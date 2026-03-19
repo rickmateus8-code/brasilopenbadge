@@ -1,26 +1,25 @@
 /**
  * Configurações globais do sistema de atestados
+ * 
+ * Para alterar o domínio, basta modificar a constante DOMAIN abaixo.
+ * Todos os QR Codes e links de validação serão atualizados automaticamente.
  */
 
 // Domínio base para validação via QR Code
-// Alterado para o novo domínio solicitado
+export const DOMAIN = "validaratestado.digital";
+
 export const APP_CONFIG = {
-  // Novo domínio
-  validationDomain: "validaratestado.digital",
-  
-  // URL base completa (usada para gerar os QR Codes)
+  validationDomain: DOMAIN,
+
   get validationBaseUrl() {
-    return `https://${this.validationDomain}`;
+    return `https://${DOMAIN}`;
   },
 
-  // URLs de validação
   get validationUrl() {
-    return `https://${this.validationDomain}/v`;
+    return `https://${DOMAIN}/v`;
   },
 
-  // Nome da instituição
   institutionName: "IDAB - DERMATOLOGY AND ALLERGY INSTITUTE",
-  
-  // Configurações de API
-  apiBaseUrl: "/api"
+
+  apiBaseUrl: "/api",
 };

@@ -1,82 +1,104 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
 import { useLanguageWithSetter } from "@/hooks/useLanguage";
 import { Card } from "@/components/ui/card";
+import AttestationDocument from "@/components/AttestationDocument";
+import type { AttestationData } from "@/data/attestations";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 type Language = "pt" | "en";
 
 const labels = {
   pt: {
-    title: "Criar Novo Atestado",
-    subtitle: "Preencha os dados abaixo para gerar um novo atestado médico",
+    title: "Emitir Novo Atestado",
+    subtitle: "Preencha os dados abaixo. O preview será atualizado em tempo real.",
     patientData: "Dados do Paciente",
     medicalData: "Dados Médicos",
     physicianData: "Dados do Médico",
     dateTime: "Data e Hora",
     logoSettings: "Configurações de Logo",
+    institutionSettings: "Dados da Instituição",
     patientName: "Nome do Paciente",
     sex: "Sexo",
     male: "Masculino",
     female: "Feminino",
-    birthDate: "Data de Nascimento",
+    birthDate: "Data de Nascimento (DD/MM/AAAA)",
     cpf: "CPF",
     motherName: "Nome da Mãe",
     address: "Endereço",
-    passport: "Passaporte/Documento",
-    condition: "Condição Clínica",
+    passport: "Passaporte",
+    condition: "Condição Clínica (Inglês)",
     vaccination: "Vacinação Contraindicada",
-    cid: "CID",
+    cid: "CID / ICD",
     physicianName: "Nome do Médico",
     crm: "CRM",
     specialty: "Especialidade",
-    signatureDate: "Data da Assinatura",
+    signatureDate: "Data da Assinatura (DD/MM/AAAA)",
     signatureTime: "Hora da Assinatura",
+    emissionDate: "Data de Emissão (ex: MARCH 16, 2026)",
     logoUrl: "URL da Logo (opcional)",
     logoPreview: "Prévia da Logo",
     useDefaultLogo: "Usar logo padrão IDAB",
-    create: "CRIAR ATESTADO",
+    institutionName: "Nome da Instituição",
+    issuingAddress: "Endereço Emitente",
+    create: "EMITIR ATESTADO",
     cancel: "CANCELAR",
-    creating: "Criando...",
-    success: "Atestado criado com sucesso!",
-    error: "Erro ao criar atestado",
+    creating: "Emitindo...",
+    success: "Atestado emitido com sucesso!",
+    error: "Erro ao emitir atestado",
     back: "← Voltar",
+    preview: "Preview em Tempo Real",
+    downloadPdf: "⬇ BAIXAR PDF",
+    form: "Formulário",
+    codeGenerated: "Código de Validação",
+    codeInfo: "O código será gerado automaticamente ao emitir.",
   },
   en: {
-    title: "Create New Certificate",
-    subtitle: "Fill in the data below to generate a new medical certificate",
+    title: "Issue New Certificate",
+    subtitle: "Fill in the data below. The preview updates in real time.",
     patientData: "Patient Data",
     medicalData: "Medical Data",
     physicianData: "Physician Data",
     dateTime: "Date and Time",
     logoSettings: "Logo Settings",
+    institutionSettings: "Institution Data",
     patientName: "Patient Name",
     sex: "Sex",
     male: "Male",
     female: "Female",
-    birthDate: "Birth Date",
+    birthDate: "Date of Birth (DD/MM/YYYY)",
     cpf: "CPF",
     motherName: "Mother's Name",
     address: "Address",
-    passport: "Passport/Document",
-    condition: "Clinical Condition",
+    passport: "Passport",
+    condition: "Clinical Condition (English)",
     vaccination: "Vaccination Contraindicated",
-    cid: "ICD",
+    cid: "ICD Code",
     physicianName: "Physician Name",
     crm: "CRM",
     specialty: "Specialty",
-    signatureDate: "Signature Date",
+    signatureDate: "Signature Date (DD/MM/YYYY)",
     signatureTime: "Signature Time",
+    emissionDate: "Emission Date (e.g., MARCH 16, 2026)",
     logoUrl: "Logo URL (optional)",
     logoPreview: "Logo Preview",
     useDefaultLogo: "Use default IDAB logo",
-    create: "CREATE CERTIFICATE",
+    institutionName: "Institution Name",
+    issuingAddress: "Issuing Address",
+    create: "ISSUE CERTIFICATE",
     cancel: "CANCEL",
-    creating: "Creating...",
-    success: "Certificate created successfully!",
-    error: "Error creating certificate",
+    creating: "Issuing...",
+    success: "Certificate issued successfully!",
+    error: "Error issuing certificate",
     back: "← Back",
+    preview: "Real-Time Preview",
+    downloadPdf: "⬇ DOWNLOAD PDF",
+    form: "Form",
+    codeGenerated: "Validation Code",
+    codeInfo: "The code will be generated automatically upon issuance.",
   },
 };
 
@@ -88,23 +110,28 @@ export default function CreateAttestation() {
   const [isLoading, setIsLoading] = useState(false);
   const [logoUrl, setLogoUrl] = useState(DEFAULT_LOGO_URL);
   const [logoPreviewError, setLogoPreviewError] = useState(false);
+  const [createdCode, setCreatedCode] = useState<string | null>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
 
   const [formData, setFormData] = useState({
     paciente: "",
-    sexo: "MALE" as const,
+    sexo: "MALE" as "MALE" | "FEMALE",
     nascimento: "",
     cpf: "",
     nomeMae: "",
     endereco: "",
     passaporte: "",
-    condicao: "",
-    vacinacao: "",
-    cid: "",
-    medico: "",
-    crm: "",
-    especialidade: "",
+    condicao: "The patient has a history of severe allergic reaction (anaphylaxis) to egg proteins, representing a risk condition for administration of vaccines containing this component.",
+    vacinacao: "YELLOW FEVER",
+    cid: "T78.0 ANAPHYLACTIC REACTION DUE TO FOOD (EGG)",
+    medico: "DIMITRI GUSMAO FLORES",
+    crm: "CRM/BA 14180",
+    especialidade: "ALLERGY AND IMMUNOLOGY",
     dataAssinatura: "",
     horaAssinatura: "",
+    dataEmissao: "",
+    instituicao: "IDAB - SALVADOR/BAHIA",
+    enderecoEmitente: "AV. ANTÔNIO CARLOS MAGALHÃES, 585 - ITAIGARA, SALVADOR - BA, 41825-000",
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -122,6 +149,53 @@ export default function CreateAttestation() {
     setLogoPreviewError(false);
   };
 
+  // Build preview data
+  const previewData: AttestationData = {
+    id: createdCode || "XXXX.XXXX",
+    paciente: formData.paciente || "NOME DO PACIENTE",
+    sexo: formData.sexo,
+    nascimento: formData.nascimento || "DD/MM/AAAA",
+    cpf: formData.cpf || "XXX.XXX.XXX-XX",
+    nomeMae: formData.nomeMae || "NOME DA MÃE",
+    endereco: formData.endereco || "ENDEREÇO COMPLETO",
+    passaporte: formData.passaporte || "XXXXXXX",
+    condicao: formData.condicao,
+    vacinacao: formData.vacinacao,
+    cid: formData.cid,
+    codigoQR: createdCode || "XXXX.XXXX",
+    dataAssinatura: formData.dataAssinatura || "DD/MM/AAAA",
+    horaAssinatura: formData.horaAssinatura || "HH:MM",
+    medico: formData.medico,
+    crm: formData.crm,
+    especialidade: formData.especialidade,
+    dataEmissao: formData.dataEmissao || "MONTH DD, YYYY",
+    logoUrl: logoUrl,
+    // Extended fields
+    instituicao: formData.instituicao,
+    enderecoEmitente: formData.enderecoEmitente,
+  } as any;
+
+  const handleDownloadPdf = async () => {
+    if (!previewRef.current) return;
+    try {
+      const canvas = await html2canvas(previewRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+      });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      const fileName = `ATESTADO_${formData.paciente.replace(/\s+/g, "_") || "NOVO"}.pdf`;
+      pdf.save(fileName);
+    } catch (err) {
+      console.error("PDF generation error:", err);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -130,20 +204,34 @@ export default function CreateAttestation() {
       const response = await fetch("/api/attestations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, logoUrl: logoUrl || DEFAULT_LOGO_URL }),
+        body: JSON.stringify({
+          paciente: formData.paciente.toUpperCase(),
+          sexo: formData.sexo,
+          nascimento: formData.nascimento,
+          cpf: formData.cpf,
+          nome_mae: formData.nomeMae.toUpperCase(),
+          endereco: formData.endereco.toUpperCase(),
+          passaporte: formData.passaporte.toUpperCase(),
+          condicao: formData.condicao,
+          vacinacao: formData.vacinacao.toUpperCase(),
+          cid: formData.cid.toUpperCase(),
+          medico: formData.medico.toUpperCase(),
+          crm: formData.crm,
+          especialidade: formData.especialidade.toUpperCase(),
+          data_assinatura: formData.dataAssinatura,
+          hora_assinatura: formData.horaAssinatura,
+          data_emissao: formData.dataEmissao.toUpperCase(),
+          logo_url: logoUrl || DEFAULT_LOGO_URL,
+          endereco_emitente: formData.enderecoEmitente,
+          instituicao: formData.instituicao,
+        }),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        alert(t.success);
-        setFormData({
-          paciente: "", sexo: "MALE", nascimento: "", cpf: "", nomeMae: "",
-          endereco: "", passaporte: "", condicao: "", vacinacao: "", cid: "",
-          medico: "", crm: "", especialidade: "", dataAssinatura: "", horaAssinatura: "",
-        });
-        setLogoUrl(DEFAULT_LOGO_URL);
-        window.location.href = "/";
+        setCreatedCode(result.data.codigoQR);
+        alert(`${t.success}\n\n${t.codeGenerated}: ${result.data.codigoQR}`);
       } else {
         alert(`${t.error}: ${result.error}`);
       }
@@ -155,169 +243,210 @@ export default function CreateAttestation() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-t-lg shadow-lg p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800">{t.title}</h1>
-              <p className="text-gray-600 mt-1">{t.subtitle}</p>
+    <div className="min-h-screen bg-gray-100">
+      {/* Header */}
+      <div className="bg-white shadow-lg p-4 border-b border-gray-200">
+        <div className="max-w-[1800px] mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">{t.title}</h1>
+            <p className="text-gray-600 text-sm mt-1">{t.subtitle}</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex gap-1">
+              <Button
+                variant={language === "pt" ? "default" : "outline"}
+                onClick={() => setLanguage("pt")}
+                size="sm"
+              >
+                PT-BR
+              </Button>
+              <Button
+                variant={language === "en" ? "default" : "outline"}
+                onClick={() => setLanguage("en")}
+                size="sm"
+              >
+                EN
+              </Button>
             </div>
             <Link href="/">
-              <Button variant="outline">{t.back}</Button>
+              <Button variant="outline" size="sm">{t.back}</Button>
             </Link>
           </div>
-
-          {/* Language Selector */}
-          <div className="flex gap-2">
-            <Button
-              variant={language === "pt" ? "default" : "outline"}
-              onClick={() => setLanguage("pt")}
-              className="text-sm"
-            >
-              PT-BR
-            </Button>
-            <Button
-              variant={language === "en" ? "default" : "outline"}
-              onClick={() => setLanguage("en")}
-              className="text-sm"
-            >
-              EN
-            </Button>
-          </div>
         </div>
+      </div>
 
-        {/* Form */}
-        <div className="bg-white shadow-lg p-8">
-          <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Main Content - Side by Side */}
+      <div className="max-w-[1800px] mx-auto p-4 flex gap-4" style={{ minHeight: "calc(100vh - 80px)" }}>
+        {/* LEFT: Form */}
+        <div className="w-[480px] flex-shrink-0 overflow-y-auto" style={{ maxHeight: "calc(100vh - 100px)" }}>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Validation Code Info */}
+            {createdCode && (
+              <Card className="p-4 bg-green-50 border-green-300">
+                <p className="text-sm font-semibold text-green-800">{t.codeGenerated}:</p>
+                <p className="text-2xl font-bold text-green-900 mt-1">{createdCode}</p>
+              </Card>
+            )}
+
             {/* Logo Settings */}
-            <Card className="p-6 bg-yellow-50">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">{t.logoSettings}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="p-4 bg-yellow-50">
+              <h3 className="text-sm font-bold text-gray-800 mb-3">{t.logoSettings}</h3>
+              <div className="space-y-2">
+                <Input type="url" value={logoUrl} onChange={handleLogoUrlChange} placeholder="https://..." className="text-sm" />
+                <Button type="button" onClick={handleUseDefaultLogo} variant="outline" className="w-full text-xs" size="sm">
+                  {t.useDefaultLogo}
+                </Button>
+                {logoUrl && !logoPreviewError && (
+                  <div className="border rounded p-2 bg-white flex justify-center">
+                    <img src={logoUrl} alt="Logo" onError={() => setLogoPreviewError(true)} className="max-h-16 object-contain" />
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* Institution Settings */}
+            <Card className="p-4 bg-gray-50">
+              <h3 className="text-sm font-bold text-gray-800 mb-3">{t.institutionSettings}</h3>
+              <div className="space-y-2">
                 <div>
-                  <label className="block text-sm font-semibold mb-2">{t.logoUrl}</label>
-                  <Input type="url" value={logoUrl} onChange={handleLogoUrlChange} placeholder="https://exemplo.com/logo.png" />
-                  <Button type="button" onClick={handleUseDefaultLogo} variant="outline" className="w-full mt-2">
-                    {t.useDefaultLogo}
-                  </Button>
+                  <label className="block text-xs font-semibold mb-1">{t.institutionName}</label>
+                  <Input name="instituicao" value={formData.instituicao} onChange={handleInputChange} className="text-sm" />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-2">{t.logoPreview}</label>
-                  <div className="border-2 border-gray-300 rounded-lg p-4 h-32 flex items-center justify-center bg-white">
-                    {logoUrl && !logoPreviewError ? (
-                      <img src={logoUrl} alt="Logo Preview" onError={() => setLogoPreviewError(true)} className="max-h-28 max-w-full object-contain" />
-                    ) : (
-                      <p className="text-gray-500 text-sm text-center">
-                        {logoPreviewError ? "Erro ao carregar logo" : "Nenhuma logo selecionada"}
-                      </p>
-                    )}
-                  </div>
+                  <label className="block text-xs font-semibold mb-1">{t.issuingAddress}</label>
+                  <Input name="enderecoEmitente" value={formData.enderecoEmitente} onChange={handleInputChange} className="text-sm" />
                 </div>
               </div>
             </Card>
 
             {/* Patient Data */}
-            <Card className="p-6 bg-blue-50">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">{t.patientData}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="p-4 bg-blue-50">
+              <h3 className="text-sm font-bold text-gray-800 mb-3">{t.patientData}</h3>
+              <div className="space-y-2">
                 <div>
-                  <label className="block text-sm font-semibold mb-2">{t.patientName}</label>
-                  <Input name="paciente" value={formData.paciente} onChange={handleInputChange} required />
+                  <label className="block text-xs font-semibold mb-1">{t.patientName}</label>
+                  <Input name="paciente" value={formData.paciente} onChange={handleInputChange} required className="text-sm" />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">{t.sex}</label>
+                    <select name="sexo" value={formData.sexo} onChange={handleInputChange} className="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm">
+                      <option value="MALE">{t.male}</option>
+                      <option value="FEMALE">{t.female}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">{t.birthDate}</label>
+                    <Input name="nascimento" value={formData.nascimento} onChange={handleInputChange} placeholder="DD/MM/AAAA" required className="text-sm" />
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-2">{t.sex}</label>
-                  <select name="sexo" value={formData.sexo} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-md" required>
-                    <option value="MALE">{t.male}</option>
-                    <option value="FEMALE">{t.female}</option>
-                  </select>
+                  <label className="block text-xs font-semibold mb-1">{t.cpf}</label>
+                  <Input name="cpf" value={formData.cpf} onChange={handleInputChange} placeholder="XXX.XXX.XXX-XX" required className="text-sm" />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-2">{t.birthDate}</label>
-                  <Input name="nascimento" type="date" value={formData.nascimento} onChange={handleInputChange} required />
+                  <label className="block text-xs font-semibold mb-1">{t.motherName}</label>
+                  <Input name="nomeMae" value={formData.nomeMae} onChange={handleInputChange} required className="text-sm" />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-2">{t.cpf}</label>
-                  <Input name="cpf" value={formData.cpf} onChange={handleInputChange} placeholder="XXX.XXX.XXX-XX" required />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold mb-2">{t.motherName}</label>
-                  <Input name="nomeMae" value={formData.nomeMae} onChange={handleInputChange} required />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold mb-2">{t.address}</label>
-                  <Input name="endereco" value={formData.endereco} onChange={handleInputChange} required />
+                  <label className="block text-xs font-semibold mb-1">{t.address}</label>
+                  <Input name="endereco" value={formData.endereco} onChange={handleInputChange} required className="text-sm" />
                 </div>
               </div>
             </Card>
 
             {/* Medical Data */}
-            <Card className="p-6 bg-green-50">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">{t.medicalData}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="p-4 bg-green-50">
+              <h3 className="text-sm font-bold text-gray-800 mb-3">{t.medicalData}</h3>
+              <div className="space-y-2">
                 <div>
-                  <label className="block text-sm font-semibold mb-2">{t.passport}</label>
-                  <Input name="passaporte" value={formData.passaporte} onChange={handleInputChange} required />
+                  <label className="block text-xs font-semibold mb-1">{t.passport}</label>
+                  <Input name="passaporte" value={formData.passaporte} onChange={handleInputChange} className="text-sm" />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-2">{t.vaccination}</label>
-                  <Input name="vacinacao" value={formData.vacinacao} onChange={handleInputChange} required />
+                  <label className="block text-xs font-semibold mb-1">{t.condition}</label>
+                  <textarea name="condicao" value={formData.condicao} onChange={handleInputChange} rows={3} className="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm" required />
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold mb-2">{t.condition}</label>
-                  <textarea name="condicao" value={formData.condicao} onChange={handleInputChange} rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-md" required />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold mb-2">{t.cid}</label>
-                  <Input name="cid" value={formData.cid} onChange={handleInputChange} required />
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">{t.vaccination}</label>
+                    <Input name="vacinacao" value={formData.vacinacao} onChange={handleInputChange} required className="text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">{t.cid}</label>
+                    <Input name="cid" value={formData.cid} onChange={handleInputChange} required className="text-sm" />
+                  </div>
                 </div>
               </div>
             </Card>
 
             {/* Physician Data */}
-            <Card className="p-6 bg-purple-50">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">{t.physicianData}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold mb-2">{t.physicianName}</label>
-                  <Input name="medico" value={formData.medico} onChange={handleInputChange} required />
+            <Card className="p-4 bg-purple-50">
+              <h3 className="text-sm font-bold text-gray-800 mb-3">{t.physicianData}</h3>
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">{t.physicianName}</label>
+                    <Input name="medico" value={formData.medico} onChange={handleInputChange} required className="text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">{t.crm}</label>
+                    <Input name="crm" value={formData.crm} onChange={handleInputChange} required className="text-sm" />
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-2">{t.crm}</label>
-                  <Input name="crm" value={formData.crm} onChange={handleInputChange} required />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold mb-2">{t.specialty}</label>
-                  <Input name="especialidade" value={formData.especialidade} onChange={handleInputChange} required />
+                  <label className="block text-xs font-semibold mb-1">{t.specialty}</label>
+                  <Input name="especialidade" value={formData.especialidade} onChange={handleInputChange} required className="text-sm" />
                 </div>
               </div>
             </Card>
 
             {/* Date and Time */}
-            <Card className="p-6 bg-orange-50">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">{t.dateTime}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold mb-2">{t.signatureDate}</label>
-                  <Input name="dataAssinatura" type="date" value={formData.dataAssinatura} onChange={handleInputChange} required />
+            <Card className="p-4 bg-orange-50">
+              <h3 className="text-sm font-bold text-gray-800 mb-3">{t.dateTime}</h3>
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">{t.signatureDate}</label>
+                    <Input name="dataAssinatura" value={formData.dataAssinatura} onChange={handleInputChange} placeholder="DD/MM/AAAA" required className="text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">{t.signatureTime}</label>
+                    <Input name="horaAssinatura" type="time" value={formData.horaAssinatura} onChange={handleInputChange} required className="text-sm" />
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-2">{t.signatureTime}</label>
-                  <Input name="horaAssinatura" type="time" value={formData.horaAssinatura} onChange={handleInputChange} required />
+                  <label className="block text-xs font-semibold mb-1">{t.emissionDate}</label>
+                  <Input name="dataEmissao" value={formData.dataEmissao} onChange={handleInputChange} placeholder="MARCH 16, 2026" required className="text-sm" />
                 </div>
               </div>
             </Card>
 
             {/* Action Buttons */}
-            <div className="flex gap-4 justify-center">
+            <div className="flex gap-3 justify-center pb-4">
               <Link href="/">
-                <Button variant="outline" className="px-8 py-3">{t.cancel}</Button>
+                <Button variant="outline" className="px-6">{t.cancel}</Button>
               </Link>
-              <Button type="submit" disabled={isLoading} className="bg-green-600 hover:bg-green-700 text-white px-8 py-3">
+              <Button type="submit" disabled={isLoading} className="bg-green-600 hover:bg-green-700 text-white px-6">
                 {isLoading ? t.creating : t.create}
               </Button>
             </div>
           </form>
+        </div>
+
+        {/* RIGHT: Preview */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-bold text-gray-700">{t.preview}</h2>
+            <Button onClick={handleDownloadPdf} className="bg-green-600 hover:bg-green-700 text-white" size="sm">
+              {t.downloadPdf}
+            </Button>
+          </div>
+          <div className="flex-1 overflow-auto bg-gray-300 rounded-lg p-4" style={{ maxHeight: "calc(100vh - 140px)" }}>
+            <div className="shadow-2xl">
+              <AttestationDocument ref={previewRef} data={previewData} logoUrl={logoUrl} />
+            </div>
+          </div>
         </div>
       </div>
     </div>

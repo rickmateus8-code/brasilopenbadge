@@ -1,104 +1,21 @@
 import express, { Request, Response } from "express";
-import { nanoid } from "nanoid";
-
-export interface AttestationDataRequest {
-  // Dados do Paciente
-  paciente: string;
-  paciente_en?: string;
-  sexo: "MALE" | "FEMALE";
-  nascimento: string;
-  cpf: string;
-  nomeMae: string;
-  nomeMae_en?: string;
-  endereco: string;
-  endereco_en?: string;
-
-  // Dados Médicos
-  passaporte: string;
-  condicao: string;
-  condicao_en?: string;
-  vacinacao: string;
-  vacinacao_en?: string;
-  cid: string;
-  cid_en?: string;
-
-  // Dados do Médico
-  medico: string;
-  crm: string;
-  especialidade: string;
-  especialidade_en?: string;
-
-  // Data e Hora
-  dataAssinatura: string;
-  horaAssinatura: string;
-}
-
-export interface AttestationData extends AttestationDataRequest {
-  id: string;
-  codigoQR: string;
-  dataEmissao: string;
-  dataEmissao_en?: string;
-  logoUrl?: string; // URL da logo personalizada
-}
-
-// In-memory storage (in production, use a database)
-const attestations: Map<string, AttestationData> = new Map();
-
-// Initialize with sample data
-function initializeSampleData() {
-  const lucas: AttestationData = {
-    id: "P792.GL02",
-    codigoQR: "P792.GL02",
-    paciente: "LUCAS MESSIAS MARON",
-    sexo: "MALE",
-    nascimento: "07/10/1987",
-    cpf: "033.548.725-43",
-    nomeMae: "DIANE MESSIAS MARON",
-    endereco: "RUA DE ITABORAHY, 749 AP 103, AMARALINA - SALVADOR - BA, 41900-000",
-    passaporte: "GN4060607",
-    condicao: "The patient has a history of severe allergic reaction (anaphylaxis) to egg proteins, representing a risk condition for administration of vaccines containing this component.",
-    vacinacao: "YELLOW FEVER",
-    cid: "T78.0 ANAPHYLACTIC REACTION DUE TO FOOD (EGG)",
-    medico: "DIMITRI GUSMAO FLORES",
-    crm: "CRM/BA 14180",
-    especialidade: "ALLERGY AND IMMUNOLOGY",
-    dataAssinatura: "16/03/2026",
-    horaAssinatura: "15:41",
-    dataEmissao: "MARCH 16, 2026",
-  };
-
-  const thielsily: AttestationData = {
-    id: "UMS4.9Z40",
-    codigoQR: "UMS4.9Z40",
-    paciente: "THIELSILY MONIQUE CÂNDIDA DA SILVA PEREIRA",
-    sexo: "FEMALE",
-    nascimento: "01/11/1994",
-    cpf: "167.709.317-02",
-    nomeMae: "CRISTIANA CANDIDA DA SILVA",
-    endereco: "RUA CASTELO BRANCO, 290 - CENTRO, ITABORAI/RJ - 24800-089",
-    passaporte: "FX255093",
-    condicao: "The patient has a history of severe allergic reaction (anaphylaxis) to egg proteins, representing a risk condition for administration of vaccines containing this component.",
-    vacinacao: "YELLOW FEVER",
-    cid: "T78.0 ANAPHYLACTIC REACTION DUE TO FOOD (EGG)",
-    medico: "DIMITRI GUSMAO FLORES",
-    crm: "CRM/BA 14180",
-    especialidade: "ALLERGY AND IMMUNOLOGY",
-    dataAssinatura: "16/03/2026",
-    horaAssinatura: "14:53",
-    dataEmissao: "MARCH 16, 2026",
-  };
-
-  attestations.set(lucas.codigoQR, lucas);
-  attestations.set(thielsily.codigoQR, thielsily);
-}
+import {
+  createAttestation,
+  getAttestationById,
+  getAttestationByCode,
+  validateAttestation,
+  getAllAttestations,
+  updateAttestation,
+  deleteAttestation,
+  seedInitialData,
+  type AttestationRecord,
+} from "./database.js";
 
 export function createApiRouter() {
   const router = express.Router();
 
-  // Initialize sample data on first load
-  if (attestations.size === 0) {
-    initializeSampleData();
-  }
+  // Seed initial data on startup
+  seedInitialData();
 
   // ===== GET ENDPOINTS =====
 
@@ -108,12 +25,8 @@ export function createApiRouter() {
    */
   router.get("/attestations", (_req: Request, res: Response) => {
     try {
-      const data = Array.from(attestations.values());
-      res.json({
-        success: true,
-        data,
-        count: data.length,
-      });
+      const data = getAllAttestations();
+      res.json({ success: true, data, count: data.length });
     } catch (error) {
       res.status(500).json({
         success: false,
@@ -124,24 +37,15 @@ export function createApiRouter() {
 
   /**
    * GET /api/attestations/:id
-   * Retrieve a specific attestation by ID or QR code
+   * Retrieve a specific attestation by ID
    */
   router.get("/attestations/:id", (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
-      const attestation = attestations.get(id);
-
+      const attestation = getAttestationById(req.params.id);
       if (!attestation) {
-        return res.status(404).json({
-          success: false,
-          error: "Attestation not found",
-        });
+        return res.status(404).json({ success: false, error: "Attestation not found" });
       }
-
-      res.json({
-        success: true,
-        data: attestation,
-      });
+      res.json({ success: true, data: attestation });
     } catch (error) {
       res.status(500).json({
         success: false,
@@ -152,13 +56,33 @@ export function createApiRouter() {
 
   /**
    * GET /api/validate/:code
-   * Validate an attestation by QR code
+   * Validate an attestation by code (optionally with date query param)
    */
   router.get("/validate/:code", (req: Request, res: Response) => {
     try {
       const { code } = req.params;
-      const attestation = attestations.get(code);
+      const date = req.query.date as string | undefined;
 
+      // If date provided, do full validation
+      if (date) {
+        const result = validateAttestation(code, date);
+        if (result.valid && result.attestation) {
+          return res.json({
+            success: true,
+            valid: true,
+            message: "Attestation is valid and authentic",
+            data: mapToFrontend(result.attestation),
+          });
+        }
+        return res.json({
+          success: false,
+          valid: false,
+          message: "Attestation not found or date does not match",
+        });
+      }
+
+      // If no date, just look up by code
+      const attestation = getAttestationByCode(code.trim().toUpperCase());
       if (!attestation) {
         return res.json({
           success: false,
@@ -170,8 +94,8 @@ export function createApiRouter() {
       res.json({
         success: true,
         valid: true,
-        message: "Attestation is valid and authentic",
-        data: attestation,
+        message: "Attestation found",
+        data: mapToFrontend(attestation),
       });
     } catch (error) {
       res.status(500).json({
@@ -186,32 +110,19 @@ export function createApiRouter() {
   /**
    * POST /api/attestations
    * Create a new attestation
-   * Body: AttestationDataRequest
    */
   router.post("/attestations", (req: Request, res: Response) => {
     try {
-      const data = req.body as AttestationDataRequest;
+      const data = req.body;
 
       // Validate required fields
       const requiredFields = [
-        "paciente",
-        "sexo",
-        "nascimento",
-        "cpf",
-        "nomeMae",
-        "endereco",
-        "passaporte",
-        "condicao",
-        "vacinacao",
-        "cid",
-        "medico",
-        "crm",
-        "especialidade",
-        "dataAssinatura",
-        "horaAssinatura",
+        "paciente", "sexo", "nascimento", "cpf", "nome_mae", "endereco",
+        "condicao", "vacinacao", "cid", "medico", "crm", "especialidade",
+        "data_assinatura", "hora_assinatura", "data_emissao",
       ];
 
-      const missingFields = requiredFields.filter((field) => !data[field as keyof AttestationDataRequest]);
+      const missingFields = requiredFields.filter((field) => !data[field]);
 
       if (missingFields.length > 0) {
         return res.status(400).json({
@@ -220,27 +131,32 @@ export function createApiRouter() {
         });
       }
 
-      // Generate unique ID and QR code
-      const id = nanoid(10).toUpperCase();
-      const codigoQR = id;
-
-      const newAttestation: AttestationData = {
-        ...data,
-        id,
-        codigoQR,
-        dataEmissao: new Date().toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        }).toUpperCase(),
-      };
-
-      attestations.set(codigoQR, newAttestation);
+      const newAttestation = createAttestation({
+        paciente: data.paciente,
+        sexo: data.sexo,
+        nascimento: data.nascimento,
+        cpf: data.cpf,
+        nome_mae: data.nome_mae,
+        endereco: data.endereco,
+        passaporte: data.passaporte || null,
+        condicao: data.condicao,
+        vacinacao: data.vacinacao,
+        cid: data.cid,
+        medico: data.medico,
+        crm: data.crm,
+        especialidade: data.especialidade,
+        data_assinatura: data.data_assinatura,
+        hora_assinatura: data.hora_assinatura,
+        data_emissao: data.data_emissao,
+        logo_url: data.logo_url || null,
+        endereco_emitente: data.endereco_emitente || "AV. ANTÔNIO CARLOS MAGALHÃES, 585 - ITAIGARA, SALVADOR - BA, 41825-000",
+        instituicao: data.instituicao || "IDAB - SALVADOR/BAHIA",
+      });
 
       res.status(201).json({
         success: true,
         message: "Attestation created successfully",
-        data: newAttestation,
+        data: mapToFrontend(newAttestation),
       });
     } catch (error) {
       res.status(500).json({
@@ -258,29 +174,14 @@ export function createApiRouter() {
    */
   router.put("/attestations/:id", (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
-      const attestation = attestations.get(id);
-
-      if (!attestation) {
-        return res.status(404).json({
-          success: false,
-          error: "Attestation not found",
-        });
+      const updated = updateAttestation(req.params.id, req.body);
+      if (!updated) {
+        return res.status(404).json({ success: false, error: "Attestation not found" });
       }
-
-      const updatedData = {
-        ...attestation,
-        ...req.body,
-        id: attestation.id, // Prevent ID changes
-        codigoQR: attestation.codigoQR, // Prevent QR code changes
-      };
-
-      attestations.set(id, updatedData);
-
       res.json({
         success: true,
         message: "Attestation updated successfully",
-        data: updatedData,
+        data: mapToFrontend(updated),
       });
     } catch (error) {
       res.status(500).json({
@@ -298,23 +199,11 @@ export function createApiRouter() {
    */
   router.delete("/attestations/:id", (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
-      const attestation = attestations.get(id);
-
-      if (!attestation) {
-        return res.status(404).json({
-          success: false,
-          error: "Attestation not found",
-        });
+      const deleted = deleteAttestation(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ success: false, error: "Attestation not found" });
       }
-
-      attestations.delete(id);
-
-      res.json({
-        success: true,
-        message: "Attestation deleted successfully",
-        data: attestation,
-      });
+      res.json({ success: true, message: "Attestation deleted successfully" });
     } catch (error) {
       res.status(500).json({
         success: false,
@@ -324,4 +213,33 @@ export function createApiRouter() {
   });
 
   return router;
+}
+
+/**
+ * Map database record to frontend-compatible format
+ */
+function mapToFrontend(record: AttestationRecord) {
+  return {
+    id: record.id,
+    codigoQR: record.codigo_validacao,
+    paciente: record.paciente,
+    sexo: record.sexo,
+    nascimento: record.nascimento,
+    cpf: record.cpf,
+    nomeMae: record.nome_mae,
+    endereco: record.endereco,
+    passaporte: record.passaporte || "",
+    condicao: record.condicao,
+    vacinacao: record.vacinacao,
+    cid: record.cid,
+    medico: record.medico,
+    crm: record.crm,
+    especialidade: record.especialidade,
+    dataAssinatura: record.data_assinatura,
+    horaAssinatura: record.hora_assinatura,
+    dataEmissao: record.data_emissao,
+    logoUrl: record.logo_url || undefined,
+    enderecoEmitente: record.endereco_emitente,
+    instituicao: record.instituicao,
+  };
 }

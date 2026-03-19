@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { attestations } from "@/data/attestations";
 import AttestationDocument from "@/components/AttestationDocument";
 import { useLanguageWithSetter } from "@/hooks/useLanguage";
 import { useParams } from "wouter";
@@ -13,7 +12,7 @@ const labels = {
     title: "Validador Oficial",
     queryDocument: "Consultar Documento",
     authenticationCode: "Código de Autenticação",
-    issueDate: "Data de Emissão",
+    issueDate: "Data de Emissão (DD/MM/AAAA)",
     validateDocument: "VALIDAR DOCUMENTO",
     verifying: "Verificando...",
     clear: "LIMPAR",
@@ -23,7 +22,6 @@ const labels = {
     downloadPdf: "BAIXAR PDF",
     downloading: "BAIXANDO...",
     close: "FECHAR",
-    officialValidation: "Validação Oficial de Atestados Médicos",
     fillAllFields: "Preencha todos os campos.",
     connectionError: "Erro de conexão.",
     downloadError: "Erro ao baixar o arquivo. Tente novamente.",
@@ -32,7 +30,7 @@ const labels = {
     title: "Official Validator",
     queryDocument: "Query Document",
     authenticationCode: "Authentication Code",
-    issueDate: "Issue Date",
+    issueDate: "Issue Date (DD/MM/YYYY)",
     validateDocument: "VALIDATE DOCUMENT",
     verifying: "Verifying...",
     clear: "CLEAR",
@@ -42,7 +40,6 @@ const labels = {
     downloadPdf: "DOWNLOAD PDF",
     downloading: "DOWNLOADING...",
     close: "CLOSE",
-    officialValidation: "Official Validation of Medical Certificates",
     fillAllFields: "Please fill in all fields.",
     connectionError: "Connection error.",
     downloadError: "Error downloading the file. Please try again.",
@@ -51,8 +48,8 @@ const labels = {
 
 export default function Validation() {
   const params = useParams();
-  const [codigo, setCodigo] = useState(params.id || "");
-  const [data, setData] = useState(params.id ? "2026-03-16" : "");
+  const [codigo, setCodigo] = useState("");
+  const [data, setData] = useState("");
   const [isValidating, setIsValidating] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [showViewer, setShowViewer] = useState(false);
@@ -63,8 +60,12 @@ export default function Validation() {
 
   const t = labels[language];
 
-  const handleValidate = async (codeToUse = codigo, dateToUse = data) => {
-    if (!codeToUse || !dateToUse) {
+  // Validate via API (database)
+  const handleValidate = async (codeToUse?: string, dateToUse?: string) => {
+    const code = codeToUse || codigo;
+    const date = dateToUse || data;
+
+    if (!code || !date) {
       alert(t.fillAllFields);
       return;
     }
@@ -74,26 +75,44 @@ export default function Validation() {
     setValidAttestation(null);
     setShowViewer(false);
 
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    try {
+      const response = await fetch(`/api/validate/${encodeURIComponent(code.trim().toUpperCase())}?date=${encodeURIComponent(date.trim())}`);
+      const result = await response.json();
 
-    const attestation = Object.values(attestations).find(
-      (a) => a.codigoQR === codeToUse.trim().toUpperCase()
-    );
-
-    if (attestation && dateToUse === "2026-03-16") {
-      setValidAttestation(attestation);
-      setShowViewer(true);
-    } else {
-      setErrorMessage(t.documentNotFound);
+      if (result.success && result.valid && result.data) {
+        setValidAttestation(result.data);
+        setShowViewer(true);
+      } else {
+        setErrorMessage(t.documentNotFound);
+      }
+    } catch (err) {
+      console.error("Validation error:", err);
+      setErrorMessage(t.connectionError);
+    } finally {
+      setIsValidating(false);
     }
-
-    setIsValidating(false);
   };
 
+  // Auto-validate when accessing via /v/:id (QR Code route)
   useEffect(() => {
     if (params.id) {
-      handleValidate(params.id, "2026-03-16");
+      const code = params.id;
+      setCodigo(code);
+      // Auto-validate by looking up the code first (without date check for QR route)
+      setIsValidating(true);
+      fetch(`/api/validate/${encodeURIComponent(code.trim().toUpperCase())}`)
+        .then((res) => res.json())
+        .then((result) => {
+          if (result.success && result.data) {
+            setValidAttestation(result.data);
+            setData(result.data.dataAssinatura || "");
+            setShowViewer(true);
+          } else {
+            setErrorMessage(t.documentNotFound);
+          }
+        })
+        .catch(() => setErrorMessage(t.connectionError))
+        .finally(() => setIsValidating(false));
     }
   }, [params.id]);
 
@@ -135,9 +154,8 @@ export default function Validation() {
 
       const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
       const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      const imgY = 0;
 
-      pdf.addImage(imgData, "PNG", imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      pdf.addImage(imgData, "PNG", imgX, 0, imgWidth * ratio, imgHeight * ratio);
 
       const nomeFormatado = validAttestation.paciente
         .trim()
@@ -168,7 +186,7 @@ export default function Validation() {
           zIndex: 9999,
         }}
       >
-        {/* GREEN HEADER BAR - Replicating original site */}
+        {/* GREEN HEADER BAR */}
         <div
           style={{
             backgroundColor: "#166534",
@@ -243,7 +261,6 @@ export default function Validation() {
             borderTop: "2px solid #e5e7eb",
           }}
         >
-          {/* FECHAR button */}
           <button
             onClick={handleClose}
             style={{
@@ -260,7 +277,6 @@ export default function Validation() {
             {t.close}
           </button>
 
-          {/* BAIXAR PDF button */}
           <button
             onClick={handleDownloadPDF}
             disabled={isDownloading}
@@ -288,7 +304,7 @@ export default function Validation() {
     );
   }
 
-  // ===== FORM MODE (initial state) =====
+  // ===== FORM MODE (initial state) - Responsive =====
   return (
     <div
       style={{
@@ -299,7 +315,7 @@ export default function Validation() {
         fontFamily: "Roboto, Arial, Helvetica, sans-serif",
       }}
     >
-      {/* HEADER - Blue bar with shield icon */}
+      {/* HEADER - Blue bar */}
       <div
         style={{
           backgroundColor: "#1e40af",
@@ -439,7 +455,7 @@ export default function Validation() {
             <input
               id="codigo"
               type="text"
-              placeholder="XXXX-XXXX"
+              placeholder="XXXX.XXXX"
               value={codigo}
               onChange={(e) => setCodigo(e.target.value.toUpperCase())}
               style={{
@@ -471,7 +487,8 @@ export default function Validation() {
             </label>
             <input
               id="data"
-              type="date"
+              type="text"
+              placeholder="DD/MM/AAAA"
               value={data}
               onChange={(e) => setData(e.target.value)}
               style={{
@@ -480,6 +497,8 @@ export default function Validation() {
                 border: "1px solid #d1d5db",
                 borderRadius: "6px",
                 fontSize: "14px",
+                textAlign: "center",
+                fontFamily: "monospace",
                 outline: "none",
                 boxSizing: "border-box",
               }}

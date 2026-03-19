@@ -169,6 +169,12 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+    },
     strictPort: false, // Will find next available port if 3000 is busy
     host: true,
     allowedHosts: [

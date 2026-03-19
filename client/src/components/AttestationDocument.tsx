@@ -1,8 +1,9 @@
 import { AttestationData } from "@/data/attestations";
 import { QRCodeSVG as QRCode } from "qrcode.react";
 import { forwardRef } from "react";
+import { DOMAIN } from "@/config";
 
-const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663380726083/Jt3ChWN8C56HSCFrn4RLrZ/idab-logo-correct_03a04244.webp";
+const DEFAULT_LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663380726083/Jt3ChWN8C56HSCFrn4RLrZ/idab-logo-correct_03a04244.webp";
 
 interface AttestationDocumentProps {
   data: AttestationData;
@@ -11,9 +12,11 @@ interface AttestationDocumentProps {
 
 const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>(
   ({ data, logoUrl }, ref) => {
-    const qrValue = `https://validaratestado.digital/v/${data.codigoQR}`;
-    const sexoFormatado = data.sexo === "MALE" ? "MALE" : "FEMALE";
-    const effectiveLogoUrl = logoUrl || LOGO_URL;
+    const qrValue = `https://${DOMAIN}/v/${data.codigoQR}`;
+    const sexLabel = data.sexo === "MALE" ? "MALE" : "FEMALE";
+    const effectiveLogoUrl = logoUrl || (data as any).logoUrl || DEFAULT_LOGO_URL;
+    const instituicao = (data as any).instituicao || "IDAB - SALVADOR/BAHIA";
+    const enderecoEmitente = (data as any).enderecoEmitente || "AV. ANTÔNIO CARLOS MAGALHÃES, 585 - ITAIGARA, SALVADOR - BA, 41825-000";
 
     // Scale factor: 20% increase (25% - 5% reduction)
     const s = 1.1875;
@@ -62,16 +65,16 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           <div style={{ width: `${120 * s}px`, flexShrink: 0 }}>
             <img
               src={effectiveLogoUrl}
-              alt="IDAB Logo"
+              alt="Logo"
               style={{ width: "100%", height: "auto", objectFit: "contain" }}
               crossOrigin="anonymous"
             />
           </div>
 
-          {/* Institution Info - Centered */}
+          {/* Institution Info - CENTRALIZED */}
           <div style={{ flex: 1, textAlign: "center" }}>
             <div style={{ fontSize: `${14 * s}px`, fontWeight: "bold", marginBottom: `${2 * s}px` }}>
-              IDAB - SALVADOR/BAHIA
+              {instituicao}
             </div>
             <div style={{ fontSize: `${11 * s}px`, fontWeight: "bold", marginBottom: `${2 * s}px` }}>
               DERMATOLOGY AND ALLERGY INSTITUTE
@@ -120,7 +123,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             </div>
             <div style={{ width: `${140 * s}px` }}>
               <span style={{ fontWeight: "bold" }}>Sex: </span>
-              <span>{sexoFormatado}</span>
+              <span>{sexLabel}</span>
             </div>
             <div style={{ width: `${160 * s}px` }}>
               <span style={{ fontWeight: "bold" }}>Date of Birth: </span>
@@ -151,7 +154,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
           {/* Issuing Address */}
           <div style={{ fontSize: `${9 * s}px`, fontWeight: "bold" }}>
-            ISSUING ADDRESS: <span style={{ fontWeight: "normal" }}>AV. ANTÔNIO CARLOS MAGALHÃES, 585 - ITAIGARA, SALVADOR - BA, 41825-000</span>
+            ISSUING ADDRESS:{" "}
+            <span style={{ fontWeight: "normal" }}>{enderecoEmitente}</span>
           </div>
         </div>
 
@@ -176,7 +180,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
           {/* Condition Description */}
           <p style={{ marginBottom: `${15 * s}px`, textAlign: "justify" }}>
-            The patient has a history of severe allergic reaction (anaphylaxis) to egg proteins, representing a risk condition for administration of vaccines containing this component.
+            {data.condicao}
           </p>
 
           {/* Passport */}
@@ -184,21 +188,19 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             Passport: <span style={{ fontWeight: "bold" }}>{data.passaporte}</span>
           </p>
 
-          {/* Vaccination Contraindication */}
-          <p style={{ marginBottom: `${4 * s}px` }}>
-            Vaccination contraindicated for:
-          </p>
-          <p style={{ fontWeight: "bold", marginBottom: `${15 * s}px` }}>
-            YELLOW FEVER
+          {/* Vaccination Contraindication - SAME LINE as per user request */}
+          <p style={{ marginBottom: `${15 * s}px` }}>
+            Vaccination contraindicated for:{" "}
+            <span style={{ fontWeight: "bold" }}>{data.vacinacao}</span>
           </p>
 
           {/* ICD */}
           <p style={{ fontWeight: "bold", fontSize: `${10.5 * s}px` }}>
-            ICD: T78.0 ANAPHYLACTIC REACTION DUE TO FOOD (EGG)
+            ICD: {data.cid}
           </p>
         </div>
 
-        {/* ===== FOOTER - 3 COLUMNS ===== */}
+        {/* ===== FOOTER - 3 COLUMNS (identical to PDF original) ===== */}
         <div
           style={{
             borderTop: `${1.5 * s}px solid #000`,
@@ -208,26 +210,26 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             justifyContent: "space-between",
             alignItems: "flex-start",
             fontSize: `${9 * s}px`,
-            gap: `${15 * s}px`,
+            gap: `${10 * s}px`,
           }}
         >
           {/* Left Column: Date and Validation */}
-          <div style={{ flex: 1, textAlign: "left" }}>
+          <div style={{ flex: "0 0 auto", maxWidth: `${220 * s}px`, textAlign: "left" }}>
             <p style={{ fontWeight: "bold", marginBottom: `${6 * s}px`, fontSize: `${10 * s}px` }}>
-              SALVADOR, MARCH 16, 2026
+              SALVADOR, {data.dataEmissao}
             </p>
-            <p style={{ marginBottom: `${2 * s}px`, color: "#333" }}>
+            <p style={{ marginBottom: `${2 * s}px`, color: "#333", fontSize: `${8.5 * s}px` }}>
               Validate this document at:
             </p>
             <p style={{ fontWeight: "bold", marginBottom: `${3 * s}px`, fontSize: `${8.5 * s}px` }}>
-              https://validaratestado.digital
+              https://{DOMAIN}
             </p>
             <p style={{ fontSize: `${8.5 * s}px` }}>
               Code: <span style={{ fontWeight: "bold" }}>{data.codigoQR}</span>
             </p>
           </div>
 
-          {/* Center Column: QR Code */}
+          {/* Center Column: QR Code - positioned exactly as in PDF */}
           <div
             style={{
               display: "flex",
@@ -235,6 +237,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               alignItems: "center",
               justifyContent: "center",
               flexShrink: 0,
+              alignSelf: "center",
             }}
           >
             <div
@@ -242,11 +245,12 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 padding: `${3 * s}px`,
                 border: `${1.5 * s}px solid #000`,
                 backgroundColor: "#fff",
+                lineHeight: 0,
               }}
             >
               <QRCode
                 value={qrValue}
-                size={Math.round(95 * s)}
+                size={Math.round(90 * s)}
                 level="H"
                 includeMargin={false}
                 fgColor="#000000"
@@ -256,9 +260,12 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </div>
 
           {/* Right Column: Physician */}
-          <div style={{ flex: 1, textAlign: "right" }}>
+          <div style={{ flex: "0 0 auto", maxWidth: `${260 * s}px`, textAlign: "right" }}>
             <p style={{ marginBottom: `${3 * s}px`, fontSize: `${8.5 * s}px` }}>
-              Document digitally signed pursuant to Provisional Measure No. 2,200-2
+              Document digitally signed pursuant to
+            </p>
+            <p style={{ marginBottom: `${3 * s}px`, fontSize: `${8.5 * s}px` }}>
+              Provisional Measure No. 2,200-2
             </p>
             <p style={{ fontWeight: "bold", marginBottom: `${3 * s}px`, fontSize: `${10 * s}px` }}>
               PHYSICIAN: {data.medico}
@@ -267,7 +274,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               {data.crm}
             </p>
             <p style={{ marginBottom: `${3 * s}px`, fontSize: `${8.5 * s}px` }}>
-              ALLERGY AND IMMUNOLOGY
+              {data.especialidade}
             </p>
             <p style={{ fontSize: `${8.5 * s}px` }}>
               Signed on {data.dataAssinatura} {data.horaAssinatura}
