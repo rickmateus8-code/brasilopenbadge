@@ -6,8 +6,8 @@
  */
 
 // Domínio base para validação via QR Code (exclusivo para QR Code)
-// Domínio definitivo para produção
-export const VALIDATION_DOMAIN = "validaratestado.digital";
+// Usando o subdomínio permanente do Cloudflare Workers/Pages
+export const VALIDATION_DOMAIN = "atestado.cideniamenezes.workers.dev";
 
 export const APP_CONFIG = {
   validationDomain: VALIDATION_DOMAIN,
