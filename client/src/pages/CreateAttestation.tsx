@@ -10,6 +10,7 @@ import type { AttestationData } from "@/data/attestations";
 import { exportElementToPDF, generatePDFFilename } from "@/lib/pdfExport";
 import { createAttestation } from "@/lib/attestationStore";
 import { createAttestationApi } from "@/lib/apiClient";
+import { handleDateInput, formatDateToEnglish } from "@/lib/dateMask";
 
 type Language = "pt" | "en";
 
@@ -40,7 +41,7 @@ const labels = {
     specialty: "Especialidade",
     signatureDate: "Data da Assinatura (DD/MM/AAAA)",
     signatureTime: "Hora da Assinatura",
-    emissionDate: "Data de Emissão (ex: MARCH 16, 2026)",
+    emissionDate: "Data de Emissão (DD/MM/AAAA)",
     logoUrl: "URL da Logo (opcional)",
     logoPreview: "Prévia da Logo",
     useDefaultLogo: "Usar logo padrão IDAB",
@@ -84,7 +85,7 @@ const labels = {
     specialty: "Specialty",
     signatureDate: "Signature Date (DD/MM/YYYY)",
     signatureTime: "Signature Time",
-    emissionDate: "Emission Date (e.g., MARCH 16, 2026)",
+    emissionDate: "Emission Date (DD/MM/YYYY)",
     logoUrl: "Logo URL (optional)",
     logoPreview: "Logo Preview",
     useDefaultLogo: "Use default IDAB logo",
@@ -141,6 +142,13 @@ export default function CreateAttestation() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Handler com máscara automática DD/MM/AAAA
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const masked = handleDateInput(value);
+    setFormData((prev) => ({ ...prev, [name]: masked }));
+  };
+
   const handleLogoUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLogoUrl(e.target.value);
     setLogoPreviewError(false);
@@ -170,7 +178,9 @@ export default function CreateAttestation() {
     medico: formData.medico,
     crm: formData.crm,
     especialidade: formData.especialidade,
-    dataEmissao: formData.dataEmissao || "MONTH DD, YYYY",
+    dataEmissao: formData.dataEmissao
+      ? formatDateToEnglish(formData.dataEmissao)
+      : "MONTH DD, YYYY",
     logoUrl: logoUrl,
     // Extended fields
     instituicao: formData.instituicao,
@@ -212,7 +222,7 @@ export default function CreateAttestation() {
       especialidade: formData.especialidade.toUpperCase(),
       dataAssinatura: formData.dataAssinatura,
       horaAssinatura: formData.horaAssinatura,
-      dataEmissao: formData.dataEmissao.toUpperCase(),
+      dataEmissao: formatDateToEnglish(formData.dataEmissao).toUpperCase(),
       logoUrl: logoUrl || DEFAULT_LOGO_URL,
       instituicao: formData.instituicao,
       enderecoEmitente: formData.enderecoEmitente,
@@ -337,7 +347,7 @@ export default function CreateAttestation() {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold mb-1">{t.birthDate}</label>
-                    <Input name="nascimento" value={formData.nascimento} onChange={handleInputChange} placeholder="DD/MM/AAAA" required className="text-sm" />
+                    <Input name="nascimento" value={formData.nascimento} onChange={handleDateChange} placeholder="DD/MM/AAAA" maxLength={10} inputMode="numeric" required className="text-sm" />
                   </div>
                 </div>
                 <div>
@@ -408,7 +418,7 @@ export default function CreateAttestation() {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-xs font-semibold mb-1">{t.signatureDate}</label>
-                    <Input name="dataAssinatura" value={formData.dataAssinatura} onChange={handleInputChange} placeholder="DD/MM/AAAA" required className="text-sm" />
+                    <Input name="dataAssinatura" value={formData.dataAssinatura} onChange={handleDateChange} placeholder="DD/MM/AAAA" maxLength={10} inputMode="numeric" required className="text-sm" />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold mb-1">{t.signatureTime}</label>
@@ -417,7 +427,7 @@ export default function CreateAttestation() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold mb-1">{t.emissionDate}</label>
-                  <Input name="dataEmissao" value={formData.dataEmissao} onChange={handleInputChange} placeholder="MARCH 16, 2026" required className="text-sm" />
+                  <Input name="dataEmissao" value={formData.dataEmissao} onChange={handleDateChange} placeholder="DD/MM/AAAA" maxLength={10} inputMode="numeric" required className="text-sm" />
                 </div>
               </div>
             </Card>

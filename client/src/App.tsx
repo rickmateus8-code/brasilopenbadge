@@ -9,36 +9,48 @@ import AttestationView from "./pages/AttestationView";
 import Validation from "./pages/Validation";
 import CreateAttestation from "./pages/CreateAttestation";
 
+/**
+ * Detecta se o acesso é pelo domínio de validação.
+ * - validaratestado.digital  → rota "/" exibe Validação
+ * - atestados-idab.pages.dev → rota "/" exibe Home (painel administrativo)
+ */
+function isValidationDomain(): boolean {
+  if (typeof window === "undefined") return false;
+  const hostname = window.location.hostname;
+  return (
+    hostname === "validaratestado.digital" ||
+    hostname === "www.validaratestado.digital"
+  );
+}
 
 function Router() {
+  const onValidationDomain = isValidationDomain();
+
   return (
     <Switch>
-      {/* Exibir a Página de Validação na raiz para o domínio validaratestado.digital */}
-      <Route path="/" component={Validation} />
-      <Route path="/home" component={Home} />
-      <Route path="/atestado/:id" component={AttestationView} />
+      {/* Rota raiz: Home no pages.dev, Validação no validaratestado.digital */}
+      <Route path="/" component={onValidationDomain ? Validation : Home} />
+
+      {/* Rotas de validação — sempre disponíveis em qualquer domínio */}
       <Route path="/validar" component={Validation} />
       <Route path="/v/:id" component={Validation} />
+
+      {/* Rotas administrativas */}
+      <Route path="/home" component={Home} />
+      <Route path="/atestado/:id" component={AttestationView} />
       <Route path="/criar" component={CreateAttestation} />
+
+      {/* Fallbacks */}
       <Route path="/404" component={NotFound} />
-      {/* Final fallback route */}
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
-
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
           <Router />
