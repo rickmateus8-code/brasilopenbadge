@@ -5,6 +5,7 @@ import { useParams } from "wouter";
 import { exportElementToPDF, generatePDFFilename } from "@/lib/pdfExport";
 import { findByCode, validateAttestation } from "@/lib/attestationStore";
 import { validateAttestationApi, fetchAttestationByCode } from "@/lib/apiClient";
+import { handleDateInput } from "@/lib/dateMask";
 
 type Language = "pt" | "en";
 
@@ -555,15 +556,18 @@ export default function Validation() {
               type="text"
               placeholder="DD/MM/AAAA"
               value={data}
-              onChange={(e) => setData(e.target.value)}
+              maxLength={10}
+              inputMode="numeric"
+              onChange={(e) => setData(handleDateInput(e.target.value))}
               style={{
                 width: "100%",
                 padding: "10px 14px",
                 border: "1px solid #d1d5db",
                 borderRadius: "6px",
-                fontSize: "14px",
+                fontSize: "16px",
                 textAlign: "center",
                 fontFamily: "monospace",
+                letterSpacing: "2px",
                 outline: "none",
                 boxSizing: "border-box",
               }}
