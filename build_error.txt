@@ -1,0 +1,4 @@
+Build Failed Error:
+Found invalid Node.js Version: "24.x". Please set Node.js Version to 18.x in your Project Settings to use Node.js 18.
+
+Solution: Need to set Node.js version to 18.x or 20.x in Vercel Project Settings

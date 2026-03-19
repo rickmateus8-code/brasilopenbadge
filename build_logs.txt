@@ -1,0 +1,14 @@
+Build Logs da Vercel:
+- Instalou dependências com pnpm v10.4.1
+- Rodou "vite build" 
+- vite v7.1.9 building for production...
+- Warning: VITE_ANALYTICS_ENDPOINT is not defined in env variables
+- Warning: VITE_ANALYTICS_WEBSITE_ID is not defined in env variables
+- Tem script src="%VITE_ANALYTICS_ENDPOINT%" in /index
+- transforming...
+
+Parece que o build está progredindo mas pode ter falhado.
+Vejo botões "Go to Project" e "Inspect Deployment" no final.
+O status diz "Deployment failed with error" mas os logs mostram progresso.
+
+Preciso verificar se o build realmente falhou ou se foi concluído.
