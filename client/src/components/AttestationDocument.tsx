@@ -4,24 +4,55 @@ import { forwardRef } from "react";
 import { APP_CONFIG } from "@/config";
 import { getQRCodeValue } from "@/config.qrcode";
 
-const DEFAULT_LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663380726083/Jt3ChWN8C56HSCFrn4RLrZ/idab-logo-correct_03a04244.webp";
+const DEFAULT_LOGO_URL =
+  "https://d2xsxph8kpxj0f.cloudfront.net/310519663380726083/Jt3ChWN8C56HSCFrn4RLrZ/idab-logo-correct_03a04244.webp";
 
 interface AttestationDocumentProps {
   data: AttestationData;
   logoUrl?: string;
+  /** URL/base64 da logo à esquerda (substitui logoUrl quando presente) */
+  logoLeft?: string;
+  /** URL/base64 da logo à direita */
+  logoRight?: string;
+  /** Cor da assinatura cursiva: "#0b109f" (azul) | "#000000" (preto) */
+  signatureColor?: string;
+  /** URL/base64 da foto da assinatura (sobrepõe a rubrica cursiva) */
+  signatureImage?: string;
 }
 
 const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>(
-  ({ data, logoUrl }, ref) => {
-    // Usar domínio validaratestado.digital para QR Code
+  ({ data, logoUrl, logoLeft, logoRight, signatureColor, signatureImage }, ref) => {
     const qrValue = getQRCodeValue(data.codigoQR);
     const sexLabel = data.sexo === "MALE" ? "MALE" : "FEMALE";
-    const effectiveLogoUrl = logoUrl || (data as any).logoUrl || DEFAULT_LOGO_URL;
-    const instituicao = (data as any).instituicao || "IDAB - SALVADOR/BAHIA";
-    const enderecoEmitente = (data as any).enderecoEmitente || "AV. ANTÔNIO CARLOS MAGALHÃES, 585 - ITAIGARA, SALVADOR - BA, 41825-000";
 
-    // Scale factor: 20% increase (25% - 5% reduction)
-    const s = 1.1875;
+    // Logo esquerda: prioridade logoLeft > logoUrl > data.logoUrl > DEFAULT
+    const effectiveLogoLeft =
+      logoLeft || logoUrl || (data as any).logoUrl || DEFAULT_LOGO_URL;
+    // Logo direita: só exibida se fornecida
+    const effectiveLogoRight = logoRight || "";
+
+    const instituicao = (data as any).instituicao || "IDAB - SALVADOR/BAHIA";
+    const enderecoEmitente =
+      (data as any).enderecoEmitente ||
+      "AV. ANTÔNIO CARLOS MAGALHÃES, 585 - ITAIGARA, SALVADOR - BA, 41825-000";
+    const unidade = (data as any).unidade || "";
+    const corAssinatura = signatureColor || (data as any).signatureColor || "#0b109f";
+    const fotoAssinatura = signatureImage || (data as any).signatureImage || "";
+
+    // Gerar rubrica cursiva a partir do nome do médico
+    const gerarRubrica = (nome: string): string => {
+      if (!nome || nome === "NOME DO MÉDICO") return "Assinado";
+      const partes = nome.trim().split(/\s+/).filter(Boolean);
+      if (partes.length >= 2) {
+        const primeiro =
+          partes[0].charAt(0).toUpperCase() + partes[0].slice(1).toLowerCase();
+        const inicial = partes[1].charAt(0).toUpperCase();
+        return `${primeiro} ${inicial}.`;
+      }
+      return partes[0].charAt(0).toUpperCase() + partes[0].slice(1).toLowerCase();
+    };
+
+    const s = 1.1875; // Scale factor A4
 
     return (
       <div
@@ -42,6 +73,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
       >
         <style>
           {`
+            @import url('https://fonts.googleapis.com/css2?family=Herr+Von+Muellerhoff&display=swap');
             @media print {
               .attestation-print-container {
                 padding: ${40 * s}px !important;
@@ -51,10 +83,15 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               }
               body { margin: 0 !important; padding: 0 !important; }
             }
+            .rubrica-cursiva {
+              font-family: 'Herr Von Muellerhoff', cursive;
+              font-size: ${36 * s}px;
+              line-height: 1;
+            }
           `}
         </style>
 
-        {/* ===== HEADER - Logo left + Info CENTERED on page ===== */}
+        {/* ===== HEADER — Logo Esquerda + Info Centralizada + Logo Direita ===== */}
         <div
           style={{
             display: "flex",
@@ -63,17 +100,17 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             position: "relative",
           }}
         >
-          {/* Logo - increased 15% (from 120 to 138) */}
-          <div style={{ width: `${138 * s}px`, flexShrink: 0 }}>
+          {/* Logo Esquerda */}
+          <div style={{ width: `${138 * s}px`, flexShrink: 0, zIndex: 1 }}>
             <img
-              src={effectiveLogoUrl}
+              src={effectiveLogoLeft}
               alt="Logo"
-              style={{ width: "100%", height: "auto", objectFit: "contain" }}
+              style={{ width: "100%", height: "auto", objectFit: "contain", maxHeight: `${80 * s}px` }}
               crossOrigin="anonymous"
             />
           </div>
 
-          {/* Institution Info - CENTERED on the full page width */}
+          {/* Informações da Instituição — Centralizadas */}
           <div
             style={{
               position: "absolute",
@@ -86,6 +123,11 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             <div style={{ fontSize: `${14 * s}px`, fontWeight: "bold", marginBottom: `${2 * s}px` }}>
               {instituicao}
             </div>
+            {unidade && (
+              <div style={{ fontSize: `${11 * s}px`, fontWeight: "bold", marginBottom: `${2 * s}px` }}>
+                {unidade}
+              </div>
+            )}
             <div style={{ fontSize: `${11 * s}px`, fontWeight: "bold", marginBottom: `${2 * s}px` }}>
               DERMATOLOGY AND ALLERGY INSTITUTE
             </div>
@@ -95,13 +137,23 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             <div style={{ fontSize: `${9.5 * s}px`, marginBottom: `${1 * s}px` }}>
               AV. ANTÔNIO CARLOS MAGALHÃES, 585 - ITAIGARA,
             </div>
-            <div style={{ fontSize: `${9.5 * s}px` }}>
-              SALVADOR - BA, 41825-000
-            </div>
+            <div style={{ fontSize: `${9.5 * s}px` }}>SALVADOR - BA, 41825-000</div>
           </div>
+
+          {/* Logo Direita (opcional) */}
+          {effectiveLogoRight && (
+            <div style={{ width: `${138 * s}px`, flexShrink: 0, marginLeft: "auto", zIndex: 1 }}>
+              <img
+                src={effectiveLogoRight}
+                alt="Logo Direita"
+                style={{ width: "100%", height: "auto", objectFit: "contain", maxHeight: `${80 * s}px` }}
+                crossOrigin="anonymous"
+              />
+            </div>
+          )}
         </div>
 
-        {/* ===== TITLE - ONLY BOTTOM LINE ===== */}
+        {/* ===== TÍTULO ===== */}
         <div
           style={{
             textAlign: "center",
@@ -115,7 +167,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </h2>
         </div>
 
-        {/* ===== PATIENT DATA BOX ===== */}
+        {/* ===== DADOS DO PACIENTE ===== */}
         <div
           style={{
             border: `${2 * s}px solid #000`,
@@ -124,7 +176,6 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             fontSize: `${10 * s}px`,
           }}
         >
-          {/* Line 1: Patient, Sex, Birth Date */}
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: `${6 * s}px` }}>
             <div style={{ flex: 1 }}>
               <span style={{ fontWeight: "bold" }}>Patient: </span>
@@ -140,7 +191,6 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             </div>
           </div>
 
-          {/* Line 2: CPF, Mother's Name */}
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: `${6 * s}px` }}>
             <div style={{ width: `${200 * s}px` }}>
               <span style={{ fontWeight: "bold" }}>CPF: </span>
@@ -152,23 +202,20 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             </div>
           </div>
 
-          {/* Line 3: Address */}
           <div style={{ marginBottom: `${8 * s}px` }}>
             <span style={{ fontWeight: "bold" }}>Address: </span>
             <span>{data.endereco}</span>
           </div>
 
-          {/* Separator */}
           <div style={{ borderTop: `${1 * s}px solid #000`, margin: `${8 * s}px 0` }}></div>
 
-          {/* Issuing Address */}
           <div style={{ fontSize: `${9 * s}px`, fontWeight: "bold" }}>
             ISSUING ADDRESS:{" "}
             <span style={{ fontWeight: "normal" }}>{enderecoEmitente}</span>
           </div>
         </div>
 
-        {/* ===== BODY TEXT - 100% ENGLISH ===== */}
+        {/* ===== CORPO DO TEXTO ===== */}
         <div
           style={{
             marginTop: `${30 * s}px`,
@@ -177,40 +224,33 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             textAlign: "justify",
           }}
         >
-          {/* Declaration */}
           <p style={{ marginBottom: `${15 * s}px`, textIndent: `${40 * s}px` }}>
             This is to certify that the above identified patient has been clinically evaluated at this medical facility.
           </p>
 
-          {/* Clinical Condition Title */}
           <p style={{ fontWeight: "bold", marginBottom: `${15 * s}px`, fontSize: `${11 * s}px` }}>
             CLINICAL CONDITION:
           </p>
 
-          {/* Condition Description */}
           <p style={{ marginBottom: `${15 * s}px`, textAlign: "justify" }}>
             {data.condicao}
           </p>
 
-          {/* Passport */}
           <p style={{ marginBottom: `${6 * s}px` }}>
             Passport: <span style={{ fontWeight: "bold" }}>{data.passaporte}</span>
           </p>
 
-          {/* Vaccination Contraindication - SAME LINE */}
           <p style={{ marginBottom: `${15 * s}px` }}>
             Vaccination contraindicated for:{" "}
             <span style={{ fontWeight: "bold" }}>{data.vacinacao}</span>
           </p>
 
-          {/* ICD */}
           <p style={{ fontWeight: "bold", fontSize: `${10.5 * s}px` }}>
             ICD: {data.cid}
           </p>
         </div>
 
-        {/* ===== FOOTER - Matching PDF original layout exactly ===== */}
-        {/* Top line separator across full width */}
+        {/* ===== RODAPÉ ===== */}
         <div style={{ borderTop: `${1.5 * s}px solid #000`, marginTop: `${60 * s}px` }}></div>
 
         <div
@@ -223,15 +263,51 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             gap: `${10 * s}px`,
           }}
         >
-          {/* LEFT SECTION: Date and Validation Info (outside the box) */}
-          <div style={{ flex: "0 0 auto", maxWidth: `${200 * s}px`, textAlign: "left", alignSelf: "flex-end" }}>
+          {/* SEÇÃO ESQUERDA: Data e Validação */}
+          <div
+            style={{
+              flex: "0 0 auto",
+              maxWidth: `${200 * s}px`,
+              textAlign: "left",
+              alignSelf: "flex-end",
+            }}
+          >
+            {/* Assinatura cursiva ou foto */}
+            <div style={{ marginBottom: `${8 * s}px`, minHeight: `${44 * s}px` }}>
+              {fotoAssinatura ? (
+                <img
+                  src={fotoAssinatura}
+                  alt="Assinatura"
+                  style={{
+                    maxWidth: `${180 * s}px`,
+                    maxHeight: `${50 * s}px`,
+                    objectFit: "contain",
+                  }}
+                  crossOrigin="anonymous"
+                />
+              ) : (
+                <span
+                  className="rubrica-cursiva"
+                  style={{ color: corAssinatura }}
+                  dangerouslySetInnerHTML={{ __html: gerarRubrica(data.medico) }}
+                />
+              )}
+            </div>
+
             <p style={{ fontWeight: "bold", marginBottom: `${6 * s}px`, fontSize: `${10 * s}px` }}>
               SALVADOR, {data.dataEmissao}
             </p>
             <p style={{ marginBottom: `${2 * s}px`, color: "#333", fontSize: `${8.5 * s}px` }}>
               Validate this document at:
             </p>
-            <p style={{ fontWeight: "bold", marginBottom: `${3 * s}px`, fontSize: `${8.5 * s}px`, fontStyle: "italic" }}>
+            <p
+              style={{
+                fontWeight: "bold",
+                marginBottom: `${3 * s}px`,
+                fontSize: `${8.5 * s}px`,
+                fontStyle: "italic",
+              }}
+            >
               {APP_CONFIG.validationBaseUrl}
             </p>
             <p style={{ fontSize: `${8.5 * s}px` }}>
@@ -239,7 +315,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             </p>
           </div>
 
-          {/* RIGHT SECTION: Bordered box containing QR Code + Physician Info */}
+          {/* SEÇÃO DIREITA: QR Code + Dados do Médico */}
           <div
             style={{
               border: `${1.5 * s}px solid #000`,
@@ -249,7 +325,6 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               padding: `${10 * s}px ${14 * s}px`,
             }}
           >
-            {/* QR Code inside the box */}
             <div style={{ flexShrink: 0, lineHeight: 0 }}>
               <QRCode
                 value={qrValue}
@@ -261,7 +336,6 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               />
             </div>
 
-            {/* Physician Info inside the box */}
             <div style={{ textAlign: "right", fontSize: `${8.5 * s}px`, whiteSpace: "nowrap" }}>
               <p style={{ marginBottom: `${3 * s}px` }}>
                 Document digitally signed pursuant to
@@ -275,9 +349,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               <p style={{ marginBottom: `${2 * s}px`, fontSize: `${9 * s}px` }}>
                 {data.crm}
               </p>
-              <p style={{ marginBottom: `${3 * s}px` }}>
-                {data.especialidade}
-              </p>
+              <p style={{ marginBottom: `${3 * s}px` }}>{data.especialidade}</p>
               <p>
                 Signed on {data.dataAssinatura} {data.horaAssinatura}
               </p>
