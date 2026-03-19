@@ -1,20 +1,23 @@
 /**
  * Sistema de exportação PDF — compatível com mobile (Android/iOS) e desktop.
  *
- * Estratégia definitiva:
- * 1. Cria um container COMPLETAMENTE NOVO e independente (não usa o elemento original)
- *    com largura fixa de DOC_REAL_WIDTH px, fora da viewport (left: -99999px)
- * 2. Clona o conteúdo do elemento para dentro desse container
- * 3. Aguarda imagens e fontes carregarem
- * 4. Captura com html2canvas em tamanho real
- * 5. Gera PDF A4 com proporção correta
- * 6. Remove o container temporário
+ * CAUSA RAIZ DO ERRO "Erro ao baixar":
+ * O html2canvas 1.4.1 não suporta a função de cor CSS moderna `oklch()`,
+ * usada pelo TailwindCSS v4. Ao clonar o elemento para o DOM, ele herda
+ * os estilos globais do Tailwind com `oklch()`, causando:
+ *   "Error: Attempting to parse an unsupported color function 'oklch'"
  *
- * Por que não usar o elemento original diretamente?
- * - O elemento pode estar dentro de um container com transform: scale(),
- *   overflow: hidden, ou position: absolute — o html2canvas captura dimensões
- *   incorretas nesses casos, causando PDF em branco ou distorcido no mobile.
- * - Criar um container independente garante captura em tamanho real.
+ * SOLUÇÃO:
+ * 1. Criar um <iframe> sandboxado com srcdoc contendo o HTML do documento
+ *    e apenas os estilos inline necessários (sem Tailwind global)
+ * 2. Capturar o iframe com html2canvas
+ * 3. Gerar o PDF A4
+ *
+ * Por que iframe?
+ * - O iframe com srcdoc cria um documento completamente isolado
+ * - Não herda os estilos globais do Tailwind (oklch)
+ * - O html2canvas consegue capturar o conteúdo sem erros de cor
+ * - Funciona em todos os browsers modernos (Chrome, Safari, Firefox)
  */
 
 import html2canvas from "html2canvas";
@@ -32,42 +35,49 @@ export interface PDFExportOptions {
 }
 
 /**
- * Pré-carrega todas as imagens dentro de um elemento HTML.
- * Retorna uma Promise que resolve quando todas as imagens estiverem carregadas.
+ * Converte imagens remotas para base64 para evitar problemas CORS no html2canvas.
+ * Retorna a URL original se a conversão falhar.
  */
-async function preloadImages(container: HTMLElement): Promise<void> {
+async function toBase64(url: string): Promise<string> {
+  try {
+    const resp = await fetch(url, { mode: "cors" });
+    if (!resp.ok) return url;
+    const blob = await resp.blob();
+    return new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(url);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return url;
+  }
+}
+
+/**
+ * Substitui todas as imagens remotas do elemento por versões base64.
+ * Isso evita problemas de CORS no html2canvas.
+ */
+async function inlineImages(container: HTMLElement): Promise<void> {
   const images = Array.from(container.querySelectorAll("img")) as HTMLImageElement[];
-  if (images.length === 0) return;
-
-  const promises = images.map(
-    (img) =>
-      new Promise<void>((resolve) => {
-        if (img.complete && img.naturalWidth > 0) {
-          resolve();
-          return;
-        }
-        img.onload = () => resolve();
-        img.onerror = () => resolve(); // resolve mesmo em erro para não bloquear
-        // Força reload se necessário
-        if (!img.src) {
-          resolve();
-        } else {
-          // Adiciona crossOrigin para imagens remotas (CloudFront)
-          img.crossOrigin = "anonymous";
-          const src = img.src;
-          img.src = "";
-          img.src = src;
-        }
-      })
+  await Promise.all(
+    images.map(async (img) => {
+      if (!img.src || img.src.startsWith("data:")) return;
+      const b64 = await toBase64(img.src);
+      img.src = b64;
+    })
   );
-
-  await Promise.all(promises);
 }
 
 /**
  * Exportar elemento HTML para PDF.
- * Funciona corretamente mesmo quando o elemento está dentro de containers
- * com transform: scale(), overflow: hidden ou position: absolute.
+ *
+ * Estratégia:
+ * 1. Extrai o HTML e estilos inline do elemento
+ * 2. Cria um iframe oculto com srcdoc (isolado dos estilos globais do Tailwind)
+ * 3. Converte imagens remotas para base64
+ * 4. Captura com html2canvas (sem oklch)
+ * 5. Gera PDF A4
  */
 export async function exportElementToPDF(
   element: HTMLElement,
@@ -86,74 +96,97 @@ export async function exportElementToPDF(
   const dpr = typeof window !== "undefined" ? (window.devicePixelRatio || 1) : 1;
   const safeScale = dpr > 2 ? Math.min(scale, 1.5) : scale;
 
-  // ── 1. Criar container completamente independente ──────────────────────
-  const offscreenWrapper = document.createElement("div");
-  offscreenWrapper.setAttribute("data-pdf-export", "true");
-  offscreenWrapper.style.cssText = [
+  // ── 1. Extrair HTML do elemento ────────────────────────────────────────
+  const elementHTML = element.outerHTML;
+
+  // ── 2. Criar iframe isolado ────────────────────────────────────────────
+  const iframe = document.createElement("iframe");
+  iframe.style.cssText = [
     "position: fixed",
     "top: 0",
-    `left: -${DOC_REAL_WIDTH + 200}px`,
+    `left: -${DOC_REAL_WIDTH + 500}px`,
     `width: ${DOC_REAL_WIDTH}px`,
-    "background: #ffffff",
+    "height: 2000px",
+    "border: none",
     "z-index: -9999",
     "pointer-events: none",
-    "overflow: visible",
     "visibility: hidden",
   ].join("; ");
 
-  // ── 2. Clonar o conteúdo do elemento ──────────────────────────────────
-  const clone = element.cloneNode(true) as HTMLElement;
+  // srcdoc com HTML puro — sem Tailwind, sem oklch
+  iframe.srcdoc = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #ffffff;
+    width: ${DOC_REAL_WIDTH}px;
+    overflow: visible;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+</style>
+</head>
+<body>
+${elementHTML}
+</body>
+</html>`;
 
-  // Garantir que o clone não tenha transform nem posicionamento relativo ao pai
-  clone.style.cssText += [
-    "; transform: none",
-    "position: static",
-    `width: ${DOC_REAL_WIDTH}px`,
-    "max-width: none",
-    "margin: 0",
-    "padding-left: 0",
-    "padding-right: 0",
-    "box-shadow: none",
-  ].join("; ");
-
-  offscreenWrapper.appendChild(clone);
-  document.body.appendChild(offscreenWrapper);
+  document.body.appendChild(iframe);
 
   try {
-    // ── 3. Aguardar imagens carregarem (logo CloudFront + qualquer outra) ─
-    await preloadImages(offscreenWrapper);
+    // ── 3. Aguardar o iframe carregar ──────────────────────────────────
+    await new Promise<void>((resolve) => {
+      iframe.onload = () => resolve();
+      // Fallback: resolve após 2s mesmo sem onload
+      setTimeout(resolve, 2000);
+    });
 
-    // Aguarda o browser finalizar o layout do clone
-    await new Promise((r) => requestAnimationFrame(r));
-    await new Promise((r) => requestAnimationFrame(r));
-    await new Promise((r) => setTimeout(r, 400));
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!iframeDoc) throw new Error("Não foi possível acessar o documento do iframe");
+
+    const iframeBody = iframeDoc.body;
+    const iframeEl = iframeBody.firstElementChild as HTMLElement;
+    if (!iframeEl) throw new Error("Elemento não encontrado no iframe");
+
+    // ── 4. Converter imagens para base64 (evita CORS no html2canvas) ───
+    await inlineImages(iframeBody);
+
+    // Aguarda fontes e layout estabilizarem
+    await new Promise((r) => setTimeout(r, 500));
 
     // Torna visível apenas para captura
-    offscreenWrapper.style.visibility = "visible";
+    iframe.style.visibility = "visible";
 
-    // ── 4. Capturar com html2canvas ────────────────────────────────────
-    const canvas = await html2canvas(clone, {
+    // Calcula altura real do documento no iframe
+    const docHeight = iframeBody.scrollHeight || iframeEl.scrollHeight || 1400;
+
+    // Ajusta altura do iframe para o conteúdo completo
+    iframe.style.height = `${docHeight + 50}px`;
+    await new Promise((r) => setTimeout(r, 100));
+
+    // ── 5. Capturar com html2canvas ────────────────────────────────────
+    const canvas = await html2canvas(iframeEl, {
       scale: safeScale,
       useCORS: true,
-      allowTaint: false,
+      allowTaint: true,
       backgroundColor: "#ffffff",
       logging: false,
-      imageTimeout: 25000,
+      imageTimeout: 20000,
       windowWidth: DOC_REAL_WIDTH,
-      windowHeight: clone.scrollHeight || 1400,
+      windowHeight: docHeight,
+      width: DOC_REAL_WIDTH,
+      height: docHeight,
       x: 0,
       y: 0,
-      width: DOC_REAL_WIDTH,
-      height: clone.scrollHeight || 1400,
     });
 
     if (canvas.width === 0 || canvas.height === 0) {
-      throw new Error(
-        "Canvas gerado está vazio. Verifique se o elemento tem dimensões válidas."
-      );
+      throw new Error("Canvas gerado está vazio.");
     }
 
-    // ── 5. Gerar PDF A4 ────────────────────────────────────────────────
+    // ── 6. Gerar PDF A4 ────────────────────────────────────────────────
     const pdf = new jsPDF({
       orientation,
       unit: "mm",
@@ -212,13 +245,13 @@ export async function exportElementToPDF(
       }
     }
 
-    // ── 6. Salvar PDF ──────────────────────────────────────────────────
+    // ── 7. Salvar PDF ──────────────────────────────────────────────────
     pdf.save(filename);
 
   } finally {
-    // ── 7. Remover container temporário ───────────────────────────────
-    if (document.body.contains(offscreenWrapper)) {
-      document.body.removeChild(offscreenWrapper);
+    // ── 8. Remover iframe ──────────────────────────────────────────────
+    if (document.body.contains(iframe)) {
+      document.body.removeChild(iframe);
     }
   }
 }
