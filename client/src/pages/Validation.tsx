@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import AttestationDocument from "@/components/AttestationDocument";
 import { useLanguageWithSetter } from "@/hooks/useLanguage";
 import { useParams } from "wouter";
@@ -48,6 +48,9 @@ const labels = {
   },
 };
 
+// Largura real do documento em pixels (850 * 1.1875)
+const DOC_WIDTH = 1010;
+
 export default function Validation() {
   const params = useParams();
   const [codigo, setCodigo] = useState("");
@@ -58,47 +61,57 @@ export default function Validation() {
   const [validAttestation, setValidAttestation] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { language, setLanguage } = useLanguageWithSetter();
+
+  // Ref do documento real (sem escala) — usado para gerar o PDF
   const documentRef = useRef<HTMLDivElement>(null);
+  // Ref do container visível (com escala) — usado para calcular o scale
   const viewerContainerRef = useRef<HTMLDivElement>(null);
+
   const [docScale, setDocScale] = useState(1);
   const [docHeight, setDocHeight] = useState(1400);
 
-  // Calcula o scale para enquadrar o documento na tela do dispositivo
+  // ─── Calcula o scale para enquadrar o documento na tela do dispositivo ───
+  const calcScale = useCallback(() => {
+    const container = viewerContainerRef.current;
+    if (!container) return;
+
+    // clientWidth já é em CSS pixels (independente do DPR do dispositivo)
+    const availableWidth = container.clientWidth - 16; // 8px padding cada lado
+    const newScale = availableWidth < DOC_WIDTH
+      ? availableWidth / DOC_WIDTH
+      : 1;
+
+    setDocScale(newScale);
+
+    // Captura a altura real do documento após render
+    if (documentRef.current) {
+      const h = documentRef.current.scrollHeight;
+      if (h > 0) setDocHeight(h);
+    }
+  }, []);
+
   useEffect(() => {
     if (!showViewer) return;
 
-    const calcScale = () => {
-      const container = viewerContainerRef.current;
-      if (!container) return;
-      // Largura real do documento (maxWidth do AttestationDocument ~1010px)
-      const docWidth = 1010;
-      const availableWidth = container.clientWidth - 32; // padding 16px cada lado
-      if (availableWidth < docWidth) {
-        setDocScale(availableWidth / docWidth);
-      } else {
-        setDocScale(1);
-      }
-      // Captura a altura real do documento após render
-      if (documentRef.current) {
-        setDocHeight(documentRef.current.scrollHeight || 1400);
-      }
-    };
+    // Aguarda render inicial
+    const t1 = setTimeout(calcScale, 80);
+    // Aguarda imagens/QR carregarem
+    const t2 = setTimeout(calcScale, 600);
+    // Aguarda fontes e layout estabilizar
+    const t3 = setTimeout(calcScale, 1200);
 
-    // Aguarda render para ter as dimensões corretas
-    const timer = setTimeout(calcScale, 100);
-    // Recalcula após imagens carregarem
-    const timer2 = setTimeout(calcScale, 800);
     window.addEventListener("resize", calcScale);
     return () => {
-      clearTimeout(timer);
-      clearTimeout(timer2);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
       window.removeEventListener("resize", calcScale);
     };
-  }, [showViewer]);
+  }, [showViewer, calcScale]);
 
   const t = labels[language];
 
-  // Validate via API (D1) with local fallback
+  // ─── Validate via API (D1) with local fallback ───
   const handleValidate = async (codeToUse?: string, dateToUse?: string) => {
     const code = codeToUse || codigo;
     const date = dateToUse || data;
@@ -114,7 +127,6 @@ export default function Validation() {
     setShowViewer(false);
 
     try {
-      // Tentar via API primeiro
       const apiResult = await validateAttestationApi(code, date);
       if (apiResult.valid && apiResult.data) {
         setValidAttestation(apiResult.data);
@@ -126,7 +138,6 @@ export default function Validation() {
       // API indisponível, usar fallback local
     }
 
-    // Fallback: busca local
     const result = validateAttestation(code, date);
     if (result.valid && result.data) {
       setValidAttestation(result.data);
@@ -137,14 +148,13 @@ export default function Validation() {
     setIsValidating(false);
   };
 
-  // Auto-validate when accessing via /v/:id (QR Code route)
+  // ─── Auto-validate when accessing via /v/:id (QR Code route) ───
   useEffect(() => {
     if (params.id) {
       const code = params.id;
       setCodigo(code);
       setIsValidating(true);
 
-      // Tentar via API primeiro, fallback local
       (async () => {
         try {
           const apiAtt = await fetchAttestationByCode(code);
@@ -158,7 +168,6 @@ export default function Validation() {
         } catch (_) {
           // fallback
         }
-        // Fallback local
         const att = findByCode(code);
         if (att) {
           setValidAttestation(att);
@@ -186,6 +195,9 @@ export default function Validation() {
     setShowViewer(false);
   };
 
+  // ─── Download PDF ───
+  // O elemento capturado pelo html2canvas é o documentRef (sem transform scale),
+  // garantindo que o PDF seja gerado em resolução total independente do zoom visual.
   const handleDownloadPDF = async () => {
     if (!documentRef.current || !validAttestation) return;
 
@@ -193,11 +205,45 @@ export default function Validation() {
 
     try {
       const filename = generatePDFFilename(validAttestation.paciente, "VALIDADO");
-      await exportElementToPDF(documentRef.current, {
+
+      // Garante que o elemento está visível para o html2canvas capturar corretamente.
+      // O documentRef está dentro de um container com overflow hidden + transform scale,
+      // então precisamos torná-lo temporariamente visível em tamanho real para a captura.
+      const el = documentRef.current;
+
+      // Salva estilos originais do wrapper
+      const wrapper = el.parentElement as HTMLElement | null;
+      let prevWrapperStyle = "";
+      let prevContainerOverflow = "";
+      const container = viewerContainerRef.current;
+
+      if (wrapper) {
+        prevWrapperStyle = wrapper.getAttribute("style") || "";
+        wrapper.style.transform = "none";
+        wrapper.style.position = "static";
+        wrapper.style.width = `${DOC_WIDTH}px`;
+      }
+      if (container) {
+        prevContainerOverflow = container.style.overflow;
+        container.style.overflow = "visible";
+      }
+
+      // Pequeno delay para o browser aplicar os estilos
+      await new Promise((r) => setTimeout(r, 60));
+
+      await exportElementToPDF(el, {
         filename,
         scale: 2,
         quality: 0.95,
       });
+
+      // Restaura estilos
+      if (wrapper) {
+        wrapper.setAttribute("style", prevWrapperStyle);
+      }
+      if (container) {
+        container.style.overflow = prevContainerOverflow;
+      }
     } catch (err) {
       console.error("PDF generation error:", err);
       alert(t.downloadError);
@@ -220,70 +266,87 @@ export default function Validation() {
           flexDirection: "column",
           backgroundColor: "#f0f2f5",
           zIndex: 9999,
+          // Evita zoom indesejado em iOS/Android
+          touchAction: "pan-y",
         }}
       >
-        {/* GREEN HEADER BAR */}
+        {/* ── GREEN HEADER BAR ── */}
         <div
           style={{
             backgroundColor: "#166534",
             color: "#ffffff",
-            padding: "12px 20px",
+            padding: "12px 16px",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             flexShrink: 0,
+            gap: "8px",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
             <div
               style={{
-                width: "24px",
-                height: "24px",
+                width: "22px",
+                height: "22px",
+                minWidth: "22px",
                 backgroundColor: "#22c55e",
                 borderRadius: "50%",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "14px",
+                fontSize: "13px",
                 fontWeight: "bold",
               }}
             >
               ✓
             </div>
-            <span style={{ fontWeight: "bold", fontSize: "14px" }}>
+            <span style={{ fontWeight: "bold", fontSize: "13px", whiteSpace: "nowrap" }}>
               {t.validAndAuthentic}
             </span>
           </div>
-          <span style={{ fontWeight: "bold", fontSize: "14px" }}>
+          <span
+            style={{
+              fontWeight: "bold",
+              fontSize: "13px",
+              textAlign: "right",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              maxWidth: "55%",
+            }}
+          >
             {validAttestation.paciente}
           </span>
         </div>
 
-        {/* DOCUMENT VIEWER AREA */}
+        {/* ── DOCUMENT VIEWER AREA ── */}
         <div
           ref={viewerContainerRef}
           style={{
             flex: 1,
-            overflow: "auto",
+            overflowY: "auto",
             overflowX: "hidden",
-            padding: "16px",
+            // Padding mínimo para não encostar nas bordas
+            padding: "8px",
             display: "flex",
             justifyContent: "center",
             alignItems: "flex-start",
             backgroundColor: "#525659",
-          }}
+            // Suporte a scroll suave em iOS
+            WebkitOverflowScrolling: "touch",
+          } as React.CSSProperties}
         >
           {/*
             Estratégia de escala responsiva:
-            - Em mobile: o documento (1010px) é escalado para caber na tela via CSS transform
-            - O wrapper externo recebe a largura/altura APÓS o scale para que o scroll funcione
-            - O documentRef permanece sem scale para que o PDF seja gerado em alta resolução
+            - O wrapper externo recebe width/height APÓS o scale para que o scroll funcione corretamente
+            - O documento interno (documentRef) permanece em tamanho real (DOC_WIDTH)
+              para que o html2canvas gere o PDF em alta resolução sem distorção
           */}
           <div
             style={{
-              // Largura do wrapper = largura real do doc * scale
-              width: `${1010 * docScale}px`,
-              // Altura do wrapper = altura real do doc * scale (para scroll correto)
+              // Largura do wrapper = largura real do doc × scale
+              width: `${DOC_WIDTH * docScale}px`,
+              // Altura do wrapper = altura real do doc × scale (para scroll correto)
               height: `${docHeight * docScale}px`,
               flexShrink: 0,
               position: "relative",
@@ -297,7 +360,7 @@ export default function Validation() {
                 left: 0,
                 transformOrigin: "top left",
                 transform: `scale(${docScale})`,
-                width: "1010px",
+                width: `${DOC_WIDTH}px`,
               }}
             >
               <div
@@ -317,20 +380,21 @@ export default function Validation() {
           </div>
         </div>
 
-        {/* FOOTER BAR - FECHAR + BAIXAR PDF */}
+        {/* ── FOOTER BAR — FECHAR + BAIXAR PDF ── */}
         <div
           style={{
             display: "flex",
-            alignItems: "center",
-            gap: "0",
+            alignItems: "stretch",
             flexShrink: 0,
             borderTop: "2px solid #e5e7eb",
+            // Garante que os botões ficam acima da barra de navegação em mobile
+            paddingBottom: "env(safe-area-inset-bottom, 0px)",
           }}
         >
           <button
             onClick={handleClose}
             style={{
-              padding: "16px 24px",
+              padding: "18px 20px",
               backgroundColor: "#ffffff",
               color: "#333",
               border: "none",
@@ -338,6 +402,7 @@ export default function Validation() {
               fontSize: "14px",
               cursor: "pointer",
               flexShrink: 0,
+              letterSpacing: "0.5px",
             }}
           >
             {t.close}
@@ -348,8 +413,8 @@ export default function Validation() {
             disabled={isDownloading}
             style={{
               flex: 1,
-              padding: "16px 24px",
-              backgroundColor: "#166534",
+              padding: "18px 20px",
+              backgroundColor: isDownloading ? "#14532d" : "#166534",
               color: "#ffffff",
               border: "none",
               fontWeight: "bold",
@@ -359,10 +424,12 @@ export default function Validation() {
               alignItems: "center",
               justifyContent: "center",
               gap: "8px",
-              opacity: isDownloading ? 0.7 : 1,
+              opacity: isDownloading ? 0.75 : 1,
+              transition: "opacity 0.2s",
+              letterSpacing: "0.5px",
             }}
           >
-            <span>⬇</span>
+            <span style={{ fontSize: "16px" }}>⬇</span>
             {isDownloading ? t.downloading : t.downloadPdf}
           </button>
         </div>
@@ -370,7 +437,7 @@ export default function Validation() {
     );
   }
 
-  // ===== FORM MODE (initial state) - Responsive =====
+  // ===== FORM MODE (initial state) — Responsive =====
   return (
     <div
       style={{
