@@ -1,6 +1,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "atestados-idab",
+  "account_id": "8f0446ea9cc0218364493885ddc1c419",
+  "zone_id": "11cc34799746947f075e51e876f06b91",
   "compatibility_date": "2025-09-27",
   "pages_build_output_dir": "dist",
   "observability": {
