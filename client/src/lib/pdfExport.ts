@@ -1,22 +1,27 @@
 /**
- * Sistema de exportação PDF robusto — compatível com mobile (Android/iOS) e desktop.
+ * Sistema de exportação PDF — compatível com mobile (Android/iOS) e desktop.
  *
- * Estratégia:
- * 1. Clona o elemento alvo para um container oculto fora do fluxo visual
- *    (position: fixed, left: -9999px) — sem transform scale, sem overflow hidden
- * 2. Captura o clone com html2canvas em tamanho real
- * 3. Gera o PDF A4 com proporção correta
- * 4. Remove o clone e salva o arquivo
+ * Estratégia definitiva:
+ * 1. Cria um container COMPLETAMENTE NOVO e independente (não usa o elemento original)
+ *    com largura fixa de DOC_REAL_WIDTH px, fora da viewport (left: -99999px)
+ * 2. Clona o conteúdo do elemento para dentro desse container
+ * 3. Aguarda imagens e fontes carregarem
+ * 4. Captura com html2canvas em tamanho real
+ * 5. Gera PDF A4 com proporção correta
+ * 6. Remove o container temporário
  *
- * Por que clonar?
- * - O elemento original pode estar dentro de um container com transform: scale(),
- *   overflow: hidden ou position: absolute, o que faz o html2canvas capturar
- *   dimensões incorretas ou falhar silenciosamente em mobile.
- * - O clone é renderizado em tamanho real (sem escala), garantindo PDF nítido.
+ * Por que não usar o elemento original diretamente?
+ * - O elemento pode estar dentro de um container com transform: scale(),
+ *   overflow: hidden, ou position: absolute — o html2canvas captura dimensões
+ *   incorretas nesses casos, causando PDF em branco ou distorcido no mobile.
+ * - Criar um container independente garante captura em tamanho real.
  */
 
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
+
+// Largura real do documento AttestationDocument (850 * 1.1875)
+export const DOC_REAL_WIDTH = 1010;
 
 export interface PDFExportOptions {
   filename: string;
@@ -27,7 +32,40 @@ export interface PDFExportOptions {
 }
 
 /**
- * Exportar elemento HTML para PDF com qualidade otimizada.
+ * Pré-carrega todas as imagens dentro de um elemento HTML.
+ * Retorna uma Promise que resolve quando todas as imagens estiverem carregadas.
+ */
+async function preloadImages(container: HTMLElement): Promise<void> {
+  const images = Array.from(container.querySelectorAll("img")) as HTMLImageElement[];
+  if (images.length === 0) return;
+
+  const promises = images.map(
+    (img) =>
+      new Promise<void>((resolve) => {
+        if (img.complete && img.naturalWidth > 0) {
+          resolve();
+          return;
+        }
+        img.onload = () => resolve();
+        img.onerror = () => resolve(); // resolve mesmo em erro para não bloquear
+        // Força reload se necessário
+        if (!img.src) {
+          resolve();
+        } else {
+          // Adiciona crossOrigin para imagens remotas (CloudFront)
+          img.crossOrigin = "anonymous";
+          const src = img.src;
+          img.src = "";
+          img.src = src;
+        }
+      })
+  );
+
+  await Promise.all(promises);
+}
+
+/**
+ * Exportar elemento HTML para PDF.
  * Funciona corretamente mesmo quando o elemento está dentro de containers
  * com transform: scale(), overflow: hidden ou position: absolute.
  */
@@ -48,53 +86,74 @@ export async function exportElementToPDF(
   const dpr = typeof window !== "undefined" ? (window.devicePixelRatio || 1) : 1;
   const safeScale = dpr > 2 ? Math.min(scale, 1.5) : scale;
 
-  // ── 1. Criar container oculto para o clone ──────────────────────────────
-  const hiddenContainer = document.createElement("div");
-  hiddenContainer.style.cssText = [
+  // ── 1. Criar container completamente independente ──────────────────────
+  const offscreenWrapper = document.createElement("div");
+  offscreenWrapper.setAttribute("data-pdf-export", "true");
+  offscreenWrapper.style.cssText = [
     "position: fixed",
     "top: 0",
-    "left: -99999px",
-    "width: " + element.scrollWidth + "px",
+    `left: -${DOC_REAL_WIDTH + 200}px`,
+    `width: ${DOC_REAL_WIDTH}px`,
     "background: #ffffff",
-    "z-index: -1",
+    "z-index: -9999",
     "pointer-events: none",
     "overflow: visible",
+    "visibility: hidden",
   ].join("; ");
 
-  // ── 2. Clonar o elemento (deep clone com estilos computados) ────────────
+  // ── 2. Clonar o conteúdo do elemento ──────────────────────────────────
   const clone = element.cloneNode(true) as HTMLElement;
 
-  // Remove qualquer transform residual do clone
-  clone.style.transform = "none";
-  clone.style.position = "static";
-  clone.style.width = element.scrollWidth + "px";
+  // Garantir que o clone não tenha transform nem posicionamento relativo ao pai
+  clone.style.cssText += [
+    "; transform: none",
+    "position: static",
+    `width: ${DOC_REAL_WIDTH}px`,
+    "max-width: none",
+    "margin: 0",
+    "padding-left: 0",
+    "padding-right: 0",
+    "box-shadow: none",
+  ].join("; ");
 
-  hiddenContainer.appendChild(clone);
-  document.body.appendChild(hiddenContainer);
-
-  // Aguarda o browser renderizar o clone (imagens, fontes, QR Code SVG)
-  await new Promise((r) => setTimeout(r, 300));
+  offscreenWrapper.appendChild(clone);
+  document.body.appendChild(offscreenWrapper);
 
   try {
-    // ── 3. Capturar o clone com html2canvas ─────────────────────────────
+    // ── 3. Aguardar imagens carregarem (logo CloudFront + qualquer outra) ─
+    await preloadImages(offscreenWrapper);
+
+    // Aguarda o browser finalizar o layout do clone
+    await new Promise((r) => requestAnimationFrame(r));
+    await new Promise((r) => requestAnimationFrame(r));
+    await new Promise((r) => setTimeout(r, 400));
+
+    // Torna visível apenas para captura
+    offscreenWrapper.style.visibility = "visible";
+
+    // ── 4. Capturar com html2canvas ────────────────────────────────────
     const canvas = await html2canvas(clone, {
       scale: safeScale,
       useCORS: true,
-      allowTaint: true,
+      allowTaint: false,
       backgroundColor: "#ffffff",
       logging: false,
-      imageTimeout: 20000,
-      windowWidth: clone.scrollWidth,
-      windowHeight: clone.scrollHeight,
+      imageTimeout: 25000,
+      windowWidth: DOC_REAL_WIDTH,
+      windowHeight: clone.scrollHeight || 1400,
+      x: 0,
+      y: 0,
+      width: DOC_REAL_WIDTH,
+      height: clone.scrollHeight || 1400,
     });
 
     if (canvas.width === 0 || canvas.height === 0) {
       throw new Error(
-        "Canvas gerado está vazio. Verifique se o elemento está visível e tem dimensões."
+        "Canvas gerado está vazio. Verifique se o elemento tem dimensões válidas."
       );
     }
 
-    // ── 4. Criar PDF A4 ──────────────────────────────────────────────────
+    // ── 5. Gerar PDF A4 ────────────────────────────────────────────────
     const pdf = new jsPDF({
       orientation,
       unit: "mm",
@@ -102,8 +161,8 @@ export async function exportElementToPDF(
       compress: true,
     });
 
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const pdfWidth = pdf.internal.pageSize.getWidth();   // 210mm
+    const pdfHeight = pdf.internal.pageSize.getHeight(); // 297mm
     const imgWidth = canvas.width;
     const imgHeight = canvas.height;
 
@@ -112,22 +171,19 @@ export async function exportElementToPDF(
     const scaledWidth = pdfWidth;
     const scaledHeight = imgHeight * ratio;
 
-    const imgData = canvas.toDataURL("image/jpeg", quality);
-
     if (scaledHeight <= pdfHeight) {
-      // Conteúdo cabe em uma única página — centraliza verticalmente
-      const yOffset = (pdfHeight - scaledHeight) / 2;
-      pdf.addImage(imgData, "JPEG", 0, yOffset, scaledWidth, scaledHeight);
+      // Conteúdo cabe em uma única página
+      const imgData = canvas.toDataURL("image/jpeg", quality);
+      pdf.addImage(imgData, "JPEG", 0, 0, scaledWidth, scaledHeight);
     } else {
       // Conteúdo maior que uma página — divide em múltiplas páginas
       let pageIndex = 0;
-      let yRendered = 0; // mm já renderizados
+      let yRenderedMM = 0;
 
-      while (yRendered < scaledHeight) {
+      while (yRenderedMM < scaledHeight) {
         if (pageIndex > 0) pdf.addPage();
 
-        // Fatia do canvas correspondente a esta página (em pixels)
-        const startPx = Math.round((yRendered / ratio));
+        const startPx = Math.round(yRenderedMM / ratio);
         const sliceHeightPx = Math.min(
           Math.round(pdfHeight / ratio),
           imgHeight - startPx
@@ -151,110 +207,19 @@ export async function exportElementToPDF(
           pdf.addImage(pageImgData, "JPEG", 0, 0, scaledWidth, pageScaledHeight);
         }
 
-        yRendered += pdfHeight;
+        yRenderedMM += pdfHeight;
         pageIndex++;
       }
     }
 
-    // ── 5. Salvar PDF ────────────────────────────────────────────────────
+    // ── 6. Salvar PDF ──────────────────────────────────────────────────
     pdf.save(filename);
 
   } finally {
-    // ── 6. Limpar o container oculto ─────────────────────────────────────
-    if (document.body.contains(hiddenContainer)) {
-      document.body.removeChild(hiddenContainer);
+    // ── 7. Remover container temporário ───────────────────────────────
+    if (document.body.contains(offscreenWrapper)) {
+      document.body.removeChild(offscreenWrapper);
     }
-  }
-}
-
-/**
- * Exportar múltiplas páginas para PDF
- */
-export async function exportMultiPagePDF(
-  elements: HTMLElement[],
-  options: PDFExportOptions
-): Promise<void> {
-  const {
-    filename,
-    scale = 2,
-    quality = 0.92,
-    orientation = "p",
-    format = "a4",
-  } = options;
-
-  const dpr = typeof window !== "undefined" ? (window.devicePixelRatio || 1) : 1;
-  const safeScale = dpr > 2 ? Math.min(scale, 1.5) : scale;
-
-  try {
-    const pdf = new jsPDF({
-      orientation,
-      unit: "mm",
-      format,
-      compress: true,
-    });
-
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-
-    for (let i = 0; i < elements.length; i++) {
-      const element = elements[i];
-
-      const hiddenContainer = document.createElement("div");
-      hiddenContainer.style.cssText = [
-        "position: fixed",
-        "top: 0",
-        "left: -99999px",
-        "width: " + element.scrollWidth + "px",
-        "background: #ffffff",
-        "z-index: -1",
-        "overflow: visible",
-      ].join("; ");
-
-      const clone = element.cloneNode(true) as HTMLElement;
-      clone.style.transform = "none";
-      clone.style.position = "static";
-      hiddenContainer.appendChild(clone);
-      document.body.appendChild(hiddenContainer);
-
-      await new Promise((r) => setTimeout(r, 200));
-
-      try {
-        const canvas = await html2canvas(clone, {
-          scale: safeScale,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: "#ffffff",
-          logging: false,
-          imageTimeout: 20000,
-          windowWidth: clone.scrollWidth,
-          windowHeight: clone.scrollHeight,
-        });
-
-        const imgWidth = canvas.width;
-        const imgHeight = canvas.height;
-        const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-        const scaledWidth = imgWidth * ratio;
-        const scaledHeight = imgHeight * ratio;
-        const xOffset = (pdfWidth - scaledWidth) / 2;
-        const yOffset = (pdfHeight - scaledHeight) / 2;
-
-        const imgData = canvas.toDataURL("image/jpeg", quality);
-
-        if (i > 0) pdf.addPage();
-        pdf.addImage(imgData, "JPEG", xOffset, yOffset, scaledWidth, scaledHeight);
-      } finally {
-        if (document.body.contains(hiddenContainer)) {
-          document.body.removeChild(hiddenContainer);
-        }
-      }
-    }
-
-    pdf.save(filename);
-  } catch (error) {
-    console.error("Erro ao gerar PDF multi-página:", error);
-    throw new Error(
-      `Falha ao exportar PDF: ${error instanceof Error ? error.message : "Erro desconhecido"}`
-    );
   }
 }
 
@@ -272,9 +237,9 @@ export function generatePDFFilename(
     .replace(/[^A-Z0-9_]/g, "");
 
   const timestamp = new Date().toISOString().split("T")[0];
-  const filename = suffix
+  const base = suffix
     ? `ATESTADO_${formatted}_${suffix}`
     : `ATESTADO_${formatted}`;
 
-  return `${filename}_${timestamp}.pdf`;
+  return `${base}_${timestamp}.pdf`;
 }

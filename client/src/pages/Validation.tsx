@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import AttestationDocument from "@/components/AttestationDocument";
 import { useLanguageWithSetter } from "@/hooks/useLanguage";
 import { useParams } from "wouter";
-import { exportElementToPDF, generatePDFFilename } from "@/lib/pdfExport";
+import { exportElementToPDF, generatePDFFilename, DOC_REAL_WIDTH } from "@/lib/pdfExport";
 import { findByCode, validateAttestation } from "@/lib/attestationStore";
 import { validateAttestationApi, fetchAttestationByCode } from "@/lib/apiClient";
 import { handleDateInput } from "@/lib/dateMask";
@@ -26,7 +26,7 @@ const labels = {
     close: "FECHAR",
     fillAllFields: "Preencha todos os campos.",
     connectionError: "Erro de conexão.",
-    downloadError: "Erro ao baixar o arquivo. Tente novamente.",
+    downloadError: "Erro ao gerar o PDF. Tente novamente.",
   },
   en: {
     title: "Official Validator",
@@ -44,12 +44,9 @@ const labels = {
     close: "CLOSE",
     fillAllFields: "Please fill in all fields.",
     connectionError: "Connection error.",
-    downloadError: "Error downloading the file. Please try again.",
+    downloadError: "Error generating PDF. Please try again.",
   },
 };
-
-// Largura real do documento em pixels (850 * 1.1875)
-const DOC_WIDTH = 1010;
 
 export default function Validation() {
   const params = useParams();
@@ -62,56 +59,65 @@ export default function Validation() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { language, setLanguage } = useLanguageWithSetter();
 
-  // Ref do documento — usado para gerar o PDF (o exportElementToPDF clona internamente)
+  // Ref do documento — usado para exportar o PDF
   const documentRef = useRef<HTMLDivElement>(null);
-  // Ref do container visível — usado para calcular o scale de exibição
+  // Ref do container do viewer — usado para calcular o scale de exibição
   const viewerContainerRef = useRef<HTMLDivElement>(null);
 
+  // Scale de exibição: ajusta o documento para caber na tela
   const [docScale, setDocScale] = useState(1);
-  const [docHeight, setDocHeight] = useState(1400);
+  // Altura do documento em pixels (para o wrapper externo manter o espaço correto)
+  const [docNaturalHeight, setDocNaturalHeight] = useState(1400);
 
-  // ─── Calcula o scale para enquadrar o documento na tela do dispositivo ───
+  const t = labels[language];
+
+  // ─── Calcula o scale para enquadrar o documento na tela ─────────────────
+  // O documento tem largura real de DOC_REAL_WIDTH px.
+  // O scale é calculado como: availableWidth / DOC_REAL_WIDTH
+  // Isso garante que o que é exibido na tela tem a mesma proporção do PDF exportado.
   const calcScale = useCallback(() => {
     const container = viewerContainerRef.current;
+    const doc = documentRef.current;
     if (!container) return;
 
-    // clientWidth já é em CSS pixels (independente do DPR do dispositivo)
-    const availableWidth = container.clientWidth - 16; // 8px padding cada lado
-    const newScale = availableWidth < DOC_WIDTH
-      ? availableWidth / DOC_WIDTH
+    // clientWidth retorna CSS pixels (independente do DPR do dispositivo)
+    const padding = 16; // 8px cada lado
+    const availableWidth = container.clientWidth - padding;
+    const newScale = availableWidth < DOC_REAL_WIDTH
+      ? availableWidth / DOC_REAL_WIDTH
       : 1;
 
     setDocScale(newScale);
 
-    // Captura a altura real do documento após render
-    if (documentRef.current) {
-      const h = documentRef.current.scrollHeight;
-      if (h > 0) setDocHeight(h);
+    // Captura a altura natural do documento após render
+    if (doc && doc.scrollHeight > 0) {
+      setDocNaturalHeight(doc.scrollHeight);
     }
   }, []);
 
   useEffect(() => {
     if (!showViewer) return;
 
-    const t1 = setTimeout(calcScale, 80);
-    const t2 = setTimeout(calcScale, 600);
-    const t3 = setTimeout(calcScale, 1200);
+    // Múltiplos timers para garantir que o documento renderizou completamente
+    const t1 = setTimeout(calcScale, 100);
+    const t2 = setTimeout(calcScale, 500);
+    const t3 = setTimeout(calcScale, 1000);
+    const t4 = setTimeout(calcScale, 2000);
 
     window.addEventListener("resize", calcScale);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
+      clearTimeout(t4);
       window.removeEventListener("resize", calcScale);
     };
   }, [showViewer, calcScale]);
 
-  const t = labels[language];
-
-  // ─── Validate via API (D1) with local fallback ───
+  // ─── Validação via API (D1) com fallback local ───────────────────────────
   const handleValidate = async (codeToUse?: string, dateToUse?: string) => {
-    const code = codeToUse || codigo;
-    const date = dateToUse || data;
+    const code = (codeToUse || codigo).trim().toUpperCase();
+    const date = (dateToUse || data).trim();
 
     if (!code || !date) {
       alert(t.fillAllFields);
@@ -124,6 +130,7 @@ export default function Validation() {
     setShowViewer(false);
 
     try {
+      // Tenta a API primeiro
       const apiResult = await validateAttestationApi(code, date);
       if (apiResult.valid && apiResult.data) {
         setValidAttestation(apiResult.data);
@@ -135,6 +142,7 @@ export default function Validation() {
       // API indisponível, usar fallback local
     }
 
+    // Fallback: busca local
     const result = validateAttestation(code, date);
     if (result.valid && result.data) {
       setValidAttestation(result.data);
@@ -145,37 +153,37 @@ export default function Validation() {
     setIsValidating(false);
   };
 
-  // ─── Auto-validate when accessing via /v/:id (QR Code route) ───
+  // ─── Auto-validação via QR Code (/v/:id) ────────────────────────────────
   useEffect(() => {
-    if (params.id) {
-      const code = params.id;
-      setCodigo(code);
-      setIsValidating(true);
+    if (!params.id) return;
 
-      (async () => {
-        try {
-          const apiAtt = await fetchAttestationByCode(code);
-          if (apiAtt) {
-            setValidAttestation(apiAtt);
-            setData(apiAtt.dataAssinatura || "");
-            setShowViewer(true);
-            setIsValidating(false);
-            return;
-          }
-        } catch (_) {
-          // fallback
-        }
-        const att = findByCode(code);
-        if (att) {
-          setValidAttestation(att);
-          setData(att.dataAssinatura || "");
+    const code = params.id;
+    setCodigo(code);
+    setIsValidating(true);
+
+    (async () => {
+      try {
+        const apiAtt = await fetchAttestationByCode(code);
+        if (apiAtt) {
+          setValidAttestation(apiAtt);
+          setData(apiAtt.dataAssinatura || "");
           setShowViewer(true);
-        } else {
-          setErrorMessage(t.documentNotFound);
+          setIsValidating(false);
+          return;
         }
-        setIsValidating(false);
-      })();
-    }
+      } catch (_) {
+        // fallback
+      }
+      const att = findByCode(code);
+      if (att) {
+        setValidAttestation(att);
+        setData(att.dataAssinatura || "");
+        setShowViewer(true);
+      } else {
+        setErrorMessage(t.documentNotFound);
+      }
+      setIsValidating(false);
+    })();
   }, [params.id]);
 
   const handleClose = () => {
@@ -192,9 +200,9 @@ export default function Validation() {
     setShowViewer(false);
   };
 
-  // ─── Download PDF ───────────────────────────────────────────────────────
-  // O exportElementToPDF clona o elemento internamente para um container oculto
-  // sem transform scale, garantindo captura em tamanho real independente do zoom visual.
+  // ─── Download PDF ────────────────────────────────────────────────────────
+  // O exportElementToPDF cria um container independente com largura fixa DOC_REAL_WIDTH,
+  // garantindo que o PDF gerado tem a mesma proporção da visualização na tela.
   const handleDownloadPDF = async () => {
     if (!documentRef.current || !validAttestation) return;
 
@@ -215,7 +223,7 @@ export default function Validation() {
     }
   };
 
-  // ===== VIEWER MODE (after successful validation) =====
+  // ===== VIEWER MODE =====
   if (showViewer && validAttestation) {
     return (
       <div
@@ -227,12 +235,14 @@ export default function Validation() {
           bottom: 0,
           display: "flex",
           flexDirection: "column",
-          backgroundColor: "#f0f2f5",
+          backgroundColor: "#525659",
           zIndex: 9999,
+          // Permite scroll vertical no iOS sem interferir com o touch
           touchAction: "pan-y",
+          WebkitOverflowScrolling: "touch",
         } as React.CSSProperties}
       >
-        {/* ── GREEN HEADER BAR ── */}
+        {/* ── BARRA VERDE SUPERIOR ── */}
         <div
           style={{
             backgroundColor: "#166534",
@@ -243,20 +253,21 @@ export default function Validation() {
             justifyContent: "space-between",
             flexShrink: 0,
             gap: "8px",
+            minHeight: "52px",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
             <div
               style={{
-                width: "22px",
-                height: "22px",
-                minWidth: "22px",
+                width: "24px",
+                height: "24px",
+                minWidth: "24px",
                 backgroundColor: "#22c55e",
                 borderRadius: "50%",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "13px",
+                fontSize: "14px",
                 fontWeight: "bold",
               }}
             >
@@ -281,7 +292,17 @@ export default function Validation() {
           </span>
         </div>
 
-        {/* ── DOCUMENT VIEWER AREA ── */}
+        {/* ── ÁREA DE VISUALIZAÇÃO DO DOCUMENTO ── */}
+        {/*
+          Layout de escala responsiva:
+          - viewerContainerRef: container com scroll, mede a largura disponível
+          - O wrapper interno tem width/height = DOC_REAL_WIDTH * docScale / DOC_REAL_HEIGHT * docScale
+            para que o scroll funcione corretamente
+          - O documentRef fica em tamanho real (DOC_REAL_WIDTH) com transform: scale(docScale)
+            aplicado a partir do canto superior esquerdo
+          - O PDF é gerado a partir do documentRef em tamanho real, garantindo
+            que a proporção visual == proporção do PDF
+        */}
         <div
           ref={viewerContainerRef}
           style={{
@@ -296,20 +317,16 @@ export default function Validation() {
             WebkitOverflowScrolling: "touch",
           } as React.CSSProperties}
         >
-          {/*
-            Estratégia de escala responsiva:
-            - O wrapper externo recebe width/height APÓS o scale para que o scroll funcione
-            - O documentRef permanece em tamanho real (DOC_WIDTH) para que o
-              exportElementToPDF gere o PDF em alta resolução sem distorção
-          */}
+          {/* Wrapper externo: ocupa o espaço correto após o scale */}
           <div
             style={{
-              width: `${DOC_WIDTH * docScale}px`,
-              height: `${docHeight * docScale}px`,
+              width: `${DOC_REAL_WIDTH * docScale}px`,
+              height: `${docNaturalHeight * docScale}px`,
               flexShrink: 0,
               position: "relative",
             }}
           >
+            {/* Wrapper de posicionamento: aplica o scale a partir do topo-esquerdo */}
             <div
               style={{
                 position: "absolute",
@@ -317,13 +334,15 @@ export default function Validation() {
                 left: 0,
                 transformOrigin: "top left",
                 transform: `scale(${docScale})`,
-                width: `${DOC_WIDTH}px`,
+                width: `${DOC_REAL_WIDTH}px`,
               }}
             >
+              {/* Documento em tamanho real — mesma largura do PDF exportado */}
               <div
                 style={{
                   backgroundColor: "#ffffff",
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+                  boxShadow: "0 2px 12px rgba(0,0,0,0.4)",
+                  width: `${DOC_REAL_WIDTH}px`,
                 }}
               >
                 <div ref={documentRef}>
@@ -337,7 +356,7 @@ export default function Validation() {
           </div>
         </div>
 
-        {/* ── FOOTER BAR — FECHAR + BAIXAR PDF ── */}
+        {/* ── BARRA INFERIOR: FECHAR + BAIXAR PDF ── */}
         <div
           style={{
             display: "flex",
@@ -345,20 +364,23 @@ export default function Validation() {
             flexShrink: 0,
             borderTop: "2px solid #e5e7eb",
             paddingBottom: "env(safe-area-inset-bottom, 0px)",
+            backgroundColor: "#ffffff",
           }}
         >
           <button
             onClick={handleClose}
             style={{
-              padding: "18px 20px",
+              padding: "18px 24px",
               backgroundColor: "#ffffff",
-              color: "#333",
+              color: "#374151",
               border: "none",
+              borderRight: "1px solid #e5e7eb",
               fontWeight: "bold",
               fontSize: "14px",
               cursor: "pointer",
               flexShrink: 0,
               letterSpacing: "0.5px",
+              fontFamily: "inherit",
             }}
           >
             {t.close}
@@ -380,9 +402,10 @@ export default function Validation() {
               alignItems: "center",
               justifyContent: "center",
               gap: "8px",
-              opacity: isDownloading ? 0.75 : 1,
+              opacity: isDownloading ? 0.8 : 1,
               transition: "opacity 0.2s",
               letterSpacing: "0.5px",
+              fontFamily: "inherit",
             }}
           >
             <span style={{ fontSize: "16px" }}>⬇</span>
@@ -393,7 +416,7 @@ export default function Validation() {
     );
   }
 
-  // ===== FORM MODE (initial state) — Responsive =====
+  // ===== FORMULÁRIO DE VALIDAÇÃO =====
   return (
     <div
       style={{
@@ -404,7 +427,7 @@ export default function Validation() {
         fontFamily: "Roboto, Arial, Helvetica, sans-serif",
       }}
     >
-      {/* HEADER - Blue bar */}
+      {/* HEADER */}
       <div
         style={{
           backgroundColor: "#1e40af",
@@ -427,7 +450,6 @@ export default function Validation() {
             alignItems: "center",
             justifyContent: "center",
             fontSize: "16px",
-            fontWeight: "bold",
           }}
         >
           🛡
@@ -436,15 +458,8 @@ export default function Validation() {
           {t.title}
         </span>
 
-        {/* Language Toggle */}
-        <div
-          style={{
-            position: "absolute",
-            right: "16px",
-            display: "flex",
-            gap: "6px",
-          }}
-        >
+        {/* Seletor de idioma */}
+        <div style={{ position: "absolute", right: "16px", display: "flex", gap: "6px" }}>
           <button
             onClick={() => setLanguage("pt")}
             style={{
@@ -478,7 +493,7 @@ export default function Validation() {
         </div>
       </div>
 
-      {/* MAIN CONTENT */}
+      {/* CONTEÚDO PRINCIPAL */}
       <div
         style={{
           flex: 1,
@@ -510,7 +525,7 @@ export default function Validation() {
             {t.queryDocument}
           </h2>
 
-          {/* Error Message */}
+          {/* Mensagem de erro */}
           {errorMessage && (
             <div
               style={{
@@ -528,7 +543,7 @@ export default function Validation() {
             </div>
           )}
 
-          {/* Authentication Code */}
+          {/* Campo: Código de Autenticação */}
           <div style={{ marginBottom: "16px" }}>
             <label
               style={{
@@ -561,7 +576,7 @@ export default function Validation() {
             />
           </div>
 
-          {/* Issue Date */}
+          {/* Campo: Data de Emissão */}
           <div style={{ marginBottom: "24px" }}>
             <label
               style={{
@@ -597,7 +612,7 @@ export default function Validation() {
             />
           </div>
 
-          {/* VALIDATE BUTTON */}
+          {/* Botão VALIDAR */}
           <button
             onClick={() => handleValidate()}
             disabled={!codigo || !data || isValidating}
@@ -613,12 +628,13 @@ export default function Validation() {
               cursor: !codigo || !data || isValidating ? "not-allowed" : "pointer",
               marginBottom: "8px",
               letterSpacing: "0.5px",
+              fontFamily: "inherit",
             }}
           >
             {isValidating ? t.verifying : t.validateDocument}
           </button>
 
-          {/* CLEAR BUTTON */}
+          {/* Botão LIMPAR */}
           <button
             onClick={handleClear}
             style={{
@@ -632,6 +648,7 @@ export default function Validation() {
               fontWeight: "bold",
               cursor: "pointer",
               letterSpacing: "0.5px",
+              fontFamily: "inherit",
             }}
           >
             {t.clear}
