@@ -5,7 +5,6 @@ import { useParams } from "wouter";
 import { exportElementToPDF, generatePDFFilename, DOC_REAL_WIDTH } from "@/lib/pdfExport";
 import { findByCode, validateAttestation } from "@/lib/attestationStore";
 import { validateAttestationApi, fetchAttestationByCode } from "@/lib/apiClient";
-import { handleDateInput } from "@/lib/dateMask";
 
 type Language = "pt" | "en";
 
@@ -14,7 +13,7 @@ const labels = {
     title: "Validador Oficial",
     queryDocument: "Consultar Documento",
     authenticationCode: "Código de Autenticação",
-    issueDate: "Data de Emissão (DD/MM/AAAA)",
+    issueDate: "Data de Emissão",
     validateDocument: "VALIDAR DOCUMENTO",
     verifying: "Verificando...",
     clear: "LIMPAR",
@@ -25,14 +24,13 @@ const labels = {
     downloading: "BAIXANDO...",
     close: "FECHAR",
     fillAllFields: "Preencha todos os campos.",
-    connectionError: "Erro de conexão.",
     downloadError: "Erro ao gerar o PDF. Tente novamente.",
   },
   en: {
     title: "Official Validator",
     queryDocument: "Query Document",
     authenticationCode: "Authentication Code",
-    issueDate: "Issue Date (DD/MM/YYYY)",
+    issueDate: "Issue Date",
     validateDocument: "VALIDATE DOCUMENT",
     verifying: "Verifying...",
     clear: "CLEAR",
@@ -43,15 +41,26 @@ const labels = {
     downloading: "DOWNLOADING...",
     close: "CLOSE",
     fillAllFields: "Please fill in all fields.",
-    connectionError: "Connection error.",
     downloadError: "Error generating PDF. Please try again.",
   },
 };
 
+/**
+ * Converte data do formato YYYY-MM-DD (retornado pelo input type="date")
+ * para DD/MM/YYYY (formato esperado pelo banco D1).
+ */
+function isoToDisplay(isoDate: string): string {
+  if (!isoDate) return "";
+  const [y, m, d] = isoDate.split("-");
+  if (!y || !m || !d) return isoDate;
+  return `${d}/${m}/${y}`;
+}
+
 export default function Validation() {
   const params = useParams();
   const [codigo, setCodigo] = useState("");
-  const [data, setData] = useState("");
+  // Armazena a data no formato ISO YYYY-MM-DD (para o input type="date")
+  const [dataISO, setDataISO] = useState("");
   const [isValidating, setIsValidating] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [showViewer, setShowViewer] = useState(false);
@@ -59,29 +68,21 @@ export default function Validation() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { language, setLanguage } = useLanguageWithSetter();
 
-  // Ref do documento — usado para exportar o PDF
   const documentRef = useRef<HTMLDivElement>(null);
-  // Ref do container do viewer — usado para calcular o scale de exibição
   const viewerContainerRef = useRef<HTMLDivElement>(null);
 
-  // Scale de exibição: ajusta o documento para caber na tela
   const [docScale, setDocScale] = useState(1);
-  // Altura do documento em pixels (para o wrapper externo manter o espaço correto)
   const [docNaturalHeight, setDocNaturalHeight] = useState(1400);
 
   const t = labels[language];
 
-  // ─── Calcula o scale para enquadrar o documento na tela ─────────────────
-  // O documento tem largura real de DOC_REAL_WIDTH px.
-  // O scale é calculado como: availableWidth / DOC_REAL_WIDTH
-  // Isso garante que o que é exibido na tela tem a mesma proporção do PDF exportado.
+  // ─── Calcula o scale do documento para caber na tela ────────────────────
   const calcScale = useCallback(() => {
     const container = viewerContainerRef.current;
     const doc = documentRef.current;
     if (!container) return;
 
-    // clientWidth retorna CSS pixels (independente do DPR do dispositivo)
-    const padding = 16; // 8px cada lado
+    const padding = 20; // 10px cada lado
     const availableWidth = container.clientWidth - padding;
     const newScale = availableWidth < DOC_REAL_WIDTH
       ? availableWidth / DOC_REAL_WIDTH
@@ -89,7 +90,6 @@ export default function Validation() {
 
     setDocScale(newScale);
 
-    // Captura a altura natural do documento após render
     if (doc && doc.scrollHeight > 0) {
       setDocNaturalHeight(doc.scrollHeight);
     }
@@ -97,29 +97,26 @@ export default function Validation() {
 
   useEffect(() => {
     if (!showViewer) return;
-
-    // Múltiplos timers para garantir que o documento renderizou completamente
-    const t1 = setTimeout(calcScale, 100);
-    const t2 = setTimeout(calcScale, 500);
-    const t3 = setTimeout(calcScale, 1000);
-    const t4 = setTimeout(calcScale, 2000);
-
+    const t1 = setTimeout(calcScale, 80);
+    const t2 = setTimeout(calcScale, 400);
+    const t3 = setTimeout(calcScale, 900);
+    const t4 = setTimeout(calcScale, 1800);
     window.addEventListener("resize", calcScale);
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-      clearTimeout(t4);
+      clearTimeout(t1); clearTimeout(t2);
+      clearTimeout(t3); clearTimeout(t4);
       window.removeEventListener("resize", calcScale);
     };
   }, [showViewer, calcScale]);
 
-  // ─── Validação via API (D1) com fallback local ───────────────────────────
-  const handleValidate = async (codeToUse?: string, dateToUse?: string) => {
-    const code = (codeToUse || codigo).trim().toUpperCase();
-    const date = (dateToUse || data).trim();
+  // ─── Validação ───────────────────────────────────────────────────────────
+  const handleValidate = async (codeOverride?: string, isoDateOverride?: string) => {
+    const code = (codeOverride || codigo).trim().toUpperCase();
+    const iso = isoDateOverride || dataISO;
+    // Converte YYYY-MM-DD → DD/MM/YYYY para a API
+    const dateForApi = isoToDisplay(iso);
 
-    if (!code || !date) {
+    if (!code || !iso) {
       alert(t.fillAllFields);
       return;
     }
@@ -130,20 +127,17 @@ export default function Validation() {
     setShowViewer(false);
 
     try {
-      // Tenta a API primeiro
-      const apiResult = await validateAttestationApi(code, date);
+      const apiResult = await validateAttestationApi(code, dateForApi);
       if (apiResult.valid && apiResult.data) {
         setValidAttestation(apiResult.data);
         setShowViewer(true);
         setIsValidating(false);
         return;
       }
-    } catch (_) {
-      // API indisponível, usar fallback local
-    }
+    } catch (_) {}
 
-    // Fallback: busca local
-    const result = validateAttestation(code, date);
+    // Fallback local
+    const result = validateAttestation(code, dateForApi);
     if (result.valid && result.data) {
       setValidAttestation(result.data);
       setShowViewer(true);
@@ -156,7 +150,6 @@ export default function Validation() {
   // ─── Auto-validação via QR Code (/v/:id) ────────────────────────────────
   useEffect(() => {
     if (!params.id) return;
-
     const code = params.id;
     setCodigo(code);
     setIsValidating(true);
@@ -166,18 +159,23 @@ export default function Validation() {
         const apiAtt = await fetchAttestationByCode(code);
         if (apiAtt) {
           setValidAttestation(apiAtt);
-          setData(apiAtt.dataAssinatura || "");
+          // Converte DD/MM/YYYY → YYYY-MM-DD para o input date
+          if (apiAtt.dataAssinatura) {
+            const [d, m, y] = apiAtt.dataAssinatura.split("/");
+            if (d && m && y) setDataISO(`${y}-${m}-${d}`);
+          }
           setShowViewer(true);
           setIsValidating(false);
           return;
         }
-      } catch (_) {
-        // fallback
-      }
+      } catch (_) {}
       const att = findByCode(code);
       if (att) {
         setValidAttestation(att);
-        setData(att.dataAssinatura || "");
+        if ((att as any).dataAssinatura) {
+          const [d, m, y] = (att as any).dataAssinatura.split("/");
+          if (d && m && y) setDataISO(`${y}-${m}-${d}`);
+        }
         setShowViewer(true);
       } else {
         setErrorMessage(t.documentNotFound);
@@ -194,20 +192,16 @@ export default function Validation() {
 
   const handleClear = () => {
     setCodigo("");
-    setData("");
+    setDataISO("");
     setErrorMessage(null);
     setValidAttestation(null);
     setShowViewer(false);
   };
 
   // ─── Download PDF ────────────────────────────────────────────────────────
-  // O exportElementToPDF cria um container independente com largura fixa DOC_REAL_WIDTH,
-  // garantindo que o PDF gerado tem a mesma proporção da visualização na tela.
   const handleDownloadPDF = async () => {
     if (!documentRef.current || !validAttestation) return;
-
     setIsDownloading(true);
-
     try {
       const filename = generatePDFFilename(validAttestation.paciente, "VALIDADO");
       await exportElementToPDF(documentRef.current, {
@@ -226,125 +220,100 @@ export default function Validation() {
   // ===== VIEWER MODE =====
   if (showViewer && validAttestation) {
     return (
-      <div
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
+      <div style={{
+        position: "fixed",
+        top: 0, left: 0, right: 0, bottom: 0,
+        display: "flex",
+        flexDirection: "column",
+        backgroundColor: "#525659",
+        zIndex: 9999,
+        fontFamily: "Roboto, sans-serif",
+      }}>
+
+        {/* ── VIEWER HEADER ── */}
+        <div style={{
+          background: "#ffffff",
+          padding: "15px",
+          borderBottom: "1px solid #e2e8f0",
           display: "flex",
-          flexDirection: "column",
-          backgroundColor: "#525659",
-          zIndex: 9999,
-          // Permite scroll vertical no iOS sem interferir com o touch
-          touchAction: "pan-y",
-          WebkitOverflowScrolling: "touch",
-        } as React.CSSProperties}
-      >
-        {/* ── BARRA VERDE SUPERIOR ── */}
-        <div
-          style={{
-            backgroundColor: "#166534",
-            color: "#ffffff",
-            padding: "12px 16px",
+          justifyContent: "space-between",
+          alignItems: "center",
+          boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
+          zIndex: 10,
+          flexShrink: 0,
+          gap: "8px",
+        }}>
+          {/* Status VÁLIDO */}
+          <div style={{
+            fontWeight: "bold",
+            color: "#16a34a",
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            flexShrink: 0,
             gap: "8px",
-            minHeight: "52px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
-            <div
-              style={{
-                width: "24px",
-                height: "24px",
-                minWidth: "24px",
-                backgroundColor: "#22c55e",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "14px",
-                fontWeight: "bold",
-              }}
-            >
-              ✓
-            </div>
-            <span style={{ fontWeight: "bold", fontSize: "13px", whiteSpace: "nowrap" }}>
-              {t.validAndAuthentic}
-            </span>
+            fontSize: "14px",
+            flexShrink: 0,
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            {t.validAndAuthentic}
           </div>
-          <span
-            style={{
-              fontWeight: "bold",
-              fontSize: "13px",
-              textAlign: "right",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              maxWidth: "55%",
-            }}
-          >
+          {/* Nome do paciente */}
+          <div style={{
+            fontSize: "11px",
+            color: "#64748b",
+            textAlign: "right",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            maxWidth: "55%",
+          }}>
             {validAttestation.paciente}
-          </span>
+          </div>
         </div>
 
-        {/* ── ÁREA DE VISUALIZAÇÃO DO DOCUMENTO ── */}
-        {/*
-          Layout de escala responsiva:
-          - viewerContainerRef: container com scroll, mede a largura disponível
-          - O wrapper interno tem width/height = DOC_REAL_WIDTH * docScale / DOC_REAL_HEIGHT * docScale
-            para que o scroll funcione corretamente
-          - O documentRef fica em tamanho real (DOC_REAL_WIDTH) com transform: scale(docScale)
-            aplicado a partir do canto superior esquerdo
-          - O PDF é gerado a partir do documentRef em tamanho real, garantindo
-            que a proporção visual == proporção do PDF
-        */}
+        {/* ── VIEWER BODY — área de scroll com o documento ── */}
         <div
           ref={viewerContainerRef}
           style={{
             flex: 1,
             overflowY: "auto",
             overflowX: "hidden",
-            padding: "8px",
+            background: "#525659",
             display: "flex",
             justifyContent: "center",
             alignItems: "flex-start",
-            backgroundColor: "#525659",
+            padding: "10px",
             WebkitOverflowScrolling: "touch",
           } as React.CSSProperties}
         >
-          {/* Wrapper externo: ocupa o espaço correto após o scale */}
-          <div
-            style={{
-              width: `${DOC_REAL_WIDTH * docScale}px`,
-              height: `${docNaturalHeight * docScale}px`,
-              flexShrink: 0,
-              position: "relative",
-            }}
-          >
+          {/*
+            Wrapper externo: ocupa o espaço correto após o scale
+            (width = DOC_REAL_WIDTH * scale, height = docNaturalHeight * scale)
+            Isso garante que o scroll funciona corretamente em mobile.
+          */}
+          <div style={{
+            width: `${DOC_REAL_WIDTH * docScale}px`,
+            height: `${docNaturalHeight * docScale}px`,
+            flexShrink: 0,
+            position: "relative",
+          }}>
             {/* Wrapper de posicionamento: aplica o scale a partir do topo-esquerdo */}
-            <div
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                transformOrigin: "top left",
-                transform: `scale(${docScale})`,
+            <div style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              transformOrigin: "top left",
+              transform: `scale(${docScale})`,
+              width: `${DOC_REAL_WIDTH}px`,
+            }}>
+              {/* Documento em tamanho real */}
+              <div style={{
+                backgroundColor: "#ffffff",
+                boxShadow: "0 4px 10px rgba(0,0,0,0.5)",
                 width: `${DOC_REAL_WIDTH}px`,
-              }}
-            >
-              {/* Documento em tamanho real — mesma largura do PDF exportado */}
-              <div
-                style={{
-                  backgroundColor: "#ffffff",
-                  boxShadow: "0 2px 12px rgba(0,0,0,0.4)",
-                  width: `${DOC_REAL_WIDTH}px`,
-                }}
-              >
+              }}>
                 <div ref={documentRef}>
                   <AttestationDocument
                     data={validAttestation}
@@ -356,59 +325,67 @@ export default function Validation() {
           </div>
         </div>
 
-        {/* ── BARRA INFERIOR: FECHAR + BAIXAR PDF ── */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "stretch",
-            flexShrink: 0,
-            borderTop: "2px solid #e5e7eb",
-            paddingBottom: "env(safe-area-inset-bottom, 0px)",
-            backgroundColor: "#ffffff",
-          }}
-        >
+        {/* ── VIEWER FOOTER ── */}
+        <div style={{
+          background: "#ffffff",
+          padding: "15px",
+          borderTop: "1px solid #e2e8f0",
+          display: "flex",
+          gap: "10px",
+          zIndex: 10,
+          flexShrink: 0,
+          paddingBottom: "calc(15px + env(safe-area-inset-bottom, 0px))",
+        }}>
+          {/* Botão FECHAR */}
           <button
             onClick={handleClose}
             style={{
-              padding: "18px 24px",
-              backgroundColor: "#ffffff",
-              color: "#374151",
-              border: "none",
-              borderRight: "1px solid #e5e7eb",
+              background: "#f1f5f9",
+              color: "#334155",
+              border: "1px solid #cbd5e1",
+              padding: "12px 20px",
+              borderRadius: "8px",
               fontWeight: "bold",
-              fontSize: "14px",
               cursor: "pointer",
+              fontSize: "14px",
+              fontFamily: "Roboto, sans-serif",
               flexShrink: 0,
-              letterSpacing: "0.5px",
-              fontFamily: "inherit",
+              letterSpacing: "0.3px",
             }}
           >
             {t.close}
           </button>
 
+          {/* Botão BAIXAR PDF */}
           <button
             onClick={handleDownloadPDF}
             disabled={isDownloading}
             style={{
               flex: 1,
-              padding: "18px 20px",
-              backgroundColor: isDownloading ? "#14532d" : "#166534",
+              background: isDownloading ? "#1565c0" : "#005CA9",
               color: "#ffffff",
               border: "none",
+              padding: "12px",
+              borderRadius: "8px",
               fontWeight: "bold",
-              fontSize: "14px",
               cursor: isDownloading ? "wait" : "pointer",
+              fontSize: "14px",
+              fontFamily: "Roboto, sans-serif",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               gap: "8px",
-              opacity: isDownloading ? 0.8 : 1,
+              opacity: isDownloading ? 0.85 : 1,
               transition: "opacity 0.2s",
-              letterSpacing: "0.5px",
-              fontFamily: "inherit",
+              letterSpacing: "0.3px",
             }}
           >
-            <span style={{ fontSize: "16px" }}>⬇</span>
+            {/* Ícone de download */}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
             {isDownloading ? t.downloading : t.downloadPdf}
           </button>
         </div>
@@ -418,59 +395,51 @@ export default function Validation() {
 
   // ===== FORMULÁRIO DE VALIDAÇÃO =====
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#f0f2f5",
+    <div style={{
+      minHeight: "100vh",
+      backgroundColor: "#f8fafc",
+      display: "flex",
+      flexDirection: "column",
+      fontFamily: "Roboto, sans-serif",
+      margin: 0,
+      padding: 0,
+    }}>
+
+      {/* ── HEADER AZUL GOV ── */}
+      <div style={{
+        backgroundColor: "#005CA9",
+        color: "#ffffff",
+        padding: "15px 20px",
+        fontSize: "18px",
+        fontWeight: 700,
+        boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+        textAlign: "center",
         display: "flex",
-        flexDirection: "column",
-        fontFamily: "Roboto, Arial, Helvetica, sans-serif",
-      }}
-    >
-      {/* HEADER */}
-      <div
-        style={{
-          backgroundColor: "#1e40af",
-          color: "#ffffff",
-          padding: "16px 20px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "10px",
-          position: "relative",
-        }}
-      >
-        <div
-          style={{
-            width: "28px",
-            height: "28px",
-            backgroundColor: "#3b82f6",
-            borderRadius: "50%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "16px",
-          }}
-        >
-          🛡
-        </div>
-        <span style={{ fontWeight: "bold", fontSize: "16px" }}>
-          {t.title}
-        </span>
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "10px",
+        position: "relative",
+      }}>
+        {/* Ícone escudo */}
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+        </svg>
+        {t.title}
 
         {/* Seletor de idioma */}
         <div style={{ position: "absolute", right: "16px", display: "flex", gap: "6px" }}>
           <button
             onClick={() => setLanguage("pt")}
             style={{
-              padding: "4px 10px",
+              padding: "3px 8px",
               fontSize: "11px",
               fontWeight: "bold",
               borderRadius: "4px",
-              border: "1px solid #fff",
+              border: "1px solid rgba(255,255,255,0.6)",
               backgroundColor: language === "pt" ? "#ffffff" : "transparent",
-              color: language === "pt" ? "#1e40af" : "#ffffff",
+              color: language === "pt" ? "#005CA9" : "#ffffff",
               cursor: "pointer",
+              fontFamily: "Roboto, sans-serif",
             }}
           >
             PT-BR
@@ -478,14 +447,15 @@ export default function Validation() {
           <button
             onClick={() => setLanguage("en")}
             style={{
-              padding: "4px 10px",
+              padding: "3px 8px",
               fontSize: "11px",
               fontWeight: "bold",
               borderRadius: "4px",
-              border: "1px solid #fff",
+              border: "1px solid rgba(255,255,255,0.6)",
               backgroundColor: language === "en" ? "#ffffff" : "transparent",
-              color: language === "en" ? "#1e40af" : "#ffffff",
+              color: language === "en" ? "#005CA9" : "#ffffff",
               cursor: "pointer",
+              fontFamily: "Roboto, sans-serif",
             }}
           >
             EN
@@ -493,67 +463,60 @@ export default function Validation() {
         </div>
       </div>
 
-      {/* CONTEÚDO PRINCIPAL */}
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "center",
-          padding: "40px 16px",
-        }}
-      >
-        <div
-          style={{
-            backgroundColor: "#ffffff",
-            borderRadius: "8px",
-            padding: "32px",
-            width: "100%",
-            maxWidth: "480px",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
-          }}
-        >
-          <h2
-            style={{
-              fontSize: "20px",
-              fontWeight: "bold",
-              textAlign: "center",
-              marginBottom: "24px",
-              color: "#111",
-            }}
-          >
+      {/* ── CONTEÚDO PRINCIPAL ── */}
+      <div style={{
+        flex: 1,
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "center",
+        padding: "20px",
+      }}>
+        {/* Card de busca */}
+        <div style={{
+          padding: "20px",
+          maxWidth: "500px",
+          width: "100%",
+          margin: "0 auto",
+          background: "#ffffff",
+          borderRadius: "8px",
+          boxShadow: "0 4px 6px rgba(0,0,0,0.05)",
+        }}>
+          <h3 style={{
+            marginTop: 0,
+            marginBottom: "20px",
+            color: "#334155",
+            textAlign: "center",
+            fontSize: "18px",
+            fontWeight: 700,
+          }}>
             {t.queryDocument}
-          </h2>
+          </h3>
 
           {/* Mensagem de erro */}
           {errorMessage && (
-            <div
-              style={{
-                backgroundColor: "#fef2f2",
-                border: "1px solid #fca5a5",
-                borderRadius: "6px",
-                padding: "12px",
-                marginBottom: "16px",
-                color: "#991b1b",
-                fontSize: "14px",
-                textAlign: "center",
-              }}
-            >
+            <div style={{
+              backgroundColor: "#fef2f2",
+              border: "1px solid #fca5a5",
+              borderRadius: "6px",
+              padding: "12px",
+              marginBottom: "16px",
+              color: "#991b1b",
+              fontSize: "14px",
+              textAlign: "center",
+            }}>
               {errorMessage}
             </div>
           )}
 
           {/* Campo: Código de Autenticação */}
-          <div style={{ marginBottom: "16px" }}>
-            <label
-              style={{
-                display: "block",
-                fontSize: "13px",
-                fontWeight: "500",
-                marginBottom: "6px",
-                color: "#374151",
-              }}
-            >
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{
+              display: "block",
+              fontSize: "14px",
+              color: "#64748b",
+              marginBottom: "8px",
+              fontWeight: "bold",
+            }}>
               {t.authenticationCode}
             </label>
             <input
@@ -564,50 +527,65 @@ export default function Validation() {
               onChange={(e) => setCodigo(e.target.value.toUpperCase())}
               style={{
                 width: "100%",
-                padding: "10px 14px",
-                border: "1px solid #d1d5db",
+                padding: "12px",
+                border: "1px solid #cbd5e1",
                 borderRadius: "6px",
-                fontSize: "14px",
-                textAlign: "center",
-                fontFamily: "monospace",
+                fontSize: "16px",
                 outline: "none",
+                textTransform: "uppercase",
+                textAlign: "center",
+                letterSpacing: "2px",
+                fontFamily: "Roboto, sans-serif",
                 boxSizing: "border-box",
+                color: "#333333",
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#005CA9";
+                e.target.style.boxShadow = "0 0 0 2px rgba(0,92,169,0.2)";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#cbd5e1";
+                e.target.style.boxShadow = "none";
               }}
             />
           </div>
 
-          {/* Campo: Data de Emissão */}
-          <div style={{ marginBottom: "24px" }}>
-            <label
-              style={{
-                display: "block",
-                fontSize: "13px",
-                fontWeight: "500",
-                marginBottom: "6px",
-                color: "#374151",
-              }}
-            >
+          {/* Campo: Data de Emissão — input type="date" com calendário nativo */}
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{
+              display: "block",
+              fontSize: "14px",
+              color: "#64748b",
+              marginBottom: "8px",
+              fontWeight: "bold",
+            }}>
               {t.issueDate}
             </label>
             <input
               id="data"
-              type="text"
-              placeholder="DD/MM/AAAA"
-              value={data}
-              maxLength={10}
-              inputMode="numeric"
-              onChange={(e) => setData(handleDateInput(e.target.value))}
+              type="date"
+              value={dataISO}
+              onChange={(e) => setDataISO(e.target.value)}
               style={{
                 width: "100%",
-                padding: "10px 14px",
-                border: "1px solid #d1d5db",
+                padding: "12px",
+                border: "1px solid #cbd5e1",
                 borderRadius: "6px",
                 fontSize: "16px",
-                textAlign: "center",
-                fontFamily: "monospace",
-                letterSpacing: "2px",
                 outline: "none",
+                fontFamily: "Roboto, sans-serif",
                 boxSizing: "border-box",
+                color: "#333333",
+                backgroundColor: "#ffffff",
+                cursor: "pointer",
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#005CA9";
+                e.target.style.boxShadow = "0 0 0 2px rgba(0,92,169,0.2)";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#cbd5e1";
+                e.target.style.boxShadow = "none";
               }}
             />
           </div>
@@ -615,20 +593,21 @@ export default function Validation() {
           {/* Botão VALIDAR */}
           <button
             onClick={() => handleValidate()}
-            disabled={!codigo || !data || isValidating}
+            disabled={!codigo || !dataISO || isValidating}
             style={{
               width: "100%",
-              padding: "14px",
-              backgroundColor: !codigo || !data || isValidating ? "#86efac" : "#16a34a",
-              color: "#ffffff",
+              padding: "12px",
               border: "none",
               borderRadius: "6px",
-              fontSize: "14px",
+              fontSize: "16px",
               fontWeight: "bold",
-              cursor: !codigo || !data || isValidating ? "not-allowed" : "pointer",
-              marginBottom: "8px",
-              letterSpacing: "0.5px",
-              fontFamily: "inherit",
+              cursor: !codigo || !dataISO || isValidating ? "not-allowed" : "pointer",
+              backgroundColor: !codigo || !dataISO || isValidating ? "#86efac" : "#16a34a",
+              color: "#ffffff",
+              marginBottom: "10px",
+              fontFamily: "Roboto, sans-serif",
+              letterSpacing: "0.3px",
+              transition: "background-color 0.2s",
             }}
           >
             {isValidating ? t.verifying : t.validateDocument}
@@ -639,16 +618,16 @@ export default function Validation() {
             onClick={handleClear}
             style={{
               width: "100%",
-              padding: "14px",
-              backgroundColor: "#f3f4f6",
-              color: "#6b7280",
-              border: "1px solid #e5e7eb",
+              padding: "12px",
+              border: "none",
               borderRadius: "6px",
-              fontSize: "14px",
+              fontSize: "16px",
               fontWeight: "bold",
               cursor: "pointer",
-              letterSpacing: "0.5px",
-              fontFamily: "inherit",
+              backgroundColor: "#e2e8f0",
+              color: "#475569",
+              fontFamily: "Roboto, sans-serif",
+              letterSpacing: "0.3px",
             }}
           >
             {t.clear}
