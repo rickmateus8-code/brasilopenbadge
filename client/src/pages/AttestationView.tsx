@@ -1,5 +1,4 @@
 import { useRoute } from "wouter";
-import { attestations } from "@/data/attestations";
 import AttestationDocument from "@/components/AttestationDocument";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -8,6 +7,7 @@ import { useRef, useState, useEffect } from "react";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import type { AttestationData } from "@/data/attestations";
+import { findById } from "@/lib/attestationStore";
 
 type Language = "pt" | "en";
 
@@ -50,37 +50,18 @@ export default function AttestationView() {
 
   const t = labels[language];
 
-  // Try to load from API first, fallback to local data
+  // Load from local store
   useEffect(() => {
-    async function loadAttestation() {
-      setIsLoading(true);
-      setNotFound(false);
+    setIsLoading(true);
+    setNotFound(false);
 
-      // First check local data (for backward compatibility with /atestado/lucas, /atestado/thielsily)
-      if (attestations[id]) {
-        setAttestation(attestations[id]);
-        setIsLoading(false);
-        return;
-      }
-
-      // Try API by ID (validation code)
-      try {
-        const response = await fetch(`/api/attestations/${encodeURIComponent(id)}`);
-        const result = await response.json();
-        if (result.success && result.data) {
-          setAttestation(result.data);
-          setIsLoading(false);
-          return;
-        }
-      } catch (err) {
-        console.error("API error:", err);
-      }
-
+    const att = findById(id);
+    if (att) {
+      setAttestation(att);
+    } else {
       setNotFound(true);
-      setIsLoading(false);
     }
-
-    loadAttestation();
+    setIsLoading(false);
   }, [id]);
 
   if (isLoading) {

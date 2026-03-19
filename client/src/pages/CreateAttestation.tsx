@@ -8,6 +8,7 @@ import AttestationDocument from "@/components/AttestationDocument";
 import type { AttestationData } from "@/data/attestations";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { createAttestation } from "@/lib/attestationStore";
 
 type Language = "pt" | "en";
 
@@ -201,40 +202,28 @@ export default function CreateAttestation() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/attestations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          paciente: formData.paciente.toUpperCase(),
-          sexo: formData.sexo,
-          nascimento: formData.nascimento,
-          cpf: formData.cpf,
-          nome_mae: formData.nomeMae.toUpperCase(),
-          endereco: formData.endereco.toUpperCase(),
-          passaporte: formData.passaporte.toUpperCase(),
-          condicao: formData.condicao,
-          vacinacao: formData.vacinacao.toUpperCase(),
-          cid: formData.cid.toUpperCase(),
-          medico: formData.medico.toUpperCase(),
-          crm: formData.crm,
-          especialidade: formData.especialidade.toUpperCase(),
-          data_assinatura: formData.dataAssinatura,
-          hora_assinatura: formData.horaAssinatura,
-          data_emissao: formData.dataEmissao.toUpperCase(),
-          logo_url: logoUrl || DEFAULT_LOGO_URL,
-          endereco_emitente: formData.enderecoEmitente,
-          instituicao: formData.instituicao,
-        }),
-      });
+      const newAtt = createAttestation({
+        paciente: formData.paciente.toUpperCase(),
+        sexo: formData.sexo,
+        nascimento: formData.nascimento,
+        cpf: formData.cpf,
+        nomeMae: formData.nomeMae.toUpperCase(),
+        endereco: formData.endereco.toUpperCase(),
+        passaporte: formData.passaporte.toUpperCase(),
+        condicao: formData.condicao,
+        vacinacao: formData.vacinacao.toUpperCase(),
+        cid: formData.cid.toUpperCase(),
+        medico: formData.medico.toUpperCase(),
+        crm: formData.crm,
+        especialidade: formData.especialidade.toUpperCase(),
+        dataAssinatura: formData.dataAssinatura,
+        horaAssinatura: formData.horaAssinatura,
+        dataEmissao: formData.dataEmissao.toUpperCase(),
+        logoUrl: logoUrl || DEFAULT_LOGO_URL,
+      } as any);
 
-      const result = await response.json();
-
-      if (result.success) {
-        setCreatedCode(result.data.codigoQR);
-        alert(`${t.success}\n\n${t.codeGenerated}: ${result.data.codigoQR}`);
-      } else {
-        alert(`${t.error}: ${result.error}`);
-      }
+      setCreatedCode(newAtt.codigoQR);
+      alert(`${t.success}\n\n${t.codeGenerated}: ${newAtt.codigoQR}`);
     } catch (error) {
       alert(`${t.error}: ${error instanceof Error ? error.message : "Unknown error"}`);
     } finally {

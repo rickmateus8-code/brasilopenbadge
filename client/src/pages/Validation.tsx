@@ -4,6 +4,7 @@ import { useLanguageWithSetter } from "@/hooks/useLanguage";
 import { useParams } from "wouter";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
+import { findByCode, validateAttestation } from "@/lib/attestationStore";
 
 type Language = "pt" | "en";
 
@@ -60,8 +61,8 @@ export default function Validation() {
 
   const t = labels[language];
 
-  // Validate via API (database)
-  const handleValidate = async (codeToUse?: string, dateToUse?: string) => {
+  // Validate locally (no API needed)
+  const handleValidate = (codeToUse?: string, dateToUse?: string) => {
     const code = codeToUse || codigo;
     const date = dateToUse || data;
 
@@ -75,22 +76,19 @@ export default function Validation() {
     setValidAttestation(null);
     setShowViewer(false);
 
-    try {
-      const response = await fetch(`/api/validate/${encodeURIComponent(code.trim().toUpperCase())}?date=${encodeURIComponent(date.trim())}`);
-      const result = await response.json();
+    // Simulate a small delay for UX
+    setTimeout(() => {
+      const result = validateAttestation(code, date);
 
-      if (result.success && result.valid && result.data) {
+      if (result.valid && result.data) {
         setValidAttestation(result.data);
         setShowViewer(true);
       } else {
         setErrorMessage(t.documentNotFound);
       }
-    } catch (err) {
-      console.error("Validation error:", err);
-      setErrorMessage(t.connectionError);
-    } finally {
+
       setIsValidating(false);
-    }
+    }, 500);
   };
 
   // Auto-validate when accessing via /v/:id (QR Code route)
@@ -98,21 +96,20 @@ export default function Validation() {
     if (params.id) {
       const code = params.id;
       setCodigo(code);
-      // Auto-validate by looking up the code first (without date check for QR route)
       setIsValidating(true);
-      fetch(`/api/validate/${encodeURIComponent(code.trim().toUpperCase())}`)
-        .then((res) => res.json())
-        .then((result) => {
-          if (result.success && result.data) {
-            setValidAttestation(result.data);
-            setData(result.data.dataAssinatura || "");
-            setShowViewer(true);
-          } else {
-            setErrorMessage(t.documentNotFound);
-          }
-        })
-        .catch(() => setErrorMessage(t.connectionError))
-        .finally(() => setIsValidating(false));
+
+      // Look up locally
+      setTimeout(() => {
+        const att = findByCode(code);
+        if (att) {
+          setValidAttestation(att);
+          setData(att.dataAssinatura || "");
+          setShowViewer(true);
+        } else {
+          setErrorMessage(t.documentNotFound);
+        }
+        setIsValidating(false);
+      }, 500);
     }
   }, [params.id]);
 
