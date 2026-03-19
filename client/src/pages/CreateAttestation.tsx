@@ -175,6 +175,12 @@ export default function CreateAttestation() {
     dataAssinatura: todayBR(),
     horaAssinatura: nowTime(),
     dataEmissao: todayBR(),
+    cidade: "",
+    textoAtestado: "",
+    cidDisplay: "",
+    cidNome: "",
+    afastamento: "",
+    modoCarimbo: false,
   });
 
   // ── Importação rápida ───────────────────────────────────────────────────────
@@ -414,12 +420,29 @@ export default function CreateAttestation() {
     crm: form.crm,
     especialidade: form.especialidade,
     dataEmissao: form.dataEmissao ? formatDateToEnglish(form.dataEmissao) : "MONTH DD, YYYY",
+    dataEmissaoFormatada: (() => {
+      if (!form.dataEmissao || form.dataEmissao.length < 8) return "";
+      const [dd, mm, yyyy] = form.dataEmissao.split("/");
+      const meses = ["JANEIRO","FEVEREIRO","MARÇO","ABRIL","MAIO","JUNHO","JULHO","AGOSTO","SETEMBRO","OUTUBRO","NOVEMBRO","DEZEMBRO"];
+      const m = parseInt(mm) - 1;
+      const cidade = form.cidade || form.instituicao.split("-")[0].trim() || "";
+      return `${cidade}, ${parseInt(dd)} DE ${meses[m] || mm} DE ${yyyy}`;
+    })(),
     logoUrl: logoLeft,
     instituicao: form.instituicao,
     unidade: form.unidade,
     enderecoEmitente: form.enderecoEmitente,
     signatureColor,
     signatureImage,
+    textoAtestado: (() => {
+      const base = form.textoAtestado || `Atesto para os devidos fins que o(a) paciente acima identificado(a) foi atendido(a) nesta unidade de saúde na data de hoje.`;
+      if (form.afastamento) return base + `\n\nO(A) paciente necessita de afastamento de suas atividades por ${form.afastamento} dia(s) a partir desta data.`;
+      return base;
+    })(),
+    cidDisplay: form.cidDisplay || form.cid,
+    cidNome: form.cidNome,
+    cidade: form.cidade,
+    modoCarimbo: form.modoCarimbo,
   };
 
   // ── Estilos ─────────────────────────────────────────────────────────────────
@@ -749,21 +772,27 @@ export default function CreateAttestation() {
             <div style={card}>
               <p style={secTitle}>🩺 Dados Médicos</p>
               <div style={{ display: "grid", gap: 8 }}>
+
+                {/* Texto do Atestado */}
                 <div>
-                  <label style={lbl}>Passaporte (opcional)</label>
-                  <input style={inp} value={form.passaporte} onChange={(e) => setForm(p => ({ ...p, passaporte: e.target.value }))} placeholder="Ex: FX255093" />
+                  <label style={lbl}>Texto do Atestado</label>
+                  <textarea
+                    value={form.textoAtestado}
+                    onChange={(e) => setForm(p => ({ ...p, textoAtestado: e.target.value }))}
+                    rows={4}
+                    style={{ ...inp, resize: "vertical" }}
+                    placeholder="Atesto para os devidos fins que o(a) paciente acima identificado(a) foi atendido(a) nesta unidade de saúde na data de hoje."
+                  />
                 </div>
+
+                {/* CID */}
                 <div>
-                  <label style={lbl}>Condição Clínica (em inglês)</label>
-                  <textarea value={form.condicao} onChange={(e) => setForm(p => ({ ...p, condicao: e.target.value }))} rows={3} style={{ ...inp, resize: "vertical" }} required />
-                </div>
-                <div>
-                  <label style={lbl}>Vacinação Contraindicada</label>
-                  <input style={inp} value={form.vacinacao} onChange={(e) => setForm(p => ({ ...p, vacinacao: e.target.value }))} placeholder="Ex: YELLOW FEVER" required />
-                </div>
-                <div>
-                  <label style={lbl}>CID / ICD</label>
-                  <select style={{ ...sel, marginBottom: 6 }} value="" onChange={(e) => { if (e.target.value) setForm(p => ({ ...p, cid: e.target.value })); }}>
+                  <label style={lbl}>CID — Diagnóstico Rápido</label>
+                  <select style={{ ...sel, marginBottom: 6 }} value="" onChange={(e) => {
+                    if (!e.target.value) return;
+                    const [code, ...rest] = e.target.value.split(" ");
+                    setForm(p => ({ ...p, cidDisplay: code, cidNome: rest.join(" "), cid: e.target.value }));
+                  }}>
                     <option value="">Selecione um diagnóstico...</option>
                     {CIDS_CATEGORIZADOS.map((g) => (
                       <optgroup key={g.grupo} label={g.grupo}>
@@ -775,8 +804,55 @@ export default function CreateAttestation() {
                       </optgroup>
                     ))}
                   </select>
-                  <input style={inp} value={form.cid} onChange={(e) => setForm(p => ({ ...p, cid: e.target.value }))} placeholder="Ou digite o código (Ex: T78.0)" required />
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 6 }}>
+                    <input
+                      style={inp}
+                      value={form.cidDisplay}
+                      onChange={(e) => setForm(p => ({ ...p, cidDisplay: e.target.value }))}
+                      placeholder="Código (Ex: H16.0)"
+                    />
+                    <input
+                      style={inp}
+                      value={form.cidNome}
+                      onChange={(e) => setForm(p => ({ ...p, cidNome: e.target.value }))}
+                      placeholder="Nome do CID (Ex: Úlcera de Córnea)"
+                    />
+                  </div>
                 </div>
+
+                {/* Afastamento */}
+                <div>
+                  <label style={lbl}>Dias de Afastamento (opcional)</label>
+                  <input
+                    style={inp}
+                    type="number"
+                    min="0"
+                    max="365"
+                    value={form.afastamento}
+                    onChange={(e) => setForm(p => ({ ...p, afastamento: e.target.value }))}
+                    placeholder="Ex: 3"
+                  />
+                </div>
+
+                {/* Passaporte */}
+                <div>
+                  <label style={lbl}>Passaporte (opcional)</label>
+                  <input style={inp} value={form.passaporte} onChange={(e) => setForm(p => ({ ...p, passaporte: e.target.value }))} placeholder="Ex: FX255093" />
+                </div>
+
+                {/* Modo Carimbo */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0" }}>
+                  <label style={{ ...lbl, margin: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                    <input
+                      type="checkbox"
+                      checked={form.modoCarimbo}
+                      onChange={(e) => setForm(p => ({ ...p, modoCarimbo: e.target.checked }))}
+                      style={{ width: 16, height: 16 }}
+                    />
+                    Modo Carimbo (rodapé com assinatura cursiva)
+                  </label>
+                </div>
+
               </div>
             </div>
 
@@ -784,6 +860,10 @@ export default function CreateAttestation() {
             <div style={card}>
               <p style={secTitle}>📅 3. Detalhes Finais</p>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <label style={lbl}>Cidade de Emissão</label>
+                  <input style={inp} value={form.cidade} onChange={(e) => setForm(p => ({ ...p, cidade: e.target.value.toUpperCase() }))} placeholder="Ex: SALVADOR" />
+                </div>
                 <div>
                   <label style={lbl}>Data da Assinatura</label>
                   <input style={inp} value={form.dataAssinatura} onChange={(e) => setForm(p => ({ ...p, dataAssinatura: handleDateInput(e.target.value) }))} placeholder="DD/MM/AAAA" maxLength={10} inputMode="numeric" required />
