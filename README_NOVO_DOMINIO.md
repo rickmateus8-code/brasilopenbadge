@@ -58,3 +58,7 @@ PDF functionality has been implemented using the browser's native print API, opt
 
 ---
 Developed by Manus AI.
+
+---
+**Update:** Forcing build for SSL certificate renewal on Cloudflare.
+Date: 2026-03-19
