@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useLanguageWithSetter } from "@/hooks/useLanguage";
 import { useRef, useState, useEffect } from "react";
-import html2canvas from "html2canvas";
-import { jsPDF } from "jspdf";
+import { exportElementToPDF, generatePDFFilename } from "@/lib/pdfExport";
 import type { AttestationData } from "@/data/attestations";
 import { findById } from "@/lib/attestationStore";
 
@@ -89,39 +88,20 @@ export default function AttestationView() {
   }
 
   const handleDownloadPDF = async () => {
-    if (!documentRef.current) return;
+    if (!documentRef.current || !attestation) return;
 
     setIsDownloading(true);
 
     try {
-      const canvas = await html2canvas(documentRef.current, {
+      const filename = generatePDFFilename(attestation.paciente, "EMITIDO");
+      await exportElementToPDF(documentRef.current, {
+        filename,
         scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: "#ffffff",
-        logging: false,
+        quality: 0.92,
       });
-
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-
-      pdf.addImage(imgData, "PNG", imgX, 0, imgWidth * ratio, imgHeight * ratio);
-
-      const nomeFormatado = attestation.paciente
-        .trim()
-        .toUpperCase()
-        .replace(/\s+/g, "_");
-      pdf.save(`ATESTADO_${nomeFormatado}.pdf`);
     } catch (err) {
       console.error("PDF generation error:", err);
+      // Fallback: impressão do browser
       const originalTitle = document.title;
       document.title = `ATESTADO_${attestation.paciente.replace(/\s+/g, "_")}.pdf`;
       window.print();

@@ -62,9 +62,9 @@ export default function Validation() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { language, setLanguage } = useLanguageWithSetter();
 
-  // Ref do documento real (sem escala) — usado para gerar o PDF
+  // Ref do documento — usado para gerar o PDF (o exportElementToPDF clona internamente)
   const documentRef = useRef<HTMLDivElement>(null);
-  // Ref do container visível (com escala) — usado para calcular o scale
+  // Ref do container visível — usado para calcular o scale de exibição
   const viewerContainerRef = useRef<HTMLDivElement>(null);
 
   const [docScale, setDocScale] = useState(1);
@@ -93,11 +93,8 @@ export default function Validation() {
   useEffect(() => {
     if (!showViewer) return;
 
-    // Aguarda render inicial
     const t1 = setTimeout(calcScale, 80);
-    // Aguarda imagens/QR carregarem
     const t2 = setTimeout(calcScale, 600);
-    // Aguarda fontes e layout estabilizar
     const t3 = setTimeout(calcScale, 1200);
 
     window.addEventListener("resize", calcScale);
@@ -195,9 +192,9 @@ export default function Validation() {
     setShowViewer(false);
   };
 
-  // ─── Download PDF ───
-  // O elemento capturado pelo html2canvas é o documentRef (sem transform scale),
-  // garantindo que o PDF seja gerado em resolução total independente do zoom visual.
+  // ─── Download PDF ───────────────────────────────────────────────────────
+  // O exportElementToPDF clona o elemento internamente para um container oculto
+  // sem transform scale, garantindo captura em tamanho real independente do zoom visual.
   const handleDownloadPDF = async () => {
     if (!documentRef.current || !validAttestation) return;
 
@@ -205,45 +202,11 @@ export default function Validation() {
 
     try {
       const filename = generatePDFFilename(validAttestation.paciente, "VALIDADO");
-
-      // Garante que o elemento está visível para o html2canvas capturar corretamente.
-      // O documentRef está dentro de um container com overflow hidden + transform scale,
-      // então precisamos torná-lo temporariamente visível em tamanho real para a captura.
-      const el = documentRef.current;
-
-      // Salva estilos originais do wrapper
-      const wrapper = el.parentElement as HTMLElement | null;
-      let prevWrapperStyle = "";
-      let prevContainerOverflow = "";
-      const container = viewerContainerRef.current;
-
-      if (wrapper) {
-        prevWrapperStyle = wrapper.getAttribute("style") || "";
-        wrapper.style.transform = "none";
-        wrapper.style.position = "static";
-        wrapper.style.width = `${DOC_WIDTH}px`;
-      }
-      if (container) {
-        prevContainerOverflow = container.style.overflow;
-        container.style.overflow = "visible";
-      }
-
-      // Pequeno delay para o browser aplicar os estilos
-      await new Promise((r) => setTimeout(r, 60));
-
-      await exportElementToPDF(el, {
+      await exportElementToPDF(documentRef.current, {
         filename,
         scale: 2,
-        quality: 0.95,
+        quality: 0.92,
       });
-
-      // Restaura estilos
-      if (wrapper) {
-        wrapper.setAttribute("style", prevWrapperStyle);
-      }
-      if (container) {
-        container.style.overflow = prevContainerOverflow;
-      }
     } catch (err) {
       console.error("PDF generation error:", err);
       alert(t.downloadError);
@@ -266,9 +229,8 @@ export default function Validation() {
           flexDirection: "column",
           backgroundColor: "#f0f2f5",
           zIndex: 9999,
-          // Evita zoom indesejado em iOS/Android
           touchAction: "pan-y",
-        }}
+        } as React.CSSProperties}
       >
         {/* ── GREEN HEADER BAR ── */}
         <div
@@ -326,33 +288,28 @@ export default function Validation() {
             flex: 1,
             overflowY: "auto",
             overflowX: "hidden",
-            // Padding mínimo para não encostar nas bordas
             padding: "8px",
             display: "flex",
             justifyContent: "center",
             alignItems: "flex-start",
             backgroundColor: "#525659",
-            // Suporte a scroll suave em iOS
             WebkitOverflowScrolling: "touch",
           } as React.CSSProperties}
         >
           {/*
             Estratégia de escala responsiva:
-            - O wrapper externo recebe width/height APÓS o scale para que o scroll funcione corretamente
-            - O documento interno (documentRef) permanece em tamanho real (DOC_WIDTH)
-              para que o html2canvas gere o PDF em alta resolução sem distorção
+            - O wrapper externo recebe width/height APÓS o scale para que o scroll funcione
+            - O documentRef permanece em tamanho real (DOC_WIDTH) para que o
+              exportElementToPDF gere o PDF em alta resolução sem distorção
           */}
           <div
             style={{
-              // Largura do wrapper = largura real do doc × scale
               width: `${DOC_WIDTH * docScale}px`,
-              // Altura do wrapper = altura real do doc × scale (para scroll correto)
               height: `${docHeight * docScale}px`,
               flexShrink: 0,
               position: "relative",
             }}
           >
-            {/* Documento com transform scale — origin top left para alinhar corretamente */}
             <div
               style={{
                 position: "absolute",
@@ -387,7 +344,6 @@ export default function Validation() {
             alignItems: "stretch",
             flexShrink: 0,
             borderTop: "2px solid #e5e7eb",
-            // Garante que os botões ficam acima da barra de navegação em mobile
             paddingBottom: "env(safe-area-inset-bottom, 0px)",
           }}
         >

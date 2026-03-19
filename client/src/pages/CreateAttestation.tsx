@@ -194,7 +194,7 @@ export default function CreateAttestation() {
       await exportElementToPDF(previewRef.current, {
         filename,
         scale: 2,
-        quality: 0.95,
+        quality: 0.92,
       });
     } catch (err) {
       console.error("PDF generation error:", err);

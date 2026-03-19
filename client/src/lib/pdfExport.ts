@@ -1,6 +1,18 @@
 /**
- * Utilitários para exportação de PDF com melhor qualidade
- * Compatível com dispositivos móveis (Android/iOS)
+ * Sistema de exportação PDF robusto — compatível com mobile (Android/iOS) e desktop.
+ *
+ * Estratégia:
+ * 1. Clona o elemento alvo para um container oculto fora do fluxo visual
+ *    (position: fixed, left: -9999px) — sem transform scale, sem overflow hidden
+ * 2. Captura o clone com html2canvas em tamanho real
+ * 3. Gera o PDF A4 com proporção correta
+ * 4. Remove o clone e salva o arquivo
+ *
+ * Por que clonar?
+ * - O elemento original pode estar dentro de um container com transform: scale(),
+ *   overflow: hidden ou position: absolute, o que faz o html2canvas capturar
+ *   dimensões incorretas ou falhar silenciosamente em mobile.
+ * - O clone é renderizado em tamanho real (sem escala), garantindo PDF nítido.
  */
 
 import html2canvas from "html2canvas";
@@ -16,12 +28,8 @@ export interface PDFExportOptions {
 
 /**
  * Exportar elemento HTML para PDF com qualidade otimizada.
- *
- * Notas importantes para mobile:
- * - O elemento capturado DEVE estar sem transform scale aplicado,
- *   caso contrário o html2canvas captura a versão escalada e o PDF fica distorcido.
- * - Em dispositivos com DPR alto (Android/iOS), o scale do html2canvas é
- *   limitado a 2 para evitar estouro de memória.
+ * Funciona corretamente mesmo quando o elemento está dentro de containers
+ * com transform: scale(), overflow: hidden ou position: absolute.
  */
 export async function exportElementToPDF(
   element: HTMLElement,
@@ -35,34 +43,58 @@ export async function exportElementToPDF(
     format = "a4",
   } = options;
 
-  // Em dispositivos com pouca memória (mobile), limita o scale para evitar crash
-  const deviceScale = typeof window !== "undefined" ? (window.devicePixelRatio || 1) : 1;
-  const safeScale = deviceScale > 2 ? Math.min(scale, 1.5) : scale;
+  // Em dispositivos com DPR alto (Android/iOS), limita o scale para evitar
+  // estouro de memória (canvas > 16MB causa falha silenciosa em mobile)
+  const dpr = typeof window !== "undefined" ? (window.devicePixelRatio || 1) : 1;
+  const safeScale = dpr > 2 ? Math.min(scale, 1.5) : scale;
+
+  // ── 1. Criar container oculto para o clone ──────────────────────────────
+  const hiddenContainer = document.createElement("div");
+  hiddenContainer.style.cssText = [
+    "position: fixed",
+    "top: 0",
+    "left: -99999px",
+    "width: " + element.scrollWidth + "px",
+    "background: #ffffff",
+    "z-index: -1",
+    "pointer-events: none",
+    "overflow: visible",
+  ].join("; ");
+
+  // ── 2. Clonar o elemento (deep clone com estilos computados) ────────────
+  const clone = element.cloneNode(true) as HTMLElement;
+
+  // Remove qualquer transform residual do clone
+  clone.style.transform = "none";
+  clone.style.position = "static";
+  clone.style.width = element.scrollWidth + "px";
+
+  hiddenContainer.appendChild(clone);
+  document.body.appendChild(hiddenContainer);
+
+  // Aguarda o browser renderizar o clone (imagens, fontes, QR Code SVG)
+  await new Promise((r) => setTimeout(r, 300));
 
   try {
-    // Converter elemento para canvas com alta qualidade
-    const canvas = await html2canvas(element, {
+    // ── 3. Capturar o clone com html2canvas ─────────────────────────────
+    const canvas = await html2canvas(clone, {
       scale: safeScale,
       useCORS: true,
       allowTaint: true,
       backgroundColor: "#ffffff",
       logging: false,
-      imageTimeout: 15000,
-      // Usa as dimensões reais do elemento (sem considerar transform do pai)
-      windowHeight: element.scrollHeight,
-      windowWidth: element.scrollWidth,
-      // Ignora elementos fora do elemento capturado
-      ignoreElements: (el) => {
-        // Ignora elementos de UI que não devem aparecer no PDF
-        return el.tagName === "BUTTON" || el.classList.contains("no-print");
-      },
+      imageTimeout: 20000,
+      windowWidth: clone.scrollWidth,
+      windowHeight: clone.scrollHeight,
     });
 
     if (canvas.width === 0 || canvas.height === 0) {
-      throw new Error("Canvas gerado está vazio. Verifique se o elemento está visível.");
+      throw new Error(
+        "Canvas gerado está vazio. Verifique se o elemento está visível e tem dimensões."
+      );
     }
 
-    // Criar PDF A4
+    // ── 4. Criar PDF A4 ──────────────────────────────────────────────────
     const pdf = new jsPDF({
       orientation,
       unit: "mm",
@@ -75,62 +107,63 @@ export async function exportElementToPDF(
     const imgWidth = canvas.width;
     const imgHeight = canvas.height;
 
-    // Calcular proporção mantendo aspecto — preenche a largura do A4
+    // Preenche a largura total do A4 mantendo proporção
     const ratio = pdfWidth / imgWidth;
     const scaledWidth = pdfWidth;
     const scaledHeight = imgHeight * ratio;
 
-    // Se o conteúdo cabe em uma página, centraliza verticalmente
-    // Caso contrário, começa do topo com margem mínima
-    const yOffset = scaledHeight <= pdfHeight
-      ? (pdfHeight - scaledHeight) / 2
-      : 0;
-
-    // Converter canvas para imagem JPEG com qualidade ajustada
     const imgData = canvas.toDataURL("image/jpeg", quality);
 
     if (scaledHeight <= pdfHeight) {
-      // Conteúdo cabe em uma única página
+      // Conteúdo cabe em uma única página — centraliza verticalmente
+      const yOffset = (pdfHeight - scaledHeight) / 2;
       pdf.addImage(imgData, "JPEG", 0, yOffset, scaledWidth, scaledHeight);
     } else {
       // Conteúdo maior que uma página — divide em múltiplas páginas
-      let yPosition = 0;
       let pageIndex = 0;
+      let yRendered = 0; // mm já renderizados
 
-      while (yPosition < scaledHeight) {
-        if (pageIndex > 0) {
-          pdf.addPage();
-        }
+      while (yRendered < scaledHeight) {
+        if (pageIndex > 0) pdf.addPage();
 
-        // Recorta a porção da página atual do canvas
+        // Fatia do canvas correspondente a esta página (em pixels)
+        const startPx = Math.round((yRendered / ratio));
+        const sliceHeightPx = Math.min(
+          Math.round(pdfHeight / ratio),
+          imgHeight - startPx
+        );
+
+        if (sliceHeightPx <= 0) break;
+
         const pageCanvas = document.createElement("canvas");
-        const pageHeightPx = Math.round((pdfHeight / ratio));
-        const startY = Math.round(yPosition / ratio);
-        const sliceHeight = Math.min(pageHeightPx, imgHeight - startY);
-
         pageCanvas.width = imgWidth;
-        pageCanvas.height = sliceHeight;
+        pageCanvas.height = sliceHeightPx;
 
         const ctx = pageCanvas.getContext("2d");
         if (ctx) {
-          ctx.drawImage(canvas, 0, startY, imgWidth, sliceHeight, 0, 0, imgWidth, sliceHeight);
+          ctx.drawImage(
+            canvas,
+            0, startPx, imgWidth, sliceHeightPx,
+            0, 0, imgWidth, sliceHeightPx
+          );
           const pageImgData = pageCanvas.toDataURL("image/jpeg", quality);
-          const pageScaledHeight = sliceHeight * ratio;
+          const pageScaledHeight = sliceHeightPx * ratio;
           pdf.addImage(pageImgData, "JPEG", 0, 0, scaledWidth, pageScaledHeight);
         }
 
-        yPosition += pdfHeight;
+        yRendered += pdfHeight;
         pageIndex++;
       }
     }
 
-    // Salvar PDF — em mobile o browser abre o arquivo para download
+    // ── 5. Salvar PDF ────────────────────────────────────────────────────
     pdf.save(filename);
-  } catch (error) {
-    console.error("Erro ao gerar PDF:", error);
-    throw new Error(
-      `Falha ao exportar PDF: ${error instanceof Error ? error.message : "Erro desconhecido"}`
-    );
+
+  } finally {
+    // ── 6. Limpar o container oculto ─────────────────────────────────────
+    if (document.body.contains(hiddenContainer)) {
+      document.body.removeChild(hiddenContainer);
+    }
   }
 }
 
@@ -149,8 +182,8 @@ export async function exportMultiPagePDF(
     format = "a4",
   } = options;
 
-  const deviceScale = typeof window !== "undefined" ? (window.devicePixelRatio || 1) : 1;
-  const safeScale = deviceScale > 2 ? Math.min(scale, 1.5) : scale;
+  const dpr = typeof window !== "undefined" ? (window.devicePixelRatio || 1) : 1;
+  const safeScale = dpr > 2 ? Math.min(scale, 1.5) : scale;
 
   try {
     const pdf = new jsPDF({
@@ -166,34 +199,54 @@ export async function exportMultiPagePDF(
     for (let i = 0; i < elements.length; i++) {
       const element = elements[i];
 
-      const canvas = await html2canvas(element, {
-        scale: safeScale,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: "#ffffff",
-        logging: false,
-        imageTimeout: 15000,
-        windowHeight: element.scrollHeight,
-        windowWidth: element.scrollWidth,
-      });
+      const hiddenContainer = document.createElement("div");
+      hiddenContainer.style.cssText = [
+        "position: fixed",
+        "top: 0",
+        "left: -99999px",
+        "width: " + element.scrollWidth + "px",
+        "background: #ffffff",
+        "z-index: -1",
+        "overflow: visible",
+      ].join("; ");
 
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
+      const clone = element.cloneNode(true) as HTMLElement;
+      clone.style.transform = "none";
+      clone.style.position = "static";
+      hiddenContainer.appendChild(clone);
+      document.body.appendChild(hiddenContainer);
 
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const scaledWidth = imgWidth * ratio;
-      const scaledHeight = imgHeight * ratio;
+      await new Promise((r) => setTimeout(r, 200));
 
-      const xOffset = (pdfWidth - scaledWidth) / 2;
-      const yOffset = (pdfHeight - scaledHeight) / 2;
+      try {
+        const canvas = await html2canvas(clone, {
+          scale: safeScale,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: "#ffffff",
+          logging: false,
+          imageTimeout: 20000,
+          windowWidth: clone.scrollWidth,
+          windowHeight: clone.scrollHeight,
+        });
 
-      const imgData = canvas.toDataURL("image/jpeg", quality);
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+        const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+        const scaledWidth = imgWidth * ratio;
+        const scaledHeight = imgHeight * ratio;
+        const xOffset = (pdfWidth - scaledWidth) / 2;
+        const yOffset = (pdfHeight - scaledHeight) / 2;
 
-      if (i > 0) {
-        pdf.addPage();
+        const imgData = canvas.toDataURL("image/jpeg", quality);
+
+        if (i > 0) pdf.addPage();
+        pdf.addImage(imgData, "JPEG", xOffset, yOffset, scaledWidth, scaledHeight);
+      } finally {
+        if (document.body.contains(hiddenContainer)) {
+          document.body.removeChild(hiddenContainer);
+        }
       }
-
-      pdf.addImage(imgData, "JPEG", xOffset, yOffset, scaledWidth, scaledHeight);
     }
 
     pdf.save(filename);
