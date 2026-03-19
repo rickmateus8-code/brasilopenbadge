@@ -13,7 +13,9 @@ import CreateAttestation from "./pages/CreateAttestation";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
+      {/* Exibir a Página de Validação na raiz para o domínio validaratestado.digital */}
+      <Route path="/" component={Validation} />
+      <Route path="/home" component={Home} />
       <Route path="/atestado/:id" component={AttestationView} />
       <Route path="/validar" component={Validation} />
       <Route path="/v/:id" component={Validation} />
