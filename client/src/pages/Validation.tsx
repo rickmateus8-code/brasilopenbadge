@@ -4,6 +4,7 @@ import { useLanguageWithSetter } from "@/hooks/useLanguage";
 import { useParams } from "wouter";
 import { exportElementToPDF, generatePDFFilename } from "@/lib/pdfExport";
 import { findByCode, validateAttestation } from "@/lib/attestationStore";
+import { validateAttestationApi, fetchAttestationByCode } from "@/lib/apiClient";
 
 type Language = "pt" | "en";
 
@@ -60,8 +61,8 @@ export default function Validation() {
 
   const t = labels[language];
 
-  // Validate locally (no API needed)
-  const handleValidate = (codeToUse?: string, dateToUse?: string) => {
+  // Validate via API (D1) with local fallback
+  const handleValidate = async (codeToUse?: string, dateToUse?: string) => {
     const code = codeToUse || codigo;
     const date = dateToUse || data;
 
@@ -75,19 +76,28 @@ export default function Validation() {
     setValidAttestation(null);
     setShowViewer(false);
 
-    // Simulate a small delay for UX
-    setTimeout(() => {
-      const result = validateAttestation(code, date);
-
-      if (result.valid && result.data) {
-        setValidAttestation(result.data);
+    try {
+      // Tentar via API primeiro
+      const apiResult = await validateAttestationApi(code, date);
+      if (apiResult.valid && apiResult.data) {
+        setValidAttestation(apiResult.data);
         setShowViewer(true);
-      } else {
-        setErrorMessage(t.documentNotFound);
+        setIsValidating(false);
+        return;
       }
+    } catch (_) {
+      // API indisponível, usar fallback local
+    }
 
-      setIsValidating(false);
-    }, 500);
+    // Fallback: busca local
+    const result = validateAttestation(code, date);
+    if (result.valid && result.data) {
+      setValidAttestation(result.data);
+      setShowViewer(true);
+    } else {
+      setErrorMessage(t.documentNotFound);
+    }
+    setIsValidating(false);
   };
 
   // Auto-validate when accessing via /v/:id (QR Code route)
@@ -97,8 +107,21 @@ export default function Validation() {
       setCodigo(code);
       setIsValidating(true);
 
-      // Look up locally
-      setTimeout(() => {
+      // Tentar via API primeiro, fallback local
+      (async () => {
+        try {
+          const apiAtt = await fetchAttestationByCode(code);
+          if (apiAtt) {
+            setValidAttestation(apiAtt);
+            setData(apiAtt.dataAssinatura || "");
+            setShowViewer(true);
+            setIsValidating(false);
+            return;
+          }
+        } catch (_) {
+          // fallback
+        }
+        // Fallback local
         const att = findByCode(code);
         if (att) {
           setValidAttestation(att);
@@ -108,7 +131,7 @@ export default function Validation() {
           setErrorMessage(t.documentNotFound);
         }
         setIsValidating(false);
-      }, 500);
+      })();
     }
   }, [params.id]);
 

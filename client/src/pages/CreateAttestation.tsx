@@ -9,6 +9,7 @@ import type { AttestationData } from "@/data/attestations";
 
 import { exportElementToPDF, generatePDFFilename } from "@/lib/pdfExport";
 import { createAttestation } from "@/lib/attestationStore";
+import { createAttestationApi } from "@/lib/apiClient";
 
 type Language = "pt" | "en";
 
@@ -195,26 +196,42 @@ export default function CreateAttestation() {
     e.preventDefault();
     setIsLoading(true);
 
+    const payload = {
+      paciente: formData.paciente.toUpperCase(),
+      sexo: formData.sexo,
+      nascimento: formData.nascimento,
+      cpf: formData.cpf,
+      nomeMae: formData.nomeMae.toUpperCase(),
+      endereco: formData.endereco.toUpperCase(),
+      passaporte: formData.passaporte.toUpperCase(),
+      condicao: formData.condicao,
+      vacinacao: formData.vacinacao.toUpperCase(),
+      cid: formData.cid.toUpperCase(),
+      medico: formData.medico.toUpperCase(),
+      crm: formData.crm,
+      especialidade: formData.especialidade.toUpperCase(),
+      dataAssinatura: formData.dataAssinatura,
+      horaAssinatura: formData.horaAssinatura,
+      dataEmissao: formData.dataEmissao.toUpperCase(),
+      logoUrl: logoUrl || DEFAULT_LOGO_URL,
+      instituicao: formData.instituicao,
+      enderecoEmitente: formData.enderecoEmitente,
+    };
+
     try {
-      const newAtt = createAttestation({
-        paciente: formData.paciente.toUpperCase(),
-        sexo: formData.sexo,
-        nascimento: formData.nascimento,
-        cpf: formData.cpf,
-        nomeMae: formData.nomeMae.toUpperCase(),
-        endereco: formData.endereco.toUpperCase(),
-        passaporte: formData.passaporte.toUpperCase(),
-        condicao: formData.condicao,
-        vacinacao: formData.vacinacao.toUpperCase(),
-        cid: formData.cid.toUpperCase(),
-        medico: formData.medico.toUpperCase(),
-        crm: formData.crm,
-        especialidade: formData.especialidade.toUpperCase(),
-        dataAssinatura: formData.dataAssinatura,
-        horaAssinatura: formData.horaAssinatura,
-        dataEmissao: formData.dataEmissao.toUpperCase(),
-        logoUrl: logoUrl || DEFAULT_LOGO_URL,
-      } as any);
+      // Tentar salvar via API (D1) primeiro, fallback para localStorage
+      let newAtt: any;
+      try {
+        const apiResult = await createAttestationApi(payload);
+        if (apiResult) {
+          newAtt = apiResult;
+        } else {
+          throw new Error('API retornou vazio');
+        }
+      } catch (apiErr) {
+        console.warn('API indisponível, salvando localmente:', apiErr);
+        newAtt = createAttestation(payload as any);
+      }
 
       setCreatedCode(newAtt.codigoQR);
       alert(`${t.success}\n\n${t.codeGenerated}: ${newAtt.codigoQR}`);
