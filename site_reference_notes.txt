@@ -1,0 +1,43 @@
+== ANÁLISE COMPLETA DO SITE atestado-valide.digital ==
+
+PÁGINA INICIAL (Validação):
+- Header: Fundo azul escuro, ícone de escudo azul + "Validador Oficial" centralizado
+- Fundo: Cinza claro (#f0f2f5 ou similar)
+- Card centralizado com borda arredondada, fundo branco
+- Título: "Consultar Documento" (negrito, centralizado)
+- Campo 1: "Código de Autenticação" - input com placeholder "XXXX-XXXX"
+- Campo 2: "Data de Emissão" - input type date
+- Botão: "VALIDAR DOCUMENTO" - verde (#22c55e), texto branco, largura total
+- Botão: "LIMPAR" - outline/cinza, largura total
+- SEM footer visível
+- SEM botão CLOSE
+- SEM seletor de idioma na tela inicial
+
+
+RESULTADO DA VALIDAÇÃO (após clicar VALIDAR DOCUMENTO):
+- Header superior: Fundo verde escuro, ícone check verde + "VÁLIDO E AUTÊNTICO" à esquerda, nome do paciente "LUCAS MESSIAS MARON" à direita
+- Corpo: Visualizador de PDF embutido (como um iframe/embed de PDF)
+  - Barra de ferramentas do PDF viewer no topo (navegação de páginas, zoom, download, print, rotate)
+  - Miniatura do PDF à esquerda
+  - PDF completo renderizado no centro
+- Rodapé fixo na parte inferior:
+  - Botão "FECHAR" à esquerda (outline/branco)
+  - Botão "BAIXAR PDF" à direita (verde, com ícone de download, largura total)
+- O PDF é exibido DIRETAMENTE no visualizador, não como HTML renderizado
+- O nome do arquivo PDF é "115.pdf"
+
+FLUXO COMPLETO:
+1. Usuário insere código (XXXX.XXXX) e data de emissão
+2. Clica em "VALIDAR DOCUMENTO"
+3. Sistema valida e exibe:
+   - Barra verde "VÁLIDO E AUTÊNTICO" + nome do paciente
+   - PDF renderizado em viewer embutido
+   - Botões FECHAR e BAIXAR PDF no rodapé
+4. FECHAR volta para o formulário de validação
+5. BAIXAR PDF faz download do arquivo
+
+DIFERENÇAS CHAVE vs NOSSO PROJETO:
+- O site original usa um PDF viewer embutido (provavelmente pdf.js ou embed nativo)
+- O site original mostra o PDF real, não uma reconstrução HTML
+- O botão BAIXAR PDF faz download direto do arquivo PDF
+- A barra de status "VÁLIDO E AUTÊNTICO" é fixa no topo com fundo verde

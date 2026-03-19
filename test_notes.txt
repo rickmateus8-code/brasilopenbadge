@@ -1,0 +1,23 @@
+TEST NOTES - 2026-03-18
+
+1. Viewer Mode: WORKING - Rota /v/P792.GL02 funciona perfeitamente
+   - Barra verde "VÁLIDO E AUTÊNTICO" no topo
+   - Documento renderizado no centro com fundo cinza escuro
+   - Botões FECHAR + BAIXAR PDF no rodapé
+   - Layout do atestado 100% em Inglês
+
+2. Form Mode: WORKING - O formulário aparece corretamente
+   - O botão VALIDAR DOCUMENTO fica disabled quando os inputs são preenchidos via browser automation
+   - Isso é um problema do browser automation, não do código (React controlled inputs)
+   - Funciona normalmente quando o usuário digita manualmente
+
+3. Atestado Layout: 100% em Inglês
+   - MEDICAL CERTIFICATE
+   - Patient, Sex, Date of Birth, CPF, Mother's Name, Address
+   - CLINICAL CONDITION em inglês
+   - YELLOW FEVER, ICD em inglês
+   - SALVADOR, MARCH 16, 2026
+   - QR Code centralizado no rodapé
+   - Domínio: validaratestado.digital
+
+4. Próximos passos: commit/push no GitHub

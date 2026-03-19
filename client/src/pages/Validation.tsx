@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect, useRef } from "react";
 import { attestations } from "@/data/attestations";
 import AttestationDocument from "@/components/AttestationDocument";
 import { useLanguageWithSetter } from "@/hooks/useLanguage";
 import { useParams } from "wouter";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 
 type Language = "pt" | "en";
 
@@ -18,12 +18,15 @@ const labels = {
     verifying: "Verificando...",
     clear: "LIMPAR",
     validAndAuthentic: "VÁLIDO E AUTÊNTICO",
-    documentValid: "Documento é válido e autêntico",
     invalid: "INVÁLIDO",
-    documentNotFound: "Documento não encontrado ou dados inválidos",
+    documentNotFound: "Documento não encontrado na base de dados oficial.",
     downloadPdf: "BAIXAR PDF",
+    downloading: "BAIXANDO...",
+    close: "FECHAR",
     officialValidation: "Validação Oficial de Atestados Médicos",
-    patient: "Paciente",
+    fillAllFields: "Preencha todos os campos.",
+    connectionError: "Erro de conexão.",
+    downloadError: "Erro ao baixar o arquivo. Tente novamente.",
   },
   en: {
     title: "Official Validator",
@@ -34,12 +37,15 @@ const labels = {
     verifying: "Verifying...",
     clear: "CLEAR",
     validAndAuthentic: "VALID AND AUTHENTIC",
-    documentValid: "Document is valid and authentic",
     invalid: "INVALID",
-    documentNotFound: "Document not found or invalid data",
+    documentNotFound: "Document not found in the official database.",
     downloadPdf: "DOWNLOAD PDF",
+    downloading: "DOWNLOADING...",
+    close: "CLOSE",
     officialValidation: "Official Validation of Medical Certificates",
-    patient: "Patient",
+    fillAllFields: "Please fill in all fields.",
+    connectionError: "Connection error.",
+    downloadError: "Error downloading the file. Please try again.",
   },
 };
 
@@ -48,34 +54,38 @@ export default function Validation() {
   const [codigo, setCodigo] = useState(params.id || "");
   const [data, setData] = useState(params.id ? "2026-03-16" : "");
   const [isValidating, setIsValidating] = useState(false);
-  const [validationResult, setValidationResult] = useState<{
-    valid: boolean;
-    message: string;
-    attestation?: any;
-  } | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [showViewer, setShowViewer] = useState(false);
+  const [validAttestation, setValidAttestation] = useState<any>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { language, setLanguage } = useLanguageWithSetter();
+  const documentRef = useRef<HTMLDivElement>(null);
 
   const t = labels[language];
 
   const handleValidate = async (codeToUse = codigo, dateToUse = data) => {
+    if (!codeToUse || !dateToUse) {
+      alert(t.fillAllFields);
+      return;
+    }
+
     setIsValidating(true);
-    setValidationResult(null);
+    setErrorMessage(null);
+    setValidAttestation(null);
+    setShowViewer(false);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Simulate network delay
+    await new Promise((resolve) => setTimeout(resolve, 800));
 
-    const attestation = Object.values(attestations).find((a) => a.codigoQR === codeToUse);
+    const attestation = Object.values(attestations).find(
+      (a) => a.codigoQR === codeToUse.trim().toUpperCase()
+    );
 
     if (attestation && dateToUse === "2026-03-16") {
-      setValidationResult({
-        valid: true,
-        message: t.documentValid,
-        attestation,
-      });
+      setValidAttestation(attestation);
+      setShowViewer(true);
     } else {
-      setValidationResult({
-        valid: false,
-        message: t.documentNotFound,
-      });
+      setErrorMessage(t.documentNotFound);
     }
 
     setIsValidating(false);
@@ -87,167 +97,434 @@ export default function Validation() {
     }
   }, [params.id]);
 
+  const handleClose = () => {
+    setShowViewer(false);
+    setValidAttestation(null);
+    setErrorMessage(null);
+  };
+
   const handleClear = () => {
     setCodigo("");
     setData("");
-    setValidationResult(null);
+    setErrorMessage(null);
+    setValidAttestation(null);
+    setShowViewer(false);
   };
 
-  const handleDownloadPDF = () => {
-    if (validationResult?.attestation) {
-      const originalTitle = document.title;
-      document.title = `ATESTADO_${validationResult.attestation.paciente.replace(/\s+/g, "_")}.pdf`;
-      window.print();
-      document.title = originalTitle;
+  const handleDownloadPDF = async () => {
+    if (!documentRef.current || !validAttestation) return;
+
+    setIsDownloading(true);
+
+    try {
+      const canvas = await html2canvas(documentRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const imgY = 0;
+
+      pdf.addImage(imgData, "PNG", imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+
+      const nomeFormatado = validAttestation.paciente
+        .trim()
+        .toUpperCase()
+        .replace(/\s+/g, "_");
+      pdf.save(`ATESTADO_${nomeFormatado}.pdf`);
+    } catch (err) {
+      console.error("PDF generation error:", err);
+      alert(t.downloadError);
+    } finally {
+      setIsDownloading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-100 p-2 sm:p-4 print:p-0 print:bg-white">
-      {/* Header - Centralizado e Responsivo */}
-      <div className="bg-blue-600 text-white py-4 sm:py-6 px-4 sm:px-6 rounded-t-lg max-w-4xl mx-auto print:hidden">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          {/* Logo + Title - Centralizado */}
-          <div className="flex items-center justify-center gap-2">
-            <div className="w-7 h-7 bg-white rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-blue-600 font-bold text-sm">✓</span>
+  // ===== VIEWER MODE (after successful validation) =====
+  if (showViewer && validAttestation) {
+    return (
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: "flex",
+          flexDirection: "column",
+          backgroundColor: "#f0f2f5",
+          zIndex: 9999,
+        }}
+      >
+        {/* GREEN HEADER BAR - Replicating original site */}
+        <div
+          style={{
+            backgroundColor: "#166534",
+            color: "#ffffff",
+            padding: "12px 20px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div
+              style={{
+                width: "24px",
+                height: "24px",
+                backgroundColor: "#22c55e",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "14px",
+                fontWeight: "bold",
+              }}
+            >
+              ✓
             </div>
-            <span className="font-bold text-lg text-center">{t.title}</span>
+            <span style={{ fontWeight: "bold", fontSize: "14px" }}>
+              {t.validAndAuthentic}
+            </span>
           </div>
+          <span style={{ fontWeight: "bold", fontSize: "14px" }}>
+            {validAttestation.paciente}
+          </span>
+        </div>
 
-          {/* Language Buttons */}
-          <div className="flex gap-2 sm:absolute sm:right-8">
-            <Button
-              variant={language === "pt" ? "default" : "outline"}
-              onClick={() => setLanguage("pt")}
-              className={`text-xs h-8 px-3 border-white ${language === "pt" ? "bg-white text-blue-600" : "bg-transparent hover:bg-white/20"}`}
-            >
-              PT-BR
-            </Button>
-            <Button
-              variant={language === "en" ? "default" : "outline"}
-              onClick={() => setLanguage("en")}
-              className={`text-xs h-8 px-3 border-white ${language === "en" ? "bg-white text-blue-600" : "bg-transparent hover:bg-white/20"}`}
-            >
-              EN
-            </Button>
+        {/* DOCUMENT VIEWER AREA */}
+        <div
+          style={{
+            flex: 1,
+            overflow: "auto",
+            padding: "20px",
+            display: "flex",
+            justifyContent: "center",
+            backgroundColor: "#525659",
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#ffffff",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+              maxWidth: "900px",
+              width: "100%",
+            }}
+          >
+            <div ref={documentRef}>
+              <AttestationDocument
+                data={validAttestation}
+                logoUrl={validAttestation.logoUrl}
+              />
+            </div>
           </div>
+        </div>
+
+        {/* FOOTER BAR - FECHAR + BAIXAR PDF */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0",
+            flexShrink: 0,
+            borderTop: "2px solid #e5e7eb",
+          }}
+        >
+          {/* FECHAR button */}
+          <button
+            onClick={handleClose}
+            style={{
+              padding: "16px 24px",
+              backgroundColor: "#ffffff",
+              color: "#333",
+              border: "none",
+              fontWeight: "bold",
+              fontSize: "14px",
+              cursor: "pointer",
+              flexShrink: 0,
+            }}
+          >
+            {t.close}
+          </button>
+
+          {/* BAIXAR PDF button */}
+          <button
+            onClick={handleDownloadPDF}
+            disabled={isDownloading}
+            style={{
+              flex: 1,
+              padding: "16px 24px",
+              backgroundColor: "#166534",
+              color: "#ffffff",
+              border: "none",
+              fontWeight: "bold",
+              fontSize: "14px",
+              cursor: isDownloading ? "wait" : "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+              opacity: isDownloading ? 0.7 : 1,
+            }}
+          >
+            <span>⬇</span>
+            {isDownloading ? t.downloading : t.downloadPdf}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ===== FORM MODE (initial state) =====
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "#f0f2f5",
+        display: "flex",
+        flexDirection: "column",
+        fontFamily: "Roboto, Arial, Helvetica, sans-serif",
+      }}
+    >
+      {/* HEADER - Blue bar with shield icon */}
+      <div
+        style={{
+          backgroundColor: "#1e40af",
+          color: "#ffffff",
+          padding: "16px 20px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "10px",
+          position: "relative",
+        }}
+      >
+        <div
+          style={{
+            width: "28px",
+            height: "28px",
+            backgroundColor: "#3b82f6",
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "16px",
+            fontWeight: "bold",
+          }}
+        >
+          🛡
+        </div>
+        <span style={{ fontWeight: "bold", fontSize: "16px" }}>
+          {t.title}
+        </span>
+
+        {/* Language Toggle */}
+        <div
+          style={{
+            position: "absolute",
+            right: "16px",
+            display: "flex",
+            gap: "6px",
+          }}
+        >
+          <button
+            onClick={() => setLanguage("pt")}
+            style={{
+              padding: "4px 10px",
+              fontSize: "11px",
+              fontWeight: "bold",
+              borderRadius: "4px",
+              border: "1px solid #fff",
+              backgroundColor: language === "pt" ? "#ffffff" : "transparent",
+              color: language === "pt" ? "#1e40af" : "#ffffff",
+              cursor: "pointer",
+            }}
+          >
+            PT-BR
+          </button>
+          <button
+            onClick={() => setLanguage("en")}
+            style={{
+              padding: "4px 10px",
+              fontSize: "11px",
+              fontWeight: "bold",
+              borderRadius: "4px",
+              border: "1px solid #fff",
+              backgroundColor: language === "en" ? "#ffffff" : "transparent",
+              color: language === "en" ? "#1e40af" : "#ffffff",
+              cursor: "pointer",
+            }}
+          >
+            EN
+          </button>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="bg-white max-w-4xl mx-auto p-4 sm:p-8 shadow-lg print:shadow-none print:p-0 relative">
-        {!validationResult ? (
-          <div className="space-y-6 print:hidden">
-            <h2 className="text-2xl sm:text-3xl font-bold text-center">{t.queryDocument}</h2>
+      {/* MAIN CONTENT */}
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "center",
+          padding: "40px 16px",
+        }}
+      >
+        <div
+          style={{
+            backgroundColor: "#ffffff",
+            borderRadius: "8px",
+            padding: "32px",
+            width: "100%",
+            maxWidth: "480px",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+          }}
+        >
+          <h2
+            style={{
+              fontSize: "20px",
+              fontWeight: "bold",
+              textAlign: "center",
+              marginBottom: "24px",
+              color: "#111",
+            }}
+          >
+            {t.queryDocument}
+          </h2>
 
-            <div className="space-y-4 max-w-lg mx-auto">
-              <div>
-                <label className="block text-sm font-semibold mb-2">{t.authenticationCode}</label>
-                <Input
-                  id="codigo"
-                  placeholder="XXXX.XXXX"
-                  value={codigo}
-                  onChange={(e) => setCodigo(e.target.value.toUpperCase())}
-                  className="text-center font-mono text-sm sm:text-base"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-2">{t.issueDate}</label>
-                <Input
-                  id="data"
-                  type="date"
-                  value={data}
-                  onChange={(e) => setData(e.target.value)}
-                  className="text-center text-sm sm:text-base"
-                />
-              </div>
-
-              <Button
-                onClick={() => handleValidate()}
-                disabled={!codigo || !data || isValidating}
-                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 font-semibold text-sm sm:text-base"
-              >
-                {isValidating ? t.verifying : t.validateDocument}
-              </Button>
-
-              <Button
-                onClick={handleClear}
-                variant="outline"
-                className="w-full py-3 text-sm sm:text-base"
-              >
-                {t.clear}
-              </Button>
+          {/* Error Message */}
+          {errorMessage && (
+            <div
+              style={{
+                backgroundColor: "#fef2f2",
+                border: "1px solid #fca5a5",
+                borderRadius: "6px",
+                padding: "12px",
+                marginBottom: "16px",
+                color: "#991b1b",
+                fontSize: "14px",
+                textAlign: "center",
+              }}
+            >
+              {errorMessage}
             </div>
+          )}
+
+          {/* Authentication Code */}
+          <div style={{ marginBottom: "16px" }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "13px",
+                fontWeight: "500",
+                marginBottom: "6px",
+                color: "#374151",
+              }}
+            >
+              {t.authenticationCode}
+            </label>
+            <input
+              id="codigo"
+              type="text"
+              placeholder="XXXX-XXXX"
+              value={codigo}
+              onChange={(e) => setCodigo(e.target.value.toUpperCase())}
+              style={{
+                width: "100%",
+                padding: "10px 14px",
+                border: "1px solid #d1d5db",
+                borderRadius: "6px",
+                fontSize: "14px",
+                textAlign: "center",
+                fontFamily: "monospace",
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
           </div>
-        ) : (
-          <div className="space-y-4 sm:space-y-6">
-            {/* Validation Result Box */}
-            <div className="print:hidden">
-              {validationResult.valid ? (
-                <div className="bg-green-50 border-2 border-green-600 rounded-lg p-4 sm:p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-white font-bold">✓</span>
-                    </div>
-                    <h3 className="text-lg sm:text-xl font-bold text-green-700">{t.validAndAuthentic}</h3>
-                  </div>
-                  <p className="text-green-800 text-sm sm:text-base">{validationResult.message}</p>
-                  {validationResult.attestation && (
-                    <p className="mt-2 font-semibold text-green-900 text-sm sm:text-base">
-                      {t.patient}: {validationResult.attestation.paciente}
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <div className="bg-red-50 border-2 border-red-600 rounded-lg p-4 sm:p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-white font-bold">✕</span>
-                    </div>
-                    <h3 className="text-lg sm:text-xl font-bold text-red-700">{t.invalid}</h3>
-                  </div>
-                  <p className="text-red-800 text-sm sm:text-base">{validationResult.message}</p>
-                </div>
-              )}
-            </div>
 
-            {/* Document Preview / Print Area */}
-            {validationResult.attestation && (
-              <div className="border-2 border-gray-300 rounded-lg p-2 sm:p-4 max-h-[600px] sm:max-h-[700px] overflow-y-auto bg-gray-50 print:border-none print:p-0 print:max-h-none print:overflow-visible print:bg-white">
-                <div className="transform scale-[0.65] sm:scale-[0.85] lg:scale-100 origin-top print:scale-100">
-                  <AttestationDocument data={validationResult.attestation} logoUrl={validationResult.attestation.logoUrl} />
-                </div>
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 print:hidden">
-              <Button
-                onClick={handleClear}
-                variant="outline"
-                className="flex-1 py-3 text-sm sm:text-base"
-              >
-                {t.clear}
-              </Button>
-              {validationResult.valid && (
-                <Button
-                  onClick={handleDownloadPDF}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 font-semibold flex items-center justify-center gap-2 text-sm sm:text-base"
-                >
-                  <span>⬇</span> {t.downloadPdf}
-                </Button>
-              )}
-            </div>
+          {/* Issue Date */}
+          <div style={{ marginBottom: "24px" }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "13px",
+                fontWeight: "500",
+                marginBottom: "6px",
+                color: "#374151",
+              }}
+            >
+              {t.issueDate}
+            </label>
+            <input
+              id="data"
+              type="date"
+              value={data}
+              onChange={(e) => setData(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "10px 14px",
+                border: "1px solid #d1d5db",
+                borderRadius: "6px",
+                fontSize: "14px",
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
           </div>
-        )}
-      </div>
 
-      {/* Footer */}
-      <div className="bg-blue-600 text-white py-3 sm:py-4 px-4 sm:px-6 rounded-b-lg max-w-4xl mx-auto mt-0 print:hidden">
-        <div className="flex items-center justify-center gap-2">
-          <span className="text-xs sm:text-sm text-center">{t.officialValidation}</span>
+          {/* VALIDATE BUTTON */}
+          <button
+            onClick={() => handleValidate()}
+            disabled={!codigo || !data || isValidating}
+            style={{
+              width: "100%",
+              padding: "14px",
+              backgroundColor: !codigo || !data || isValidating ? "#86efac" : "#16a34a",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "6px",
+              fontSize: "14px",
+              fontWeight: "bold",
+              cursor: !codigo || !data || isValidating ? "not-allowed" : "pointer",
+              marginBottom: "8px",
+              letterSpacing: "0.5px",
+            }}
+          >
+            {isValidating ? t.verifying : t.validateDocument}
+          </button>
+
+          {/* CLEAR BUTTON */}
+          <button
+            onClick={handleClear}
+            style={{
+              width: "100%",
+              padding: "14px",
+              backgroundColor: "#f3f4f6",
+              color: "#6b7280",
+              border: "1px solid #e5e7eb",
+              borderRadius: "6px",
+              fontSize: "14px",
+              fontWeight: "bold",
+              cursor: "pointer",
+              letterSpacing: "0.5px",
+            }}
+          >
+            {t.clear}
+          </button>
         </div>
       </div>
     </div>

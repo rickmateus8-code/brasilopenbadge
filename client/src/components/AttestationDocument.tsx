@@ -12,15 +12,16 @@ interface AttestationDocumentProps {
 const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>(
   ({ data, logoUrl }, ref) => {
     const qrValue = `https://validaratestado.digital/v/${data.codigoQR}`;
-    const sexoFormatado = data.sexo === "MALE" ? "MASCULINO" : "FEMININO";
+    const sexoFormatado = data.sexo === "MALE" ? "MALE" : "FEMALE";
     const effectiveLogoUrl = logoUrl || LOGO_URL;
 
-    // Escala: 25% aumento - 5% redução = 20% final (1.1875)
+    // Scale factor: 20% increase (25% - 5% reduction)
     const s = 1.1875;
 
     return (
       <div
         ref={ref}
+        id="attestation-document"
         className="attestation-print-container"
         style={{
           fontFamily: "Arial, Helvetica, sans-serif",
@@ -48,7 +49,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           `}
         </style>
 
-        {/* ===== CABEÇALHO - Logo à esquerda + Info centralizada ===== */}
+        {/* ===== HEADER - Logo left + Info centered ===== */}
         <div
           style={{
             display: "flex",
@@ -63,16 +64,17 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               src={effectiveLogoUrl}
               alt="IDAB Logo"
               style={{ width: "100%", height: "auto", objectFit: "contain" }}
+              crossOrigin="anonymous"
             />
           </div>
 
-          {/* Informações da Instituição - Centralizado */}
+          {/* Institution Info - Centered */}
           <div style={{ flex: 1, textAlign: "center" }}>
             <div style={{ fontSize: `${14 * s}px`, fontWeight: "bold", marginBottom: `${2 * s}px` }}>
               IDAB - SALVADOR/BAHIA
             </div>
             <div style={{ fontSize: `${11 * s}px`, fontWeight: "bold", marginBottom: `${2 * s}px` }}>
-              INSTITUTO DE DERMATOLOGIA E ALERGIA
+              DERMATOLOGY AND ALLERGY INSTITUTE
             </div>
             <div style={{ fontSize: `${10 * s}px`, fontWeight: "bold", marginBottom: `${1 * s}px` }}>
               CNPJ 15.180.631/0003-79
@@ -86,7 +88,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </div>
         </div>
 
-        {/* ===== TÍTULO ===== */}
+        {/* ===== TITLE ===== */}
         <div
           style={{
             textAlign: "center",
@@ -97,11 +99,11 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           }}
         >
           <h2 style={{ fontSize: `${20 * s}px`, fontWeight: "bold", margin: 0, letterSpacing: "2px" }}>
-            ATESTADO MÉDICO
+            MEDICAL CERTIFICATE
           </h2>
         </div>
 
-        {/* ===== CAIXA DE DADOS DO PACIENTE ===== */}
+        {/* ===== PATIENT DATA BOX ===== */}
         <div
           style={{
             border: `${2 * s}px solid #000`,
@@ -110,50 +112,50 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             fontSize: `${10 * s}px`,
           }}
         >
-          {/* Linha 1: Paciente, Sexo, Nascimento */}
+          {/* Line 1: Patient, Sex, Birth Date */}
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: `${6 * s}px` }}>
             <div style={{ flex: 1 }}>
-              <span style={{ fontWeight: "bold" }}>Paciente: </span>
+              <span style={{ fontWeight: "bold" }}>Patient: </span>
               <span>{data.paciente}</span>
             </div>
             <div style={{ width: `${140 * s}px` }}>
-              <span style={{ fontWeight: "bold" }}>Sexo: </span>
+              <span style={{ fontWeight: "bold" }}>Sex: </span>
               <span>{sexoFormatado}</span>
             </div>
-            <div style={{ width: `${140 * s}px` }}>
-              <span style={{ fontWeight: "bold" }}>Nasc: </span>
+            <div style={{ width: `${160 * s}px` }}>
+              <span style={{ fontWeight: "bold" }}>Date of Birth: </span>
               <span>{data.nascimento}</span>
             </div>
           </div>
 
-          {/* Linha 2: CPF, Nome da Mãe */}
+          {/* Line 2: CPF, Mother's Name */}
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: `${6 * s}px` }}>
             <div style={{ width: `${200 * s}px` }}>
               <span style={{ fontWeight: "bold" }}>CPF: </span>
               <span>{data.cpf}</span>
             </div>
             <div style={{ flex: 1 }}>
-              <span style={{ fontWeight: "bold" }}>Nome da Mãe: </span>
+              <span style={{ fontWeight: "bold" }}>Mother's Name: </span>
               <span>{data.nomeMae}</span>
             </div>
           </div>
 
-          {/* Linha 3: Endereço */}
+          {/* Line 3: Address */}
           <div style={{ marginBottom: `${8 * s}px` }}>
-            <span style={{ fontWeight: "bold" }}>Endereço: </span>
+            <span style={{ fontWeight: "bold" }}>Address: </span>
             <span>{data.endereco}</span>
           </div>
 
-          {/* Separador */}
+          {/* Separator */}
           <div style={{ borderTop: `${1 * s}px solid #000`, margin: `${8 * s}px 0` }}></div>
 
-          {/* Endereço Emitente */}
+          {/* Issuing Address */}
           <div style={{ fontSize: `${9 * s}px`, fontWeight: "bold" }}>
-            ENDEREÇO EMITENTE: <span style={{ fontWeight: "normal" }}>AV. ANTÔNIO CARLOS MAGALHÃES, 585 - ITAIGARA, SALVADOR - BA, 41825-000</span>
+            ISSUING ADDRESS: <span style={{ fontWeight: "normal" }}>AV. ANTÔNIO CARLOS MAGALHÃES, 585 - ITAIGARA, SALVADOR - BA, 41825-000</span>
           </div>
         </div>
 
-        {/* ===== CORPO DO TEXTO - BILÍNGUE PT-BR / EN ===== */}
+        {/* ===== BODY TEXT - 100% ENGLISH ===== */}
         <div
           style={{
             marginTop: `${30 * s}px`,
@@ -162,53 +164,41 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             textAlign: "justify",
           }}
         >
-          {/* Declaração PT-BR */}
-          <p style={{ marginBottom: `${10 * s}px`, textIndent: `${40 * s}px` }}>
-            Declaro, para os devidos fins, que o paciente acima identificado foi avaliado clinicamente nesta unidade de saúde.
-          </p>
-
-          {/* Declaração EN */}
-          <p style={{ marginBottom: `${25 * s}px` }}>
+          {/* Declaration */}
+          <p style={{ marginBottom: `${15 * s}px`, textIndent: `${40 * s}px` }}>
             This is to certify that the above identified patient has been clinically evaluated at this medical facility.
           </p>
 
-          {/* Condição Clínica - Título bilíngue */}
+          {/* Clinical Condition Title */}
           <p style={{ fontWeight: "bold", marginBottom: `${15 * s}px`, fontSize: `${11 * s}px` }}>
-            CONDIÇÃO CLÍNICA / CLINICAL CONDITION:
+            CLINICAL CONDITION:
           </p>
 
-          {/* Condição em PT-BR */}
+          {/* Condition Description */}
           <p style={{ marginBottom: `${15 * s}px`, textAlign: "justify" }}>
-            O paciente apresenta histórico de reação alérgica grave (anafilática) a proteínas do ovo, caracterizando condição de risco para administração de imunobiológicos que contenham esse componente.
-          </p>
-
-          {/* Passaporte */}
-          <p style={{ marginBottom: `${4 * s}px` }}>
-            Documento (Passaporte) / Passport: <span style={{ fontWeight: "bold" }}>{data.passaporte}</span>
-          </p>
-
-          {/* Contraindicação PT-BR */}
-          <p style={{ marginBottom: `${2 * s}px` }}>
-            Fica contraindicada a vacinação contra:
-          </p>
-
-          {/* Contraindicação EN + Vacina */}
-          <p style={{ fontWeight: "bold", marginBottom: `${15 * s}px` }}>
-            Vaccination contraindicated for: FEBRE AMARELA / YELLOW FEVER
-          </p>
-
-          {/* Condição em EN */}
-          <p style={{ marginBottom: `${20 * s}px`, textAlign: "justify" }}>
             The patient has a history of severe allergic reaction (anaphylaxis) to egg proteins, representing a risk condition for administration of vaccines containing this component.
           </p>
 
-          {/* CID bilíngue */}
+          {/* Passport */}
+          <p style={{ marginBottom: `${6 * s}px` }}>
+            Passport: <span style={{ fontWeight: "bold" }}>{data.passaporte}</span>
+          </p>
+
+          {/* Vaccination Contraindication */}
+          <p style={{ marginBottom: `${4 * s}px` }}>
+            Vaccination contraindicated for:
+          </p>
+          <p style={{ fontWeight: "bold", marginBottom: `${15 * s}px` }}>
+            YELLOW FEVER
+          </p>
+
+          {/* ICD */}
           <p style={{ fontWeight: "bold", fontSize: `${10.5 * s}px` }}>
-            CID: T78.0 REAÇÃO ANAFILÁTICA DEVIDO A ALIMENTO (OVO) / ANAPHYLACTIC REACTION DUE TO FOOD (EGG)
+            ICD: T78.0 ANAPHYLACTIC REACTION DUE TO FOOD (EGG)
           </p>
         </div>
 
-        {/* ===== RODAPÉ - 3 COLUNAS ===== */}
+        {/* ===== FOOTER - 3 COLUMNS ===== */}
         <div
           style={{
             borderTop: `${1.5 * s}px solid #000`,
@@ -221,23 +211,23 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             gap: `${15 * s}px`,
           }}
         >
-          {/* Coluna Esquerda: Data e Validação */}
+          {/* Left Column: Date and Validation */}
           <div style={{ flex: 1, textAlign: "left" }}>
             <p style={{ fontWeight: "bold", marginBottom: `${6 * s}px`, fontSize: `${10 * s}px` }}>
-              SALVADOR, 16 DE MARÇO DE 2026
+              SALVADOR, MARCH 16, 2026
             </p>
             <p style={{ marginBottom: `${2 * s}px`, color: "#333" }}>
-              Valide este documento acessando o endereço:
+              Validate this document at:
             </p>
             <p style={{ fontWeight: "bold", marginBottom: `${3 * s}px`, fontSize: `${8.5 * s}px` }}>
               https://validaratestado.digital
             </p>
             <p style={{ fontSize: `${8.5 * s}px` }}>
-              Código: <span style={{ fontWeight: "bold" }}>{data.codigoQR}</span>
+              Code: <span style={{ fontWeight: "bold" }}>{data.codigoQR}</span>
             </p>
           </div>
 
-          {/* Coluna Central: QR Code */}
+          {/* Center Column: QR Code */}
           <div
             style={{
               display: "flex",
@@ -265,22 +255,22 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             </div>
           </div>
 
-          {/* Coluna Direita: Médico */}
+          {/* Right Column: Physician */}
           <div style={{ flex: 1, textAlign: "right" }}>
             <p style={{ marginBottom: `${3 * s}px`, fontSize: `${8.5 * s}px` }}>
-              Documento assinado digitalmente conforme MP nº 2.200-2
+              Document digitally signed pursuant to Provisional Measure No. 2,200-2
             </p>
             <p style={{ fontWeight: "bold", marginBottom: `${3 * s}px`, fontSize: `${10 * s}px` }}>
-              PHYSICIAN: DIMITRI GUSMAO FLORES
+              PHYSICIAN: {data.medico}
             </p>
             <p style={{ marginBottom: `${2 * s}px`, fontSize: `${9 * s}px` }}>
-              CRM/BA 14180
+              {data.crm}
             </p>
             <p style={{ marginBottom: `${3 * s}px`, fontSize: `${8.5 * s}px` }}>
-              ALERGIA E IMUNOLOGIA / ALLERGY AND IMMUNOLOGY
+              ALLERGY AND IMMUNOLOGY
             </p>
             <p style={{ fontSize: `${8.5 * s}px` }}>
-              Assinado em {data.dataAssinatura} {data.horaAssinatura}
+              Signed on {data.dataAssinatura} {data.horaAssinatura}
             </p>
           </div>
         </div>
