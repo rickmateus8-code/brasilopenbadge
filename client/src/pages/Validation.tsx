@@ -56,10 +56,14 @@ function isoToDisplay(isoDate: string): string {
   return `${d}/${m}/${y}`;
 }
 
+// Proporção A4: 210mm × 297mm
+// DOC_REAL_WIDTH = 1010px → altura A4 = 1010 × (297/210) ≈ 1428px
+const DOC_A4_RATIO = 297 / 210;
+const DOC_A4_HEIGHT = Math.round(DOC_REAL_WIDTH * DOC_A4_RATIO); // ≈ 1428px
+
 export default function Validation() {
   const params = useParams();
   const [codigo, setCodigo] = useState("");
-  // Armazena a data no formato ISO YYYY-MM-DD (para o input type="date")
   const [dataISO, setDataISO] = useState("");
   const [isValidating, setIsValidating] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -72,35 +76,40 @@ export default function Validation() {
   const viewerContainerRef = useRef<HTMLDivElement>(null);
 
   const [docScale, setDocScale] = useState(1);
-  const [docNaturalHeight, setDocNaturalHeight] = useState(1400);
 
   const t = labels[language];
 
-  // ─── Calcula o scale do documento para caber na tela ────────────────────
+  // ─── Calcula o scale para exibir o documento A4 INTEIRO na tela ──────────
+  // O documento deve aparecer completamente visível, com a mesma proporção
+  // do PDF exportado (210×297mm), sem scroll e sem cortes.
   const calcScale = useCallback(() => {
     const container = viewerContainerRef.current;
-    const doc = documentRef.current;
     if (!container) return;
 
-    const padding = 20; // 10px cada lado
-    const availableWidth = container.clientWidth - padding;
-    const newScale = availableWidth < DOC_REAL_WIDTH
-      ? availableWidth / DOC_REAL_WIDTH
-      : 1;
+    const paddingH = 16; // padding horizontal total (8px cada lado)
+    const paddingV = 16; // padding vertical total (8px cada lado)
+    const availableWidth  = container.clientWidth  - paddingH;
+    const availableHeight = container.clientHeight - paddingV;
+
+    if (availableWidth <= 0 || availableHeight <= 0) return;
+
+    // Scale para caber na largura disponível
+    const scaleByWidth  = availableWidth  / DOC_REAL_WIDTH;
+    // Scale para caber na altura disponível (mantendo proporção A4)
+    const scaleByHeight = availableHeight / DOC_A4_HEIGHT;
+
+    // Usa o menor dos dois → documento cabe inteiro na tela sem cortes
+    const newScale = Math.min(scaleByWidth, scaleByHeight, 1);
 
     setDocScale(newScale);
-
-    if (doc && doc.scrollHeight > 0) {
-      setDocNaturalHeight(doc.scrollHeight);
-    }
   }, []);
 
   useEffect(() => {
     if (!showViewer) return;
-    const t1 = setTimeout(calcScale, 80);
-    const t2 = setTimeout(calcScale, 400);
-    const t3 = setTimeout(calcScale, 900);
-    const t4 = setTimeout(calcScale, 1800);
+    const t1 = setTimeout(calcScale, 50);
+    const t2 = setTimeout(calcScale, 200);
+    const t3 = setTimeout(calcScale, 600);
+    const t4 = setTimeout(calcScale, 1200);
     window.addEventListener("resize", calcScale);
     return () => {
       clearTimeout(t1); clearTimeout(t2);
@@ -113,7 +122,6 @@ export default function Validation() {
   const handleValidate = async (codeOverride?: string, isoDateOverride?: string) => {
     const code = (codeOverride || codigo).trim().toUpperCase();
     const iso = isoDateOverride || dataISO;
-    // Converte YYYY-MM-DD → DD/MM/YYYY para a API
     const dateForApi = isoToDisplay(iso);
 
     if (!code || !iso) {
@@ -159,7 +167,6 @@ export default function Validation() {
         const apiAtt = await fetchAttestationByCode(code);
         if (apiAtt) {
           setValidAttestation(apiAtt);
-          // Converte DD/MM/YYYY → YYYY-MM-DD para o input date
           if (apiAtt.dataAssinatura) {
             const [d, m, y] = apiAtt.dataAssinatura.split("/");
             if (d && m && y) setDataISO(`${y}-${m}-${d}`);
@@ -233,7 +240,7 @@ export default function Validation() {
         {/* ── VIEWER HEADER ── */}
         <div style={{
           background: "#ffffff",
-          padding: "15px",
+          padding: "12px 16px",
           borderBottom: "1px solid #e2e8f0",
           display: "flex",
           justifyContent: "space-between",
@@ -250,10 +257,10 @@ export default function Validation() {
             display: "flex",
             alignItems: "center",
             gap: "8px",
-            fontSize: "14px",
+            fontSize: "13px",
             flexShrink: 0,
           }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
               <polyline points="22 4 12 14.01 9 11.01"/>
             </svg>
@@ -273,33 +280,40 @@ export default function Validation() {
           </div>
         </div>
 
-        {/* ── VIEWER BODY — área de scroll com o documento ── */}
+        {/* ── VIEWER BODY ──────────────────────────────────────────────────────
+            O documento A4 é exibido INTEIRO na área disponível entre o header
+            e o footer, com a mesma proporção do PDF exportado (210×297mm).
+            Não há scroll — o scale é calculado para caber tudo na tela.
+        ─────────────────────────────────────────────────────────────────────── */}
         <div
           ref={viewerContainerRef}
           style={{
             flex: 1,
-            overflowY: "auto",
-            overflowX: "hidden",
+            overflow: "hidden",
             background: "#525659",
             display: "flex",
             justifyContent: "center",
-            alignItems: "flex-start",
-            padding: "10px",
-            WebkitOverflowScrolling: "touch",
+            alignItems: "center",
+            padding: "8px",
           } as React.CSSProperties}
         >
           {/*
-            Wrapper externo: ocupa o espaço correto após o scale
-            (width = DOC_REAL_WIDTH * scale, height = docNaturalHeight * scale)
-            Isso garante que o scroll funciona corretamente em mobile.
+            Wrapper externo: ocupa exatamente o espaço visual do documento escalado.
+            width  = DOC_REAL_WIDTH × docScale
+            height = DOC_A4_HEIGHT  × docScale  (proporção A4 exata: 297/210)
           */}
           <div style={{
             width: `${DOC_REAL_WIDTH * docScale}px`,
-            height: `${docNaturalHeight * docScale}px`,
+            height: `${DOC_A4_HEIGHT * docScale}px`,
             flexShrink: 0,
             position: "relative",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.6)",
           }}>
-            {/* Wrapper de posicionamento: aplica o scale a partir do topo-esquerdo */}
+            {/*
+              Wrapper de escala: aplica transform a partir do topo-esquerdo.
+              O documento real tem DOC_REAL_WIDTH × DOC_A4_HEIGHT pixels,
+              e é escalado para caber no espaço disponível.
+            */}
             <div style={{
               position: "absolute",
               top: 0,
@@ -307,19 +321,16 @@ export default function Validation() {
               transformOrigin: "top left",
               transform: `scale(${docScale})`,
               width: `${DOC_REAL_WIDTH}px`,
+              height: `${DOC_A4_HEIGHT}px`,
+              overflow: "hidden",
+              backgroundColor: "#ffffff",
             }}>
-              {/* Documento em tamanho real */}
-              <div style={{
-                backgroundColor: "#ffffff",
-                boxShadow: "0 4px 10px rgba(0,0,0,0.5)",
-                width: `${DOC_REAL_WIDTH}px`,
-              }}>
-                <div ref={documentRef}>
-                  <AttestationDocument
-                    data={validAttestation}
-                    logoUrl={validAttestation.logoUrl}
-                  />
-                </div>
+              {/* Documento em tamanho real — capturado pelo exportElementToPDF */}
+              <div ref={documentRef}>
+                <AttestationDocument
+                  data={validAttestation}
+                  logoUrl={validAttestation.logoUrl}
+                />
               </div>
             </div>
           </div>
@@ -328,13 +339,13 @@ export default function Validation() {
         {/* ── VIEWER FOOTER ── */}
         <div style={{
           background: "#ffffff",
-          padding: "15px",
+          padding: "12px 16px",
           borderTop: "1px solid #e2e8f0",
           display: "flex",
           gap: "10px",
           zIndex: 10,
           flexShrink: 0,
-          paddingBottom: "calc(15px + env(safe-area-inset-bottom, 0px))",
+          paddingBottom: "calc(12px + env(safe-area-inset-bottom, 0px))",
         }}>
           {/* Botão FECHAR */}
           <button
@@ -380,7 +391,6 @@ export default function Validation() {
               letterSpacing: "0.3px",
             }}
           >
-            {/* Ícone de download */}
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
               <polyline points="7 10 12 15 17 10"/>
@@ -420,7 +430,6 @@ export default function Validation() {
         gap: "10px",
         position: "relative",
       }}>
-        {/* Ícone escudo */}
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
         </svg>
