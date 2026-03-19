@@ -52,17 +52,17 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           `}
         </style>
 
-        {/* ===== HEADER - Logo left + Info centered ===== */}
+        {/* ===== HEADER - Logo left + Info CENTERED on page ===== */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: `${20 * s}px`,
             marginBottom: `${25 * s}px`,
+            position: "relative",
           }}
         >
-          {/* Logo */}
-          <div style={{ width: `${120 * s}px`, flexShrink: 0 }}>
+          {/* Logo - increased 15% (from 120 to 138) */}
+          <div style={{ width: `${138 * s}px`, flexShrink: 0 }}>
             <img
               src={effectiveLogoUrl}
               alt="Logo"
@@ -71,8 +71,16 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             />
           </div>
 
-          {/* Institution Info - CENTRALIZED */}
-          <div style={{ flex: 1, textAlign: "center" }}>
+          {/* Institution Info - CENTERED on the full page width */}
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              textAlign: "center",
+              pointerEvents: "none",
+            }}
+          >
             <div style={{ fontSize: `${14 * s}px`, fontWeight: "bold", marginBottom: `${2 * s}px` }}>
               {instituicao}
             </div>
@@ -91,7 +99,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </div>
         </div>
 
-        {/* ===== TITLE - ONLY BOTTOM LINE (removed top line per user request) ===== */}
+        {/* ===== TITLE - ONLY BOTTOM LINE ===== */}
         <div
           style={{
             textAlign: "center",
@@ -199,8 +207,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </p>
         </div>
 
-        {/* ===== FOOTER - 3 COLUMNS (matching reference image exactly) ===== */}
-        {/* Top line separator */}
+        {/* ===== FOOTER - Matching PDF original layout exactly ===== */}
+        {/* Top line separator across full width */}
         <div style={{ borderTop: `${1.5 * s}px solid #000`, marginTop: `${60 * s}px` }}></div>
 
         <div
@@ -210,18 +218,18 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             justifyContent: "space-between",
             alignItems: "flex-start",
             fontSize: `${9 * s}px`,
-            gap: `${8 * s}px`,
+            gap: `${10 * s}px`,
           }}
         >
-          {/* Left Column: Date and Validation Info */}
-          <div style={{ flex: "0 0 auto", maxWidth: `${220 * s}px`, textAlign: "left" }}>
+          {/* LEFT SECTION: Date and Validation Info (outside the box) */}
+          <div style={{ flex: "0 0 auto", maxWidth: `${200 * s}px`, textAlign: "left", alignSelf: "flex-end" }}>
             <p style={{ fontWeight: "bold", marginBottom: `${6 * s}px`, fontSize: `${10 * s}px` }}>
               SALVADOR, {data.dataEmissao}
             </p>
             <p style={{ marginBottom: `${2 * s}px`, color: "#333", fontSize: `${8.5 * s}px` }}>
               Validate this document at:
             </p>
-            <p style={{ fontWeight: "bold", marginBottom: `${3 * s}px`, fontSize: `${8.5 * s}px` }}>
+            <p style={{ fontWeight: "bold", marginBottom: `${3 * s}px`, fontSize: `${8.5 * s}px`, fontStyle: "italic" }}>
               https://{DOMAIN}
             </p>
             <p style={{ fontSize: `${8.5 * s}px` }}>
@@ -229,25 +237,18 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             </p>
           </div>
 
-          {/* Center Column: QR Code with thick black border (matching reference image) */}
+          {/* RIGHT SECTION: Bordered box containing QR Code + Physician Info */}
           <div
             style={{
+              border: `${1.5 * s}px solid #000`,
               display: "flex",
-              flexDirection: "column",
               alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              alignSelf: "center",
+              gap: `${12 * s}px`,
+              padding: `${10 * s}px ${14 * s}px`,
             }}
           >
-            <div
-              style={{
-                padding: `${4 * s}px`,
-                border: `${2.5 * s}px solid #000`,
-                backgroundColor: "#fff",
-                lineHeight: 0,
-              }}
-            >
+            {/* QR Code inside the box */}
+            <div style={{ flexShrink: 0, lineHeight: 0 }}>
               <QRCode
                 value={qrValue}
                 size={Math.round(95 * s)}
@@ -257,28 +258,28 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 bgColor="#FFFFFF"
               />
             </div>
-          </div>
 
-          {/* Right Column: Physician Info */}
-          <div style={{ flex: "0 0 auto", maxWidth: `${260 * s}px`, textAlign: "right" }}>
-            <p style={{ marginBottom: `${3 * s}px`, fontSize: `${8.5 * s}px` }}>
-              Document digitally signed pursuant to
-            </p>
-            <p style={{ marginBottom: `${3 * s}px`, fontSize: `${8.5 * s}px` }}>
-              Provisional Measure No. 2,200-2
-            </p>
-            <p style={{ fontWeight: "bold", marginBottom: `${3 * s}px`, fontSize: `${10 * s}px` }}>
-              PHYSICIAN: {data.medico}
-            </p>
-            <p style={{ marginBottom: `${2 * s}px`, fontSize: `${9 * s}px` }}>
-              {data.crm}
-            </p>
-            <p style={{ marginBottom: `${3 * s}px`, fontSize: `${8.5 * s}px` }}>
-              {data.especialidade}
-            </p>
-            <p style={{ fontSize: `${8.5 * s}px` }}>
-              Signed on {data.dataAssinatura} {data.horaAssinatura}
-            </p>
+            {/* Physician Info inside the box */}
+            <div style={{ textAlign: "right", fontSize: `${8.5 * s}px`, whiteSpace: "nowrap" }}>
+              <p style={{ marginBottom: `${3 * s}px` }}>
+                Document digitally signed pursuant to
+              </p>
+              <p style={{ marginBottom: `${3 * s}px` }}>
+                Provisional Measure No. 2,200-2
+              </p>
+              <p style={{ fontWeight: "bold", marginBottom: `${3 * s}px`, fontSize: `${10 * s}px` }}>
+                PHYSICIAN: {data.medico}
+              </p>
+              <p style={{ marginBottom: `${2 * s}px`, fontSize: `${9 * s}px` }}>
+                {data.crm}
+              </p>
+              <p style={{ marginBottom: `${3 * s}px` }}>
+                {data.especialidade}
+              </p>
+              <p>
+                Signed on {data.dataAssinatura} {data.horaAssinatura}
+              </p>
+            </div>
           </div>
         </div>
       </div>
