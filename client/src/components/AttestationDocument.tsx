@@ -91,14 +91,13 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </div>
         </div>
 
-        {/* ===== TITLE ===== */}
+        {/* ===== TITLE - ONLY BOTTOM LINE (removed top line per user request) ===== */}
         <div
           style={{
             textAlign: "center",
             margin: `${15 * s}px 0`,
-            borderTop: `${2 * s}px solid #000`,
             borderBottom: `${2 * s}px solid #000`,
-            padding: `${8 * s}px 0`,
+            paddingBottom: `${8 * s}px`,
           }}
         >
           <h2 style={{ fontSize: `${20 * s}px`, fontWeight: "bold", margin: 0, letterSpacing: "2px" }}>
@@ -188,7 +187,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             Passport: <span style={{ fontWeight: "bold" }}>{data.passaporte}</span>
           </p>
 
-          {/* Vaccination Contraindication - SAME LINE as per user request */}
+          {/* Vaccination Contraindication - SAME LINE */}
           <p style={{ marginBottom: `${15 * s}px` }}>
             Vaccination contraindicated for:{" "}
             <span style={{ fontWeight: "bold" }}>{data.vacinacao}</span>
@@ -200,20 +199,21 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </p>
         </div>
 
-        {/* ===== FOOTER - 3 COLUMNS (identical to PDF original) ===== */}
+        {/* ===== FOOTER - 3 COLUMNS (matching reference image exactly) ===== */}
+        {/* Top line separator */}
+        <div style={{ borderTop: `${1.5 * s}px solid #000`, marginTop: `${60 * s}px` }}></div>
+
         <div
           style={{
-            borderTop: `${1.5 * s}px solid #000`,
-            marginTop: `${60 * s}px`,
-            paddingTop: `${15 * s}px`,
+            paddingTop: `${12 * s}px`,
             display: "flex",
             justifyContent: "space-between",
             alignItems: "flex-start",
             fontSize: `${9 * s}px`,
-            gap: `${10 * s}px`,
+            gap: `${8 * s}px`,
           }}
         >
-          {/* Left Column: Date and Validation */}
+          {/* Left Column: Date and Validation Info */}
           <div style={{ flex: "0 0 auto", maxWidth: `${220 * s}px`, textAlign: "left" }}>
             <p style={{ fontWeight: "bold", marginBottom: `${6 * s}px`, fontSize: `${10 * s}px` }}>
               SALVADOR, {data.dataEmissao}
@@ -229,7 +229,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             </p>
           </div>
 
-          {/* Center Column: QR Code - positioned exactly as in PDF */}
+          {/* Center Column: QR Code with thick black border (matching reference image) */}
           <div
             style={{
               display: "flex",
@@ -242,15 +242,15 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           >
             <div
               style={{
-                padding: `${3 * s}px`,
-                border: `${1.5 * s}px solid #000`,
+                padding: `${4 * s}px`,
+                border: `${2.5 * s}px solid #000`,
                 backgroundColor: "#fff",
                 lineHeight: 0,
               }}
             >
               <QRCode
                 value={qrValue}
-                size={Math.round(90 * s)}
+                size={Math.round(95 * s)}
                 level="H"
                 includeMargin={false}
                 fgColor="#000000"
@@ -259,7 +259,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             </div>
           </div>
 
-          {/* Right Column: Physician */}
+          {/* Right Column: Physician Info */}
           <div style={{ flex: "0 0 auto", maxWidth: `${260 * s}px`, textAlign: "right" }}>
             <p style={{ marginBottom: `${3 * s}px`, fontSize: `${8.5 * s}px` }}>
               Document digitally signed pursuant to
