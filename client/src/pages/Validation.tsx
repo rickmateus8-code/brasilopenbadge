@@ -58,6 +58,42 @@ export default function Validation() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { language, setLanguage } = useLanguageWithSetter();
   const documentRef = useRef<HTMLDivElement>(null);
+  const viewerContainerRef = useRef<HTMLDivElement>(null);
+  const [docScale, setDocScale] = useState(1);
+  const [docHeight, setDocHeight] = useState(1400);
+
+  // Calcula o scale para enquadrar o documento na tela do dispositivo
+  useEffect(() => {
+    if (!showViewer) return;
+
+    const calcScale = () => {
+      const container = viewerContainerRef.current;
+      if (!container) return;
+      // Largura real do documento (maxWidth do AttestationDocument ~1010px)
+      const docWidth = 1010;
+      const availableWidth = container.clientWidth - 32; // padding 16px cada lado
+      if (availableWidth < docWidth) {
+        setDocScale(availableWidth / docWidth);
+      } else {
+        setDocScale(1);
+      }
+      // Captura a altura real do documento após render
+      if (documentRef.current) {
+        setDocHeight(documentRef.current.scrollHeight || 1400);
+      }
+    };
+
+    // Aguarda render para ter as dimensões corretas
+    const timer = setTimeout(calcScale, 100);
+    // Recalcula após imagens carregarem
+    const timer2 = setTimeout(calcScale, 800);
+    window.addEventListener("resize", calcScale);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(timer2);
+      window.removeEventListener("resize", calcScale);
+    };
+  }, [showViewer]);
 
   const t = labels[language];
 
@@ -224,28 +260,58 @@ export default function Validation() {
 
         {/* DOCUMENT VIEWER AREA */}
         <div
+          ref={viewerContainerRef}
           style={{
             flex: 1,
             overflow: "auto",
-            padding: "20px",
+            overflowX: "hidden",
+            padding: "16px",
             display: "flex",
             justifyContent: "center",
+            alignItems: "flex-start",
             backgroundColor: "#525659",
           }}
         >
+          {/*
+            Estratégia de escala responsiva:
+            - Em mobile: o documento (1010px) é escalado para caber na tela via CSS transform
+            - O wrapper externo recebe a largura/altura APÓS o scale para que o scroll funcione
+            - O documentRef permanece sem scale para que o PDF seja gerado em alta resolução
+          */}
           <div
             style={{
-              backgroundColor: "#ffffff",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
-              maxWidth: "900px",
-              width: "100%",
+              // Largura do wrapper = largura real do doc * scale
+              width: `${1010 * docScale}px`,
+              // Altura do wrapper = altura real do doc * scale (para scroll correto)
+              height: `${docHeight * docScale}px`,
+              flexShrink: 0,
+              position: "relative",
             }}
           >
-            <div ref={documentRef}>
-              <AttestationDocument
-                data={validAttestation}
-                logoUrl={validAttestation.logoUrl}
-              />
+            {/* Documento com transform scale — origin top left para alinhar corretamente */}
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                transformOrigin: "top left",
+                transform: `scale(${docScale})`,
+                width: "1010px",
+              }}
+            >
+              <div
+                style={{
+                  backgroundColor: "#ffffff",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+                }}
+              >
+                <div ref={documentRef}>
+                  <AttestationDocument
+                    data={validAttestation}
+                    logoUrl={validAttestation.logoUrl}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
