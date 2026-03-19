@@ -6,6 +6,7 @@
  */
 
 // Domínio base para validação via QR Code (exclusivo para QR Code)
+// Domínio definitivo para produção
 export const VALIDATION_DOMAIN = "validaratestado.digital";
 
 export const APP_CONFIG = {
