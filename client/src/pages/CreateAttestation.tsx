@@ -6,8 +6,8 @@ import { useLanguageWithSetter } from "@/hooks/useLanguage";
 import { Card } from "@/components/ui/card";
 import AttestationDocument from "@/components/AttestationDocument";
 import type { AttestationData } from "@/data/attestations";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+
+import { exportElementToPDF, generatePDFFilename } from "@/lib/pdfExport";
 import { createAttestation } from "@/lib/attestationStore";
 
 type Language = "pt" | "en";
@@ -179,21 +179,15 @@ export default function CreateAttestation() {
   const handleDownloadPdf = async () => {
     if (!previewRef.current) return;
     try {
-      const canvas = await html2canvas(previewRef.current, {
+      const filename = generatePDFFilename(formData.paciente || "NOVO", "EMITIDO");
+      await exportElementToPDF(previewRef.current, {
+        filename,
         scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: "#ffffff",
+        quality: 0.95,
       });
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      const fileName = `ATESTADO_${formData.paciente.replace(/\s+/g, "_") || "NOVO"}.pdf`;
-      pdf.save(fileName);
     } catch (err) {
       console.error("PDF generation error:", err);
+      alert(`Erro ao gerar PDF: ${err instanceof Error ? err.message : "Erro desconhecido"}`);
     }
   };
 

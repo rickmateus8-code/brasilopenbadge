@@ -118,3 +118,7 @@ pdf_reference_notes.txt
 test_notes.txt
 site_reference_notes.txt
 pdf_layout_reference.txt
+
+# Wrangler
+.wrangler/
+wrangler-dist/

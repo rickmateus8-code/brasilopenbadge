@@ -1,10 +1,69 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
+  "$schema": "https://developers.cloudflare.com/workers/schemas/wrangler.json",
   "name": "atestados-idab",
-  "account_id": "8f0446ea9cc0218364493885ddc1c419",
-  "zone_id": "11cc34799746947f075e51e876f06b91",
-  "compatibility_date": "2025-09-27",
+  "type": "javascript",
+  "main": "src/index.ts",
+  
+  "compatibility_date": "2026-03-19",
+  "compatibility_flags": ["nodejs_compat"],
+  
   "pages_build_output_dir": "dist",
+  
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "atestados-idab",
+      "database_id": "YOUR_DATABASE_ID_HERE"
+    }
+  ],
+  
+  "vars": {
+    "ENVIRONMENT": "production",
+    "API_BASE_URL": "https://atestado-valide.digital/api"
+  },
+  
+  "env": {
+    "production": {
+      "routes": [
+        {
+          "pattern": "atestado-valide.digital",
+          "custom_domain": true
+        }
+      ],
+      "vars": {
+        "ENVIRONMENT": "production",
+        "API_BASE_URL": "https://atestado-valide.digital/api"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "atestados-idab-prod",
+          "database_id": "YOUR_PRODUCTION_DATABASE_ID_HERE"
+        }
+      ]
+    },
+    
+    "staging": {
+      "routes": [
+        {
+          "pattern": "staging.atestado-valide.digital",
+          "custom_domain": true
+        }
+      ],
+      "vars": {
+        "ENVIRONMENT": "staging",
+        "API_BASE_URL": "https://staging.atestado-valide.digital/api"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "atestados-idab-staging",
+          "database_id": "YOUR_STAGING_DATABASE_ID_HERE"
+        }
+      ]
+    }
+  },
+  
   "observability": {
     "enabled": true
   }

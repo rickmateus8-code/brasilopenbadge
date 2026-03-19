@@ -2,8 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import AttestationDocument from "@/components/AttestationDocument";
 import { useLanguageWithSetter } from "@/hooks/useLanguage";
 import { useParams } from "wouter";
-import html2canvas from "html2canvas";
-import { jsPDF } from "jspdf";
+import { exportElementToPDF, generatePDFFilename } from "@/lib/pdfExport";
 import { findByCode, validateAttestation } from "@/lib/attestationStore";
 
 type Language = "pt" | "en";
@@ -133,32 +132,12 @@ export default function Validation() {
     setIsDownloading(true);
 
     try {
-      const canvas = await html2canvas(documentRef.current, {
+      const filename = generatePDFFilename(validAttestation.paciente, "VALIDADO");
+      await exportElementToPDF(documentRef.current, {
+        filename,
         scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: "#ffffff",
-        logging: false,
+        quality: 0.95,
       });
-
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-
-      pdf.addImage(imgData, "PNG", imgX, 0, imgWidth * ratio, imgHeight * ratio);
-
-      const nomeFormatado = validAttestation.paciente
-        .trim()
-        .toUpperCase()
-        .replace(/\s+/g, "_");
-      pdf.save(`ATESTADO_${nomeFormatado}.pdf`);
     } catch (err) {
       console.error("PDF generation error:", err);
       alert(t.downloadError);
