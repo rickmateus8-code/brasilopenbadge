@@ -1,7 +1,7 @@
 import { AttestationData } from "@/data/attestations";
 import { QRCodeSVG as QRCode } from "qrcode.react";
 import { forwardRef } from "react";
-import { DOMAIN } from "@/config";
+import { VALIDATION_DOMAIN } from "@/config";
 
 const DEFAULT_LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663380726083/Jt3ChWN8C56HSCFrn4RLrZ/idab-logo-correct_03a04244.webp";
 
@@ -12,7 +12,7 @@ interface AttestationDocumentProps {
 
 const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>(
   ({ data, logoUrl }, ref) => {
-    const qrValue = `https://${DOMAIN}/v/${data.codigoQR}`;
+    const qrValue = `https://${VALIDATION_DOMAIN}/v/${data.codigoQR}`;
     const sexLabel = data.sexo === "MALE" ? "MALE" : "FEMALE";
     const effectiveLogoUrl = logoUrl || (data as any).logoUrl || DEFAULT_LOGO_URL;
     const instituicao = (data as any).instituicao || "IDAB - SALVADOR/BAHIA";
@@ -230,7 +230,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               Validate this document at:
             </p>
             <p style={{ fontWeight: "bold", marginBottom: `${3 * s}px`, fontSize: `${8.5 * s}px`, fontStyle: "italic" }}>
-              https://{DOMAIN}
+              https://{VALIDATION_DOMAIN}
             </p>
             <p style={{ fontSize: `${8.5 * s}px` }}>
               Code: <span style={{ fontWeight: "bold" }}>{data.codigoQR}</span>
