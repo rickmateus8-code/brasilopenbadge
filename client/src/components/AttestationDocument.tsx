@@ -5,7 +5,7 @@ import { APP_CONFIG } from "@/config";
 import { getQRCodeValue } from "@/config.qrcode";
 
 const DEFAULT_LOGO_URL =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663380726083/Jt3ChWN8C56HSCFrn4RLrZ/idab-logo-correct_03a04244.webp";
+  "/logos/logo-default.png";
 
 interface AttestationDocumentProps {
   data: AttestationData;
@@ -48,11 +48,11 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     // Logo direita: só exibida se fornecida
     const effectiveLogoRight = logoRight || (data as any).logoRight || "";
 
-    const instituicao = (data as any).instituicao || "IDAB - SALVADOR/BAHIA";
-    const unidade = (data as any).unidade || "DERMATOLOGY AND ALLERGY INSTITUTE";
+    const instituicao = (data as any).instituicao || "Clínica / Hospital";
+    const unidade = (data as any).unidade || "Unidade de Saúde";
     const enderecoEmitente =
       (data as any).enderecoEmitente ||
-      "AV. ANTÔNIO CARLOS MAGALHÃES, 585 - ITAIGARA, SALVADOR - BA, 41825-000";
+      "Endereço da Clínica";
     const corAssinatura = signatureColor || (data as any).signatureColor || "#0b109f";
     const fotoAssinatura = signatureImage || (data as any).signatureImage || "";
     const textoAtestado = (data as any).textoAtestado || "";

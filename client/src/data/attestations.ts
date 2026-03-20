@@ -23,7 +23,7 @@ export interface AttestationData {
 export const attestations: Record<string, AttestationData> = {
   lucas: {
     id: "P792.GL02",
-    paciente: "LUCAS MESSIAS MARON",
+    paciente: "",
     sexo: "MALE",
     nascimento: "07/10/1987",
     cpf: "033.548.725-43",
@@ -41,9 +41,9 @@ export const attestations: Record<string, AttestationData> = {
     especialidade: "ALLERGY AND IMMUNOLOGY",
     dataEmissao: "MARCH 16, 2026",
   },
-  thielsily: {
+  exemplo2: {
     id: "UMS4.9Z40",
-    paciente: "THIELSILY MONIQUE CÂNDIDA DA SILVA PEREIRA",
+    paciente: "",
     sexo: "FEMALE",
     nascimento: "01/11/1994",
     cpf: "167.709.317-02",

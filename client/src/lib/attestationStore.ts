@@ -1,6 +1,6 @@
 import { attestations, type AttestationData } from "@/data/attestations";
 
-const STORAGE_KEY = "atestados_idab_db";
+const STORAGE_KEY = "docmaster_db";
 
 // Generate random validation code in format XXXX.XXXX
 function generateCode(): string {
@@ -64,7 +64,7 @@ export function findByCode(code: string): AttestationData | null {
 
 // Find attestation by ID (slug or code)
 export function findById(id: string): AttestationData | null {
-  // Check built-in by slug (lucas, thielsily)
+  // Check built-in by slug (exemplos)
   if (attestations[id]) {
     return attestations[id];
   }

@@ -1,5 +1,5 @@
 {
-  "name": "atestados-idab",
+  "name": "docmaster",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
@@ -9,11 +9,11 @@
     "deploy": "wrangler deploy",
     "deploy:staging": "wrangler deploy --env staging",
     "deploy:production": "wrangler deploy --env production",
-    "db:create": "wrangler d1 create atestados-idab",
-    "db:migrate": "wrangler d1 execute atestados-idab --file=./migrations/0001_initial.sql",
-    "db:migrate:remote": "wrangler d1 execute atestados-idab --remote --file=./migrations/0001_initial.sql",
-    "db:query": "wrangler d1 execute atestados-idab --command",
-    "db:query:remote": "wrangler d1 execute atestados-idab --remote --command",
+    "db:create": "wrangler d1 create docmaster-db",
+    "db:migrate": "wrangler d1 execute docmaster-db --file=./schema.sql",
+    "db:migrate:remote": "wrangler d1 execute docmaster-db --remote --file=./schema.sql",
+    "db:query": "wrangler d1 execute docmaster-db --command",
+    "db:query:remote": "wrangler d1 execute docmaster-db --remote --command",
     "types": "wrangler types"
   },
   "dependencies": {

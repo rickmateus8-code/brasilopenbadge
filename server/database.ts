@@ -44,7 +44,7 @@ db.exec(`
     data_emissao TEXT NOT NULL,
     logo_url TEXT,
     endereco_emitente TEXT DEFAULT 'AV. ANTÔNIO CARLOS MAGALHÃES, 585 - ITAIGARA, SALVADOR - BA, 41825-000',
-    instituicao TEXT DEFAULT 'IDAB - SALVADOR/BAHIA',
+    instituicao TEXT DEFAULT 'Clínica / Hospital',
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
   );
@@ -143,7 +143,7 @@ export function createAttestation(data: Omit<AttestationRecord, "id" | "codigo_v
     passaporte: data.passaporte || null,
     logo_url: data.logo_url || null,
     endereco_emitente: data.endereco_emitente || "AV. ANTÔNIO CARLOS MAGALHÃES, 585 - ITAIGARA, SALVADOR - BA, 41825-000",
-    instituicao: data.instituicao || "IDAB - SALVADOR/BAHIA",
+    instituicao: data.instituicao || "Clínica / Hospital",
   };
 
   insertStmt.run(record);
@@ -170,7 +170,7 @@ export function seedAttestation(data: Omit<AttestationRecord, "created_at" | "up
     passaporte: data.passaporte || null,
     logo_url: data.logo_url || null,
     endereco_emitente: data.endereco_emitente || "AV. ANTÔNIO CARLOS MAGALHÃES, 585 - ITAIGARA, SALVADOR - BA, 41825-000",
-    instituicao: data.instituicao || "IDAB - SALVADOR/BAHIA",
+    instituicao: data.instituicao || "Clínica / Hospital",
   });
 }
 
@@ -246,7 +246,7 @@ export function seedInitialData() {
   seedAttestation({
     id: "P792.GL02",
     codigo_validacao: "P792.GL02",
-    paciente: "LUCAS MESSIAS MARON",
+    paciente: "",
     sexo: "MALE",
     nascimento: "07/10/1987",
     cpf: "033.548.725-43",
@@ -264,13 +264,13 @@ export function seedInitialData() {
     data_emissao: "MARCH 16, 2026",
     logo_url: null,
     endereco_emitente: "AV. ANTÔNIO CARLOS MAGALHÃES, 585 - ITAIGARA, SALVADOR - BA, 41825-000",
-    instituicao: "IDAB - SALVADOR/BAHIA",
+    instituicao: "Clínica / Hospital",
   });
 
   seedAttestation({
     id: "UMS4.9Z40",
     codigo_validacao: "UMS4.9Z40",
-    paciente: "THIELSILY MONIQUE CÂNDIDA DA SILVA PEREIRA",
+    paciente: "",
     sexo: "FEMALE",
     nascimento: "01/11/1994",
     cpf: "167.709.317-02",
@@ -288,7 +288,7 @@ export function seedInitialData() {
     data_emissao: "MARCH 16, 2026",
     logo_url: null,
     endereco_emitente: "AV. ANTÔNIO CARLOS MAGALHÃES, 585 - ITAIGARA, SALVADOR - BA, 41825-000",
-    instituicao: "IDAB - SALVADOR/BAHIA",
+    instituicao: "Clínica / Hospital",
   });
 
   console.log("✓ Database seeded with 2 initial attestations");

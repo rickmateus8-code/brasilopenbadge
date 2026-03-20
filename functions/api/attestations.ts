@@ -142,8 +142,8 @@ async function handleCreateAttestation(request: Request, env: Env) {
     logo_url: body.logo_url || null,
     endereco_emitente:
       body.endereco_emitente ||
-      'AV. ANTÔNIO CARLOS MAGALHÃES, 585 - ITAIGARA, SALVADOR - BA, 41825-000',
-    instituicao: body.instituicao || 'IDAB - SALVADOR/BAHIA',
+      'Endereço da Clínica',
+    instituicao: body.instituicao || 'Clínica / Hospital',
   });
 
   return new Response(

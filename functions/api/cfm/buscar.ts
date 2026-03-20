@@ -30,7 +30,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       const municipiosUrl = `https://portal.cfm.org.br/api_rest_php/api/v2/medicos/listar_municipios/${uf}`;
       const res = await fetch(municipiosUrl, {
         headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; AtestadosIDAB/1.0)",
+          "User-Agent": "Mozilla/5.0 (compatible; DocMaster/1.0)",
           "Accept": "application/json",
           "Referer": "https://portal.cfm.org.br/busca-medicos",
         },
@@ -57,7 +57,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const res = await fetch(searchUrl, {
       method: "POST",
       headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; AtestadosIDAB/1.0)",
+        "User-Agent": "Mozilla/5.0 (compatible; DocMaster/1.0)",
         "Accept": "application/json",
         "Referer": "https://portal.cfm.org.br/busca-medicos",
         "Origin": "https://portal.cfm.org.br",
