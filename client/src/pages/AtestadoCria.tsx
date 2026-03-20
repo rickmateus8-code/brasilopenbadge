@@ -306,6 +306,12 @@ export default function AtestadoCria() {
       .catch(() => setLocais([]));
     setFiltroBairro("");
     setFiltroLocal("");
+    // Preencher automaticamente instituicao como PREFEITURA DE {CIDADE}
+    setForm(p => ({
+      ...p,
+      instituicao: `PREFEITURA DE ${filtroCidade.toUpperCase()}`,
+      cidade: filtroCidade.toUpperCase(),
+    }));
   }, [filtroUF, filtroCidade]);
 
   // ── Busca de médicos ─────────────────────────────────────────────────────────────────────────────────────
@@ -354,8 +360,8 @@ export default function AtestadoCria() {
       medico: m.nome_medico.toUpperCase(),
       crm: `CRM/${m.uf_crm || m.uf_local} ${m.crm}`,
       especialidade: (m.especialidade || "CLÍNICO GERAL").toUpperCase(),
-      // Preenche instituição somente se ainda não foi preenchida pelo usuário
-      instituicao: p.instituicao || (m.local_trabalho || "CONSULTÓRIO MÉDICO").toUpperCase(),
+      // Usar local de trabalho do médico se disponível, senão manter a instituição automática (PREFEITURA DE {CIDADE})
+      instituicao: m.local_trabalho?.toUpperCase() || p.instituicao || "CONSULTÓRIO MÉDICO",
       enderecoEmitente: [m.endereco, m.bairro, m.cidade, m.uf_local].filter(Boolean).join(", ").toUpperCase(),
       cidade: m.cidade?.toUpperCase() || p.cidade,
     }));
@@ -828,29 +834,7 @@ export default function AtestadoCria() {
                 </summary>
                 <div style={{ paddingTop: 10, display: "grid", gap: 8 }}>
                   <p style={{ ...secTitle, fontSize: 10 }}>Dados do Local</p>
-                  <div>
-                    <label style={lbl}>Nome da Instituição</label>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <input
-                        style={{ ...inp, flex: 1 }}
-                        value={form.instituicao}
-                        onChange={(e) => setForm(p => ({ ...p, instituicao: e.target.value }))}
-                        placeholder="Ex: PREFEITURA DE SÃO PAULO ou HOSPITAL MUNICIPAL..."
-                      />
-                      <button
-                        type="button"
-                        title="Preencher como PREFEITURA DE {CIDADE}"
-                        style={{ ...btnGray, padding: "6px 10px", fontSize: 11, whiteSpace: "nowrap", flexShrink: 0 }}
-                        onClick={() => {
-                          const cidade = form.cidade || "";
-                          if (!cidade) { alert("Preencha o campo Cidade de Emissão primeiro."); return; }
-                          setForm(p => ({ ...p, instituicao: `PREFEITURA DE ${cidade.toUpperCase()}` }));
-                        }}
-                      >
-                        🏛 PREFEITURA
-                      </button>
-                    </div>
-                  </div>
+                  {/* Campo Nome da Instituição removido - preenchido automaticamente baseado na cidade e médico selecionado */}
                   <div>
                     <label style={lbl}>Unidade / Setor</label>
                     <input style={inp} value={form.unidade} onChange={(e) => setForm(p => ({ ...p, unidade: e.target.value }))} placeholder="Ex: UBS CENTRO" />
