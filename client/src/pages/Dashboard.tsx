@@ -130,7 +130,11 @@ export default function Dashboard() {
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "—";
     try {
-      // Suporta formato ISO e DD/MM/YYYY
+      // Já está em DD/MM/YYYY — retorna direto
+      if (/^\d{2}\/\d{2}\/\d{4}/.test(dateStr)) {
+        return dateStr.slice(0, 10);
+      }
+      // Formato ISO YYYY-MM-DD ou YYYY-MM-DDTHH:mm:ssZ
       if (dateStr.includes("-") && dateStr.length >= 10) {
         const [y, m, d] = dateStr.slice(0, 10).split("-");
         return `${d}/${m}/${y}`;
