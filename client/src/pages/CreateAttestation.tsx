@@ -27,6 +27,19 @@ async function sbFetch(path: string) {
 const DEFAULT_LOGO_URL =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663380726083/Jt3ChWN8C56HSCFrn4RLrZ/idab-logo-correct_03a04244.webp";
 
+// Logos padrão disponíveis (baixadas do elitedoc.store)
+const LOGOS_PADRAO = [
+  { id: "idab",       label: "IDAB",         src: DEFAULT_LOGO_URL },
+  { id: "logo1",      label: "Logo 1",       src: "/logos/logo1.png" },
+  { id: "logo2",      label: "Logo 2",       src: "/logos/logo2.png" },
+  { id: "logo3",      label: "Logo 3",       src: "/logos/logo3.jpg" },
+  { id: "amil",       label: "Amil",         src: "/logos/amil.png" },
+  { id: "hapvida",    label: "Hapvida",      src: "/logos/hapvida.png" },
+  { id: "notredame",  label: "Notre Dame",   src: "/logos/notredame.png" },
+  { id: "sulamerica", label: "Sul América",  src: "/logos/sulamerica.png" },
+  { id: "unimed",     label: "Unimed",       src: "/logos/unimed.png" },
+];
+
 const UFS = [
   "AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT",
   "PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO",
@@ -220,10 +233,15 @@ export default function CreateAttestation() {
 
   // ── Busca de médicos ────────────────────────────────────────────────────────
   const buscarMedicos = useCallback(async () => {
-    const termo = termoBusca.toUpperCase().replace(/[.\-]/g, "");
+    const termo = termoBusca.trim().toUpperCase().replace(/[.\-]/g, "");
 
-    if (termo.length < 3 && (!filtroUF || !filtroCidade)) {
-      setErroBusca("Selecione UF + Cidade, ou digite ao menos 3 caracteres.");
+    // Exige UF + pelo menos 3 chars de nome/CRM para evitar timeout
+    if (!filtroUF) {
+      setErroBusca("Selecione a UF antes de buscar.");
+      return;
+    }
+    if (termo.length < 3) {
+      setErroBusca("Digite ao menos 3 caracteres do nome ou CRM.");
       return;
     }
 
@@ -232,26 +250,28 @@ export default function CreateAttestation() {
     setShowResultados(true);
 
     try {
-      let query = `medicos_brasil?select=*&limit=30&order=nome_medico.asc`;
+      // Detectar se é busca por CRM (só números) ou por nome
+      const isCRM = /^\d+$/.test(termo);
+      let query: string;
 
-      if (termo.length >= 3) {
-        query += `&or=(nome_medico.ilike.*${termo}*,crm.ilike.*${termo}*)`;
-        if (filtroUF) query += `&uf_local=eq.${filtroUF}`;
+      if (isCRM) {
+        // Busca por CRM exige UF obrigatório para não dar timeout
+        query = `medicos_brasil?select=*&limit=30&order=nome_medico.asc&uf_crm=eq.${filtroUF}&crm=ilike.*${termo}*`;
       } else {
-        query += `&uf_local=eq.${filtroUF}&cidade=eq.${encodeURIComponent(filtroCidade)}`;
-        if (filtroBairro) query += `&bairro=eq.${encodeURIComponent(filtroBairro)}`;
+        // Busca por nome: UF obrigatório + nome com ilike
+        query = `medicos_brasil?select=*&limit=30&order=nome_medico.asc&uf_crm=eq.${filtroUF}&nome_medico=ilike.*${termo}*`;
         if (filtroEsp) query += `&especialidade=ilike.*${filtroEsp}*`;
       }
 
       const data: MedicoDB[] = await sbFetch(query);
       setResultados(data);
-      if (data.length === 0) setErroBusca("Nenhum médico encontrado.");
+      if (data.length === 0) setErroBusca("Nenhum médico encontrado. Tente outro nome ou preencha manualmente.");
     } catch {
-      setErroBusca("Erro ao buscar. Preencha os dados manualmente.");
+      setErroBusca("Erro ao buscar. Verifique a conexão ou preencha manualmente.");
     } finally {
       setBuscando(false);
     }
-  }, [termoBusca, filtroUF, filtroCidade, filtroBairro, filtroEsp]);
+  }, [termoBusca, filtroUF, filtroEsp]);
 
   const selecionarMedico = (m: MedicoDB) => {
     setForm((p) => ({
@@ -880,6 +900,7 @@ export default function CreateAttestation() {
 
               {/* Logos Esquerda / Direita */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 12 }}>
+
                 {/* Logo Esquerda */}
                 <div style={{ textAlign: "center" }}>
                   <p style={{ fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6 }}>Esquerda (Logo)</p>
@@ -895,14 +916,13 @@ export default function CreateAttestation() {
                     )}
                   </div>
                   <label style={{ ...btnBlue, display: "block", textAlign: "center", padding: "6px 0", cursor: "pointer", fontSize: 11 }}>
-                    ENVIAR LOGO
+                    📁 ENVIAR LOGO
                     <input ref={logoLeftRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => handleLogoUpload("left", e)} />
                   </label>
-                  {logoLeft !== DEFAULT_LOGO_URL && (
-                    <button type="button" style={{ ...btnGray, width: "100%", marginTop: 4, fontSize: 10, padding: "4px 0" }} onClick={() => { setLogoLeft(DEFAULT_LOGO_URL); if (logoLeftRef.current) logoLeftRef.current.value = ""; }}>
-                      🔄 Padrão IDAB
-                    </button>
-                  )}
+                  <button type="button" style={{ ...btnGray, width: "100%", marginTop: 4, fontSize: 10, padding: "4px 0" }}
+                    onClick={() => { setLogoLeft(""); if (logoLeftRef.current) logoLeftRef.current.value = ""; }}>
+                    ✕ SEM LOGO
+                  </button>
                 </div>
 
                 {/* Logo Direita */}
@@ -920,14 +940,51 @@ export default function CreateAttestation() {
                     )}
                   </div>
                   <label style={{ ...btnBlue, display: "block", textAlign: "center", padding: "6px 0", cursor: "pointer", fontSize: 11 }}>
-                    ENVIAR LOGO
+                    📁 ENVIAR LOGO
                     <input ref={logoRightRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => handleLogoUpload("right", e)} />
                   </label>
-                  {logoRight && (
-                    <button type="button" style={{ ...btnGray, width: "100%", marginTop: 4, fontSize: 10, padding: "4px 0" }} onClick={() => { setLogoRight(""); if (logoRightRef.current) logoRightRef.current.value = ""; }}>
-                      ✕ Remover
-                    </button>
-                  )}
+                  <button type="button" style={{ ...btnGray, width: "100%", marginTop: 4, fontSize: 10, padding: "4px 0" }}
+                    onClick={() => { setLogoRight(""); if (logoRightRef.current) logoRightRef.current.value = ""; }}>
+                    ✕ SEM LOGO
+                  </button>
+                </div>
+
+              </div>
+
+              {/* Galeria de Logos Padrão */}
+              <div style={{ marginTop: 12 }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6 }}>Logos Padrão — Clique para selecionar</p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
+                  {LOGOS_PADRAO.map((logo) => (
+                    <div key={logo.id} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                      <div
+                        onClick={() => setLogoLeft(logo.src)}
+                        title={`Esq: ${logo.label}`}
+                        style={{
+                          border: logoLeft === logo.src ? "2px solid #005CA9" : "1px solid #e5e7eb",
+                          borderRadius: 6, padding: 4, cursor: "pointer", background: "#fff",
+                          height: 44, display: "flex", alignItems: "center", justifyContent: "center",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <img src={logo.src} alt={logo.label} style={{ maxWidth: "100%", maxHeight: 36, objectFit: "contain" }} />
+                      </div>
+                      <div style={{ display: "flex", gap: 3 }}>
+                        <button type="button"
+                          onClick={() => setLogoLeft(logo.src)}
+                          style={{ flex: 1, fontSize: 9, padding: "2px 0", background: logoLeft === logo.src ? "#005CA9" : "#e2e8f0",
+                            color: logoLeft === logo.src ? "#fff" : "#374151", border: "none", borderRadius: 4, cursor: "pointer", fontWeight: 600 }}>
+                          ESQ
+                        </button>
+                        <button type="button"
+                          onClick={() => setLogoRight(logo.src)}
+                          style={{ flex: 1, fontSize: 9, padding: "2px 0", background: logoRight === logo.src ? "#005CA9" : "#e2e8f0",
+                            color: logoRight === logo.src ? "#fff" : "#374151", border: "none", borderRadius: 4, cursor: "pointer", fontWeight: 600 }}>
+                          DIR
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
