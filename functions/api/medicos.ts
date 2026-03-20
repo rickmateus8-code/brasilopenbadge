@@ -8,7 +8,7 @@ interface Env {
 }
 
 const SB_URL = "https://ijkzwzvanougkjcxquvn.supabase.co";
-const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlqa3p3enZhbm91Z2tqY3h1dW4iLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0MDUyNTcyMiwiZXhwIjoyMDU2MTAxNzIyfQ.Iy3-7Gg1QBQHF4BN0qOqJdkiJrxHbRtpPJkJJpFkAhQ";
+const SB_KEY = "sb_publishable_x76vx-9M9DrmibJ6NeELJg_iT1_CDsT";
 
 const FIELDS_SB = "nome_medico,crm,uf_crm,especialidade,local_trabalho,cidade,uf_local,endereco,bairro";
 const FIELDS_D1 = "nome_medico, crm, uf_crm, especialidade, local_trabalho, cidade, uf_local, endereco, bairro";
