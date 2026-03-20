@@ -21,13 +21,19 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password) {
+    
+    // Normalização para evitar erros de auto-capitalização em mobile
+    const normalizedUsername = username.trim().toLowerCase();
+    const normalizedPassword = password.trim();
+
+    if (!normalizedUsername || !normalizedPassword) {
       toast.error("Preencha todos os campos");
       return;
     }
+    
     setLoading(true);
     try {
-      await login(username, password);
+      await login(normalizedUsername, normalizedPassword);
       toast.success("Acesso autorizado!");
       setLocation("/dashboard");
     } catch (error: any) {
@@ -114,6 +120,9 @@ export default function Login() {
                   onChange={e => setUsername(e.target.value)}
                   placeholder="Seu usuário"
                   autoComplete="username"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck="false"
                   className={`w-full pl-10 pr-4 py-3 rounded-xl border transition-all text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500/50 ${
                     theme === "dark"
                       ? "border-gray-700/60 bg-gray-800/60 text-white placeholder-gray-600"
@@ -139,6 +148,9 @@ export default function Login() {
                   onChange={e => setPassword(e.target.value)}
                   placeholder="Sua senha"
                   autoComplete="current-password"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck="false"
                   className={`w-full pl-10 pr-10 py-3 rounded-xl border transition-all text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500/50 ${
                     theme === "dark"
                       ? "border-gray-700/60 bg-gray-800/60 text-white placeholder-gray-600"

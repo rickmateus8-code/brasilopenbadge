@@ -17,7 +17,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     }
 
     const user = await env.DB.prepare(
-      'SELECT * FROM users WHERE username = ? AND is_active = 1'
+      'SELECT * FROM users WHERE LOWER(username) = LOWER(?) AND is_active = 1'
     ).bind(username.trim()).first<any>();
 
     if (!user) {
