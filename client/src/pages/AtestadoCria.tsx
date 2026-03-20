@@ -834,18 +834,33 @@ export default function AtestadoCria() {
                 </summary>
                 <div style={{ paddingTop: 10, display: "grid", gap: 8 }}>
                   <p style={{ ...secTitle, fontSize: 10 }}>Dados do Local</p>
-                  {/* Campo Nome da Instituição removido - preenchido automaticamente baseado na cidade e médico selecionado */}
+                  {/* Nome da Instituição — preenchido automaticamente pela cidade selecionada */}
+                  <div>
+                    <label style={lbl}>Nome da Instituição <span style={{ fontSize: 10, color: "#666", fontWeight: 400 }}>(preenchido automaticamente)</span></label>
+                    <input
+                      style={{ ...inp, background: "#f8fafc", color: form.instituicao ? "#000" : "#888" }}
+                      value={form.instituicao}
+                      onChange={(e) => setForm(p => ({ ...p, instituicao: e.target.value }))}
+                      placeholder="PREFEITURA DE {CIDADE} — preenchido ao selecionar a cidade"
+                    />
+                  </div>
                   <div>
                     <label style={lbl}>Unidade / Setor</label>
-                    <input style={inp} value={form.unidade} onChange={(e) => setForm(p => ({ ...p, unidade: e.target.value }))} placeholder="Ex: UBS CENTRO" />
+                    <input style={inp} value={form.unidade} onChange={(e) => setForm(p => ({ ...p, unidade: e.target.value }))} placeholder="Ex: UBS CENTRO, UPA NORTE, HOSPITAL MUNICIPAL" />
+                  </div>
+                  <div>
+                    <label style={lbl}>Endereço Completo / Emitente</label>
+                    <input
+                      style={{ ...inp, background: form.enderecoEmitente ? "#fff" : "#f8fafc" }}
+                      value={form.enderecoEmitente}
+                      onChange={(e) => setForm(p => ({ ...p, enderecoEmitente: e.target.value }))}
+                      placeholder="Ex: RUA ANTÔNIO WALTER, 66 – CENTRO, VOTORANTIM/SP"
+                    />
+                    <span style={{ fontSize: 10, color: "#666", marginTop: 2, display: "block" }}>Preenchido automaticamente ao selecionar médico. Edite se necessário.</span>
                   </div>
                   <div>
                     <label style={lbl}>Especialidade</label>
-                    <input style={inp} value={form.especialidade} onChange={(e) => setForm(p => ({ ...p, especialidade: e.target.value }))} placeholder="Ex: PEDIATRA" />
-                  </div>
-                  <div>
-                    <label style={lbl}>Endereço Completo</label>
-                    <input style={inp} value={form.enderecoEmitente} onChange={(e) => setForm(p => ({ ...p, enderecoEmitente: e.target.value }))} placeholder="Rua, Número, Bairro..." />
+                    <input style={inp} value={form.especialidade} onChange={(e) => setForm(p => ({ ...p, especialidade: e.target.value }))} placeholder="Ex: CLÍNICO GERAL, PEDIATRA" />
                   </div>
                   <p style={{ ...secTitle, fontSize: 10 }}>Dados do Médico</p>
                   <div>

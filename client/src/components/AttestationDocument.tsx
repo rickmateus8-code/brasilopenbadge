@@ -166,16 +166,21 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             )}
           </div>
 
-          {/* Centro — Nome da Instituição */}
-          <div style={{ flex: 1, padding: "0 12px", textAlign: "center" }}>
+          {/* Centro — Nome da Instituição / Unidade / Endereço */}
+          <div style={{ flex: 1, padding: "0 12px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
             {instituicao && (
-              <div style={{ fontSize: 13, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", letterSpacing: 0.3 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, textTransform: "uppercase", marginBottom: 1, color: "#000", letterSpacing: 0.5, lineHeight: 1.3 }}>
                 {instituicao}
               </div>
             )}
             {unidade && (
-              <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000" }}>
+              <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", marginBottom: 1, color: "#000", lineHeight: 1.3 }}>
                 {unidade}
+              </div>
+            )}
+            {enderecoEmitente && (
+              <div style={{ fontSize: 10, fontWeight: 400, textTransform: "uppercase", color: "#000", lineHeight: 1.3 }}>
+                {enderecoEmitente}
               </div>
             )}
           </div>
@@ -267,8 +272,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             fontWeight: 700,
             color: "#000",
             textTransform: "uppercase",
-            marginBottom: 4,
-            marginTop: 2,
+            marginBottom: 0,
+            marginTop: 4,
             position: "relative",
             zIndex: 2,
             flexShrink: 0,
@@ -285,7 +290,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           textAlign: "justify",
           position: "relative",
           zIndex: 2,
-          paddingTop: 18,
+          paddingTop: 32,
           paddingBottom: 8,
           color: "#111",
           fontWeight: 400,
