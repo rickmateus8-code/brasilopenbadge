@@ -5,23 +5,16 @@ import type { AttestationData } from "@/data/attestations";
 import { exportElementToPDF, generatePDFFilename } from "@/lib/pdfExport";
 import { useAuth } from "@/contexts/AuthContext";
 
-// ─── Supabase (banco de médicos) ───────────────────────────────────────────────
-const SB_URL = "https://ijkzwzvanougkjcxquvn.supabase.co";
-const SB_KEY = "sb_publishable_x76vx-9M9DrmibJ6NeELJg_iT1_CDsT";
-
-async function sbFetch(path: string) {
+// ─── API de Médicos (Cloudflare D1 — banco unificado) ─────────────────────────
+async function apiFetch(path: string) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 25000);
   try {
-    const res = await fetch(`${SB_URL}/rest/v1/${path}`, {
+    const res = await fetch(`/api/medicos${path}`, {
       signal: controller.signal,
-      headers: {
-        apikey: SB_KEY,
-        Authorization: `Bearer ${SB_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
     });
-    if (!res.ok) throw new Error(`Supabase HTTP ${res.status}`);
+    if (!res.ok) throw new Error(`API HTTP ${res.status}`);
     return res.json();
   } catch (e: any) {
     if (e?.name === "AbortError") throw new Error("Timeout: servidor demorou demais. Tente novamente.");
@@ -277,10 +270,9 @@ export default function AtestadoCria() {
   // ── Carregar cidades quando UF muda ────────────────────────────────────────
   useEffect(() => {
     if (!filtroUF) { setCidades([]); setBairros([]); return; }
-    sbFetch(`medicos_brasil?uf_local=eq.${filtroUF}&select=cidade&order=cidade.asc`)
-      .then((data: any[]) => {
-        const unicas = [...new Set(data.map((d) => d.cidade).filter(Boolean))].sort();
-        setCidades(unicas as string[]);
+    apiFetch(`?action=cidades&uf=${filtroUF}`)
+      .then((data: string[]) => {
+        setCidades(data || []);
       })
       .catch(() => setCidades([]));
     setFiltroCidade("");
@@ -292,18 +284,12 @@ export default function AtestadoCria() {
   // ── Carregar bairros e locais quando cidade muda ─────────────────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!filtroUF || !filtroCidade) { setBairros([]); setLocais([]); return; }
-    sbFetch(`medicos_brasil?uf_local=eq.${filtroUF}&cidade=eq.${encodeURIComponent(filtroCidade)}&select=bairro&order=bairro.asc`)
-      .then((data: any[]) => {
-        const unicos = [...new Set(data.map((d) => d.bairro).filter(Boolean))].sort();
-        setBairros(unicos as string[]);
-      })
+    apiFetch(`?action=bairros&uf=${filtroUF}&cidade=${encodeURIComponent(filtroCidade)}`)
+      .then((data: string[]) => setBairros(data || []))
       .catch(() => setBairros([]));
     // Carregar locais de trabalho
-    sbFetch(`medicos_brasil?uf_local=eq.${filtroUF}&cidade=eq.${encodeURIComponent(filtroCidade)}&select=local_trabalho&order=local_trabalho.asc`)
-      .then((data: any[]) => {
-        const unicos = [...new Set(data.map((d) => d.local_trabalho).filter(Boolean))].sort();
-        setLocais(unicos as string[]);
-      })
+    apiFetch(`?action=locais&uf=${filtroUF}&cidade=${encodeURIComponent(filtroCidade)}`)
+      .then((data: string[]) => setLocais(data || []))
       .catch(() => setLocais([]));
     setFiltroBairro("");
     setFiltroLocal("");
@@ -325,27 +311,15 @@ export default function AtestadoCria() {
     setErroBusca("");
     setShowResultados(true);
     try {
-      // Campos mínimos para evitar timeout no Supabase (1.1M registros)
-      const FIELDS = "nome_medico,crm,uf_crm,especialidade,local_trabalho,cidade,uf_local,endereco,bairro";
-      let query: string;
+      // Busca via API D1 unificada
+      let params = `?uf=${filtroUF}&limit=50`;
       if (termo.length >= 3) {
         const isCRM = /^\d+$/.test(termo);
-        if (isCRM) {
-          query = `medicos_brasil?select=${FIELDS}&limit=50&uf_crm=eq.${filtroUF}&crm=ilike.*${termo}*`;
-        } else {
-          query = `medicos_brasil?select=${FIELDS}&limit=50&uf_crm=eq.${filtroUF}&nome_medico=ilike.*${termo}*`;
-          if (filtroEsp) query += `&especialidade=ilike.*${filtroEsp}*`;
-          if (filtroCidade) query += `&cidade=eq.${encodeURIComponent(filtroCidade)}`;
-          if (filtroLocal) query += `&local_trabalho=eq.${encodeURIComponent(filtroLocal)}`;
-        }
-      } else {
-        // Busca por local sem termo de nome
-        query = `medicos_brasil?select=${FIELDS}&limit=50&uf_local=eq.${filtroUF}`;
-        if (filtroCidade) query += `&cidade=eq.${encodeURIComponent(filtroCidade)}`;
-        if (filtroLocal) query += `&local_trabalho=eq.${encodeURIComponent(filtroLocal)}`;
-        if (filtroEsp) query += `&especialidade=ilike.*${filtroEsp}*`;
+        params += isCRM
+          ? `&tipo=crm&q=${encodeURIComponent(termo)}`
+          : `&tipo=nome&q=${encodeURIComponent(termo)}`;
       }
-      const data: MedicoDB[] = await sbFetch(query);
+      const data: MedicoDB[] = await apiFetch(params);
       setResultados(data);
       if (data.length === 0) setErroBusca("Nenhum médico encontrado. Tente outro nome ou preencha manualmente.");
     } catch {

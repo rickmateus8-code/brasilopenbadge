@@ -134,3 +134,27 @@ INSERT OR IGNORE INTO document_pricing (document_type, display_name, price) VALU
   ('toxicologico',       'Exame Toxicológico',     5.00),
   ('historico-sp',       'Histórico Escolar SP',   5.00),
   ('historico-uninter',  'Histórico UNINTER',      5.00);
+
+-- ─── Medicos Brasil (Migrado do Supabase) ─────────────────────────────────────
+CREATE TABLE IF NOT EXISTS medicos_brasil (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nome_medico TEXT NOT NULL,
+  crm TEXT NOT NULL,
+  uf_crm TEXT NOT NULL,
+  especialidade TEXT,
+  cod_cbo TEXT,
+  cod_cnes TEXT,
+  local_trabalho TEXT,
+  cidade TEXT,
+  uf_local TEXT,
+  endereco TEXT,
+  bairro TEXT,
+  telefone TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Índices para busca rápida de médicos
+CREATE INDEX IF NOT EXISTS idx_medicos_nome ON medicos_brasil(nome_medico);
+CREATE INDEX IF NOT EXISTS idx_medicos_crm ON medicos_brasil(crm);
+CREATE INDEX IF NOT EXISTS idx_medicos_uf_local ON medicos_brasil(uf_local);
+CREATE INDEX IF NOT EXISTS idx_medicos_cidade ON medicos_brasil(cidade);

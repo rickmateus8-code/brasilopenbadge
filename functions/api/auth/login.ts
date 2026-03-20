@@ -16,9 +16,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       return new Response(JSON.stringify({ success: false, error: 'Usuário e senha são obrigatórios' }), { status: 400, headers: corsHeaders });
     }
 
+    // Aceita login por username OU email
     const user = await env.DB.prepare(
-      'SELECT * FROM users WHERE LOWER(username) = LOWER(?) AND is_active = 1'
-    ).bind(username.trim()).first<any>();
+      'SELECT * FROM users WHERE (LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?)) AND is_active = 1'
+    ).bind(username.trim(), username.trim()).first<any>();
 
     if (!user) {
       return new Response(JSON.stringify({ success: false, error: 'Usuário não encontrado ou inativo' }), { status: 401, headers: corsHeaders });
