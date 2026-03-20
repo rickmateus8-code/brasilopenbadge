@@ -550,7 +550,7 @@ export default function AtestadoCria() {
     logoUrl: logoLeft,
     logoRight: logoRight,
     instituicao: form.instituicao || "CLÍNICA / HOSPITAL",
-    unidade: form.unidade,
+    unidade: form.unidade || "UNIDADE / SETOR",
     enderecoEmitente: form.enderecoEmitente || "ENDEREÇO DA CLÍNICA",
     signatureColor,
     signatureImage,
