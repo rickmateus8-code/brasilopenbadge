@@ -302,23 +302,28 @@ export default function AtestadoCria() {
   }, [filtroUF, filtroCidade]);
 
   // ── Busca de médicos ─────────────────────────────────────────────────────────────────────────────────────
-  const buscarMedicos = useCallback(async () => {
+  const buscarMedicos = useCallback(async (autoSearch = false) => {
     const termo = termoBusca.trim().toUpperCase().replace(/[.\-]/g, "");
-    if (!filtroUF) { setErroBusca("Selecione a UF antes de buscar."); return; }
-    // Permite busca sem termo se tiver local selecionado
-    if (termo.length < 3 && !filtroLocal) { setErroBusca("Digite ao menos 3 caracteres do nome/CRM, ou selecione um Local."); return; }
+    if (!filtroUF) { if (!autoSearch) setErroBusca("Selecione a UF antes de buscar."); return; }
+    // Permite busca sem termo se tiver cidade selecionada (igual ao elitedoc)
+    if (termo.length < 3 && !filtroCidade) {
+      if (!autoSearch) setErroBusca("Digite ao menos 3 caracteres do nome/CRM, ou selecione uma Cidade.");
+      return;
+    }
     setBuscando(true);
     setErroBusca("");
     setShowResultados(true);
     try {
-      // Busca via API D1 unificada
       let params = `?uf=${filtroUF}&limit=50`;
       if (termo.length >= 3) {
-        const isCRM = /^\d+$/.test(termo);
-        params += isCRM
-          ? `&tipo=crm&q=${encodeURIComponent(termo)}`
-          : `&tipo=nome&q=${encodeURIComponent(termo)}`;
+        // Busca por nome ou CRM (igual ao elitedoc)
+        params += `&q=${encodeURIComponent(termo)}`;
+      } else if (filtroCidade) {
+        // Sem termo: lista médicos da cidade (igual ao elitedoc)
+        params += `&cidade=${encodeURIComponent(filtroCidade)}`;
+        if (filtroBairro) params += `&bairro=${encodeURIComponent(filtroBairro)}`;
       }
+      if (filtroEsp) params += `&esp=${encodeURIComponent(filtroEsp)}`;
       const data: MedicoDB[] = await apiFetch(params);
       setResultados(data);
       if (data.length === 0) setErroBusca("Nenhum médico encontrado. Tente outro nome ou preencha manualmente.");
@@ -327,7 +332,15 @@ export default function AtestadoCria() {
     } finally {
       setBuscando(false);
     }
-  }, [termoBusca, filtroUF, filtroEsp, filtroCidade, filtroLocal]);
+  }, [termoBusca, filtroUF, filtroEsp, filtroCidade, filtroBairro]);
+
+  // ── Busca automática ao selecionar cidade (igual ao elitedoc) ────────────────────────
+  useEffect(() => {
+    if (filtroUF && filtroCidade) {
+      const timer = setTimeout(() => buscarMedicos(true), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [filtroUF, filtroCidade, buscarMedicos]);
 
   const selecionarMedico = (m: MedicoDB) => {
     setForm((p) => ({

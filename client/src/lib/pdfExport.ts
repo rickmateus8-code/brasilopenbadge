@@ -412,3 +412,126 @@ export function generatePDFFilename(
 
   return `${parts.join("_")}.pdf`;
 }
+
+/**
+ * Gera o PDF do elemento e retorna um blob URL (para exibição em iframe).
+ * Diferente de exportElementToPDF, NÃO faz download — retorna a URL do blob.
+ * O chamador é responsável por chamar URL.revokeObjectURL() quando não precisar mais.
+ */
+export async function exportElementToPDFBlob(
+  element: HTMLElement,
+  options: Omit<PDFExportOptions, "filename">
+): Promise<string> {
+  const {
+    scale = 2,
+    quality = 0.92,
+    orientation = "p",
+    format = "a4",
+    multiPage = false,
+  } = options;
+  const dpr = typeof window !== "undefined" ? (window.devicePixelRatio || 1) : 1;
+  const safeScale = dpr > 2 ? Math.min(scale, 1.5) : scale;
+  const elementHTML = element.outerHTML;
+  const iframe = document.createElement("iframe");
+  iframe.style.cssText = [
+    "position: fixed",
+    "top: 0",
+    `left: -${DOC_REAL_WIDTH + 500}px`,
+    `width: ${DOC_REAL_WIDTH}px`,
+    `height: ${DOC_REAL_HEIGHT}px`,
+    "border: none",
+    "z-index: -9999",
+    "pointer-events: none",
+    "visibility: hidden",
+  ].join("; ");
+  iframe.srcdoc = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #ffffff;
+    width: ${DOC_REAL_WIDTH}px;
+    height: ${DOC_REAL_HEIGHT}px;
+    overflow: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+</style>
+</head>
+<body>
+${elementHTML}
+</body>
+</html>`;
+  document.body.appendChild(iframe);
+  try {
+    await new Promise<void>((resolve) => {
+      iframe.onload = () => resolve();
+      setTimeout(resolve, 2000);
+    });
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!iframeDoc) throw new Error("Não foi possível acessar o documento do iframe");
+    const iframeBody = iframeDoc.body;
+    const iframeEl = iframeBody.firstElementChild as HTMLElement;
+    if (!iframeEl) throw new Error("Elemento não encontrado no iframe");
+    await inlineImages(iframeBody);
+    await new Promise((r) => setTimeout(r, 500));
+    iframe.style.visibility = "visible";
+    const docHeight = DOC_REAL_HEIGHT;
+    iframe.style.height = `${docHeight}px`;
+    await new Promise((r) => setTimeout(r, 100));
+    const canvas = await html2canvas(iframeEl, {
+      scale: safeScale,
+      useCORS: true,
+      allowTaint: false,
+      backgroundColor: "#ffffff",
+      logging: false,
+      imageTimeout: 20000,
+      windowWidth: DOC_REAL_WIDTH,
+      windowHeight: docHeight,
+      width: DOC_REAL_WIDTH,
+      height: docHeight,
+      x: 0,
+      y: 0,
+    });
+    if (canvas.width === 0 || canvas.height === 0) throw new Error("Canvas gerado está vazio.");
+    const pdf = new jsPDF({ orientation, unit: "mm", format, compress: true });
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+    const ratio = pdfWidth / imgWidth;
+    const scaledWidth = pdfWidth;
+    const scaledHeight = imgHeight * ratio;
+    if (!multiPage || scaledHeight <= pdfHeight) {
+      const offsetY = Math.max(0, (pdfHeight - scaledHeight) / 2);
+      const imgData = canvas.toDataURL("image/jpeg", quality);
+      pdf.addImage(imgData, "JPEG", 0, offsetY, scaledWidth, scaledHeight);
+    } else {
+      let pageIndex = 0;
+      let yRenderedMM = 0;
+      while (yRenderedMM < scaledHeight) {
+        if (pageIndex > 0) pdf.addPage();
+        const startPx = Math.round(yRenderedMM / ratio);
+        const sliceHeightPx = Math.min(Math.round(pdfHeight / ratio), imgHeight - startPx);
+        if (sliceHeightPx <= 0) break;
+        const pageCanvas = document.createElement("canvas");
+        pageCanvas.width = imgWidth;
+        pageCanvas.height = sliceHeightPx;
+        const ctx = pageCanvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(canvas, 0, startPx, imgWidth, sliceHeightPx, 0, 0, imgWidth, sliceHeightPx);
+          const pageImgData = pageCanvas.toDataURL("image/jpeg", quality);
+          const pageScaledHeight = sliceHeightPx * ratio;
+          pdf.addImage(pageImgData, "JPEG", 0, 0, scaledWidth, pageScaledHeight);
+        }
+        yRenderedMM += pdfHeight;
+        pageIndex++;
+      }
+    }
+    const pdfBlob = pdf.output("blob");
+    return URL.createObjectURL(pdfBlob);
+  } finally {
+    if (document.body.contains(iframe)) document.body.removeChild(iframe);
+  }
+}
