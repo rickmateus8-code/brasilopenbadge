@@ -538,12 +538,14 @@ export default function CreateAttestation() {
     <div style={{ minHeight: "100vh", background: "#f1f5f9", fontFamily: "Roboto, sans-serif" }}>
 
       {/* Header */}
-      <div style={{ background: "#005CA9", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ background: "#d97706", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <Link href="/"><button style={{ ...btnGray, padding: "5px 12px", fontSize: 11 }}>← VOLTAR</button></Link>
           <h1 style={{ color: "#fff", fontSize: 16, fontWeight: 700, margin: 0 }}>IDAB — EMITIR ATESTADO</h1>
         </div>
-        <button style={btnBlue} onClick={handleDownloadPdf}>⬇ BAIXAR PDF</button>
+        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.9)", background: "rgba(0,0,0,0.15)", padding: "4px 12px", borderRadius: 6, fontWeight: 600 }}>
+          🔒 Dados excluídos automaticamente após 60 dias
+        </span>
       </div>
 
       <div style={{ display: "flex", gap: 14, padding: 14, maxWidth: 1800, margin: "0 auto" }}>
@@ -1008,7 +1010,9 @@ export default function CreateAttestation() {
             borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
           }}>
             <span style={{ fontWeight: 700, color: "#374151", fontSize: 14 }}>📄 Preview em Tempo Real</span>
-            <button style={btnBlue} onClick={handleDownloadPdf}>⬇ BAIXAR PDF</button>
+            <span style={{ fontSize: 11, color: "#6b7280", background: "#fef3c7", padding: "3px 8px", borderRadius: 5, fontWeight: 600 }}>
+              🔒 QR Code gerado somente após emissão
+            </span>
           </div>
           <div style={{ flex: 1, overflow: "auto", background: "#525659", borderRadius: 10, padding: 14, maxHeight: "calc(100vh - 120px)" }}>
             <div style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}>

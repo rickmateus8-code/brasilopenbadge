@@ -277,10 +277,16 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
     ).run();
   }
 
+  // 7. Apagar CPF após emissão (regra de privacidade — CPF não é armazenado após emissão)
+  await env.DB.prepare(
+    "UPDATE attestations SET cpf = NULL, cns = NULL WHERE id = ?"
+  ).bind(id).run();
+
   return jsonResponse({
     success: true,
     message: "Atestado emitido com sucesso.",
     codigoQR,
+    notice: "⚠️ Aviso: Este documento será excluído automaticamente após 60 dias. Faça o download agora.",
     data: {
       id,
       codigoQR,

@@ -1,50 +1,166 @@
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/DashboardLayout";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   FileText, Car, Anchor, FlaskConical, GraduationCap,
-  CreditCard, ChevronRight, TrendingUp, BarChart3, Wallet
+  Wallet, TrendingUp, BarChart3, ChevronRight, Plus,
+  Clock, CheckCircle, Bell
 } from "lucide-react";
 
 const quickActions = [
-  { icon: FileText, label: "Criar Atestado", desc: "Novo atestado médico", path: "/atestadocria", color: "blue" },
-  { icon: Car, label: "Criar CNH", desc: "Nova CNH digital", path: "/cnhcria", color: "amber" },
-  { icon: Anchor, label: "Criar CHA", desc: "Nova CHA náutica", path: "/chacria", color: "cyan" },
-  { icon: FlaskConical, label: "Toxicológico", desc: "Novo exame toxicológico", path: "/toxicologicocria", color: "purple" },
-  { icon: GraduationCap, label: "Histórico SP", desc: "Histórico escolar SP", path: "/historico-sp", color: "green" },
-  { icon: GraduationCap, label: "Histórico UNINTER", desc: "Histórico UNINTER", path: "/historico-uninter", color: "indigo" },
-  { icon: CreditCard, label: "Recarregar", desc: "Adicionar créditos", path: "/recargas", color: "emerald" },
+  { icon: FileText, label: "Novo Atestado", desc: "Emitir atestado médico", path: "/atestadocria", color: "yellow" },
+  { icon: Car, label: "Nova CNH", desc: "Emitir CNH digital", path: "/cnhcria", color: "amber" },
+  { icon: Anchor, label: "Nova CHA", desc: "Emitir CHA náutica", path: "/chacria", color: "cyan" },
+  { icon: FlaskConical, label: "Novo Toxicológico", desc: "Emitir exame toxicológico", path: "/toxicologicocria", color: "purple" },
+  { icon: GraduationCap, label: "Histórico SP", desc: "Emitir histórico escolar SP", path: "/historico-sp", color: "green" },
+  { icon: GraduationCap, label: "Histórico UNINTER", desc: "Emitir histórico UNINTER", path: "/historico-uninter", color: "indigo" },
 ];
 
-const colorMap: Record<string, { bg: string; text: string; iconBg: string }> = {
-  blue:    { bg: "bg-blue-50 dark:bg-blue-900/10",    text: "text-blue-600 dark:text-blue-400",    iconBg: "bg-blue-100 dark:bg-blue-900/30" },
-  amber:   { bg: "bg-amber-50 dark:bg-amber-900/10",  text: "text-amber-600 dark:text-amber-400",  iconBg: "bg-amber-100 dark:bg-amber-900/30" },
-  cyan:    { bg: "bg-cyan-50 dark:bg-cyan-900/10",    text: "text-cyan-600 dark:text-cyan-400",    iconBg: "bg-cyan-100 dark:bg-cyan-900/30" },
-  purple:  { bg: "bg-purple-50 dark:bg-purple-900/10",text: "text-purple-600 dark:text-purple-400",iconBg: "bg-purple-100 dark:bg-purple-900/30" },
-  green:   { bg: "bg-green-50 dark:bg-green-900/10",  text: "text-green-600 dark:text-green-400",  iconBg: "bg-green-100 dark:bg-green-900/30" },
-  indigo:  { bg: "bg-indigo-50 dark:bg-indigo-900/10",text: "text-indigo-600 dark:text-indigo-400",iconBg: "bg-indigo-100 dark:bg-indigo-900/30" },
-  emerald: { bg: "bg-emerald-50 dark:bg-emerald-900/10",text: "text-emerald-600 dark:text-emerald-400",iconBg: "bg-emerald-100 dark:bg-emerald-900/30" },
+const colorMap: Record<string, { bg: string; text: string; iconBg: string; badge: string }> = {
+  yellow:  { bg: "bg-yellow-50 dark:bg-yellow-900/10",  text: "text-yellow-600 dark:text-yellow-400",  iconBg: "bg-yellow-100 dark:bg-yellow-900/30", badge: "bg-yellow-500" },
+  amber:   { bg: "bg-amber-50 dark:bg-amber-900/10",    text: "text-amber-600 dark:text-amber-400",    iconBg: "bg-amber-100 dark:bg-amber-900/30",   badge: "bg-amber-500" },
+  cyan:    { bg: "bg-cyan-50 dark:bg-cyan-900/10",      text: "text-cyan-600 dark:text-cyan-400",      iconBg: "bg-cyan-100 dark:bg-cyan-900/30",     badge: "bg-cyan-500" },
+  purple:  { bg: "bg-purple-50 dark:bg-purple-900/10",  text: "text-purple-600 dark:text-purple-400",  iconBg: "bg-purple-100 dark:bg-purple-900/30", badge: "bg-purple-500" },
+  green:   { bg: "bg-green-50 dark:bg-green-900/10",    text: "text-green-600 dark:text-green-400",    iconBg: "bg-green-100 dark:bg-green-900/30",   badge: "bg-green-500" },
+  indigo:  { bg: "bg-indigo-50 dark:bg-indigo-900/10",  text: "text-indigo-600 dark:text-indigo-400",  iconBg: "bg-indigo-100 dark:bg-indigo-900/30", badge: "bg-indigo-500" },
+  emerald: { bg: "bg-emerald-50 dark:bg-emerald-900/10",text: "text-emerald-600 dark:text-emerald-400",iconBg: "bg-emerald-100 dark:bg-emerald-900/30",badge: "bg-emerald-500" },
 };
+
+const HISTORY_TABS = [
+  { key: "atestado", label: "Atestado", icon: FileText, color: "yellow" },
+  { key: "cnh", label: "CNH", icon: Car, color: "amber" },
+  { key: "cha", label: "CHA", icon: Anchor, color: "cyan" },
+  { key: "toxicologico", label: "Toxicológico", icon: FlaskConical, color: "purple" },
+  { key: "historico-sp", label: "Histórico SP", icon: GraduationCap, color: "green" },
+  { key: "historico-uninter", label: "UNINTER", icon: GraduationCap, color: "indigo" },
+];
+
+interface DocRecord {
+  id: string;
+  type: string;
+  paciente?: string;
+  nome?: string;
+  created_at: string;
+  status: string;
+  codigo_qr?: string;
+  codigo_validacao?: string;
+}
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+  const [activeTab, setActiveTab] = useState("atestado");
+  const [history, setHistory] = useState<DocRecord[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [stats, setStats] = useState<Record<string, number>>({});
+  const [notifications, setNotifications] = useState<any[]>([]);
+
+  useEffect(() => {
+    loadStats();
+    loadNotifications();
+  }, []);
+
+  useEffect(() => {
+    loadHistory(activeTab);
+  }, [activeTab]);
+
+  const loadStats = async () => {
+    try {
+      const res = await fetch("/api/attestations?stats=1", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.stats) setStats(data.stats);
+      }
+    } catch {}
+  };
+
+  const loadNotifications = async () => {
+    try {
+      const res = await fetch("/api/notifications", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.notifications) setNotifications(data.notifications.slice(0, 3));
+      }
+    } catch {}
+  };
+
+  const loadHistory = async (type: string) => {
+    setHistoryLoading(true);
+    try {
+      const endpoint = type === "atestado"
+        ? `/api/attestations?limit=10`
+        : `/api/documents/${type}?limit=10`;
+      const res = await fetch(endpoint, { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        setHistory(data.attestations || data.documents || []);
+      }
+    } catch {
+      setHistory([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "—";
+    try {
+      return new Date(dateStr).toLocaleDateString("pt-BR");
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const activeTabInfo = HISTORY_TABS.find(t => t.key === activeTab)!;
 
   return (
     <DashboardLayout>
-      <div className="p-6 max-w-6xl mx-auto">
+      <div className="p-7 max-w-7xl mx-auto">
+        {/* Notifications */}
+        {notifications.length > 0 && (
+          <div className="mb-6 space-y-2">
+            {notifications.map(n => (
+              <div key={n.id} className={`flex items-start gap-3 p-3 rounded-xl border ${
+                n.type === "warning" ? "bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800" :
+                n.type === "error" ? "bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800" :
+                "bg-yellow-50 dark:bg-yellow-900/10 border-yellow-200 dark:border-yellow-800"
+              }`}>
+                <Bell className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
+                  n.type === "warning" ? "text-amber-500" :
+                  n.type === "error" ? "text-red-500" :
+                  "text-yellow-500"
+                }`} />
+                <div>
+                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{n.title}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">{n.message}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Welcome Banner */}
-        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-6 mb-6 text-white">
+        <div className="bg-gradient-to-r from-yellow-500 to-amber-500 rounded-2xl p-7 mb-7 text-white shadow-lg">
           <h1 className="text-2xl font-bold">
-            Olá, <span className="text-blue-100">{user?.displayName || user?.username}</span>! 👋
+            Olá, <span className="text-yellow-100">{user?.displayName || user?.username}</span>! 👋
           </h1>
-          <p className="text-blue-100 mt-1 text-sm">
+          <p className="text-yellow-100 mt-1 text-sm">
             Bem-vindo ao maior e melhor painel da atualidade — <strong>DocMaster</strong>
           </p>
+          <div className="mt-4 flex items-center gap-3">
+            <button
+              onClick={() => setLocation("/atestadocria")}
+              className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-semibold transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              Novo Documento
+            </button>
+          </div>
         </div>
 
         {/* Stats */}
-        <div className="mb-6">
+        <div className="mb-7">
           <div className="flex items-center gap-2 mb-4">
             <BarChart3 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 uppercase tracking-wide">
@@ -53,16 +169,16 @@ export default function Dashboard() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { icon: FileText, label: "Atestados Criados", value: "—", color: "blue" },
-              { icon: Car, label: "CNHs Criadas", value: "—", color: "amber" },
-              { icon: Anchor, label: "CHAs Criadas", value: "—", color: "cyan" },
+              { icon: FileText, label: "Atestados Emitidos", value: stats.atestado ?? "—", color: "yellow" },
+              { icon: Car, label: "CNHs Emitidas", value: stats.cnh ?? "—", color: "amber" },
+              { icon: Anchor, label: "CHAs Emitidas", value: stats.cha ?? "—", color: "cyan" },
               { icon: Wallet, label: "Saldo Disponível", value: `R$ ${((user?.balance || 0) / 100).toFixed(2).replace(".", ",")}`, color: "emerald" },
             ].map(({ icon: Icon, label, value, color }) => {
               const c = colorMap[color];
               return (
-                <div key={label} className={`${c.bg} rounded-xl p-4 flex items-center gap-3`}>
-                  <div className={`${c.iconBg} rounded-lg p-2.5 flex-shrink-0`}>
-                    <Icon className={`w-5 h-5 ${c.text}`} />
+                <div key={label} className={`${c.bg} rounded-xl p-5 flex items-center gap-3`}>
+                  <div className={`${c.iconBg} rounded-lg p-3 flex-shrink-0`}>
+                    <Icon className={`w-6 h-6 ${c.text}`} />
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
@@ -71,6 +187,103 @@ export default function Dashboard() {
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        {/* Emission History — like elitedoc.store */}
+        <div className="mb-7">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 uppercase tracking-wide">
+              Histórico de Emissões
+            </h2>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-1 flex-wrap mb-4 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+            {HISTORY_TABS.map(tab => {
+              const c = colorMap[tab.color];
+              const TabIcon = tab.icon;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    activeTab === tab.key
+                      ? `${c.badge} text-white shadow-sm`
+                      : "text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700"
+                  }`}
+                >
+                  <TabIcon className="w-3.5 h-3.5" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Table */}
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+            {historyLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin w-6 h-6 border-2 border-yellow-500 border-t-transparent rounded-full" />
+              </div>
+            ) : history.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                <Clock className="w-10 h-10 mb-3 opacity-30" />
+                <p className="text-sm">Nenhum documento emitido ainda</p>
+                <button
+                  onClick={() => setLocation(quickActions.find(q => q.path.includes(activeTab.split("-")[0]))?.path || "/atestadocria")}
+                  className="mt-3 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-semibold rounded-lg transition-colors"
+                >
+                  Emitir agora
+                </button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-gray-800">
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nome</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">Código</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Data</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                      <th className="px-4 py-3"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                    {history.map(doc => (
+                      <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">
+                          {doc.paciente || doc.nome || "—"}
+                        </td>
+                        <td className="px-4 py-3 text-xs font-mono text-gray-500 dark:text-gray-400 hidden sm:table-cell">
+                          {doc.codigo_qr || doc.codigo_validacao || doc.id?.slice(0, 8) || "—"}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
+                          {formatDate(doc.created_at)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400">
+                            <CheckCircle className="w-3 h-3" />
+                            {doc.status || "emitido"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {activeTab === "atestado" && (
+                            <button
+                              onClick={() => setLocation(`/historico/atestados/${doc.id}`)}
+                              className="text-xs text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 font-medium"
+                            >
+                              Ver
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
 
@@ -89,16 +302,16 @@ export default function Dashboard() {
                 <button
                   key={path}
                   onClick={() => setLocation(path)}
-                  className="flex items-center gap-4 p-4 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-800 hover:shadow-md transition-all group text-left"
+                  className="flex items-center gap-4 p-5 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-yellow-200 dark:hover:border-yellow-800 hover:shadow-md transition-all group text-left"
                 >
-                  <div className={`${c.iconBg} rounded-lg p-2.5 flex-shrink-0`}>
-                    <Icon className={`w-5 h-5 ${c.text}`} />
+                  <div className={`${c.iconBg} rounded-lg p-3 flex-shrink-0`}>
+                    <Icon className={`w-6 h-6 ${c.text}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{label}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{desc}</p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0" />
+                  <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-yellow-500 transition-colors flex-shrink-0" />
                 </button>
               );
             })}

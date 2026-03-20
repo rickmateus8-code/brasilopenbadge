@@ -7,6 +7,7 @@ export type AuthUser = {
   role: "user" | "admin";
   balance: number;
   displayName?: string;
+  profilePhoto?: string | null;
 };
 
 type AuthContextType = {
@@ -19,6 +20,7 @@ type AuthContextType = {
   logout: () => void;
   refresh: () => Promise<void>;
   updateBalance: (newBalance: number) => void;
+  updateUser: (updates: Partial<AuthUser>) => void;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -95,6 +97,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(prev => prev ? { ...prev, balance: newBalance } : null);
   }, []);
 
+  const updateUser = useCallback((updates: Partial<AuthUser>) => {
+    setUser(prev => prev ? { ...prev, ...updates } : null);
+  }, []);
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -106,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       refresh,
       updateBalance,
+      updateUser,
     }}>
       {children}
     </AuthContext.Provider>

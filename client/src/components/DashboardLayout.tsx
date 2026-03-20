@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuth, type AuthUser } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -6,7 +6,7 @@ import {
   LayoutDashboard, FileText, CreditCard, Receipt, LogOut,
   ChevronDown, ChevronRight, Menu, X, Sun, Moon,
   Shield, GraduationCap, Car, Anchor, FlaskConical,
-  MessageCircle, User, Wallet
+  User, Wallet, Settings, HelpCircle, Plus, Bell
 } from "lucide-react";
 
 interface MenuItem {
@@ -19,10 +19,9 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   {
-    icon: FileText, label: "Atestados",
+    icon: FileText, label: "Atestado",
     children: [
       { label: "Novo Atestado", path: "/atestadocria" },
-      { label: "Histórico", path: "/historico/atestados" },
     ],
   },
   {
@@ -50,8 +49,6 @@ const menuItems: MenuItem[] = [
       { label: "Histórico UNINTER", path: "/historico-uninter" },
     ],
   },
-  { icon: Receipt, label: "Extrato", path: "/extrato" },
-  { icon: CreditCard, label: "Recargas", path: "/recargas" },
 ];
 
 function SidebarItem({
@@ -84,7 +81,7 @@ function SidebarItem({
           onClick={() => setOpen(o => !o)}
           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all
             ${isActive
-              ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
+              ? "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400"
               : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 hover:text-gray-900 dark:hover:text-gray-100"
             }`}
         >
@@ -106,7 +103,7 @@ function SidebarItem({
                 onClick={() => navigate(child.path)}
                 className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all
                   ${location === child.path
-                    ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-medium"
+                    ? "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 font-medium"
                     : "text-gray-500 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800/60 hover:text-gray-800 dark:hover:text-gray-200"
                   }`}
               >
@@ -124,13 +121,111 @@ function SidebarItem({
       onClick={() => item.path && navigate(item.path)}
       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all
         ${isActive
-          ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
+          ? "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400"
           : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 hover:text-gray-900 dark:hover:text-gray-100"
         }`}
     >
       <Icon className="w-4 h-4 flex-shrink-0" />
       {!collapsed && <span>{item.label}</span>}
     </button>
+  );
+}
+
+function UserDropdown({ user, logout, collapsed }: { user: AuthUser; logout: () => void; collapsed: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [, setLocation] = useLocation();
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const avatarSrc = user.profilePhoto;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className={`flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors w-full ${collapsed ? "justify-center" : ""}`}
+      >
+        <div className="w-8 h-8 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-yellow-300 dark:border-yellow-700">
+          {avatarSrc ? (
+            <img src={avatarSrc} alt="Avatar" className="w-full h-full object-cover" />
+          ) : (
+            <User className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+          )}
+        </div>
+        {!collapsed && (
+          <>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
+                {user.displayName || user.username}
+              </p>
+              <p className="text-[10px] text-gray-400 dark:text-gray-500 capitalize">
+                {user.role === "admin" ? "Administrador" : "Usuário"}
+              </p>
+            </div>
+            <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform flex-shrink-0 ${open ? "rotate-180" : ""}`} />
+          </>
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute bottom-full left-0 right-0 mb-1 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl z-50 overflow-hidden min-w-[200px]">
+          <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800">
+            <p className="text-xs font-bold text-gray-800 dark:text-gray-200">{user.displayName || user.username}</p>
+            <p className="text-[10px] text-gray-500">{user.email}</p>
+          </div>
+          <div className="py-1">
+            <button
+              onClick={() => { setLocation("/configuracoes"); setOpen(false); }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <Settings className="w-4 h-4" />
+              Configurações
+            </button>
+            <button
+              onClick={() => { setLocation("/extrato"); setOpen(false); }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <Receipt className="w-4 h-4" />
+              Extrato
+            </button>
+            <button
+              onClick={() => { setLocation("/recargas"); setOpen(false); }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <CreditCard className="w-4 h-4" />
+              Histórico de Recargas
+            </button>
+            <a
+              href="https://wa.me/5511965355468?text=Preciso+de+suporte"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <HelpCircle className="w-4 h-4" />
+              Ajuda / Suporte
+            </a>
+          </div>
+          <div className="border-t border-gray-100 dark:border-gray-800 py-1">
+            <button
+              onClick={() => { logout(); setOpen(false); }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              Sair
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -141,7 +236,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Fechar sidebar mobile ao redimensionar para desktop
   useEffect(() => {
     const handler = () => {
       if (window.innerWidth >= 768) setMobileOpen(false);
@@ -160,22 +254,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     : [];
 
   const allItems = [...menuItems, ...adminItems];
-
   const balanceFormatted = `R$ ${(user.balance / 100).toFixed(2).replace(".", ",")}`;
 
   const SidebarContent = ({ mobile = false }: { mobile?: boolean }) => (
     <div
-      className={`flex flex-col h-full ${mobile ? "w-72" : collapsed ? "w-16" : "w-60"} 
+      className={`flex flex-col h-full ${mobile ? "w-72" : collapsed ? "w-18" : "w-64"} 
         bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-200`}
     >
-      {/* Header com Logo 02 */}
-      <div className="flex items-center justify-between px-3 py-3 border-b border-gray-200 dark:border-gray-800 min-h-[60px]">
+      {/* Header com Logo */}
+      <div className="flex items-center justify-between px-3 py-3 border-b border-gray-200 dark:border-gray-800 min-h-[64px]">
         {(!collapsed || mobile) && (
           <div className="flex items-center">
             <img
               src="/assets/logo-text.webp"
               alt="DocMaster"
-              className="h-8 w-auto object-contain"
+              className="h-9 w-auto object-contain"
               draggable={false}
             />
           </div>
@@ -185,7 +278,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <img
               src="/assets/logo-icon.png"
               alt="DM"
-              className="h-8 w-8 object-contain"
+              className="h-9 w-9 object-contain"
               draggable={false}
             />
           </div>
@@ -225,34 +318,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Footer */}
       <div className="px-2 py-3 border-t border-gray-200 dark:border-gray-800 space-y-2">
-        {/* Saldo */}
+        {/* Saldo com botão + */}
         {(!collapsed || mobile) && (
-          <div className="px-3 py-2 bg-red-50 dark:bg-red-900/10 rounded-lg border border-red-100 dark:border-red-900/20">
-            <p className="text-[10px] text-gray-500 dark:text-gray-500 uppercase tracking-wider">Saldo</p>
-            <p className="text-sm font-bold text-red-600 dark:text-red-400">
-              {balanceFormatted}
-            </p>
-          </div>
-        )}
-
-        {/* User info */}
-        <div className={`flex items-center gap-2 px-2 py-1.5 rounded-lg ${collapsed && !mobile ? "justify-center" : ""}`}>
-          <div className="w-7 h-7 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
-            <User className="w-4 h-4 text-red-600 dark:text-red-400" />
-          </div>
-          {(!collapsed || mobile) && (
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
-                {user.displayName || user.username}
-              </p>
-              <p className="text-[10px] text-gray-400 dark:text-gray-500 capitalize">
-                {user.role === "admin" ? "Administrador" : "Usuário"}
+          <div className="px-3 py-2 bg-yellow-50 dark:bg-yellow-900/10 rounded-lg border border-yellow-100 dark:border-yellow-900/20 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] text-gray-500 dark:text-gray-500 uppercase tracking-wider">Saldo</p>
+              <p className="text-sm font-bold text-yellow-600 dark:text-yellow-400">
+                {balanceFormatted}
               </p>
             </div>
-          )}
-        </div>
-
-        {/* Actions */}
+            <button
+              onClick={() => setLocation("/recargas")}
+              className="w-7 h-7 rounded-full bg-yellow-500 hover:bg-yellow-600 text-white flex items-center justify-center transition-colors shadow-sm"
+              title="Adicionar saldo"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+        {/* User dropdown */}
+        <UserDropdown user={user} logout={logout} collapsed={!mobile && collapsed} />
+        {/* Theme toggle */}
         <div className={`flex gap-1 ${collapsed && !mobile ? "flex-col items-center" : ""}`}>
           <button
             onClick={toggleTheme}
@@ -265,14 +351,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {(!collapsed || mobile) && (
               <span>{theme === "dark" ? "Claro" : "Escuro"}</span>
             )}
-          </button>
-          <button
-            onClick={logout}
-            className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-            title="Sair"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            {(!collapsed || mobile) && <span>Sair</span>}
           </button>
         </div>
       </div>
@@ -310,28 +388,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           >
             <Menu className="w-5 h-5" />
           </button>
-
-          {/* Logo no header mobile */}
           <img
             src="/assets/logo-text.webp"
             alt="DocMaster"
             className="h-7 w-auto object-contain"
             draggable={false}
           />
-
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-lg">
-              <Wallet className="w-3.5 h-3.5 text-red-500" />
-              <span className="text-xs font-bold text-red-600 dark:text-red-400">
+            <div className="flex items-center gap-1 bg-yellow-50 dark:bg-yellow-900/20 px-2 py-1 rounded-lg">
+              <Wallet className="w-3.5 h-3.5 text-yellow-500" />
+              <span className="text-xs font-bold text-yellow-600 dark:text-yellow-400">
                 {balanceFormatted}
               </span>
             </div>
-            <div className="w-7 h-7 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-              <User className="w-4 h-4 text-red-600 dark:text-red-400" />
+            <div className="w-7 h-7 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center overflow-hidden border-2 border-yellow-300 dark:border-yellow-700">
+              {user.profilePhoto ? (
+                <img src={user.profilePhoto} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+              )}
             </div>
           </div>
         </header>
-
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto">
           {children}
@@ -347,7 +425,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         title="Suporte via WhatsApp"
         aria-label="Contato WhatsApp"
       >
-        {/* Ícone WhatsApp SVG nativo */}
         <svg viewBox="0 0 24 24" className="w-7 h-7 fill-white" xmlns="http://www.w3.org/2000/svg">
           <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
         </svg>

@@ -21,6 +21,7 @@ import HistoricoUNINTER from "./pages/HistoricoUNINTER";
 import AdminDashboard from "./pages/AdminDashboard";
 import Extrato from "./pages/Extrato";
 import Recargas from "./pages/Recargas";
+import Configuracoes from "./pages/Configuracoes";
 import NotFound from "./pages/NotFound";
 
 function Router() {
@@ -36,7 +37,12 @@ function Router() {
       {/* Painel principal */}
       <Route path="/dashboard" component={Dashboard} />
 
-      {/* Emissão de documentos */}
+      {/* Emissão de documentos - slugs principais */}
+      <Route path="/atestado" component={AtestadoCria} />
+      <Route path="/cnh" component={CNHCria} />
+      <Route path="/cha" component={CHACria} />
+      <Route path="/toxicologico" component={ToxicologicoCria} />
+      {/* Rotas legacy - redirecionam para slugs */}
       <Route path="/atestadocria" component={AtestadoCria} />
       <Route path="/cnhcria" component={CNHCria} />
       <Route path="/chacria" component={CHACria} />
@@ -51,6 +57,9 @@ function Router() {
       {/* Financeiro */}
       <Route path="/extrato" component={Extrato} />
       <Route path="/recargas" component={Recargas} />
+
+      {/* Configurações do usuário */}
+      <Route path="/configuracoes" component={Configuracoes} />
 
       {/* Administração */}
       <Route path="/admin" component={AdminDashboard} />

@@ -339,12 +339,27 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                     bgColor="#FFFFFF"
                   />
                 ) : (
-                  <div style={{
-                    width: 80, height: 80, background: "#f3f4f6",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    border: "1px dashed #9ca3af", borderRadius: 4,
-                  }}>
-                    <span style={{ fontSize: 8, color: "#9ca3af", textAlign: "center", padding: 4 }}>QR após emissão</span>
+                  <div style={{ position: "relative", width: 80, height: 80, flexShrink: 0 }}>
+                    {/* QR Code borrado — placeholder visual antes da emissão */}
+                    <div style={{ filter: "blur(3.5px) brightness(0.8)", opacity: 0.55, lineHeight: 0 }}>
+                      <QRCode
+                        value="https://docmaster.store/validar"
+                        size={80}
+                        level="H"
+                        includeMargin={false}
+                        fgColor="#1a1a1a"
+                        bgColor="#FFFFFF"
+                      />
+                    </div>
+                    <div style={{
+                      position: "absolute", inset: 0,
+                      display: "flex", flexDirection: "column",
+                      alignItems: "center", justifyContent: "center",
+                      background: "rgba(255,255,255,0.35)",
+                      borderRadius: 4,
+                    }}>
+                      <span style={{ fontSize: 7, color: "#374151", textAlign: "center", fontWeight: 700, lineHeight: 1.3, padding: "0 4px", textShadow: "0 1px 2px rgba(255,255,255,0.8)" }}>🔒 Após emissão</span>
+                    </div>
                   </div>
                 )}
               </div>
