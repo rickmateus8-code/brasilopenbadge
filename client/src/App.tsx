@@ -24,17 +24,45 @@ import Recargas from "./pages/Recargas";
 import Configuracoes from "./pages/Configuracoes";
 import NotFound from "./pages/NotFound";
 
-function Router() {
-  // Detectar se está acessando via validaratestado.digital
-  const isValidationDomain = typeof window !== 'undefined' && window.location.hostname === 'validaratestado.digital';
-  
+// ─── Detectar Domínio ──────────────────────────────────────────────────────────
+const isValidationDomain = typeof window !== 'undefined' && 
+  (window.location.hostname === 'validaratestado.digital' || 
+   window.location.hostname === 'www.validaratestado.digital');
+
+// ─── Roteador para validaratestado.digital (Apenas Validação) ──────────────────
+function ValidationRouter() {
   return (
     <Switch>
-      {/* Se está em validaratestado.digital, redirecionar para validação */}
-      {isValidationDomain && <Route path="/" component={Validation} />}
+      {/* Rota para código direto: /XXXX.XXXX */}
+      <Route path="/:id" component={(props: { params: { id: string } }) => {
+        const id = props.params?.id || "";
+        if (/^[A-Z0-9]{4}\.[A-Z0-9]{4}$/i.test(id)) {
+          return <Validation />;
+        }
+        return <NotFound />;
+      }} />
       
-      {/* Landing page pública (apenas em docmaster.store) */}
-      {!isValidationDomain && <Route path="/" component={Home} />}
+      {/* Rota raiz: / - Sempre validação */}
+      <Route path="/" component={Validation} />
+      
+      {/* Rota legacy /validar */}
+      <Route path="/validar" component={Validation} />
+      
+      {/* Rota legacy /v/:id */}
+      <Route path="/v/:id" component={Validation} />
+      
+      {/* Qualquer outra rota em validaratestado.digital redireciona para validação */}
+      <Route component={Validation} />
+    </Switch>
+  );
+}
+
+// ─── Roteador para docmaster.store (Painel Completo) ─────────────────────────────
+function DocMasterRouter() {
+  return (
+    <Switch>
+      {/* Landing page pública */}
+      <Route path="/" component={Home} />
 
       {/* Autenticação */}
       <Route path="/login" component={Login} />
@@ -96,7 +124,8 @@ function App() {
         <AuthProvider>
           <TooltipProvider>
             <Toaster />
-            <Router />
+            {/* Renderizar roteador apropriado baseado no domínio */}
+            {isValidationDomain ? <ValidationRouter /> : <DocMasterRouter />}
           </TooltipProvider>
         </AuthProvider>
       </ThemeProvider>
