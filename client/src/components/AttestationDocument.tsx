@@ -146,19 +146,19 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           justifyContent: "space-between",
           alignItems: "center",
           marginBottom: 8,
-          height: 72,
+          height: 80,
           position: "relative",
           zIndex: 2,
           flexShrink: 0,
         }}>
           {/* Logo Esquerda */}
-          <div style={{ width: 140, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start", flexShrink: 0 }}>
+          <div style={{ width: 154, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start", flexShrink: 0 }}>
             {effectiveLogoLeft && (
               <img
                 src={effectiveLogoLeft}
                 alt="Logo"
                 crossOrigin="anonymous"
-                style={{ maxHeight: "100%", maxWidth: 140, objectFit: "contain" }}
+                style={{ maxHeight: "100%", maxWidth: 154, objectFit: "contain" }}
               />
             )}
           </div>
@@ -183,13 +183,13 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </div>
 
           {/* Logo Direita */}
-          <div style={{ width: 140, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-end", flexShrink: 0 }}>
+          <div style={{ width: 154, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-end", flexShrink: 0 }}>
             {effectiveLogoRight && (
               <img
                 src={effectiveLogoRight}
                 alt="Logo Direita"
                 crossOrigin="anonymous"
-                style={{ maxHeight: "100%", maxWidth: 140, objectFit: "contain" }}
+                style={{ maxHeight: "100%", maxWidth: 154, objectFit: "contain" }}
               />
             )}
           </div>
@@ -200,7 +200,6 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           fontWeight: 900,
           fontSize: 20,
           textTransform: "uppercase",
-          borderTop: "2px solid #000",
           borderBottom: "2px solid #000",
           display: "block",
           padding: "5px 0",
