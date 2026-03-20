@@ -103,12 +103,23 @@ export async function onRequest(context: { request: Request; env: Env; params: a
     return jsonResponse({ success: false, error: "Não autenticado. Faça login para continuar." }, 401);
   }
 
+  // Verificar se há um ID na URL (ex: /api/attestations/XXXX)
+  const url = new URL(request.url);
+  const pathParts = url.pathname.split('/').filter(Boolean);
+  const attestationId = pathParts.length >= 3 ? pathParts[2] : null;
+
   try {
+    if (request.method === "GET" && attestationId) {
+      return handleGetAttestationById(env, user, attestationId);
+    }
     if (request.method === "GET") {
       return handleGetAttestations(env, user);
     }
     if (request.method === "POST") {
       return handleCreateAttestation(request, env, user);
+    }
+    if (request.method === "DELETE" && attestationId) {
+      return handleDeleteAttestation(env, user, attestationId);
     }
     return jsonResponse({ success: false, error: "Método não permitido." }, 405);
   } catch (error) {
@@ -297,4 +308,49 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
     },
     newBalance,
   }, 201);
+}
+
+// ─── GET por ID ───────────────────────────────────────────────────────────────
+
+async function handleGetAttestationById(env: Env, user: any, id: string) {
+  let attestation;
+  if (user.role === "admin") {
+    attestation = await env.DB.prepare(
+      "SELECT * FROM attestations WHERE id = ? LIMIT 1"
+    ).bind(id).first<any>();
+  } else {
+    attestation = await env.DB.prepare(
+      "SELECT * FROM attestations WHERE id = ? AND user_id = ? LIMIT 1"
+    ).bind(id, user.id).first<any>();
+  }
+
+  if (!attestation) {
+    return jsonResponse({ success: false, error: "Atestado não encontrado." }, 404);
+  }
+
+  return jsonResponse({ success: true, data: attestation });
+}
+
+// ─── DELETE ───────────────────────────────────────────────────────────────────
+
+async function handleDeleteAttestation(env: Env, user: any, id: string) {
+  // Verificar se o atestado existe e pertence ao usuário
+  let attestation;
+  if (user.role === "admin") {
+    attestation = await env.DB.prepare(
+      "SELECT id FROM attestations WHERE id = ? LIMIT 1"
+    ).bind(id).first<any>();
+  } else {
+    attestation = await env.DB.prepare(
+      "SELECT id FROM attestations WHERE id = ? AND user_id = ? LIMIT 1"
+    ).bind(id, user.id).first<any>();
+  }
+
+  if (!attestation) {
+    return jsonResponse({ success: false, error: "Atestado não encontrado ou sem permissão." }, 404);
+  }
+
+  await env.DB.prepare("DELETE FROM attestations WHERE id = ?").bind(id).run();
+
+  return jsonResponse({ success: true, message: "Atestado excluído com sucesso." });
 }

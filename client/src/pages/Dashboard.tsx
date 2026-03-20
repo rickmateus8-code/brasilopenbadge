@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   FileText, Car, Anchor, FlaskConical, GraduationCap,
   Wallet, TrendingUp, BarChart3, ChevronRight, Plus,
-  Clock, CheckCircle, Bell
+  Clock, CheckCircle, Bell, Eye, Download, Trash2
 } from "lucide-react";
 
 const quickActions = [
@@ -45,6 +45,8 @@ interface DocRecord {
   status: string;
   codigo_qr?: string;
   codigo_validacao?: string;
+  data_emissao?: string;
+  medico?: string;
 }
 
 export default function Dashboard() {
@@ -55,6 +57,8 @@ export default function Dashboard() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [stats, setStats] = useState<Record<string, number>>({});
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     loadStats();
@@ -89,12 +93,12 @@ export default function Dashboard() {
     setHistoryLoading(true);
     try {
       const endpoint = type === "atestado"
-        ? `/api/attestations?limit=10`
-        : `/api/documents/${type}?limit=10`;
+        ? `/api/attestations?limit=50`
+        : `/api/documents/${type}?limit=50`;
       const res = await fetch(endpoint, { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
-        setHistory(data.attestations || data.documents || []);
+        setHistory(data.data || data.attestations || data.documents || []);
       }
     } catch {
       setHistory([]);
@@ -103,9 +107,34 @@ export default function Dashboard() {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/attestations/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (res.ok) {
+        setHistory(prev => prev.filter(d => d.id !== id));
+        setConfirmDeleteId(null);
+      } else {
+        alert("Erro ao excluir atestado.");
+      }
+    } catch {
+      alert("Erro ao excluir atestado.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "—";
     try {
+      // Suporta formato ISO e DD/MM/YYYY
+      if (dateStr.includes("-") && dateStr.length >= 10) {
+        const [y, m, d] = dateStr.slice(0, 10).split("-");
+        return `${d}/${m}/${y}`;
+      }
       return new Date(dateStr).toLocaleDateString("pt-BR");
     } catch {
       return dateStr;
@@ -169,7 +198,7 @@ export default function Dashboard() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { icon: FileText, label: "Atestados Emitidos", value: stats.atestado ?? "—", color: "yellow" },
+              { icon: FileText, label: "Atestados Emitidos", value: (stats.atestado ?? history.filter(d => activeTab === "atestado").length) || "—", color: "yellow" },
               { icon: Car, label: "CNHs Emitidas", value: stats.cnh ?? "—", color: "amber" },
               { icon: Anchor, label: "CHAs Emitidas", value: stats.cha ?? "—", color: "cyan" },
               { icon: Wallet, label: "Saldo Disponível", value: `R$ ${((user?.balance || 0) / 100).toFixed(2).replace(".", ",")}`, color: "emerald" },
@@ -190,7 +219,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Emission History — like elitedoc.store */}
+        {/* Emission History */}
         <div className="mb-7">
           <div className="flex items-center gap-2 mb-4">
             <Clock className="w-5 h-5 text-gray-600 dark:text-gray-400" />
@@ -242,44 +271,81 @@ export default function Dashboard() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-100 dark:border-gray-800">
+                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
                       <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nome</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">Código</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Data</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">Código QR</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Criado Em</th>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                      <th className="px-4 py-3"></th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-                    {history.map(doc => (
-                      <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                        <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">
-                          {doc.paciente || doc.nome || "—"}
-                        </td>
-                        <td className="px-4 py-3 text-xs font-mono text-gray-500 dark:text-gray-400 hidden sm:table-cell">
-                          {doc.codigo_qr || doc.codigo_validacao || doc.id?.slice(0, 8) || "—"}
-                        </td>
-                        <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
-                          {formatDate(doc.created_at)}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400">
-                            <CheckCircle className="w-3 h-3" />
-                            {doc.status || "emitido"}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          {activeTab === "atestado" && (
-                            <button
-                              onClick={() => setLocation(`/historico/atestados/${doc.id}`)}
-                              className="text-xs text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 font-medium"
-                            >
-                              Ver
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                    {history.map(doc => {
+                      const codigoQR = doc.codigo_qr || doc.codigo_validacao || "";
+                      const dataEmissao = doc.data_emissao || doc.created_at;
+                      return (
+                        <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                          <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">
+                            {doc.paciente || doc.nome || "—"}
+                          </td>
+                          <td className="px-4 py-3 text-xs font-mono text-gray-500 dark:text-gray-400 hidden sm:table-cell">
+                            {codigoQR || doc.id?.slice(0, 8) || "—"}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
+                            {formatDate(dataEmissao)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400">
+                              <CheckCircle className="w-3 h-3" />
+                              {doc.status || "emitido"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              {/* Visualizar */}
+                              {activeTab === "atestado" && codigoQR && (
+                                <button
+                                  title="Visualizar no validador"
+                                  onClick={() => window.open(`https://validaratestado.digital/${codigoQR}`, "_blank")}
+                                  className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                              )}
+                              {/* Baixar PDF */}
+                              {activeTab === "atestado" && (
+                                <button
+                                  title="Baixar PDF"
+                                  onClick={() => setLocation(`/historico/atestados/${doc.id}`)}
+                                  className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                                >
+                                  <Download className="w-4 h-4" />
+                                </button>
+                              )}
+                              {/* Excluir */}
+                              {activeTab === "atestado" && (
+                                <button
+                                  title="Excluir atestado"
+                                  onClick={() => setConfirmDeleteId(doc.id)}
+                                  className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                              {/* Ver (outros tipos) */}
+                              {activeTab !== "atestado" && (
+                                <button
+                                  onClick={() => setLocation(`/historico/atestados/${doc.id}`)}
+                                  className="text-xs text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 font-medium"
+                                >
+                                  Ver
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -318,6 +384,59 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Modal de confirmação de exclusão */}
+      {confirmDeleteId && (
+        <div
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            zIndex: 9999,
+          }}
+          onClick={() => setConfirmDeleteId(null)}
+        >
+          <div
+            style={{
+              background: "#fff", borderRadius: 16, padding: "32px 40px",
+              textAlign: "center", maxWidth: 380, width: "90%",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🗑️</div>
+            <h2 style={{ fontSize: 18, fontWeight: 800, color: "#dc2626", margin: "0 0 8px" }}>
+              Excluir Atestado?
+            </h2>
+            <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 24px" }}>
+              Esta ação não pode ser desfeita. O atestado será removido permanentemente.
+            </p>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                style={{
+                  flex: 1, padding: "10px 0", borderRadius: 8, border: "none",
+                  background: "#dc2626", color: "#fff", fontWeight: 700, fontSize: 13,
+                  cursor: deletingId ? "not-allowed" : "pointer",
+                  opacity: deletingId ? 0.7 : 1,
+                }}
+                disabled={!!deletingId}
+                onClick={() => handleDelete(confirmDeleteId)}
+              >
+                {deletingId === confirmDeleteId ? "Excluindo..." : "Sim, Excluir"}
+              </button>
+              <button
+                style={{
+                  flex: 1, padding: "10px 0", borderRadius: 8, border: "1px solid #e5e7eb",
+                  background: "#f9fafb", color: "#374151", fontWeight: 700, fontSize: 13,
+                  cursor: "pointer",
+                }}
+                onClick={() => setConfirmDeleteId(null)}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

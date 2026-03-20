@@ -200,6 +200,7 @@ export default function AtestadoCria() {
   const [isLoading, setIsLoading] = useState(false);
   const [createdCode, setCreatedCode] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   // ── Logos ──────────────────────────────────────────────────────────────────
   const [logoLeft, setLogoLeft] = useState<string>("");
@@ -661,10 +662,22 @@ export default function AtestadoCria() {
             )}
             <div style={{ display: "flex", gap: 10 }}>
               <button
-                style={{ ...btnGreen, flex: 1 }}
-                onClick={() => { setShowSuccessModal(false); navigate("/historico/atestados"); }}
+                style={{ ...btnGreen, flex: 1, opacity: isDownloadingPdf ? 0.7 : 1 }}
+                disabled={isDownloadingPdf}
+                onClick={async () => {
+                  if (previewRef.current) {
+                    setIsDownloadingPdf(true);
+                    try {
+                      const filename = generatePDFFilename(form.paciente || "ATESTADO", "EMITIDO");
+                      await exportElementToPDF(previewRef.current, { filename, scale: 2, quality: 0.92 });
+                    } catch {}
+                    setIsDownloadingPdf(false);
+                  }
+                  setShowSuccessModal(false);
+                  navigate("/dashboard");
+                }}
               >
-                VER HISTÓRICO
+                {isDownloadingPdf ? "⏳ Baixando PDF..." : "⬇ VER HISTÓRICO"}
               </button>
               <button
                 style={{ ...btnGray, flex: 1 }}
