@@ -62,7 +62,8 @@ export default function Validation() {
 
   useEffect(() => {
     if (!params.id) return;
-    const code = params.id as string;
+    // Suporta tanto /v/:id quanto /:id (validaratestado.digital/:codigo)
+    const code = (params.id as string).trim().toUpperCase();
     setCodigo(code);
     handleValidate(code);
   }, [params.id]);
@@ -98,8 +99,8 @@ export default function Validation() {
           <span style={{ fontSize: 18 }}>🔍</span>
         </div>
         <div>
-          <h1 style={{ color: "#fff", fontSize: 18, fontWeight: 900, margin: 0, letterSpacing: 1 }}>DocMaster</h1>
-          <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 12, margin: 0 }}>Validador Oficial de Documentos</p>
+          <h1 style={{ color: "#fff", fontSize: 18, fontWeight: 900, margin: 0, letterSpacing: 1 }}>validaratestado.digital</h1>
+          <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 12, margin: 0 }}>Validador Oficial de Documentos Médicos</p>
         </div>
       </div>
 

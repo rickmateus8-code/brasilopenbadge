@@ -17,7 +17,7 @@
   "vars": {
     "ENVIRONMENT": "production",
     "APP_DOMAIN": "docmaster.store",
-    "VALIDATION_BASE_URL": "https://docmaster.store/v"
+    "VALIDATION_BASE_URL": "https://validaratestado.digital"
   },
   
   "observability": {

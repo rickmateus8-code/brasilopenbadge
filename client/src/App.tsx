@@ -67,6 +67,14 @@ function Router() {
       {/* Validação pública de documentos */}
       <Route path="/validar" component={Validation} />
       <Route path="/v/:id" component={Validation} />
+      {/* Rota direta para validaratestado.digital/:codigo (formato XXXX.XXXX) */}
+      <Route path="/:id" component={(props: { params: { id: string } }) => {
+        const id = props.params?.id || "";
+        if (/^[A-Z0-9]{4}\.[A-Z0-9]{4}$/i.test(id)) {
+          return <Validation />;
+        }
+        return <NotFound />;
+      }} />
 
       {/* 404 */}
       <Route path="/404" component={NotFound} />

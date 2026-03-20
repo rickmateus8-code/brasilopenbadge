@@ -1,28 +1,16 @@
 /**
  * Configuração de QR Code — DocMaster
  *
- * Os QR Codes apontam para: https://docmaster.store/v/:codigo
- * Usa o domínio atual dinamicamente para funcionar em qualquer ambiente.
+ * Os QR Codes apontam para: https://validaratestado.digital/:codigo
+ * O domínio validaratestado.digital é o validador oficial de documentos DocMaster.
  */
 
-function getQRDomain(): string {
-  if (typeof window !== "undefined") {
-    // Em produção usa o domínio atual (docmaster.store)
-    // Em dev usa localhost
-    const host = window.location.host;
-    const protocol = window.location.protocol;
-    return `${protocol}//${host}`;
-  }
-  return "https://docmaster.store";
-}
-
 export const QR_CODE_CONFIG = {
-  get qrCodeBaseUrl() {
-    return getQRDomain();
-  },
+  // Domínio de validação público
+  qrCodeBaseUrl: "https://validaratestado.digital",
 
   getQRCodeValidationUrl(code: string): string {
-    return `${this.qrCodeBaseUrl}/v/${code}`;
+    return `${this.qrCodeBaseUrl}/${code}`;
   },
 
   protocol: "https",

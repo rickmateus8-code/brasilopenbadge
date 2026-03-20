@@ -56,7 +56,10 @@ const PAD_V = 60;  // ~16mm left/right
 const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>(
   ({ data, logoUrl, logoLeft, logoRight, signatureColor, signatureImage }, ref) => {
     const isEmitted = data.codigoQR && data.codigoQR !== "XXXX.XXXX";
-    const qrValue = isEmitted ? getQRCodeValue(data.codigoQR) : "https://docmaster.store";
+    // QR Code aponta para validaratestado.digital
+    const qrValue = isEmitted
+      ? `https://validaratestado.digital/${data.codigoQR}`
+      : "https://validaratestado.digital";
 
     const effectiveLogoLeft = logoLeft || logoUrl || (data as any).logoUrl || "";
     const effectiveLogoRight = logoRight || (data as any).logoRight || "";
@@ -175,11 +178,6 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 {unidade}
               </div>
             )}
-            {enderecoEmitente && (
-              <div style={{ fontSize: 9, lineHeight: 1.3, color: "#444", fontWeight: 400 }}>
-                {enderecoEmitente}
-              </div>
-            )}
           </div>
 
           {/* Logo Direita */}
@@ -262,26 +260,51 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </div>
         </div>
 
+        {/* ===== ENDEREÇO EMITENTE ===== */}
+        {enderecoEmitente && (
+          <div style={{
+            fontSize: 10.5,
+            fontWeight: 700,
+            color: "#000",
+            textTransform: "uppercase",
+            marginBottom: 4,
+            marginTop: 2,
+            position: "relative",
+            zIndex: 2,
+            flexShrink: 0,
+          }}>
+            <span style={{ fontWeight: 700 }}>ENDEREÇO EMITENTE: </span>
+            <span style={{ fontWeight: 400 }}>{enderecoEmitente}</span>
+          </div>
+        )}
         {/* ===== CORPO DO TEXTO ===== */}
         <div style={{
           flex: "1 1 auto",
           fontSize: 13,
           lineHeight: 1.9,
           textAlign: "justify",
-          whiteSpace: "pre-wrap",
-          padding: "16px 0 8px",
-          color: "#111",
-          fontWeight: 400,
           position: "relative",
           zIndex: 2,
+          paddingTop: 18,
+          paddingBottom: 8,
+          color: "#111",
+          fontWeight: 400,
         }}>
-          {textoAtestado || "Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico."}
+          {/* Parágrafo com recuo */}
+          <p style={{
+            margin: 0,
+            textIndent: "3em",
+            lineHeight: 1.9,
+            whiteSpace: "pre-wrap",
+          }}>
+            {textoAtestado || "Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico."}
+          </p>
 
           {cidDisplay && (
             <div style={{
               fontWeight: 700,
               fontSize: 11,
-              marginTop: 10,
+              marginTop: 18,
               color: "#000",
               textTransform: "uppercase",
             }}>
@@ -293,7 +316,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         {/* ===== RODAPÉ DIGITAL ===== */}
         {!modoCarimbo && (
           <div style={{
-            borderTop: "1.5px solid #000",
+            borderTop: "1.75px solid #000",
             marginTop: "auto",
             paddingTop: 8,
             display: "flex",
@@ -309,7 +332,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 {dataFormatada || data.dataEmissao}
               </div>
               <div>Valide este documento em:</div>
-              <strong style={{ fontSize: 9 }}>docmaster.store/v/{data.codigoQR}</strong>
+              <strong style={{ fontSize: 9 }}>validaratestado.digital/{data.codigoQR}</strong>
               <br />
               <span>Código: </span>
               <strong style={{ fontFamily: "'Courier New', monospace", letterSpacing: 2, color: "#374151", fontSize: 9 }}>
@@ -319,7 +342,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
             {/* Direita: QR Code + Dados do Médico */}
             <div style={{
-              border: "1px solid #000",
+              border: "1.75px solid #000",
               padding: "5px 8px",
               display: "flex",
               gap: 10,
@@ -342,7 +365,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                     {/* QR Code borrado — placeholder visual antes da emissão */}
                     <div style={{ filter: "blur(3.5px) brightness(0.8)", opacity: 0.55, lineHeight: 0 }}>
                       <QRCode
-                        value="https://docmaster.store/validar"
+                        value="https://validaratestado.digital"
                         size={80}
                         level="H"
                         includeMargin={false}
@@ -363,7 +386,14 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 )}
               </div>
               <div style={{ fontSize: 8.5, textAlign: "right", lineHeight: 1.3, color: "#000" }}>
-                <div style={{ fontSize: 7.5, marginBottom: 2 }}>Documento assinado digitalmente conforme MP nº 2.200-2</div>
+                <div style={{
+                  fontSize: 7.5,
+                  marginBottom: 4,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  maxWidth: 160,
+                }}>Documento assinado digitalmente conforme MP nº 2.200-2</div>
                 <strong style={{ fontWeight: 700, fontSize: 9.5, textTransform: "uppercase", display: "block" }}>
                   {data.medico}
                 </strong>

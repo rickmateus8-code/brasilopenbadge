@@ -210,10 +210,12 @@ export default function AtestadoCria() {
   const [filtroUF, setFiltroUF] = useState("");
   const [filtroCidade, setFiltroCidade] = useState("");
   const [filtroBairro, setFiltroBairro] = useState("");
+  const [filtroLocal, setFiltroLocal] = useState("");
   const [filtroEsp, setFiltroEsp] = useState("");
   const [termoBusca, setTermoBusca] = useState("");
   const [cidades, setCidades] = useState<string[]>([]);
   const [bairros, setBairros] = useState<string[]>([]);
+  const [locais, setLocais] = useState<string[]>([]);
   const [resultados, setResultados] = useState<MedicoDB[]>([]);
   const [buscando, setBuscando] = useState(false);
   const [erroBusca, setErroBusca] = useState("");
@@ -273,35 +275,55 @@ export default function AtestadoCria() {
     setFiltroCidade("");
     setFiltroBairro("");
     setBairros([]);
+    setLocais([]);
   }, [filtroUF]);
 
-  // ── Carregar bairros quando cidade muda ────────────────────────────────────
+  // ── Carregar bairros e locais quando cidade muda ─────────────────────────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!filtroUF || !filtroCidade) { setBairros([]); return; }
+    if (!filtroUF || !filtroCidade) { setBairros([]); setLocais([]); return; }
     sbFetch(`medicos_brasil?uf_local=eq.${filtroUF}&cidade=eq.${encodeURIComponent(filtroCidade)}&select=bairro&order=bairro.asc`)
       .then((data: any[]) => {
         const unicos = [...new Set(data.map((d) => d.bairro).filter(Boolean))].sort();
         setBairros(unicos as string[]);
       })
       .catch(() => setBairros([]));
+    // Carregar locais de trabalho
+    sbFetch(`medicos_brasil?uf_local=eq.${filtroUF}&cidade=eq.${encodeURIComponent(filtroCidade)}&select=local_trabalho&order=local_trabalho.asc`)
+      .then((data: any[]) => {
+        const unicos = [...new Set(data.map((d) => d.local_trabalho).filter(Boolean))].sort();
+        setLocais(unicos as string[]);
+      })
+      .catch(() => setLocais([]));
     setFiltroBairro("");
+    setFiltroLocal("");
   }, [filtroUF, filtroCidade]);
 
-  // ── Busca de médicos ────────────────────────────────────────────────────────
+  // ── Busca de médicos ─────────────────────────────────────────────────────────────────────────────────────
   const buscarMedicos = useCallback(async () => {
     const termo = termoBusca.trim().toUpperCase().replace(/[.\-]/g, "");
     if (!filtroUF) { setErroBusca("Selecione a UF antes de buscar."); return; }
-    if (termo.length < 3) { setErroBusca("Digite ao menos 3 caracteres do nome ou CRM."); return; }
+    // Permite busca sem termo se tiver local selecionado
+    if (termo.length < 3 && !filtroLocal) { setErroBusca("Digite ao menos 3 caracteres do nome/CRM, ou selecione um Local."); return; }
     setBuscando(true);
     setErroBusca("");
     setShowResultados(true);
     try {
-      const isCRM = /^\d+$/.test(termo);
       let query: string;
-      if (isCRM) {
-        query = `medicos_brasil?select=*&limit=30&order=nome_medico.asc&uf_crm=eq.${filtroUF}&crm=ilike.*${termo}*`;
+      if (termo.length >= 3) {
+        const isCRM = /^\d+$/.test(termo);
+        if (isCRM) {
+          query = `medicos_brasil?select=*&limit=50&order=nome_medico.asc&uf_crm=eq.${filtroUF}&crm=ilike.*${termo}*`;
+        } else {
+          query = `medicos_brasil?select=*&limit=50&order=nome_medico.asc&uf_crm=eq.${filtroUF}&nome_medico=ilike.*${termo}*`;
+          if (filtroEsp) query += `&especialidade=ilike.*${filtroEsp}*`;
+          if (filtroCidade) query += `&cidade=eq.${encodeURIComponent(filtroCidade)}`;
+          if (filtroLocal) query += `&local_trabalho=eq.${encodeURIComponent(filtroLocal)}`;
+        }
       } else {
-        query = `medicos_brasil?select=*&limit=30&order=nome_medico.asc&uf_crm=eq.${filtroUF}&nome_medico=ilike.*${termo}*`;
+        // Busca por local sem termo de nome
+        query = `medicos_brasil?select=*&limit=50&order=nome_medico.asc&uf_local=eq.${filtroUF}`;
+        if (filtroCidade) query += `&cidade=eq.${encodeURIComponent(filtroCidade)}`;
+        if (filtroLocal) query += `&local_trabalho=eq.${encodeURIComponent(filtroLocal)}`;
         if (filtroEsp) query += `&especialidade=ilike.*${filtroEsp}*`;
       }
       const data: MedicoDB[] = await sbFetch(query);
@@ -312,7 +334,7 @@ export default function AtestadoCria() {
     } finally {
       setBuscando(false);
     }
-  }, [termoBusca, filtroUF, filtroEsp]);
+  }, [termoBusca, filtroUF, filtroEsp, filtroCidade, filtroLocal]);
 
   const selecionarMedico = (m: MedicoDB) => {
     setForm((p) => ({
@@ -320,7 +342,8 @@ export default function AtestadoCria() {
       medico: m.nome_medico.toUpperCase(),
       crm: `CRM/${m.uf_crm || m.uf_local} ${m.crm}`,
       especialidade: (m.especialidade || "CLÍNICO GERAL").toUpperCase(),
-      instituicao: (m.local_trabalho || "CONSULTÓRIO MÉDICO").toUpperCase(),
+      // Preenche instituição somente se ainda não foi preenchida pelo usuário
+      instituicao: p.instituicao || (m.local_trabalho || "CONSULTÓRIO MÉDICO").toUpperCase(),
       enderecoEmitente: [m.endereco, m.bairro, m.cidade, m.uf_local].filter(Boolean).join(", ").toUpperCase(),
       cidade: m.cidade?.toUpperCase() || p.cidade,
     }));
@@ -672,9 +695,31 @@ export default function AtestadoCria() {
                     placeholder={"Nome Completo: JOÃO DA SILVA\nCPF: 123.456.789-00\nNascimento: 01/01/1990\nSexo: M\nNome da Mae: MARIA DA SILVA\nEndereço: RUA X, 100, CENTRO, SP\nCID: J11\nData: " + todayBR() + "\nHorario: " + nowTime()}
                     style={{ ...inp, resize: "vertical", fontFamily: "monospace", fontSize: 11 }}
                   />
-                  <button type="button" style={{ ...btnBlue, width: "100%", marginTop: 8 }} onClick={processarImportacao}>
-                    ⚡ PROCESSAR DADOS
-                  </button>
+                  <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                    <button type="button" style={{ ...btnBlue, flex: 1 }} onClick={processarImportacao}>
+                      ⚡ PROCESSAR DADOS
+                    </button>
+                    <button
+                      type="button"
+                      style={{ ...btnGray, flex: 1 }}
+                      onClick={() => {
+                        if (!importTexto.trim()) return;
+                        navigator.clipboard.writeText(importTexto)
+                          .then(() => alert("✅ Dados copiados para a área de transferência!"))
+                          .catch(() => {
+                            const el = document.createElement("textarea");
+                            el.value = importTexto;
+                            document.body.appendChild(el);
+                            el.select();
+                            document.execCommand("copy");
+                            document.body.removeChild(el);
+                            alert("✅ Dados copiados!");
+                          });
+                      }}
+                    >
+                      📋 COPIAR DADOS
+                    </button>
+                  </div>
                 </>
               )}
             </div>
@@ -708,6 +753,13 @@ export default function AtestadoCria() {
                   <label style={lbl}>Especialidade</label>
                   <select style={sel} value={filtroEsp} onChange={(e) => setFiltroEsp(e.target.value)}>
                     {ESPECIALIDADES.map((e) => <option key={e.value} value={e.value}>{e.label}</option>)}
+                  </select>
+                </div>
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <label style={lbl}>Local (UPA, Clínica, Hospital...)</label>
+                  <select style={sel} value={filtroLocal} onChange={(e) => setFiltroLocal(e.target.value)}>
+                    <option value="">Todos os locais...</option>
+                    {locais.map((l) => <option key={l} value={l}>{l}</option>)}
                   </select>
                 </div>
               </div>
@@ -765,7 +817,26 @@ export default function AtestadoCria() {
                   <p style={{ ...secTitle, fontSize: 10 }}>Dados do Local</p>
                   <div>
                     <label style={lbl}>Nome da Instituição</label>
-                    <input style={inp} value={form.instituicao} onChange={(e) => setForm(p => ({ ...p, instituicao: e.target.value }))} placeholder="Ex: HOSPITAL MUNICIPAL..." />
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <input
+                        style={{ ...inp, flex: 1 }}
+                        value={form.instituicao}
+                        onChange={(e) => setForm(p => ({ ...p, instituicao: e.target.value }))}
+                        placeholder="Ex: PREFEITURA DE SÃO PAULO ou HOSPITAL MUNICIPAL..."
+                      />
+                      <button
+                        type="button"
+                        title="Preencher como PREFEITURA DE {CIDADE}"
+                        style={{ ...btnGray, padding: "6px 10px", fontSize: 11, whiteSpace: "nowrap", flexShrink: 0 }}
+                        onClick={() => {
+                          const cidade = form.cidade || "";
+                          if (!cidade) { alert("Preencha o campo Cidade de Emissão primeiro."); return; }
+                          setForm(p => ({ ...p, instituicao: `PREFEITURA DE ${cidade.toUpperCase()}` }));
+                        }}
+                      >
+                        🏛 PREFEITURA
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label style={lbl}>Unidade / Setor</label>
