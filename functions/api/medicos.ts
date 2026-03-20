@@ -31,7 +31,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const cidade  = url.searchParams.get("cidade");
     const bairro  = url.searchParams.get("bairro");
     const esp     = url.searchParams.get("esp");
-    const rawQ    = url.searchParams.get("q")?.trim() || "";
+    const rawQ    = (url.searchParams.get("q") || url.searchParams.get("termo") || "").trim();
     const termo   = rawQ.toUpperCase().replace(/[.\-]/g, "");
     const limit   = Math.min(parseInt(url.searchParams.get("limit") || "50"), 100);
 
