@@ -175,6 +175,36 @@
     }
   }
 }
+/* ─── Segurança: Proteção contra Inspeção ─────────────────────────────────── */
+
+/* Desabilitar seleção de texto em elementos críticos */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Desabilitar arrasto de imagens */
+img {
+  pointer-events: none;
+  user-drag: none;
+  -webkit-user-drag: none;
+}
+
+/* Desabilitar seleção e cópia de texto em documentos críticos */
+.document-content {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Desabilitar clique direito visualmente */
+body {
+  -webkit-touch-callout: none;
+}
+
 /* Print Styles */
 @media print {
   @page {
