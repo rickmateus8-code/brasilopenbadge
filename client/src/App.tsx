@@ -25,10 +25,16 @@ import Configuracoes from "./pages/Configuracoes";
 import NotFound from "./pages/NotFound";
 
 function Router() {
+  // Detectar se está acessando via validaratestado.digital
+  const isValidationDomain = typeof window !== 'undefined' && window.location.hostname === 'validaratestado.digital';
+  
   return (
     <Switch>
-      {/* Landing page pública */}
-      <Route path="/" component={Home} />
+      {/* Se está em validaratestado.digital, redirecionar para validação */}
+      {isValidationDomain && <Route path="/" component={Validation} />}
+      
+      {/* Landing page pública (apenas em docmaster.store) */}
+      {!isValidationDomain && <Route path="/" component={Home} />}
 
       {/* Autenticação */}
       <Route path="/login" component={Login} />
