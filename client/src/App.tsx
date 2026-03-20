@@ -6,6 +6,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthContext";
 
 // Pages
+import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
@@ -22,32 +23,43 @@ import Extrato from "./pages/Extrato";
 import Recargas from "./pages/Recargas";
 import NotFound from "./pages/NotFound";
 
-function isValidationDomain(): boolean {
-  if (typeof window === "undefined") return false;
-  const hostname = window.location.hostname;
-  return hostname === "validaratestado.digital" || hostname === "www.validaratestado.digital";
-}
-
 function Router() {
-  const onValidationDomain = isValidationDomain();
   return (
     <Switch>
-      <Route path="/" component={onValidationDomain ? Validation : Login} />
+      {/* Landing page pública */}
+      <Route path="/" component={Home} />
+
+      {/* Autenticação */}
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+
+      {/* Painel principal */}
       <Route path="/dashboard" component={Dashboard} />
+
+      {/* Emissão de documentos */}
       <Route path="/atestadocria" component={AtestadoCria} />
-      <Route path="/atestado/:id" component={AtestadoView} />
       <Route path="/cnhcria" component={CNHCria} />
       <Route path="/chacria" component={CHACria} />
       <Route path="/toxicologicocria" component={ToxicologicoCria} />
+
+      {/* Históricos */}
+      <Route path="/historico/atestados" component={AtestadoCria} />
+      <Route path="/historico/atestados/:id" component={AtestadoView} />
       <Route path="/historico-sp" component={HistoricoSP} />
       <Route path="/historico-uninter" component={HistoricoUNINTER} />
+
+      {/* Financeiro */}
       <Route path="/extrato" component={Extrato} />
       <Route path="/recargas" component={Recargas} />
+
+      {/* Administração */}
       <Route path="/admin" component={AdminDashboard} />
+
+      {/* Validação pública de documentos */}
       <Route path="/validar" component={Validation} />
       <Route path="/v/:id" component={Validation} />
+
+      {/* 404 */}
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

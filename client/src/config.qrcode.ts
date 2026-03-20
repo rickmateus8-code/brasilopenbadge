@@ -1,32 +1,36 @@
 /**
- * Configuração de QR Code com redirecionamento para validaratestado.digital
- * 
- * Este arquivo configura o domínio usado nos QR Codes dos atestados.
- * Os QR Codes apontam para: https://validaratestado.digital/v/:codigo
+ * Configuração de QR Code — DocMaster
+ *
+ * Os QR Codes apontam para: https://docmaster.store/v/:codigo
+ * Usa o domínio atual dinamicamente para funcionar em qualquer ambiente.
  */
 
-// Domínio fixo para QR Code (sempre validaratestado.digital em produção)
+function getQRDomain(): string {
+  if (typeof window !== "undefined") {
+    // Em produção usa o domínio atual (docmaster.store)
+    // Em dev usa localhost
+    const host = window.location.host;
+    const protocol = window.location.protocol;
+    return `${protocol}//${host}`;
+  }
+  return "https://docmaster.store";
+}
+
 export const QR_CODE_CONFIG = {
-  // Domínio para QR Code (sempre https://validaratestado.digital)
-  qrCodeDomain: "validaratestado.digital",
-  
-  // URL base para validação via QR Code
   get qrCodeBaseUrl() {
-    return `https://${this.qrCodeDomain}`;
+    return getQRDomain();
   },
-  
-  // URL para validação (com código)
+
   getQRCodeValidationUrl(code: string): string {
     return `${this.qrCodeBaseUrl}/v/${code}`;
   },
-  
-  // Configuração de protocolo
+
   protocol: "https",
 };
 
 /**
- * Usar esta configuração quando gerar QR Codes para garantir que
- * todos os QR Codes apontam para validaratestado.digital
+ * Retorna a URL completa de validação para um código de atestado.
+ * Usada para gerar o QR Code no documento.
  */
 export function getQRCodeValue(attestationCode: string): string {
   return QR_CODE_CONFIG.getQRCodeValidationUrl(attestationCode);

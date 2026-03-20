@@ -1,140 +1,154 @@
-import { Env, ValidateResponse, AttestationFrontend } from '../../types';
-import {
-  getAttestationByCode,
-  validateAttestation,
-  mapToFrontend,
-} from '../../utils/db';
-
 /**
- * GET /api/validate/:code - Validate attestation by code
- * Query params:
- *   - date: optional, to validate with date matching
+ * GET /api/validate/:code
+ * Endpoint público de validação de documentos via QR Code.
+ *
+ * SEGURANÇA:
+ * - Apenas documentos com status "emitido" são considerados válidos
+ * - O código QR é gerado exclusivamente pelo servidor no momento da emissão
+ * - Não há como forjar um código sem acesso ao banco D1
  */
-export async function onRequest(context: { request: Request; env: Env; params: { code: string } }) {
-  const { request, env, params } = context;
-  const code = params.code;
 
-  // Enable CORS
-  if (request.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
+import type { Env } from "../../types";
+
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Content-Type": "application/json",
+};
+
+export const onRequest: PagesFunction<Env> = async (context) => {
+  const { request, env, params } = context;
+
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
+  }
+
+  if (request.method !== "GET") {
+    return new Response(JSON.stringify({ error: "Método não permitido" }), {
+      status: 405,
+      headers: CORS_HEADERS,
     });
   }
 
+  const code = (params.code as string || "").trim().toUpperCase();
+
+  if (!code || code.length < 4) {
+    return new Response(
+      JSON.stringify({ valid: false, message: "Código inválido." }),
+      { status: 400, headers: CORS_HEADERS }
+    );
+  }
+
   try {
-    if (request.method === 'GET') {
-      return handleValidateAttestation(code, request, env);
-    } else {
+    // Busca na tabela attestations (atestados médicos)
+    const attestation = await env.DB.prepare(
+      `SELECT
+        a.id, a.codigo_qr, a.paciente, a.sexo, a.nascimento,
+        a.cpf, a.cns, a.tipo_doc, a.nome_mae, a.endereco,
+        a.medico, a.crm, a.especialidade, a.cid, a.cid_display, a.cid_nome,
+        a.texto_atestado, a.afastamento, a.data_emissao, a.hora_assinatura,
+        a.cidade, a.instituicao, a.unidade, a.endereco_emitente,
+        a.logo_left, a.logo_right, a.signature_color, a.modo_carimbo,
+        a.status, a.created_at,
+        u.username as emitido_por
+       FROM attestations a
+       LEFT JOIN users u ON a.user_id = u.id
+       WHERE a.codigo_qr = ? AND a.status = 'emitido'`
+    )
+      .bind(code)
+      .first<Record<string, unknown>>();
+
+    if (attestation) {
+      const data = {
+        id: attestation.id,
+        tipo: "atestado",
+        codigoQR: attestation.codigo_qr,
+        paciente: attestation.paciente,
+        sexo: attestation.sexo,
+        nascimento: attestation.nascimento,
+        cpf: attestation.cpf,
+        cns: attestation.cns,
+        tipoDoc: attestation.tipo_doc,
+        nomeMae: attestation.nome_mae,
+        endereco: attestation.endereco,
+        medico: attestation.medico,
+        crm: attestation.crm,
+        especialidade: attestation.especialidade,
+        cid: attestation.cid,
+        cidDisplay: attestation.cid_display,
+        cidNome: attestation.cid_nome,
+        textoAtestado: attestation.texto_atestado,
+        afastamento: attestation.afastamento,
+        dataEmissao: attestation.data_emissao,
+        dataAssinatura: attestation.data_emissao,
+        horaAssinatura: attestation.hora_assinatura,
+        cidade: attestation.cidade,
+        instituicao: attestation.instituicao,
+        unidade: attestation.unidade,
+        enderecoEmitente: attestation.endereco_emitente,
+        logoUrl: attestation.logo_left,
+        logoRight: attestation.logo_right,
+        signatureColor: attestation.signature_color,
+        modoCarimbo: attestation.modo_carimbo === 1,
+        status: attestation.status,
+        emitidoPor: attestation.emitido_por,
+        createdAt: attestation.created_at,
+      };
+
       return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Method not allowed',
-        }),
-        {
-          status: 405,
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-          },
-        }
+        JSON.stringify({ valid: true, message: "Documento válido e autêntico.", data }),
+        { status: 200, headers: CORS_HEADERS }
       );
     }
-  } catch (error) {
-    console.error('Error in validate endpoint:', error);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        valid: false,
-        message: error instanceof Error ? error.message : 'Unknown error',
-      } as ValidateResponse),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
+
+    // Busca na tabela documents (CNH, CHA, Toxicológico, etc.)
+    const document = await env.DB.prepare(
+      `SELECT
+        d.id, d.codigo_validacao, d.type, d.data, d.status, d.created_at,
+        u.username as emitido_por
+       FROM documents d
+       LEFT JOIN users u ON d.user_id = u.id
+       WHERE d.codigo_validacao = ? AND d.status = 'emitido'`
+    )
+      .bind(code)
+      .first<Record<string, unknown>>();
+
+    if (document) {
+      let parsedData: Record<string, unknown> = {};
+      try {
+        parsedData = JSON.parse(document.data as string || "{}");
+      } catch {
+        // ignore
       }
-    );
-  }
-}
 
-async function handleValidateAttestation(code: string, request: Request, env: Env) {
-  const url = new URL(request.url);
-  const date = url.searchParams.get('date');
-
-  // If date provided, do full validation
-  if (date) {
-    const result = await validateAttestation(env, code, date);
-    if (result.valid && result.attestation) {
       return new Response(
         JSON.stringify({
-          success: true,
           valid: true,
-          message: 'Attestation is valid and authentic',
-          data: mapToFrontend(result.attestation),
-        } as ValidateResponse),
-        {
-          status: 200,
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
+          message: "Documento válido e autêntico.",
+          data: {
+            id: document.id,
+            tipo: document.type,
+            codigoQR: document.codigo_validacao,
+            status: document.status,
+            emitidoPor: document.emitido_por,
+            createdAt: document.created_at,
+            ...parsedData,
           },
-        }
+        }),
+        { status: 200, headers: CORS_HEADERS }
       );
     }
+
     return new Response(
-      JSON.stringify({
-        success: false,
-        valid: false,
-        message: 'Attestation not found or date does not match',
-      } as ValidateResponse),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      }
+      JSON.stringify({ valid: false, message: "Documento não encontrado ou código inválido." }),
+      { status: 404, headers: CORS_HEADERS }
+    );
+  } catch (err) {
+    console.error("[validate] Erro:", err);
+    return new Response(
+      JSON.stringify({ valid: false, message: "Erro interno ao validar documento." }),
+      { status: 500, headers: CORS_HEADERS }
     );
   }
-
-  // If no date, just look up by code
-  const attestation = await getAttestationByCode(env, code);
-  if (!attestation) {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        valid: false,
-        message: 'Attestation not found',
-      } as ValidateResponse),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      }
-    );
-  }
-
-  return new Response(
-    JSON.stringify({
-      success: true,
-      valid: true,
-      message: 'Attestation found',
-      data: mapToFrontend(attestation),
-    } as ValidateResponse),
-    {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-    }
-  );
-}
+};

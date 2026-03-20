@@ -23,8 +23,8 @@
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 
-// Largura real do documento AttestationDocument (850 * 1.1875)
-export const DOC_REAL_WIDTH = 1010;
+// Largura A4 exata em pixels a 96dpi (210mm = 794px)
+export const DOC_REAL_WIDTH = 794;
 
 export interface PDFExportOptions {
   filename: string;
@@ -106,7 +106,7 @@ export async function exportElementToPDF(
     "top: 0",
     `left: -${DOC_REAL_WIDTH + 500}px`,
     `width: ${DOC_REAL_WIDTH}px`,
-    "height: 2000px",
+    "height: 1123px",
     "border: none",
     "z-index: -9999",
     "pointer-events: none",
@@ -123,7 +123,8 @@ export async function exportElementToPDF(
   body {
     background: #ffffff;
     width: ${DOC_REAL_WIDTH}px;
-    overflow: visible;
+    height: 1123px;
+    overflow: hidden;
     font-family: Arial, Helvetica, sans-serif;
   }
 </style>
@@ -159,18 +160,18 @@ ${elementHTML}
     // Torna visível apenas para captura
     iframe.style.visibility = "visible";
 
-    // Calcula altura real do documento no iframe
-    const docHeight = iframeBody.scrollHeight || iframeEl.scrollHeight || 1400;
+    // Usa altura A4 fixa (1123px) para enquadramento perfeito
+    const docHeight = 1123;
 
-    // Ajusta altura do iframe para o conteúdo completo
-    iframe.style.height = `${docHeight + 50}px`;
+    // Ajusta altura do iframe para A4 exato
+    iframe.style.height = `${docHeight}px`;
     await new Promise((r) => setTimeout(r, 100));
 
     // ── 5. Capturar com html2canvas ────────────────────────────────────
     const canvas = await html2canvas(iframeEl, {
       scale: safeScale,
       useCORS: true,
-      allowTaint: true,
+      allowTaint: false,
       backgroundColor: "#ffffff",
       logging: false,
       imageTimeout: 20000,
@@ -199,15 +200,16 @@ ${elementHTML}
     const imgWidth = canvas.width;
     const imgHeight = canvas.height;
 
-    // Preenche a largura total do A4 mantendo proporção
+    // Enquadramento perfeito A4 — preenche toda a página sem margens
     const ratio = pdfWidth / imgWidth;
     const scaledWidth = pdfWidth;
     const scaledHeight = imgHeight * ratio;
 
     if (scaledHeight <= pdfHeight) {
-      // Conteúdo cabe em uma única página
+      // Conteúdo cabe em uma única página — centraliza verticalmente
+      const offsetY = Math.max(0, (pdfHeight - scaledHeight) / 2);
       const imgData = canvas.toDataURL("image/jpeg", quality);
-      pdf.addImage(imgData, "JPEG", 0, 0, scaledWidth, scaledHeight);
+      pdf.addImage(imgData, "JPEG", 0, offsetY, scaledWidth, scaledHeight);
     } else {
       // Conteúdo maior que uma página — divide em múltiplas páginas
       let pageIndex = 0;

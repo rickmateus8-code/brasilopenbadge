@@ -1,30 +1,25 @@
 /**
- * Configurações globais do sistema de atestados
- * 
+ * Configurações globais do DocMaster
+ *
  * O domínio é detectado dinamicamente baseado em onde o projeto está sendo acessado.
  * Isso permite que os QR Codes funcionem em qualquer ambiente:
  * - Localhost (desenvolvimento)
- * - Link local do Manus (testes)
- * - Cloudflare Workers/Pages (produção)
- * - Domínio personalizado (produção com domínio próprio)
+ * - Cloudflare Pages (testes)
+ * - docmaster.store (produção)
  */
 
-// Função para obter o domínio dinâmico
 function getDynamicDomain(): string {
-  if (typeof window !== 'undefined') {
-    // Usa o domínio de onde o site está sendo acessado
+  if (typeof window !== "undefined") {
     return window.location.host;
   }
-  // Fallback para servidor (SSR)
-  return "localhost:3000";
+  return "docmaster.store";
 }
 
-// Função para obter o protocolo dinâmico
 function getDynamicProtocol(): string {
-  if (typeof window !== 'undefined') {
-    return window.location.protocol.replace(':', '');
+  if (typeof window !== "undefined") {
+    return window.location.protocol.replace(":", "");
   }
-  return 'https';
+  return "https";
 }
 
 export const APP_CONFIG = {
@@ -40,7 +35,7 @@ export const APP_CONFIG = {
     return `${getDynamicProtocol()}://${getDynamicDomain()}/v`;
   },
 
-  institutionName: "IDAB - DERMATOLOGY AND ALLERGY INSTITUTE",
+  appName: "DocMaster",
 
   apiBaseUrl: "/api",
 };

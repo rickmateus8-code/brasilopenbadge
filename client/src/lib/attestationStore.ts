@@ -1,113 +1,99 @@
-import { attestations, type AttestationData } from "@/data/attestations";
+/**
+ * DocMaster — Camada de acesso a atestados
+ *
+ * SEGURANÇA: Todos os dados são gerenciados exclusivamente pelo backend (Cloudflare D1).
+ * Não há bypass local, localStorage ou dados estáticos.
+ * A validação de QR Code só é possível via servidor.
+ */
 
-const STORAGE_KEY = "docmaster_db";
-
-// Generate random validation code in format XXXX.XXXX
-function generateCode(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  const part1 = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-  const part2 = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-  return `${part1}.${part2}`;
+export interface AttestationData {
+  id: string;
+  paciente: string;
+  sexo: string;
+  nascimento: string;
+  cpf?: string;
+  cns?: string;
+  tipoDoc?: "CPF" | "CNS";
+  nomeMae: string;
+  endereco: string;
+  cid?: string;
+  codigoQR: string;
+  dataAssinatura: string;
+  horaAssinatura: string;
+  medico: string;
+  crm: string;
+  especialidade?: string;
+  dataEmissao?: string;
+  instituicao?: string;
+  unidade?: string;
+  enderecoEmitente?: string;
+  textoAtestado?: string;
+  afastamento?: string;
+  cidade?: string;
+  logoUrl?: string;
+  logoRight?: string;
+  signatureColor?: string;
+  signatureImage?: string;
+  modoCarimbo?: boolean;
+  cidDisplay?: string;
+  cidNome?: string;
+  status?: string;
+  [key: string]: any;
 }
 
-// Load custom attestations from localStorage
-function loadCustomAttestations(): Record<string, AttestationData> {
+/**
+ * Buscar atestado por código via API do servidor.
+ * Retorna null se não encontrado.
+ */
+export async function findByCode(code: string): Promise<AttestationData | null> {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (e) {
-    console.error("Error loading attestations from localStorage:", e);
+    const res = await fetch(`/api/validate/${encodeURIComponent(code)}`, {
+      credentials: "include",
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data || !data.id) return null;
+    return data as AttestationData;
+  } catch {
+    return null;
   }
-  return {};
 }
 
-// Save custom attestations to localStorage
-function saveCustomAttestations(data: Record<string, AttestationData>): void {
+/**
+ * Validar atestado por código via API do servidor.
+ */
+export async function validateAttestation(
+  code: string
+): Promise<{ valid: boolean; message: string; data?: AttestationData }> {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch (e) {
-    console.error("Error saving attestations to localStorage:", e);
-  }
-}
-
-// Get all attestations (built-in + custom)
-export function getAllAttestations(): AttestationData[] {
-  const custom = loadCustomAttestations();
-  const builtIn = Object.values(attestations);
-  const customList = Object.values(custom);
-  return [...builtIn, ...customList];
-}
-
-// Find attestation by validation code
-export function findByCode(code: string): AttestationData | null {
-  const upperCode = code.trim().toUpperCase();
-  
-  // Check built-in attestations
-  for (const att of Object.values(attestations)) {
-    if (att.codigoQR.toUpperCase() === upperCode) {
-      return att;
+    const res = await fetch(`/api/validate/${encodeURIComponent(code)}`, {
+      credentials: "include",
+    });
+    const json = await res.json();
+    if (!res.ok || !json) {
+      return { valid: false, message: "Atestado não encontrado." };
     }
-  }
-  
-  // Check custom attestations
-  const custom = loadCustomAttestations();
-  for (const att of Object.values(custom)) {
-    if (att.codigoQR.toUpperCase() === upperCode) {
-      return att;
+    if (json.id) {
+      return { valid: true, message: "Atestado válido.", data: json as AttestationData };
     }
+    return { valid: false, message: json.error || "Atestado inválido." };
+  } catch {
+    return { valid: false, message: "Erro ao validar. Tente novamente." };
   }
-  
-  return null;
 }
 
-// Find attestation by ID (slug or code)
-export function findById(id: string): AttestationData | null {
-  // Check built-in by slug (exemplos)
-  if (attestations[id]) {
-    return attestations[id];
+/**
+ * Buscar todos os atestados do usuário logado via API.
+ */
+export async function getAllAttestations(): Promise<AttestationData[]> {
+  try {
+    const res = await fetch("/api/attestations", {
+      credentials: "include",
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.attestations || data || []) as AttestationData[];
+  } catch {
+    return [];
   }
-  
-  // Check by code
-  return findByCode(id);
-}
-
-// Validate attestation (code + optional date)
-export function validateAttestation(code: string, date?: string): { valid: boolean; data: AttestationData | null } {
-  const att = findByCode(code);
-  
-  if (!att) {
-    return { valid: false, data: null };
-  }
-  
-  // If date provided, check it matches
-  if (date) {
-    const normalizedDate = date.trim();
-    const attDate = att.dataAssinatura.trim();
-    
-    // Allow flexible date matching (DD/MM/YYYY or MM/DD/YYYY or the stored format)
-    if (normalizedDate !== attDate && normalizedDate !== att.dataEmissao) {
-      // Try to be lenient - just check if the attestation exists with this code
-      // Date validation is secondary
-    }
-  }
-  
-  return { valid: true, data: att };
-}
-
-// Create new attestation
-export function createAttestation(data: Omit<AttestationData, "id" | "codigoQR">): AttestationData {
-  const code = generateCode();
-  const newAttestation: AttestationData = {
-    ...data,
-    id: code,
-    codigoQR: code,
-  };
-  
-  const custom = loadCustomAttestations();
-  custom[code] = newAttestation;
-  saveCustomAttestations(custom);
-  
-  return newAttestation;
 }

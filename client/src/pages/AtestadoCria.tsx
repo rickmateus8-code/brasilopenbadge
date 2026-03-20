@@ -1,13 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Link } from "wouter";
+import { useLocation } from "wouter";
 import AttestationDocument from "@/components/AttestationDocument";
 import type { AttestationData } from "@/data/attestations";
 import { exportElementToPDF, generatePDFFilename } from "@/lib/pdfExport";
-import { createAttestation } from "@/lib/attestationStore";
-import { createAttestationApi } from "@/lib/apiClient";
-import { handleDateInput, formatDateToEnglish } from "@/lib/dateMask";
+import { useAuth } from "@/contexts/AuthContext";
 
-// ─── Supabase (banco de médicos do elitedoc) ───────────────────────────────────
+// ─── Supabase (banco de médicos) ───────────────────────────────────────────────
 const SB_URL = "https://ijkzwzvanougkjcxquvn.supabase.co";
 const SB_KEY = "sb_publishable_x76vx-9M9DrmibJ6NeELJg_iT1_CDsT";
 
@@ -24,22 +22,6 @@ async function sbFetch(path: string) {
 }
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
-const DEFAULT_LOGO_URL =
-  "/logos/logo-default.png";
-
-// Logos padrão disponíveis (baixadas do elitedoc.store)
-const LOGOS_PADRAO = [
-  { id: "default",    label: "Padrão",       src: DEFAULT_LOGO_URL },
-  { id: "logo1",      label: "Logo 1",       src: "/logos/logo1.png" },
-  { id: "logo2",      label: "Logo 2",       src: "/logos/logo2.png" },
-  { id: "logo3",      label: "Logo 3",       src: "/logos/logo3.jpg" },
-  { id: "amil",       label: "Amil",         src: "/logos/amil.png" },
-  { id: "hapvida",    label: "Hapvida",      src: "/logos/hapvida.png" },
-  { id: "notredame",  label: "Notre Dame",   src: "/logos/notredame.png" },
-  { id: "sulamerica", label: "Sul América",  src: "/logos/sulamerica.png" },
-  { id: "unimed",     label: "Unimed",       src: "/logos/unimed.png" },
-];
-
 const UFS = [
   "AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT",
   "PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO",
@@ -103,14 +85,78 @@ const CIDS_CATEGORIZADOS = [
   },
 ];
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────
+// ─── Logos padrão disponíveis ──────────────────────────────────────────────────
+const LOGOS_PADRAO = [
+  { id: "logo1",      label: "Logo 1",       src: "/logos/logo1.png" },
+  { id: "logo2",      label: "Logo 2",       src: "/logos/logo2.png" },
+  { id: "logo3",      label: "Logo 3",       src: "/logos/logo3.jpg" },
+  { id: "amil",       label: "Amil",         src: "/logos/amil.png" },
+  { id: "hapvida",    label: "Hapvida",      src: "/logos/hapvida.png" },
+  { id: "notredame",  label: "Notre Dame",   src: "/logos/notredame.png" },
+  { id: "sulamerica", label: "Sul América",  src: "/logos/sulamerica.png" },
+  { id: "unimed",     label: "Unimed",       src: "/logos/unimed.png" },
+];
+
+// ─── Mapeamento de dias por extenso ───────────────────────────────────────────
+const DIAS_EXTENSO: Record<number, { num: string; ext: string }> = {
+  1:  { num: "01", ext: "um" },
+  2:  { num: "02", ext: "dois" },
+  3:  { num: "03", ext: "três" },
+  4:  { num: "04", ext: "quatro" },
+  5:  { num: "05", ext: "cinco" },
+  6:  { num: "06", ext: "seis" },
+  7:  { num: "07", ext: "sete" },
+  8:  { num: "08", ext: "oito" },
+  9:  { num: "09", ext: "nove" },
+  10: { num: "10", ext: "dez" },
+  11: { num: "11", ext: "onze" },
+  12: { num: "12", ext: "doze" },
+  13: { num: "13", ext: "treze" },
+  14: { num: "14", ext: "quatorze" },
+  15: { num: "15", ext: "quinze" },
+};
+
+function gerarTextoAfastamento(dias: number): string {
+  const d = DIAS_EXTENSO[dias];
+  if (!d) return "";
+  const unidade = dias === 1 ? "dia" : "dias";
+  return `Necessita de ${d.num} (${d.ext}) ${unidade} de afastamento de suas atividades laborais para repouso e tratamento de saúde.`;
+}
+
+// ─── Texto padrão do atestado ─────────────────────────────────────────────────
+const TEXTO_PADRAO = `Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico. Necessita de 03 (três) dia(s) de afastamento de suas atividades laborais para repouso e tratamento de saúde.`;
+
+// ─── Máscaras ─────────────────────────────────────────────────────────────────
+function maskCPF(v: string): string {
+  const d = v.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `${d.slice(0,3)}.${d.slice(3)}`;
+  if (d.length <= 9) return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6)}`;
+  return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
+}
+
+function maskCNS(v: string): string {
+  const d = v.replace(/\D/g, "").slice(0, 15);
+  if (d.length <= 3) return d;
+  if (d.length <= 7) return `${d.slice(0,3)} ${d.slice(3)}`;
+  if (d.length <= 11) return `${d.slice(0,3)} ${d.slice(3,7)} ${d.slice(7)}`;
+  return `${d.slice(0,3)} ${d.slice(3,7)} ${d.slice(7,11)} ${d.slice(11)}`;
+}
+
+function handleDateInput(v: string): string {
+  const d = v.replace(/\D/g, "").slice(0, 8);
+  if (d.length <= 2) return d;
+  if (d.length <= 4) return `${d.slice(0,2)}/${d.slice(2)}`;
+  return `${d.slice(0,2)}/${d.slice(2,4)}/${d.slice(4)}`;
+}
+
 function todayBR() {
   const d = new Date();
-  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;
 }
 function nowTime() {
   const d = new Date();
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
 }
 function readFileAsBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -137,14 +183,18 @@ interface MedicoDB {
 }
 
 // ─── Componente ────────────────────────────────────────────────────────────────
-export default function CreateAttestation() {
+export default function AtestadoCria() {
+  const { user, updateBalance } = useAuth();
+  const [, navigate] = useLocation();
   const previewRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [createdCode, setCreatedCode] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // ── Logos ──────────────────────────────────────────────────────────────────
-  const [logoLeft, setLogoLeft] = useState<string>(DEFAULT_LOGO_URL);
+  const [logoLeft, setLogoLeft] = useState<string>("");
   const [logoRight, setLogoRight] = useState<string>("");
+  const [logoSide, setLogoSide] = useState<"left" | "right">("left");
   const logoLeftRef = useRef<HTMLInputElement>(null);
   const logoRightRef = useRef<HTMLInputElement>(null);
 
@@ -152,6 +202,9 @@ export default function CreateAttestation() {
   const [signatureColor, setSignatureColor] = useState<string>("#0b109f");
   const [signatureImage, setSignatureImage] = useState<string>("");
   const signatureRef = useRef<HTMLInputElement>(null);
+
+  // ── Tipo de documento do paciente ──────────────────────────────────────────
+  const [tipoDoc, setTipoDoc] = useState<"CPF" | "CNS">("CPF");
 
   // ── Busca de médicos ────────────────────────────────────────────────────────
   const [filtroUF, setFiltroUF] = useState("");
@@ -165,48 +218,53 @@ export default function CreateAttestation() {
   const [buscando, setBuscando] = useState(false);
   const [erroBusca, setErroBusca] = useState("");
   const [showResultados, setShowResultados] = useState(false);
+  const [showEditar, setShowEditar] = useState(false);
 
   // ── Formulário ─────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
-    instituicao: "Clínica / Hospital",
+    instituicao: "",
     unidade: "",
-    enderecoEmitente: "AV. ANTÔNIO CARLOS MAGALHÃES, 585 - ITAIGARA, SALVADOR - BA, 41825-000",
-    medico: "DIMITRI GUSMAO FLORES",
-    crm: "CRM/BA 14180",
-    especialidade: "ALLERGY AND IMMUNOLOGY",
+    enderecoEmitente: "",
+    medico: "",
+    crm: "",
+    especialidade: "",
     paciente: "",
     sexo: "FEMALE" as "MALE" | "FEMALE",
     nascimento: "",
-    cpf: "",
+    docValue: "",  // CPF ou CNS conforme tipoDoc
     nomeMae: "",
     endereco: "",
-    passaporte: "",
-    condicao:
-      "The patient has a history of severe allergic reaction (anaphylaxis) to egg proteins, representing a risk condition for administration of vaccines containing this component.",
-    vacinacao: "YELLOW FEVER",
-    cid: "T78.0 ANAPHYLACTIC REACTION DUE TO FOOD (EGG)",
+    cid: "",
+    cidDisplay: "",
+    cidNome: "",
+    afastamento: "3",
+    textoAtestado: TEXTO_PADRAO,
     dataAssinatura: todayBR(),
     horaAssinatura: nowTime(),
     dataEmissao: todayBR(),
     cidade: "",
-    textoAtestado: "",
-    cidDisplay: "",
-    cidNome: "",
-    afastamento: "",
     modoCarimbo: false,
   });
 
   // ── Importação rápida ───────────────────────────────────────────────────────
   const [importTexto, setImportTexto] = useState("");
   const [showImport, setShowImport] = useState(false);
-  const [showEditar, setShowEditar] = useState(false);
+
+  // ── Atualizar texto do atestado quando dias mudam ──────────────────────────
+  useEffect(() => {
+    const dias = parseInt(form.afastamento);
+    if (!isNaN(dias) && dias >= 1 && dias <= 15) {
+      const d = DIAS_EXTENSO[dias];
+      const unidade = dias === 1 ? "dia" : "dias";
+      const textoBase = `Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico. Necessita de ${d.num} (${d.ext}) ${unidade} de afastamento de suas atividades laborais para repouso e tratamento de saúde.`;
+      setForm(p => ({ ...p, textoAtestado: textoBase }));
+    }
+  }, [form.afastamento]);
 
   // ── Carregar cidades quando UF muda ────────────────────────────────────────
   useEffect(() => {
     if (!filtroUF) { setCidades([]); setBairros([]); return; }
-    sbFetch(
-      `medicos_brasil?uf_local=eq.${filtroUF}&select=cidade&order=cidade.asc`
-    )
+    sbFetch(`medicos_brasil?uf_local=eq.${filtroUF}&select=cidade&order=cidade.asc`)
       .then((data: any[]) => {
         const unicas = [...new Set(data.map((d) => d.cidade).filter(Boolean))].sort();
         setCidades(unicas as string[]);
@@ -220,9 +278,7 @@ export default function CreateAttestation() {
   // ── Carregar bairros quando cidade muda ────────────────────────────────────
   useEffect(() => {
     if (!filtroUF || !filtroCidade) { setBairros([]); return; }
-    sbFetch(
-      `medicos_brasil?uf_local=eq.${filtroUF}&cidade=eq.${encodeURIComponent(filtroCidade)}&select=bairro&order=bairro.asc`
-    )
+    sbFetch(`medicos_brasil?uf_local=eq.${filtroUF}&cidade=eq.${encodeURIComponent(filtroCidade)}&select=bairro&order=bairro.asc`)
       .then((data: any[]) => {
         const unicos = [...new Set(data.map((d) => d.bairro).filter(Boolean))].sort();
         setBairros(unicos as string[]);
@@ -234,35 +290,20 @@ export default function CreateAttestation() {
   // ── Busca de médicos ────────────────────────────────────────────────────────
   const buscarMedicos = useCallback(async () => {
     const termo = termoBusca.trim().toUpperCase().replace(/[.\-]/g, "");
-
-    // Exige UF + pelo menos 3 chars de nome/CRM para evitar timeout
-    if (!filtroUF) {
-      setErroBusca("Selecione a UF antes de buscar.");
-      return;
-    }
-    if (termo.length < 3) {
-      setErroBusca("Digite ao menos 3 caracteres do nome ou CRM.");
-      return;
-    }
-
+    if (!filtroUF) { setErroBusca("Selecione a UF antes de buscar."); return; }
+    if (termo.length < 3) { setErroBusca("Digite ao menos 3 caracteres do nome ou CRM."); return; }
     setBuscando(true);
     setErroBusca("");
     setShowResultados(true);
-
     try {
-      // Detectar se é busca por CRM (só números) ou por nome
       const isCRM = /^\d+$/.test(termo);
       let query: string;
-
       if (isCRM) {
-        // Busca por CRM exige UF obrigatório para não dar timeout
         query = `medicos_brasil?select=*&limit=30&order=nome_medico.asc&uf_crm=eq.${filtroUF}&crm=ilike.*${termo}*`;
       } else {
-        // Busca por nome: UF obrigatório + nome com ilike
         query = `medicos_brasil?select=*&limit=30&order=nome_medico.asc&uf_crm=eq.${filtroUF}&nome_medico=ilike.*${termo}*`;
         if (filtroEsp) query += `&especialidade=ilike.*${filtroEsp}*`;
       }
-
       const data: MedicoDB[] = await sbFetch(query);
       setResultados(data);
       if (data.length === 0) setErroBusca("Nenhum médico encontrado. Tente outro nome ou preencha manualmente.");
@@ -280,10 +321,8 @@ export default function CreateAttestation() {
       crm: `CRM/${m.uf_crm || m.uf_local} ${m.crm}`,
       especialidade: (m.especialidade || "CLÍNICO GERAL").toUpperCase(),
       instituicao: (m.local_trabalho || "CONSULTÓRIO MÉDICO").toUpperCase(),
-      enderecoEmitente: [m.endereco, m.bairro, m.cidade, m.uf_local]
-        .filter(Boolean)
-        .join(", ")
-        .toUpperCase(),
+      enderecoEmitente: [m.endereco, m.bairro, m.cidade, m.uf_local].filter(Boolean).join(", ").toUpperCase(),
+      cidade: m.cidade?.toUpperCase() || p.cidade,
     }));
     setShowResultados(false);
     setTermoBusca("");
@@ -291,10 +330,7 @@ export default function CreateAttestation() {
   };
 
   // ── Upload de logos ─────────────────────────────────────────────────────────
-  const handleLogoUpload = async (
-    side: "left" | "right",
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleLogoUpload = async (side: "left" | "right", e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const b64 = await readFileAsBase64(file);
@@ -310,15 +346,21 @@ export default function CreateAttestation() {
     setSignatureImage(b64);
   };
 
+  // ── Máscara do documento do paciente ───────────────────────────────────────
+  const handleDocInput = (v: string) => {
+    const masked = tipoDoc === "CPF" ? maskCPF(v) : maskCNS(v);
+    setForm(p => ({ ...p, docValue: masked }));
+  };
+
   // ── Importação rápida ───────────────────────────────────────────────────────
   const processarImportacao = () => {
     if (!importTexto.trim()) return;
     const mapa: Record<string, string> = {
       "nome completo": "paciente",
       "nome": "paciente",
-      "cpf": "cpf",
-      "cns": "cpf",
-      "numero do doc": "cpf",
+      "cpf": "docValue",
+      "cns": "docValue",
+      "numero do doc": "docValue",
       "nascimento": "nascimento",
       "data de nascimento": "nascimento",
       "sexo": "sexo",
@@ -326,11 +368,7 @@ export default function CreateAttestation() {
       "mae": "nomeMae",
       "endereco do paciente": "endereco",
       "endereco": "endereco",
-      "passaporte": "passaporte",
       "cid": "cid",
-      "condicao": "condicao",
-      "condicao clinica": "condicao",
-      "vacinacao": "vacinacao",
       "data do atestado": "dataAssinatura",
       "data": "dataAssinatura",
       "horario": "horaAssinatura",
@@ -352,10 +390,11 @@ export default function CreateAttestation() {
             (updates as any)[field] = valor.startsWith("M") ? "MALE" : "FEMALE";
           } else if (field === "nascimento" || field === "dataAssinatura") {
             const d = valor.replace(/\D/g, "");
-            (updates as any)[field] =
-              d.length === 8
-                ? `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4, 8)}`
-                : valor;
+            (updates as any)[field] = d.length === 8 ? `${d.slice(0,2)}/${d.slice(2,4)}/${d.slice(4,8)}` : valor;
+          } else if (field === "docValue") {
+            const isCNS = valor.replace(/\D/g, "").length > 11;
+            if (isCNS) { setTipoDoc("CNS"); (updates as any)[field] = maskCNS(valor); }
+            else { setTipoDoc("CPF"); (updates as any)[field] = maskCPF(valor); }
           } else {
             (updates as any)[field] = valor;
           }
@@ -378,41 +417,59 @@ export default function CreateAttestation() {
     }
   };
 
-  // ── Submit ──────────────────────────────────────────────────────────────────
+  // ── Submit — EMISSÃO REAL (backend gera QR Code) ────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) { alert("Você precisa estar logado para emitir."); return; }
+
     setIsLoading(true);
-    const payload = {
-      paciente: form.paciente.toUpperCase(),
-      sexo: form.sexo,
-      nascimento: form.nascimento,
-      cpf: form.cpf,
-      nomeMae: form.nomeMae.toUpperCase(),
-      endereco: form.endereco.toUpperCase(),
-      passaporte: form.passaporte.toUpperCase(),
-      condicao: form.condicao,
-      vacinacao: form.vacinacao.toUpperCase(),
-      cid: form.cid.toUpperCase(),
-      medico: form.medico.toUpperCase(),
-      crm: form.crm,
-      especialidade: form.especialidade.toUpperCase(),
-      dataAssinatura: form.dataAssinatura,
-      horaAssinatura: form.horaAssinatura,
-      dataEmissao: formatDateToEnglish(form.dataEmissao).toUpperCase(),
-      logoUrl: logoLeft || DEFAULT_LOGO_URL,
-      instituicao: form.instituicao,
-      enderecoEmitente: form.enderecoEmitente,
-    };
     try {
-      let newAtt: any;
-      try {
-        const apiResult = await createAttestationApi(payload);
-        newAtt = apiResult || createAttestation(payload as any);
-      } catch {
-        newAtt = createAttestation(payload as any);
+      const payload = {
+        paciente: form.paciente.toUpperCase(),
+        sexo: form.sexo,
+        nascimento: form.nascimento,
+        cpf: tipoDoc === "CPF" ? form.docValue : "",
+        cns: tipoDoc === "CNS" ? form.docValue : "",
+        tipoDoc,
+        nomeMae: form.nomeMae.toUpperCase(),
+        endereco: form.endereco.toUpperCase(),
+        cid: form.cid.toUpperCase(),
+        cidDisplay: form.cidDisplay,
+        cidNome: form.cidNome,
+        medico: form.medico.toUpperCase(),
+        crm: form.crm,
+        especialidade: form.especialidade.toUpperCase(),
+        dataAssinatura: form.dataAssinatura,
+        horaAssinatura: form.horaAssinatura,
+        dataEmissao: form.dataEmissao,
+        logoUrl: logoLeft || "",
+        logoRight: logoRight || "",
+        instituicao: form.instituicao,
+        unidade: form.unidade,
+        enderecoEmitente: form.enderecoEmitente,
+        textoAtestado: form.textoAtestado,
+        afastamento: form.afastamento,
+        cidade: form.cidade,
+        signatureColor,
+        signatureImage,
+        modoCarimbo: form.modoCarimbo,
+      };
+
+      const res = await fetch("/api/attestations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Erro ao emitir atestado");
       }
-      setCreatedCode(newAtt.codigoQR);
-      alert(`✅ Atestado emitido com sucesso!\n\nCódigo de Validação: ${newAtt.codigoQR}`);
+
+      setCreatedCode(data.codigoQR || data.data?.codigoQR);
+      if (data.newBalance !== undefined) updateBalance(data.newBalance);
+      setShowSuccessModal(true);
     } catch (error) {
       alert(`Erro ao emitir: ${error instanceof Error ? error.message : "Erro desconhecido"}`);
     } finally {
@@ -420,45 +477,43 @@ export default function CreateAttestation() {
     }
   };
 
-  // ── Preview ─────────────────────────────────────────────────────────────────
+  // ── Preview data ────────────────────────────────────────────────────────────
   const previewData: AttestationData & Record<string, any> = {
-    id: createdCode || "XXXX.XXXX",
+    id: "XXXX.XXXX",
     paciente: form.paciente || "NOME DO PACIENTE",
     sexo: form.sexo,
     nascimento: form.nascimento || "DD/MM/AAAA",
-    cpf: form.cpf || "XXX.XXX.XXX-XX",
+    cpf: tipoDoc === "CPF" ? (form.docValue || "XXX.XXX.XXX-XX") : "",
+    cns: tipoDoc === "CNS" ? (form.docValue || "XXX XXXX XXXX XXXX") : "",
+    tipoDoc,
     nomeMae: form.nomeMae || "NOME DA MÃE",
     endereco: form.endereco || "ENDEREÇO COMPLETO",
-    passaporte: form.passaporte || "XXXXXXX",
-    condicao: form.condicao,
-    vacinacao: form.vacinacao,
+    condicao: "",
+    vacinacao: "",
     cid: form.cid,
-    codigoQR: createdCode || "XXXX.XXXX",
+    codigoQR: "XXXX.XXXX",
     dataAssinatura: form.dataAssinatura || "DD/MM/AAAA",
     horaAssinatura: form.horaAssinatura || "HH:MM",
-    medico: form.medico,
-    crm: form.crm,
-    especialidade: form.especialidade,
-    dataEmissao: form.dataEmissao ? formatDateToEnglish(form.dataEmissao) : "MONTH DD, YYYY",
+    medico: form.medico || "NOME DO MÉDICO",
+    crm: form.crm || "CRM/UF 00000",
+    especialidade: form.especialidade || "ESPECIALIDADE",
+    dataEmissao: form.dataEmissao || "DD/MM/AAAA",
     dataEmissaoFormatada: (() => {
-      if (!form.dataEmissao || form.dataEmissao.length < 8) return "";
+      if (!form.dataEmissao || form.dataEmissao.length < 10) return "";
       const [dd, mm, yyyy] = form.dataEmissao.split("/");
       const meses = ["JANEIRO","FEVEREIRO","MARÇO","ABRIL","MAIO","JUNHO","JULHO","AGOSTO","SETEMBRO","OUTUBRO","NOVEMBRO","DEZEMBRO"];
       const m = parseInt(mm) - 1;
-      const cidade = form.cidade || form.instituicao.split("-")[0].trim() || "";
-      return `${cidade}, ${parseInt(dd)} DE ${meses[m] || mm} DE ${yyyy}`;
+      const cidade = form.cidade || "";
+      return cidade ? `${cidade}, ${parseInt(dd)} DE ${meses[m] || mm} DE ${yyyy}` : `${parseInt(dd)} DE ${meses[m] || mm} DE ${yyyy}`;
     })(),
     logoUrl: logoLeft,
-    instituicao: form.instituicao,
+    logoRight: logoRight,
+    instituicao: form.instituicao || "CLÍNICA / HOSPITAL",
     unidade: form.unidade,
-    enderecoEmitente: form.enderecoEmitente,
+    enderecoEmitente: form.enderecoEmitente || "ENDEREÇO DA CLÍNICA",
     signatureColor,
     signatureImage,
-    textoAtestado: (() => {
-      const base = form.textoAtestado || `Atesto para os devidos fins que o(a) paciente acima identificado(a) foi atendido(a) nesta unidade de saúde na data de hoje.`;
-      if (form.afastamento) return base + `\n\nO(A) paciente necessita de afastamento de suas atividades por ${form.afastamento} dia(s) a partir desta data.`;
-      return base;
-    })(),
+    textoAtestado: form.textoAtestado,
     cidDisplay: form.cidDisplay || form.cid,
     cidNome: form.cidNome,
     cidade: form.cidade,
@@ -537,10 +592,53 @@ export default function CreateAttestation() {
   return (
     <div style={{ minHeight: "100vh", background: "#f1f5f9", fontFamily: "Roboto, sans-serif" }}>
 
+      {/* ── Modal de Sucesso ── */}
+      {showSuccessModal && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 9999,
+        }}>
+          <div style={{
+            background: "#fff", borderRadius: 16, padding: "40px 48px",
+            textAlign: "center", maxWidth: 420, width: "90%",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+          }}>
+            <div style={{ fontSize: 56, marginBottom: 12 }}>✅</div>
+            <h2 style={{ fontSize: 22, fontWeight: 800, color: "#15803d", margin: "0 0 8px" }}>
+              DOCUMENTO EMITIDO COM SUCESSO!
+            </h2>
+            <p style={{ fontSize: 14, color: "#6b7280", margin: "0 0 16px" }}>
+              Seu atestado foi registrado e validado.
+            </p>
+            {createdCode && (
+              <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 10, padding: "12px 16px", marginBottom: 20 }}>
+                <p style={{ fontSize: 11, fontWeight: 600, color: "#166534", margin: "0 0 4px" }}>Código de Validação:</p>
+                <p style={{ fontSize: 24, fontWeight: 800, color: "#15803d", margin: 0, letterSpacing: 2 }}>{createdCode}</p>
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                style={{ ...btnBlue, flex: 1 }}
+                onClick={handleDownloadPdf}
+              >
+                ⬇ BAIXAR PDF
+              </button>
+              <button
+                style={{ ...btnGreen, flex: 1 }}
+                onClick={() => { setShowSuccessModal(false); navigate("/historico/atestados"); }}
+              >
+                VER HISTÓRICO
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ background: "#005CA9", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Link href="/"><button style={{ ...btnGray, padding: "5px 12px", fontSize: 11 }}>← VOLTAR</button></Link>
+          <button style={{ ...btnGray, padding: "5px 12px", fontSize: 11 }} onClick={() => navigate("/dashboard")}>← VOLTAR</button>
           <h1 style={{ color: "#fff", fontSize: 16, fontWeight: 700, margin: 0 }}>DocMaster — EMITIR ATESTADO</h1>
         </div>
         <button style={btnBlue} onClick={handleDownloadPdf}>⬇ BAIXAR PDF</button>
@@ -551,14 +649,6 @@ export default function CreateAttestation() {
         {/* ═══ COLUNA ESQUERDA — FORMULÁRIO ═══ */}
         <div style={{ width: 500, flexShrink: 0, overflowY: "auto", maxHeight: "calc(100vh - 70px)" }}>
           <form onSubmit={handleSubmit}>
-
-            {/* Código gerado */}
-            {createdCode && (
-              <div style={{ ...card, background: "#f0fdf4", border: "1px solid #86efac" }}>
-                <p style={{ fontSize: 12, fontWeight: 600, color: "#166534", margin: 0 }}>✅ Código de Validação:</p>
-                <p style={{ fontSize: 22, fontWeight: 800, color: "#15803d", margin: "4px 0 0" }}>{createdCode}</p>
-              </div>
-            )}
 
             {/* ── Importação Rápida ── */}
             <div style={card}>
@@ -576,8 +666,8 @@ export default function CreateAttestation() {
                   <textarea
                     value={importTexto}
                     onChange={(e) => setImportTexto(e.target.value)}
-                    rows={7}
-                    placeholder={"Nome Completo: JOÃO DA SILVA\nCPF: 123.456.789-00\nNascimento: 01/01/1990\nSexo: M\nNome da Mae: MARIA\nEndereço: RUA X, 100\nCID: A09\nData: 19/03/2026\nHorario: 14:30"}
+                    rows={9}
+                    placeholder={"Nome Completo: JOÃO DA SILVA\nCPF: 123.456.789-00\nNascimento: 01/01/1990\nSexo: M\nNome da Mae: MARIA DA SILVA\nEndereço: RUA X, 100, CENTRO, SP\nCID: J11\nData: " + todayBR() + "\nHorario: " + nowTime()}
                     style={{ ...inp, resize: "vertical", fontFamily: "monospace", fontSize: 11 }}
                   />
                   <button type="button" style={{ ...btnBlue, width: "100%", marginTop: 8 }} onClick={processarImportacao}>
@@ -590,13 +680,11 @@ export default function CreateAttestation() {
             {/* ── 1. Buscar Médico ── */}
             <div style={card}>
               <p style={secTitle}>🔍 1. Buscar Médico</p>
-
-              {/* Filtros */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 6 }}>
                 <div>
-                  <label style={lbl}>UF</label>
+                  <label style={lbl}>UF *</label>
                   <select style={sel} value={filtroUF} onChange={(e) => setFiltroUF(e.target.value)}>
-                    <option value="">UF...</option>
+                    <option value="">Selecione a UF...</option>
                     {UFS.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
                   </select>
                 </div>
@@ -621,8 +709,6 @@ export default function CreateAttestation() {
                   </select>
                 </div>
               </div>
-
-              {/* Campo de busca */}
               <input
                 style={{ ...inp, marginBottom: 8 }}
                 placeholder="DIGITE NOME OU CRM..."
@@ -633,14 +719,11 @@ export default function CreateAttestation() {
               <button type="button" style={{ ...btnBlue, width: "100%" }} onClick={buscarMedicos} disabled={buscando}>
                 {buscando ? "🔄 Buscando..." : "🔍 BUSCAR NO BANCO DE DADOS"}
               </button>
-
               {erroBusca && (
                 <p style={{ fontSize: 11, color: "#dc2626", marginTop: 6, padding: "5px 8px", background: "#fef2f2", borderRadius: 6 }}>
                   {erroBusca}
                 </p>
               )}
-
-              {/* Resultados */}
               {showResultados && resultados.length > 0 && (
                 <div style={{ marginTop: 8, maxHeight: 220, overflowY: "auto", border: "1px solid #e5e7eb", borderRadius: 8 }}>
                   {resultados.map((m, i) => (
@@ -653,7 +736,6 @@ export default function CreateAttestation() {
                         cursor: "pointer",
                         fontSize: 12,
                         background: i % 2 === 0 ? "#fff" : "#f9fafb",
-                        transition: "background 0.15s",
                       }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = "#eff6ff")}
                       onMouseLeave={(e) => (e.currentTarget.style.background = i % 2 === 0 ? "#fff" : "#f9fafb")}
@@ -669,7 +751,7 @@ export default function CreateAttestation() {
                 </div>
               )}
 
-              {/* Editar Médico / Local / Assinatura */}
+              {/* Editar Médico */}
               <details open={showEditar} style={{ marginTop: 10 }}>
                 <summary
                   style={{ cursor: "pointer", fontSize: 12, fontWeight: 700, color: "#005CA9", padding: "6px 0", listStyle: "none" }}
@@ -678,25 +760,10 @@ export default function CreateAttestation() {
                   ✏️ EDITAR MÉDICO / LOCAL / ASSINATURA
                 </summary>
                 <div style={{ paddingTop: 10, display: "grid", gap: 8 }}>
-
-                  {/* Seletor rápido (banco) */}
-                  <div>
-                    <label style={lbl}>🔄 Puxar do Banco de Dados</label>
-                    <select style={sel} onChange={(e) => {
-                      const idx = parseInt(e.target.value);
-                      if (!isNaN(idx) && resultados[idx]) selecionarMedico(resultados[idx]);
-                    }} value="">
-                      <option value="">Selecione um médico da lista...</option>
-                      {resultados.map((m, i) => (
-                        <option key={m.id} value={i}>{m.nome_medico} — CRM/{m.uf_crm} {m.crm}</option>
-                      ))}
-                    </select>
-                  </div>
-
                   <p style={{ ...secTitle, fontSize: 10 }}>Dados do Local</p>
                   <div>
                     <label style={lbl}>Nome da Instituição</label>
-                    <input style={inp} value={form.instituicao} onChange={(e) => setForm(p => ({ ...p, instituicao: e.target.value }))} placeholder="Ex: PREFEITURA DE..." />
+                    <input style={inp} value={form.instituicao} onChange={(e) => setForm(p => ({ ...p, instituicao: e.target.value }))} placeholder="Ex: HOSPITAL MUNICIPAL..." />
                   </div>
                   <div>
                     <label style={lbl}>Unidade / Setor</label>
@@ -710,17 +777,15 @@ export default function CreateAttestation() {
                     <label style={lbl}>Endereço Completo</label>
                     <input style={inp} value={form.enderecoEmitente} onChange={(e) => setForm(p => ({ ...p, enderecoEmitente: e.target.value }))} placeholder="Rua, Número, Bairro..." />
                   </div>
-
                   <p style={{ ...secTitle, fontSize: 10 }}>Dados do Médico</p>
                   <div>
                     <label style={lbl}>Nome Completo</label>
-                    <input style={inp} value={form.medico} onChange={(e) => setForm(p => ({ ...p, medico: e.target.value }))} />
+                    <input style={inp} value={form.medico} onChange={(e) => setForm(p => ({ ...p, medico: e.target.value }))} placeholder="DR. NOME SOBRENOME" />
                   </div>
                   <div>
                     <label style={lbl}>CRM (Ex: CRM/SP 12345)</label>
-                    <input style={inp} value={form.crm} onChange={(e) => setForm(p => ({ ...p, crm: e.target.value }))} />
+                    <input style={inp} value={form.crm} onChange={(e) => setForm(p => ({ ...p, crm: e.target.value }))} placeholder="CRM/SP 00000" />
                   </div>
-
                   <p style={{ ...secTitle, fontSize: 10 }}>ASSINATURA & CARIMBO</p>
                   <div>
                     <label style={lbl}>COR DA TINTA</label>
@@ -736,7 +801,7 @@ export default function CreateAttestation() {
                         <div style={{ position: "relative" }}>
                           <img src={signatureImage} alt="Assinatura" style={{ maxHeight: 50, maxWidth: 160, objectFit: "contain", border: "1px solid #e5e7eb", borderRadius: 6 }} />
                           <button type="button" onClick={() => { setSignatureImage(""); if (signatureRef.current) signatureRef.current.value = ""; }}
-                            style={{ position: "absolute", top: -6, right: -6, background: "#ef4444", color: "#fff", border: "none", borderRadius: "50%", width: 18, height: 18, fontSize: 10, cursor: "pointer", lineHeight: 1 }}>
+                            style={{ position: "absolute", top: -6, right: -6, background: "#ef4444", color: "#fff", border: "none", borderRadius: "50%", width: 18, height: 18, fontSize: 10, cursor: "pointer" }}>
                             ✕
                           </button>
                         </div>
@@ -757,8 +822,8 @@ export default function CreateAttestation() {
               <p style={secTitle}>👤 2. Dados do Paciente</p>
               <div style={{ display: "grid", gap: 8 }}>
                 <div>
-                  <label style={lbl}>Nome Completo</label>
-                  <input style={inp} value={form.paciente} onChange={(e) => setForm(p => ({ ...p, paciente: e.target.value }))} placeholder="Nome Completo" required />
+                  <label style={lbl}>Nome Completo *</label>
+                  <input style={inp} value={form.paciente} onChange={(e) => setForm(p => ({ ...p, paciente: e.target.value }))} placeholder="Nome Completo do Paciente" required />
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                   <div>
@@ -769,29 +834,85 @@ export default function CreateAttestation() {
                     </select>
                   </div>
                   <div>
-                    <label style={lbl}>Data de Nascimento</label>
+                    <label style={lbl}>Data de Nascimento *</label>
                     <input style={inp} value={form.nascimento} onChange={(e) => setForm(p => ({ ...p, nascimento: handleDateInput(e.target.value) }))} placeholder="DD/MM/AAAA" maxLength={10} inputMode="numeric" required />
                   </div>
                 </div>
+
+                {/* CPF ou CNS */}
                 <div>
-                  <label style={lbl}>CPF / CNS</label>
-                  <input style={inp} value={form.cpf} onChange={(e) => setForm(p => ({ ...p, cpf: e.target.value }))} placeholder="XXX.XXX.XXX-XX" required />
+                  <label style={lbl}>Tipo de Documento *</label>
+                  <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
+                    <button
+                      type="button"
+                      onClick={() => { setTipoDoc("CPF"); setForm(p => ({ ...p, docValue: "" })); }}
+                      style={{
+                        flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
+                        background: tipoDoc === "CPF" ? "#005CA9" : "#e2e8f0",
+                        color: tipoDoc === "CPF" ? "#fff" : "#374151",
+                        border: tipoDoc === "CPF" ? "2px solid #005CA9" : "2px solid #d1d5db",
+                      }}
+                    >
+                      CPF
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setTipoDoc("CNS"); setForm(p => ({ ...p, docValue: "" })); }}
+                      style={{
+                        flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
+                        background: tipoDoc === "CNS" ? "#005CA9" : "#e2e8f0",
+                        color: tipoDoc === "CNS" ? "#fff" : "#374151",
+                        border: tipoDoc === "CNS" ? "2px solid #005CA9" : "2px solid #d1d5db",
+                      }}
+                    >
+                      CNS — Cartão Nacional de Saúde
+                    </button>
+                  </div>
+                  <input
+                    style={inp}
+                    value={form.docValue}
+                    onChange={(e) => handleDocInput(e.target.value)}
+                    placeholder={tipoDoc === "CPF" ? "000.000.000-00" : "000 0000 0000 0000"}
+                    inputMode="numeric"
+                    required
+                  />
                 </div>
+
                 <div>
-                  <label style={lbl}>Nome da Mãe</label>
+                  <label style={lbl}>Nome da Mãe *</label>
                   <input style={inp} value={form.nomeMae} onChange={(e) => setForm(p => ({ ...p, nomeMae: e.target.value }))} placeholder="Nome da Mãe" required />
                 </div>
                 <div>
-                  <label style={lbl}>Endereço do Paciente</label>
+                  <label style={lbl}>Endereço do Paciente *</label>
                   <input style={inp} value={form.endereco} onChange={(e) => setForm(p => ({ ...p, endereco: e.target.value }))} placeholder="Rua, Número, Bairro, Cidade/UF" required />
                 </div>
               </div>
             </div>
 
-            {/* ── Dados Médicos ── */}
+            {/* ── 3. Dados Médicos ── */}
             <div style={card}>
-              <p style={secTitle}>🩺 Dados Médicos</p>
+              <p style={secTitle}>🩺 3. Dados Médicos</p>
               <div style={{ display: "grid", gap: 8 }}>
+
+                {/* Dias de Afastamento */}
+                <div>
+                  <label style={lbl}>Dias de Afastamento (1-15)</label>
+                  <select
+                    style={sel}
+                    value={form.afastamento}
+                    onChange={(e) => setForm(p => ({ ...p, afastamento: e.target.value }))}
+                  >
+                    {Array.from({ length: 15 }, (_, i) => i + 1).map((n) => {
+                      const d = DIAS_EXTENSO[n];
+                      const unidade = n === 1 ? "dia" : "dias";
+                      return (
+                        <option key={n} value={String(n)}>
+                          {d.num} ({d.ext}) {unidade}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
 
                 {/* Texto do Atestado */}
                 <div>
@@ -799,9 +920,8 @@ export default function CreateAttestation() {
                   <textarea
                     value={form.textoAtestado}
                     onChange={(e) => setForm(p => ({ ...p, textoAtestado: e.target.value }))}
-                    rows={4}
-                    style={{ ...inp, resize: "vertical" }}
-                    placeholder="Atesto para os devidos fins que o(a) paciente acima identificado(a) foi atendido(a) nesta unidade de saúde na data de hoje."
+                    rows={5}
+                    style={{ ...inp, resize: "vertical", lineHeight: 1.6 }}
                   />
                 </div>
 
@@ -825,39 +945,9 @@ export default function CreateAttestation() {
                     ))}
                   </select>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 6 }}>
-                    <input
-                      style={inp}
-                      value={form.cidDisplay}
-                      onChange={(e) => setForm(p => ({ ...p, cidDisplay: e.target.value }))}
-                      placeholder="Código (Ex: H16.0)"
-                    />
-                    <input
-                      style={inp}
-                      value={form.cidNome}
-                      onChange={(e) => setForm(p => ({ ...p, cidNome: e.target.value }))}
-                      placeholder="Nome do CID (Ex: Úlcera de Córnea)"
-                    />
+                    <input style={inp} value={form.cidDisplay} onChange={(e) => setForm(p => ({ ...p, cidDisplay: e.target.value }))} placeholder="Código (Ex: J11)" />
+                    <input style={inp} value={form.cidNome} onChange={(e) => setForm(p => ({ ...p, cidNome: e.target.value }))} placeholder="Nome do CID" />
                   </div>
-                </div>
-
-                {/* Afastamento */}
-                <div>
-                  <label style={lbl}>Dias de Afastamento (opcional)</label>
-                  <input
-                    style={inp}
-                    type="number"
-                    min="0"
-                    max="365"
-                    value={form.afastamento}
-                    onChange={(e) => setForm(p => ({ ...p, afastamento: e.target.value }))}
-                    placeholder="Ex: 3"
-                  />
-                </div>
-
-                {/* Passaporte */}
-                <div>
-                  <label style={lbl}>Passaporte (opcional)</label>
-                  <input style={inp} value={form.passaporte} onChange={(e) => setForm(p => ({ ...p, passaporte: e.target.value }))} placeholder="Ex: FX255093" />
                 </div>
 
                 {/* Modo Carimbo */}
@@ -872,127 +962,141 @@ export default function CreateAttestation() {
                     Modo Carimbo (rodapé com assinatura cursiva)
                   </label>
                 </div>
-
               </div>
             </div>
 
-            {/* ── 3. Detalhes Finais ── */}
+            {/* ── 4. Data de Emissão ── */}
             <div style={card}>
-              <p style={secTitle}>📅 3. Detalhes Finais</p>
+              <p style={secTitle}>📅 4. Data de Emissão</p>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                 <div style={{ gridColumn: "1 / -1" }}>
                   <label style={lbl}>Cidade de Emissão</label>
-                  <input style={inp} value={form.cidade} onChange={(e) => setForm(p => ({ ...p, cidade: e.target.value.toUpperCase() }))} placeholder="Ex: SALVADOR" />
+                  <input style={inp} value={form.cidade} onChange={(e) => setForm(p => ({ ...p, cidade: e.target.value.toUpperCase() }))} placeholder="Ex: SÃO PAULO" />
                 </div>
-                <div>
-                  <label style={lbl}>Data da Assinatura</label>
-                  <input style={inp} value={form.dataAssinatura} onChange={(e) => setForm(p => ({ ...p, dataAssinatura: handleDateInput(e.target.value) }))} placeholder="DD/MM/AAAA" maxLength={10} inputMode="numeric" required />
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <label style={lbl}>Data de Emissão *</label>
+                  <input style={inp} value={form.dataEmissao} onChange={(e) => {
+                    const v = handleDateInput(e.target.value);
+                    setForm(p => ({ ...p, dataEmissao: v, dataAssinatura: v }));
+                  }} placeholder="DD/MM/AAAA" maxLength={10} inputMode="numeric" required />
+                  <p style={{ fontSize: 10, color: "#6b7280", marginTop: 3 }}>
+                    A data de assinatura reflete automaticamente a data de emissão.
+                  </p>
                 </div>
                 <div>
                   <label style={lbl}>Hora da Assinatura</label>
-                  <input style={inp} type="time" value={form.horaAssinatura} onChange={(e) => setForm(p => ({ ...p, horaAssinatura: e.target.value }))} required />
-                </div>
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <label style={lbl}>Data de Emissão</label>
-                  <input style={inp} value={form.dataEmissao} onChange={(e) => setForm(p => ({ ...p, dataEmissao: handleDateInput(e.target.value) }))} placeholder="DD/MM/AAAA" maxLength={10} inputMode="numeric" required />
+                  <input style={inp} type="time" value={form.horaAssinatura} onChange={(e) => setForm(p => ({ ...p, horaAssinatura: e.target.value }))} />
                 </div>
               </div>
 
-              {/* Logos Esquerda / Direita */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 12 }}>
+              {/* ── Logos ── */}
+              <div style={{ marginTop: 16 }}>
+                <p style={{ ...secTitle, marginBottom: 10 }}>🖼 Logos do Documento</p>
 
-                {/* Logo Esquerda */}
-                <div style={{ textAlign: "center" }}>
-                  <p style={{ fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6 }}>Esquerda (Logo)</p>
-                  <div style={{
-                    width: "100%", height: 70, border: "2px dashed #d1d5db", borderRadius: 8,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    overflow: "hidden", background: "#f9fafb", marginBottom: 6,
-                  }}>
-                    {logoLeft ? (
-                      <img src={logoLeft} alt="Logo Esq" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
-                    ) : (
-                      <span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 700 }}>SEM LOGO</span>
-                    )}
-                  </div>
-                  <label style={{ ...btnBlue, display: "block", textAlign: "center", padding: "6px 0", cursor: "pointer", fontSize: 11 }}>
-                    📁 ENVIAR LOGO
-                    <input ref={logoLeftRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => handleLogoUpload("left", e)} />
-                  </label>
-                  <button type="button" style={{ ...btnGray, width: "100%", marginTop: 4, fontSize: 10, padding: "4px 0" }}
-                    onClick={() => { setLogoLeft(""); if (logoLeftRef.current) logoLeftRef.current.value = ""; }}>
-                    ✕ SEM LOGO
+                {/* Seletor de lado */}
+                <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                  <button
+                    type="button"
+                    onClick={() => setLogoSide("left")}
+                    style={{
+                      flex: 1, padding: "8px 0", borderRadius: 7, fontWeight: 700, fontSize: 12, cursor: "pointer",
+                      background: logoSide === "left" ? "#005CA9" : "#e2e8f0",
+                      color: logoSide === "left" ? "#fff" : "#374151",
+                      border: "none",
+                    }}
+                  >
+                    ← LOGO ESQUERDA
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLogoSide("right")}
+                    style={{
+                      flex: 1, padding: "8px 0", borderRadius: 7, fontWeight: 700, fontSize: 12, cursor: "pointer",
+                      background: logoSide === "right" ? "#005CA9" : "#e2e8f0",
+                      color: logoSide === "right" ? "#fff" : "#374151",
+                      border: "none",
+                    }}
+                  >
+                    LOGO DIREITA →
                   </button>
                 </div>
 
-                {/* Logo Direita */}
-                <div style={{ textAlign: "center" }}>
-                  <p style={{ fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6 }}>Direita (Logo)</p>
-                  <div style={{
-                    width: "100%", height: 70, border: "2px dashed #d1d5db", borderRadius: 8,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    overflow: "hidden", background: "#f9fafb", marginBottom: 6,
-                  }}>
-                    {logoRight ? (
-                      <img src={logoRight} alt="Logo Dir" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
-                    ) : (
-                      <span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 700 }}>SEM LOGO</span>
-                    )}
-                  </div>
-                  <label style={{ ...btnBlue, display: "block", textAlign: "center", padding: "6px 0", cursor: "pointer", fontSize: 11 }}>
+                {/* Preview do lado selecionado */}
+                <div style={{
+                  width: "100%", height: 80, border: "2px dashed #d1d5db", borderRadius: 8,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  overflow: "hidden", background: "#f9fafb", marginBottom: 8,
+                }}>
+                  {(logoSide === "left" ? logoLeft : logoRight) ? (
+                    <img
+                      src={logoSide === "left" ? logoLeft : logoRight}
+                      alt="Logo"
+                      style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+                    />
+                  ) : (
+                    <div style={{ textAlign: "center" }}>
+                      <p style={{ fontSize: 11, color: "#9ca3af", fontWeight: 700, margin: 0 }}>SEM LOGO</p>
+                      <p style={{ fontSize: 10, color: "#d1d5db", margin: "2px 0 0" }}>Tamanho ideal: 300×100px (PNG/JPG)</p>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                  <label style={{ ...btnBlue, flex: 1, display: "block", textAlign: "center", padding: "7px 0", cursor: "pointer", fontSize: 11 }}>
                     📁 ENVIAR LOGO
-                    <input ref={logoRightRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => handleLogoUpload("right", e)} />
+                    <input
+                      type="file" accept="image/*" style={{ display: "none" }}
+                      onChange={(e) => handleLogoUpload(logoSide, e)}
+                    />
                   </label>
-                  <button type="button" style={{ ...btnGray, width: "100%", marginTop: 4, fontSize: 10, padding: "4px 0" }}
-                    onClick={() => { setLogoRight(""); if (logoRightRef.current) logoRightRef.current.value = ""; }}>
-                    ✕ SEM LOGO
+                  <button
+                    type="button"
+                    style={{ ...btnGray, flex: 1, fontSize: 11, padding: "7px 0" }}
+                    onClick={() => {
+                      if (logoSide === "left") { setLogoLeft(""); if (logoLeftRef.current) logoLeftRef.current.value = ""; }
+                      else { setLogoRight(""); if (logoRightRef.current) logoRightRef.current.value = ""; }
+                    }}
+                  >
+                    ✕ REMOVER
                   </button>
                 </div>
 
-              </div>
-
-              {/* Galeria de Logos Padrão */}
-              <div style={{ marginTop: 12 }}>
-                <p style={{ fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6 }}>Logos Padrão — Clique para selecionar</p>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
-                  {LOGOS_PADRAO.map((logo) => (
-                    <div key={logo.id} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                {/* Galeria de Logos Padrão */}
+                <p style={{ fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6 }}>
+                  Logos Padrão — Clique para aplicar no lado selecionado ({logoSide === "left" ? "Esquerda" : "Direita"})
+                </p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+                  {LOGOS_PADRAO.map((logo) => {
+                    const currentLogo = logoSide === "left" ? logoLeft : logoRight;
+                    const isSelected = currentLogo === logo.src;
+                    return (
                       <div
-                        onClick={() => setLogoLeft(logo.src)}
-                        title={`Esq: ${logo.label}`}
+                        key={logo.id}
+                        onClick={() => logoSide === "left" ? setLogoLeft(logo.src) : setLogoRight(logo.src)}
                         style={{
-                          border: logoLeft === logo.src ? "2px solid #005CA9" : "1px solid #e5e7eb",
-                          borderRadius: 6, padding: 4, cursor: "pointer", background: "#fff",
+                          border: isSelected ? "2px solid #005CA9" : "1px solid #e5e7eb",
+                          borderRadius: 6, padding: 4, cursor: "pointer", background: isSelected ? "#eff6ff" : "#fff",
                           height: 44, display: "flex", alignItems: "center", justifyContent: "center",
                           overflow: "hidden",
                         }}
+                        title={logo.label}
                       >
                         <img src={logo.src} alt={logo.label} style={{ maxWidth: "100%", maxHeight: 36, objectFit: "contain" }} />
                       </div>
-                      <div style={{ display: "flex", gap: 3 }}>
-                        <button type="button"
-                          onClick={() => setLogoLeft(logo.src)}
-                          style={{ flex: 1, fontSize: 9, padding: "2px 0", background: logoLeft === logo.src ? "#005CA9" : "#e2e8f0",
-                            color: logoLeft === logo.src ? "#fff" : "#374151", border: "none", borderRadius: 4, cursor: "pointer", fontWeight: 600 }}>
-                          ESQ
-                        </button>
-                        <button type="button"
-                          onClick={() => setLogoRight(logo.src)}
-                          style={{ flex: 1, fontSize: 9, padding: "2px 0", background: logoRight === logo.src ? "#005CA9" : "#e2e8f0",
-                            color: logoRight === logo.src ? "#fff" : "#374151", border: "none", borderRadius: 4, cursor: "pointer", fontWeight: 600 }}>
-                          DIR
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
 
             {/* Botões de Ação */}
             <div style={{ display: "flex", gap: 10, paddingBottom: 20 }}>
-              <Link href="/"><button type="button" style={{ ...btnGray, flex: 1 }}>CANCELAR</button></Link>
-              <button type="submit" disabled={isLoading} style={{ ...btnGreen, flex: 2, opacity: isLoading ? 0.7 : 1 }}>
+              <button type="button" style={{ ...btnGray, flex: 1 }} onClick={() => navigate("/dashboard")}>CANCELAR</button>
+              <button
+                type="submit"
+                disabled={isLoading}
+                style={{ ...btnGreen, flex: 2, opacity: isLoading ? 0.7 : 1, fontSize: 14, padding: "12px 0" }}
+              >
                 {isLoading ? "⏳ Emitindo..." : "✅ CONFIRMAR E EMITIR"}
               </button>
             </div>
@@ -1008,7 +1112,12 @@ export default function CreateAttestation() {
             borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
           }}>
             <span style={{ fontWeight: 700, color: "#374151", fontSize: 14 }}>📄 Preview em Tempo Real</span>
-            <button style={btnBlue} onClick={handleDownloadPdf}>⬇ BAIXAR PDF</button>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <span style={{ fontSize: 11, color: "#6b7280", background: "#fef3c7", padding: "3px 8px", borderRadius: 5, fontWeight: 600 }}>
+                🔒 QR Code gerado somente após emissão
+              </span>
+              <button style={btnBlue} onClick={handleDownloadPdf}>⬇ BAIXAR PDF</button>
+            </div>
           </div>
           <div style={{ flex: 1, overflow: "auto", background: "#525659", borderRadius: 10, padding: 14, maxHeight: "calc(100vh - 120px)" }}>
             <div style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}>
