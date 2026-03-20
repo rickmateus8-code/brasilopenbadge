@@ -105,16 +105,20 @@ export default function Validation() {
     }
   }, [codigo, dataEmissao]);
 
-  // ── Auto-validar se vier código na URL ───────────────────────────────────
+  // ── Auto-validar se vier código na URL (query string ou path param) ────────
   useEffect(() => {
-    if (!params.id) return;
-    const code = (params.id as string).trim().toUpperCase();
-    setCodigo(code);
-    // Pegar data da query string se disponível
     const urlParams = new URLSearchParams(window.location.search);
+    // Tenta pegar código da query string (?codigo=) ou do path param (/v/:id)
+    const codeFromQuery = urlParams.get("codigo") || urlParams.get("code") || "";
+    const codeFromPath = params.id ? (params.id as string) : "";
+    const code = (codeFromQuery || codeFromPath).trim().toUpperCase();
     const dateParam = urlParams.get("data") || "";
-    if (dateParam) setDataEmissao(dateParam);
-    handleValidate(code, dateParam);
+    if (code) {
+      setCodigo(code);
+      if (dateParam) setDataEmissao(dateParam);
+      // Pequeno delay para garantir que o estado foi atualizado
+      setTimeout(() => handleValidate(code, dateParam), 100);
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Download PDF ─────────────────────────────────────────────────────────
