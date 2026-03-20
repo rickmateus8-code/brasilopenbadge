@@ -49,7 +49,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         a.medico, a.crm, a.especialidade, a.cid, a.cid_display, a.cid_nome,
         a.texto_atestado, a.afastamento, a.data_emissao, a.hora_assinatura,
         a.cidade, a.instituicao, a.unidade, a.endereco_emitente,
-        a.logo_left, a.logo_right, a.signature_color, a.modo_carimbo,
+        a.logo_url, a.logo_right, a.signature_color, a.modo_carimbo,
         a.status, a.created_at,
         u.username as emitido_por
        FROM attestations a
@@ -87,7 +87,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         instituicao: attestation.instituicao,
         unidade: attestation.unidade,
         enderecoEmitente: attestation.endereco_emitente,
-        logoUrl: attestation.logo_left,
+        logoUrl: attestation.logo_url,
         logoRight: attestation.logo_right,
         signatureColor: attestation.signature_color,
         modoCarimbo: attestation.modo_carimbo === 1,
@@ -103,16 +103,22 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
 
     // Busca na tabela documents (CNH, CHA, Toxicológico, etc.)
-    const document = await env.DB.prepare(
-      `SELECT
-        d.id, d.codigo_validacao, d.type, d.data, d.status, d.created_at,
-        u.username as emitido_por
-       FROM documents d
-       LEFT JOIN users u ON d.user_id = u.id
-       WHERE d.codigo_validacao = ? AND d.status = 'emitido'`
-    )
-      .bind(code)
-      .first<Record<string, unknown>>();
+    let document: Record<string, unknown> | null = null;
+    try {
+      document = await env.DB.prepare(
+        `SELECT
+          d.id, d.codigo_validacao, d.type, d.data, d.status, d.created_at,
+          u.username as emitido_por
+         FROM documents d
+         LEFT JOIN users u ON d.user_id = u.id
+         WHERE d.codigo_validacao = ? AND d.status = 'emitido'`
+      )
+        .bind(code)
+        .first<Record<string, unknown>>();
+    } catch {
+      // Tabela documents pode não existir — ignorar erro
+      document = null;
+    }
 
     if (document) {
       let parsedData: Record<string, unknown> = {};

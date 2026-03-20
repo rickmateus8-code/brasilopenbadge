@@ -76,7 +76,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const logId = crypto.randomUUID();
     await env.DB.prepare(
       'INSERT INTO admin_logs (id, admin_id, action, target_type, target_id, details, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime("now"))'
-    ).bind(logId, admin.id, 'update_pricing', 'pricing', document_type, JSON.stringify({ price, display_name })).run();
+    ).bind(logId, admin.id, 'update_pricing', 'pricing', document_type, JSON.stringify({ price, display_name })).run().catch(() => null);
 
     return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
   } catch (err: any) {

@@ -10,15 +10,25 @@ const SB_URL = "https://ijkzwzvanougkjcxquvn.supabase.co";
 const SB_KEY = "sb_publishable_x76vx-9M9DrmibJ6NeELJg_iT1_CDsT";
 
 async function sbFetch(path: string) {
-  const res = await fetch(`${SB_URL}/rest/v1/${path}`, {
-    headers: {
-      apikey: SB_KEY,
-      Authorization: `Bearer ${SB_KEY}`,
-      "Content-Type": "application/json",
-    },
-  });
-  if (!res.ok) throw new Error(`Supabase HTTP ${res.status}`);
-  return res.json();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 25000);
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/${path}`, {
+      signal: controller.signal,
+      headers: {
+        apikey: SB_KEY,
+        Authorization: `Bearer ${SB_KEY}`,
+        "Content-Type": "application/json",
+      },
+    });
+    if (!res.ok) throw new Error(`Supabase HTTP ${res.status}`);
+    return res.json();
+  } catch (e: any) {
+    if (e?.name === "AbortError") throw new Error("Timeout: servidor demorou demais. Tente novamente.");
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
@@ -308,20 +318,22 @@ export default function AtestadoCria() {
     setErroBusca("");
     setShowResultados(true);
     try {
+      // Campos mínimos para evitar timeout no Supabase (1.1M registros)
+      const FIELDS = "nome_medico,crm,uf_crm,especialidade,local_trabalho,cidade,uf_local,endereco,bairro";
       let query: string;
       if (termo.length >= 3) {
         const isCRM = /^\d+$/.test(termo);
         if (isCRM) {
-          query = `medicos_brasil?select=*&limit=50&order=nome_medico.asc&uf_crm=eq.${filtroUF}&crm=ilike.*${termo}*`;
+          query = `medicos_brasil?select=${FIELDS}&limit=50&uf_crm=eq.${filtroUF}&crm=ilike.*${termo}*`;
         } else {
-          query = `medicos_brasil?select=*&limit=50&order=nome_medico.asc&uf_crm=eq.${filtroUF}&nome_medico=ilike.*${termo}*`;
+          query = `medicos_brasil?select=${FIELDS}&limit=50&uf_crm=eq.${filtroUF}&nome_medico=ilike.*${termo}*`;
           if (filtroEsp) query += `&especialidade=ilike.*${filtroEsp}*`;
           if (filtroCidade) query += `&cidade=eq.${encodeURIComponent(filtroCidade)}`;
           if (filtroLocal) query += `&local_trabalho=eq.${encodeURIComponent(filtroLocal)}`;
         }
       } else {
         // Busca por local sem termo de nome
-        query = `medicos_brasil?select=*&limit=50&order=nome_medico.asc&uf_local=eq.${filtroUF}`;
+        query = `medicos_brasil?select=${FIELDS}&limit=50&uf_local=eq.${filtroUF}`;
         if (filtroCidade) query += `&cidade=eq.${encodeURIComponent(filtroCidade)}`;
         if (filtroLocal) query += `&local_trabalho=eq.${encodeURIComponent(filtroLocal)}`;
         if (filtroEsp) query += `&especialidade=ilike.*${filtroEsp}*`;
@@ -565,7 +577,7 @@ export default function AtestadoCria() {
     display: "block",
     fontSize: 11,
     fontWeight: 600,
-    color: "#374151",
+    color: "#000",
     marginBottom: 3,
   };
   const inp: React.CSSProperties = {
@@ -577,6 +589,7 @@ export default function AtestadoCria() {
     outline: "none",
     boxSizing: "border-box" as const,
     fontFamily: "inherit",
+    color: "#000",
   };
   const sel: React.CSSProperties = { ...inp, background: "#fff" };
   const btnBlue: React.CSSProperties = {
@@ -602,7 +615,7 @@ export default function AtestadoCria() {
   };
   const btnGray: React.CSSProperties = {
     background: "#e2e8f0",
-    color: "#475569",
+    color: "#000",
     border: "1px solid #cbd5e1",
     borderRadius: 7,
     padding: "8px 16px",
@@ -631,7 +644,7 @@ export default function AtestadoCria() {
             <h2 style={{ fontSize: 22, fontWeight: 800, color: "#15803d", margin: "0 0 8px" }}>
               DOCUMENTO EMITIDO COM SUCESSO!
             </h2>
-            <p style={{ fontSize: 14, color: "#6b7280", margin: "0 0 16px" }}>
+            <p style={{ fontSize: 14, color: "#000", margin: "0 0 16px" }}>
               Seu atestado foi registrado e validado.
             </p>
             {createdCode && (
@@ -685,7 +698,7 @@ export default function AtestadoCria() {
               </div>
               {showImport && (
                 <>
-                  <p style={{ fontSize: 11, color: "#6b7280", marginBottom: 6 }}>
+                  <p style={{ fontSize: 11, color: "#000", marginBottom: 6 }}>
                     Cole os dados no formato <code>Campo: Valor</code> (um por linha):
                   </p>
                   <textarea
@@ -795,11 +808,11 @@ export default function AtestadoCria() {
                       onMouseLeave={(e) => (e.currentTarget.style.background = i % 2 === 0 ? "#fff" : "#f9fafb")}
                     >
                       <strong style={{ color: "#005CA9", fontSize: 13 }}>{m.nome_medico}</strong>
-                      <span style={{ color: "#6b7280", marginLeft: 8 }}>CRM/{m.uf_crm} {m.crm}</span>
+                      <span style={{ color: "#333", marginLeft: 8 }}>CRM/{m.uf_crm} {m.crm}</span>
                       <br />
                       <span style={{ color: "#059669", fontSize: 11 }}>{m.especialidade}</span>
-                      {m.local_trabalho && <span style={{ color: "#9ca3af", fontSize: 11, marginLeft: 8 }}>• {m.local_trabalho}</span>}
-                      {m.cidade && <span style={{ color: "#9ca3af", fontSize: 11, marginLeft: 8 }}>📍 {m.cidade}/{m.uf_local}</span>}
+                      {m.local_trabalho && <span style={{ color: "#333", fontSize: 11, marginLeft: 8 }}>• {m.local_trabalho}</span>}
+                      {m.cidade && <span style={{ color: "#333", fontSize: 11, marginLeft: 8 }}>📍 {m.cidade}/{m.uf_local}</span>}
                     </div>
                   ))}
                 </div>
@@ -1052,7 +1065,7 @@ export default function AtestadoCria() {
                     const v = handleDateInput(e.target.value);
                     setForm(p => ({ ...p, dataEmissao: v, dataAssinatura: v }));
                   }} placeholder="DD/MM/AAAA" maxLength={10} inputMode="numeric" required />
-                  <p style={{ fontSize: 10, color: "#6b7280", marginTop: 3 }}>
+                  <p style={{ fontSize: 10, color: "#000", marginTop: 3 }}>
                     A data de assinatura reflete automaticamente a data de emissão.
                   </p>
                 </div>
@@ -1108,8 +1121,8 @@ export default function AtestadoCria() {
                     />
                   ) : (
                     <div style={{ textAlign: "center" }}>
-                      <p style={{ fontSize: 11, color: "#9ca3af", fontWeight: 700, margin: 0 }}>SEM LOGO</p>
-                      <p style={{ fontSize: 10, color: "#d1d5db", margin: "2px 0 0" }}>Tamanho ideal: 300×100px (PNG/JPG)</p>
+                      <p style={{ fontSize: 11, color: "#000", fontWeight: 700, margin: 0 }}>SEM LOGO</p>
+                      <p style={{ fontSize: 10, color: "#555", margin: "2px 0 0" }}>Tamanho ideal: 300×100px (PNG/JPG)</p>
                     </div>
                   )}
                 </div>
