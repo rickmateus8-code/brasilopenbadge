@@ -20,6 +20,7 @@ import HistoricoSP from "./pages/HistoricoSP";
 import HistoricoUNINTER from "./pages/HistoricoUNINTER";
 import AdminDashboard from "./pages/AdminDashboard";
 import ReceitaCria from "./pages/ReceitaCria";
+import ValidationReceita from "./pages/ValidationReceita";
 import Extrato from "./pages/Extrato";
 import Recargas from "./pages/Recargas";
 import Configuracoes from "./pages/Configuracoes";
@@ -38,14 +39,14 @@ const isVerificaMedDomain = typeof window !== 'undefined' &&
 function VerificaMedRouter() {
   return (
     <Switch>
-      {/* /verificar/receita/:codigo */}
-      <Route path="/verificar/receita/:id" component={Validation} />
-      {/* /verificar/:id */}
-      <Route path="/verificar/:id" component={Validation} />
-      {/* Raiz */}
-      <Route path="/" component={Validation} />
+      {/* /verificar/receita/:codigo — página dedicada de receitas */}
+      <Route path="/verificar/receita/:id" component={ValidationReceita} />
+      {/* /verificar/:id — fallback genérico */}
+      <Route path="/verificar/:id" component={ValidationReceita} />
+      {/* Raiz — tela de busca */}
+      <Route path="/" component={ValidationReceita} />
       {/* Fallback */}
-      <Route component={Validation} />
+      <Route component={ValidationReceita} />
     </Switch>
   );
 }

@@ -474,32 +474,42 @@ export default function ReceitaCria() {
     cursor: "pointer",
   };
 
-  // ── Preview data ────────────────────────────────────────────────────────────
+  // ── Preview data (alinhado com PrescricaoData) ────────────────────────────
   const previewData = {
-    codigoQR: "RX-XXXX-XXXX",
     tipo_receituario: tipoReceituario,
-    paciente: form.paciente || "NOME DO PACIENTE",
-    cpf: form.cpf || undefined,
-    identidade: form.identidade || undefined,
-    endereco: form.endereco || undefined,
-    telefone: form.telefone || undefined,
-    cidade: form.cidade || undefined,
-    medico: form.medico || "NOME DO MÉDICO",
-    crm: form.crm || "CRM/UF 00000",
-    especialidade: form.especialidade || "ESPECIALIDADE",
-    instituicao: form.instituicao || (form.cidade ? `PREFEITURA DE ${form.cidade.toUpperCase()}` : undefined),
-    unidade: form.unidade || undefined,
-    endereco_emitente: form.enderecoEmitente || undefined,
+    // Emitente
+    logo_url: logoUrl || undefined,
+    nome_unidade: form.unidade || form.instituicao || "NOME DA UNIDADE",
     cnpj_emitente: form.cnpjEmitente || undefined,
+    endereco_emitente: form.enderecoEmitente || undefined,
     telefone_emitente: form.telefoneEmitente || undefined,
     site_emitente: form.siteEmitente || undefined,
-    unidades_proximas: unidadesProximas.length > 0 ? unidadesProximas : undefined,
-    prescricao: prescricao.filter((p) => p.medicamento.trim()),
+    // Paciente
+    paciente_nome: form.paciente || "NOME DO PACIENTE",
+    paciente_cpf: form.cpf || undefined,
+    paciente_identidade: form.identidade || undefined,
+    paciente_endereco: form.endereco || undefined,
+    paciente_telefone: form.telefone || undefined,
+    paciente_cidade: form.cidade || undefined,
+    // Médico
+    medico_nome: form.medico || "NOME DO MÉDICO",
+    medico_crm: form.crm || "000000",
+    medico_uf: filtroUF || "UF",
+    medico_especialidade: form.especialidade || undefined,
+    medico_assinatura_url: signatureImage || undefined,
+    // Prescrição
+    medicamentos: prescricao
+      .filter((p) => p.medicamento.trim())
+      .map((p) => ({
+        uso_tipo: p.uso_interno ? "interno" as const : "externo" as const,
+        nome: p.medicamento,
+        quantidade: p.quantidade,
+        posologia: p.modo_uso,
+      })),
+    // Emissão
     data_emissao: form.dataEmissao || todayBR(),
-    hora_emissao: form.horaEmissao,
-    logo_url: logoUrl || undefined,
-    signature_color: signatureColor,
-    signature_image: signatureImage || undefined,
+    codigo_qr: undefined,
+    qr_code_url: undefined,
   };
 
   return (
@@ -983,13 +993,9 @@ export default function ReceitaCria() {
             </span>
           </div>
           <div style={{ flex: 1, overflow: "auto", background: "#525659", borderRadius: 10, padding: 14, maxHeight: "calc(100vh - 120px)" }}>
-            <div style={{ width: 794, margin: "0 auto", boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}>
+            <div ref={previewRef} style={{ width: 794, margin: "0 auto", boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}>
               <PrescricaoDocument
-                ref={previewRef}
                 data={previewData}
-                logoUrl={logoUrl}
-                signatureColor={signatureColor}
-                signatureImage={signatureImage}
               />
             </div>
           </div>
