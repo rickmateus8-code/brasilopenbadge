@@ -502,8 +502,13 @@ export default function AtestadoCria() {
         throw new Error(data.error || "Erro ao emitir atestado");
       }
 
-      setCreatedCode(data.codigoQR || data.data?.codigoQR);
+      const emittedCode = data.codigoQR || data.data?.codigoQR;
+      setCreatedCode(emittedCode);
       if (data.newBalance !== undefined) updateBalance(data.newBalance);
+      // Atualizar o preview com o código real para desbloquear o QR Code
+      if (emittedCode) {
+        setForm(prev => ({ ...prev, _emittedCode: emittedCode }));
+      }
       setShowSuccessModal(true);
     } catch (error) {
       alert(`Erro ao emitir: ${error instanceof Error ? error.message : "Erro desconhecido"}`);
@@ -526,7 +531,7 @@ export default function AtestadoCria() {
     condicao: "",
     vacinacao: "",
     cid: form.cid,
-    codigoQR: "XXXX.XXXX",
+    codigoQR: (form as any)._emittedCode || createdCode || "XXXX.XXXX",
     dataAssinatura: form.dataAssinatura || "DD/MM/AAAA",
     horaAssinatura: form.horaAssinatura || "HH:MM",
     medico: form.medico || "NOME DO MÉDICO",
@@ -637,47 +642,61 @@ export default function AtestadoCria() {
         }}>
           <div style={{
             background: "#fff", borderRadius: 16, padding: "40px 48px",
-            textAlign: "center", maxWidth: 420, width: "90%",
+            textAlign: "center", maxWidth: 440, width: "90%",
             boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
           }}>
-            <div style={{ fontSize: 56, marginBottom: 12 }}>✅</div>
+            <div style={{ fontSize: 56, marginBottom: 12 }}>\u2705</div>
             <h2 style={{ fontSize: 22, fontWeight: 800, color: "#15803d", margin: "0 0 8px" }}>
               DOCUMENTO EMITIDO COM SUCESSO!
             </h2>
-            <p style={{ fontSize: 14, color: "#000", margin: "0 0 16px" }}>
-              Seu atestado foi registrado e validado.
+            <p style={{ fontSize: 14, color: "#374151", margin: "0 0 6px" }}>
+              Saldo descontado. QR Code e c\u00f3digo de valida\u00e7\u00e3o liberados.
+            </p>
+            <p style={{ fontSize: 12, color: "#6b7280", margin: "0 0 16px" }}>
+              O PDF j\u00e1 cont\u00e9m o QR Code v\u00e1lido para verifica\u00e7\u00e3o.
             </p>
             {createdCode && (
-              <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 10, padding: "12px 16px", marginBottom: 20 }}>
-                <p style={{ fontSize: 11, fontWeight: 600, color: "#166534", margin: "0 0 4px" }}>Código de Validação:</p>
-                <p style={{ fontSize: 24, fontWeight: 800, color: "#15803d", margin: 0, letterSpacing: 2 }}>{createdCode}</p>
+              <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 10, padding: "12px 16px", marginBottom: 16 }}>
+                <p style={{ fontSize: 11, fontWeight: 600, color: "#166534", margin: "0 0 4px" }}>C\u00f3digo de Valida\u00e7\u00e3o:</p>
+                <p style={{ fontSize: 24, fontWeight: 800, color: "#15803d", margin: 0, letterSpacing: 2, fontFamily: "'Courier New', monospace" }}>{createdCode}</p>
               </div>
             )}
-            <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <button
-                style={{ ...btnGreen, flex: 1, opacity: isDownloadingPdf ? 0.7 : 1 }}
+                style={{ ...btnGreen, width: "100%", padding: "12px 0", fontSize: 14, opacity: isDownloadingPdf ? 0.7 : 1 }}
                 disabled={isDownloadingPdf}
                 onClick={async () => {
                   if (previewRef.current) {
                     setIsDownloadingPdf(true);
                     try {
+                      // Aguardar re-render com QR Code desbloqueado
+                      await new Promise(r => setTimeout(r, 300));
                       const filename = generatePDFFilename(form.paciente || "ATESTADO", "EMITIDO");
                       await exportElementToPDF(previewRef.current, { filename, scale: 2, quality: 0.92 });
                     } catch {}
                     setIsDownloadingPdf(false);
                   }
-                  setShowSuccessModal(false);
-                  navigate("/dashboard");
                 }}
               >
-                {isDownloadingPdf ? "⏳ Baixando PDF..." : "⬇ VER HISTÓRICO"}
+                {isDownloadingPdf ? "\u23F3 Gerando PDF..." : "\u2B07 BAIXAR PDF COM QR CODE"}
               </button>
-              <button
-                style={{ ...btnGray, flex: 1 }}
-                onClick={() => setShowSuccessModal(false)}
-              >
-                FECHAR
-              </button>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  style={{ ...btnBlue, flex: 1, padding: "10px 0", fontSize: 13 }}
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    navigate("/dashboard");
+                  }}
+                >
+                  VER HIST\u00d3RICO
+                </button>
+                <button
+                  style={{ ...btnGray, flex: 1, padding: "10px 0", fontSize: 13 }}
+                  onClick={() => setShowSuccessModal(false)}
+                >
+                  FECHAR
+                </button>
+              </div>
             </div>
           </div>
         </div>

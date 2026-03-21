@@ -188,7 +188,10 @@ export default function Dashboard() {
           </p>
           <div className="mt-4 flex items-center gap-3">
             <button
-              onClick={() => setLocation("/atestadocria")}
+              onClick={() => {
+                const el = document.getElementById("acesso-rapido");
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
               className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-semibold transition-all"
             >
               <Plus className="w-4 h-4" />
@@ -363,7 +366,7 @@ export default function Dashboard() {
         </div>
 
         {/* Quick Access */}
-        <div>
+        <div id="acesso-rapido">
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 uppercase tracking-wide">

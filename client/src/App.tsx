@@ -39,11 +39,13 @@ const isVerificaMedDomain = typeof window !== 'undefined' &&
 function VerificaMedRouter() {
   return (
     <Switch>
-      {/* /verificar/receita/:codigo — página dedicada de receitas */}
+      {/* /verificar/receita/:codigo — via QR Code */}
       <Route path="/verificar/receita/:id" component={ValidationReceita} />
+      {/* /verificar-receita/:codigo — compatibilidade verificamed.online */}
+      <Route path="/verificar-receita/:id" component={ValidationReceita} />
       {/* /verificar/:id — fallback genérico */}
       <Route path="/verificar/:id" component={ValidationReceita} />
-      {/* Raiz — tela de busca */}
+      {/* Raiz — homepage */}
       <Route path="/" component={ValidationReceita} />
       {/* Fallback */}
       <Route component={ValidationReceita} />
