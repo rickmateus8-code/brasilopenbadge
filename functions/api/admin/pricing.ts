@@ -70,7 +70,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
          price = excluded.price,
          is_active = excluded.is_active,
          updated_at = datetime('now')`
-    ).bind(document_type, display_name || document_type, Math.round(price * 100) / 100, is_active !== false ? 1 : 0).run();
+    // price recebido em centavos (ex: 500 = R$5,00), armazenar como recebido
+    ).bind(document_type, display_name || document_type, Math.round(price), is_active !== false ? 1 : 0).run();
 
     // Log action
     const logId = crypto.randomUUID();

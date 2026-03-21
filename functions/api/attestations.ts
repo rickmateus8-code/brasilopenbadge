@@ -190,7 +190,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
     if (balance < price) {
       return jsonResponse({
         success: false,
-        error: `Saldo insuficiente. Saldo atual: R$ ${balance.toFixed(2)}. Necessário: R$ ${price.toFixed(2)}. Recarregue seu saldo para continuar.`,
+        error: `Saldo insuficiente. Saldo atual: R$ ${(balance / 100).toFixed(2)}. Necessário: R$ ${(price / 100).toFixed(2)}. Recarregue seu saldo para continuar.`,
         needsRecharge: true,
       }, 402);
     }

@@ -10,7 +10,19 @@ import {
   Activity, Database, Search, Eye, X, Save
 } from "lucide-react";
 
-type Tab = "users" | "pricing" | "notices" | "logs" | "database" | "settings";
+type Tab = "users" | "pricing" | "notices" | "logs" | "emissions" | "database" | "settings";
+
+interface EmissionRow {
+  id: string;
+  user_id: string;
+  username?: string;
+  paciente?: string;
+  nome?: string;
+  type: string;
+  status: string;
+  codigo_qr?: string;
+  created_at: string;
+}
 
 interface UserRow {
   id: number;
@@ -52,6 +64,7 @@ const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "pricing", label: "Preços", icon: DollarSign },
   { key: "notices", label: "Avisos", icon: Bell },
   { key: "logs", label: "Logs", icon: Activity },
+  { key: "emissions", label: "Emissões", icon: FileText },
   { key: "database", label: "Banco de Dados", icon: Database },
   { key: "settings", label: "Configurações", icon: Settings },
 ];
@@ -89,6 +102,10 @@ export default function AdminDashboard() {
   // Logs
   const [logs, setLogs] = useState<LogRow[]>([]);
   const [logFilter, setLogFilter] = useState("");
+
+  // Emissions
+  const [emissions, setEmissions] = useState<EmissionRow[]>([]);
+  const [emissionsFilter, setEmissionsFilter] = useState("");
 
   // Database
   const [deleteConfirm, setDeleteConfirm] = useState("");
@@ -155,11 +172,30 @@ export default function AdminDashboard() {
     finally { setLoading(false); }
   }, []);
 
+  const loadEmissions = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Carregar atestados (admin vê todos)
+      const res = await fetch("/api/attestations", { credentials: "include" });
+      const data = await res.json();
+      if (data.success) {
+        const attestations = (data.data || []).map((a: any) => ({
+          ...a,
+          type: "atestado",
+          nome: a.paciente,
+        }));
+        setEmissions(attestations);
+      }
+    } catch { toast.error("Erro ao carregar emissões"); }
+    finally { setLoading(false); }
+  }, []);
+
   useEffect(() => {
     if (tab === "users") loadUsers();
     if (tab === "pricing") loadPricing();
     if (tab === "notices") loadNotices();
     if (tab === "logs") loadLogs();
+    if (tab === "emissions") loadEmissions();
   }, [tab]);
 
   // ── Users ──────────────────────────────────────────────────────────────────
@@ -223,8 +259,9 @@ export default function AdminDashboard() {
 
   // ── Pricing ────────────────────────────────────────────────────────────────
   const savePrice = async (docType: string) => {
-    const price = Math.round(parseFloat(editingPrice[docType] || "0") * 100);
-    if (isNaN(price) || price < 0) { toast.error("Preço inválido"); return; }
+    const priceReais = parseFloat(editingPrice[docType] || "0");
+    if (isNaN(priceReais) || priceReais < 0) { toast.error("Preço inválido"); return; }
+    const price = Math.round(priceReais * 100); // Converter reais para centavos
     try {
       const res = await fetch("/api/admin/pricing", {
         method: "POST",
@@ -325,8 +362,10 @@ export default function AdminDashboard() {
     }
     try {
       const res = await fetch(`/api/admin/users/${deleteTargetUserId}/delete-data`, {
-        method: "DELETE",
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
+        body: JSON.stringify({ confirm: true }),
       });
       const data = await res.json();
       if (data.success) {
@@ -334,10 +373,12 @@ export default function AdminDashboard() {
         setDeleteTargetUserId(null);
         setDeleteTargetUsername("");
         setDeleteUserConfirm("");
+        loadUsers();
+      } else {
+        toast.error(data.error || "Erro ao excluir dados");
       }
     } catch { toast.error("Erro de conexão"); }
   };
-
   const deleteAllData = async () => {
     if (deleteConfirm !== "EXCLUIR TUDO") {
       toast.error('Digite "EXCLUIR TUDO" para confirmar');
@@ -345,13 +386,17 @@ export default function AdminDashboard() {
     }
     try {
       const res = await fetch("/api/admin/delete-all-data", {
-        method: "DELETE",
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
+        body: JSON.stringify({ confirm: true, confirmation_text: "EXCLUIR TUDO" }),
       });
       const data = await res.json();
       if (data.success) {
         toast.success("Todos os dados excluídos!");
         setDeleteConfirm("");
+      } else {
+        toast.error(data.error || "Erro ao excluir dados");
       }
     } catch { toast.error("Erro de conexão"); }
   };
@@ -372,6 +417,13 @@ export default function AdminDashboard() {
     !logFilter ||
     (l.username || "").toLowerCase().includes(logFilter.toLowerCase()) ||
     l.action.toLowerCase().includes(logFilter.toLowerCase())
+  );
+
+  const filteredEmissions = emissions.filter(e =>
+    !emissionsFilter ||
+    (e.nome || e.paciente || "").toLowerCase().includes(emissionsFilter.toLowerCase()) ||
+    (e.username || "").toLowerCase().includes(emissionsFilter.toLowerCase()) ||
+    (e.codigo_qr || "").toLowerCase().includes(emissionsFilter.toLowerCase())
   );
 
   const totalBalance = users.reduce((sum, u) => sum + (u.balance || 0), 0);
@@ -776,6 +828,77 @@ export default function AdminDashboard() {
                           </span>
                         </td>
                         <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400 hidden md:table-cell max-w-xs truncate">{l.details || "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── EMISSIONS TAB ── */}
+        {tab === "emissions" && (
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Filtrar por paciente, usuário ou código..."
+                  value={emissionsFilter}
+                  onChange={e => setEmissionsFilter(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                />
+              </div>
+              <button onClick={loadEmissions} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors">
+                <RefreshCw className="w-4 h-4" />
+              </button>
+              <span className="text-xs text-gray-500 dark:text-gray-400">{filteredEmissions.length} emissões</span>
+            </div>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin w-6 h-6 border-2 border-yellow-500 border-t-transparent rounded-full" />
+              </div>
+            ) : filteredEmissions.length === 0 ? (
+              <div className="text-center py-12 text-gray-400 text-sm">
+                <FileText className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p>Nenhuma emissão encontrada</p>
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Data</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Usuário</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Paciente</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Tipo</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Código QR</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                    {filteredEmissions.map(e => (
+                      <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400 whitespace-nowrap">{formatDate(e.created_at)}</td>
+                        <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{e.username || e.user_id || "—"}</td>
+                        <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">{e.nome || e.paciente || "—"}</td>
+                        <td className="px-4 py-2.5 hidden md:table-cell">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400">
+                            {e.type || "atestado"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-gray-400 dark:text-gray-500 font-mono hidden md:table-cell">{e.codigo_qr || "—"}</td>
+                        <td className="px-4 py-2.5">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                            e.status === "emitido"
+                              ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400"
+                              : "bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400"
+                          }`}>
+                            {e.status}
+                          </span>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
