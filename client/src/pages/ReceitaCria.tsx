@@ -302,8 +302,8 @@ export default function ReceitaCria() {
   const handleDownloadPdf = async () => {
     if (!previewRef.current) return;
     try {
-      const filename = generatePDFFilename(form.paciente || "RECEITA", "EMITIDA");
-      await exportElementToPDF(previewRef.current, { filename, scale: 2, quality: 0.92 });
+      const filename = generatePDFFilename(form.paciente || "RECEITA", "receita");
+      await exportElementToPDF(previewRef.current, { filename, scale: 2, quality: 0.92, multiPage: true });
     } catch (err) {
       alert(`Erro ao gerar PDF: ${err instanceof Error ? err.message : "Erro desconhecido"}`);
     }

@@ -6,7 +6,7 @@ import {
   LayoutDashboard, FileText, CreditCard, Receipt, LogOut,
   ChevronDown, ChevronRight, Menu, X, Sun, Moon,
   Shield, GraduationCap, Car, Anchor, FlaskConical,
-  User, Wallet, Settings, HelpCircle, Plus, Bell
+  User, Wallet, Settings, HelpCircle, Plus, Bell, Pill
 } from "lucide-react";
 
 interface MenuItem {
@@ -47,6 +47,12 @@ const menuItems: MenuItem[] = [
     children: [
       { label: "Histórico SP", path: "/historico-sp" },
       { label: "Histórico UNINTER", path: "/historico-uninter" },
+    ],
+  },
+  {
+    icon: Pill, label: "Receituário",
+    children: [
+      { label: "Nova Receita", path: "/receitacria" },
     ],
   },
 ];

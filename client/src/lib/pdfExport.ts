@@ -82,6 +82,7 @@ export type DocType =
   | "toxicologico"
   | "historico-sp"
   | "historico-uninter"
+  | "receita"
   | "generic";
 
 export interface PDFExportOptions {
@@ -232,7 +233,10 @@ ${elementHTML}
     // Torna visível apenas para captura
     iframe.style.visibility = "visible";
 
-    const docHeight = DOC_REAL_HEIGHT;
+    // Para documentos multiPage, usa a altura real do elemento (pode ser múltiplos de DOC_REAL_HEIGHT)
+    const docHeight = multiPage
+      ? Math.max(iframeEl.scrollHeight || DOC_REAL_HEIGHT, DOC_REAL_HEIGHT)
+      : DOC_REAL_HEIGHT;
     iframe.style.height = `${docHeight}px`;
     await new Promise((r) => setTimeout(r, 100));
 
@@ -375,6 +379,7 @@ const DOC_PREFIXES: Record<DocType, string> = {
   toxicologico: "TOXICOLOGICO",
   "historico-sp": "HISTORICO_SP",
   "historico-uninter": "HISTORICO_UNINTER",
+  receita: "RECEITA",
   generic: "DOCUMENTO",
 };
 
