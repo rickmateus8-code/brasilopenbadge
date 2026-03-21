@@ -18,9 +18,10 @@ export default function AtestadoView() {
     if (!id) { setNotFound(true); setIsLoading(false); return; }
     fetch(`/api/attestations/${encodeURIComponent(id)}`, { credentials: "include" })
       .then((r) => r.json())
-      .then((data) => {
-        if (data && data.id) {
-          setAttestation(data as AttestationData);
+      .then((resp) => {
+        const row = resp?.data || resp;
+        if (row && row.id) {
+          setAttestation(row as AttestationData);
         } else {
           setNotFound(true);
         }
