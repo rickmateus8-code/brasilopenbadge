@@ -149,14 +149,14 @@ function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
                 />
               </div>
             ) : (
-              /* Logo dr.consulta padrão em texto */
+              /* Logo dr.consulta padrão em texto — tamanho fiel ao original */
               <div
                 style={{
-                  fontSize: 26,
+                  fontSize: 20,
                   fontWeight: 700,
-                  marginBottom: 5,
+                  marginBottom: 4,
                   lineHeight: 1,
-                  letterSpacing: -0.5,
+                  letterSpacing: -0.3,
                 }}
               >
                 <span style={{ color: "#1565c0" }}>dr.</span>
@@ -241,13 +241,17 @@ function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
             >
               {cfg.via1}
             </div>
-            {/* Retenção — apenas a primeira palavra sublinhada */}
-            <div style={{ fontSize: 8, lineHeight: 1.5, color: "#000" }}>
-              {cfg.via2.split("\n").map((line, i) => (
-                <div key={i} style={{ textDecoration: i === 0 ? "underline" : "none" }}>
-                  {line}
-                </div>
-              ))}
+            {/* Retenção — sublinhado SOMENTE na palavra Retenção, demais linhas normais */}
+            <div style={{ fontSize: 8, lineHeight: 1.25, color: "#000" }}>
+              {cfg.via2.split("\n").map((line, i) => {
+                // Sublinha apenas a palavra/linha que começa com "Retenção"
+                const isRetencao = line.trim().startsWith("Reten");
+                return (
+                  <div key={i} style={{ textDecoration: isRetencao ? "underline" : "none", marginBottom: 0 }}>
+                    {line}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -338,28 +342,81 @@ function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
           flexShrink: 0,
         }}
       >
-        {/* QR Code — canto superior esquerdo */}
+        {/* QR Code — canto superior esquerdo
+             - Antes da emissão (sem qr_code_url): placeholder borrado/desfocado
+             - Após emissão: QR Code real nítido
+        */}
         <div style={{ flexShrink: 0 }}>
           {data.qr_code_url ? (
+            /* QR Code real — exibido após emissão */
             <img
               src={data.qr_code_url}
               alt="QR Code"
               style={{ width: 120, height: 120, display: "block" }}
             />
           ) : (
+            /* Placeholder borrado — preview antes da emissão */
             <div
               style={{
                 width: 120,
                 height: 120,
-                border: "1px dashed #bbb",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 8,
-                color: "#bbb",
+                position: "relative",
+                overflow: "hidden",
+                flexShrink: 0,
               }}
             >
-              QR Code
+              {/* Grade de quadrados simulando QR borrado */}
+              <svg
+                width={120}
+                height={120}
+                viewBox="0 0 120 120"
+                style={{
+                  display: "block",
+                  filter: "blur(3px)",
+                  opacity: 0.35,
+                }}
+              >
+                {/* Padrão de quadrados aleatórios simulando QR */}
+                {Array.from({ length: 12 }).map((_, row) =>
+                  Array.from({ length: 12 }).map((_, col) => {
+                    const filled = (row + col + row * col) % 3 !== 0;
+                    return filled ? (
+                      <rect
+                        key={`${row}-${col}`}
+                        x={col * 10}
+                        y={row * 10}
+                        width={9}
+                        height={9}
+                        fill="#000"
+                      />
+                    ) : null;
+                  })
+                )}
+                {/* Marcadores de canto (finder patterns) */}
+                <rect x={0} y={0} width={30} height={30} fill="none" stroke="#000" strokeWidth={3} />
+                <rect x={5} y={5} width={20} height={20} fill="#000" />
+                <rect x={90} y={0} width={30} height={30} fill="none" stroke="#000" strokeWidth={3} />
+                <rect x={95} y={5} width={20} height={20} fill="#000" />
+                <rect x={0} y={90} width={30} height={30} fill="none" stroke="#000" strokeWidth={3} />
+                <rect x={5} y={95} width={20} height={20} fill="#000" />
+              </svg>
+              {/* Overlay com texto */}
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 7,
+                  color: "#555",
+                  textAlign: "center",
+                  lineHeight: 1.3,
+                  background: "rgba(255,255,255,0.55)",
+                }}
+              >
+                QR após<br />emissão
+              </div>
             </div>
           )}
           {data.codigo_qr && (
