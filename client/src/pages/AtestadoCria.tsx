@@ -537,8 +537,8 @@ export default function AtestadoCria() {
     })(),
     logoUrl: logoLeft,
     logoRight: logoRight,
-    instituicao: form.instituicao || "CLÍNICA / HOSPITAL",
-    unidade: form.unidade || "UNIDADE / SETOR",
+    instituicao: form.instituicao || (form.cidade ? `PREFEITURA DE ${form.cidade.toUpperCase()}` : "INSTITUIÇÃO"),
+    unidade: form.unidade || "LOCAL DE ATENDIMENTO",
     enderecoEmitente: form.enderecoEmitente || "ENDEREÇO DA CLÍNICA",
     signatureColor,
     signatureImage,
@@ -691,55 +691,59 @@ export default function AtestadoCria() {
       <div style={{ display: "flex", gap: 14, padding: 14, maxWidth: 2000, margin: "0 auto" }}>
 
         {/* ═══ COLUNA ESQUERDA — FORMULÁRIO ═══ */}
-        <div style={{ width: 720, flexShrink: 0, overflowY: "auto", maxHeight: "calc(100vh - 70px)" }}>
+        <div style={{ width: 612, flexShrink: 0, overflowY: "auto", maxHeight: "calc(100vh - 70px)" }}>
           <form onSubmit={handleSubmit}>
 
             {/* ── Importação Rápida ── */}
             <div style={card}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                <p style={{ ...secTitle, margin: 0, border: "none", padding: 0 }}>📋 Importação Rápida</p>
+                <p style={{ ...secTitle, margin: 0, border: "none", padding: 0 }}>📋 Importação Rápida de Dados</p>
                 <button type="button" style={{ ...btnGray, padding: "3px 10px", fontSize: 11 }} onClick={() => setShowImport(!showImport)}>
                   {showImport ? "▲" : "▼"}
                 </button>
               </div>
               {showImport && (
-                <>
-                  <p style={{ fontSize: 11, color: "#000", marginBottom: 6 }}>
-                    Cole os dados no formato <code>Campo: Valor</code> (um por linha):
-                  </p>
-                  <textarea
-                    value={importTexto}
-                    onChange={(e) => setImportTexto(e.target.value)}
-                    rows={9}
-                    placeholder={"Nome Completo: JOÃO DA SILVA\nCPF: 123.456.789-00\nNascimento: 01/01/1990\nSexo: M\nNome da Mae: MARIA DA SILVA\nEndereço: RUA X, 100, CENTRO, SP\nCID: J11\nData: " + todayBR() + "\nHorario: " + nowTime()}
-                    style={{ ...inp, resize: "vertical", fontFamily: "monospace", fontSize: 11 }}
-                  />
-                  <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                    <button type="button" style={{ ...btnBlue, flex: 1 }} onClick={processarImportacao}>
-                      ⚡ PROCESSAR DADOS
-                    </button>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  {/* Painel 1 — Modelo para enviar ao cliente */}
+                  <div>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: "#005CA9", marginBottom: 6, textTransform: "uppercase" as const }}>1. Envie para o Cliente</p>
+                    <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 6, padding: "8px 10px", fontFamily: "monospace", fontSize: 11, color: "#374151", lineHeight: 1.8, whiteSpace: "pre" as const }}>{`Nome Completo: \nTipo de Doc (CPF ou CNS): \nNúmero do Doc: \nNascimento: \nSexo (M/F): \nNome da Mãe: \nEndereço do Paciente: \nCID (Código da Doença): \nCidade de Emissão: \nData do Atestado: \nHorário do Atendimento:`}</div>
                     <button
                       type="button"
-                      style={{ ...btnGray, flex: 1 }}
+                      style={{ ...btnBlue, width: "100%", marginTop: 8, fontSize: 11 }}
                       onClick={() => {
-                        if (!importTexto.trim()) return;
-                        navigator.clipboard.writeText(importTexto)
-                          .then(() => alert("✅ Dados copiados para a área de transferência!"))
+                        const modelo = `Nome Completo: \nTipo de Doc (CPF ou CNS): \nNúmero do Doc: \nNascimento: \nSexo (M/F): \nNome da Mãe: \nEndereço do Paciente: \nCID (Código da Doença): \nCidade de Emissão: \nData do Atestado: \nHorário do Atendimento: `;
+                        navigator.clipboard.writeText(modelo)
+                          .then(() => alert("✅ Modelo copiado! Envie para o cliente preencher."))
                           .catch(() => {
                             const el = document.createElement("textarea");
-                            el.value = importTexto;
+                            el.value = modelo;
                             document.body.appendChild(el);
                             el.select();
                             document.execCommand("copy");
                             document.body.removeChild(el);
-                            alert("✅ Dados copiados!");
+                            alert("✅ Modelo copiado!");
                           });
                       }}
                     >
-                      📋 COPIAR DADOS
+                      📋 COPIAR MODELO
                     </button>
                   </div>
-                </>
+                  {/* Painel 2 — Colar resposta do cliente */}
+                  <div>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: "#005CA9", marginBottom: 6, textTransform: "uppercase" as const }}>2. Cole a Resposta</p>
+                    <textarea
+                      value={importTexto}
+                      onChange={(e) => setImportTexto(e.target.value)}
+                      rows={9}
+                      placeholder={"Cole aqui os dados preenchidos..."}
+                      style={{ ...inp, resize: "none", fontFamily: "monospace", fontSize: 11, height: 180 }}
+                    />
+                    <button type="button" style={{ ...btnBlue, width: "100%", marginTop: 8, fontSize: 11, background: "#16a34a" }} onClick={processarImportacao}>
+                      ⚡ PROCESSAR DADOS
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
 
@@ -834,18 +838,10 @@ export default function AtestadoCria() {
                 </summary>
                 <div style={{ paddingTop: 10, display: "grid", gap: 8 }}>
                   <p style={{ ...secTitle, fontSize: 10 }}>Dados do Local</p>
-                  {/* Nome da Instituição — preenchido automaticamente pela cidade selecionada */}
+                  {/* Instituição: preenchida automaticamente como PREFEITURA DE {CIDADE} — não exibida no formulário */}
+                  {/* Campo oculto — valor gerenciado pelo useEffect de filtroCidade e selecionarMedico */}
                   <div>
-                    <label style={lbl}>Nome da Instituição <span style={{ fontSize: 10, color: "#666", fontWeight: 400 }}>(preenchido automaticamente)</span></label>
-                    <input
-                      style={{ ...inp, background: "#f8fafc", color: form.instituicao ? "#000" : "#888" }}
-                      value={form.instituicao}
-                      onChange={(e) => setForm(p => ({ ...p, instituicao: e.target.value }))}
-                      placeholder="PREFEITURA DE {CIDADE} — preenchido ao selecionar a cidade"
-                    />
-                  </div>
-                  <div>
-                    <label style={lbl}>Unidade / Setor</label>
+                    <label style={lbl}>Local de Atendimento</label>
                     <input style={inp} value={form.unidade} onChange={(e) => setForm(p => ({ ...p, unidade: e.target.value }))} placeholder="Ex: UBS CENTRO, UPA NORTE, HOSPITAL MUNICIPAL" />
                   </div>
                   <div>
