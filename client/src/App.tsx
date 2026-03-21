@@ -19,6 +19,7 @@ import ToxicologicoCria from "./pages/ToxicologicoCria";
 import HistoricoSP from "./pages/HistoricoSP";
 import HistoricoUNINTER from "./pages/HistoricoUNINTER";
 import AdminDashboard from "./pages/AdminDashboard";
+import ReceitaCria from "./pages/ReceitaCria";
 import Extrato from "./pages/Extrato";
 import Recargas from "./pages/Recargas";
 import Configuracoes from "./pages/Configuracoes";
@@ -81,6 +82,9 @@ function DocMasterRouter() {
       <Route path="/cnhcria" component={CNHCria} />
       <Route path="/chacria" component={CHACria} />
       <Route path="/toxicologicocria" component={ToxicologicoCria} />
+      {/* Receituário Médico */}
+      <Route path="/receita" component={ReceitaCria} />
+      <Route path="/receitacria" component={ReceitaCria} />
 
       {/* Históricos */}
       <Route path="/historico/atestados" component={AtestadoCria} />

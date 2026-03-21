@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   FileText, Car, Anchor, FlaskConical, GraduationCap,
   Wallet, TrendingUp, BarChart3, ChevronRight, Plus,
-  Clock, CheckCircle, Bell, Eye, Download, Trash2
+  Clock, CheckCircle, Bell, Eye, Download, Trash2, Pill
 } from "lucide-react";
 
 const quickActions = [
@@ -15,6 +15,7 @@ const quickActions = [
   { icon: FlaskConical, label: "Novo Toxicológico", desc: "Emitir exame toxicológico", path: "/toxicologicocria", color: "purple" },
   { icon: GraduationCap, label: "Histórico SP", desc: "Emitir histórico escolar SP", path: "/historico-sp", color: "green" },
   { icon: GraduationCap, label: "Histórico UNINTER", desc: "Emitir histórico UNINTER", path: "/historico-uninter", color: "indigo" },
+  { icon: Pill, label: "Nova Receita", desc: "Emitir receituário médico", path: "/receitacria", color: "violet" },
 ];
 
 const colorMap: Record<string, { bg: string; text: string; iconBg: string; badge: string }> = {
@@ -25,6 +26,7 @@ const colorMap: Record<string, { bg: string; text: string; iconBg: string; badge
   green:   { bg: "bg-green-50 dark:bg-green-900/10",    text: "text-green-600 dark:text-green-400",    iconBg: "bg-green-100 dark:bg-green-900/30",   badge: "bg-green-500" },
   indigo:  { bg: "bg-indigo-50 dark:bg-indigo-900/10",  text: "text-indigo-600 dark:text-indigo-400",  iconBg: "bg-indigo-100 dark:bg-indigo-900/30", badge: "bg-indigo-500" },
   emerald: { bg: "bg-emerald-50 dark:bg-emerald-900/10",text: "text-emerald-600 dark:text-emerald-400",iconBg: "bg-emerald-100 dark:bg-emerald-900/30",badge: "bg-emerald-500" },
+  violet:  { bg: "bg-violet-50 dark:bg-violet-900/10",  text: "text-violet-600 dark:text-violet-400",  iconBg: "bg-violet-100 dark:bg-violet-900/30",  badge: "bg-violet-500" },
 };
 
 const HISTORY_TABS = [
@@ -34,6 +36,7 @@ const HISTORY_TABS = [
   { key: "toxicologico", label: "Toxicológico", icon: FlaskConical, color: "purple" },
   { key: "historico-sp", label: "Histórico SP", icon: GraduationCap, color: "green" },
   { key: "historico-uninter", label: "UNINTER", icon: GraduationCap, color: "indigo" },
+  { key: "receita", label: "Receitas", icon: Pill, color: "violet" },
 ];
 
 interface DocRecord {
@@ -94,6 +97,8 @@ export default function Dashboard() {
     try {
       const endpoint = type === "atestado"
         ? `/api/attestations?limit=50`
+        : type === "receita"
+        ? `/api/receitas?limit=50`
         : `/api/documents/${type}?limit=50`;
       const res = await fetch(endpoint, { credentials: "include" });
       if (res.ok) {

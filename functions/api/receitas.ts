@@ -1,0 +1,312 @@
+/**
+ * /api/receitas — Endpoint seguro de emissão de receituário médico
+ *
+ * SEGURANÇA:
+ * 1. Autenticação obrigatória via cookie HttpOnly (sessão no banco D1)
+ * 2. Verificação de saldo ANTES de qualquer inserção
+ * 3. QR Code gerado EXCLUSIVAMENTE no servidor — nunca no cliente
+ * 4. Código único verificado no banco antes de inserir (sem colisões)
+ * 5. Débito de saldo e inserção em operações sequenciais
+ * 6. GET protegido — usuário só vê seus próprios documentos
+ * 7. Admin pode ver todos os documentos
+ */
+import type { Env } from '../types';
+
+// ─── Helpers de autenticação ──────────────────────────────────────────────────
+function getSessionToken(request: Request): string | null {
+  const cookieHeader = request.headers.get("Cookie") || "";
+  const match = cookieHeader.match(/docmaster_session=([^;]+)/);
+  return match ? match[1] : null;
+}
+
+async function getAuthUser(env: Env, token: string | null): Promise<any | null> {
+  if (!token) return null;
+  const now = new Date().toISOString();
+  const session = await env.DB.prepare(
+    "SELECT user_id FROM sessions WHERE token = ? AND expires_at > ? LIMIT 1"
+  ).bind(token, now).first<{ user_id: string }>();
+  if (!session) return null;
+  const user = await env.DB.prepare(
+    "SELECT id, username, role, balance, is_active FROM users WHERE id = ? AND is_active = 1 LIMIT 1"
+  ).bind(session.user_id).first<any>();
+  return user || null;
+}
+
+// ─── Gerador de código QR único para receitas ─────────────────────────────────
+function generateRxCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  const arr = new Uint8Array(8);
+  crypto.getRandomValues(arr);
+  for (let i = 0; i < 8; i++) {
+    code += chars[arr[i] % chars.length];
+  }
+  return `RX-${code.slice(0, 4)}-${code.slice(4)}`;
+}
+
+async function generateUniqueRxCode(env: Env): Promise<string> {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const code = generateRxCode();
+    const exists = await env.DB.prepare(
+      "SELECT id FROM receitas WHERE codigo_qr = ? LIMIT 1"
+    ).bind(code).first();
+    if (!exists) return code;
+  }
+  throw new Error("Não foi possível gerar um código único. Tente novamente.");
+}
+
+// ─── Preço do documento ───────────────────────────────────────────────────────
+async function getDocumentPrice(env: Env, tipo: string): Promise<number> {
+  const row = await env.DB.prepare(
+    "SELECT price FROM document_pricing WHERE document_type = ? AND is_active = 1 LIMIT 1"
+  ).bind(tipo).first<{ price: number }>();
+  return row ? row.price : 0;
+}
+
+// ─── CORS headers ─────────────────────────────────────────────────────────────
+function corsHeaders() {
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Content-Type": "application/json",
+  };
+}
+
+function jsonResponse(data: any, status = 200) {
+  return new Response(JSON.stringify(data), { status, headers: corsHeaders() });
+}
+
+// ─── Handler principal ────────────────────────────────────────────────────────
+export async function onRequest(context: { request: Request; env: Env; params: any }) {
+  const { request, env } = context;
+
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders() });
+  }
+
+  const token = getSessionToken(request);
+  const user = await getAuthUser(env, token);
+  if (!user) {
+    return jsonResponse({ success: false, error: "Não autenticado. Faça login para continuar." }, 401);
+  }
+
+  const url = new URL(request.url);
+  const pathParts = url.pathname.split('/').filter(Boolean);
+  const receitaId = pathParts.length >= 3 ? pathParts[2] : null;
+
+  try {
+    if (request.method === "GET" && receitaId) {
+      return handleGetReceitaById(env, user, receitaId);
+    }
+    if (request.method === "GET") {
+      return handleGetReceitas(env, user);
+    }
+    if (request.method === "POST") {
+      return handleCreateReceita(request, env, user);
+    }
+    if (request.method === "DELETE" && receitaId) {
+      return handleDeleteReceita(env, user, receitaId);
+    }
+    return jsonResponse({ success: false, error: "Método não permitido." }, 405);
+  } catch (error) {
+    console.error("[receitas] Erro:", error);
+    return jsonResponse({
+      success: false,
+      error: error instanceof Error ? error.message : "Erro interno do servidor.",
+    }, 500);
+  }
+}
+
+// ─── GET — Listar receitas ────────────────────────────────────────────────────
+async function handleGetReceitas(env: Env, user: any) {
+  let rows;
+  if (user.role === "admin") {
+    rows = await env.DB.prepare(
+      `SELECT r.*, u.username FROM receitas r
+       LEFT JOIN users u ON r.user_id = u.id
+       ORDER BY r.created_at DESC LIMIT 200`
+    ).all();
+  } else {
+    rows = await env.DB.prepare(
+      "SELECT * FROM receitas WHERE user_id = ? ORDER BY created_at DESC LIMIT 100"
+    ).bind(user.id).all();
+  }
+  return jsonResponse({
+    success: true,
+    data: rows.results || [],
+    count: (rows.results || []).length,
+  });
+}
+
+// ─── GET — Buscar receita por ID ──────────────────────────────────────────────
+async function handleGetReceitaById(env: Env, user: any, receitaId: string) {
+  let receita;
+  if (user.role === "admin") {
+    receita = await env.DB.prepare(
+      "SELECT * FROM receitas WHERE id = ? LIMIT 1"
+    ).bind(receitaId).first<any>();
+  } else {
+    receita = await env.DB.prepare(
+      "SELECT * FROM receitas WHERE id = ? AND user_id = ? LIMIT 1"
+    ).bind(receitaId, user.id).first<any>();
+  }
+  if (!receita) {
+    return jsonResponse({ success: false, error: "Receita não encontrada." }, 404);
+  }
+  return jsonResponse({ success: true, data: receita });
+}
+
+// ─── POST — Criar receita ─────────────────────────────────────────────────────
+async function handleCreateReceita(request: Request, env: Env, user: any) {
+  const body = await request.json<any>();
+
+  // 1. Validação dos campos obrigatórios
+  const required = ["paciente", "medico", "crm", "prescricao"];
+  const missing = required.filter((f) => !body[f]);
+  if (missing.length > 0) {
+    return jsonResponse({
+      success: false,
+      error: `Campos obrigatórios ausentes: ${missing.join(", ")}`,
+    }, 400);
+  }
+
+  // Validar que há pelo menos um item na prescrição
+  let prescricao: any[] = [];
+  try {
+    prescricao = typeof body.prescricao === "string"
+      ? JSON.parse(body.prescricao)
+      : body.prescricao;
+  } catch {
+    return jsonResponse({ success: false, error: "Prescrição inválida." }, 400);
+  }
+  if (!Array.isArray(prescricao) || prescricao.length === 0) {
+    return jsonResponse({ success: false, error: "Adicione pelo menos um medicamento à prescrição." }, 400);
+  }
+
+  // 2. Verificar saldo do usuário
+  const price = await getDocumentPrice(env, "receita");
+  if (user.role !== "admin" && price > 0) {
+    const currentUser = await env.DB.prepare(
+      "SELECT balance FROM users WHERE id = ? LIMIT 1"
+    ).bind(user.id).first<{ balance: number }>();
+    const balance = currentUser?.balance ?? 0;
+    if (balance < price) {
+      return jsonResponse({
+        success: false,
+        error: `Saldo insuficiente. Saldo atual: R$ ${(balance / 100).toFixed(2)}. Necessário: R$ ${(price / 100).toFixed(2)}. Recarregue seu saldo para continuar.`,
+        needsRecharge: true,
+      }, 402);
+    }
+  }
+
+  // 3. Gerar código QR único no servidor
+  const codigoQR = await generateUniqueRxCode(env);
+  const validationUrl = `https://validaratestado.digital/receita/${codigoQR}`;
+
+  // 4. Gerar ID único
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+
+  // 5. Inserir no banco
+  await env.DB.prepare(`
+    INSERT INTO receitas (
+      id, user_id, codigo_qr, validation_url, status,
+      tipo_receituario,
+      paciente, cpf, identidade, endereco, telefone, cidade,
+      medico, crm, especialidade, instituicao, endereco_emitente,
+      cnpj_emitente, telefone_emitente, site_emitente,
+      prescricao,
+      data_emissao, hora_emissao,
+      logo_url, signature_color, signature_image,
+      created_at, updated_at
+    ) VALUES (
+      ?, ?, ?, ?, 'emitido',
+      ?,
+      ?, ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?,
+      ?, ?, ?,
+      ?,
+      ?, ?,
+      ?, ?, ?,
+      ?, ?
+    )
+  `).bind(
+    id, user.id, codigoQR, validationUrl,
+    body.tipo_receituario || "simples",
+    body.paciente || "",
+    body.cpf || null,
+    body.identidade || null,
+    body.endereco || null,
+    body.telefone || null,
+    body.cidade || null,
+    body.medico || "",
+    body.crm || "",
+    body.especialidade || null,
+    body.instituicao || null,
+    body.endereco_emitente || null,
+    body.cnpj_emitente || null,
+    body.telefone_emitente || null,
+    body.site_emitente || null,
+    JSON.stringify(prescricao),
+    body.data_emissao || null,
+    body.hora_emissao || null,
+    body.logo_url || null,
+    body.signature_color || "#0b109f",
+    body.signature_image || null,
+    now, now
+  ).run();
+
+  // 6. Debitar saldo (se aplicável)
+  if (user.role !== "admin" && price > 0) {
+    await env.DB.prepare(
+      "UPDATE users SET balance = balance - ? WHERE id = ?"
+    ).bind(price, user.id).run();
+    // Registrar transação
+    await env.DB.prepare(`
+      INSERT INTO transactions (id, user_id, type, amount, description, reference_id, created_at)
+      VALUES (?, ?, 'debit', ?, ?, ?, ?)
+    `).bind(
+      crypto.randomUUID(), user.id, price,
+      `Receita médica emitida — ${body.paciente}`,
+      id, now
+    ).run().catch(() => {}); // Não falhar se transactions não existir
+  }
+
+  return jsonResponse({
+    success: true,
+    data: {
+      id,
+      codigo_qr: codigoQR,
+      validation_url: validationUrl,
+      tipo_receituario: body.tipo_receituario || "simples",
+      paciente: body.paciente,
+      medico: body.medico,
+      crm: body.crm,
+      prescricao,
+      created_at: now,
+    },
+    message: "Receita emitida com sucesso!",
+  }, 201);
+}
+
+// ─── DELETE — Cancelar receita ────────────────────────────────────────────────
+async function handleDeleteReceita(env: Env, user: any, receitaId: string) {
+  // Verificar ownership
+  const receita = await env.DB.prepare(
+    "SELECT id, user_id FROM receitas WHERE id = ? LIMIT 1"
+  ).bind(receitaId).first<any>();
+
+  if (!receita) {
+    return jsonResponse({ success: false, error: "Receita não encontrada." }, 404);
+  }
+  if (user.role !== "admin" && receita.user_id !== user.id) {
+    return jsonResponse({ success: false, error: "Sem permissão para excluir esta receita." }, 403);
+  }
+
+  await env.DB.prepare(
+    "UPDATE receitas SET status = 'cancelado', updated_at = ? WHERE id = ?"
+  ).bind(new Date().toISOString(), receitaId).run();
+
+  return jsonResponse({ success: true, message: "Receita cancelada com sucesso." });
+}
