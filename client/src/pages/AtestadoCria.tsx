@@ -294,9 +294,11 @@ export default function AtestadoCria() {
     setFiltroBairro("");
     setFiltroLocal("");
     // Preencher automaticamente instituicao como PREFEITURA DE {CIDADE}
+    // unidade será preenchida ao selecionar o médico (local_trabalho)
     setForm(p => ({
       ...p,
       instituicao: `PREFEITURA DE ${filtroCidade.toUpperCase()}`,
+      unidade: "", // Limpar unidade ao trocar cidade — será preenchida pelo médico selecionado
       cidade: filtroCidade.toUpperCase(),
     }));
   }, [filtroUF, filtroCidade]);
@@ -343,15 +345,19 @@ export default function AtestadoCria() {
   }, [filtroUF, filtroCidade, buscarMedicos]);
 
   const selecionarMedico = (m: MedicoDB) => {
+    const localTrabalho = m.local_trabalho?.toUpperCase() || "";
+    const cidadeMedico = m.cidade?.toUpperCase() || "";
     setForm((p) => ({
       ...p,
       medico: m.nome_medico.toUpperCase(),
       crm: `CRM/${m.uf_crm || m.uf_local} ${m.crm}`,
       especialidade: (m.especialidade || "CLÍNICO GERAL").toUpperCase(),
-      // Usar local de trabalho do médico se disponível, senão manter a instituição automática (PREFEITURA DE {CIDADE})
-      instituicao: m.local_trabalho?.toUpperCase() || p.instituicao || "CONSULTÓRIO MÉDICO",
+      // instituicao = PREFEITURA DE {CIDADE} (sempre, pois é o órgão empregador pública)
+      // unidade = local_trabalho do médico (UBS, UPA, Hospital, Clínica etc.)
+      instituicao: cidadeMedico ? `PREFEITURA DE ${cidadeMedico}` : (p.instituicao || "CONSULTÓRIO MÉDICO"),
+      unidade: localTrabalho || p.unidade,
       enderecoEmitente: [m.endereco, m.bairro, m.cidade, m.uf_local].filter(Boolean).join(", ").toUpperCase(),
-      cidade: m.cidade?.toUpperCase() || p.cidade,
+      cidade: cidadeMedico || p.cidade,
     }));
     setShowResultados(false);
     setTermoBusca("");
