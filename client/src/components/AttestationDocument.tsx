@@ -370,7 +370,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                   />
                 ) : (
                   <div style={{ position: "relative", width: 81, height: 81, flexShrink: 0 }}>
-                    <div style={{ filter: "blur(3.5px) brightness(0.8)", opacity: 0.55, lineHeight: 0 }}>
+                    <div style={{ filter: "blur(4px)", opacity: 0.5, lineHeight: 0 }}>
                       <QRCode
                         value="https://validaratestado.digital"
                         size={81}
@@ -379,14 +379,6 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                         fgColor="#1a1a1a"
                         bgColor="#FFFFFF"
                       />
-                    </div>
-                    <div style={{
-                      position: "absolute", inset: 0,
-                      display: "flex", flexDirection: "column",
-                      alignItems: "center", justifyContent: "center",
-                      background: "rgba(255,255,255,0.35)",
-                    }}>
-                      <span style={{ fontSize: 7, color: "#374151", textAlign: "center", fontWeight: 700, lineHeight: 1.3, padding: "0 4px" }}>Após emissão</span>
                     </div>
                   </div>
                 )}

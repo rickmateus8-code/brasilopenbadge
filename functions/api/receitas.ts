@@ -67,7 +67,7 @@ async function getDocumentPrice(env: Env, tipo: string): Promise<number> {
 function corsHeaders() {
   return {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Content-Type": "application/json",
   };
@@ -104,6 +104,9 @@ export async function onRequest(context: { request: Request; env: Env; params: a
     }
     if (request.method === "POST") {
       return handleCreateReceita(request, env, user);
+    }
+    if (request.method === "PUT" && receitaId) {
+      return handleUpdateReceita(request, env, user, receitaId);
     }
     if (request.method === "DELETE" && receitaId) {
       return handleDeleteReceita(env, user, receitaId);
@@ -309,4 +312,81 @@ async function handleDeleteReceita(env: Env, user: any, receitaId: string) {
   ).bind(new Date().toISOString(), receitaId).run();
 
   return jsonResponse({ success: true, message: "Receita cancelada com sucesso." });
+}
+
+// ─── PUT — Editar receita (CPF BLOQUEADO — segurança) ────────────────────────
+async function handleUpdateReceita(request: Request, env: Env, user: any, receitaId: string) {
+  // Verificar ownership
+  const receita = await env.DB.prepare(
+    "SELECT * FROM receitas WHERE id = ? LIMIT 1"
+  ).bind(receitaId).first<any>();
+
+  if (!receita) {
+    return jsonResponse({ success: false, error: "Receita não encontrada." }, 404);
+  }
+  if (user.role !== "admin" && receita.user_id !== user.id) {
+    return jsonResponse({ success: false, error: "Sem permissão para editar esta receita." }, 403);
+  }
+
+  const body = await request.json<any>();
+  const now = new Date().toISOString();
+
+  // CPF BLOQUEADO — não pode ser alterado após emissão
+  // Ignorar qualquer valor de CPF enviado pelo cliente
+
+  let prescricao = body.prescricao;
+  if (typeof prescricao === "object") {
+    prescricao = JSON.stringify(prescricao);
+  }
+
+  await env.DB.prepare(`
+    UPDATE receitas SET
+      tipo_receituario = COALESCE(?, tipo_receituario),
+      paciente = COALESCE(?, paciente),
+      identidade = COALESCE(?, identidade),
+      endereco = COALESCE(?, endereco),
+      telefone = COALESCE(?, telefone),
+      cidade = COALESCE(?, cidade),
+      medico = COALESCE(?, medico),
+      crm = COALESCE(?, crm),
+      especialidade = COALESCE(?, especialidade),
+      instituicao = COALESCE(?, instituicao),
+      endereco_emitente = COALESCE(?, endereco_emitente),
+      cnpj_emitente = COALESCE(?, cnpj_emitente),
+      telefone_emitente = COALESCE(?, telefone_emitente),
+      site_emitente = COALESCE(?, site_emitente),
+      prescricao = COALESCE(?, prescricao),
+      data_emissao = COALESCE(?, data_emissao),
+      hora_emissao = COALESCE(?, hora_emissao),
+      logo_url = COALESCE(?, logo_url),
+      signature_color = COALESCE(?, signature_color),
+      signature_image = COALESCE(?, signature_image),
+      updated_at = ?
+    WHERE id = ?
+  `).bind(
+    body.tipo_receituario || null,
+    body.paciente || null,
+    body.identidade || null,
+    body.endereco || null,
+    body.telefone || null,
+    body.cidade || null,
+    body.medico || null,
+    body.crm || null,
+    body.especialidade || null,
+    body.instituicao || null,
+    body.endereco_emitente || null,
+    body.cnpj_emitente || null,
+    body.telefone_emitente || null,
+    body.site_emitente || null,
+    prescricao || null,
+    body.data_emissao || null,
+    body.hora_emissao || null,
+    body.logo_url || null,
+    body.signature_color || null,
+    body.signature_image || null,
+    now,
+    receitaId
+  ).run();
+
+  return jsonResponse({ success: true, message: "Receita atualizada com sucesso." });
 }

@@ -21,6 +21,7 @@ import HistoricoUNINTER from "./pages/HistoricoUNINTER";
 import AdminDashboard from "./pages/AdminDashboard";
 import ReceitaCria from "./pages/ReceitaCria";
 import AtestadoEditar from "./pages/AtestadoEditar";
+import ReceitaEditar from "./pages/ReceitaEditar";
 import ValidationReceita from "./pages/ValidationReceita";
 import Extrato from "./pages/Extrato";
 import Recargas from "./pages/Recargas";
@@ -116,6 +117,7 @@ function DocMasterRouter() {
       {/* Receituário Médico */}
       <Route path="/receita" component={ReceitaCria} />
       <Route path="/receitacria" component={ReceitaCria} />
+      <Route path="/receita/editar/:id" component={ReceitaEditar} />
 
       {/* Históricos */}
       <Route path="/historico/atestados" component={AtestadoCria} />

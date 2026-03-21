@@ -115,7 +115,8 @@ export default function Dashboard() {
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      const res = await fetch(`/api/attestations/${id}`, {
+      const endpoint = activeTab === "receita" ? `/api/receitas/${id}` : `/api/attestations/${id}`;
+      const res = await fetch(endpoint, {
         method: "DELETE",
         credentials: "include",
       });
@@ -123,10 +124,10 @@ export default function Dashboard() {
         setHistory(prev => prev.filter(d => d.id !== id));
         setConfirmDeleteId(null);
       } else {
-        alert("Erro ao excluir atestado.");
+        alert("Erro ao excluir documento.");
       }
     } catch {
-      alert("Erro ao excluir atestado.");
+      alert("Erro ao excluir documento.");
     } finally {
       setDeletingId(null);
     }
@@ -179,11 +180,11 @@ export default function Dashboard() {
         )}
 
         {/* Welcome Banner */}
-        <div className="bg-gradient-to-r from-yellow-500 to-amber-500 rounded-2xl p-7 mb-7 text-white shadow-lg">
+        <div className="bg-gradient-to-r from-red-600 to-red-500 rounded-2xl p-7 mb-7 text-white shadow-lg">
           <h1 className="text-2xl font-bold">
-            Olá, <span className="text-yellow-100">{user?.displayName || user?.username}</span>! 👋
+            Olá, <span className="text-red-100">{user?.displayName || user?.username}</span>! 👋
           </h1>
-          <p className="text-yellow-100 mt-1 text-sm">
+          <p className="text-red-100 mt-1 text-sm">
             Bem-vindo ao maior e melhor painel da atualidade — <strong>DocMaster</strong>
           </p>
           <div className="mt-4 flex items-center gap-3">
@@ -210,9 +211,9 @@ export default function Dashboard() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { icon: FileText, label: "Atestados Emitidos", value: (stats.atestado ?? history.filter(d => activeTab === "atestado").length) || "—", color: "yellow" },
-              { icon: Car, label: "CNHs Emitidas", value: stats.cnh ?? "—", color: "amber" },
-              { icon: Anchor, label: "CHAs Emitidas", value: stats.cha ?? "—", color: "cyan" },
+              { icon: FileText, label: "Atestados Emitidos", value: stats.atestado ?? 0, color: "yellow" },
+              { icon: Car, label: "CNHs Emitidas", value: stats.cnh ?? 0, color: "amber" },
+              { icon: Anchor, label: "CHAs Emitidas", value: stats.cha ?? 0, color: "cyan" },
               { icon: Wallet, label: "Saldo Disponível", value: `R$ ${((user?.balance || 0) / 100).toFixed(2).replace(".", ",")}`, color: "emerald" },
             ].map(({ icon: Icon, label, value, color }) => {
               const c = colorMap[color];
@@ -266,7 +267,7 @@ export default function Dashboard() {
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
             {historyLoading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="animate-spin w-6 h-6 border-2 border-yellow-500 border-t-transparent rounded-full" />
+                <div className="animate-spin w-6 h-6 border-2 border-red-500 border-t-transparent rounded-full" />
               </div>
             ) : history.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-gray-400">
@@ -274,7 +275,7 @@ export default function Dashboard() {
                 <p className="text-sm">Nenhum documento emitido ainda</p>
                 <button
                   onClick={() => setLocation(quickActions.find(q => q.path.includes(activeTab.split("-")[0]))?.path || "/atestadocria")}
-                  className="mt-3 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-semibold rounded-lg transition-colors"
+                  className="mt-3 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-lg transition-colors"
                 >
                   Emitir agora
                 </button>
@@ -324,6 +325,15 @@ export default function Dashboard() {
                                   <Pencil className="w-4 h-4" />
                                 </button>
                               )}
+                              {activeTab === "receita" && (
+                                <button
+                                  title="Editar receita"
+                                  onClick={() => setLocation(`/receita/editar/${doc.id}`)}
+                                  className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </button>
+                              )}
                               {/* Baixar PDF */}
                               {activeTab === "atestado" && (
                                 <button
@@ -335,9 +345,9 @@ export default function Dashboard() {
                                 </button>
                               )}
                               {/* Excluir */}
-                              {activeTab === "atestado" && (
+                              {(activeTab === "atestado" || activeTab === "receita") && (
                                 <button
-                                  title="Excluir atestado"
+                                  title={`Excluir ${activeTab === "receita" ? "receita" : "atestado"}`}
                                   onClick={() => setConfirmDeleteId(doc.id)}
                                   className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                                 >
@@ -348,7 +358,7 @@ export default function Dashboard() {
                               {activeTab !== "atestado" && (
                                 <button
                                   onClick={() => setLocation(`/historico/atestados/${doc.id}`)}
-                                  className="text-xs text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 font-medium"
+                                  className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 font-medium"
                                 >
                                   Ver
                                 </button>
@@ -380,7 +390,7 @@ export default function Dashboard() {
                 <button
                   key={path}
                   onClick={() => setLocation(path)}
-                  className="flex items-center gap-4 p-5 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-yellow-200 dark:hover:border-yellow-800 hover:shadow-md transition-all group text-left"
+                  className="flex items-center gap-4 p-5 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-red-200 dark:hover:border-red-800 hover:shadow-md transition-all group text-left"
                 >
                   <div className={`${c.iconBg} rounded-lg p-3 flex-shrink-0`}>
                     <Icon className={`w-6 h-6 ${c.text}`} />
@@ -389,7 +399,7 @@ export default function Dashboard() {
                     <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{label}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{desc}</p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-yellow-500 transition-colors flex-shrink-0" />
+                  <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-red-500 transition-colors flex-shrink-0" />
                 </button>
               );
             })}
@@ -417,10 +427,10 @@ export default function Dashboard() {
           >
             <div style={{ fontSize: 48, marginBottom: 12 }}>🗑️</div>
             <h2 style={{ fontSize: 18, fontWeight: 800, color: "#dc2626", margin: "0 0 8px" }}>
-              Excluir Atestado?
+              Excluir Documento?
             </h2>
             <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 24px" }}>
-              Esta ação não pode ser desfeita. O atestado será removido permanentemente.
+              Esta ação não pode ser desfeita. O documento será removido permanentemente.
             </p>
             <div style={{ display: "flex", gap: 10 }}>
               <button

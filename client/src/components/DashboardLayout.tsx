@@ -87,7 +87,7 @@ function SidebarItem({
           onClick={() => setOpen(o => !o)}
           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all
             ${isActive
-              ? "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400"
+              ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
               : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 hover:text-gray-900 dark:hover:text-gray-100"
             }`}
         >
@@ -109,7 +109,7 @@ function SidebarItem({
                 onClick={() => navigate(child.path)}
                 className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all
                   ${location === child.path
-                    ? "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 font-medium"
+                    ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-medium"
                     : "text-gray-500 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800/60 hover:text-gray-800 dark:hover:text-gray-200"
                   }`}
               >
@@ -127,7 +127,7 @@ function SidebarItem({
       onClick={() => item.path && navigate(item.path)}
       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all
         ${isActive
-          ? "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400"
+          ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
           : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 hover:text-gray-900 dark:hover:text-gray-100"
         }`}
     >
@@ -160,11 +160,11 @@ function UserDropdown({ user, logout, collapsed }: { user: AuthUser; logout: () 
         onClick={() => setOpen(o => !o)}
         className={`flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors w-full ${collapsed ? "justify-center" : ""}`}
       >
-        <div className="w-8 h-8 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-yellow-300 dark:border-yellow-700">
+        <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-red-300 dark:border-red-700">
           {avatarSrc ? (
             <img src={avatarSrc} alt="Avatar" className="w-full h-full object-cover" />
           ) : (
-            <User className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+            <User className="w-4 h-4 text-red-600 dark:text-red-400" />
           )}
         </div>
         {!collapsed && (
@@ -208,7 +208,7 @@ function UserDropdown({ user, logout, collapsed }: { user: AuthUser; logout: () 
               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
               <CreditCard className="w-4 h-4" />
-              Histórico de Recargas
+              Recarregar Saldo
             </button>
             <a
               href="https://wa.me/5511965355468?text=Preciso+de+suporte"
@@ -326,16 +326,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="px-2 py-3 border-t border-gray-200 dark:border-gray-800 space-y-2">
         {/* Saldo com botão + */}
         {(!collapsed || mobile) && (
-          <div className="px-3 py-2 bg-yellow-50 dark:bg-yellow-900/10 rounded-lg border border-yellow-100 dark:border-yellow-900/20 flex items-center justify-between">
+          <div className="px-3 py-2 bg-red-50 dark:bg-red-900/10 rounded-lg border border-red-100 dark:border-red-900/20 flex items-center justify-between">
             <div>
               <p className="text-[10px] text-gray-500 dark:text-gray-500 uppercase tracking-wider">Saldo</p>
-              <p className="text-sm font-bold text-yellow-600 dark:text-yellow-400">
+              <p className="text-sm font-bold text-red-600 dark:text-red-400">
                 {balanceFormatted}
               </p>
             </div>
             <button
               onClick={() => setLocation("/recargas")}
-              className="w-7 h-7 rounded-full bg-yellow-500 hover:bg-yellow-600 text-white flex items-center justify-center transition-colors shadow-sm"
+              className="w-7 h-7 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors shadow-sm"
               title="Adicionar saldo"
             >
               <Plus className="w-4 h-4" />
@@ -401,17 +401,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             draggable={false}
           />
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 bg-yellow-50 dark:bg-yellow-900/20 px-2 py-1 rounded-lg">
-              <Wallet className="w-3.5 h-3.5 text-yellow-500" />
-              <span className="text-xs font-bold text-yellow-600 dark:text-yellow-400">
+            <div className="flex items-center gap-1 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-lg">
+              <Wallet className="w-3.5 h-3.5 text-red-500" />
+              <span className="text-xs font-bold text-red-600 dark:text-red-400">
                 {balanceFormatted}
               </span>
             </div>
-            <div className="w-7 h-7 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center overflow-hidden border-2 border-yellow-300 dark:border-yellow-700">
+            <div className="w-7 h-7 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center overflow-hidden border-2 border-red-300 dark:border-red-700">
               {user.profilePhoto ? (
                 <img src={user.profilePhoto} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
-                <User className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+                <User className="w-4 h-4 text-red-600 dark:text-red-400" />
               )}
             </div>
           </div>

@@ -314,12 +314,7 @@ function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
                 <rect x={0} y={99} width={33} height={33} fill="none" stroke="#000" strokeWidth={3} />
                 <rect x={5} y={104} width={23} height={23} fill="#000" />
               </svg>
-              <div style={{
-                position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 7, color: "#555", textAlign: "center", lineHeight: 1.3, background: "rgba(255,255,255,0.55)",
-              }}>
-                QR após<br />emissão
-              </div>
+
             </div>
           )}
           {data.codigo_qr && (
