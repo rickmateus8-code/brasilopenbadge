@@ -16,6 +16,7 @@ import DashboardLayout from "../components/DashboardLayout";
 import CNHDocument, { type CNHDocumentHandle, type CNHDocumentProps } from "../components/CNHDocument";
 import { toast } from "sonner";
 import { getQRCodeCNH } from "@/config.qrcode";
+import { validarCPF, formatarCPF as formatarCPFUtil, formatarRG, displayDateToHtml } from "@/lib/utils";
 import {
   ArrowLeft, Save, Download, MessageCircle, Copy, Zap,
   Upload, Type, Lock, AlertCircle, Car
@@ -95,6 +96,7 @@ export default function CNHCria() {
   const update = useCallback((field: keyof CNHDocumentProps) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     let val = e.target.value;
     if (field === "cpf") val = formatarCPFInput(val);
+    if (field === "rg") val = val.replace(/\./g, ""); // RG sem pontos, apenas números
     setData(d => ({ ...d, [field]: val }));
   }, []);
 
@@ -120,25 +122,41 @@ export default function CNHCria() {
       const m = importText.match(regex);
       return m ? m[1].trim() : "";
     };
+    // Converter datas DD/MM/YYYY para YYYY-MM-DD (formato HTML date input)
+    const convertDate = (val: string): string => {
+      if (!val) return "";
+      const trimmed = val.trim();
+      // Se já está no formato YYYY-MM-DD, retorna direto
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+      // Converte DD/MM/YYYY para YYYY-MM-DD
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) {
+        return displayDateToHtml(trimmed);
+      }
+      return trimmed;
+    };
+
+    // RG: remover pontos, manter apenas números e letras
+    const cleanRG = (val: string): string => val.replace(/\./g, "");
+
     setData(d => ({
       ...d,
       nome: get("Nome Completo") || d.nome,
       cpf: formatarCPFInput(get("CPF")) || d.cpf,
       sexo: get("Sexo") || d.sexo,
-      rg: get("RG") || d.rg,
+      rg: cleanRG(get("RG")) || d.rg,
       orgaoEmissor: get("Org[aã]o Emissor") || d.orgaoEmissor,
       ufRG: get("UF RG") || d.ufRG,
-      nacionalidade: get("Nacionalidade") || d.nacionalidade,
-      dataNascimento: get("Data Nascimento") || d.dataNascimento,
+      nacionalidade: get("Nacionalidade") || d.nacionalidade || "BRASILEIRA",
+      dataNascimento: convertDate(get("Data Nascimento")) || d.dataNascimento,
       localNascimento: get("Local Nascimento") || d.localNascimento,
       ufNascimento: get("UF Nasc") || d.ufNascimento,
       nomePai: get("Nome do Pai") || d.nomePai,
       nomeMae: get("Nome da M[aã]e") || d.nomeMae,
       categoria: get("Categoria") || d.categoria,
       tipo: get("Tipo") || d.tipo,
-      validade: get("Validade") || d.validade,
-      dataEmissao: get("Emiss[aã]o") || d.dataEmissao,
-      primeiraHabilitacao: get("1[ªa] Habilita[çc][aã]o") || d.primeiraHabilitacao,
+      validade: convertDate(get("Validade")) || d.validade,
+      dataEmissao: convertDate(get("Emiss[aã]o")) || d.dataEmissao,
+      primeiraHabilitacao: convertDate(get("1[ªa] Habilita[çc][aã]o")) || d.primeiraHabilitacao,
       localEmissao: get("Local Emiss[aã]o") || d.localEmissao,
       ufEmissao: get("UF Emiss[aã]o") || d.ufEmissao,
       senhaApp: get("Senha App") || d.senhaApp,
@@ -195,6 +213,11 @@ export default function CNHCria() {
   const handleSave = async () => {
     if (!data.nome || !data.cpf) {
       toast.error("Preencha Nome e CPF obrigatoriamente!");
+      return;
+    }
+    // Validação de CPF universal
+    if (!validarCPF(data.cpf)) {
+      toast.error("CPF inválido! Verifique os dígitos informados.");
       return;
     }
     if ((user?.balance || 0) <= 0) {

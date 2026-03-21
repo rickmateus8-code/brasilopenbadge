@@ -270,7 +270,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Header com Logo */}
       <div className="flex items-center justify-between px-3 py-3 border-b border-gray-200 dark:border-gray-800 min-h-[64px]">
         {(!collapsed || mobile) && (
-          <div className="flex items-center">
+          <div className="flex items-center cursor-pointer" onClick={() => setLocation("/dashboard")} title="Ir para Dashboard">
             <img
               src="/assets/logo-text.webp"
               alt="DocMaster"
@@ -280,7 +280,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         )}
         {collapsed && !mobile && (
-          <div className="flex items-center justify-center w-full">
+          <div className="flex items-center justify-center w-full cursor-pointer" onClick={() => setLocation("/dashboard")} title="Ir para Dashboard">
             <img
               src="/assets/logo-icon.png"
               alt="DM"

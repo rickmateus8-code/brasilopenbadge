@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   FileText, Car, Anchor, FlaskConical, GraduationCap,
   Wallet, TrendingUp, BarChart3, ChevronRight, Plus,
-  Clock, CheckCircle, Bell, Eye, Download, Trash2, Pill, Pencil
+  Clock, CheckCircle, Bell, Eye, Download, Trash2, Pill, Pencil, QrCode
 } from "lucide-react";
 
 const quickActions = [
@@ -305,7 +305,18 @@ export default function Dashboard() {
                             {doc.paciente || doc.nome || "—"}
                           </td>
                           <td className="px-4 py-3 text-xs font-mono text-gray-500 dark:text-gray-400 hidden sm:table-cell">
-                            {codigoQR || doc.id?.slice(0, 8) || "—"}
+                            <div className="flex items-center gap-1.5">
+                              {codigoQR ? (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400" title="QR Code ativo">
+                                  <QrCode className="w-3 h-3" />
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-400" title="Sem QR Code">
+                                  <QrCode className="w-3 h-3 opacity-40" />
+                                </span>
+                              )}
+                              <span>{codigoQR || doc.id?.slice(0, 8) || "—"}</span>
+                            </div>
                           </td>
                           <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
                             {formatDate(dataEmissao)}

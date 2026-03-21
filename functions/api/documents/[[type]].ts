@@ -81,7 +81,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
 
     // Save document with status='emitido' for validation
     await env.DB.prepare(
-      'INSERT INTO documents (id, user_id, type, data, codigo_validacao, status, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime("now"))'
+      'INSERT INTO documents (id, user_id, type, data, codigo_qr, status, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime("now"))'
     ).bind(docId, user.id, docType, JSON.stringify(body), codigoValidacao, 'emitido').run();
 
     return new Response(JSON.stringify({
