@@ -140,7 +140,7 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       // Função helper para desenhar texto com maxWidth (scale se necessário)
       const txt = (t: string, x: number, y: number, s: number, _b?: boolean, c?: string, mw?: number) => {
         if (!t) return;
-        ctx.font = `${s}px 'Segoe UI', Arial, sans-serif`;
+        ctx.font = `${s}px 'Altra', 'Georgia', serif`;
         ctx.fillStyle = c || "#000";
         t = String(t).toUpperCase();
 
@@ -223,7 +223,7 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       ctx.save();
       ctx.translate(213, 930);
       ctx.rotate(-Math.PI / 2);
-      ctx.font = "40px 'Segoe UI', Arial, sans-serif";
+      ctx.font = "40px 'Altra', 'Georgia', serif";
       ctx.fillStyle = "#000";
       ctx.fillText(props.espelho || "0000000000", 0, 0);
       ctx.restore();
@@ -231,7 +231,7 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       ctx.save();
       ctx.translate(213, 1670);
       ctx.rotate(-Math.PI / 2);
-      ctx.font = "40px 'Segoe UI', Arial, sans-serif";
+      ctx.font = "40px 'Altra', 'Georgia', serif";
       ctx.fillStyle = "#000";
       ctx.fillText(props.espelho || "0000000000", 0, 0);
       ctx.restore();
@@ -241,19 +241,19 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       ctx.textAlign = "center";
       const ufDigitada = (props.ufEmissao || "").trim().toUpperCase();
       const nomeEstadoCompleto = NOMES_ESTADOS[ufDigitada] || "";
-      ctx.font = "bold 44px 'Segoe UI', Arial, sans-serif";
+      ctx.font = "bold 44px 'Altra', 'Georgia', serif";
       ctx.fillStyle = "#000";
       ctx.fillText(nomeEstadoCompleto, 670, 1660);
 
       // Assinaturas digitais
-      ctx.font = "23px 'Segoe UI', Arial, sans-serif";
+      ctx.font = "23px 'Altra', 'Georgia', serif";
       ctx.fillText(props.assDigital1, 945, 1545);
       ctx.fillText(props.assDigital2, 945, 1575);
       ctx.restore();
 
       // ===== MRZ =====
       const mrz = gerarMRZ(props);
-      ctx.font = "28px 'Courier New', monospace";
+      ctx.font = "28px 'OCR-B', 'Courier New', monospace";
       ctx.fillStyle = "#353535";
       mrz.forEach((l, i) => ctx.fillText(l, 335, 2225 + (i * 33)));
 
