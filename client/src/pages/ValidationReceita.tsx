@@ -158,6 +158,25 @@ export default function ValidationReceita() {
       const json = await res.json();
       if (json.valid && json.data) {
         const d = json.data;
+        // Mapear prescrição (API retorna 'prescricao' como array de objetos)
+        let meds: MedicamentoValidado[] = [];
+        const rawMeds = d.medicamentos || d.prescricao || [];
+        if (Array.isArray(rawMeds)) {
+          meds = rawMeds.map((m: any) => ({
+            uso_tipo: m.uso_tipo || m.tipo || "interno",
+            nome: m.nome || m.medicamento || "",
+            quantidade: m.quantidade || m.qtd || "",
+            posologia: m.posologia || m.uso || "",
+          }));
+        }
+        // Extrair CRM e UF (API retorna crm como "123456/SP" ou separado)
+        let crmNum = d.medico_crm || d.crm || "";
+        let crmUf = d.medico_uf || d.uf || "";
+        if (crmNum.includes("/") && !crmUf) {
+          const parts = crmNum.split("/");
+          crmNum = parts[0];
+          crmUf = parts[1] || "";
+        }
         setReceita({
           codigo: code,
           tipo_receituario: d.tipo_receituario || d.tipoReceituario || "controle_especial",
@@ -169,10 +188,10 @@ export default function ValidationReceita() {
           paciente_telefone: d.paciente_telefone || d.telefone || "",
           paciente_cidade: d.paciente_cidade || d.cidade || "",
           medico_nome: d.medico_nome || d.medico || "",
-          medico_crm: d.medico_crm || d.crm || "",
-          medico_uf: d.medico_uf || d.uf || "",
+          medico_crm: crmNum,
+          medico_uf: crmUf,
           medico_especialidade: d.medico_especialidade || d.especialidade || "",
-          medicamentos: d.medicamentos || [],
+          medicamentos: meds,
           data_emissao: d.data_emissao || d.dataEmissao || "",
           validade: d.validade || "",
           nome_unidade: d.nome_unidade || d.unidade || d.instituicao || "",
