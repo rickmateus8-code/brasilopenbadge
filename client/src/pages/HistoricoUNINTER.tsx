@@ -5,6 +5,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
 import { ArrowLeft, Download, GraduationCap, AlertCircle, Plus, Trash2 } from "lucide-react";
 import { exportElementToPDF } from "@/lib/pdfExport";
+import { validarCPF } from "@/lib/utils";
 
 interface Disciplina {
   nome: string;
@@ -74,6 +75,7 @@ export default function HistoricoUNINTER() {
 
   const handleSave = async () => {
     if (!data.nomeAluno || !data.ra) { toast.error("Preencha Nome do Aluno e RA"); return; }
+    if (data.cpf && !validarCPF(data.cpf)) { toast.error("CPF inválido! Verifique os dígitos informados."); return; }
     if ((user?.balance || 0) <= 0) {
       toast.error("Saldo insuficiente. Recarregue para emitir documentos.");
       return;

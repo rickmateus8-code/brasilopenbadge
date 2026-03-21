@@ -14,6 +14,7 @@ import PrescricaoDocument from "@/components/PrescricaoDocument";
 import type { PrescricaoItem } from "@/components/PrescricaoDocument";
 import { exportElementToPDF, generatePDFFilename } from "@/lib/pdfExport";
 import { useAuth } from "@/contexts/AuthContext";
+import { validarCPF } from "@/lib/utils";
 
 // ─── API helpers ─────────────────────────────────────────────────────────────
 async function apiFetch(path: string) {
@@ -208,6 +209,7 @@ export default function ReceitaCria() {
     const prescricaoValida = prescricao.filter(p => p.medicamento.trim());
     if (prescricaoValida.length === 0) { alert("Adicione pelo menos um medicamento."); return; }
     if (!form.medico.trim()) { alert("Preencha o nome do médico."); return; }
+    if (form.cpf && !validarCPF(form.cpf)) { alert("CPF inválido! Verifique os dígitos informados."); return; }
 
     setIsLoading(true);
     try {

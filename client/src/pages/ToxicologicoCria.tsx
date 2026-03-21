@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
 import { ArrowLeft, Download, FlaskConical, AlertCircle } from "lucide-react";
+import { validarCPF } from "@/lib/utils";
 import { QRCodeSVG } from "qrcode.react";
 import { exportElementToPDF } from "@/lib/pdfExport";
 
@@ -60,6 +61,7 @@ export default function ToxicologicoCria() {
 
   const handleSave = async () => {
     if (!data.nome || !data.cpf) { toast.error("Preencha Nome e CPF"); return; }
+    if (!validarCPF(data.cpf)) { toast.error("CPF inválido! Verifique os dígitos informados."); return; }
     if ((user?.balance || 0) <= 0) {
       toast.error("Saldo insuficiente. Recarregue para emitir documentos.");
       return;

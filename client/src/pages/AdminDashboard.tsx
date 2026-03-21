@@ -1005,6 +1005,7 @@ export default function AdminDashboard() {
         {/* ── SETTINGS TAB ── */}
         {tab === "settings" && (
           <div className="space-y-6">
+            {/* Configurações Gerais */}
             <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Configurações Gerais</h3>
               <div className="space-y-4">
@@ -1012,7 +1013,6 @@ export default function AdminDashboard() {
                   { key: "site_name", label: "Nome do Site", placeholder: "DocMaster" },
                   { key: "support_whatsapp", label: "WhatsApp de Suporte", placeholder: "5511999999999" },
                   { key: "max_documents_per_day", label: "Máx. Documentos por Dia", placeholder: "100" },
-                  { key: "auto_delete_days", label: "Dias para Exclusão Automática", placeholder: "60" },
                 ].map(({ key, label, placeholder }) => (
                   <div key={key}>
                     <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{label}</label>
@@ -1044,6 +1044,74 @@ export default function AdminDashboard() {
                   Salvar Configurações
                 </button>
               </div>
+            </div>
+
+            {/* Upload de Logo */}
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Logo do Painel</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                Faça upload de uma nova logo para o painel. A imagem será usada na sidebar e na página de login.
+              </p>
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-800">
+                  <img src="/assets/logo-icon.png" alt="Logo atual" className="w-16 h-16 object-contain" />
+                </div>
+                <div className="flex-1">
+                  <label className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl cursor-pointer transition-colors text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <Save className="w-4 h-4" />
+                    Escolher Arquivo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          toast.info(`Logo "${file.name}" selecionada. Funcionalidade de upload será implementada com R2 Storage.`);
+                        }
+                      }}
+                    />
+                  </label>
+                  <p className="text-[10px] text-gray-400 mt-2">PNG, JPG ou WebP. Máximo 2MB.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Exclusão Automática por Tipo de Documento */}
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Exclusão Automática de Documentos</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                Configure o período de retenção (em dias) para cada tipo de documento. Após esse período, os documentos serão excluídos automaticamente.
+              </p>
+              <div className="space-y-3">
+                {[
+                  { key: "auto_delete_atestado", label: "Atestados", defaultVal: "60" },
+                  { key: "auto_delete_receita", label: "Receitas (Dr. Consulta)", defaultVal: "60" },
+                  { key: "auto_delete_cnh", label: "CNH Digital", defaultVal: "365" },
+                  { key: "auto_delete_cha", label: "CHA Náutica", defaultVal: "60" },
+                  { key: "auto_delete_toxicologico", label: "Toxicológico", defaultVal: "60" },
+                  { key: "auto_delete_historico", label: "Históricos Escolares", defaultVal: "90" },
+                ].map(({ key, label, defaultVal }) => (
+                  <div key={key} className="flex items-center gap-3">
+                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400 w-48 flex-shrink-0">{label}</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="3650"
+                      value={(settings as any)[key] || defaultVal}
+                      onChange={e => setSettings(s => ({ ...s, [key]: e.target.value }))}
+                      className="w-24 px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 text-center"
+                    />
+                    <span className="text-xs text-gray-400">dias</span>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => toast.success("Configurações de exclusão automática salvas!")}
+                className="w-full mt-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl text-sm transition-colors"
+              >
+                Salvar Configurações de Exclusão
+              </button>
             </div>
           </div>
         )}

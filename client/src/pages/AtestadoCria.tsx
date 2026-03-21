@@ -4,6 +4,7 @@ import AttestationDocument from "@/components/AttestationDocument";
 import type { AttestationData } from "@/data/attestations";
 import { exportElementToPDF, generatePDFFilename } from "@/lib/pdfExport";
 import { useAuth } from "@/contexts/AuthContext";
+import { validarCPF } from "@/lib/utils";
 
 // ─── API de Médicos (Cloudflare D1 — banco unificado) ─────────────────────────
 async function apiFetch(path: string) {
@@ -456,6 +457,11 @@ export default function AtestadoCria() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) { alert("Você precisa estar logado para emitir."); return; }
+    // Validação de CPF universal
+    if (tipoDoc === "CPF" && form.docValue && !validarCPF(form.docValue)) {
+      alert("CPF inválido! Verifique os dígitos informados.");
+      return;
+    }
 
     setIsLoading(true);
     try {
