@@ -1,12 +1,15 @@
 /**
- * ReceitaCria — Emissão de Receituário Médico
+ * ReceitaCria — Emissão de Receituário Médico (Dr. Consulta)
  *
- * Tipos suportados:
- * - Simples (branco)
- * - Controle Especial (tarja amarela)
- * - Antimicrobiano (tarja azul)
+ * Fluxo simplificado:
+ * 1. Selecionar UF + Cidade → busca automática de médicos da Dr. Consulta
+ * 2. Selecionar médico → preenche dados automaticamente
+ * 3. Preencher dados do paciente
+ * 4. Adicionar medicamentos
+ * 5. Emitir receita
  *
- * Segurança: QR Code gerado exclusivamente no servidor após emissão.
+ * Logo dr.consulta fixa (extraída do PDF original).
+ * Somente médicos da rede Dr. Consulta são exibidos.
  */
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
@@ -15,7 +18,7 @@ import type { PrescricaoItem } from "@/components/PrescricaoDocument";
 import { exportElementToPDF, generatePDFFilename } from "@/lib/pdfExport";
 import { useAuth } from "@/contexts/AuthContext";
 
-// ─── API de Médicos ────────────────────────────────────────────────────────────
+// ─── API de Médicos (rotas corretas) ──────────────────────────────────────────
 async function apiFetch(path: string) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 25000);
@@ -27,14 +30,14 @@ async function apiFetch(path: string) {
     if (!res.ok) throw new Error(`API HTTP ${res.status}`);
     return res.json();
   } catch (e: any) {
-    if (e?.name === "AbortError") throw new Error("Timeout: servidor demorou demais. Tente novamente.");
+    if (e?.name === "AbortError") throw new Error("Timeout: servidor demorou demais.");
     throw e;
   } finally {
     clearTimeout(timer);
   }
 }
 
-// ─── Constantes ────────────────────────────────────────────────────────────────
+// ─── Constantes ───────────────────────────────────────────────────────────────
 const UFS = [
   "AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT",
   "PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO",
@@ -51,17 +54,6 @@ const ESPECIALIDADES = [
   { value: "PSIQUIATRIA", label: "Psiquiatria" },
   { value: "DERMATOLOGIA", label: "Dermatologia" },
   { value: "CIRURGIA GERAL", label: "Cirurgia Geral" },
-];
-
-const LOGOS_PADRAO = [
-  { id: "logo1",      label: "Logo 1",       src: "/logos/logo1.png" },
-  { id: "logo2",      label: "Logo 2",       src: "/logos/logo2.png" },
-  { id: "logo3",      label: "Logo 3",       src: "/logos/logo3.jpg" },
-  { id: "amil",       label: "Amil",         src: "/logos/amil.png" },
-  { id: "hapvida",    label: "Hapvida",      src: "/logos/hapvida.png" },
-  { id: "notredame",  label: "Notre Dame",   src: "/logos/notredame.png" },
-  { id: "sulamerica", label: "Sul América",  src: "/logos/sulamerica.png" },
-  { id: "unimed",     label: "Unimed",       src: "/logos/unimed.png" },
 ];
 
 // ─── Máscaras ─────────────────────────────────────────────────────────────────
@@ -99,7 +91,7 @@ function readFileAsBase64(file: File): Promise<string> {
   });
 }
 
-// ─── Tipos ─────────────────────────────────────────────────────────────────────
+// ─── Tipos ────────────────────────────────────────────────────────────────────
 interface MedicoDB {
   id: number;
   nome_medico: string;
@@ -111,12 +103,11 @@ interface MedicoDB {
   uf_local: string;
   endereco: string;
   bairro: string;
-  telefone?: string;
 }
 
 type TipoReceituario = "simples" | "controle_especial" | "antimicrobiano";
 
-// ─── Componente ────────────────────────────────────────────────────────────────
+// ─── Componente ───────────────────────────────────────────────────────────────
 export default function ReceitaCria() {
   const { user, updateBalance } = useAuth();
   const [, navigate] = useLocation();
@@ -126,60 +117,51 @@ export default function ReceitaCria() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
-  // ── Logo (único, upload opcional) ────────────────────────────────────────
-  const [logoUrl, setLogoUrl] = useState<string>("");
-  const logoRef = useRef<HTMLInputElement>(null);
-
-  // ── Assinatura ─────────────────────────────────────────────────────────────
+  // ── Assinatura ──────────────────────────────────────────────────────────────
   const [signatureColor, setSignatureColor] = useState<string>("#0b109f");
   const [signatureImage, setSignatureImage] = useState<string>("");
   const signatureRef = useRef<HTMLInputElement>(null);
 
-  // ── Tipo de receituário ────────────────────────────────────────────────────
-  const [tipoReceituario, setTipoReceituario] = useState<TipoReceituario>("simples");
+  // ── Tipo de receituário ─────────────────────────────────────────────────────
+  const [tipoReceituario, setTipoReceituario] = useState<TipoReceituario>("controle_especial");
 
   // ── Busca de médicos ────────────────────────────────────────────────────────
   const [filtroUF, setFiltroUF] = useState("");
   const [filtroCidade, setFiltroCidade] = useState("");
-  const [filtroBairro, setFiltroBairro] = useState("");
-  const [filtroLocal, setFiltroLocal] = useState("");
   const [filtroEsp, setFiltroEsp] = useState("");
   const [termoBusca, setTermoBusca] = useState("");
   const [cidades, setCidades] = useState<string[]>([]);
-  const [bairros, setBairros] = useState<string[]>([]);
-  const [locais, setLocais] = useState<string[]>([]);
   const [resultados, setResultados] = useState<MedicoDB[]>([]);
   const [buscando, setBuscando] = useState(false);
   const [erroBusca, setErroBusca] = useState("");
   const [showResultados, setShowResultados] = useState(false);
-  const [showEditar, setShowEditar] = useState(false);
+  const [medicoSelecionado, setMedicoSelecionado] = useState(false);
 
-  // ── Unidades Próximas ─────────────────────────────────────────────────────
-  const [unidadesProximas, setUnidadesProximas] = useState<string[]>([]);
-  const [buscandoUnidades, setBuscandoUnidades] = useState(false);
-
-  // ── Formulário base ─────────────────────────────────────────────────────────
+  // ── Formulário ──────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
-    instituicao: "",
+    // Emitente (preenchido automaticamente)
     unidade: "",
     enderecoEmitente: "",
-    cnpjEmitente: "",
-    telefoneEmitente: "",
-    siteEmitente: "",
+    cnpjEmitente: "14.245.016/0059-95",
+    telefoneEmitente: "4090-1510",
+    siteEmitente: "www.drconsulta.com",
+    // Médico
     medico: "",
     crm: "",
     especialidade: "",
+    // Paciente
     paciente: "",
     cpf: "",
     identidade: "",
     endereco: "",
     telefone: "",
     cidade: "",
+    // Emissão
     dataEmissao: todayBR(),
     horaEmissao: nowTime(),
   });
 
-  // ── Prescrição (lista de medicamentos) ─────────────────────────────────────
+  // ── Prescrição ──────────────────────────────────────────────────────────────
   const [prescricao, setPrescricao] = useState<PrescricaoItem[]>([
     { numero: 1, uso_interno: true, medicamento: "", quantidade: "", modo_uso: "" },
   ]);
@@ -188,123 +170,54 @@ export default function ReceitaCria() {
   useEffect(() => {
     if (!filtroUF) { setCidades([]); setFiltroCidade(""); return; }
     apiFetch(`/cidades?uf=${filtroUF}`)
-      .then((d) => setCidades(d.cidades || []))
+      .then((d) => setCidades(d.cidades || d || []))
       .catch(() => setCidades([]));
   }, [filtroUF]);
 
-  // ── Carregar bairros ao selecionar cidade ─────────────────────────────────
-  useEffect(() => {
-    if (!filtroUF || !filtroCidade) { setBairros([]); setFiltroBairro(""); return; }
-    apiFetch(`/bairros?uf=${filtroUF}&cidade=${encodeURIComponent(filtroCidade)}`)
-      .then((d) => setBairros(d.bairros || []))
-      .catch(() => setBairros([]));
-  }, [filtroUF, filtroCidade]);
-
-  // ── Carregar locais ao selecionar bairro ──────────────────────────────────
-  useEffect(() => {
-    if (!filtroUF || !filtroCidade) { setLocais([]); setFiltroLocal(""); return; }
-    const params = new URLSearchParams({ uf: filtroUF, cidade: filtroCidade });
-    if (filtroBairro) params.set("bairro", filtroBairro);
-    apiFetch(`/locais?${params}`)
-      .then((d) => setLocais(d.locais || []))
-      .catch(() => setLocais([]));
-  }, [filtroUF, filtroCidade, filtroBairro]);
-
-  // ── Preencher instituição ao selecionar cidade ────────────────────────────
-  useEffect(() => {
-    if (filtroCidade) {
-      setForm((p) => ({
-        ...p,
-        instituicao: `PREFEITURA DE ${filtroCidade.toUpperCase()}`,
-        cidade: filtroCidade.toUpperCase(),
-        unidade: "",
-      }));
-    }
-  }, [filtroCidade]);
-
-  // ── Buscar médicos ─────────────────────────────────────────────────────────
+  // ── Buscar médicos (somente Dr. Consulta) ─────────────────────────────────
   const buscarMedicos = useCallback(async () => {
-    if (!filtroUF) { setErroBusca("Selecione o estado (UF) antes de buscar."); return; }
+    if (!filtroUF) { setErroBusca("Selecione o estado (UF)."); return; }
     setBuscando(true);
     setErroBusca("");
     setShowResultados(true);
     try {
       const params = new URLSearchParams({ uf: filtroUF });
       if (filtroCidade) params.set("cidade", filtroCidade);
-      if (filtroBairro) params.set("bairro", filtroBairro);
-      if (filtroLocal) params.set("local", filtroLocal);
       if (filtroEsp) params.set("especialidade", filtroEsp);
-      if (termoBusca.trim()) params.set("nome", termoBusca.trim());
+      if (termoBusca.trim().length >= 3) params.set("nome", termoBusca.trim());
       const data = await apiFetch(`/buscar?${params}`);
-      setResultados(data.medicos || []);
-      if ((data.medicos || []).length === 0) setErroBusca("Nenhum médico encontrado. Tente outros filtros.");
+      const medicos = data.medicos || data || [];
+      setResultados(medicos);
+      if (medicos.length === 0) setErroBusca("Nenhum médico da Dr. Consulta encontrado. Tente outros filtros.");
     } catch (err: any) {
       setErroBusca(err.message || "Erro ao buscar médicos.");
     } finally {
       setBuscando(false);
     }
-  }, [filtroUF, filtroCidade, filtroBairro, filtroLocal, filtroEsp, termoBusca]);
+  }, [filtroUF, filtroCidade, filtroEsp, termoBusca]);
 
   // ── Auto-buscar ao selecionar cidade ──────────────────────────────────────
   useEffect(() => {
     if (filtroUF && filtroCidade) buscarMedicos();
   }, [filtroUF, filtroCidade, buscarMedicos]);
 
-  // ── Selecionar médico ──────────────────────────────────────────────────────
+  // ── Selecionar médico ─────────────────────────────────────────────────────
   const selecionarMedico = (m: MedicoDB) => {
     const localTrabalho = m.local_trabalho?.toUpperCase() || "";
-    const cidadeMedico = m.cidade?.toUpperCase() || "";
     setForm((p) => ({
       ...p,
       medico: m.nome_medico.toUpperCase(),
       crm: `CRM/${m.uf_crm || m.uf_local} ${m.crm}`,
       especialidade: (m.especialidade || "CLÍNICO GERAL").toUpperCase(),
-      instituicao: cidadeMedico ? `PREFEITURA DE ${cidadeMedico}` : (p.instituicao || "CONSULTÓRIO MÉDICO"),
       unidade: localTrabalho || p.unidade,
       enderecoEmitente: [m.endereco, m.bairro, m.cidade, m.uf_local].filter(Boolean).join(", ").toUpperCase(),
-      cidade: cidadeMedico || p.cidade,
     }));
     setShowResultados(false);
     setTermoBusca("");
-    setShowEditar(true);
+    setMedicoSelecionado(true);
   };
 
-  // ── Upload de logo ─────────────────────────────────────────────────────────
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const b64 = await readFileAsBase64(file);
-    setLogoUrl(b64);
-  };
-
-  // ── Buscar unidades próximas ao endereço do paciente ──────────────────────
-  const buscarUnidadesProximas = async () => {
-    const cidPaciente = form.cidade.trim();
-    const endPaciente = form.endereco.trim();
-    if (!cidPaciente && !endPaciente) {
-      alert("Preencha a cidade ou endereço do paciente antes de buscar unidades próximas.");
-      return;
-    }
-    setBuscandoUnidades(true);
-    try {
-      const params = new URLSearchParams();
-      if (filtroUF) params.set("uf", filtroUF);
-      const cidadeRef = cidPaciente || filtroUF;
-      if (cidadeRef) params.set("cidade", cidadeRef.toUpperCase());
-      const data = await apiFetch(`/locais?${params}`);
-      const locais: string[] = data.locais || [];
-      setUnidadesProximas(locais.slice(0, 8));
-      if (locais.length === 0) {
-        alert("Nenhuma unidade encontrada na cidade do paciente.");
-      }
-    } catch {
-      alert("Erro ao buscar unidades próximas.");
-    } finally {
-      setBuscandoUnidades(false);
-    }
-  };
-
-  // ── Upload de assinatura ─────────────────────────────────────────────────────────
+  // ── Upload de assinatura ──────────────────────────────────────────────────
   const handleSignatureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -312,7 +225,7 @@ export default function ReceitaCria() {
     setSignatureImage(b64);
   };
 
-  // ── Gerenciar prescrição ────────────────────────────────────────────────────
+  // ── Gerenciar prescrição ──────────────────────────────────────────────────
   const addMedicamento = () => {
     setPrescricao((p) => [
       ...p,
@@ -328,7 +241,7 @@ export default function ReceitaCria() {
     setPrescricao((p) => p.map((item, i) => i === idx ? { ...item, [field]: value } : item));
   };
 
-  // ── Download PDF ────────────────────────────────────────────────────────────
+  // ── Download PDF ──────────────────────────────────────────────────────────
   const handleDownloadPdf = async () => {
     if (!previewRef.current) return;
     try {
@@ -339,15 +252,19 @@ export default function ReceitaCria() {
     }
   };
 
-  // ── Submit ──────────────────────────────────────────────────────────────────
+  // ── Submit ────────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) { alert("Você precisa estar logado para emitir."); return; }
 
-    // Validar prescrição
     const prescricaoValida = prescricao.filter((p) => p.medicamento.trim());
     if (prescricaoValida.length === 0) {
       alert("Adicione pelo menos um medicamento à prescrição.");
+      return;
+    }
+
+    if (!form.medico.trim()) {
+      alert("Selecione um médico antes de emitir.");
       return;
     }
 
@@ -364,13 +281,13 @@ export default function ReceitaCria() {
         medico: form.medico.toUpperCase(),
         crm: form.crm,
         especialidade: form.especialidade.toUpperCase(),
-        instituicao: form.instituicao || null,
+        instituicao: "DR. CONSULTA",
         unidade: form.unidade || null,
         endereco_emitente: form.enderecoEmitente || null,
         prescricao: prescricaoValida,
         data_emissao: form.dataEmissao,
         hora_emissao: form.horaEmissao,
-        logo_url: logoUrl || null,
+        logo_url: "/logos/drconsulta.png",
         signature_color: signatureColor,
         signature_image: signatureImage || null,
       };
@@ -395,7 +312,7 @@ export default function ReceitaCria() {
     }
   };
 
-  // ── Estilos ─────────────────────────────────────────────────────────────────
+  // ── Estilos ───────────────────────────────────────────────────────────────
   const card: React.CSSProperties = {
     background: "#fff",
     borderRadius: 10,
@@ -404,7 +321,7 @@ export default function ReceitaCria() {
     marginBottom: 12,
   };
   const secTitle: React.CSSProperties = {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 700,
     textTransform: "uppercase" as const,
     letterSpacing: 1,
@@ -422,7 +339,7 @@ export default function ReceitaCria() {
   };
   const inp: React.CSSProperties = {
     width: "100%",
-    padding: "6px 10px",
+    padding: "7px 10px",
     border: "1px solid #d1d5db",
     borderRadius: 6,
     fontSize: 13,
@@ -474,12 +391,12 @@ export default function ReceitaCria() {
     cursor: "pointer",
   };
 
-  // ── Preview data (alinhado com PrescricaoData) ────────────────────────────
+  // ── Preview data ──────────────────────────────────────────────────────────
   const previewData = {
     tipo_receituario: tipoReceituario,
-    // Emitente
-    logo_url: logoUrl || undefined,
-    nome_unidade: form.unidade || form.instituicao || "NOME DA UNIDADE",
+    // Emitente — logo dr.consulta fixa
+    logo_url: "/logos/drconsulta.png",
+    nome_unidade: form.unidade || "UNIDADE DR. CONSULTA",
     cnpj_emitente: form.cnpjEmitente || undefined,
     endereco_emitente: form.enderecoEmitente || undefined,
     telefone_emitente: form.telefoneEmitente || undefined,
@@ -527,7 +444,7 @@ export default function ReceitaCria() {
               <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "10px 16px", marginBottom: 16 }}>
                 <p style={{ fontSize: 11, color: "#166534", margin: 0, marginBottom: 4 }}>Código de Verificação:</p>
                 <p style={{ fontSize: 20, fontWeight: 700, fontFamily: "monospace", color: "#15803d", margin: 0, letterSpacing: 2 }}>{createdCode}</p>
-                <p style={{ fontSize: 10, color: "#166534", margin: "4px 0 0" }}>Valide em: <a href={`https://verificamed.digital/verificar/receita/${createdCode}`} target="_blank" rel="noreferrer" style={{ color: "#15803d" }}>verificamed.digital/verificar/receita/{createdCode}</a></p>
+                <p style={{ fontSize: 10, color: "#166534", margin: "4px 0 0" }}>Valide em: <a href={`https://verificamed.digital/verificar/receita/${createdCode}`} target="_blank" rel="noreferrer" style={{ color: "#15803d" }}>verificamed.digital</a></p>
               </div>
             )}
             <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
@@ -542,10 +459,10 @@ export default function ReceitaCria() {
                   navigate("/dashboard");
                 }}
               >
-                {isDownloadingPdf ? "⏳ Baixando PDF..." : "⬇ BAIXAR PDF"}
+                {isDownloadingPdf ? "Baixando PDF..." : "BAIXAR PDF"}
               </button>
               <button style={{ ...btnGray, flex: 1 }} onClick={() => { setShowSuccessModal(false); navigate("/dashboard"); }}>
-                VER HISTÓRICO
+                FECHAR
               </button>
             </div>
           </div>
@@ -553,29 +470,29 @@ export default function ReceitaCria() {
       )}
 
       {/* Header */}
-      <div style={{ background: "#7c3aed", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ background: "#005CA9", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <button style={{ ...btnGray, padding: "5px 12px", fontSize: 11 }} onClick={() => navigate("/dashboard")}>← VOLTAR</button>
-          <h1 style={{ color: "#fff", fontSize: 16, fontWeight: 700, margin: 0 }}>DocMaster — EMITIR RECEITA MÉDICA</h1>
+          <h1 style={{ color: "#fff", fontSize: 16, fontWeight: 700, margin: 0 }}>EMITIR RECEITA MÉDICA — Dr. Consulta</h1>
         </div>
         <span style={{ fontSize: 11, color: "rgba(255,255,255,0.9)", background: "rgba(0,0,0,0.15)", padding: "4px 12px", borderRadius: 6, fontWeight: 600 }}>
-          🔒 Dados excluídos automaticamente após 60 dias
+          Dados excluídos após 60 dias
         </span>
       </div>
 
       <div style={{ display: "flex", gap: 14, padding: 14, maxWidth: 2000, margin: "0 auto" }}>
         {/* ═══ COLUNA ESQUERDA — FORMULÁRIO ═══ */}
-        <div style={{ width: 612, flexShrink: 0, overflowY: "auto", maxHeight: "calc(100vh - 70px)" }}>
+        <div style={{ width: 580, flexShrink: 0, overflowY: "auto", maxHeight: "calc(100vh - 70px)" }}>
           <form onSubmit={handleSubmit}>
 
             {/* ── Tipo de Receituário ── */}
             <div style={card}>
-              <p style={secTitle}>📋 Tipo de Receituário</p>
+              <p style={secTitle}>Tipo de Receituário</p>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
                 {([
-                  { value: "simples", label: "Simples", desc: "Branco — uso geral", color: "#374151" },
-                  { value: "controle_especial", label: "Controle Especial", desc: "Tarja Amarela — 2 vias", color: "#92400e" },
-                  { value: "antimicrobiano", label: "Antimicrobiano", desc: "Tarja Azul — notificação", color: "#1e40af" },
+                  { value: "simples", label: "Simples", desc: "Branco", color: "#374151" },
+                  { value: "controle_especial", label: "Controle Especial", desc: "2 vias — Retenção", color: "#92400e" },
+                  { value: "antimicrobiano", label: "Antimicrobiano", desc: "Notificação", color: "#1e40af" },
                 ] as const).map((t) => (
                   <button
                     key={t.value}
@@ -600,42 +517,29 @@ export default function ReceitaCria() {
               </div>
             </div>
 
-            {/* ── 1. Buscar Médico ── */}
+            {/* ── 1. Buscar Médico (Dr. Consulta) ── */}
             <div style={card}>
-              <p style={secTitle}>🔍 1. Buscar Médico</p>
+              <p style={secTitle}>1. Selecionar Médico — Dr. Consulta</p>
+              <p style={{ fontSize: 10, color: "#6b7280", margin: "-6px 0 10px", lineHeight: 1.4 }}>
+                Somente médicos cadastrados na rede <strong>Dr. Consulta</strong> são exibidos.
+              </p>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
                 <div>
                   <label style={lbl}>Estado (UF) *</label>
-                  <select style={sel} value={filtroUF} onChange={(e) => { setFiltroUF(e.target.value); setFiltroCidade(""); }}>
-                    <option value="">Selecione o Estado</option>
+                  <select style={sel} value={filtroUF} onChange={(e) => { setFiltroUF(e.target.value); setFiltroCidade(""); setResultados([]); setShowResultados(false); setMedicoSelecionado(false); }}>
+                    <option value="">Selecione</option>
                     {UFS.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
                   </select>
                 </div>
                 <div>
                   <label style={lbl}>Cidade</label>
                   <select style={sel} value={filtroCidade} onChange={(e) => setFiltroCidade(e.target.value)} disabled={!filtroUF || cidades.length === 0}>
-                    <option value="">Selecione a Cidade</option>
+                    <option value="">Selecione</option>
                     {cidades.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
-                {bairros.length > 0 && (
-                  <div>
-                    <label style={lbl}>Bairro</label>
-                    <select style={sel} value={filtroBairro} onChange={(e) => setFiltroBairro(e.target.value)}>
-                      <option value="">Todos os Bairros</option>
-                      {bairros.map((b) => <option key={b} value={b}>{b}</option>)}
-                    </select>
-                  </div>
-                )}
-                {locais.length > 0 && (
-                  <div>
-                    <label style={lbl}>Local de Atendimento</label>
-                    <select style={sel} value={filtroLocal} onChange={(e) => setFiltroLocal(e.target.value)}>
-                      <option value="">Todos os Locais</option>
-                      {locais.map((l) => <option key={l} value={l}>{l}</option>)}
-                    </select>
-                  </div>
-                )}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
                 <div>
                   <label style={lbl}>Especialidade</label>
                   <select style={sel} value={filtroEsp} onChange={(e) => setFiltroEsp(e.target.value)}>
@@ -644,11 +548,11 @@ export default function ReceitaCria() {
                 </div>
                 <div>
                   <label style={lbl}>Nome do Médico</label>
-                  <input style={inp} value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} placeholder="Buscar por nome..." onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), buscarMedicos())} />
+                  <input style={inp} value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} placeholder="Buscar por nome..." onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); buscarMedicos(); } }} />
                 </div>
               </div>
               <button type="button" style={{ ...btnBlue, width: "100%" }} onClick={buscarMedicos} disabled={buscando || !filtroUF}>
-                {buscando ? "⏳ Buscando..." : "🔍 BUSCAR NO BANCO DE DADOS"}
+                {buscando ? "Buscando..." : "BUSCAR MÉDICOS DR. CONSULTA"}
               </button>
 
               {/* Resultados */}
@@ -656,10 +560,10 @@ export default function ReceitaCria() {
                 <div style={{ marginTop: 10 }}>
                   {erroBusca && <p style={{ color: "#ef4444", fontSize: 12, margin: "6px 0" }}>{erroBusca}</p>}
                   {resultados.length > 0 && (
-                    <div style={{ maxHeight: 220, overflowY: "auto", border: "1px solid #e5e7eb", borderRadius: 8 }}>
-                      {resultados.map((m) => (
+                    <div style={{ maxHeight: 200, overflowY: "auto", border: "1px solid #e5e7eb", borderRadius: 8 }}>
+                      {resultados.map((m, i) => (
                         <div
-                          key={m.id}
+                          key={m.id || i}
                           onClick={() => selecionarMedico(m)}
                           style={{ padding: "8px 12px", borderBottom: "1px solid #f3f4f6", cursor: "pointer", transition: "background 0.15s" }}
                           onMouseEnter={(e) => (e.currentTarget.style.background = "#eff6ff")}
@@ -669,8 +573,7 @@ export default function ReceitaCria() {
                           <span style={{ fontSize: 11, color: "#6b7280", marginLeft: 8 }}>CRM/{m.uf_crm || m.uf_local} {m.crm}</span>
                           <br />
                           <span style={{ color: "#059669", fontSize: 11 }}>{m.especialidade}</span>
-                          {m.local_trabalho && <span style={{ color: "#333", fontSize: 11, marginLeft: 8 }}>• {m.local_trabalho}</span>}
-                          {m.cidade && <span style={{ color: "#333", fontSize: 11, marginLeft: 8 }}>📍 {m.cidade}/{m.uf_local}</span>}
+                          {m.local_trabalho && <span style={{ color: "#333", fontSize: 10, marginLeft: 8 }}>{m.local_trabalho}</span>}
                         </div>
                       ))}
                     </div>
@@ -678,72 +581,70 @@ export default function ReceitaCria() {
                 </div>
               )}
 
-              {/* Editar Médico */}
-              <details open={showEditar} style={{ marginTop: 10 }}>
-                <summary
-                  style={{ cursor: "pointer", fontSize: 12, fontWeight: 700, color: "#005CA9", padding: "6px 0", listStyle: "none" }}
-                  onClick={() => setShowEditar(!showEditar)}
-                >
-                  ✏️ EDITAR MÉDICO / LOCAL / ASSINATURA
+              {/* Médico selecionado */}
+              {medicoSelecionado && form.medico && (
+                <div style={{ marginTop: 10, background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "10px 14px" }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#166534", marginBottom: 4 }}>Médico Selecionado:</div>
+                  <div style={{ fontSize: 12, color: "#111" }}>{form.medico}</div>
+                  <div style={{ fontSize: 11, color: "#6b7280" }}>{form.crm} — {form.especialidade}</div>
+                  <div style={{ fontSize: 11, color: "#6b7280" }}>{form.unidade}</div>
+                  <button type="button" style={{ ...btnGray, padding: "4px 10px", fontSize: 10, marginTop: 6 }} onClick={() => { setMedicoSelecionado(false); setShowResultados(true); }}>
+                    Alterar Médico
+                  </button>
+                </div>
+              )}
+
+              {/* Editar dados do emitente (colapsado) */}
+              <details style={{ marginTop: 10 }}>
+                <summary style={{ cursor: "pointer", fontSize: 11, fontWeight: 600, color: "#6b7280", padding: "4px 0" }}>
+                  Editar dados do emitente / assinatura
                 </summary>
-                <div style={{ paddingTop: 10, display: "grid", gap: 8 }}>
-                  <p style={{ ...secTitle, fontSize: 10 }}>Dados do Local</p>
-                  {/* Instituição: preenchida automaticamente — não exibida */}
+                <div style={{ paddingTop: 8, display: "grid", gap: 6 }}>
                   <div>
-                    <label style={lbl}>Local de Atendimento</label>
-                    <input style={inp} value={form.unidade} onChange={(e) => setForm(p => ({ ...p, unidade: e.target.value }))} placeholder="Ex: UBS CENTRO, UPA NORTE, HOSPITAL MUNICIPAL" />
+                    <label style={lbl}>Unidade / Local</label>
+                    <input style={inp} value={form.unidade} onChange={(e) => setForm(p => ({ ...p, unidade: e.target.value }))} placeholder="UNIDADE DR. CONSULTA" />
                   </div>
                   <div>
-                    <label style={lbl}>Endereço Completo / Emitente</label>
-                    <input style={{ ...inp, background: form.enderecoEmitente ? "#fff" : "#f8fafc" }}
-                      value={form.enderecoEmitente}
-                      onChange={(e) => setForm(p => ({ ...p, enderecoEmitente: e.target.value }))}
-                      placeholder="Ex: RUA ANTÔNIO WALTER, 66 – CENTRO, VOTORANTIM/SP" />
-                    <span style={{ fontSize: 10, color: "#666", marginTop: 2, display: "block" }}>Preenchido automaticamente ao selecionar médico.</span>
+                    <label style={lbl}>Endereço Emitente</label>
+                    <input style={inp} value={form.enderecoEmitente} onChange={(e) => setForm(p => ({ ...p, enderecoEmitente: e.target.value }))} placeholder="Rua, Número, Bairro, Cidade/UF" />
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                     <div>
-                      <label style={lbl}>CNPJ do Emitente</label>
-                      <input style={inp} value={form.cnpjEmitente}
-                        onChange={(e) => setForm(p => ({ ...p, cnpjEmitente: e.target.value }))}
-                        placeholder="Ex: 14.245.016/0059-95" />
+                      <label style={lbl}>CNPJ</label>
+                      <input style={inp} value={form.cnpjEmitente} onChange={(e) => setForm(p => ({ ...p, cnpjEmitente: e.target.value }))} />
                     </div>
                     <div>
-                      <label style={lbl}>Central de Atendimento</label>
-                      <input style={inp} value={form.telefoneEmitente}
-                        onChange={(e) => setForm(p => ({ ...p, telefoneEmitente: e.target.value }))}
-                        placeholder="Ex: 4090-1510" />
+                      <label style={lbl}>Central Atendimento</label>
+                      <input style={inp} value={form.telefoneEmitente} onChange={(e) => setForm(p => ({ ...p, telefoneEmitente: e.target.value }))} />
                     </div>
                   </div>
                   <div>
-                    <label style={lbl}>Site do Emitente</label>
-                    <input style={inp} value={form.siteEmitente}
-                      onChange={(e) => setForm(p => ({ ...p, siteEmitente: e.target.value }))}
-                      placeholder="Ex: www.drconsulta.com" />
+                    <label style={lbl}>Site</label>
+                    <input style={inp} value={form.siteEmitente} onChange={(e) => setForm(p => ({ ...p, siteEmitente: e.target.value }))} />
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                    <div>
+                      <label style={lbl}>Nome do Médico</label>
+                      <input style={inp} value={form.medico} onChange={(e) => setForm(p => ({ ...p, medico: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label style={lbl}>CRM</label>
+                      <input style={inp} value={form.crm} onChange={(e) => setForm(p => ({ ...p, crm: e.target.value }))} />
+                    </div>
                   </div>
                   <div>
                     <label style={lbl}>Especialidade</label>
-                    <input style={inp} value={form.especialidade} onChange={(e) => setForm(p => ({ ...p, especialidade: e.target.value }))} placeholder="Ex: CLÍNICO GERAL, PEDIATRA" />
-                  </div>
-                  <p style={{ ...secTitle, fontSize: 10 }}>Dados do Médico</p>
-                  <div>
-                    <label style={lbl}>Nome Completo</label>
-                    <input style={inp} value={form.medico} onChange={(e) => setForm(p => ({ ...p, medico: e.target.value }))} placeholder="DR. NOME SOBRENOME" />
+                    <input style={inp} value={form.especialidade} onChange={(e) => setForm(p => ({ ...p, especialidade: e.target.value }))} />
                   </div>
                   <div>
-                    <label style={lbl}>CRM (Ex: CRM/SP 12345)</label>
-                    <input style={inp} value={form.crm} onChange={(e) => setForm(p => ({ ...p, crm: e.target.value }))} placeholder="CRM/SP 00000" />
-                  </div>
-                  <p style={{ ...secTitle, fontSize: 10 }}>ASSINATURA</p>
-                  <div>
-                    <label style={lbl}>COR DA TINTA</label>
+                    <label style={lbl}>Cor da Tinta (Assinatura)</label>
                     <select style={sel} value={signatureColor} onChange={(e) => setSignatureColor(e.target.value)}>
-                      <option value="#0b109f">🔵 Azul Caneta (Padrão)</option>
-                      <option value="#000000">⚫ Preto (Xerox)</option>
+                      <option value="#0b109f">Azul Caneta</option>
+                      <option value="#000000">Preto</option>
                     </select>
                   </div>
                   <div>
-                    <label style={lbl}>USAR FOTO DA ASSINATURA (OPCIONAL)</label>
+                    <label style={lbl}>Foto da Assinatura (opcional)</label>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       {signatureImage ? (
                         <div style={{ position: "relative" }}>
@@ -754,8 +655,8 @@ export default function ReceitaCria() {
                           </button>
                         </div>
                       ) : (
-                        <label style={{ ...btnBlue, padding: "6px 12px", cursor: "pointer", fontSize: 11 }}>
-                          📷 ENVIAR FOTO
+                        <label style={{ ...btnBlue, padding: "5px 10px", cursor: "pointer", fontSize: 10 }}>
+                          ENVIAR FOTO
                           <input ref={signatureRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleSignatureUpload} />
                         </label>
                       )}
@@ -767,7 +668,7 @@ export default function ReceitaCria() {
 
             {/* ── 2. Dados do Paciente ── */}
             <div style={card}>
-              <p style={secTitle}>👤 2. Dados do Paciente</p>
+              <p style={secTitle}>2. Dados do Paciente</p>
               <div style={{ display: "grid", gap: 8 }}>
                 <div>
                   <label style={lbl}>Nome Completo *</label>
@@ -794,37 +695,18 @@ export default function ReceitaCria() {
                   </div>
                 </div>
                 <div>
-                  <label style={lbl}>Endereço do Paciente</label>
-                  <input style={inp} value={form.endereco} onChange={(e) => setForm(p => ({ ...p, endereco: e.target.value }))} placeholder="Rua, Número, Bairro, Cidade/UF" />
+                  <label style={lbl}>Endereço Completo</label>
+                  <input style={inp} value={form.endereco} onChange={(e) => setForm(p => ({ ...p, endereco: e.target.value }))} placeholder="Rua, Número, Bairro, Cidade/UF, CEP" />
                 </div>
-                {/* Unidades Próximas */}
-                <button
-                  type="button"
-                  style={{ ...btnGreen, width: "100%", marginTop: 4, fontSize: 11 }}
-                  onClick={buscarUnidadesProximas}
-                  disabled={buscandoUnidades}
-                >
-                  {buscandoUnidades ? "⏳ Buscando..." : "📍 BUSCAR UNIDADES PRÓXIMAS AO PACIENTE"}
-                </button>
-                {unidadesProximas.length > 0 && (
-                  <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "10px 14px", marginTop: 4 }}>
-                    <p style={{ fontSize: 11, fontWeight: 700, color: "#166534", margin: "0 0 6px" }}>📍 Unidades Próximas encontradas</p>
-                    {unidadesProximas.map((u, i) => (
-                      <div key={i} style={{ fontSize: 11, color: "#374151", padding: "3px 0", borderBottom: i < unidadesProximas.length - 1 ? "1px solid #d1fae5" : "none" }}>
-                        {i + 1}. {u}
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
 
             {/* ── 3. Prescrição ── */}
             <div style={card}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                <p style={{ ...secTitle, margin: 0, border: "none", padding: 0 }}>💊 3. Prescrição Médica</p>
+                <p style={{ ...secTitle, margin: 0, border: "none", padding: 0 }}>3. Prescrição Médica</p>
                 <button type="button" style={{ ...btnBlue, padding: "5px 12px", fontSize: 11 }} onClick={addMedicamento}>
-                  + ADICIONAR MEDICAMENTO
+                  + ADICIONAR
                 </button>
               </div>
 
@@ -832,139 +714,75 @@ export default function ReceitaCria() {
                 <div key={idx} style={{
                   border: "1px solid #e5e7eb",
                   borderRadius: 8,
-                  padding: "12px 14px",
-                  marginBottom: 10,
+                  padding: "10px 12px",
+                  marginBottom: 8,
                   background: "#fafafa",
-                  position: "relative",
                 }}>
-                  {/* Número + Remover */}
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <div style={{
-                        width: 24, height: 24, borderRadius: "50%",
+                        width: 22, height: 22, borderRadius: "50%",
                         background: "#005CA9", color: "#fff",
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 12, fontWeight: 700,
+                        fontSize: 11, fontWeight: 700,
                       }}>
                         {idx + 1}
                       </div>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>Medicamento {idx + 1}</span>
+                      {/* Uso interno/externo toggle */}
+                      <button type="button" onClick={() => updateMedicamento(idx, "uso_interno", !item.uso_interno)}
+                        style={{
+                          padding: "3px 10px", borderRadius: 4, fontWeight: 600, fontSize: 10, cursor: "pointer",
+                          background: item.uso_interno ? "#059669" : "#7c3aed",
+                          color: "#fff", border: "none",
+                        }}>
+                        {item.uso_interno ? "USO INTERNO" : "USO EXTERNO"}
+                      </button>
                     </div>
                     {prescricao.length > 1 && (
-                      <button type="button" style={btnRed} onClick={() => removeMedicamento(idx)}>✕ REMOVER</button>
+                      <button type="button" style={btnRed} onClick={() => removeMedicamento(idx)}>✕</button>
                     )}
                   </div>
 
-                  {/* Uso interno/externo */}
-                  <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-                    <button
-                      type="button"
-                      onClick={() => updateMedicamento(idx, "uso_interno", true)}
-                      style={{
-                        flex: 1, padding: "6px 0", borderRadius: 6, fontWeight: 700, fontSize: 11, cursor: "pointer",
-                        background: item.uso_interno ? "#059669" : "#e2e8f0",
-                        color: item.uso_interno ? "#fff" : "#374151",
-                        border: "none",
-                      }}
-                    >
-                      ● USO INTERNO
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => updateMedicamento(idx, "uso_interno", false)}
-                      style={{
-                        flex: 1, padding: "6px 0", borderRadius: 6, fontWeight: 700, fontSize: 11, cursor: "pointer",
-                        background: !item.uso_interno ? "#7c3aed" : "#e2e8f0",
-                        color: !item.uso_interno ? "#fff" : "#374151",
-                        border: "none",
-                      }}
-                    >
-                      ○ USO EXTERNO
-                    </button>
-                  </div>
-
-                  <div style={{ display: "grid", gap: 6 }}>
-                    <div>
-                      <label style={lbl}>Nome do Medicamento *</label>
-                      <input
-                        style={inp}
-                        value={item.medicamento}
-                        onChange={(e) => updateMedicamento(idx, "medicamento", e.target.value.toUpperCase())}
-                        placeholder="Ex: AMOXICILINA 500MG — CÁPSULA"
-                        required={idx === 0}
-                      />
-                    </div>
-                    <div>
-                      <label style={lbl}>Quantidade / Apresentação</label>
+                  <div style={{ display: "grid", gap: 5 }}>
+                    <input
+                      style={inp}
+                      value={item.medicamento}
+                      onChange={(e) => updateMedicamento(idx, "medicamento", e.target.value.toUpperCase())}
+                      placeholder="Nome do Medicamento — Ex: AMOXICILINA 500MG CÁPSULA"
+                      required={idx === 0}
+                    />
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 5 }}>
                       <input
                         style={inp}
                         value={item.quantidade}
                         onChange={(e) => updateMedicamento(idx, "quantidade", e.target.value)}
-                        placeholder="Ex: 1 caixa com 21 cápsulas"
+                        placeholder="Qtd: 1 caixa"
                       />
-                    </div>
-                    <div>
-                      <label style={lbl}>Modo de Uso / Posologia</label>
                       <input
                         style={inp}
                         value={item.modo_uso}
                         onChange={(e) => updateMedicamento(idx, "modo_uso", e.target.value)}
-                        placeholder="Ex: Tomar 1 cápsula de 8 em 8 horas por 7 dias"
+                        placeholder="Uso: Tomar 1 cápsula de 8/8h por 7 dias"
                       />
                     </div>
                   </div>
                 </div>
               ))}
-
-              <button type="button" style={{ ...btnGray, width: "100%", marginTop: 4 }} onClick={addMedicamento}>
-                + ADICIONAR OUTRO MEDICAMENTO
-              </button>
             </div>
 
-            {/* ── 4. Data de Emissão ── */}
+            {/* ── 4. Data ── */}
             <div style={card}>
-              <p style={secTitle}>📅 4. Data de Emissão</p>
+              <p style={secTitle}>4. Data de Emissão</p>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                 <div>
-                  <label style={lbl}>Data de Emissão *</label>
+                  <label style={lbl}>Data *</label>
                   <input style={inp} value={form.dataEmissao}
                     onChange={(e) => setForm(p => ({ ...p, dataEmissao: handleDateInput(e.target.value) }))}
                     placeholder="DD/MM/AAAA" maxLength={10} inputMode="numeric" required />
                 </div>
                 <div>
-                  <label style={lbl}>Hora da Emissão</label>
+                  <label style={lbl}>Hora</label>
                   <input style={inp} type="time" value={form.horaEmissao} onChange={(e) => setForm(p => ({ ...p, horaEmissao: e.target.value }))} />
-                </div>
-              </div>
-
-              {/* ── Logo (opcional) ── */}
-              <div style={{ marginTop: 16 }}>
-                <p style={{ ...secTitle, marginBottom: 8 }}>🖼 Logo do Documento (Opcional)</p>
-                <p style={{ fontSize: 10, color: "#6b7280", marginBottom: 10, marginTop: 0 }}>
-                  Por padrão usa o logo <strong>dr.consulta</strong>. Faça upload para substituir.
-                </p>
-                {/* Preview */}
-                <div style={{ height: 60, background: "#f8fafc", border: "1px dashed #d1d5db", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
-                  {logoUrl ? (
-                    <img src={logoUrl} alt="Logo" style={{ maxHeight: 50, maxWidth: 200, objectFit: "contain" }} />
-                  ) : (
-                    <div style={{ textAlign: "center" }}>
-                      <p style={{ fontSize: 14, color: "#1a56db", fontWeight: 700, margin: 0, fontFamily: "Arial" }}>dr.consulta</p>
-                      <p style={{ fontSize: 10, color: "#555", margin: "2px 0 0" }}>Logo padrão — faça upload para alterar</p>
-                    </div>
-                  )}
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <label style={{ ...btnBlue, flex: 1, display: "block", textAlign: "center", padding: "7px 0", cursor: "pointer", fontSize: 11 }}>
-                    📁 FAZER UPLOAD DO LOGO
-                    <input ref={logoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleLogoUpload} />
-                  </label>
-                  {logoUrl && (
-                    <button type="button" style={{ ...btnGray, flex: 1, fontSize: 11, padding: "7px 0" }}
-                      onClick={() => { setLogoUrl(""); if (logoRef.current) logoRef.current.value = ""; }}>
-                      ✕ USAR LOGO PADRÃO
-                    </button>
-                  )}
                 </div>
               </div>
             </div>
@@ -974,7 +792,7 @@ export default function ReceitaCria() {
               <button type="button" style={{ ...btnGray, flex: 1 }} onClick={() => navigate("/dashboard")}>CANCELAR</button>
               <button type="submit" disabled={isLoading}
                 style={{ ...btnGreen, flex: 2, opacity: isLoading ? 0.7 : 1, fontSize: 14, padding: "12px 0" }}>
-                {isLoading ? "⏳ Emitindo..." : "✅ CONFIRMAR E EMITIR RECEITA"}
+                {isLoading ? "Emitindo..." : "CONFIRMAR E EMITIR RECEITA"}
               </button>
             </div>
           </form>
@@ -987,9 +805,9 @@ export default function ReceitaCria() {
             marginBottom: 10, padding: "8px 12px", background: "#fff",
             borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
           }}>
-            <span style={{ fontWeight: 700, color: "#374151", fontSize: 14 }}>📄 Preview em Tempo Real</span>
+            <span style={{ fontWeight: 700, color: "#374151", fontSize: 14 }}>Preview em Tempo Real</span>
             <span style={{ fontSize: 11, color: "#6b7280", background: "#fef3c7", padding: "3px 8px", borderRadius: 5, fontWeight: 600 }}>
-              🔒 QR Code gerado somente após emissão
+              QR Code gerado somente após emissão
             </span>
           </div>
           <div style={{ flex: 1, overflow: "auto", background: "#525659", borderRadius: 10, padding: 14, maxHeight: "calc(100vh - 120px)" }}>

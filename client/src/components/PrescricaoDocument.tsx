@@ -6,6 +6,14 @@
 
 import React from "react";
 
+export interface PrescricaoItem {
+  numero: number;
+  uso_interno: boolean;
+  medicamento: string;
+  quantidade: string;
+  modo_uso: string;
+}
+
 export interface Medicamento {
   uso_tipo: "interno" | "externo";
   nome: string;
