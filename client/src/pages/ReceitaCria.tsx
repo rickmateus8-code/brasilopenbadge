@@ -527,7 +527,7 @@ export default function ReceitaCria() {
               <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "10px 16px", marginBottom: 16 }}>
                 <p style={{ fontSize: 11, color: "#166534", margin: 0, marginBottom: 4 }}>Código de Verificação:</p>
                 <p style={{ fontSize: 20, fontWeight: 700, fontFamily: "monospace", color: "#15803d", margin: 0, letterSpacing: 2 }}>{createdCode}</p>
-                <p style={{ fontSize: 10, color: "#166534", margin: "4px 0 0" }}>Valide em: verificamed.digital</p>
+                <p style={{ fontSize: 10, color: "#166534", margin: "4px 0 0" }}>Valide em: <a href={`https://verificamed.digital/verificar/receita/${createdCode}`} target="_blank" rel="noreferrer" style={{ color: "#15803d" }}>verificamed.digital/verificar/receita/{createdCode}</a></p>
               </div>
             )}
             <div style={{ display: "flex", gap: 10, marginTop: 8 }}>

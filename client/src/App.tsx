@@ -55,6 +55,12 @@ function VerificaMedRouter() {
 function ValidationRouter() {
   return (
     <Switch>
+      {/* Rota principal: /verificar/atestado/:id */}
+      <Route path="/verificar/atestado/:id" component={Validation} />
+
+      {/* Rota genérica: /verificar/:id */}
+      <Route path="/verificar/:id" component={Validation} />
+
       {/* Rota para código direto: /XXXX.XXXX */}
       <Route path="/:id" component={(props: { params: { id: string } }) => {
         const id = props.params?.id || "";
@@ -63,16 +69,16 @@ function ValidationRouter() {
         }
         return <NotFound />;
       }} />
-      
+
       {/* Rota raiz: / - Sempre validação */}
       <Route path="/" component={Validation} />
-      
+
       {/* Rota legacy /validar */}
       <Route path="/validar" component={Validation} />
-      
+
       {/* Rota legacy /v/:id */}
       <Route path="/v/:id" component={Validation} />
-      
+
       {/* Qualquer outra rota em validaratestado.digital redireciona para validação */}
       <Route component={Validation} />
     </Switch>
