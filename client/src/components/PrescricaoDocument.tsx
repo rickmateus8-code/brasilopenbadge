@@ -2,6 +2,9 @@
  * PrescricaoDocument.tsx
  * Replicação 100% fiel ao PDF "Receituário Controle Especial" — dr.consulta
  * 2 páginas A4 idênticas (1ª via médico/paciente + 2ª via farmácia)
+ *
+ * Assinatura: Dr. ou Dra. (detecta gênero pelo prefixo do nome ou rt_nome)
+ * Emitente: CENTRALIZADO conforme PDF original
  */
 
 import React from "react";
@@ -22,18 +25,13 @@ export interface Medicamento {
 }
 
 export interface PrescricaoData {
-  // Tipo de receituário
   tipo_receituario: "simples" | "controle_especial" | "antimicrobiano";
-
-  // Emitente
   logo_url?: string;
   nome_unidade: string;
   cnpj_emitente?: string;
   endereco_emitente?: string;
   telefone_emitente?: string;
   site_emitente?: string;
-
-  // Paciente
   paciente_nome: string;
   paciente_endereco?: string;
   paciente_identidade?: string;
@@ -41,148 +39,107 @@ export interface PrescricaoData {
   paciente_nascimento?: string;
   paciente_telefone?: string;
   paciente_cidade?: string;
-
-  // Prescrição
   medicamentos: Medicamento[];
-
-  // Médico
   medico_nome: string;
   medico_crm: string;
   medico_uf: string;
   medico_especialidade?: string;
   medico_assinatura_url?: string;
-
-  // Emissão
   data_emissao: string;
   codigo_qr?: string;
   qr_code_url?: string;
-
-  // Validade
   validade?: string;
 }
 
-// ─── Configuração por tipo de receituário ────────────────────────────────────
+// ─── Config por tipo ─────────────────────────────────────────────────────────
 const TIPO_CONFIG = {
-  simples: {
-    titulo: "Receituário",
-    tarja: null,
-    via1: "Via Única",
-    via2: "Retenção\nFacultativa",
-  },
-  controle_especial: {
-    titulo: "Receituário  Controle  Especial",
-    tarja: null,
-    via1: "1/2ª Via",
-    via2: "Retenção na\nFarmácia ou\nDrogaria",
-  },
-  antimicrobiano: {
-    titulo: "Receituário  Antimicrobiano",
-    tarja: null,
-    via1: "1/2ª Via",
-    via2: "Retenção na\nFarmácia",
-  },
+  simples: { titulo: "Receituário", via1: "Via Única", via2: "Retenção\nFacultativa" },
+  controle_especial: { titulo: "Receituário  Controle  Especial", via1: "1/2ª Via", via2: "Retenção na\nFarmácia ou\nDrogaria" },
+  antimicrobiano: { titulo: "Receituário  Antimicrobiano", via1: "1/2ª Via", via2: "Retenção na\nFarmácia" },
 };
 
-// ─── Componente de uma via (página A4 completa) ───────────────────────────────
+// ─── Detectar Dr. ou Dra. ────────────────────────────────────────────────────
+function getPrefixo(nome: string): string {
+  const n = nome.trim().toUpperCase();
+  // Se já começa com DRA. ou DR.
+  if (n.startsWith("DRA.") || n.startsWith("DRA ")) return "Dra.";
+  if (n.startsWith("DR.") || n.startsWith("DR ")) return "Dr.";
+  // Nomes femininos comuns terminam em A, mas há exceções
+  // Usar heurística: se o primeiro nome termina em 'A' (exceto exceções), é Dra.
+  const primeiro = n.replace(/^(DR\.?|DRA\.?)\s*/i, "").split(/\s+/)[0];
+  const femininos = ["MARIA","ANA","JULIA","JULIANA","FERNANDA","AMANDA","PATRICIA","CAMILA","GABRIELA","MARIANA","DANIELA","CAROLINA","ISABELA","IZABELLA","LETICIA","SABRINA","TATIANA","VANESSA","LARISSA","JESSICA","MICHELE","MICHELLE","GRASIELE","LILLIAN","LIVIA","MILENA","JANAINA","ALESSANDRA","MARCIA"];
+  if (femininos.includes(primeiro)) return "Dra.";
+  if (primeiro.endsWith("A") && !["LUCA","COSTA","BORBA","SOUZA","SILVA","ROSA"].includes(primeiro)) return "Dra.";
+  return "Dr.";
+}
+
+function getNomeSemPrefixo(nome: string): string {
+  return nome.trim().replace(/^(DRA?\.\s*|DRA?\s+)/i, "");
+}
+
+// ─── Via (página A4) ─────────────────────────────────────────────────────────
 function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
   const cfg = TIPO_CONFIG[data.tipo_receituario] || TIPO_CONFIG.controle_especial;
+  const prefixo = getPrefixo(data.medico_nome);
+  const nomeDisplay = getNomeSemPrefixo(data.medico_nome);
+
+  // Extrair número do CRM para exibição
+  const crmParts = data.medico_crm.match(/(\d+)/);
+  const crmNumero = crmParts ? crmParts[1] : data.medico_crm;
 
   return (
-    <div
-      style={{
-        width: 794,
-        minHeight: 1123,
-        backgroundColor: "#fff",
-        fontFamily: "Arial, Helvetica, sans-serif",
-        color: "#000",
-        padding: "28px 36px 24px 36px",
-        boxSizing: "border-box",
-        display: "flex",
-        flexDirection: "column",
-        pageBreakAfter: "always",
-      }}
-    >
-      {/* ── TÍTULO ─────────────────────────────────────────────────────────── */}
-      <div
-        style={{
-          textAlign: "center",
-          fontFamily: "Times New Roman, serif",
-          fontSize: 26,
-          fontWeight: 700,
-          letterSpacing: 1,
-          marginBottom: 14,
-          color: "#000",
-        }}
-      >
+    <div style={{
+      width: 794, minHeight: 1123, backgroundColor: "#fff",
+      fontFamily: "Arial, Helvetica, sans-serif", color: "#000",
+      padding: "28px 36px 24px 36px", boxSizing: "border-box",
+      display: "flex", flexDirection: "column", pageBreakAfter: "always",
+    }}>
+
+      {/* ── TÍTULO ──────────────────────────────────────────────────────────── */}
+      <div style={{
+        textAlign: "center", fontFamily: "Times New Roman, serif",
+        fontSize: 26, fontWeight: 700, letterSpacing: 1, marginBottom: 14, color: "#000",
+      }}>
         {cfg.titulo}
       </div>
 
-      {/* ── CABEÇALHO: Box Emitente (esq) + Coluna Via/Data (dir) ─────────── */}
+      {/* ── CABEÇALHO: Box Emitente (esq) + Via/Data (dir) ─────────────────── */}
       <div style={{ display: "flex", marginBottom: 10, alignItems: "stretch" }}>
 
-        {/* Box Emitente — ~65% */}
-        <div
-          style={{
-            flex: "0 0 65%",
-            border: "1px solid #000",
-            boxSizing: "border-box",
-            padding: "0 0 10px 0",
-          }}
-        >
-          {/* Label IDENTIFICAÇÃO DO EMITENTE */}
-          <div
-            style={{
-              textAlign: "center",
-              fontSize: 8.5,
-              fontWeight: 400,
-              color: "#000",
-              padding: "5px 0 4px",
-              letterSpacing: 0.3,
-            }}
-          >
+        {/* Box Emitente — ~65% — TUDO CENTRALIZADO */}
+        <div style={{
+          flex: "0 0 65%", border: "1px solid #000", boxSizing: "border-box", padding: "0 0 10px 0",
+        }}>
+          {/* Label */}
+          <div style={{
+            textAlign: "center", fontSize: 8.5, fontWeight: 400, color: "#000",
+            padding: "5px 0 4px", letterSpacing: 0.3,
+          }}>
             IDENTIFICAÇÃO DO EMITENTE
           </div>
-          {/* Linha separadora */}
           <div style={{ borderBottom: "1px solid #000", marginBottom: 8 }} />
 
-          {/* Conteúdo do emitente */}
-          <div style={{ padding: "0 12px" }}>
+          {/* Conteúdo — CENTRALIZADO */}
+          <div style={{ padding: "0 12px", textAlign: "center" }}>
             {/* Logo */}
             {data.logo_url ? (
-              <div style={{ marginBottom: 6 }}>
-                <img
-                  src={data.logo_url}
-                  alt="Logo"
-                  style={{ maxHeight: 36, maxWidth: 180, objectFit: "contain" }}
-                />
+              <div style={{ marginBottom: 6, display: "flex", justifyContent: "center" }}>
+                <img src={data.logo_url} alt="Logo" style={{ maxHeight: 36, maxWidth: 180, objectFit: "contain" }} />
               </div>
             ) : (
-              /* Logo dr.consulta padrão em texto — tamanho fiel ao original */
-              <div
-                style={{
-                  fontSize: 20,
-                  fontWeight: 700,
-                  marginBottom: 4,
-                  lineHeight: 1,
-                  letterSpacing: -0.3,
-                }}
-              >
+              <div style={{
+                fontSize: 20, fontWeight: 700, marginBottom: 4, lineHeight: 1, letterSpacing: -0.3,
+              }}>
                 <span style={{ color: "#1565c0" }}>dr.</span>
                 <span style={{ color: "#29b6f6" }}>consulta</span>
               </div>
             )}
 
             {/* Nome da unidade */}
-            <div
-              style={{
-                fontSize: 10.5,
-                fontWeight: 700,
-                color: "#000",
-                marginBottom: 2,
-                textTransform: "uppercase",
-                letterSpacing: 0.2,
-              }}
-            >
+            <div style={{
+              fontSize: 10.5, fontWeight: 700, color: "#000", marginBottom: 2,
+              textTransform: "uppercase", letterSpacing: 0.2,
+            }}>
               {data.nome_unidade || "NOME DA UNIDADE"}
             </div>
 
@@ -202,16 +159,10 @@ function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
 
             {/* Central de atendimento */}
             {data.telefone_emitente && (
-              <div
-                style={{
-                  fontSize: 9.5,
-                  fontWeight: 700,
-                  color: "#000",
-                  textTransform: "uppercase",
-                  marginBottom: 1,
-                  letterSpacing: 0.2,
-                }}
-              >
+              <div style={{
+                fontSize: 9.5, fontWeight: 700, color: "#000",
+                textTransform: "uppercase", marginBottom: 1, letterSpacing: 0.2,
+              }}>
                 CENTRAL DE ATENDIMENTO: {data.telefone_emitente}
               </div>
             )}
@@ -225,182 +176,86 @@ function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
           </div>
         </div>
 
-        {/* Coluna Via/Data — ~35%, sem borda */}
-        <div
-          style={{
-            flex: "0 0 35%",
-            boxSizing: "border-box",
-            padding: "8px 12px 12px 20px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            alignSelf: "stretch",
-          }}
-        >
-          {/* Via — topo */}
+        {/* Coluna Via/Data — ~35% */}
+        <div style={{
+          flex: "0 0 35%", boxSizing: "border-box", padding: "8px 12px 12px 20px",
+          display: "flex", flexDirection: "column", justifyContent: "space-between",
+        }}>
           <div>
-            <div
-              style={{
-                fontWeight: 700,
-                fontSize: 8.5,
-                marginBottom: 1,
-                color: "#000",
-              }}
-            >
+            <div style={{ fontWeight: 700, fontSize: 8.5, marginBottom: 1, color: "#000" }}>
               {cfg.via1}
             </div>
-            {/* Retenção — sublinhado SOMENTE na palavra Retenção, demais linhas normais */}
             <div style={{ fontSize: 8, lineHeight: 1.25, color: "#000" }}>
               {cfg.via2.split("\n").map((line, i) => {
-                // Sublinha apenas a palavra/linha que começa com "Retenção"
                 const isRetencao = line.trim().startsWith("Reten");
                 return (
-                  <div key={i} style={{ textDecoration: isRetencao ? "underline" : "none", marginBottom: 0 }}>
+                  <div key={i} style={{ textDecoration: isRetencao ? "underline" : "none" }}>
                     {line}
                   </div>
                 );
               })}
             </div>
           </div>
-
-          {/* Data — base */}
           <div style={{ fontSize: 13, fontWeight: 400, color: "#000" }}>
             Data:{" "}
             {data.data_emissao
-              ? (() => {
-                  const p = data.data_emissao.split("/");
-                  return p.length === 3
-                    ? `${p[0]}/${p[1]}/${p[2]}`
-                    : data.data_emissao;
-                })()
+              ? (() => { const p = data.data_emissao.split("/"); return p.length === 3 ? `${p[0]}/${p[1]}/${p[2]}` : data.data_emissao; })()
               : "__/__/____"}
           </div>
         </div>
       </div>
 
-      {/* ── BOX PACIENTE ───────────────────────────────────────────────────── */}
-      <div
-        style={{
-          border: "1px solid #000",
-          padding: "7px 12px",
-          marginBottom: 14,
-          lineHeight: 1.9,
-          flexShrink: 0,
-        }}
-      >
+      {/* ── BOX PACIENTE ────────────────────────────────────────────────────── */}
+      <div style={{
+        border: "1px solid #000", padding: "7px 12px", marginBottom: 14,
+        lineHeight: 1.9, flexShrink: 0,
+      }}>
         <div style={{ fontSize: 10.5, color: "#000" }}>
-          <span style={{ fontWeight: 700 }}>Paciente:</span>
-          {"   "}
-          {data.paciente_nome || ""}
+          <span style={{ fontWeight: 700 }}>Paciente:</span>{"   "}{data.paciente_nome || ""}
         </div>
         {data.paciente_endereco && (
           <div style={{ fontSize: 10.5, color: "#000" }}>
-            <span style={{ fontWeight: 700 }}>Endereço:</span>
-            {"   "}
-            {data.paciente_endereco}
+            <span style={{ fontWeight: 700 }}>Endereço:</span>{"   "}{data.paciente_endereco}
           </div>
         )}
       </div>
 
-      {/* ── PRESCRIÇÃO ─────────────────────────────────────────────────────── */}
+      {/* ── PRESCRIÇÃO ──────────────────────────────────────────────────────── */}
       <div style={{ marginBottom: 10, flexShrink: 0 }}>
         {(data.medicamentos || []).map((med, idx) => (
           <div key={idx} style={{ marginBottom: 10 }}>
-            <div
-              style={{
-                fontSize: 10.5,
-                fontWeight: 700,
-                marginBottom: 2,
-                color: "#000",
-              }}
-            >
+            <div style={{ fontSize: 10.5, fontWeight: 700, marginBottom: 2, color: "#000" }}>
               {idx + 1}) Uso {med.uso_tipo === "interno" ? "Interno" : "Externo"}
             </div>
-            <div style={{ fontSize: 10, color: "#000", marginBottom: 1 }}>
-              {med.nome}
-            </div>
-            <div style={{ fontSize: 10, color: "#000", marginBottom: 1 }}>
-              Quantidade: {med.quantidade}
-            </div>
-            <div style={{ fontSize: 10, color: "#000" }}>
-              Uso:{"  "}
-              {med.posologia}
-            </div>
+            <div style={{ fontSize: 10, color: "#000", marginBottom: 1 }}>{med.nome}</div>
+            <div style={{ fontSize: 10, color: "#000", marginBottom: 1 }}>Quantidade: {med.quantidade}</div>
+            <div style={{ fontSize: 10, color: "#000" }}>Uso:{"  "}{med.posologia}</div>
           </div>
         ))}
       </div>
 
-      {/* ── ÁREA CENTRAL (flex grow para empurrar rodapé para baixo) ─────── */}
+      {/* ── Spacer ──────────────────────────────────────────────────────────── */}
       <div style={{ flex: 1 }} />
 
-      {/* ── QR CODE + ASSINATURA ───────────────────────────────────────────── */}
-      {/*
-        Layout fiel à imagem:
-        - QR Code grande (120×120) no canto SUPERIOR esquerdo
-        - Assinatura itálica cinza claro à direita (nome, especialidade, CRM)
-        - Linha de assinatura abaixo do texto itálico
-        - Espaço vazio entre QR e boxes do rodapé
-      */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          marginBottom: 16,
-          flexShrink: 0,
-        }}
-      >
-        {/* QR Code — canto superior esquerdo
-             - Antes da emissão (sem qr_code_url): placeholder borrado/desfocado
-             - Após emissão: QR Code real nítido
-        */}
+      {/* ── QR CODE + ASSINATURA ────────────────────────────────────────────── */}
+      <div style={{
+        display: "flex", alignItems: "flex-end", justifyContent: "space-between",
+        marginBottom: 16, flexShrink: 0,
+      }}>
+        {/* QR Code */}
         <div style={{ flexShrink: 0 }}>
           {data.qr_code_url ? (
-            /* QR Code real — exibido após emissão */
-            <img
-              src={data.qr_code_url}
-              alt="QR Code"
-              style={{ width: 120, height: 120, display: "block" }}
-            />
+            <img src={data.qr_code_url} alt="QR Code" style={{ width: 120, height: 120, display: "block" }} />
           ) : (
-            /* Placeholder borrado — preview antes da emissão */
-            <div
-              style={{
-                width: 120,
-                height: 120,
-                position: "relative",
-                overflow: "hidden",
-                flexShrink: 0,
-              }}
-            >
-              {/* Grade de quadrados simulando QR borrado */}
-              <svg
-                width={120}
-                height={120}
-                viewBox="0 0 120 120"
-                style={{
-                  display: "block",
-                  filter: "blur(3px)",
-                  opacity: 0.35,
-                }}
-              >
-                {/* Padrão de quadrados aleatórios simulando QR */}
+            <div style={{ width: 120, height: 120, position: "relative", overflow: "hidden" }}>
+              <svg width={120} height={120} viewBox="0 0 120 120"
+                style={{ display: "block", filter: "blur(3px)", opacity: 0.35 }}>
                 {Array.from({ length: 12 }).map((_, row) =>
                   Array.from({ length: 12 }).map((_, col) => {
                     const filled = (row + col + row * col) % 3 !== 0;
-                    return filled ? (
-                      <rect
-                        key={`${row}-${col}`}
-                        x={col * 10}
-                        y={row * 10}
-                        width={9}
-                        height={9}
-                        fill="#000"
-                      />
-                    ) : null;
+                    return filled ? <rect key={`${row}-${col}`} x={col * 10} y={row * 10} width={9} height={9} fill="#000" /> : null;
                   })
                 )}
-                {/* Marcadores de canto (finder patterns) */}
                 <rect x={0} y={0} width={30} height={30} fill="none" stroke="#000" strokeWidth={3} />
                 <rect x={5} y={5} width={20} height={20} fill="#000" />
                 <rect x={90} y={0} width={30} height={30} fill="none" stroke="#000" strokeWidth={3} />
@@ -408,21 +263,10 @@ function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
                 <rect x={0} y={90} width={30} height={30} fill="none" stroke="#000" strokeWidth={3} />
                 <rect x={5} y={95} width={20} height={20} fill="#000" />
               </svg>
-              {/* Overlay com texto */}
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 7,
-                  color: "#555",
-                  textAlign: "center",
-                  lineHeight: 1.3,
-                  background: "rgba(255,255,255,0.55)",
-                }}
-              >
+              <div style={{
+                position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 7, color: "#555", textAlign: "center", lineHeight: 1.3, background: "rgba(255,255,255,0.55)",
+              }}>
                 QR após<br />emissão
               </div>
             </div>
@@ -434,106 +278,71 @@ function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
           )}
         </div>
 
-        {/* Assinatura — canto superior direito, itálico cinza claro */}
-        <div style={{ textAlign: "right", minWidth: 240 }}>
+        {/* Assinatura — estilo manuscrito/cursivo fiel ao PDF original */}
+        <div style={{ textAlign: "right", minWidth: 260 }}>
           {data.medico_assinatura_url && (
-            <img
-              src={data.medico_assinatura_url}
-              alt="Assinatura"
-              style={{ maxHeight: 44, maxWidth: 200, objectFit: "contain", marginBottom: 4, display: "block", marginLeft: "auto" }}
-            />
+            <img src={data.medico_assinatura_url} alt="Assinatura"
+              style={{ maxHeight: 44, maxWidth: 200, objectFit: "contain", marginBottom: 4, display: "block", marginLeft: "auto" }} />
           )}
-          {/* Nome, especialidade e CRM — itálico, cinza claro, alinhado à direita */}
-          <div
-            style={{
-              fontStyle: "italic",
-              color: "#aaa",
-              fontSize: 10.5,
-              lineHeight: 1.55,
-              marginBottom: 6,
-            }}
-          >
-            <div style={{ fontSize: 10 }}>{data.medico_nome}</div>
+
+          {/* Nome cursivo inclinado — fiel ao PDF original */}
+          <div style={{
+            fontFamily: "'Segoe Script', 'Brush Script MT', 'Dancing Script', cursive",
+            fontStyle: "italic",
+            color: "#333",
+            fontSize: 14,
+            lineHeight: 1.3,
+            marginBottom: 6,
+            transform: "rotate(-3deg)",
+            transformOrigin: "right center",
+          }}>
+            <div>{prefixo} {nomeDisplay}</div>
             {data.medico_especialidade && (
-              <div style={{ fontSize: 10 }}>{data.medico_especialidade}</div>
+              <div style={{ fontSize: 12 }}>{data.medico_especialidade}</div>
             )}
-            <div style={{ fontSize: 10, fontWeight: 700 }}>
-              CRM-{data.medico_uf}: {data.medico_crm}
+            <div style={{ fontSize: 13, fontWeight: 700 }}>
+              CRM-{data.medico_uf}: {crmNumero}
             </div>
           </div>
+
           {/* Linha de assinatura */}
           <div style={{ borderTop: "1px solid #555", width: "100%", marginTop: 2 }} />
         </div>
       </div>
 
-      {/* ── RODAPÉ: Box Comprador + Box Farmacêutico ───────────────────────── */}
+      {/* ── RODAPÉ: Comprador + Farmacêutico ────────────────────────────────── */}
       <div style={{ display: "flex", flexShrink: 0 }}>
-
-        {/* Box Identificação do Comprador — 50% */}
-        <div
-          style={{
-            flex: "0 0 50%",
-            border: "1px solid #000",
-            boxSizing: "border-box",
-            padding: "0 0 8px 0",
-          }}
-        >
-          {/* Label */}
-          <div
-            style={{
-              textAlign: "center",
-              fontSize: 8.5,
-              fontWeight: 700,
-              padding: "5px 0 4px",
-              letterSpacing: 0.3,
-            }}
-          >
+        {/* Identificação do Comprador */}
+        <div style={{
+          flex: "0 0 50%", border: "1px solid #000", boxSizing: "border-box", padding: "0 0 8px 0",
+        }}>
+          <div style={{
+            textAlign: "center", fontSize: 8.5, fontWeight: 700, padding: "5px 0 4px", letterSpacing: 0.3,
+          }}>
             IDENTIFICAÇÃO DO COMPRADOR
           </div>
           <div style={{ borderBottom: "1px solid #000", marginBottom: 6 }} />
-
           <div style={{ padding: "0 10px", fontSize: 10, lineHeight: 1.85 }}>
-            <div>
-              Nome completo:{" "}
-              {data.paciente_nome || ""}
-            </div>
-            {data.paciente_identidade && (
-              <div>Ident. {data.paciente_identidade}</div>
-            )}
-            {data.paciente_endereco && (
-              <div>End. completo: {data.paciente_endereco}</div>
-            )}
-            {data.paciente_telefone && (
-              <div>Telefone: {data.paciente_telefone}</div>
-            )}
-            {data.paciente_cidade && (
-              <div>Cidade: {data.paciente_cidade}</div>
-            )}
+            <div>Nome completo: {data.paciente_nome || ""}</div>
+            {data.paciente_identidade && <div>Ident. {data.paciente_identidade}</div>}
+            {data.paciente_endereco && <div>End. completo: {data.paciente_endereco}</div>}
+            {data.paciente_telefone && <div>Telefone: {data.paciente_telefone}</div>}
+            {data.paciente_cidade && <div>Cidade: {data.paciente_cidade}</div>}
           </div>
         </div>
 
-        {/* Box Assinatura do Farmacêutico — 50%, sem borda esquerda */}
-        <div
-          style={{
-            flex: "0 0 50%",
-            border: "1px solid #000",
-            borderLeft: "none",
-            boxSizing: "border-box",
-            padding: "14px 16px 12px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "flex-end",
-          }}
-        >
-          {/* 3 linhas de preenchimento manual */}
+        {/* Assinatura do Farmacêutico */}
+        <div style={{
+          flex: "0 0 50%", border: "1px solid #000", borderLeft: "none",
+          boxSizing: "border-box", padding: "14px 16px 12px",
+          display: "flex", flexDirection: "column", justifyContent: "flex-end",
+        }}>
           <div style={{ borderTop: "1px solid #000", marginBottom: 24 }} />
           <div style={{ borderTop: "1px solid #000", marginBottom: 24 }} />
           <div style={{ borderTop: "1px solid #000", marginBottom: 10 }} />
-          {/* Label Assinatura do Farmacêutico */}
           <div style={{ fontSize: 9, textAlign: "center", marginBottom: 8, color: "#000" }}>
             Assinatura do Farmacêutico
           </div>
-          {/* Data */}
           <div style={{ fontSize: 9.5, textAlign: "center", color: "#000", fontWeight: 400 }}>
             Data{" "}
             <span style={{ borderBottom: "1px solid #000", display: "inline-block", minWidth: 28 }}>&nbsp;&nbsp;&nbsp;&nbsp;</span>
@@ -552,9 +361,7 @@ function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
 export default function PrescricaoDocument({ data }: { data: PrescricaoData }) {
   return (
     <div style={{ background: "#fff" }}>
-      {/* 1ª Via */}
       <ViaPage data={data} viaNum={1} />
-      {/* 2ª Via — idêntica */}
       <ViaPage data={data} viaNum={2} />
     </div>
   );
