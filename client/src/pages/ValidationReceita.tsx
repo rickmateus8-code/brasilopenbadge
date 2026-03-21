@@ -206,7 +206,7 @@ const GLOBAL_CSS = `
   .vm-animate { animation: vm-fade-in 0.4s ease-out; }
   .vm-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px); }
   .vm-wave { position: relative; }
-  .vm-wave::after { content: ''; position: absolute; bottom: -60px; left: -5%; right: -5%; width: 110%; height: 100px; background: var(--vm-bg); border-radius: 50% 50% 0 0 / 100% 100% 0 0; }
+  .vm-wave::after { content: ''; position: absolute; bottom: -80px; left: -5%; right: -5%; width: 110%; height: 120px; background: var(--vm-bg); border-radius: 50% 50% 0 0 / 100% 100% 0 0; }
   @media (max-width: 768px) {
     .vm-hero h1 { font-size: 28px !important; }
     .vm-hero p { font-size: 14px !important; }
@@ -332,7 +332,7 @@ export default function ValidationReceita() {
           </header>
 
           {/* Hero */}
-          <section className="vm-hero" style={{ padding: "80px 20px 140px", textAlign: "center", position: "relative", overflow: "hidden" }}>
+          <section className="vm-hero" style={{ padding: "100px 20px 160px", textAlign: "center", position: "relative", overflow: "hidden" }}>
             <div style={{ maxWidth: 700, margin: "0 auto", position: "relative", zIndex: 1 }}>
               <div style={{
                 display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.1)",
@@ -351,7 +351,7 @@ export default function ValidationReceita() {
                 padding: "14px 32px", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer",
                 display: "inline-flex", alignItems: "center", gap: 8, boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
               }}>
-                <SparklesIcon size={16} /> Verificar Documento <span style={{ marginLeft: 4 }}>&rarr;</span>
+                <QrCodeIcon size={16} /> Verificar Documento <span style={{ marginLeft: 4 }}>&rarr;</span>
               </button>
             </div>
           </section>
