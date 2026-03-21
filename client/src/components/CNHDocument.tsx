@@ -1,10 +1,11 @@
 /**
  * CNHDocument — Geração visual da CNH Digital via Canvas
  *
- * Usa o template de imagem (modelo.jpg) como background e desenha
+ * Usa o template de imagem (cnh_modelo.jpg) como background e desenha
  * todos os campos por cima via Canvas 2D, replicando fielmente
- * o layout do elitedoc.store.
+ * o layout do elitedoc.store com coordenadas pixel-perfect.
  *
+ * Fontes: Ultra (AltraW00-SmallCaps.woff2) + OCR-B (ocrbstd.otf)
  * Exporta como imagem JPEG de alta qualidade.
  */
 import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
@@ -96,6 +97,22 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
+// Carregar fontes customizadas
+let fontsLoaded = false;
+async function loadFonts() {
+  if (fontsLoaded) return;
+  try {
+    const ultraFont = new FontFace("Ultra", "url(/assets/AltraW00-SmallCaps.woff2)");
+    const ocrFont = new FontFace("OCR-B", "url(/assets/ocrbstd.otf)");
+    const [f1, f2] = await Promise.all([ultraFont.load(), ocrFont.load()]);
+    document.fonts.add(f1);
+    document.fonts.add(f2);
+    fontsLoaded = true;
+  } catch (e) {
+    console.warn("Fontes customizadas não carregaram, usando fallback:", e);
+  }
+}
+
 export interface CNHDocumentHandle {
   exportAsBlob: () => Promise<Blob | null>;
   getCanvas: () => HTMLCanvasElement | null;
@@ -126,9 +143,12 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
     const ctx = cvs.getContext("2d");
     if (!ctx) return;
 
+    // Carregar fontes antes de renderizar
+    await loadFonts();
+
     try {
-      // Carregar template
-      const bg = await loadImage("/assets/cnh_template.jpeg");
+      // Carregar template original do elitedoc (modelo.jpg)
+      const bg = await loadImage("/assets/cnh_modelo.jpg");
       cvs.width = bg.width;
       cvs.height = bg.height;
       ctx.drawImage(bg, 0, 0);
@@ -137,10 +157,11 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       ctx.fillStyle = "#000";
       ctx.textBaseline = "top";
 
-      // Função helper para desenhar texto com maxWidth (scale se necessário)
-      const txt = (t: string, x: number, y: number, s: number, _b?: boolean, c?: string, mw?: number) => {
+      // Função helper txt() — idêntica à do elitedoc
+      // txt(texto, x, y, tamanho, bold, cor, maxWidth)
+      const txt = (t: string, x: number, y: number, s: number, _b?: boolean | number, c?: string, mw?: number) => {
         if (!t) return;
-        ctx.font = `${s}px 'Altra', 'Georgia', serif`;
+        ctx.font = `${s}px 'Ultra', serif`;
         ctx.fillStyle = c || "#000";
         t = String(t).toUpperCase();
 
@@ -165,65 +186,65 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       // ===== CAMPOS PRINCIPAIS (posições idênticas ao elitedoc) =====
 
       // Nome Completo
-      txt(props.nome, 314, 452, 22, true, "#000", 520);
+      txt(props.nome, 314, 452, 22, 1, "#000", 520);
 
       // Data Nascimento + Local + UF
       let ln = d(props.dataNascimento);
       if (props.localNascimento) ln += ` ${props.localNascimento}`;
       if (props.ufNascimento) ln += `/${props.ufNascimento}`;
-      txt(ln, 597, 510, 22, true, "#000", 450);
+      txt(ln, 597, 510, 22, 1, "#000", 450);
 
       // Nacionalidade
-      txt(props.nacionalidade, 599, 752, 22, true, "#000", 300);
+      txt(props.nacionalidade, 599, 752, 22, 1, "#000", 300);
 
       // Data Emissão (4a)
-      txt(d(props.dataEmissao), 597, 570, 22, true, "#000", 180);
+      txt(d(props.dataEmissao), 597, 570, 22, 1, "#000", 180);
 
       // Validade (4b) - em vermelho
-      txt(d(props.validade), 775, 570, 22, true, "#c0392b", 180);
+      txt(d(props.validade), 775, 570, 22, 1, "#c0392b", 180);
 
       // RG + Órgão Emissor / UF
-      txt(`${props.rg} ${props.orgaoEmissor}/${props.ufRG}`, 597, 630, 22, true, "#000", 450);
+      txt(`${props.rg} ${props.orgaoEmissor}/${props.ufRG}`, 597, 630, 22, 1, "#000", 450);
 
       // CPF
-      txt(formatarCPF(props.cpf), 597, 695, 22, true, "#000", 250);
+      txt(formatarCPF(props.cpf), 597, 695, 22, 1, "#000", 250);
 
       // Nome Pai
-      txt(props.nomePai, 597, 826, 22, true, "#000", 550);
+      txt(props.nomePai, 597, 826, 22, 1, "#000", 550);
 
       // Nome Mãe
-      txt(props.nomeMae, 597, 869, 22, true, "#000", 550);
+      txt(props.nomeMae, 597, 869, 22, 1, "#000", 550);
 
       // Nº Registro - em vermelho
-      txt(props.registro, 801, 695, 22, true, "#c0392b", 210);
+      txt(props.registro, 801, 695, 22, 1, "#c0392b", 210);
 
       // Categoria - em vermelho
-      txt(props.categoria, 990, 695, 22, true, "#c0392b", 120);
+      txt(props.categoria, 990, 695, 22, 1, "#c0392b", 120);
 
       // Observações (multi-linha)
       const obsTexto = String(props.observacoes || "");
       const linhasObs = obsTexto.split("\n");
-      let obsY = 1340;
+      const obsY = 1340;
       linhasObs.forEach((linha, index) => {
         txt(linha, 320, obsY + (index * 20), 20, false, "#000", 680);
       });
 
       // Local Emissão + UF
-      txt(`${props.localEmissao}, ${props.ufEmissao}`, 318, 1569, 22, true, "#000", 450);
+      txt(`${props.localEmissao}, ${props.ufEmissao}`, 318, 1569, 22, 1, "#000", 450);
 
       // 1ª Habilitação
-      txt(d(props.primeiraHabilitacao), 958, 450, 22, true, "#000", 180);
+      txt(d(props.primeiraHabilitacao), 958, 450, 22, 1, "#000", 180);
 
       // Tipo CNH (D = Definitiva, P = Permissão) - letra grande no box
       const tipoLetra = props.tipo === "Permissão" ? "P" : "D";
-      txt(tipoLetra, 1055, 555, 55, true, "#000", 80);
+      txt(tipoLetra, 1055, 555, 55, 1, "#000", 80);
 
       // ===== TEXTOS LATERAIS VERTICAIS =====
       // Nº CNH (Espelho) rotacionado na lateral esquerda (2 posições)
       ctx.save();
       ctx.translate(213, 930);
       ctx.rotate(-Math.PI / 2);
-      ctx.font = "40px 'Altra', 'Georgia', serif";
+      ctx.font = "40px 'Ultra', serif";
       ctx.fillStyle = "#000";
       ctx.fillText(props.espelho || "0000000000", 0, 0);
       ctx.restore();
@@ -231,7 +252,7 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       ctx.save();
       ctx.translate(213, 1670);
       ctx.rotate(-Math.PI / 2);
-      ctx.font = "40px 'Altra', 'Georgia', serif";
+      ctx.font = "40px 'Ultra', serif";
       ctx.fillStyle = "#000";
       ctx.fillText(props.espelho || "0000000000", 0, 0);
       ctx.restore();
@@ -241,19 +262,19 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       ctx.textAlign = "center";
       const ufDigitada = (props.ufEmissao || "").trim().toUpperCase();
       const nomeEstadoCompleto = NOMES_ESTADOS[ufDigitada] || "";
-      ctx.font = "bold 44px 'Altra', 'Georgia', serif";
+      ctx.font = "bold 44px 'Ultra', sans-serif";
       ctx.fillStyle = "#000";
       ctx.fillText(nomeEstadoCompleto, 670, 1660);
 
       // Assinaturas digitais
-      ctx.font = "23px 'Altra', 'Georgia', serif";
+      ctx.font = "23px 'Ultra'";
       ctx.fillText(props.assDigital1, 945, 1545);
       ctx.fillText(props.assDigital2, 945, 1575);
       ctx.restore();
 
       // ===== MRZ =====
       const mrz = gerarMRZ(props);
-      ctx.font = "28px 'OCR-B', 'Courier New', monospace";
+      ctx.font = "28px 'OCR-B', monospace";
       ctx.fillStyle = "#353535";
       mrz.forEach((l, i) => ctx.fillText(l, 335, 2225 + (i * 33)));
 
@@ -268,14 +289,14 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       };
 
       let userCat = (props.categoria || "").toUpperCase();
-      // Lógica de herança de categorias
+      // Lógica de herança de categorias (E inclui D,C,B; D inclui C,B; C inclui B)
       if (userCat.includes("E")) userCat += "DCB";
       else if (userCat.includes("D")) userCat += "CB";
       else if (userCat.includes("C")) userCat += "B";
 
       Object.keys(cats).forEach((k) => {
         if (userCat.includes(k)) {
-          txt(d(props.validade), cats[k].x, cats[k].y, 14, true, "#000", 120);
+          txt(d(props.validade), cats[k].x, cats[k].y, 14, 1, "#000", 120);
         }
       });
 
@@ -288,7 +309,7 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
           ctx.beginPath();
           ctx.rect(bx, by, bw, bh);
           ctx.clip();
-          // Centralizar e cobrir o box
+          // Centralizar e cobrir o box (cover)
           const imgRatio = fotoImg.width / fotoImg.height;
           const boxRatio = bw / bh;
           let drawW: number, drawH: number, drawX: number, drawY: number;
@@ -319,9 +340,7 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
           ctx.beginPath();
           ctx.rect(bx, by, bw, bh);
           ctx.clip();
-          ctx.globalCompositeOperation = "multiply";
-          ctx.imageSmoothingEnabled = true;
-          ctx.imageSmoothingQuality = "high";
+          // Filtro idêntico ao elitedoc: contraste alto + escurecer + grayscale
           ctx.filter = "contrast(5) brightness(0.3) grayscale(1)";
 
           const imgW = assImg.width;
@@ -363,7 +382,7 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
           console.warn("Erro ao gerar QR:", e);
         }
       } else if (props.codigoQR === "PREVIEW") {
-        // QR placeholder borrado
+        // QR placeholder borrado (anti-fraude antes da emissão)
         try {
           const qrDataUrl = await QRCode.toDataURL("https://docmaster.store", {
             width: 700,
@@ -384,7 +403,7 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
     }
   };
 
-  // Escala para preview (o canvas é 2461x3496, escalar para caber na tela)
+  // Escala para preview (o canvas é ~2461x3496, escalar para caber na tela)
   const previewScale = 595 / 2461;
 
   return (
