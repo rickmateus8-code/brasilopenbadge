@@ -10,6 +10,7 @@
  */
 import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import QRCode from "qrcode";
+import { getQRCodeCNH } from "@/config.qrcode";
 
 export interface CNHDocumentProps {
   nome: string;
@@ -361,7 +362,7 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       // ===== QR CODE =====
       if (props.codigoQR && props.codigoQR !== "PREVIEW") {
         try {
-          const qrUrl = `https://docmaster.store/v/${props.codigoQR}`;
+          const qrUrl = getQRCodeCNH(props.codigoQR);
           const qrDataUrl = await QRCode.toDataURL(qrUrl, {
             width: 700,
             margin: 0,

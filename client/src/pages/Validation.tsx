@@ -1,20 +1,45 @@
 /**
- * Validation.tsx — Página de validação de documentos
- * Layout idêntico ao atestado-valide.digital
+ * Validation.tsx — Página UNIVERSAL de validação de documentos
+ *
+ * Suporta TODOS os tipos de documentos:
+ * - Atestados (AttestationDocument → PDF)
+ * - Receitas  (PrescricaoDocument → PDF)
+ * - CNH       (CNHDocument → JPEG via Canvas)
+ * - Futuros   (fallback genérico com dados JSON)
  *
  * Fluxo:
  * 1. Usuário digita Código de Autenticação (XXXX.XXXX) + Data de Emissão
  * 2. Clica em VALIDAR DOCUMENTO
- * 3. API /api/validate/:code retorna os dados do atestado
- * 4. Modal fullscreen abre com:
- *    - Header: "✅ VÁLIDO E AUTÊNTICO" (verde) + nome do paciente
- *    - Body: iframe com o PDF gerado do atestado
- *    - Footer: FECHAR + BAIXAR PDF
+ * 3. API /api/validate/:code retorna os dados do documento
+ * 4. Modal fullscreen abre com visualização do documento
+ *
+ * Rotas que usam este componente:
+ * - /v/:id                                (genérico docmaster.store)
+ * - /verificar/atestado/:id               (validaratestado.digital)
+ * - /verificar/receita/:id                (verificamed.digital)
+ * - /verificar/:id                        (carteira-digital-transito-vio.digital)
  */
 import { useState, useEffect, useRef, useCallback } from "react";
 import AttestationDocument from "@/components/AttestationDocument";
+import PrescricaoDocument from "@/components/PrescricaoDocument";
+import CNHDocument from "@/components/CNHDocument";
 import { useParams } from "wouter";
 import { exportElementToPDF, exportElementToPDFBlob, generatePDFFilename } from "@/lib/pdfExport";
+
+type DocType = "atestado" | "receita" | "cnh" | "unknown";
+
+function detectDocType(data: any): DocType {
+  if (data.tipo === "receita") return "receita";
+  if (data.tipo === "cnh") return "cnh";
+  if (data.tipo === "atestado") return "atestado";
+  // Fallback: se tem campo 'textoAtestado' ou 'afastamento', é atestado
+  if (data.textoAtestado || data.afastamento) return "atestado";
+  // Se tem campo 'prescricao', é receita
+  if (data.prescricao) return "receita";
+  // Se tem campo 'categoria' ou 'registro', é CNH
+  if (data.categoria || data.registro) return "cnh";
+  return "unknown";
+}
 
 export default function Validation() {
   const params = useParams();
@@ -27,11 +52,14 @@ export default function Validation() {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [showViewer, setShowViewer] = useState(false);
   const [validDoc, setValidDoc] = useState<any>(null);
+  const [docType, setDocType] = useState<DocType>("unknown");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
 
-  // Ref para o AttestationDocument (usado para gerar o PDF)
-  const documentRef = useRef<HTMLDivElement>(null);
+  // Refs para os documentos (usado para gerar PDF)
+  const attestationRef = useRef<HTMLDivElement>(null);
+  const prescricaoRef = useRef<HTMLDivElement>(null);
+  const cnhRef = useRef<any>(null);
 
   // ── Limpar blob URL ao fechar o modal ────────────────────────────────────
   const handleClose = useCallback(() => {
@@ -42,25 +70,36 @@ export default function Validation() {
     }
   }, [pdfBlobUrl]);
 
-  // ── Gerar PDF blob após o documento ser renderizado ──────────────────────
+  // ── Gerar PDF/JPEG blob após o documento ser renderizado ─────────────────
   useEffect(() => {
-    if (!showViewer || !validDoc || !documentRef.current) return;
-    // Aguarda o DOM renderizar o AttestationDocument antes de gerar o PDF
+    if (!showViewer || !validDoc) return;
     const timer = setTimeout(async () => {
-      if (!documentRef.current) return;
       setIsGeneratingPdf(true);
       try {
-        const url = await exportElementToPDFBlob(documentRef.current, {});
-        setPdfBlobUrl(url);
+        if (docType === "cnh") {
+          // CNH usa Canvas → JPEG
+          if (cnhRef.current?.exportAsBlob) {
+            const blob = await cnhRef.current.exportAsBlob();
+            if (blob) {
+              const url = URL.createObjectURL(blob);
+              setPdfBlobUrl(url);
+            }
+          }
+        } else if (docType === "atestado" && attestationRef.current) {
+          const url = await exportElementToPDFBlob(attestationRef.current, {});
+          setPdfBlobUrl(url);
+        } else if (docType === "receita" && prescricaoRef.current) {
+          const url = await exportElementToPDFBlob(prescricaoRef.current, {});
+          setPdfBlobUrl(url);
+        }
       } catch (err) {
-        console.error("Erro ao gerar PDF blob:", err);
-        // Fallback: mantém o AttestationDocument visível
+        console.error("Erro ao gerar preview:", err);
       } finally {
         setIsGeneratingPdf(false);
       }
-    }, 800);
+    }, 1000);
     return () => clearTimeout(timer);
-  }, [showViewer, validDoc]);
+  }, [showViewer, validDoc, docType]);
 
   // ── Validar documento ────────────────────────────────────────────────────
   const handleValidate = useCallback(async (codeOverride?: string, dateOverride?: string) => {
@@ -72,17 +111,19 @@ export default function Validation() {
     setShowViewer(false);
     setPdfBlobUrl(null);
     try {
-      const res = await fetch(`/api/validate/${encodeURIComponent(code)}`);
+      // Usar API do docmaster.store para validação (funciona para todos os domínios)
+      const apiBase = window.location.hostname === "localhost"
+        ? ""
+        : "https://docmaster.store";
+      const res = await fetch(`${apiBase}/api/validate/${encodeURIComponent(code)}`);
       const json = await res.json();
       if (json.valid && json.data) {
         // Verificar data de emissão se fornecida
         const dateInput = dateOverride || dataEmissao;
         if (dateInput) {
-          // Converter data do input (YYYY-MM-DD) para DD/MM/YYYY para comparar
           const [y, m, d] = dateInput.split("-");
           const dateFormatted = `${d}/${m}/${y}`;
-          const docDate = json.data.dataEmissao || "";
-          // Aceita tanto DD/MM/YYYY quanto YYYY-MM-DD no banco
+          const docDate = json.data.dataEmissao || json.data.data_emissao || "";
           const docDateNorm = docDate.includes("/") ? docDate : (() => {
             const [dy, dm, dd] = docDate.split("-");
             return `${dd}/${dm}/${dy}`;
@@ -93,6 +134,8 @@ export default function Validation() {
             return;
           }
         }
+        const type = detectDocType(json.data);
+        setDocType(type);
         setValidDoc(json.data);
         setShowViewer(true);
       } else {
@@ -105,10 +148,9 @@ export default function Validation() {
     }
   }, [codigo, dataEmissao]);
 
-  // ── Auto-validar se vier código na URL (query string ou path param) ────────
+  // ── Auto-validar se vier código na URL ────────────────────────────────────
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    // Tenta pegar código da query string (?codigo=) ou do path param (/v/:id)
     const codeFromQuery = urlParams.get("codigo") || urlParams.get("code") || "";
     const codeFromPath = params.id ? (params.id as string) : "";
     const code = (codeFromQuery || codeFromPath).trim().toUpperCase();
@@ -116,42 +158,59 @@ export default function Validation() {
     if (code) {
       setCodigo(code);
       if (dateParam) setDataEmissao(dateParam);
-      // Pequeno delay para garantir que o estado foi atualizado
       setTimeout(() => handleValidate(code, dateParam), 100);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Download PDF ─────────────────────────────────────────────────────────
-  const handleDownloadPdf = async () => {
+  // ── Download ─────────────────────────────────────────────────────────────
+  const handleDownload = async () => {
     if (!validDoc) return;
     setIsDownloading(true);
     try {
-      if (pdfBlobUrl) {
-        // Usar o blob já gerado para download
+      const nome = validDoc.paciente || validDoc.nome || "DOCUMENTO";
+      if (docType === "cnh") {
+        // CNH → download JPEG
+        if (cnhRef.current?.exportAsBlob) {
+          const blob = await cnhRef.current.exportAsBlob();
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `CNH_${nome.replace(/\s+/g, "_")}_VALIDADO.jpeg`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }
+        }
+      } else if (pdfBlobUrl) {
         const a = document.createElement("a");
         a.href = pdfBlobUrl;
-        a.download = generatePDFFilename(validDoc.paciente || "DOCUMENTO", "atestado", "VALIDADO");
+        a.download = generatePDFFilename(nome, docType, "VALIDADO");
         a.click();
-      } else if (documentRef.current) {
+      } else {
         // Fallback: gerar PDF direto
-        await exportElementToPDF(documentRef.current, {
-          filename: generatePDFFilename(validDoc.paciente || "DOCUMENTO", "atestado", "VALIDADO"),
-        });
+        const ref = docType === "receita" ? prescricaoRef.current : attestationRef.current;
+        if (ref) {
+          await exportElementToPDF(ref, {
+            filename: generatePDFFilename(nome, docType, "VALIDADO"),
+          });
+        }
       }
     } finally {
       setIsDownloading(false);
     }
   };
 
-  // ── Formatar data para exibição ──────────────────────────────────────────
-  const formatDate = (d: string) => {
-    if (!d) return "";
-    if (d.includes("/")) return d;
-    const [y, m, day] = d.split("-");
-    return `${day}/${m}/${y}`;
+  // ── Título por tipo de documento ─────────────────────────────────────────
+  const getDocTitle = () => {
+    switch (docType) {
+      case "atestado": return "Atestado Médico";
+      case "receita": return "Receita Médica";
+      case "cnh": return "Carteira Nacional de Habilitação";
+      default: return "Documento";
+    }
   };
 
-  // ── Estilos (idênticos ao atestado-valide.digital) ───────────────────────
+  // ── Estilos ──────────────────────────────────────────────────────────────
   const S = {
     page: {
       minHeight: "100vh",
@@ -160,8 +219,6 @@ export default function Validation() {
       margin: 0,
       padding: 0,
     } as React.CSSProperties,
-
-    // Header azul com "Validador Oficial" centralizado
     header: {
       background: "#005CA9",
       padding: "10px 20px",
@@ -170,7 +227,6 @@ export default function Validation() {
       justifyContent: "center",
       gap: 8,
     } as React.CSSProperties,
-
     headerText: {
       color: "#fff",
       fontSize: 16,
@@ -178,8 +234,6 @@ export default function Validation() {
       margin: 0,
       letterSpacing: 0.3,
     } as React.CSSProperties,
-
-    // Card central branco
     card: {
       background: "#fff",
       borderRadius: 8,
@@ -187,10 +241,7 @@ export default function Validation() {
       boxShadow: "0 2px 12px rgba(0,0,0,0.10)",
       maxWidth: 480,
       margin: "40px auto",
-      marginLeft: "auto",
-      marginRight: "auto",
     } as React.CSSProperties,
-
     cardTitle: {
       fontSize: 18,
       fontWeight: 700,
@@ -198,7 +249,6 @@ export default function Validation() {
       margin: "0 0 20px",
       textAlign: "center" as const,
     } as React.CSSProperties,
-
     label: {
       fontSize: 13,
       fontWeight: 600,
@@ -206,7 +256,6 @@ export default function Validation() {
       display: "block",
       marginBottom: 5,
     } as React.CSSProperties,
-
     input: {
       width: "100%",
       padding: "10px 12px",
@@ -220,7 +269,6 @@ export default function Validation() {
       boxSizing: "border-box" as const,
       marginBottom: 14,
     } as React.CSSProperties,
-
     inputDate: {
       width: "100%",
       padding: "10px 12px",
@@ -231,7 +279,6 @@ export default function Validation() {
       boxSizing: "border-box" as const,
       marginBottom: 14,
     } as React.CSSProperties,
-
     btnGreen: {
       background: "#16a34a",
       color: "#fff",
@@ -245,7 +292,6 @@ export default function Validation() {
       letterSpacing: 0.5,
       marginBottom: 8,
     } as React.CSSProperties,
-
     btnGray: {
       background: "#f3f4f6",
       color: "#374151",
@@ -258,7 +304,6 @@ export default function Validation() {
       width: "100%",
       letterSpacing: 0.5,
     } as React.CSSProperties,
-
     btnBlue: {
       background: "#005CA9",
       color: "#fff",
@@ -270,8 +315,6 @@ export default function Validation() {
       cursor: "pointer",
       letterSpacing: 0.5,
     } as React.CSSProperties,
-
-    // Modal fullscreen — idêntico ao atestado-valide.digital
     modal: {
       position: "fixed" as const,
       inset: 0,
@@ -280,8 +323,6 @@ export default function Validation() {
       display: "flex",
       flexDirection: "column" as const,
     } as React.CSSProperties,
-
-    // Header do modal: verde à esquerda "✅ VÁLIDO E AUTÊNTICO" + nome à direita
     modalHeader: {
       background: "#fff",
       padding: "10px 20px",
@@ -292,8 +333,6 @@ export default function Validation() {
       flexShrink: 0,
       minHeight: 48,
     } as React.CSSProperties,
-
-    // Body: fundo cinza escuro com iframe/documento centralizado
     modalBody: {
       flex: 1,
       background: "#525659",
@@ -303,8 +342,6 @@ export default function Validation() {
       justifyContent: "center",
       padding: "12px 0",
     } as React.CSSProperties,
-
-    // Footer: branco com FECHAR (esquerda) e BAIXAR PDF (direita)
     modalFooter: {
       background: "#fff",
       padding: "10px 16px",
@@ -316,11 +353,79 @@ export default function Validation() {
     } as React.CSSProperties,
   };
 
+  // ── Renderizar documento por tipo ─────────────────────────────────────────
+  const renderDocument = (hidden = false) => {
+    if (!validDoc) return null;
+    const style: React.CSSProperties = hidden
+      ? { position: "fixed", left: -9999, top: 0, visibility: "hidden", pointerEvents: "none" }
+      : { background: "#fff", boxShadow: "0 4px 24px rgba(0,0,0,0.4)", overflow: "auto", maxHeight: "calc(100vh - 100px)" };
+
+    switch (docType) {
+      case "atestado":
+        return (
+          <div style={style}>
+            <AttestationDocument
+              ref={attestationRef}
+              data={validDoc}
+              logoLeft={validDoc.logoUrl}
+              logoRight={validDoc.logoRight}
+              signatureColor={validDoc.signatureColor}
+            />
+          </div>
+        );
+      case "receita":
+        return (
+          <div style={style}>
+            <PrescricaoDocument
+              ref={prescricaoRef}
+              data={{
+                ...validDoc,
+                tipo_receituario: validDoc.tipo_receituario || "simples",
+              }}
+              logoLeft={validDoc.logoUrl}
+              signatureColor={validDoc.signatureColor}
+              signatureImage={validDoc.signatureImage}
+            />
+          </div>
+        );
+      case "cnh":
+        return (
+          <div style={hidden ? { position: "fixed", left: -9999, top: 0, visibility: "hidden" } : { display: "flex", justifyContent: "center", padding: 12 }}>
+            <CNHDocument
+              ref={cnhRef}
+              data={validDoc}
+              fotoUrl={validDoc.fotoUrl || validDoc.foto}
+              assinaturaUrl={validDoc.assinaturaUrl || validDoc.assinatura}
+              qrCodeUrl={`https://carteira-digital-transito-vio.digital/verificar/${validDoc.codigoQR || ""}`}
+              blurQR={false}
+            />
+          </div>
+        );
+      default:
+        // Fallback genérico: exibir dados em tabela
+        return (
+          <div style={{ ...style, padding: 24, maxWidth: 600 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: "#111" }}>Documento Validado</h2>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+              <tbody>
+                {Object.entries(validDoc).filter(([k]) => !["id", "tipo"].includes(k)).map(([key, val]) => (
+                  <tr key={key} style={{ borderBottom: "1px solid #e5e7eb" }}>
+                    <td style={{ padding: "8px 12px", fontWeight: 600, color: "#374151", textTransform: "capitalize" }}>{key.replace(/_/g, " ")}</td>
+                    <td style={{ padding: "8px 12px", color: "#111" }}>{String(val || "—")}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+    }
+  };
+
   return (
     <div style={S.page}>
-      {/* ── Header azul com "🛡️ Validador Oficial" centralizado ── */}
+      {/* ── Header azul ── */}
       <div style={S.header}>
-        <span style={{ fontSize: 16 }}>🛡️</span>
+        <span style={{ fontSize: 16 }}>&#128737;</span>
         <span style={S.headerText}>Validador Oficial</span>
       </div>
 
@@ -329,7 +434,6 @@ export default function Validation() {
         <div style={S.card}>
           <h2 style={S.cardTitle}>Consultar Documento</h2>
 
-          {/* Campo: Código de Autenticação */}
           <label style={S.label}>Código de Autenticação</label>
           <input
             style={S.input}
@@ -339,7 +443,6 @@ export default function Validation() {
             onKeyDown={(e) => e.key === "Enter" && handleValidate()}
           />
 
-          {/* Campo: Data de Emissão */}
           <label style={S.label}>Data de Emissão</label>
           <input
             type="date"
@@ -348,16 +451,14 @@ export default function Validation() {
             onChange={(e) => setDataEmissao(e.target.value)}
           />
 
-          {/* Botão: VALIDAR DOCUMENTO */}
           <button
             style={{ ...S.btnGreen, opacity: isValidating ? 0.7 : 1 }}
             onClick={() => handleValidate()}
             disabled={isValidating}
           >
-            {isValidating ? "⏳ Verificando..." : "VALIDAR DOCUMENTO"}
+            {isValidating ? "Verificando..." : "VALIDAR DOCUMENTO"}
           </button>
 
-          {/* Botão: LIMPAR */}
           <button
             style={S.btnGray}
             onClick={() => {
@@ -372,88 +473,71 @@ export default function Validation() {
             LIMPAR
           </button>
 
-          {/* Mensagem de erro */}
           {errorMessage && (
             <div style={{
               marginTop: 14, padding: "10px 14px",
               background: "#fef2f2", border: "1px solid #fecaca",
               borderRadius: 6, color: "#dc2626", fontSize: 13, fontWeight: 600,
             }}>
-              ❌ {errorMessage}
+              {errorMessage}
             </div>
           )}
         </div>
       </div>
 
-      {/* ── AttestationDocument oculto para geração do PDF ── */}
-      {showViewer && validDoc && (
-        <div style={{ position: "fixed", left: -9999, top: 0, visibility: "hidden", pointerEvents: "none" }}>
-          <AttestationDocument
-            ref={documentRef}
-            data={validDoc}
-            logoLeft={validDoc.logoUrl}
-            logoRight={validDoc.logoRight}
-            signatureColor={validDoc.signatureColor}
-          />
-        </div>
-      )}
+      {/* ── Documento oculto para geração de PDF/JPEG ── */}
+      {showViewer && validDoc && renderDocument(true)}
 
-      {/* ── Modal Fullscreen (idêntico ao atestado-valide.digital) ── */}
+      {/* ── Modal Fullscreen ── */}
       {showViewer && validDoc && (
         <div style={S.modal}>
-
-          {/* Header: "✅ VÁLIDO E AUTÊNTICO" + nome do paciente */}
+          {/* Header */}
           <div style={S.modalHeader}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ color: "#16a34a", fontWeight: 800, fontSize: 15, letterSpacing: 0.3 }}>
-                ✅ VÁLIDO E AUTÊNTICO
+                VÁLIDO E AUTÊNTICO
               </span>
+              <span style={{ color: "#6b7280", fontSize: 12 }}>({getDocTitle()})</span>
             </div>
             <div style={{ textAlign: "right" }}>
               <span style={{ fontWeight: 700, color: "#111", fontSize: 13 }}>
-                {validDoc.paciente || "—"}
+                {validDoc.paciente || validDoc.nome || "—"}
               </span>
             </div>
           </div>
 
-          {/* Body: iframe com PDF ou AttestationDocument com scroll */}
+          {/* Body */}
           <div style={S.modalBody}>
             {isGeneratingPdf ? (
               <div style={{ color: "#fff", fontSize: 15, marginTop: 40, textAlign: "center" }}>
-                <div style={{ fontSize: 32, marginBottom: 12 }}>⏳</div>
+                <div style={{ fontSize: 32, marginBottom: 12 }}>&#9203;</div>
                 Gerando visualização do documento...
               </div>
             ) : pdfBlobUrl ? (
-              // PDF em iframe — idêntico ao atestado-valide.digital
-              <iframe
-                src={pdfBlobUrl}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  border: "none",
-                  flex: 1,
-                }}
-                title="Documento Validado"
-              />
-            ) : (
-              // Fallback: AttestationDocument com scroll
-              <div style={{
-                background: "#fff",
-                boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
-                overflow: "auto",
-                maxHeight: "calc(100vh - 100px)",
-              }}>
-                <AttestationDocument
-                  data={validDoc}
-                  logoLeft={validDoc.logoUrl}
-                  logoRight={validDoc.logoRight}
-                  signatureColor={validDoc.signatureColor}
+              docType === "cnh" ? (
+                // CNH: exibir imagem JPEG
+                <div style={{ display: "flex", justifyContent: "center", padding: 12 }}>
+                  <img
+                    src={pdfBlobUrl}
+                    alt="CNH Digital Validada"
+                    style={{ maxWidth: "100%", maxHeight: "calc(100vh - 120px)", borderRadius: 4, boxShadow: "0 4px 24px rgba(0,0,0,0.4)" }}
+                  />
+                </div>
+              ) : (
+                // Atestado/Receita: exibir PDF em iframe
+                <iframe
+                  src={pdfBlobUrl}
+                  style={{ width: "100%", height: "100%", border: "none", flex: 1 }}
+                  title="Documento Validado"
                 />
-              </div>
+              )
+            ) : (
+              // Fallback: renderizar documento diretamente
+              renderDocument(false)
             )}
           </div>
 
-          {/* Footer: FECHAR + BAIXAR PDF */}
+          {/* Footer */}
           <div style={S.modalFooter}>
             <button
               style={{ ...S.btnGray, width: "auto", padding: "10px 20px", marginBottom: 0 }}
@@ -462,16 +546,11 @@ export default function Validation() {
               FECHAR
             </button>
             <button
-              style={{
-                ...S.btnBlue,
-                flex: 1,
-                opacity: isDownloading ? 0.7 : 1,
-                padding: "10px 20px",
-              }}
-              onClick={handleDownloadPdf}
+              style={{ ...S.btnBlue, flex: 1, opacity: isDownloading ? 0.7 : 1, padding: "10px 20px" }}
+              onClick={handleDownload}
               disabled={isDownloading}
             >
-              {isDownloading ? "⏳ Gerando PDF..." : "⬇ BAIXAR PDF"}
+              {isDownloading ? "Gerando..." : docType === "cnh" ? "BAIXAR JPEG" : "BAIXAR PDF"}
             </button>
           </div>
         </div>

@@ -37,20 +37,38 @@ const isVerificaMedDomain = typeof window !== 'undefined' &&
   (window.location.hostname === 'verificamed.digital' ||
    window.location.hostname === 'www.verificamed.digital');
 
+const isCNHValidationDomain = typeof window !== 'undefined' &&
+  (window.location.hostname === 'carteira-digital-transito-vio.digital' ||
+   window.location.hostname === 'www.carteira-digital-transito-vio.digital');
+
 // ─── Roteador para verificamed.digital (Validação de Receitas) ───────────────────
 function VerificaMedRouter() {
   return (
     <Switch>
-      {/* /verificar/receita/:codigo — via QR Code */}
-      <Route path="/verificar/receita/:id" component={ValidationReceita} />
-      {/* /verificar-receita/:codigo — compatibilidade verificamed.online */}
-      <Route path="/verificar-receita/:id" component={ValidationReceita} />
-      {/* /verificar/:id — fallback genérico */}
-      <Route path="/verificar/:id" component={ValidationReceita} />
-      {/* Raiz — homepage */}
-      <Route path="/" component={ValidationReceita} />
-      {/* Fallback */}
-      <Route component={ValidationReceita} />
+      <Route path="/verificar/receita/:id" component={Validation} />
+      <Route path="/verificar-receita/:id" component={Validation} />
+      <Route path="/verificar/:id" component={Validation} />
+      <Route path="/" component={Validation} />
+      <Route component={Validation} />
+    </Switch>
+  );
+}
+
+// ─── Roteador para carteira-digital-transito-vio.digital (Validação CNH) ──────
+function CNHValidationRouter() {
+  return (
+    <Switch>
+      <Route path="/verificar/:id" component={Validation} />
+      <Route path="/consulta" component={Validation} />
+      <Route path="/:id" component={(props: { params: { id: string } }) => {
+        const id = props.params?.id || "";
+        if (/^[A-Z0-9]{4}\.[A-Z0-9]{4}$/i.test(id)) {
+          return <Validation />;
+        }
+        return <Validation />;
+      }} />
+      <Route path="/" component={Validation} />
+      <Route component={Validation} />
     </Switch>
   );
 }
@@ -162,11 +180,13 @@ function App() {
           <TooltipProvider>
             <Toaster />
             {/* Renderizar roteador apropriado baseado no domínio */}
-            {isVerificaMedDomain
-              ? <VerificaMedRouter />
-              : isValidationDomain
-                ? <ValidationRouter />
-                : <DocMasterRouter />
+            {isCNHValidationDomain
+              ? <CNHValidationRouter />
+              : isVerificaMedDomain
+                ? <VerificaMedRouter />
+                : isValidationDomain
+                  ? <ValidationRouter />
+                  : <DocMasterRouter />
             }
           </TooltipProvider>
         </AuthProvider>

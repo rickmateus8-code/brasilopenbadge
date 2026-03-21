@@ -15,6 +15,7 @@ import { useAuth } from "../contexts/AuthContext";
 import DashboardLayout from "../components/DashboardLayout";
 import CNHDocument, { type CNHDocumentHandle, type CNHDocumentProps } from "../components/CNHDocument";
 import { toast } from "sonner";
+import { getQRCodeCNH } from "@/config.qrcode";
 import {
   ArrowLeft, Save, Download, MessageCircle, Copy, Zap,
   Upload, Type, Lock, AlertCircle, Car
@@ -251,7 +252,7 @@ export default function CNHCria() {
   // ─── WhatsApp Share ────────────────────────────────────────────────────────
   const handleWhatsApp = () => {
     const texto = encodeURIComponent(
-      `*DocMaster - CNH Digital*\n\nOlá! Segue sua CNH Digital gerada pelo DocMaster.\n\nNome: ${data.nome}\nCPF: ${data.cpf}\nCategoria: ${data.categoria}\n\nAcesse o documento: https://docmaster.store/v/${codigoQR}\n\nSenha App: ${data.senhaApp || "Não definida"}\n\n_Documento gerado por DocMaster_`
+      `*DocMaster - CNH Digital*\n\nOlá! Segue sua CNH Digital gerada pelo DocMaster.\n\nNome: ${data.nome}\nCPF: ${data.cpf}\nCategoria: ${data.categoria}\n\nAcesse o documento: ${getQRCodeCNH(codigoQR)}\n\nSenha App: ${data.senhaApp || "Não definida"}\n\n_Documento gerado por DocMaster_`
     );
     window.open(`https://wa.me/?text=${texto}`, "_blank");
   };
@@ -667,7 +668,7 @@ export default function CNHCria() {
           <div className="cnh-result-box">
             <h3>CNH Digital emitida com sucesso!</h3>
             <p>Código: <strong style={{ fontFamily: "monospace" }}>{codigoQR}</strong></p>
-            <p>Validação: <strong>docmaster.store/v/{codigoQR}</strong></p>
+            <p>Validação: <strong>{getQRCodeCNH(codigoQR)}</strong></p>
             <div className="cnh-result-btns">
               <button className="cnh-btn-download" onClick={handleExportJPEG} disabled={loading}>
                 <Download size={14} /> Baixar JPEG

@@ -115,7 +115,10 @@ export default function Dashboard() {
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      const endpoint = activeTab === "receita" ? `/api/receitas/${id}` : `/api/attestations/${id}`;
+      // Endpoint genérico por tipo de documento
+      let endpoint = `/api/attestations/${id}`;
+      if (activeTab === "receita") endpoint = `/api/receitas/${id}`;
+      else if (activeTab === "cnh" || activeTab === "cha" || activeTab === "toxicologico" || activeTab === "historico-sp" || activeTab === "historico-uninter") endpoint = `/api/documents/${id}`;
       const res = await fetch(endpoint, {
         method: "DELETE",
         credentials: "include",
@@ -334,35 +337,27 @@ export default function Dashboard() {
                                   <Pencil className="w-4 h-4" />
                                 </button>
                               )}
-                              {/* Baixar PDF */}
-                              {activeTab === "atestado" && (
-                                <button
-                                  title="Baixar PDF"
-                                  onClick={() => setLocation(`/historico/atestados/${doc.id}`)}
-                                  className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-                                >
-                                  <Download className="w-4 h-4" />
-                                </button>
-                              )}
-                              {/* Excluir */}
-                              {(activeTab === "atestado" || activeTab === "receita") && (
-                                <button
-                                  title={`Excluir ${activeTab === "receita" ? "receita" : "atestado"}`}
-                                  onClick={() => setConfirmDeleteId(doc.id)}
-                                  className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              )}
-                              {/* Ver (outros tipos) */}
-                              {activeTab !== "atestado" && (
-                                <button
-                                  onClick={() => setLocation(`/historico/atestados/${doc.id}`)}
-                                  className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 font-medium"
-                                >
-                                  Ver
-                                </button>
-                              )}
+                              {/* Baixar PDF / Ver */}
+                              <button
+                                title="Ver documento"
+                                onClick={() => {
+                                  if (activeTab === "atestado") setLocation(`/historico/atestados/${doc.id}`);
+                                  else if (activeTab === "receita") setLocation(`/v/${doc.codigo_qr || doc.id}`);
+                                  else if (activeTab === "cnh") setLocation(`/v/${doc.codigo_qr || doc.id}`);
+                                  else setLocation(`/v/${doc.codigo_qr || doc.id}`);
+                                }}
+                                className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                              >
+                                <Download className="w-4 h-4" />
+                              </button>
+                              {/* Excluir — disponível para todos os tipos */}
+                              <button
+                                title="Excluir documento"
+                                onClick={() => setConfirmDeleteId(doc.id)}
+                                className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
                             </div>
                           </td>
                         </tr>
