@@ -202,7 +202,7 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
 
   // 3. Gerar código QR único no servidor
   const codigoQR = await generateUniqueRxCode(env);
-  const validationUrl = `https://validaratestado.digital/receita/${codigoQR}`;
+  const validationUrl = `https://verificamed.digital/verificar/receita/${codigoQR}`;
 
   // 4. Gerar ID único
   const id = crypto.randomUUID();

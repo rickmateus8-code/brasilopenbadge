@@ -102,6 +102,74 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       );
     }
 
+    // Busca na tabela receitas (receituário médico)
+    let receita: Record<string, unknown> | null = null;
+    try {
+      receita = await env.DB.prepare(
+        `SELECT
+          r.id, r.codigo_qr, r.tipo_receituario,
+          r.paciente, r.cpf, r.identidade, r.endereco, r.telefone, r.cidade,
+          r.medico, r.crm, r.especialidade, r.instituicao, r.unidade,
+          r.endereco_emitente, r.cnpj_emitente, r.telefone_emitente, r.site_emitente,
+          r.prescricao, r.data_emissao, r.hora_emissao,
+          r.logo_url, r.signature_color, r.signature_image,
+          r.status, r.created_at,
+          u.username as emitido_por
+         FROM receitas r
+         LEFT JOIN users u ON r.user_id = u.id
+         WHERE r.codigo_qr = ? AND r.status = 'emitido'`
+      )
+        .bind(code)
+        .first<Record<string, unknown>>();
+    } catch {
+      receita = null;
+    }
+
+    if (receita) {
+      let prescricao: any[] = [];
+      try {
+        prescricao = JSON.parse(receita.prescricao as string || "[]");
+      } catch { prescricao = []; }
+
+      return new Response(
+        JSON.stringify({
+          valid: true,
+          message: "Receita médica válida e autêntica.",
+          data: {
+            id: receita.id,
+            tipo: "receita",
+            tipo_receituario: receita.tipo_receituario,
+            codigoQR: receita.codigo_qr,
+            paciente: receita.paciente,
+            cpf: receita.cpf,
+            identidade: receita.identidade,
+            endereco: receita.endereco,
+            telefone: receita.telefone,
+            cidade: receita.cidade,
+            medico: receita.medico,
+            crm: receita.crm,
+            especialidade: receita.especialidade,
+            instituicao: receita.instituicao,
+            unidade: receita.unidade,
+            endereco_emitente: receita.endereco_emitente,
+            cnpj_emitente: receita.cnpj_emitente,
+            telefone_emitente: receita.telefone_emitente,
+            site_emitente: receita.site_emitente,
+            prescricao,
+            dataEmissao: receita.data_emissao,
+            horaEmissao: receita.hora_emissao,
+            logoUrl: receita.logo_url,
+            signatureColor: receita.signature_color,
+            signatureImage: receita.signature_image,
+            status: receita.status,
+            emitidoPor: receita.emitido_por,
+            createdAt: receita.created_at,
+          },
+        }),
+        { status: 200, headers: CORS_HEADERS }
+      );
+    }
+
     // Busca na tabela documents (CNH, CHA, Toxicológico, etc.)
     let document: Record<string, unknown> | null = null;
     try {

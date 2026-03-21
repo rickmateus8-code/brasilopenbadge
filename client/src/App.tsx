@@ -30,6 +30,26 @@ const isValidationDomain = typeof window !== 'undefined' &&
   (window.location.hostname === 'validaratestado.digital' || 
    window.location.hostname === 'www.validaratestado.digital');
 
+const isVerificaMedDomain = typeof window !== 'undefined' &&
+  (window.location.hostname === 'verificamed.digital' ||
+   window.location.hostname === 'www.verificamed.digital');
+
+// ─── Roteador para verificamed.digital (Validação de Receitas) ───────────────────
+function VerificaMedRouter() {
+  return (
+    <Switch>
+      {/* /verificar/receita/:codigo */}
+      <Route path="/verificar/receita/:id" component={Validation} />
+      {/* /verificar/:id */}
+      <Route path="/verificar/:id" component={Validation} />
+      {/* Raiz */}
+      <Route path="/" component={Validation} />
+      {/* Fallback */}
+      <Route component={Validation} />
+    </Switch>
+  );
+}
+
 // ─── Roteador para validaratestado.digital (Apenas Validação) ──────────────────
 function ValidationRouter() {
   return (
@@ -129,7 +149,12 @@ function App() {
           <TooltipProvider>
             <Toaster />
             {/* Renderizar roteador apropriado baseado no domínio */}
-            {isValidationDomain ? <ValidationRouter /> : <DocMasterRouter />}
+            {isVerificaMedDomain
+              ? <VerificaMedRouter />
+              : isValidationDomain
+                ? <ValidationRouter />
+                : <DocMasterRouter />
+            }
           </TooltipProvider>
         </AuthProvider>
       </ThemeProvider>
