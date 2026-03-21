@@ -197,8 +197,8 @@ export async function exportElementToPDF(
   body {
     background: #ffffff;
     width: ${DOC_REAL_WIDTH}px;
-    height: ${DOC_REAL_HEIGHT}px;
-    overflow: hidden;
+    height: ${multiPage ? "auto" : DOC_REAL_HEIGHT + "px"};
+    overflow: ${multiPage ? "visible" : "hidden"};
     font-family: Arial, Helvetica, sans-serif;
   }
 </style>
@@ -458,8 +458,8 @@ export async function exportElementToPDFBlob(
   body {
     background: #ffffff;
     width: ${DOC_REAL_WIDTH}px;
-    height: ${DOC_REAL_HEIGHT}px;
-    overflow: hidden;
+    height: ${multiPage ? "auto" : DOC_REAL_HEIGHT + "px"};
+    overflow: ${multiPage ? "visible" : "hidden"};
     font-family: Arial, Helvetica, sans-serif;
   }
 </style>
