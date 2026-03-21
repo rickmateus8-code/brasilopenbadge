@@ -291,10 +291,8 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
     ).run();
   }
 
-  // 7. Apagar CPF após emissão (regra de privacidade — CPF não é armazenado após emissão)
-  await env.DB.prepare(
-    "UPDATE attestations SET cpf = NULL, cns = NULL WHERE id = ?"
-  ).bind(id).run();
+  // 7. CPF é mantido no banco para exibição na edição (bloqueado/não-editável)
+  // Não apagamos mais o CPF após emissão para que a edição mostre o valor original
 
   return jsonResponse({
     success: true,

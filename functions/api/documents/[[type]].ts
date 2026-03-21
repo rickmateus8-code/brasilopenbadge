@@ -79,10 +79,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
       'INSERT INTO transactions (user_id, type, amount, description, document_type, document_id) VALUES (?, ?, ?, ?, ?, ?)'
     ).bind(user.id, 'debit', price, `Emissão de ${docType.toUpperCase()}`, docType, docId).run();
 
-    // Save document
+    // Save document with status='emitido' for validation
     await env.DB.prepare(
-      'INSERT INTO documents (id, user_id, type, data, codigo_validacao, created_at) VALUES (?, ?, ?, ?, ?, datetime("now"))'
-    ).bind(docId, user.id, docType, JSON.stringify(body), codigoValidacao).run();
+      'INSERT INTO documents (id, user_id, type, data, codigo_validacao, status, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime("now"))'
+    ).bind(docId, user.id, docType, JSON.stringify(body), codigoValidacao, 'emitido').run();
 
     return new Response(JSON.stringify({
       success: true,

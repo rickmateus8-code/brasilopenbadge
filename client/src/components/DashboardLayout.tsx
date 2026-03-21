@@ -52,7 +52,7 @@ const menuItems: MenuItem[] = [
   {
     icon: Pill, label: "Receituário",
     children: [
-      { label: "Nova Receita", path: "/receitacria" },
+      { label: "Dr. Consulta", path: "/receitacria" },
     ],
   },
 ];

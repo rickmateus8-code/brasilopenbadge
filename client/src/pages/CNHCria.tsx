@@ -267,37 +267,39 @@ export default function CNHCria() {
   // ─── RENDER ────────────────────────────────────────────────────────────────
   return (
     <DashboardLayout>
-      {/* CSS inline idêntico ao elitedoc */}
+      {/* CSS tema escuro DocMaster */}
       <style>{`
         .cnh-form {
           font-family: 'Inter', sans-serif;
-          background: #fff;
-          color: #1e293b;
-          padding: 20px;
+          background: #0f172a;
+          color: #e2e8f0;
+          padding: 24px;
           padding-bottom: 120px;
-          max-width: 960px;
-          margin: 0 auto;
+          width: 100%;
+          max-width: 100%;
+          min-height: 100vh;
+          box-sizing: border-box;
         }
         .cnh-header-top {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 20px;
+          margin-bottom: 24px;
         }
         .cnh-header-top h1 {
           font-size: 20px;
           font-weight: 800;
           margin: 0;
         }
-        .cnh-header-top h1 span.brand-black { color: #000; }
-        .cnh-header-top h1 span.brand-blue { color: #2563eb; }
+        .cnh-header-top h1 span.brand-black { color: #f1f5f9; }
+        .cnh-header-top h1 span.brand-blue { color: #ef4444; }
         .cnh-divider {
           padding: 10px 0;
           font-size: 11px;
           text-transform: uppercase;
-          color: #475569;
+          color: #94a3b8;
           font-weight: 700;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid #1e293b;
           margin: 25px 0 15px 0;
           display: flex;
           align-items: center;
@@ -305,9 +307,9 @@ export default function CNHCria() {
         }
         .cnh-form-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-          gap: 15px;
-          margin-bottom: 15px;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 16px;
+          margin-bottom: 16px;
         }
         .cnh-form-group {
           display: flex;
@@ -317,16 +319,16 @@ export default function CNHCria() {
         .cnh-form-group label {
           font-size: 12px;
           font-weight: 600;
-          color: #64748b;
+          color: #94a3b8;
         }
         .cnh-form-group input,
         .cnh-form-group select,
         .cnh-form-group textarea {
-          padding: 10px;
+          padding: 10px 12px;
           border-radius: 8px;
-          border: 2px dashed #ef4444;
-          background: #f8fafc;
-          color: #1e293b;
+          border: 1px solid #334155;
+          background: #1e293b;
+          color: #f1f5f9;
           outline: none;
           font-size: 13px;
           font-family: 'Inter', sans-serif;
@@ -335,16 +337,15 @@ export default function CNHCria() {
         .cnh-form-group input:focus,
         .cnh-form-group select:focus,
         .cnh-form-group textarea:focus {
-          border-color: #2563eb;
-          background: #fff;
-          border-style: solid;
+          border-color: #ef4444;
+          background: #1e293b;
         }
         .cnh-form-group textarea {
           resize: vertical;
           min-height: 60px;
         }
         .cnh-form-group .obs-textarea {
-          border-color: #2563eb;
+          border-color: #ef4444;
         }
         .cnh-badge-auto {
           font-size: 9px;
@@ -365,24 +366,24 @@ export default function CNHCria() {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 15px;
-          padding: 15px;
-          border: 1px solid #e2e8f0;
+          padding: 16px;
+          border: 1px solid #334155;
           border-radius: 12px;
-          background: #fafbfc;
-          margin-bottom: 15px;
+          background: #1e293b;
+          margin-bottom: 16px;
         }
         .cnh-import-box .import-col h3 {
           font-size: 12px;
           font-weight: 600;
-          color: #475569;
+          color: #94a3b8;
           margin: 0 0 8px 0;
         }
         .cnh-import-box .modelo-text {
           font-family: monospace;
           font-size: 11px;
-          color: #64748b;
-          background: #f1f5f9;
-          border: 1px solid #e2e8f0;
+          color: #94a3b8;
+          background: #0f172a;
+          border: 1px solid #334155;
           border-radius: 8px;
           padding: 10px;
           height: 160px;
@@ -394,15 +395,18 @@ export default function CNHCria() {
           width: 100%;
           height: 160px;
           padding: 10px;
-          border: 2px dashed #2563eb;
+          border: 1px solid #334155;
           border-radius: 8px;
-          background: #f8fafc;
+          background: #0f172a;
           font-size: 12px;
           font-family: 'Inter', sans-serif;
           resize: none;
           outline: none;
-          color: #1e293b;
+          color: #f1f5f9;
           margin-bottom: 8px;
+        }
+        .cnh-import-box textarea:focus {
+          border-color: #ef4444;
         }
         .cnh-btn-copiar {
           width: 100%;
@@ -446,13 +450,13 @@ export default function CNHCria() {
         }
         .cnh-preview-box {
           margin-top: 10px;
-          border: 2px dashed #cbd5e1;
+          border: 1px solid #334155;
           border-radius: 8px;
           display: flex;
           align-items: center;
           justify-content: center;
           overflow: hidden;
-          background: #fff;
+          background: #1e293b;
         }
         .cnh-preview-rosto {
           width: 150px;
@@ -468,12 +472,12 @@ export default function CNHCria() {
           margin-bottom: 10px;
         }
         .cnh-ass-option.green {
-          background: #f0fdf4;
-          border: 1px solid #bbf7d0;
+          background: #1a2e1a;
+          border: 1px solid #22c55e33;
         }
         .cnh-ass-option.blue {
-          background: #eff6ff;
-          border: 1px solid #bfdbfe;
+          background: #1a1e2e;
+          border: 1px solid #3b82f633;
         }
         .cnh-ass-option h4 {
           font-size: 12px;
@@ -483,8 +487,8 @@ export default function CNHCria() {
           align-items: center;
           gap: 5px;
         }
-        .cnh-ass-option.green h4 { color: #15803d; }
-        .cnh-ass-option.blue h4 { color: #1d4ed8; }
+        .cnh-ass-option.green h4 { color: #4ade80; }
+        .cnh-ass-option.blue h4 { color: #60a5fa; }
         .cnh-ass-option p {
           font-size: 10px;
           color: #64748b;
@@ -496,14 +500,14 @@ export default function CNHCria() {
           left: 50%;
           transform: translateX(-50%);
           width: 90%;
-          max-width: 400px;
-          background: #2563eb;
+          max-width: 500px;
+          background: #ef4444;
           color: white;
           padding: 15px;
           border-radius: 12px;
           font-size: 16px;
           font-weight: bold;
-          box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.5);
+          box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.5);
           border: none;
           cursor: pointer;
           display: flex;
@@ -513,28 +517,28 @@ export default function CNHCria() {
           z-index: 100;
           transition: background 0.2s;
         }
-        .cnh-floating-save:hover { background: #1d4ed8; }
+        .cnh-floating-save:hover { background: #dc2626; }
         .cnh-floating-save:disabled {
-          background: #94a3b8;
+          background: #475569;
           cursor: not-allowed;
           box-shadow: none;
         }
         .cnh-result-box {
           padding: 20px;
-          background: #f0fdf4;
-          border: 1px solid #bbf7d0;
+          background: #1a2e1a;
+          border: 1px solid #22c55e44;
           border-radius: 12px;
           margin-bottom: 20px;
         }
         .cnh-result-box h3 {
           font-size: 16px;
           font-weight: 700;
-          color: #15803d;
+          color: #4ade80;
           margin: 0 0 8px 0;
         }
         .cnh-result-box p {
           font-size: 13px;
-          color: #166534;
+          color: #86efac;
           margin: 4px 0;
         }
         .cnh-result-btns {
@@ -574,9 +578,9 @@ export default function CNHCria() {
         }
         .cnh-btn-whatsapp:hover { background: #1da851; }
         .cnh-btn-voltar {
-          background: #ffffff;
-          color: #2563eb;
-          border: 1px solid #2563eb;
+          background: transparent;
+          color: #94a3b8;
+          border: 1px solid #334155;
           padding: 8px 16px;
           border-radius: 8px;
           font-weight: bold;
@@ -587,18 +591,18 @@ export default function CNHCria() {
           gap: 5px;
           transition: 0.2s;
         }
-        .cnh-btn-voltar:hover { background: #eff6ff; }
+        .cnh-btn-voltar:hover { background: #1e293b; color: #f1f5f9; }
         .cnh-balance-warn {
           display: flex;
           align-items: center;
           gap: 10px;
           padding: 12px 16px;
-          background: #fef2f2;
-          border: 1px solid #fecaca;
+          background: #2e1a1a;
+          border: 1px solid #ef444444;
           border-radius: 10px;
           margin-bottom: 20px;
           font-size: 13px;
-          color: #991b1b;
+          color: #fca5a5;
         }
         .cnh-input-with-auto {
           display: flex;
@@ -613,19 +617,19 @@ export default function CNHCria() {
           align-items: center;
           gap: 6px;
           padding: 8px 14px;
-          border: 2px dashed #cbd5e1;
+          border: 1px solid #334155;
           border-radius: 8px;
           cursor: pointer;
           font-size: 12px;
-          color: #475569;
-          background: #f8fafc;
+          color: #94a3b8;
+          background: #1e293b;
           transition: border-color 0.2s;
         }
-        .cnh-file-label:hover { border-color: #2563eb; }
+        .cnh-file-label:hover { border-color: #ef4444; }
         .cnh-acesso-divider {
           font-size: 11px;
           text-transform: uppercase;
-          color: #475569;
+          color: #94a3b8;
           font-weight: 700;
           margin: 20px 0 10px 0;
         }
@@ -654,7 +658,7 @@ export default function CNHCria() {
         {(user?.balance || 0) <= 0 && (
           <div className="cnh-balance-warn">
             <AlertCircle size={18} />
-            Saldo insuficiente. <button onClick={() => setLocation("/recargas")} style={{ fontWeight: 700, textDecoration: "underline", background: "none", border: "none", color: "#991b1b", cursor: "pointer" }}>Recarregue aqui</button>
+            Saldo insuficiente. <button onClick={() => setLocation("/recargas")} style={{ fontWeight: 700, textDecoration: "underline", background: "none", border: "none", color: "#fca5a5", cursor: "pointer" }}>Recarregue aqui</button>
           </div>
         )}
 
@@ -863,7 +867,7 @@ export default function CNHCria() {
               {data.fotoUrl ? (
                 <img src={data.fotoUrl} alt="Rosto" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               ) : (
-                <span style={{ fontSize: 12, color: "#94a3b8" }}>Prévia Rosto</span>
+                <span style={{ fontSize: 12, color: "#64748b" }}>Prévia Rosto</span>
               )}
             </div>
           </div>
@@ -881,7 +885,7 @@ export default function CNHCria() {
               <select
                 value={assEstilo}
                 onChange={(e) => setAssEstilo(parseInt(e.target.value))}
-                style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "12px", marginBottom: "6px" }}
+                style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #334155", background: "#1e293b", color: "#f1f5f9", fontSize: "12px", marginBottom: "6px" }}
               >
                 {ESTILOS_ASS.map((e, i) => <option key={i} value={i}>{e.label}</option>)}
               </select>
@@ -891,7 +895,7 @@ export default function CNHCria() {
                   value={assTexto}
                   onChange={(e) => setAssTexto(e.target.value)}
                   placeholder="Digite o nome para assinar..."
-                  style={{ flex: 1, padding: "8px", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "13px" }}
+                  style={{ flex: 1, padding: "8px", borderRadius: "6px", border: "1px solid #334155", background: "#1e293b", color: "#f1f5f9", fontSize: "13px" }}
                 />
                 <button
                   onClick={gerarAssinaturaTexto}
@@ -917,7 +921,7 @@ export default function CNHCria() {
               {data.assinaturaUrl ? (
                 <img src={data.assinaturaUrl} alt="Assinatura" style={{ height: "40px", objectFit: "contain" }} />
               ) : (
-                <span style={{ fontSize: 12, color: "#94a3b8" }}>Prévia Assinatura</span>
+                <span style={{ fontSize: 12, color: "#64748b" }}>Prévia Assinatura</span>
               )}
             </div>
           </div>
@@ -962,7 +966,7 @@ export default function CNHCria() {
             {loading ? (
               <><div style={{ width: 16, height: 16, border: "2px solid white", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} /> Gerando Documento...</>
             ) : (
-              <><Save size={18} /> SALVAR DOCUMENTO</>
+              <><Save size={18} /> EMITIR CNH</>
             )}
           </button>
         )}

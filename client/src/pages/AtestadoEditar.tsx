@@ -149,7 +149,7 @@ export default function AtestadoEditar() {
         const d = json.data || json;
         if (!d || !d.id) { setNotFound(true); setLoading(false); return; }
 
-        setCpfOriginal(d.cpf || d.tipo_doc === "CPF" ? (d.cpf || "***.***.***-**") : "");
+        setCpfOriginal(d.cpf || "");
         setCodigoQR(d.codigo_qr || d.codigoQR || "");
         setLogoLeft(d.logo_url || d.logoUrl || "");
         setLogoRight(d.logo_right || d.logoRight || "");
@@ -421,7 +421,7 @@ export default function AtestadoEditar() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
-              {cpfOriginal || "CPF não registrado"}
+              {cpfOriginal || "CPF não disponível"}
             </div>
             <p style={{ fontSize: 10, color: "#9ca3af", marginTop: 4 }}>
               Por segurança, o CPF é bloqueado após emissão e não pode ser editado.
@@ -491,18 +491,8 @@ export default function AtestadoEditar() {
             <div style={{ marginBottom: 8 }}>
               <label style={lbl}>Dias de Afastamento</label>
               <select style={sel} value={form.afastamento} onChange={e => {
-                const dias = parseInt(e.target.value);
-                const d = DIAS_EXTENSO[dias];
-                if (d) {
-                  const unidade = dias === 1 ? "dia" : "dias";
-                  setForm(p => ({
-                    ...p,
-                    afastamento: e.target.value,
-                    textoAtestado: `Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico. Necessita de ${d.num} (${d.ext}) ${unidade} de afastamento de suas atividades laborais para repouso e tratamento de saúde.`,
-                  }));
-                } else {
-                  setForm(p => ({ ...p, afastamento: e.target.value }));
-                }
+                // Na edição, só atualiza o número de dias sem sobrescrever o texto original
+                setForm(p => ({ ...p, afastamento: e.target.value }));
               }}>
                 {Array.from({ length: 15 }, (_, i) => i + 1).map(n => (
                   <option key={n} value={n}>{n} {n === 1 ? "dia" : "dias"}</option>

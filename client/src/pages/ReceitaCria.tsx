@@ -271,7 +271,7 @@ export default function ReceitaCria() {
       nome: p.medicamento, quantidade: p.quantidade, posologia: p.modo_uso,
     })),
     data_emissao: form.dataEmissao || todayBR(),
-    codigo_qr: undefined, qr_code_url: undefined,
+    codigo_qr: createdCode || undefined, qr_code_url: createdCode ? `https://docmaster.store/v/${createdCode}` : undefined,
   };
 
   return (
@@ -515,8 +515,8 @@ export default function ReceitaCria() {
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                   <div>
-                    <label style={lbl}>CPF</label>
-                    <input style={inp} value={form.cpf} onChange={e => setForm(p => ({ ...p, cpf: maskCPF(e.target.value) }))} placeholder="000.000.000-00" inputMode="numeric" maxLength={14} />
+                    <label style={lbl}>CPF {createdCode && <span style={{ fontSize: 9, color: "#ef4444", fontWeight: 700 }}>🔒 BLOQUEADO</span>}</label>
+                    <input style={{ ...inp, ...(createdCode ? { background: "#f3f4f6", color: "#6b7280", cursor: "not-allowed" } : {}) }} value={form.cpf} onChange={e => { if (!createdCode) setForm(p => ({ ...p, cpf: maskCPF(e.target.value) })); }} placeholder="000.000.000-00" inputMode="numeric" maxLength={14} readOnly={!!createdCode} />
                   </div>
                   <div>
                     <label style={lbl}>RG / Identidade</label>

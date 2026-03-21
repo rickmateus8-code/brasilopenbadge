@@ -15,7 +15,7 @@ const quickActions = [
   { icon: FlaskConical, label: "Novo Toxicológico", desc: "Emitir exame toxicológico", path: "/toxicologicocria", color: "purple" },
   { icon: GraduationCap, label: "Histórico SP", desc: "Emitir histórico escolar SP", path: "/historico-sp", color: "green" },
   { icon: GraduationCap, label: "Histórico UNINTER", desc: "Emitir histórico UNINTER", path: "/historico-uninter", color: "indigo" },
-  { icon: Pill, label: "Nova Receita", desc: "Emitir receituário médico", path: "/receitacria", color: "violet" },
+  { icon: Pill, label: "Dr. Consulta", desc: "Emitir receituário médico", path: "/receitacria", color: "violet" },
 ];
 
 const colorMap: Record<string, { bg: string; text: string; iconBg: string; badge: string }> = {
