@@ -299,20 +299,20 @@ function ViaPage({
         <div style={{
           flex: "0 0 35%",
           boxSizing: "border-box",
-          padding: "10px 16px 10px 20px",
+          padding: "8px 12px 12px 18px",
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          minHeight: 110,
+          alignSelf: "stretch",
         }}>
           {/* Via — topo: negrito pequeno + sublinhado menor */}
-          <div>
-            <div style={{ fontWeight: 700, fontSize: 9, marginBottom: 1, color: "#000" }}>
+          <div style={{ lineHeight: 1 }}>
+            <div style={{ fontWeight: 700, fontSize: 8.5, marginBottom: 1, color: "#000" }}>
               {viaNum1}
             </div>
             <div style={{
-              fontSize: 8.5,
-              lineHeight: 1.55,
+              fontSize: 8,
+              lineHeight: 1.5,
               textDecoration: "underline",
               whiteSpace: "pre-line",
               color: "#000",
@@ -321,18 +321,15 @@ function ViaPage({
             </div>
           </div>
 
-          {/* Data — base: fonte grande */}
-          <div style={{ fontSize: 14, fontWeight: 400, color: "#000", marginTop: "auto", paddingTop: 16 }}>
-            Data:{" "}
-            <span style={{ fontWeight: 400 }}>
-              {data.data_emissao
-                ? (() => {
-                    const p = data.data_emissao.split("/");
-                    if (p.length === 3) return `${p[0]}/${p[1]}/${p[2]}`;
-                    return data.data_emissao;
-                  })()
-                : "__/__/____"}
-            </span>
+          {/* Data — base: fonte maior, alinhada à esquerda */}
+          <div style={{ fontSize: 13, fontWeight: 400, color: "#000" }}>
+            Data: {data.data_emissao
+              ? (() => {
+                  const p = data.data_emissao.split("/");
+                  if (p.length === 3) return `${p[0]}/${p[1]}/${p[2]}`;
+                  return data.data_emissao;
+                })()
+              : "__/__/____"}
           </div>
         </div>
       </div>
