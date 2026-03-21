@@ -241,16 +241,13 @@ function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
             >
               {cfg.via1}
             </div>
-            <div
-              style={{
-                fontSize: 8,
-                lineHeight: 1.5,
-                textDecoration: "underline",
-                whiteSpace: "pre-line",
-                color: "#000",
-              }}
-            >
-              {cfg.via2}
+            {/* Retenção — apenas a primeira palavra sublinhada */}
+            <div style={{ fontSize: 8, lineHeight: 1.5, color: "#000" }}>
+              {cfg.via2.split("\n").map((line, i) => (
+                <div key={i} style={{ textDecoration: i === 0 ? "underline" : "none" }}>
+                  {line}
+                </div>
+              ))}
             </div>
           </div>
 
@@ -325,94 +322,82 @@ function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
       <div style={{ flex: 1 }} />
 
       {/* ── QR CODE + ASSINATURA ───────────────────────────────────────────── */}
+      {/*
+        Layout fiel à imagem:
+        - QR Code grande (120×120) no canto SUPERIOR esquerdo
+        - Assinatura itálica cinza claro à direita (nome, especialidade, CRM)
+        - Linha de assinatura abaixo do texto itálico
+        - Espaço vazio entre QR e boxes do rodapé
+      */}
       <div
         style={{
           display: "flex",
-          alignItems: "flex-end",
+          alignItems: "flex-start",
           justifyContent: "space-between",
-          marginBottom: 12,
+          marginBottom: 16,
           flexShrink: 0,
         }}
       >
-        {/* QR Code — canto inferior esquerdo */}
-        <div>
+        {/* QR Code — canto superior esquerdo */}
+        <div style={{ flexShrink: 0 }}>
           {data.qr_code_url ? (
             <img
               src={data.qr_code_url}
               alt="QR Code"
-              style={{ width: 110, height: 110, display: "block" }}
+              style={{ width: 120, height: 120, display: "block" }}
             />
           ) : (
             <div
               style={{
-                width: 110,
-                height: 110,
-                border: "1px dashed #999",
+                width: 120,
+                height: 120,
+                border: "1px dashed #bbb",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 fontSize: 8,
-                color: "#999",
+                color: "#bbb",
               }}
             >
               QR Code
             </div>
           )}
           {data.codigo_qr && (
-            <div
-              style={{
-                fontSize: 7.5,
-                color: "#555",
-                marginTop: 2,
-                textAlign: "center",
-                maxWidth: 110,
-              }}
-            >
+            <div style={{ fontSize: 7, color: "#888", marginTop: 2, textAlign: "center", maxWidth: 120 }}>
               {data.codigo_qr}
             </div>
           )}
         </div>
 
-        {/* Assinatura — canto inferior direito */}
-        <div style={{ textAlign: "center", minWidth: 220 }}>
+        {/* Assinatura — canto superior direito, itálico cinza claro */}
+        <div style={{ textAlign: "right", minWidth: 240 }}>
           {data.medico_assinatura_url && (
             <img
               src={data.medico_assinatura_url}
               alt="Assinatura"
-              style={{
-                maxHeight: 48,
-                maxWidth: 200,
-                objectFit: "contain",
-                marginBottom: 2,
-              }}
+              style={{ maxHeight: 44, maxWidth: 200, objectFit: "contain", marginBottom: 4, display: "block", marginLeft: "auto" }}
             />
           )}
-          {/* Nome, especialidade e CRM em itálico azul */}
+          {/* Nome, especialidade e CRM — itálico, cinza claro, alinhado à direita */}
           <div
             style={{
               fontStyle: "italic",
-              color: "#1a3a6b",
-              fontSize: 11,
-              lineHeight: 1.5,
-              marginBottom: 4,
+              color: "#aaa",
+              fontSize: 10.5,
+              lineHeight: 1.55,
+              marginBottom: 6,
             }}
           >
-            <div>{data.medico_nome}</div>
+            <div style={{ fontSize: 10 }}>{data.medico_nome}</div>
             {data.medico_especialidade && (
-              <div>{data.medico_especialidade}</div>
+              <div style={{ fontSize: 10 }}>{data.medico_especialidade}</div>
             )}
-            <div>
+            <div style={{ fontSize: 10, fontWeight: 700 }}>
               CRM-{data.medico_uf}: {data.medico_crm}
             </div>
           </div>
           {/* Linha de assinatura */}
-          <div
-            style={{
-              borderTop: "1px solid #000",
-              width: 220,
-              marginTop: 2,
-            }}
-          />
+          <div style={{ borderTop: "1px solid #555", width: "100%", marginTop: 2 }} />
         </div>
       </div>
 
@@ -462,34 +447,35 @@ function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
           </div>
         </div>
 
-        {/* Box Assinatura do Farmacêutico — 50% */}
+        {/* Box Assinatura do Farmacêutico — 50%, sem borda esquerda */}
         <div
           style={{
             flex: "0 0 50%",
             border: "1px solid #000",
             borderLeft: "none",
             boxSizing: "border-box",
-            padding: "12px 12px 10px",
+            padding: "14px 16px 12px",
             display: "flex",
             flexDirection: "column",
             justifyContent: "flex-end",
           }}
         >
-          <div style={{ borderTop: "1px solid #000", marginBottom: 22 }} />
-          <div style={{ borderTop: "1px solid #000", marginBottom: 22 }} />
-          <div style={{ borderTop: "1px solid #000", marginBottom: 8 }} />
-          <div
-            style={{
-              fontSize: 9.5,
-              textAlign: "center",
-              marginBottom: 6,
-              color: "#000",
-            }}
-          >
+          {/* 3 linhas de preenchimento manual */}
+          <div style={{ borderTop: "1px solid #000", marginBottom: 24 }} />
+          <div style={{ borderTop: "1px solid #000", marginBottom: 24 }} />
+          <div style={{ borderTop: "1px solid #000", marginBottom: 10 }} />
+          {/* Label Assinatura do Farmacêutico */}
+          <div style={{ fontSize: 9, textAlign: "center", marginBottom: 8, color: "#000" }}>
             Assinatura do Farmacêutico
           </div>
-          <div style={{ fontSize: 9.5, textAlign: "center", color: "#000" }}>
-            Data _______ / _______ / _______
+          {/* Data */}
+          <div style={{ fontSize: 9.5, textAlign: "center", color: "#000", fontWeight: 400 }}>
+            Data{" "}
+            <span style={{ borderBottom: "1px solid #000", display: "inline-block", minWidth: 28 }}>&nbsp;&nbsp;&nbsp;&nbsp;</span>
+            {" "}/{" "}
+            <span style={{ borderBottom: "1px solid #000", display: "inline-block", minWidth: 28 }}>&nbsp;&nbsp;&nbsp;&nbsp;</span>
+            {" "}/{" "}
+            <span style={{ borderBottom: "1px solid #000", display: "inline-block", minWidth: 28 }}>&nbsp;&nbsp;&nbsp;&nbsp;</span>
           </div>
         </div>
       </div>
