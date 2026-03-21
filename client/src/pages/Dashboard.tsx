@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   FileText, Car, Anchor, FlaskConical, GraduationCap,
   Wallet, TrendingUp, BarChart3, ChevronRight, Plus,
-  Clock, CheckCircle, Bell, Eye, Download, Trash2, Pill
+  Clock, CheckCircle, Bell, Eye, Download, Trash2, Pill, Pencil
 } from "lucide-react";
 
 const quickActions = [
@@ -232,7 +232,7 @@ export default function Dashboard() {
         </div>
 
         {/* Emission History */}
-        <div className="mb-7">
+        <div id="historico-atestados" className="mb-7">
           <div className="flex items-center gap-2 mb-4">
             <Clock className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 uppercase tracking-wide">
@@ -314,14 +314,14 @@ export default function Dashboard() {
                           </td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex items-center justify-end gap-1">
-                              {/* Visualizar */}
-                              {activeTab === "atestado" && codigoQR && (
+                              {/* Editar */}
+                              {activeTab === "atestado" && (
                                 <button
-                                  title="Visualizar no validador"
-                                  onClick={() => window.open(`https://validaratestado.digital/${codigoQR}`, "_blank")}
+                                  title="Editar atestado"
+                                  onClick={() => setLocation(`/atestado/editar/${doc.id}`)}
                                   className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                                 >
-                                  <Eye className="w-4 h-4" />
+                                  <Pencil className="w-4 h-4" />
                                 </button>
                               )}
                               {/* Baixar PDF */}

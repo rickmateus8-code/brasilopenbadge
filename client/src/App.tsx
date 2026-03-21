@@ -20,6 +20,7 @@ import HistoricoSP from "./pages/HistoricoSP";
 import HistoricoUNINTER from "./pages/HistoricoUNINTER";
 import AdminDashboard from "./pages/AdminDashboard";
 import ReceitaCria from "./pages/ReceitaCria";
+import AtestadoEditar from "./pages/AtestadoEditar";
 import ValidationReceita from "./pages/ValidationReceita";
 import Extrato from "./pages/Extrato";
 import Recargas from "./pages/Recargas";
@@ -103,6 +104,7 @@ function DocMasterRouter() {
 
       {/* Emissão de documentos - slugs principais */}
       <Route path="/atestado" component={AtestadoCria} />
+      <Route path="/atestado/editar/:id" component={AtestadoEditar} />
       <Route path="/cnh" component={CNHCria} />
       <Route path="/cha" component={CHACria} />
       <Route path="/toxicologico" component={ToxicologicoCria} />

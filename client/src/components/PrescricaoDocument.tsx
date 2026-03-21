@@ -5,6 +5,9 @@
  *
  * Assinatura: Dr. ou Dra. (detecta gênero pelo prefixo do nome ou rt_nome)
  * Emitente: CENTRALIZADO conforme PDF original
+ * Textos em negrito: Data, CENTRAL DE ATENDIMENTO, UNIDADE, Quantidade
+ * QR Code: 10% maior (132px), espaçamento +10% antes de Comprador
+ * Quantidade: por extenso (01 (um) caixa, 02 (duas) caixas)
  */
 
 import React from "react";
@@ -45,6 +48,7 @@ export interface PrescricaoData {
   medico_uf: string;
   medico_especialidade?: string;
   medico_assinatura_url?: string;
+  signature_color?: string;
   data_emissao: string;
   codigo_qr?: string;
   qr_code_url?: string;
@@ -61,15 +65,12 @@ const TIPO_CONFIG = {
 // ─── Detectar Dr. ou Dra. ────────────────────────────────────────────────────
 function getPrefixo(nome: string): string {
   const n = nome.trim().toUpperCase();
-  // Se já começa com DRA. ou DR.
   if (n.startsWith("DRA.") || n.startsWith("DRA ")) return "Dra.";
   if (n.startsWith("DR.") || n.startsWith("DR ")) return "Dr.";
-  // Nomes femininos comuns terminam em A, mas há exceções
-  // Usar heurística: se o primeiro nome termina em 'A' (exceto exceções), é Dra.
   const primeiro = n.replace(/^(DR\.?|DRA\.?)\s*/i, "").split(/\s+/)[0];
-  const femininos = ["MARIA","ANA","JULIA","JULIANA","FERNANDA","AMANDA","PATRICIA","CAMILA","GABRIELA","MARIANA","DANIELA","CAROLINA","ISABELA","IZABELLA","LETICIA","SABRINA","TATIANA","VANESSA","LARISSA","JESSICA","MICHELE","MICHELLE","GRASIELE","LILLIAN","LIVIA","MILENA","JANAINA","ALESSANDRA","MARCIA"];
+  const femininos = ["MARIA","ANA","JULIA","JULIANA","FERNANDA","AMANDA","PATRICIA","CAMILA","GABRIELA","MARIANA","DANIELA","CAROLINA","ISABELA","IZABELLA","LETICIA","SABRINA","TATIANA","VANESSA","LARISSA","JESSICA","MICHELE","MICHELLE","GRASIELE","LILLIAN","LIVIA","MILENA","JANAINA","ALESSANDRA","MARCIA","BEATRIZ","BIANCA","BRUNA","CARLA","CLAUDIA","CRISTINA","DEBORA","ELAINE","FABIANA","FLAVIA","HELENA","INGRID","JOANA","KARINA","LAURA","LUCIANA","MONICA","NATALIA","PAULA","PRISCILA","RAFAELA","RENATA","ROBERTA","SANDRA","SILVANA","SIMONE","SONIA","SUZANA","TANIA","THAIS","VIVIANE"];
   if (femininos.includes(primeiro)) return "Dra.";
-  if (primeiro.endsWith("A") && !["LUCA","COSTA","BORBA","SOUZA","SILVA","ROSA"].includes(primeiro)) return "Dra.";
+  if (primeiro.endsWith("A") && !["LUCA","COSTA","BORBA","SOUZA","SILVA","ROSA","MOURA","VIEIRA","PEREIRA","OLIVEIRA","FERREIRA","ALMEIDA","ARAUJO","BARBOSA","BATISTA","FONSECA","FREITAS","LIMA","MOTA","NUNES","PINTO","RIBEIRA","ROCHA","TEIXEIRA"].includes(primeiro)) return "Dra.";
   return "Dr.";
 }
 
@@ -77,11 +78,57 @@ function getNomeSemPrefixo(nome: string): string {
   return nome.trim().replace(/^(DRA?\.\s*|DRA?\s+)/i, "");
 }
 
+// ─── Número por extenso ─────────────────────────────────────────────────────
+function numeroPorExtenso(n: number): string {
+  const extenso: Record<number, string> = {
+    1: "um", 2: "dois", 3: "três", 4: "quatro", 5: "cinco",
+    6: "seis", 7: "sete", 8: "oito", 9: "nove", 10: "dez",
+  };
+  return extenso[n] || String(n);
+}
+
+function numeroPorExtensoFem(n: number): string {
+  const extenso: Record<number, string> = {
+    1: "uma", 2: "duas", 3: "três", 4: "quatro", 5: "cinco",
+    6: "seis", 7: "sete", 8: "oito", 9: "nove", 10: "dez",
+  };
+  return extenso[n] || String(n);
+}
+
+/** Formata quantidade: "2" → "02 (duas) caixas" */
+function formatarQuantidade(qtd: string): string {
+  if (!qtd || !qtd.trim()) return "";
+  // Se já está formatado (contém parênteses), retornar como está
+  if (qtd.includes("(")) return qtd;
+  // Tentar extrair número
+  const match = qtd.match(/^(\d+)\s*(.*)/);
+  if (!match) return qtd;
+  const num = parseInt(match[1], 10);
+  const resto = match[2].trim().toLowerCase();
+  if (isNaN(num) || num <= 0) return qtd;
+  // Determinar unidade
+  let unidade = resto || "caixa";
+  // Detectar se a unidade é feminina
+  const femininas = ["caixa", "caixas", "cartela", "cartelas", "ampola", "ampolas", "bisnaga", "bisnagas", "seringa", "seringas", "unidade", "unidades"];
+  const isFem = femininas.some(f => unidade.startsWith(f));
+  const extenso = isFem ? numeroPorExtensoFem(num) : numeroPorExtenso(num);
+  // Pluralizar unidade
+  if (num > 1 && !unidade.endsWith("s")) {
+    unidade = unidade + "s";
+  }
+  if (num === 1 && unidade.endsWith("s")) {
+    unidade = unidade.slice(0, -1);
+  }
+  const numStr = String(num).padStart(2, "0");
+  return `${numStr} (${extenso}) ${unidade}`;
+}
+
 // ─── Via (página A4) ─────────────────────────────────────────────────────────
 function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
   const cfg = TIPO_CONFIG[data.tipo_receituario] || TIPO_CONFIG.controle_especial;
   const prefixo = getPrefixo(data.medico_nome);
   const nomeDisplay = getNomeSemPrefixo(data.medico_nome);
+  const sigColor = data.signature_color || "#0b109f";
 
   // Extrair número do CRM para exibição
   const crmParts = data.medico_crm.match(/(\d+)/);
@@ -135,7 +182,7 @@ function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
               </div>
             )}
 
-            {/* Nome da unidade */}
+            {/* Nome da unidade — NEGRITO */}
             <div style={{
               fontSize: 10.5, fontWeight: 700, color: "#000", marginBottom: 2,
               textTransform: "uppercase", letterSpacing: 0.2,
@@ -157,7 +204,7 @@ function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
               </div>
             )}
 
-            {/* Central de atendimento */}
+            {/* Central de atendimento — NEGRITO */}
             {data.telefone_emitente && (
               <div style={{
                 fontSize: 9.5, fontWeight: 700, color: "#000",
@@ -167,9 +214,9 @@ function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
               </div>
             )}
 
-            {/* Site */}
+            {/* Site — NEGRITO */}
             {data.site_emitente && (
-              <div style={{ fontSize: 9.5, color: "#000" }}>
+              <div style={{ fontSize: 9.5, fontWeight: 700, color: "#000" }}>
                 {data.site_emitente}
               </div>
             )}
@@ -187,7 +234,7 @@ function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
             </div>
             <div style={{ fontSize: 8, lineHeight: 1.25, color: "#000" }}>
               {cfg.via2.split("\n").map((line, i) => {
-                const isRetencao = line.trim().startsWith("Reten");
+                const isRetencao = line.trim().toLowerCase().startsWith("reten");
                 return (
                   <div key={i} style={{ textDecoration: isRetencao ? "underline" : "none" }}>
                     {line}
@@ -196,7 +243,8 @@ function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
               })}
             </div>
           </div>
-          <div style={{ fontSize: 13, fontWeight: 400, color: "#000" }}>
+          {/* Data — NEGRITO */}
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#000" }}>
             Data:{" "}
             {data.data_emissao
               ? (() => { const p = data.data_emissao.split("/"); return p.length === 3 ? `${p[0]}/${p[1]}/${p[2]}` : data.data_emissao; })()
@@ -228,7 +276,10 @@ function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
               {idx + 1}) Uso {med.uso_tipo === "interno" ? "Interno" : "Externo"}
             </div>
             <div style={{ fontSize: 10, color: "#000", marginBottom: 1 }}>{med.nome}</div>
-            <div style={{ fontSize: 10, color: "#000", marginBottom: 1 }}>Quantidade: {med.quantidade}</div>
+            {/* Quantidade — NEGRITO */}
+            <div style={{ fontSize: 10, color: "#000", marginBottom: 1 }}>
+              <span style={{ fontWeight: 700 }}>Quantidade:</span>{" "}{formatarQuantidade(med.quantidade)}
+            </div>
             <div style={{ fontSize: 10, color: "#000" }}>Uso:{"  "}{med.posologia}</div>
           </div>
         ))}
@@ -240,28 +291,28 @@ function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
       {/* ── QR CODE + ASSINATURA ────────────────────────────────────────────── */}
       <div style={{
         display: "flex", alignItems: "flex-end", justifyContent: "space-between",
-        marginBottom: 16, flexShrink: 0,
+        marginBottom: 28, flexShrink: 0,
       }}>
-        {/* QR Code */}
+        {/* QR Code — 10% maior (132px) */}
         <div style={{ flexShrink: 0 }}>
           {data.qr_code_url ? (
-            <img src={data.qr_code_url} alt="QR Code" style={{ width: 120, height: 120, display: "block" }} />
+            <img src={data.qr_code_url} alt="QR Code" style={{ width: 132, height: 132, display: "block" }} />
           ) : (
-            <div style={{ width: 120, height: 120, position: "relative", overflow: "hidden" }}>
-              <svg width={120} height={120} viewBox="0 0 120 120"
+            <div style={{ width: 132, height: 132, position: "relative", overflow: "hidden" }}>
+              <svg width={132} height={132} viewBox="0 0 132 132"
                 style={{ display: "block", filter: "blur(3px)", opacity: 0.35 }}>
-                {Array.from({ length: 12 }).map((_, row) =>
-                  Array.from({ length: 12 }).map((_, col) => {
+                {Array.from({ length: 13 }).map((_, row) =>
+                  Array.from({ length: 13 }).map((_, col) => {
                     const filled = (row + col + row * col) % 3 !== 0;
-                    return filled ? <rect key={`${row}-${col}`} x={col * 10} y={row * 10} width={9} height={9} fill="#000" /> : null;
+                    return filled ? <rect key={`${row}-${col}`} x={col * 10 + 1} y={row * 10 + 1} width={9} height={9} fill="#000" /> : null;
                   })
                 )}
-                <rect x={0} y={0} width={30} height={30} fill="none" stroke="#000" strokeWidth={3} />
-                <rect x={5} y={5} width={20} height={20} fill="#000" />
-                <rect x={90} y={0} width={30} height={30} fill="none" stroke="#000" strokeWidth={3} />
-                <rect x={95} y={5} width={20} height={20} fill="#000" />
-                <rect x={0} y={90} width={30} height={30} fill="none" stroke="#000" strokeWidth={3} />
-                <rect x={5} y={95} width={20} height={20} fill="#000" />
+                <rect x={0} y={0} width={33} height={33} fill="none" stroke="#000" strokeWidth={3} />
+                <rect x={5} y={5} width={23} height={23} fill="#000" />
+                <rect x={99} y={0} width={33} height={33} fill="none" stroke="#000" strokeWidth={3} />
+                <rect x={104} y={5} width={23} height={23} fill="#000" />
+                <rect x={0} y={99} width={33} height={33} fill="none" stroke="#000" strokeWidth={3} />
+                <rect x={5} y={104} width={23} height={23} fill="#000" />
               </svg>
               <div style={{
                 position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
@@ -272,7 +323,7 @@ function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
             </div>
           )}
           {data.codigo_qr && (
-            <div style={{ fontSize: 7, color: "#888", marginTop: 2, textAlign: "center", maxWidth: 120 }}>
+            <div style={{ fontSize: 7, color: "#888", marginTop: 2, textAlign: "center", maxWidth: 132 }}>
               {data.codigo_qr}
             </div>
           )}
@@ -282,14 +333,14 @@ function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
         <div style={{ textAlign: "right", minWidth: 260 }}>
           {data.medico_assinatura_url && (
             <img src={data.medico_assinatura_url} alt="Assinatura"
-              style={{ maxHeight: 44, maxWidth: 200, objectFit: "contain", marginBottom: 4, display: "block", marginLeft: "auto" }} />
+              style={{ maxHeight: 50, maxWidth: 220, objectFit: "contain", marginBottom: 4, display: "block", marginLeft: "auto" }} />
           )}
 
           {/* Nome cursivo inclinado — fiel ao PDF original */}
           <div style={{
             fontFamily: "'Segoe Script', 'Brush Script MT', 'Dancing Script', cursive",
             fontStyle: "italic",
-            color: "#333",
+            color: sigColor,
             fontSize: 14,
             lineHeight: 1.3,
             marginBottom: 6,
@@ -357,7 +408,7 @@ function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
   );
 }
 
-// ─── Componente principal — 2 páginas ────────────────────────────────────────
+// ─── Componente principal — 2 páginas (2 vias) ─────────────────────────────
 export default function PrescricaoDocument({ data }: { data: PrescricaoData }) {
   return (
     <div style={{ background: "#fff" }}>

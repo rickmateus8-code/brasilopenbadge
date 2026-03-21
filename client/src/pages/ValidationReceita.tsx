@@ -187,7 +187,13 @@ const GLOBAL_CSS = `
   }
   * { box-sizing: border-box; }
   body { margin: 0; }
-  .vm-hero { background: linear-gradient(135deg, hsl(215, 90%, 18%) 0%, hsl(215, 90%, 28%) 50%, hsl(215, 70%, 36%) 100%); }
+  .vm-hero {
+    background: linear-gradient(135deg, hsl(215, 90%, 18%) 0%, hsl(215, 90%, 28%) 50%, hsl(215, 70%, 36%) 100%);
+    background-image:
+      radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px),
+      linear-gradient(135deg, hsl(215, 90%, 18%) 0%, hsl(215, 90%, 28%) 50%, hsl(215, 70%, 36%) 100%);
+    background-size: 24px 24px, 100% 100%;
+  }
   .vm-stat-card { transition: transform 0.2s, box-shadow 0.2s; }
   .vm-stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.12); }
   .vm-feature-card { transition: transform 0.2s; }
@@ -200,7 +206,18 @@ const GLOBAL_CSS = `
   .vm-animate { animation: vm-fade-in 0.4s ease-out; }
   .vm-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px); }
   .vm-wave { position: relative; }
-  .vm-wave::after { content: ''; position: absolute; bottom: -40px; left: 0; right: 0; height: 80px; background: var(--vm-bg); border-radius: 50% 50% 0 0 / 100% 100% 0 0; }
+  .vm-wave::after { content: ''; position: absolute; bottom: -60px; left: -5%; right: -5%; width: 110%; height: 100px; background: var(--vm-bg); border-radius: 50% 50% 0 0 / 100% 100% 0 0; }
+  @media (max-width: 768px) {
+    .vm-hero h1 { font-size: 28px !important; }
+    .vm-hero p { font-size: 14px !important; }
+    .vm-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    .vm-docs-grid { grid-template-columns: 1fr !important; }
+    .vm-features-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    .vm-footer-grid { grid-template-columns: 1fr !important; }
+    .vm-nav-links { display: none !important; }
+    .vm-result-grid-3 { grid-template-columns: 1fr !important; }
+    .vm-result-grid-med { grid-template-columns: 1fr !important; }
+  }
 `;
 
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
@@ -303,23 +320,19 @@ export default function ValidationReceita() {
                 <span style={{ color: "#fff", fontSize: 20, fontWeight: 800, letterSpacing: -0.5 }}>VerificaMed</span>
                 <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, borderLeft: "1px solid rgba(255,255,255,0.25)", paddingLeft: 10 }}>Sistema Nacional de Verificação</span>
               </div>
-              <nav style={{ display: "flex", alignItems: "center", gap: 24 }}>
-                <a href="#" style={{ color: "rgba(255,255,255,0.95)", textDecoration: "none", fontSize: 14, fontWeight: 500 }}>Início</a>
-                <a href="#sobre" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none", fontSize: 14 }}>Sobre</a>
-                <a href="#instituicoes" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none", fontSize: 14 }}>Instituições</a>
-                <button onClick={() => { setShowModal(true); setModalTab("camera"); }} style={{
-                  background: "transparent", border: "1.5px solid rgba(255,255,255,0.4)", color: "#fff",
-                  padding: "7px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer",
-                  display: "flex", alignItems: "center", gap: 6,
-                }}>
-                  <SparklesIcon size={14} /> Verificar Documento
-                </button>
+              <nav className="vm-nav-links" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <a href="#" style={{
+                  color: "#fff", textDecoration: "none", fontSize: 14, fontWeight: 500,
+                  background: "rgba(255,255,255,0.15)", padding: "6px 16px", borderRadius: 20,
+                }}>Início</a>
+                <a href="#sobre" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none", fontSize: 14, padding: "6px 16px" }}>Sobre</a>
+                <a href="#instituicoes" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none", fontSize: 14, padding: "6px 16px" }}>Instituições</a>
               </nav>
             </div>
           </header>
 
           {/* Hero */}
-          <section className="vm-hero" style={{ padding: "80px 20px 120px", textAlign: "center", position: "relative", overflow: "hidden" }}>
+          <section className="vm-hero" style={{ padding: "80px 20px 140px", textAlign: "center", position: "relative", overflow: "hidden" }}>
             <div style={{ maxWidth: 700, margin: "0 auto", position: "relative", zIndex: 1 }}>
               <div style={{
                 display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.1)",
@@ -344,11 +357,11 @@ export default function ValidationReceita() {
           </section>
 
           {/* Stats — wave transition */}
-          <div style={{ background: "var(--vm-bg)", marginTop: -50, paddingTop: 70, paddingBottom: 40 }}>
-            <svg viewBox="0 0 1440 60" style={{ display: "block", width: "100%", marginTop: -70 }} preserveAspectRatio="none">
-              <path d="M0,30 C360,60 1080,0 1440,30 L1440,60 L0,60 Z" fill="var(--vm-bg)" />
+          <div style={{ background: "var(--vm-bg)", marginTop: -70, paddingTop: 90, paddingBottom: 40, position: "relative" }}>
+            <svg viewBox="0 0 1440 120" style={{ display: "block", width: "100%", marginTop: -90, position: "relative", zIndex: 1 }} preserveAspectRatio="none">
+              <path d="M0,60 C240,120 480,0 720,60 C960,120 1200,0 1440,60 L1440,120 L0,120 Z" fill="var(--vm-bg)" />
             </svg>
-            <div style={{ maxWidth: 1000, margin: "0 auto", padding: "0 20px", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
+            <div className="vm-stats-grid" style={{ maxWidth: 1000, margin: "0 auto", padding: "0 20px", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
               {[
                 { icon: <ClipboardListIcon />, num: "2.500+", label: "Unidades de Saúde" },
                 { icon: <FileCheckIcon />, num: "15M+", label: "Documentos Verificados" },
@@ -373,7 +386,7 @@ export default function ValidationReceita() {
             <p style={{ textAlign: "center", color: "var(--vm-muted-fg)", marginBottom: 32, fontSize: 15 }}>
               Nosso sistema suporta a verificação de diversos tipos de documentos médicos, garantindo segurança em todas as modalidades.
             </p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div className="vm-docs-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               {[
                 { icon: <ClipboardListIcon />, title: "Atestados Médicos", desc: "Verificação de atestados de afastamento, comparecimento e aptidão." },
                 { icon: <PillIcon size={28} />, title: "Receitas Médicas", desc: "Validação de receitas simples, especiais e de controle especial." },
@@ -406,7 +419,7 @@ export default function ValidationReceita() {
               <p style={{ color: "var(--vm-muted-fg)", marginBottom: 32, fontSize: 15, textAlign: "center" }}>
                 Tecnologia de ponta para garantir a autenticidade dos documentos médicos em todo o território brasileiro.
               </p>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
+              <div className="vm-features-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
                 {[
                   { icon: <QrCodeIcon size={24} />, title: "QR Code Único", desc: "Cada documento recebe um código exclusivo criptografado para verificação instantânea." },
                   { icon: <CheckBadgeIcon />, title: "Validação em Segundos", desc: "Confirme a autenticidade de atestados e receitas em menos de 5 segundos." },
@@ -442,7 +455,7 @@ export default function ValidationReceita() {
 
           {/* Footer */}
           <footer style={{ background: "hsl(215, 90%, 14%)", padding: "40px 20px 20px", color: "rgba(255,255,255,0.7)" }}>
-            <div style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 40, marginBottom: 30 }}>
+            <div className="vm-footer-grid" style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 40, marginBottom: 30 }}>
               <div>
                 <div style={{ color: "#fff", fontSize: 18, fontWeight: 800, marginBottom: 8 }}>VerificaMed</div>
                 <p style={{ fontSize: 13, lineHeight: 1.6, margin: 0 }}>Sistema Nacional de Verificação de Documentos Médicos. Garantindo a autenticidade de atestados e receitas em todo o Brasil.</p>
@@ -697,7 +710,7 @@ export default function ValidationReceita() {
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, color: "var(--vm-primary)" }}>
                     <UserIcon /><span style={{ fontWeight: 700, fontSize: 16, color: "var(--vm-fg)" }}>Paciente</span>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                  <div className="vm-result-grid-3" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
                     <div className="vm-field-box"><div className="vm-field-label">NOME</div><div className="vm-field-value">{receita.paciente_nome}</div></div>
                     {receita.paciente_cpf && <div className="vm-field-box"><div className="vm-field-label">CPF</div><div className="vm-field-value">{receita.paciente_cpf}</div></div>}
                     {receita.paciente_nascimento && <div className="vm-field-box"><div className="vm-field-label">NASCIMENTO</div><div className="vm-field-value">{formatDate(receita.paciente_nascimento)}</div></div>}
@@ -741,7 +754,7 @@ export default function ValidationReceita() {
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, color: "var(--vm-primary)" }}>
                     <StethoscopeIcon /><span style={{ fontWeight: 700, fontSize: 16, color: "var(--vm-fg)" }}>Médico Responsável</span>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                  <div className="vm-result-grid-med" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
                     <div className="vm-field-box"><div className="vm-field-label">NOME</div><div className="vm-field-value">{receita.medico_nome}</div></div>
                     <div className="vm-field-box"><div className="vm-field-label">CRM</div><div className="vm-field-value">{receita.medico_crm}{receita.medico_uf ? `/${receita.medico_uf}` : ""}</div></div>
                     {receita.medico_especialidade && <div className="vm-field-box"><div className="vm-field-label">ESPECIALIDADE</div><div className="vm-field-value">{receita.medico_especialidade}</div></div>}

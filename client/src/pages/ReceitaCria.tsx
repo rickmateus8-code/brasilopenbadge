@@ -149,7 +149,7 @@ export default function ReceitaCria() {
     const endCompleto = [u.endereco, u.bairro, `${u.cidade}/${u.uf}`, u.cep ? `CEP ${u.cep}` : ""].filter(Boolean).join(", ");
     setForm(p => ({
       ...p,
-      unidade: `UNIDADE ${u.nome.toUpperCase()}`,
+      unidade: `UNIDADE DR. CONSULTA ${u.nome.toUpperCase()}`,
       enderecoEmitente: endCompleto,
     }));
   };
@@ -265,6 +265,7 @@ export default function ReceitaCria() {
     medico_uf: filtroUF || "UF",
     medico_especialidade: form.especialidade || undefined,
     medico_assinatura_url: signatureImage || undefined,
+    signature_color: signatureColor,
     medicamentos: prescricao.filter(p => p.medicamento.trim()).map(p => ({
       uso_tipo: p.uso_interno ? "interno" as const : "externo" as const,
       nome: p.medicamento, quantidade: p.quantidade, posologia: p.modo_uso,
@@ -473,11 +474,9 @@ export default function ReceitaCria() {
               )}
 
               {/* Assinatura */}
-              <details style={{ marginTop: 8 }}>
-                <summary style={{ cursor: "pointer", fontSize: 11, fontWeight: 600, color: "#6b7280", padding: "4px 0" }}>
-                  Assinatura do Médico
-                </summary>
-                <div style={{ paddingTop: 8, display: "grid", gap: 6 }}>
+              <div style={{ marginTop: 10, borderTop: "1px solid #e5e7eb", paddingTop: 10 }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6 }}>Assinatura do Médico</p>
+                <div style={{ display: "grid", gap: 6 }}>
                   <div>
                     <label style={lbl}>Cor da Tinta</label>
                     <select style={sel} value={signatureColor} onChange={e => setSignatureColor(e.target.value)}>
@@ -503,7 +502,7 @@ export default function ReceitaCria() {
                     </div>
                   </div>
                 </div>
-              </details>
+              </div>
             </div>
 
             {/* ── 3. Paciente ── */}
@@ -561,8 +560,29 @@ export default function ReceitaCria() {
                   </div>
                   <div style={{ display: "grid", gap: 5 }}>
                     <input style={inp} value={item.medicamento} onChange={e => updateMedicamento(idx, "medicamento", e.target.value.toUpperCase())} placeholder="Nome do Medicamento — Ex: AMOXICILINA 500MG CÁPSULA" required={idx === 0} />
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 5 }}>
-                      <input style={inp} value={item.quantidade} onChange={e => updateMedicamento(idx, "quantidade", e.target.value)} placeholder="Qtd: 1 caixa" />
+                    <div style={{ display: "grid", gridTemplateColumns: "auto 1fr 2fr", gap: 5, alignItems: "end" }}>
+                      <div>
+                        <label style={{ ...lbl, fontSize: 10 }}>Qtd</label>
+                        <select style={{ ...sel, width: 60, padding: "7px 4px", fontSize: 12 }}
+                          value={(() => { const m = item.quantidade.match(/^(\d+)/); return m ? (parseInt(m[1]) <= 10 ? m[1] : "custom") : ""; })()}
+                          onChange={e => {
+                            const v = e.target.value;
+                            if (v === "custom") { updateMedicamento(idx, "quantidade", ""); return; }
+                            if (!v) { updateMedicamento(idx, "quantidade", ""); return; }
+                            const n = parseInt(v);
+                            const ext: Record<number,string> = {1:"uma",2:"duas",3:"três",4:"quatro",5:"cinco",6:"seis",7:"sete",8:"oito",9:"nove",10:"dez"};
+                            const numStr = String(n).padStart(2, "0");
+                            updateMedicamento(idx, "quantidade", `${numStr} (${ext[n]}) caixa${n > 1 ? "s" : ""}`);
+                          }}>
+                          <option value="">-</option>
+                          {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={String(n)}>{String(n).padStart(2,"0")}</option>)}
+                          <option value="custom">+</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ ...lbl, fontSize: 10 }}>Quantidade</label>
+                        <input style={inp} value={item.quantidade} onChange={e => updateMedicamento(idx, "quantidade", e.target.value)} placeholder="Ex: 01 (uma) caixa" />
+                      </div>
                       <input style={inp} value={item.modo_uso} onChange={e => updateMedicamento(idx, "modo_uso", e.target.value)} placeholder="Uso: Tomar 1 cápsula de 8/8h por 7 dias" />
                     </div>
                   </div>

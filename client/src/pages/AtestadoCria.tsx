@@ -645,31 +645,20 @@ export default function AtestadoCria() {
             textAlign: "center", maxWidth: 440, width: "90%",
             boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
           }}>
-            <div style={{ fontSize: 56, marginBottom: 12 }}>\u2705</div>
-            <h2 style={{ fontSize: 22, fontWeight: 800, color: "#15803d", margin: "0 0 8px" }}>
+            <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#dcfce7", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </div>
+            <h2 style={{ fontSize: 22, fontWeight: 800, color: "#15803d", margin: "0 0 20px" }}>
               DOCUMENTO EMITIDO COM SUCESSO!
             </h2>
-            <p style={{ fontSize: 14, color: "#374151", margin: "0 0 6px" }}>
-              Saldo descontado. QR Code e c\u00f3digo de valida\u00e7\u00e3o liberados.
-            </p>
-            <p style={{ fontSize: 12, color: "#6b7280", margin: "0 0 16px" }}>
-              O PDF j\u00e1 cont\u00e9m o QR Code v\u00e1lido para verifica\u00e7\u00e3o.
-            </p>
-            {createdCode && (
-              <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 10, padding: "12px 16px", marginBottom: 16 }}>
-                <p style={{ fontSize: 11, fontWeight: 600, color: "#166534", margin: "0 0 4px" }}>C\u00f3digo de Valida\u00e7\u00e3o:</p>
-                <p style={{ fontSize: 24, fontWeight: 800, color: "#15803d", margin: 0, letterSpacing: 2, fontFamily: "'Courier New', monospace" }}>{createdCode}</p>
-              </div>
-            )}
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <button
-                style={{ ...btnGreen, width: "100%", padding: "12px 0", fontSize: 14, opacity: isDownloadingPdf ? 0.7 : 1 }}
+                style={{ ...btnGreen, width: "100%", padding: "14px 0", fontSize: 15, fontWeight: 700, opacity: isDownloadingPdf ? 0.7 : 1 }}
                 disabled={isDownloadingPdf}
                 onClick={async () => {
                   if (previewRef.current) {
                     setIsDownloadingPdf(true);
                     try {
-                      // Aguardar re-render com QR Code desbloqueado
                       await new Promise(r => setTimeout(r, 300));
                       const filename = generatePDFFilename(form.paciente || "ATESTADO", "EMITIDO");
                       await exportElementToPDF(previewRef.current, { filename, scale: 2, quality: 0.92 });
@@ -678,25 +667,27 @@ export default function AtestadoCria() {
                   }
                 }}
               >
-                {isDownloadingPdf ? "\u23F3 Gerando PDF..." : "\u2B07 BAIXAR PDF COM QR CODE"}
+                {isDownloadingPdf ? "Gerando PDF..." : "BAIXAR ATESTADO"}
               </button>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button
-                  style={{ ...btnBlue, flex: 1, padding: "10px 0", fontSize: 13 }}
-                  onClick={() => {
-                    setShowSuccessModal(false);
-                    navigate("/dashboard");
-                  }}
-                >
-                  VER HIST\u00d3RICO
-                </button>
-                <button
-                  style={{ ...btnGray, flex: 1, padding: "10px 0", fontSize: 13 }}
-                  onClick={() => setShowSuccessModal(false)}
-                >
-                  FECHAR
-                </button>
-              </div>
+              <button
+                style={{ ...btnBlue, width: "100%", padding: "12px 0", fontSize: 13, fontWeight: 600 }}
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  navigate("/dashboard");
+                  setTimeout(() => {
+                    const el = document.getElementById("historico-atestados");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }, 300);
+                }}
+              >
+                IR PARA HISTÓRICO DE ATESTADOS
+              </button>
+              <button
+                style={{ ...btnGray, width: "100%", padding: "10px 0", fontSize: 12 }}
+                onClick={() => setShowSuccessModal(false)}
+              >
+                FECHAR
+              </button>
             </div>
           </div>
         </div>

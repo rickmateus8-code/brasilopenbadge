@@ -77,7 +77,7 @@ async function getDocumentPrice(env: Env, tipo: string): Promise<number> {
 function corsHeaders() {
   return {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Content-Type": "application/json",
   };
@@ -117,6 +117,9 @@ export async function onRequest(context: { request: Request; env: Env; params: a
     }
     if (request.method === "POST") {
       return handleCreateAttestation(request, env, user);
+    }
+    if (request.method === "PUT" && attestationId) {
+      return handleUpdateAttestation(request, env, user, attestationId);
     }
     if (request.method === "DELETE" && attestationId) {
       return handleDeleteAttestation(env, user, attestationId);
@@ -329,6 +332,103 @@ async function handleGetAttestationById(env: Env, user: any, id: string) {
   }
 
   return jsonResponse({ success: true, data: attestation });
+}
+
+// ─── PUT — Editar atestado (CPF bloqueado) ──────────────────────────────────
+
+async function handleUpdateAttestation(request: Request, env: Env, user: any, id: string) {
+  // Verificar se o atestado existe e pertence ao usuário
+  let attestation;
+  if (user.role === "admin") {
+    attestation = await env.DB.prepare(
+      "SELECT * FROM attestations WHERE id = ? LIMIT 1"
+    ).bind(id).first<any>();
+  } else {
+    attestation = await env.DB.prepare(
+      "SELECT * FROM attestations WHERE id = ? AND user_id = ? LIMIT 1"
+    ).bind(id, user.id).first<any>();
+  }
+
+  if (!attestation) {
+    return jsonResponse({ success: false, error: "Atestado não encontrado ou sem permissão." }, 404);
+  }
+
+  const body = await request.json<any>();
+
+  // SEGURANÇA: CPF NÃO pode ser alterado após emissão
+  // O campo CPF é ignorado completamente no update
+
+  const now = new Date().toISOString();
+
+  await env.DB.prepare(`
+    UPDATE attestations SET
+      paciente = COALESCE(?, paciente),
+      sexo = COALESCE(?, sexo),
+      nascimento = COALESCE(?, nascimento),
+      nome_mae = COALESCE(?, nome_mae),
+      endereco = COALESCE(?, endereco),
+      cid = COALESCE(?, cid),
+      cid_display = COALESCE(?, cid_display),
+      cid_nome = COALESCE(?, cid_nome),
+      medico = COALESCE(?, medico),
+      crm = COALESCE(?, crm),
+      especialidade = COALESCE(?, especialidade),
+      instituicao = COALESCE(?, instituicao),
+      unidade = COALESCE(?, unidade),
+      endereco_emitente = COALESCE(?, endereco_emitente),
+      texto_atestado = COALESCE(?, texto_atestado),
+      afastamento = COALESCE(?, afastamento),
+      data_assinatura = COALESCE(?, data_assinatura),
+      hora_assinatura = COALESCE(?, hora_assinatura),
+      data_emissao = COALESCE(?, data_emissao),
+      logo_url = COALESCE(?, logo_url),
+      logo_right = COALESCE(?, logo_right),
+      signature_color = COALESCE(?, signature_color),
+      signature_image = COALESCE(?, signature_image),
+      modo_carimbo = COALESCE(?, modo_carimbo),
+      cidade = COALESCE(?, cidade),
+      updated_at = ?
+    WHERE id = ?
+  `).bind(
+    body.paciente?.toUpperCase() || null,
+    body.sexo || null,
+    body.nascimento || null,
+    body.nomeMae?.toUpperCase() || body.nome_mae?.toUpperCase() || null,
+    body.endereco?.toUpperCase() || null,
+    body.cid || null,
+    body.cidDisplay || body.cid_display || null,
+    body.cidNome || body.cid_nome || null,
+    body.medico?.toUpperCase() || null,
+    body.crm || null,
+    body.especialidade?.toUpperCase() || null,
+    body.instituicao?.toUpperCase() || null,
+    body.unidade?.toUpperCase() || null,
+    body.enderecoEmitente?.toUpperCase() || body.endereco_emitente?.toUpperCase() || null,
+    body.textoAtestado || body.texto_atestado || null,
+    body.afastamento || null,
+    body.dataAssinatura || body.data_assinatura || null,
+    body.horaAssinatura || body.hora_assinatura || null,
+    body.dataEmissao || body.data_emissao || null,
+    body.logoUrl || body.logo_url || null,
+    body.logoRight || body.logo_right || null,
+    body.signatureColor || body.signature_color || null,
+    body.signatureImage || body.signature_image || null,
+    body.modoCarimbo !== undefined ? (body.modoCarimbo ? 1 : 0) : null,
+    body.cidade || null,
+    now,
+    id
+  ).run();
+
+  // Buscar o atestado atualizado
+  const updated = await env.DB.prepare(
+    "SELECT * FROM attestations WHERE id = ? LIMIT 1"
+  ).bind(id).first<any>();
+
+  return jsonResponse({
+    success: true,
+    message: "Atestado atualizado com sucesso.",
+    data: updated,
+  });
 }
 
 // ─── DELETE ───────────────────────────────────────────────────────────────────
