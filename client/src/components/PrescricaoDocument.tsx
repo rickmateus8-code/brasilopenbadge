@@ -298,8 +298,6 @@ function ViaPage({
         {/* ── Coluna direita: Via + Data ── */}
         <div style={{
           flex: "0 0 35%",
-          border: "1px solid #000",
-          borderLeft: "none",
           boxSizing: "border-box",
           padding: "10px 16px",
           display: "flex",
