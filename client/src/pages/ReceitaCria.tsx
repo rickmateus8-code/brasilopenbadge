@@ -126,12 +126,9 @@ export default function ReceitaCria() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
-  // ── Logos ──────────────────────────────────────────────────────────────────
-  const [logoLeft, setLogoLeft] = useState<string>("");
-  const [logoRight, setLogoRight] = useState<string>("");
-  const [logoSide, setLogoSide] = useState<"left" | "right">("left");
-  const logoLeftRef = useRef<HTMLInputElement>(null);
-  const logoRightRef = useRef<HTMLInputElement>(null);
+  // ── Logo (único, upload opcional) ────────────────────────────────────────
+  const [logoUrl, setLogoUrl] = useState<string>("");
+  const logoRef = useRef<HTMLInputElement>(null);
 
   // ── Assinatura ─────────────────────────────────────────────────────────────
   const [signatureColor, setSignatureColor] = useState<string>("#0b109f");
@@ -157,11 +154,18 @@ export default function ReceitaCria() {
   const [showResultados, setShowResultados] = useState(false);
   const [showEditar, setShowEditar] = useState(false);
 
+  // ── Unidades Próximas ─────────────────────────────────────────────────────
+  const [unidadesProximas, setUnidadesProximas] = useState<string[]>([]);
+  const [buscandoUnidades, setBuscandoUnidades] = useState(false);
+
   // ── Formulário base ─────────────────────────────────────────────────────────
   const [form, setForm] = useState({
     instituicao: "",
     unidade: "",
     enderecoEmitente: "",
+    cnpjEmitente: "",
+    telefoneEmitente: "",
+    siteEmitente: "",
     medico: "",
     crm: "",
     especialidade: "",
@@ -265,16 +269,42 @@ export default function ReceitaCria() {
     setShowEditar(true);
   };
 
-  // ── Upload de logos ─────────────────────────────────────────────────────────
-  const handleLogoUpload = async (side: "left" | "right", e: React.ChangeEvent<HTMLInputElement>) => {
+  // ── Upload de logo ─────────────────────────────────────────────────────────
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const b64 = await readFileAsBase64(file);
-    if (side === "left") setLogoLeft(b64);
-    else setLogoRight(b64);
+    setLogoUrl(b64);
   };
 
-  // ── Upload de assinatura ────────────────────────────────────────────────────
+  // ── Buscar unidades próximas ao endereço do paciente ──────────────────────
+  const buscarUnidadesProximas = async () => {
+    const cidPaciente = form.cidade.trim();
+    const endPaciente = form.endereco.trim();
+    if (!cidPaciente && !endPaciente) {
+      alert("Preencha a cidade ou endereço do paciente antes de buscar unidades próximas.");
+      return;
+    }
+    setBuscandoUnidades(true);
+    try {
+      const params = new URLSearchParams();
+      if (filtroUF) params.set("uf", filtroUF);
+      const cidadeRef = cidPaciente || filtroUF;
+      if (cidadeRef) params.set("cidade", cidadeRef.toUpperCase());
+      const data = await apiFetch(`/locais?${params}`);
+      const locais: string[] = data.locais || [];
+      setUnidadesProximas(locais.slice(0, 8));
+      if (locais.length === 0) {
+        alert("Nenhuma unidade encontrada na cidade do paciente.");
+      }
+    } catch {
+      alert("Erro ao buscar unidades próximas.");
+    } finally {
+      setBuscandoUnidades(false);
+    }
+  };
+
+  // ── Upload de assinatura ─────────────────────────────────────────────────────────
   const handleSignatureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -340,8 +370,7 @@ export default function ReceitaCria() {
         prescricao: prescricaoValida,
         data_emissao: form.dataEmissao,
         hora_emissao: form.horaEmissao,
-        logo_url: logoLeft || null,
-        logo_right: logoRight || null,
+        logo_url: logoUrl || null,
         signature_color: signatureColor,
         signature_image: signatureImage || null,
       };
@@ -461,11 +490,14 @@ export default function ReceitaCria() {
     instituicao: form.instituicao || (form.cidade ? `PREFEITURA DE ${form.cidade.toUpperCase()}` : undefined),
     unidade: form.unidade || undefined,
     endereco_emitente: form.enderecoEmitente || undefined,
+    cnpj_emitente: form.cnpjEmitente || undefined,
+    telefone_emitente: form.telefoneEmitente || undefined,
+    site_emitente: form.siteEmitente || undefined,
+    unidades_proximas: unidadesProximas.length > 0 ? unidadesProximas : undefined,
     prescricao: prescricao.filter((p) => p.medicamento.trim()),
     data_emissao: form.dataEmissao || todayBR(),
     hora_emissao: form.horaEmissao,
-    logo_url: logoLeft || undefined,
-    logo_right: logoRight || undefined,
+    logo_url: logoUrl || undefined,
     signature_color: signatureColor,
     signature_image: signatureImage || undefined,
   };
@@ -659,6 +691,26 @@ export default function ReceitaCria() {
                       placeholder="Ex: RUA ANTÔNIO WALTER, 66 – CENTRO, VOTORANTIM/SP" />
                     <span style={{ fontSize: 10, color: "#666", marginTop: 2, display: "block" }}>Preenchido automaticamente ao selecionar médico.</span>
                   </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <div>
+                      <label style={lbl}>CNPJ do Emitente</label>
+                      <input style={inp} value={form.cnpjEmitente}
+                        onChange={(e) => setForm(p => ({ ...p, cnpjEmitente: e.target.value }))}
+                        placeholder="Ex: 14.245.016/0059-95" />
+                    </div>
+                    <div>
+                      <label style={lbl}>Central de Atendimento</label>
+                      <input style={inp} value={form.telefoneEmitente}
+                        onChange={(e) => setForm(p => ({ ...p, telefoneEmitente: e.target.value }))}
+                        placeholder="Ex: 4090-1510" />
+                    </div>
+                  </div>
+                  <div>
+                    <label style={lbl}>Site do Emitente</label>
+                    <input style={inp} value={form.siteEmitente}
+                      onChange={(e) => setForm(p => ({ ...p, siteEmitente: e.target.value }))}
+                      placeholder="Ex: www.drconsulta.com" />
+                  </div>
                   <div>
                     <label style={lbl}>Especialidade</label>
                     <input style={inp} value={form.especialidade} onChange={(e) => setForm(p => ({ ...p, especialidade: e.target.value }))} placeholder="Ex: CLÍNICO GERAL, PEDIATRA" />
@@ -735,6 +787,25 @@ export default function ReceitaCria() {
                   <label style={lbl}>Endereço do Paciente</label>
                   <input style={inp} value={form.endereco} onChange={(e) => setForm(p => ({ ...p, endereco: e.target.value }))} placeholder="Rua, Número, Bairro, Cidade/UF" />
                 </div>
+                {/* Unidades Próximas */}
+                <button
+                  type="button"
+                  style={{ ...btnGreen, width: "100%", marginTop: 4, fontSize: 11 }}
+                  onClick={buscarUnidadesProximas}
+                  disabled={buscandoUnidades}
+                >
+                  {buscandoUnidades ? "⏳ Buscando..." : "📍 BUSCAR UNIDADES PRÓXIMAS AO PACIENTE"}
+                </button>
+                {unidadesProximas.length > 0 && (
+                  <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "10px 14px", marginTop: 4 }}>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: "#166534", margin: "0 0 6px" }}>📍 Unidades Próximas encontradas</p>
+                    {unidadesProximas.map((u, i) => (
+                      <div key={i} style={{ fontSize: 11, color: "#374151", padding: "3px 0", borderBottom: i < unidadesProximas.length - 1 ? "1px solid #d1fae5" : "none" }}>
+                        {i + 1}. {u}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -856,60 +927,34 @@ export default function ReceitaCria() {
                 </div>
               </div>
 
-              {/* ── Logos ── */}
+              {/* ── Logo (opcional) ── */}
               <div style={{ marginTop: 16 }}>
-                <p style={{ ...secTitle, marginBottom: 10 }}>🖼 Logos do Documento</p>
-                <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-                  <button type="button" onClick={() => setLogoSide("left")}
-                    style={{ flex: 1, padding: "8px 0", borderRadius: 7, fontWeight: 700, fontSize: 12, cursor: "pointer", background: logoSide === "left" ? "#005CA9" : "#e2e8f0", color: logoSide === "left" ? "#fff" : "#374151", border: "none" }}>
-                    ← LOGO ESQUERDA
-                  </button>
-                  <button type="button" onClick={() => setLogoSide("right")}
-                    style={{ flex: 1, padding: "8px 0", borderRadius: 7, fontWeight: 700, fontSize: 12, cursor: "pointer", background: logoSide === "right" ? "#005CA9" : "#e2e8f0", color: logoSide === "right" ? "#fff" : "#374151", border: "none" }}>
-                    LOGO DIREITA →
-                  </button>
-                </div>
-                {/* Preview do logo selecionado */}
+                <p style={{ ...secTitle, marginBottom: 8 }}>🖼 Logo do Documento (Opcional)</p>
+                <p style={{ fontSize: 10, color: "#6b7280", marginBottom: 10, marginTop: 0 }}>
+                  Por padrão usa o logo <strong>dr.consulta</strong>. Faça upload para substituir.
+                </p>
+                {/* Preview */}
                 <div style={{ height: 60, background: "#f8fafc", border: "1px dashed #d1d5db", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
-                  {(logoSide === "left" ? logoLeft : logoRight) ? (
-                    <img src={logoSide === "left" ? logoLeft : logoRight} alt="Logo" style={{ maxHeight: 50, maxWidth: 200, objectFit: "contain" }} />
+                  {logoUrl ? (
+                    <img src={logoUrl} alt="Logo" style={{ maxHeight: 50, maxWidth: 200, objectFit: "contain" }} />
                   ) : (
                     <div style={{ textAlign: "center" }}>
-                      <p style={{ fontSize: 11, color: "#000", fontWeight: 700, margin: 0 }}>SEM LOGO</p>
-                      <p style={{ fontSize: 10, color: "#555", margin: "2px 0 0" }}>Tamanho ideal: 300×100px (PNG/JPG)</p>
+                      <p style={{ fontSize: 14, color: "#1a56db", fontWeight: 700, margin: 0, fontFamily: "Arial" }}>dr.consulta</p>
+                      <p style={{ fontSize: 10, color: "#555", margin: "2px 0 0" }}>Logo padrão — faça upload para alterar</p>
                     </div>
                   )}
                 </div>
-                <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                <div style={{ display: "flex", gap: 8 }}>
                   <label style={{ ...btnBlue, flex: 1, display: "block", textAlign: "center", padding: "7px 0", cursor: "pointer", fontSize: 11 }}>
-                    📁 ENVIAR LOGO
-                    <input type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => handleLogoUpload(logoSide, e)} />
+                    📁 FAZER UPLOAD DO LOGO
+                    <input ref={logoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleLogoUpload} />
                   </label>
-                  <button type="button" style={{ ...btnGray, flex: 1, fontSize: 11, padding: "7px 0" }}
-                    onClick={() => {
-                      if (logoSide === "left") { setLogoLeft(""); if (logoLeftRef.current) logoLeftRef.current.value = ""; }
-                      else { setLogoRight(""); if (logoRightRef.current) logoRightRef.current.value = ""; }
-                    }}>
-                    ✕ REMOVER
-                  </button>
-                </div>
-                {/* Galeria de Logos Padrão */}
-                <p style={{ fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6 }}>
-                  Logos Padrão — Clique para aplicar ({logoSide === "left" ? "Esquerda" : "Direita"})
-                </p>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
-                  {LOGOS_PADRAO.map((logo) => {
-                    const currentLogo = logoSide === "left" ? logoLeft : logoRight;
-                    const isSelected = currentLogo === logo.src;
-                    return (
-                      <div key={logo.id}
-                        onClick={() => logoSide === "left" ? setLogoLeft(logo.src) : setLogoRight(logo.src)}
-                        style={{ border: isSelected ? "2px solid #005CA9" : "1px solid #e5e7eb", borderRadius: 6, padding: 4, cursor: "pointer", background: isSelected ? "#eff6ff" : "#fff", height: 44, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}
-                        title={logo.label}>
-                        <img src={logo.src} alt={logo.label} style={{ maxWidth: "100%", maxHeight: 36, objectFit: "contain" }} />
-                      </div>
-                    );
-                  })}
+                  {logoUrl && (
+                    <button type="button" style={{ ...btnGray, flex: 1, fontSize: 11, padding: "7px 0" }}
+                      onClick={() => { setLogoUrl(""); if (logoRef.current) logoRef.current.value = ""; }}>
+                      ✕ USAR LOGO PADRÃO
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -942,8 +987,7 @@ export default function ReceitaCria() {
               <PrescricaoDocument
                 ref={previewRef}
                 data={previewData}
-                logoLeft={logoLeft}
-                logoRight={logoRight}
+                logoUrl={logoUrl}
                 signatureColor={signatureColor}
                 signatureImage={signatureImage}
               />

@@ -1,14 +1,15 @@
 /**
  * PrescricaoDocument — Clone visual 100% fiel ao PDF de referência
  *
- * Estrutura: 2 páginas A4 separadas (cada via = 1 página completa)
- *  - Título: "Receituário  Controle  Especial" — serif, negrito, centralizado
- *  - Box "IDENTIFICAÇÃO DO EMITENTE" (esq, ~65%) + coluna "Via/Data" (dir, ~35%)
- *  - Box Paciente (nome + endereço), largura total
- *  - Área de Prescrição (numerada, uso interno/externo)
- *  - Rodapé: QR Code grande (esq) + Assinatura itálica azul (dir) + linha de assinatura
- *  - Box "IDENTIFICAÇÃO DO COMPRADOR" (esq, ~50%) + Box "Assinatura Farmacêutico" (dir, ~50%)
+ * Carimbo do emitente:
+ *  - Logo (dr.consulta em azul ou upload do usuário)
+ *  - UNIDADE (negrito, maiúsculas)
+ *  - CNPJ
+ *  - Endereço
+ *  - CENTRAL DE ATENDIMENTO: telefone (negrito)
+ *  - www.site.com (negrito)
  *
+ * Estrutura: 2 páginas A4 separadas (cada via = 1 página completa)
  * Validação: https://verificamed.digital/verificar/receita/{codigo}
  */
 import { QRCodeSVG as QRCode } from "qrcode.react";
@@ -32,6 +33,8 @@ export interface PrescricaoData {
   endereco?: string;
   telefone?: string;
   cidade?: string;
+  // Unidades próximas
+  unidades_proximas?: string[];
   // Dados do médico/emitente
   medico: string;
   crm: string;
@@ -58,17 +61,20 @@ export interface PrescricaoData {
 const TIPO_CONFIG = {
   simples: {
     titulo: "Receituário  Médico",
-    viaDesc: "Via Única\nRetenção\nFacultativa",
+    viaDesc1: "Via Única",
+    viaDesc2: "Retenção\nFacultativa",
     showComprador: false,
   },
   controle_especial: {
     titulo: "Receituário  Controle  Especial",
-    viaDesc: "1/2ª Via\nRetenção na\nFarmácia ou\nDrogaria",
+    viaDesc1: "1/2ª Via",
+    viaDesc2: "Retenção na\nFarmácia ou\nDrogaria",
     showComprador: true,
   },
   antimicrobiano: {
     titulo: "Receituário  Antimicrobiano",
-    viaDesc: "1/2ª Via\nRetenção na\nFarmácia",
+    viaDesc1: "1/2ª Via",
+    viaDesc2: "Retenção na\nFarmácia",
     showComprador: true,
   },
 };
@@ -91,16 +97,40 @@ function formatEspecialidade(esp: string): string {
 }
 
 function formatCRM(crm: string): string {
-  // "CRM/SP 12345" → "CRM-SP: 12345"
   return crm.replace("/", "-").replace(" ", ": ");
+}
+
+// ─── Logo padrão dr.consulta (SVG inline) ─────────────────────────────────────
+// Replica exatamente: "dr." em azul (#1a56db) + "consulta" em azul escuro (#1a3a6b)
+// fonte sans-serif, peso 700, letras minúsculas
+function DrConsultaLogo({ height = 38 }: { height?: number }) {
+  return (
+    <svg
+      viewBox="0 0 220 50"
+      height={height}
+      style={{ display: "block" }}
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <text
+        x="0"
+        y="40"
+        fontFamily="Arial, Helvetica, sans-serif"
+        fontWeight="700"
+        fontSize="42"
+        fill="#1a56db"
+        letterSpacing="-1"
+      >
+        dr.consulta
+      </text>
+    </svg>
+  );
 }
 
 // ─── Componente de UMA VIA (página A4 completa) ───────────────────────────────
 function ViaPage({
   viaNum,
   data,
-  logoLeft,
-  logoRight,
+  logoUrl,
   signatureColor,
   signatureImage,
   isEmitted,
@@ -109,18 +139,15 @@ function ViaPage({
 }: {
   viaNum: 1 | 2;
   data: PrescricaoData;
-  logoLeft?: string;
-  logoRight?: string;
+  logoUrl?: string;
   signatureColor: string;
   signatureImage: string;
   isEmitted: boolean;
   qrValue: string;
   cfg: typeof TIPO_CONFIG["controle_especial"];
 }) {
-  // Rótulo da via: "1/2ª Via" para via 1, "2/2ª Via" para via 2 (controle especial)
-  const viaLabel = viaNum === 1
-    ? cfg.viaDesc
-    : cfg.viaDesc.replace("1/2ª Via", "2/2ª Via");
+  // Rótulo da via
+  const viaNum1 = viaNum === 1 ? cfg.viaDesc1 : cfg.viaDesc1.replace("1/2ª", "2/2ª");
 
   return (
     <div
@@ -128,10 +155,10 @@ function ViaPage({
         width: 794,
         height: 1123,
         background: "#fff",
-        paddingTop: 32,
-        paddingBottom: 28,
-        paddingLeft: 40,
-        paddingRight: 40,
+        paddingTop: 30,
+        paddingBottom: 24,
+        paddingLeft: 42,
+        paddingRight: 42,
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
@@ -145,28 +172,29 @@ function ViaPage({
       {/* ── TÍTULO ── */}
       <div style={{
         textAlign: "center",
-        marginBottom: 14,
+        marginBottom: 16,
         flexShrink: 0,
       }}>
         <span style={{
           fontFamily: "'Times New Roman', Times, serif",
-          fontSize: 26,
+          fontSize: 28,
           fontWeight: 700,
-          letterSpacing: 0,
+          letterSpacing: 1,
           color: "#000",
         }}>
           {cfg.titulo}
         </span>
       </div>
 
-      {/* ── CABEÇALHO: Box Emitente (esq) + Via/Data (dir) ── */}
+      {/* ── CABEÇALHO: Box Emitente (esq ~65%) + Coluna Via/Data (dir ~35%) ── */}
       <div style={{
         display: "flex",
         flexShrink: 0,
         marginBottom: 8,
         alignItems: "stretch",
       }}>
-        {/* Box Identificação do Emitente — ~65% */}
+
+        {/* ── Box Identificação do Emitente ── */}
         <div style={{
           flex: "0 0 65%",
           border: "1px solid #000",
@@ -174,9 +202,9 @@ function ViaPage({
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          padding: "6px 12px 10px",
+          padding: "6px 16px 12px",
         }}>
-          {/* Label do box */}
+          {/* Label */}
           <div style={{
             fontSize: 8.5,
             fontWeight: 400,
@@ -186,25 +214,31 @@ function ViaPage({
             alignSelf: "stretch",
             textAlign: "center",
             borderBottom: "1px solid #000",
-            paddingBottom: 4,
-            marginBottom: 6,
+            paddingBottom: 5,
+            marginBottom: 10,
           }}>
             IDENTIFICAÇÃO DO EMITENTE
           </div>
 
-          {/* Logo */}
-          {(logoLeft || logoRight) && (
-            <div style={{ marginBottom: 4, lineHeight: 0 }}>
+          {/* ── LOGO ── */}
+          {logoUrl ? (
+            /* Logo customizado enviado pelo usuário */
+            <div style={{ marginBottom: 6, lineHeight: 0 }}>
               <img
-                src={logoLeft || logoRight}
+                src={logoUrl}
                 alt="Logo"
                 crossOrigin="anonymous"
                 style={{ maxHeight: 44, maxWidth: 220, objectFit: "contain" }}
               />
             </div>
+          ) : (
+            /* Logo padrão dr.consulta */
+            <div style={{ marginBottom: 6 }}>
+              <DrConsultaLogo height={36} />
+            </div>
           )}
 
-          {/* Nome da unidade/clínica */}
+          {/* ── NOME DA UNIDADE — negrito, maiúsculas ── */}
           {(data.unidade || data.instituicao) && (
             <div style={{
               fontWeight: 700,
@@ -218,7 +252,7 @@ function ViaPage({
             </div>
           )}
 
-          {/* Fallback: nome do médico quando não há unidade/instituição */}
+          {/* Fallback: nome do médico */}
           {!data.unidade && !data.instituicao && (
             <div style={{
               fontWeight: 700,
@@ -232,28 +266,28 @@ function ViaPage({
             </div>
           )}
 
-          {/* CNPJ */}
+          {/* ── CNPJ ── */}
           {data.cnpj_emitente && (
-            <div style={{ fontSize: 9.5, textAlign: "center", marginBottom: 1 }}>
+            <div style={{ fontSize: 9.5, textAlign: "center", marginBottom: 2 }}>
               CNPJ {data.cnpj_emitente}
             </div>
           )}
 
-          {/* Endereço do emitente */}
+          {/* ── ENDEREÇO ── */}
           {data.endereco_emitente && (
-            <div style={{ fontSize: 9.5, textAlign: "center", lineHeight: 1.35, marginBottom: 2 }}>
+            <div style={{ fontSize: 9.5, textAlign: "center", lineHeight: 1.4, marginBottom: 4 }}>
               {data.endereco_emitente}
             </div>
           )}
 
-          {/* Telefone central de atendimento */}
+          {/* ── CENTRAL DE ATENDIMENTO ── negrito */}
           {data.telefone_emitente && (
             <div style={{ fontWeight: 700, fontSize: 9.5, textAlign: "center", marginBottom: 1 }}>
               CENTRAL DE ATENDIMENTO: {data.telefone_emitente}
             </div>
           )}
 
-          {/* Site */}
+          {/* ── SITE ── negrito */}
           {data.site_emitente && (
             <div style={{ fontWeight: 700, fontSize: 9.5, textAlign: "center" }}>
               {data.site_emitente}
@@ -261,30 +295,37 @@ function ViaPage({
           )}
         </div>
 
-        {/* Coluna direita: Via + Data — ~35% */}
+        {/* ── Coluna direita: Via + Data ── */}
         <div style={{
           flex: "0 0 35%",
           border: "1px solid #000",
           borderLeft: "none",
           boxSizing: "border-box",
-          padding: "8px 12px",
+          padding: "10px 16px",
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
         }}>
-          {/* Via */}
-          <div style={{
-            fontSize: 10.5,
-            lineHeight: 1.6,
-            whiteSpace: "pre-line",
-            color: "#000",
-          }}>
-            {viaLabel}
+          {/* Via — primeira linha negrito, restante sublinhado */}
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 10.5, marginBottom: 2 }}>
+              {viaNum1}
+            </div>
+            <div style={{
+              fontSize: 10.5,
+              lineHeight: 1.65,
+              textDecoration: "underline",
+              whiteSpace: "pre-line",
+              color: "#000",
+            }}>
+              {cfg.viaDesc2}
+            </div>
           </div>
 
           {/* Data */}
-          <div style={{ fontSize: 11, color: "#000" }}>
-            Data: {data.data_emissao
+          <div style={{ fontSize: 11.5, color: "#000", marginTop: 8 }}>
+            Data:{" "}
+            {data.data_emissao
               ? (() => {
                   const p = data.data_emissao.split("/");
                   if (p.length === 3) return `${p[0]}/${p[1]}/${p[2]}`;
@@ -298,20 +339,20 @@ function ViaPage({
       {/* ── BOX PACIENTE ── */}
       <div style={{
         border: "1px solid #000",
-        padding: "7px 12px",
+        padding: "7px 14px",
         marginBottom: 12,
         flexShrink: 0,
-        lineHeight: 1.75,
+        lineHeight: 1.85,
         fontSize: 11,
       }}>
         <div>
-          <span>Paciente:{"   "}</span>
-          <span>{data.paciente || "NOME DO PACIENTE"}</span>
+          <span style={{ fontWeight: 400 }}>Paciente:</span>
+          <span style={{ marginLeft: 12 }}>{data.paciente || "NOME DO PACIENTE"}</span>
         </div>
         {data.endereco && (
           <div>
-            <span>Endereço:{"  "}</span>
-            <span>{data.endereco}</span>
+            <span style={{ fontWeight: 400 }}>Endereço:</span>
+            <span style={{ marginLeft: 12 }}>{data.endereco}</span>
           </div>
         )}
       </div>
@@ -321,29 +362,25 @@ function ViaPage({
         flex: "1 1 auto",
         overflow: "hidden",
         fontSize: 11,
-        lineHeight: 1.5,
+        lineHeight: 1.55,
         paddingLeft: 2,
       }}>
         {(data.prescricao || []).map((item, idx) => (
-          <div key={idx} style={{ marginBottom: 14 }}>
-            {/* Número e tipo de uso */}
-            <div style={{ marginBottom: 3 }}>
+          <div key={idx} style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 2 }}>
               {idx + 1}) {item.uso_interno ? "Uso Interno" : "Uso Externo"}
             </div>
-            {/* Medicamento */}
-            <div style={{ marginBottom: 2 }}>
+            <div style={{ marginBottom: 2, paddingLeft: 12 }}>
               {item.medicamento}
             </div>
-            {/* Quantidade */}
             {item.quantidade && (
-              <div style={{ marginBottom: 2 }}>
+              <div style={{ paddingLeft: 12 }}>
                 Quantidade: {item.quantidade}
               </div>
             )}
-            {/* Modo de uso */}
             {item.modo_uso && (
-              <div>
-                Uso:{"  "}{item.modo_uso}
+              <div style={{ paddingLeft: 12 }}>
+                {item.modo_uso}
               </div>
             )}
           </div>
@@ -366,7 +403,7 @@ function ViaPage({
         marginBottom: 10,
         gap: 16,
       }}>
-        {/* QR Code — esquerda, grande */}
+        {/* QR Code — esquerda */}
         <div style={{ flexShrink: 0 }}>
           {isEmitted ? (
             <QRCode
@@ -492,7 +529,6 @@ function ViaPage({
             flexDirection: "column",
             justifyContent: "flex-end",
           }}>
-            {/* 3 linhas de preenchimento manual */}
             <div style={{ borderTop: "1px solid #000", marginBottom: 22 }} />
             <div style={{ borderTop: "1px solid #000", marginBottom: 22 }} />
             <div style={{ borderTop: "1px solid #000", marginBottom: 8 }} />
@@ -512,11 +548,10 @@ function ViaPage({
 // ─── Componente principal — exporta 2 páginas A4 ──────────────────────────────
 const PrescricaoDocument = forwardRef<HTMLDivElement, {
   data: PrescricaoData;
-  logoLeft?: string;
-  logoRight?: string;
+  logoUrl?: string;
   signatureColor?: string;
   signatureImage?: string;
-}>(({ data, logoLeft, logoRight, signatureColor, signatureImage }, ref) => {
+}>(({ data, logoUrl, signatureColor, signatureImage }, ref) => {
 
   const isEmitted = !!(data.codigoQR && data.codigoQR !== "RX-XXXX-XXXX");
   const qrValue = isEmitted
@@ -529,10 +564,12 @@ const PrescricaoDocument = forwardRef<HTMLDivElement, {
   const corAssinatura = signatureColor || data.signature_color || "#1a3a6b";
   const fotoAssinatura = signatureImage || data.signature_image || "";
 
+  // Logo: prioridade para upload do usuário, depois logo_url do data
+  const logoFinal = logoUrl || data.logo_url || "";
+
   const viaProps = {
     data,
-    logoLeft,
-    logoRight,
+    logoUrl: logoFinal,
     signatureColor: corAssinatura,
     signatureImage: fotoAssinatura,
     isEmitted,
@@ -555,7 +592,7 @@ const PrescricaoDocument = forwardRef<HTMLDivElement, {
       {/* ── 1ª VIA (Página 1) ── */}
       <ViaPage viaNum={1} {...viaProps} />
 
-      {/* ── 2ª VIA (Página 2) — separador de página para impressão/PDF ── */}
+      {/* ── 2ª VIA (Página 2) ── */}
       <div style={{
         pageBreakBefore: "always",
         breakBefore: "page",
