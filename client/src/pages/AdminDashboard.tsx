@@ -86,7 +86,7 @@ const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "notices", label: "Avisos", icon: Bell },
   { key: "logs", label: "Logs", icon: Activity },
   { key: "emissions", label: "Emissões", icon: FileText },
-  { key: "referral", label: "Indica\u00e7\u00f5es", icon: Gift },
+  { key: "referral", label: "Indicações", icon: Gift },
   { key: "database", label: "Banco de Dados", icon: Database },
   { key: "settings", label: "Configurações", icon: Settings },
 ];
@@ -287,7 +287,7 @@ export default function AdminDashboard() {
       const data = await res.json();
       if (data.success) { toast.success("Logs limpos com sucesso!"); loadLogs(); }
       else toast.error(data.error || "Erro ao limpar logs");
-    } catch { toast.error("Erro de conex\u00e3o"); }
+    } catch { toast.error("Erro de conexão"); }
   };
 
   const loadReferral = useCallback(async () => {
@@ -306,7 +306,7 @@ export default function AdminDashboard() {
           cashback_enabled: s.cashback_enabled === "true",
         });
       }
-    } catch { toast.error("Erro ao carregar indica\u00e7\u00f5es"); }
+    } catch { toast.error("Erro ao carregar indicações"); }
     finally { setLoading(false); }
   }, [referralTab]);
 
@@ -317,9 +317,9 @@ export default function AdminDashboard() {
         body: JSON.stringify({ action: "update_global_settings", ...referralSettings }),
       });
       const data = await res.json();
-      if (data.success) toast.success("Configura\u00e7\u00f5es de indica\u00e7\u00e3o salvas!");
+      if (data.success) toast.success("Configurações de indicação salvas!");
       else toast.error(data.error || "Erro");
-    } catch { toast.error("Erro de conex\u00e3o"); }
+    } catch { toast.error("Erro de conexão"); }
   };
 
   const saveUserRefSettings = async (userId: string) => {
@@ -333,9 +333,9 @@ export default function AdminDashboard() {
         }),
       });
       const data = await res.json();
-      if (data.success) { toast.success("% do usu\u00e1rio atualizado!"); setEditUserRefId(null); loadReferral(); }
+      if (data.success) { toast.success("% do usuário atualizado!"); setEditUserRefId(null); loadReferral(); }
       else toast.error(data.error || "Erro");
-    } catch { toast.error("Erro de conex\u00e3o"); }
+    } catch { toast.error("Erro de conexão"); }
   };
 
   const saveAllPrices = async () => {
@@ -351,9 +351,9 @@ export default function AdminDashboard() {
         body: JSON.stringify({ prices }),
       });
       const data = await res.json();
-      if (data.success) { toast.success("Todos os pre\u00e7os atualizados com sucesso!"); loadPricing(); }
-      else toast.error(data.error || "Erro ao salvar pre\u00e7os");
-    } catch { toast.error("Erro de conex\u00e3o"); }
+      if (data.success) { toast.success("Todos os preços atualizados com sucesso!"); loadPricing(); }
+      else toast.error(data.error || "Erro ao salvar preços");
+    } catch { toast.error("Erro de conexão"); }
     finally { setPricingSaving(false); }
   };
 
@@ -1097,7 +1097,7 @@ export default function AdminDashboard() {
                     className="flex items-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
                   >
                     <Save className="w-4 h-4" />
-                    {pricingSaving ? "Salvando..." : "Salvar Todos os Pre\u00e7os"}
+                    {pricingSaving ? "Salvando..." : "Salvar Todos os Preços"}
                   </button>
                 </div>
               </>
@@ -1249,14 +1249,14 @@ export default function AdminDashboard() {
             </div>
             <div className="flex items-center gap-2 mb-4 flex-wrap">
               <Calendar className="w-4 h-4 text-gray-400" />
-              <span className="text-xs text-gray-500 dark:text-gray-400">Per\u00edodo:</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Período:</span>
               <input
                 type="date"
                 value={logDateFrom}
                 onChange={e => setLogDateFrom(e.target.value)}
                 className="px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
               />
-              <span className="text-xs text-gray-400">at\u00e9</span>
+              <span className="text-xs text-gray-400">até</span>
               <input
                 type="date"
                 value={logDateTo}
@@ -1481,7 +1481,7 @@ export default function AdminDashboard() {
                       : "text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700"
                   }`}
                 >
-                  {rt === "overview" ? "Vis\u00e3o Geral" : rt === "referrals" ? "Indica\u00e7\u00f5es" : rt === "earnings" ? "Ganhos Referral" : rt === "cashback" ? "Cashback" : "Usu\u00e1rios"}
+                  {rt === "overview" ? "Visão Geral" : rt === "referrals" ? "Indicações" : rt === "earnings" ? "Ganhos Referral" : rt === "cashback" ? "Cashback" : "Usuários"}
                 </button>
               ))}
             </div>
@@ -1493,7 +1493,7 @@ export default function AdminDashboard() {
                   <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 text-center">
                     <Gift className="w-6 h-6 mx-auto mb-2 text-purple-500" />
                     <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{referralData.totalReferrals || 0}</p>
-                    <p className="text-xs text-gray-500">Total Indica\u00e7\u00f5es</p>
+                    <p className="text-xs text-gray-500">Total Indicações</p>
                   </div>
                   <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 text-center">
                     <Users className="w-6 h-6 mx-auto mb-2 text-blue-500" />
@@ -1514,10 +1514,10 @@ export default function AdminDashboard() {
 
                 {/* Global settings */}
                 <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
-                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">Configura\u00e7\u00f5es Globais</h3>
+                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">Configurações Globais</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">% Indica\u00e7\u00e3o (Referral)</label>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">% Indicação (Referral)</label>
                       <div className="flex items-center gap-2">
                         <input
                           type="number" step="0.5" min="0" max="100"
@@ -1533,10 +1533,10 @@ export default function AdminDashboard() {
                           {referralSettings.referral_enabled ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
                         </button>
                       </div>
-                      <p className="text-[10px] text-gray-400 mt-1">% que o indicador ganha sobre cada dep\u00f3sito do indicado</p>
+                      <p className="text-[10px] text-gray-400 mt-1">% que o indicador ganha sobre cada depósito do indicado</p>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">% Cashback (Dep\u00f3sito)</label>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">% Cashback (Depósito)</label>
                       <div className="flex items-center gap-2">
                         <input
                           type="number" step="0.5" min="0" max="100"
@@ -1552,12 +1552,12 @@ export default function AdminDashboard() {
                           {referralSettings.cashback_enabled ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
                         </button>
                       </div>
-                      <p className="text-[10px] text-gray-400 mt-1">% que o usu\u00e1rio ganha de volta ao depositar</p>
+                      <p className="text-[10px] text-gray-400 mt-1">% que o usuário ganha de volta ao depositar</p>
                     </div>
                   </div>
                   <div className="mt-4 flex justify-end">
                     <button onClick={saveReferralSettings} className="flex items-center gap-2 px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl transition-colors">
-                      <Save className="w-4 h-4" /> Salvar Configura\u00e7\u00f5es
+                      <Save className="w-4 h-4" /> Salvar Configurações
                     </button>
                   </div>
                 </div>
@@ -1589,7 +1589,7 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
                 {(referralData.referrals || []).length === 0 && (
-                  <div className="text-center py-8 text-gray-400 text-sm">Nenhuma indica\u00e7\u00e3o registrada</div>
+                  <div className="text-center py-8 text-gray-400 text-sm">Nenhuma indicação registrada</div>
                 )}
               </div>
             )}
@@ -1602,7 +1602,7 @@ export default function AdminDashboard() {
                       <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Data</th>
                       <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicador</th>
                       <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicado</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Dep\u00f3sito</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Depósito</th>
                       <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">%</th>
                       <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Ganho</th>
                     </tr>
@@ -1621,7 +1621,7 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
                 {(referralData.earnings || []).length === 0 && (
-                  <div className="text-center py-8 text-gray-400 text-sm">Nenhum ganho de indica\u00e7\u00e3o registrado</div>
+                  <div className="text-center py-8 text-gray-400 text-sm">Nenhum ganho de indicação registrado</div>
                 )}
               </div>
             )}
@@ -1632,8 +1632,8 @@ export default function AdminDashboard() {
                   <thead>
                     <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
                       <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Data</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Usu\u00e1rio</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Dep\u00f3sito</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Usuário</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Depósito</th>
                       <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">%</th>
                       <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Cashback</th>
                     </tr>
@@ -1661,13 +1661,13 @@ export default function AdminDashboard() {
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Usu\u00e1rio</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">C\u00f3digo</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Usuário</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Código</th>
                       <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicados</th>
                       <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Ganho Ref.</th>
                       <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Cashback</th>
                       <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">% Custom</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">A\u00e7\u00f5es</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
@@ -1712,7 +1712,7 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
                 {(referralData.users || []).length === 0 && (
-                  <div className="text-center py-8 text-gray-400 text-sm">Nenhum usu\u00e1rio encontrado</div>
+                  <div className="text-center py-8 text-gray-400 text-sm">Nenhum usuário encontrado</div>
                 )}
               </div>
             )}
