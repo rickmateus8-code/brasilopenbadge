@@ -119,8 +119,45 @@ export async function onRequest(context: { request: Request; env: Env; params: {
       }, 201);
     }
 
-    // ── GET: Retrieve document by ID ──
+    // ── GET: List documents by type OR retrieve single document by ID ──
     if (request.method === "GET") {
+      const docTypeOrId = idOrType.toLowerCase();
+
+      // If it's a known document type, list all documents of that type
+      if (DOCUMENT_TYPES.includes(docTypeOrId)) {
+        const url = new URL(request.url);
+        const limit = parseInt(url.searchParams.get('limit') || '50');
+        let results;
+        if (user.role === "admin") {
+          results = await env.DB.prepare(
+            "SELECT d.*, u.display_name as user_name FROM documents d LEFT JOIN users u ON d.user_id = u.id WHERE d.type = ? ORDER BY d.created_at DESC LIMIT ?"
+          ).bind(docTypeOrId, limit).all();
+        } else {
+          results = await env.DB.prepare(
+            "SELECT * FROM documents WHERE type = ? AND user_id = ? ORDER BY created_at DESC LIMIT ?"
+          ).bind(docTypeOrId, user.id, limit).all();
+        }
+
+        // Parse JSON data field for each document and extract nome
+        const documents = (results.results || []).map((doc: any) => {
+          let parsedData: any = {};
+          try { if (doc.data) parsedData = JSON.parse(doc.data); } catch {}
+          return {
+            id: doc.id,
+            type: doc.type,
+            nome: parsedData.nome || parsedData.nomeCompleto || parsedData.paciente || 'Sem nome',
+            codigo_qr: doc.codigo_qr,
+            status: doc.status || 'emitido',
+            created_at: doc.created_at,
+            user_id: doc.user_id,
+            user_name: doc.user_name,
+          };
+        });
+
+        return jsonResponse({ success: true, data: documents });
+      }
+
+      // Otherwise, retrieve single document by ID
       const docId = idOrType;
       let doc;
       if (user.role === "admin") {
