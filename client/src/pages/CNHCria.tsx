@@ -308,7 +308,21 @@ export default function CNHCria() {
     }
   };
 
-  // ─── Exportar JPEG ─────────────────────────────────────────────────────────
+  // ─── Exportar PDF ──────────────────────────────────────────────────────────────────
+  const handleExportPdf = async () => {
+    if (!docRef.current) return;
+    setLoading(true);
+    try {
+      await docRef.current.exportAsPdf();
+      toast.success("PDF exportado com sucesso!");
+    } catch {
+      toast.error("Erro ao exportar PDF");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ─── Exportar JPEG (mantido como backup) ───────────────────────────────────────────────
   const handleExportJPEG = async () => {
     if (!docRef.current) return;
     setLoading(true);
@@ -330,7 +344,6 @@ export default function CNHCria() {
       setLoading(false);
     }
   };
-
   // ─── WhatsApp Share ────────────────────────────────────────────────────────
   const handleWhatsApp = () => {
     const texto = encodeURIComponent(
@@ -752,7 +765,10 @@ export default function CNHCria() {
             <p>Código: <strong style={{ fontFamily: "monospace" }}>{codigoQR}</strong></p>
             <p>Validação: <strong>{getQRCodeCNH(codigoQR)}</strong></p>
             <div className="cnh-result-btns">
-              <button className="cnh-btn-download" onClick={handleExportJPEG} disabled={loading}>
+              <button className="cnh-btn-download" onClick={handleExportPdf} disabled={loading}>
+                <Download size={14} /> Baixar PDF
+              </button>
+              <button className="cnh-btn-download" onClick={handleExportJPEG} disabled={loading} style={{ background: "#6b7280" }}>
                 <Download size={14} /> Baixar JPEG
               </button>
               <button className="cnh-btn-whatsapp" onClick={handleWhatsApp}>
@@ -1066,7 +1082,7 @@ export default function CNHCria() {
         onCancel={() => setShowConfirmModal(false)}
         onDownload={async () => {
           setIsDownloading(true);
-          await handleExportJPEG();
+          await handleExportPdf();
           setIsDownloading(false);
         }}
         onClose={() => setShowSuccessModal(false)}

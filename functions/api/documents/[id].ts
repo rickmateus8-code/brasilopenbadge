@@ -241,20 +241,30 @@ export async function onRequest(context: { request: Request; env: Env; params: {
         return jsonResponse({ success: false, error: "Sem permissão." }, 403);
       }
 
-      const body = await request.json<any>();
+      const rawBody = await request.json<any>();
       const now = new Date().toISOString();
+
+      // DocumentosSalvos.tsx sends { data: { ... } }, direct calls send fields at root
+      const editPayload = rawBody.data || rawBody;
 
       // CPF BLOQUEADO — não pode ser alterado após emissão (regra universal)
       let existingData: any = {};
       try { if (doc.data) existingData = JSON.parse(doc.data); } catch { /* ignore */ }
-      body.cpf = existingData.cpf; // Preservar CPF original
+
+      // Merge: keep existing data, overlay with new edits
+      const mergedData = { ...existingData, ...editPayload };
+      mergedData.cpf = existingData.cpf; // Preservar CPF original
+
+      // Also update direct columns if present
+      const nome = editPayload.nome || editPayload.nomeCompleto || editPayload.paciente || doc.nome;
 
       await env.DB.prepare(`
         UPDATE documents SET
           data = ?,
+          nome = COALESCE(?, nome),
           updated_at = ?
         WHERE id = ?
-      `).bind(JSON.stringify(body), now, docId).run();
+      `).bind(JSON.stringify(mergedData), nome || null, now, docId).run();
 
       return jsonResponse({ success: true, message: "Documento atualizado com sucesso." });
     }

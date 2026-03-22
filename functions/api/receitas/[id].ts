@@ -69,8 +69,26 @@ export async function onRequest(context: { request: Request; env: Env; params: {
         return jsonResponse({ success: false, error: "Sem permissão." }, 403);
       }
 
-      const body = await request.json<any>();
+      const rawBody = await request.json<any>();
       const now = new Date().toISOString();
+
+      // DocumentosSalvos.tsx sends { data: { ... } }, direct calls send fields at root
+      const editPayload = rawBody.data || rawBody;
+
+      // Map frontend field names to database column names
+      const fieldMap: Record<string, string> = {
+        nome_paciente: 'paciente',
+        nome_medico: 'medico',
+        uf_crm: 'uf_crm',
+        medicamento: 'prescricao',
+        posologia: 'posologia',
+        observacoes: 'observacoes',
+      };
+      const body: any = {};
+      for (const [key, value] of Object.entries(editPayload)) {
+        const mappedKey = fieldMap[key] || key;
+        body[mappedKey] = value;
+      }
 
       // CPF BLOQUEADO — não pode ser alterado após emissão
       let prescricao = body.prescricao;

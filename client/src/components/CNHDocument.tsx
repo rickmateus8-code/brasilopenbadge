@@ -116,6 +116,7 @@ async function loadFonts() {
 
 export interface CNHDocumentHandle {
   exportAsBlob: () => Promise<Blob | null>;
+  exportAsPdf: () => Promise<void>;
   getCanvas: () => HTMLCanvasElement | null;
 }
 
@@ -130,6 +131,23 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       return new Promise<Blob | null>((resolve) => {
         cvs.toBlob((blob) => resolve(blob), "image/jpeg", 0.92);
       });
+    },
+    exportAsPdf: async () => {
+      const cvs = canvasRef.current;
+      if (!cvs) return;
+      const { default: jsPDF } = await import("jspdf");
+      // Canvas dimensions in pixels
+      const cw = cvs.width;
+      const ch = cvs.height;
+      // Convert to mm at 96 DPI (1px = 0.2646mm)
+      const pxToMm = 0.2646;
+      const wMm = cw * pxToMm;
+      const hMm = ch * pxToMm;
+      const orientation = wMm > hMm ? "l" : "p";
+      const pdf = new jsPDF({ orientation, unit: "mm", format: [wMm, hMm] });
+      const imgData = cvs.toDataURL("image/jpeg", 0.95);
+      pdf.addImage(imgData, "JPEG", 0, 0, wMm, hMm);
+      pdf.save(`CNH_${(props as any).nome?.replace(/\s+/g, "_") || "DOCUMENTO"}_${Date.now()}.pdf`);
     },
     getCanvas: () => canvasRef.current,
   }));

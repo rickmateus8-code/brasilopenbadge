@@ -201,6 +201,24 @@ export default function AtestadoEditar() {
     })();
   }, [id]);
 
+  // ── Auto-download quando vem de "Baixar PDF" nos Salvos ───────────────────
+  useEffect(() => {
+    if (loading || notFound) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("download") === "1" && previewRef.current) {
+      // Aguardar renderização do preview e disparar download
+      const timer = setTimeout(async () => {
+        try {
+          const filename = generatePDFFilename(form.paciente || "ATESTADO", "DOWNLOAD");
+          await exportElementToPDF(previewRef.current!, { filename, scale: 2, quality: 0.92 });
+        } catch (err) {
+          console.error("Auto-download falhou:", err);
+        }
+      }, 1500); // Esperar imagens e fontes carregarem
+      return () => clearTimeout(timer);
+    }
+  }, [loading, notFound]);
+
   // ── Salvar edição ──────────────────────────────────────────────────────────
   const handleSave = async () => {
     setSaving(true);

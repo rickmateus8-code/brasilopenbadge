@@ -33,6 +33,10 @@ interface DocumentosSalvosProps {
   nameField?: string;
   cpfField?: string;
   extraColumns?: { key: string; label: string; render?: (doc: DocRecord) => string }[];
+  /** Rota para editar o documento (ex: "/atestado/editar"). Se fornecida, o botão Editar navega para lá com ?id=<id>. */
+  editRoute?: string;
+  /** Rota para baixar/visualizar o documento para download (ex: "/atestado/view"). Se fornecida, renderiza botão Baixar PDF. */
+  downloadRoute?: string;
 }
 
 export default function DocumentosSalvos({
@@ -44,6 +48,8 @@ export default function DocumentosSalvos({
   nameField = "nome",
   cpfField = "cpf",
   extraColumns = [],
+  editRoute,
+  downloadRoute,
 }: DocumentosSalvosProps) {
   const [docs, setDocs] = useState<DocRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -229,11 +235,27 @@ export default function DocumentosSalvos({
                           <Eye className="w-3 h-3" /> Visualizar
                         </button>
                         <button
-                          onClick={() => openEdit(doc)}
+                          onClick={() => {
+                            if (editRoute) {
+                              window.location.href = `${editRoute}/${doc.id}`;
+                            } else {
+                              openEdit(doc);
+                            }
+                          }}
                           className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-yellow-700 hover:bg-yellow-800 text-white transition-colors flex items-center gap-1"
                         >
                           <Edit3 className="w-3 h-3" /> Editar
                         </button>
+                        {downloadRoute && (
+                          <button
+                            onClick={() => {
+                              window.location.href = `${downloadRoute}/${doc.id}?download=1`;
+                            }}
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center gap-1"
+                          >
+                            <Download className="w-3 h-3" /> Baixar PDF
+                          </button>
+                        )}
                         <button
                           onClick={() => setDeleteConfirmId(doc.id)}
                           className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500 hover:bg-red-600 text-white transition-colors flex items-center gap-1"

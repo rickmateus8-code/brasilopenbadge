@@ -87,7 +87,25 @@ export async function onRequest(context: { request: Request; env: Env; params: {
         return jsonResponse({ success: false, error: "Sem permissão." }, 403);
       }
 
-      const body = await request.json() as any;
+      const rawBody = await request.json() as any;
+
+      // DocumentosSalvos.tsx sends { data: { ... } }, direct calls send fields at root
+      const editPayload = rawBody.data || rawBody;
+
+      // Map frontend field names to database column names
+      const fieldMap: Record<string, string> = {
+        nome_paciente: 'paciente',
+        nome_medico: 'medico',
+        uf_crm: 'uf_crm',
+        dias_afastamento: 'afastamento',
+        tipo_doc: 'tipo_doc',
+        observacoes: 'texto_atestado',
+      };
+      const body: any = {};
+      for (const [key, value] of Object.entries(editPayload)) {
+        const mappedKey = fieldMap[key] || key;
+        body[mappedKey] = value;
+      }
 
       // CPF BLOQUEADO — não pode ser alterado
       if (body.cpf && body.cpf !== existing.cpf) {

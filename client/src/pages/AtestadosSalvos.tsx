@@ -26,6 +26,8 @@ export default function AtestadosSalvos() {
       fields={FIELDS}
       nameField="nome_paciente"
       cpfField="cpf"
+      editRoute="/atestado/editar"
+      downloadRoute="/atestado/editar"
     />
   );
 }

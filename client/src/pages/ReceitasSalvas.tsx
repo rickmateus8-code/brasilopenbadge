@@ -24,6 +24,8 @@ export default function ReceitasSalvas() {
       fields={FIELDS}
       nameField="nome_paciente"
       cpfField="cpf"
+      editRoute="/receita/editar"
+      downloadRoute="/receita/editar"
     />
   );
 }
