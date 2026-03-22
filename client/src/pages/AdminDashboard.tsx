@@ -297,7 +297,7 @@ export default function AdminDashboard() {
           const data = await res.json();
           if (data.success) { toast.success("Logs limpos com sucesso!"); loadLogs(); }
           else toast.error(data.error || "Erro ao limpar logs");
-        } catch { toast.error("Erro de conex\u00e3o"); }
+        } catch { toast.error("Erro de conexão"); }
       },
     });
   };
@@ -1431,7 +1431,7 @@ export default function AdminDashboard() {
               <button onClick={loadEmissions} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors">
                 <RefreshCw className="w-4 h-4" />
               </button>
-              <span className="text-xs text-gray-500 dark:text-gray-400">{filteredEmissions.length} emiss\u00f5es</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">{filteredEmissions.length} emissões</span>
             </div>
             {loading ? (
               <div className="flex items-center justify-center py-12">

@@ -547,37 +547,27 @@ export default function Dashboard() {
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <button
                                     onClick={() => setPreviewModal(doc)}
-                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-500 hover:bg-green-600 text-white transition-colors"
+                                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-700 hover:bg-amber-800 text-white transition-colors"
                                   >
                                     Preview CNH
                                   </button>
                                   <button
                                     onClick={() => { setAppModal(doc); setWhatsappPhone(""); }}
-                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white transition-colors"
+                                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white transition-colors"
                                   >
                                     App CNH
                                   </button>
                                   <button
                                     onClick={() => openFicha(doc)}
-                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-yellow-700 hover:bg-yellow-800 text-white transition-colors"
+                                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-orange-400 hover:bg-orange-500 text-white transition-colors"
                                   >
-                                    Editar
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setDownloadingId(doc.id);
-                                      setDirectDownloadCnh(doc);
-                                    }}
-                                    disabled={downloadingId === doc.id}
-                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center gap-1 disabled:opacity-50"
-                                  >
-                                    <Download className="w-3 h-3" /> {downloadingId === doc.id ? 'Gerando...' : 'PDF'}
+                                    Ficha Técnica
                                   </button>
                                   <button
                                     onClick={() => setConfirmDeleteId(doc.id)}
-                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500 hover:bg-red-600 text-white transition-colors flex items-center gap-1"
+                                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-500 hover:bg-rose-600 text-white transition-colors flex items-center gap-1"
                                   >
-                                    <Trash2 className="w-3 h-3" /> Excluir
+                                    <Trash2 className="w-3 h-3" /> DELETAR
                                   </button>
                                 </div>
                               </td>

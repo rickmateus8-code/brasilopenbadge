@@ -10,6 +10,7 @@ import {
 
 interface CNHRecord {
   id: string;
+  seq_id: number;
   nome: string;
   cpf: string;
   senha: string;
@@ -45,11 +46,12 @@ export default function CNHSalvas() {
       const res = await fetch("/api/documents/cnh?limit=100", { credentials: "include" });
       const data = await res.json();
       if (data.success) {
-        const records = (data.data || []).map((d: any) => {
+        const records = (data.data || []).map((d: any, index: number) => {
           let parsed: any = {};
           try { parsed = typeof d.data === "string" ? JSON.parse(d.data) : (d.data || {}); } catch {}
           return {
             id: d.id,
+            seq_id: d.seq_id || (14000 + index + 1),
             nome: d.nome || parsed.nome || parsed.nomeCompleto || "\u2014",
             cpf: d.cpf || parsed.cpf || "\u2014",
             senha: d.senha || parsed.senhaApp || parsed.senha || String(Math.floor(1000 + Math.random() * 9000)),
@@ -75,44 +77,44 @@ export default function CNHSalvas() {
       const res = await fetch(`/api/documents/${id}`, { method: "DELETE", credentials: "include" });
       const data = await res.json();
       if (data.success) {
-        toast.success("CNH exclu\u00edda com sucesso!");
+        toast.success("CNH excluída com sucesso!");
         setCnhs(prev => prev.filter(c => c.id !== id));
       } else {
         toast.error(data.error || "Erro ao excluir");
       }
     } catch {
-      toast.error("Erro de conex\u00e3o");
+      toast.error("Erro de conexão");
     }
     setDeleteConfirmId(null);
   };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast.success("Copiado para a \u00e1rea de transfer\u00eancia!");
+    toast.success("Copiado para a área de transferência!");
   };
 
   const generateMessage = (cnh: CNHRecord) => {
-    return `Ol\u00e1! \ud83d\udc4b Aqui est\u00e3o seus dados de acesso para o App CNH:
-CPF: ${cnh.cpf} \ud83d\udccb
-Senha: ${cnh.senha} \ud83d\udd11
+    return `Olá! 👋 Aqui estão seus dados de acesso para o App CNH:
+CPF: ${cnh.cpf} 📋
+Senha: ${cnh.senha} 🔑
 
-Links para download: \ud83d\udcf1
-Android (GOV): ${APP_LINKS.gov} \ud83d\udcf2
-Android (DETRAN): ${APP_LINKS.detran} \ud83d\udcf2
-WebApp (DETRAN): ${APP_LINKS.webapp} \ud83c\udf10
+Links para download: 📱
+Android (GOV): ${APP_LINKS.gov} 📲
+Android (DETRAN): ${APP_LINKS.detran} 📲
+WebApp (DETRAN): ${APP_LINKS.webapp} 🌐
 
-Um abra\u00e7o da equipe DocMaster! \ud83d\ude0a\ud83d\ude97\ud83d\udca8`;
+Um abraço da equipe DocMaster! 😊🚗💨`;
   };
 
   const shareWhatsApp = (cnh: CNHRecord) => {
-    if (!whatsappPhone) { toast.error("Digite o n\u00famero do telefone"); return; }
+    if (!whatsappPhone) { toast.error("Digite o número do telefone"); return; }
     const phone = whatsappPhone.replace(/\D/g, "");
     const msg = encodeURIComponent(generateMessage(cnh));
     window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
   };
 
   const formatDate = (d: string) => {
-    if (!d) return "\u2014";
+    if (!d) return "—";
     try { return new Date(d).toLocaleDateString("pt-BR"); } catch { return d; }
   };
 
@@ -231,14 +233,14 @@ Um abra\u00e7o da equipe DocMaster! \ud83d\ude0a\ud83d\ude97\ud83d\udca8`;
       });
       const result = await res.json();
       if (result.success) {
-        toast.success("Ficha T\u00e9cnica salva com sucesso!");
+        toast.success("Ficha Técnica salva com sucesso!");
         setFichaModal(null);
         loadCNHs();
       } else {
         toast.error(result.error || "Erro ao salvar");
       }
     } catch {
-      toast.error("Erro de conex\u00e3o");
+      toast.error("Erro de conexão");
     } finally {
       setFichaSaving(false);
     }
@@ -254,7 +256,7 @@ Um abra\u00e7o da equipe DocMaster! \ud83d\ude0a\ud83d\ude97\ud83d\udca8`;
     { key: "nome", label: "Nome Completo" },
     { key: "cpf", label: "CPF", locked: true },
     { key: "rg", label: "RG" },
-    { key: "orgaoEmissor", label: "\u00d3rg\u00e3o Emissor" },
+    { key: "orgaoEmissor", label: "Órgão Emissor" },
     { key: "ufRG", label: "UF RG" },
     { key: "sexo", label: "Sexo" },
     { key: "nacionalidade", label: "Nacionalidade" },
@@ -262,20 +264,20 @@ Um abra\u00e7o da equipe DocMaster! \ud83d\ude0a\ud83d\ude97\ud83d\udca8`;
     { key: "localNascimento", label: "Local Nascimento" },
     { key: "ufNascimento", label: "UF Nascimento" },
     { key: "nomePai", label: "Nome do Pai" },
-    { key: "nomeMae", label: "Nome da M\u00e3e" },
+    { key: "nomeMae", label: "Nome da Mãe" },
     { key: "categoria", label: "Categoria" },
     { key: "tipo", label: "Tipo" },
-    { key: "registro", label: "N\u00ba Registro" },
-    { key: "espelho", label: "N\u00ba CNH (Espelho)" },
+    { key: "registro", label: "Nº Registro" },
+    { key: "espelho", label: "Nº CNH (Espelho)" },
     { key: "validade", label: "Validade" },
-    { key: "dataEmissao", label: "Data Emiss\u00e3o" },
-    { key: "primeiraHabilitacao", label: "1\u00aa Habilita\u00e7\u00e3o" },
-    { key: "localEmissao", label: "Local Emiss\u00e3o" },
-    { key: "ufEmissao", label: "UF Emiss\u00e3o" },
+    { key: "dataEmissao", label: "Data Emissão" },
+    { key: "primeiraHabilitacao", label: "1ª Habilitação" },
+    { key: "localEmissao", label: "Local Emissão" },
+    { key: "ufEmissao", label: "UF Emissão" },
     { key: "assDigital1", label: "Ass. Digital 1" },
     { key: "assDigital2", label: "Ass. Digital 2" },
     { key: "senhaApp", label: "Senha App" },
-    { key: "observacoes", label: "Observa\u00e7\u00f5es" },
+    { key: "observacoes", label: "Observações" },
   ];
 
   return (
@@ -287,8 +289,8 @@ Um abra\u00e7o da equipe DocMaster! \ud83d\ude0a\ud83d\ude97\ud83d\udca8`;
         <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 mb-6 flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
           <p className="text-sm text-yellow-800 dark:text-yellow-300">
-            <strong>Aten\u00e7\u00e3o:</strong> As CNHs tem uma validade de <strong>30 dias</strong>, ap\u00f3s esse per\u00edodo elas s\u00e3o{" "}
-            <strong>exclu\u00eddas do sistema</strong> e n\u00e3o podem ser mais utilizadas.
+            <strong>Atenção:</strong> As CNHs tem uma validade de <strong>30 dias</strong>, após esse período elas são{" "}
+            <strong>excluídas do sistema</strong> e não podem ser mais utilizadas.
           </p>
         </div>
 
@@ -329,13 +331,13 @@ Um abra\u00e7o da equipe DocMaster! \ud83d\ude0a\ud83d\ude97\ud83d\udca8`;
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">CPF</th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Senha</th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Categoria</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">A\u00e7\u00f5es</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                 {filtered.map(cnh => (
                   <tr key={cnh.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                    <td className="px-4 py-3 font-mono text-gray-600 dark:text-gray-400">{cnh.id}</td>
+                    <td className="px-4 py-3 font-mono text-gray-600 dark:text-gray-400">{cnh.seq_id}</td>
                     <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-200 uppercase">{cnh.nome}</td>
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{cnh.cpf}</td>
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-400 font-mono">{cnh.senha}</td>
@@ -344,37 +346,27 @@ Um abra\u00e7o da equipe DocMaster! \ud83d\ude0a\ud83d\ude97\ud83d\udca8`;
                       <div className="flex items-center gap-2 flex-wrap">
                         <button
                           onClick={() => setPreviewModal(cnh)}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-500 hover:bg-green-600 text-white transition-colors"
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-700 hover:bg-amber-800 text-white transition-colors"
                         >
                           Preview CNH
                         </button>
                         <button
                           onClick={() => { setAppModal(cnh); setWhatsappPhone(""); }}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white transition-colors"
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white transition-colors"
                         >
                           App CNH
                         </button>
                         <button
                           onClick={() => openFicha(cnh)}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-yellow-700 hover:bg-yellow-800 text-white transition-colors"
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold bg-orange-400 hover:bg-orange-500 text-white transition-colors"
                         >
-                          Editar
-                        </button>
-                        <button
-                          onClick={() => {
-                            setDownloadingId(cnh.id);
-                            setDirectDownloadCnh(cnh);
-                          }}
-                          disabled={downloadingId === cnh.id}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center gap-1 disabled:opacity-50"
-                        >
-                          <Download className="w-3 h-3" /> {downloadingId === cnh.id ? 'Gerando...' : 'PDF'}
+                          Ficha Técnica
                         </button>
                         <button
                           onClick={() => setDeleteConfirmId(cnh.id)}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500 hover:bg-red-600 text-white transition-colors flex items-center gap-1"
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-500 hover:bg-rose-600 text-white transition-colors flex items-center gap-1"
                         >
-                          <Trash2 className="w-3 h-3" /> Excluir
+                          <Trash2 className="w-3 h-3" /> DELETAR
                         </button>
                       </div>
                     </td>
@@ -396,7 +388,7 @@ Um abra\u00e7o da equipe DocMaster! \ud83d\ude0a\ud83d\ude97\ud83d\udca8`;
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">Excluir CNH</h3>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                Tem certeza que deseja excluir esta CNH permanentemente? Esta a\u00e7\u00e3o n\u00e3o pode ser desfeita.
+                Tem certeza que deseja excluir esta CNH permanentemente? Esta ação não pode ser desfeita.
               </p>
               <div className="flex gap-3 justify-end">
                 <button onClick={() => setDeleteConfirmId(null)} className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
@@ -432,7 +424,7 @@ Um abra\u00e7o da equipe DocMaster! \ud83d\ude0a\ud83d\ude97\ud83d\udca8`;
                   <Download className="w-4 h-4" /> Baixe o App (Android):
                 </p>
                 <div className="space-y-2">
-                  {[{ label: "Op\u00e7\u00e3o GOV:", link: APP_LINKS.gov }, { label: "Op\u00e7\u00e3o DETRAN:", link: APP_LINKS.detran }].map(item => (
+                  {[{ label: "Opção GOV:", link: APP_LINKS.gov }, { label: "Opção DETRAN:", link: APP_LINKS.detran }].map(item => (
                     <div key={item.label}>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{item.label}</p>
                       <div className="flex items-center gap-2">
@@ -447,7 +439,7 @@ Um abra\u00e7o da equipe DocMaster! \ud83d\ude0a\ud83d\ude97\ud83d\udca8`;
               <div className="mb-4">
                 <p className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-2">WebApp:</p>
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Op\u00e7\u00e3o DETRAN:</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Opção DETRAN:</p>
                   <div className="flex items-center gap-2">
                     <input type="text" readOnly value={APP_LINKS.webapp} className="flex-1 px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400" />
                     <button onClick={() => copyToClipboard(APP_LINKS.webapp)} className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors">Copiar</button>
@@ -465,7 +457,7 @@ Um abra\u00e7o da equipe DocMaster! \ud83d\ude0a\ud83d\ude97\ud83d\udca8`;
                 onClick={() => copyToClipboard(generateMessage(appModal))}
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition-colors mb-4"
               >
-                <Copy className="w-4 h-4" /> Copiar mensagem para a \u00e1rea de transfer\u00eancia
+                <Copy className="w-4 h-4" /> Copiar mensagem para a área de transferência
               </button>
 
               <div className="text-center text-sm text-gray-400 dark:text-gray-500 mb-4">OU</div>
@@ -475,7 +467,7 @@ Um abra\u00e7o da equipe DocMaster! \ud83d\ude0a\ud83d\ude97\ud83d\udca8`;
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
-                    placeholder="Digite o n\u00famero de telefone do cliente"
+                    placeholder="Digite o número de telefone do cliente"
                     value={whatsappPhone}
                     onChange={e => setWhatsappPhone(e.target.value)}
                     className="flex-1 px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-400"
@@ -523,7 +515,7 @@ Um abra\u00e7o da equipe DocMaster! \ud83d\ude0a\ud83d\ude97\ud83d\udca8`;
           </div>
         )}
 
-        {/* ── FICHA T\u00c9CNICA MODAL ── */}
+        {/* ── FICHA TÉCNICA MODAL ── */}
         {/* Hidden CNH renderer for direct PDF download */}
         {directDownloadCnh && (
           <div className="fixed -left-[9999px] top-0" aria-hidden>
@@ -535,7 +527,7 @@ Um abra\u00e7o da equipe DocMaster! \ud83d\ude0a\ud83d\ude97\ud83d\udca8`;
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setFichaModal(null)}>
             <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-2xl w-full shadow-xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Ficha T\u00e9cnica - {fichaModal.nome}</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Ficha Técnica - {fichaModal.nome}</h3>
                 <button onClick={() => setFichaModal(null)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                   <X className="w-5 h-5 text-gray-500" />
                 </button>
@@ -577,7 +569,7 @@ Um abra\u00e7o da equipe DocMaster! \ud83d\ude0a\ud83d\ude97\ud83d\udca8`;
                   disabled={fichaSaving}
                   className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl transition-colors disabled:opacity-50"
                 >
-                  <Save className="w-4 h-4" /> {fichaSaving ? "Salvando..." : "Salvar Altera\u00e7\u00f5es"}
+                  <Save className="w-4 h-4" /> {fichaSaving ? "Salvando..." : "Salvar Alterações"}
                 </button>
               </div>
             </div>

@@ -129,19 +129,34 @@ export async function onRequest(context: { request: Request; env: Env; params: {
       const categoria = body.categoria || body.cat || '';
       const senha = String(Math.floor(1000 + Math.random() * 9000));
 
-      // Save document with direct columns + validation_id for QR code
+      // Generate sequential numeric ID for CNH (unique per type)
+      let seqId: number | null = null;
+      if (docType === 'cnh') {
+        try {
+          const maxSeq = await env.DB.prepare(
+            "SELECT MAX(CAST(seq_id AS INTEGER)) as max_seq FROM documents WHERE type = 'cnh' AND seq_id IS NOT NULL"
+          ).first<{ max_seq: number | null }>();
+          seqId = (maxSeq?.max_seq || 14000) + Math.floor(Math.random() * 5) + 1;
+        } catch {
+          seqId = 14000 + Math.floor(Math.random() * 2000);
+        }
+      }
+
+      // Save document with direct columns + validation_id + seq_id for QR code
       try {
         await env.DB.prepare(
-          'INSERT INTO documents (id, user_id, type, data, codigo_qr, validation_id, status, nome, cpf, senha, categoria, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"))'
-        ).bind(docId, user.id, docType, JSON.stringify(body), codigoValidacao, validationId, 'emitido', nome, cpf, senha, categoria).run();
+          'INSERT INTO documents (id, user_id, type, data, codigo_qr, validation_id, seq_id, status, nome, cpf, senha, categoria, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"))'
+        ).bind(docId, user.id, docType, JSON.stringify(body), codigoValidacao, validationId, seqId, 'emitido', nome, cpf, senha, categoria).run();
       } catch (insertErr: any) {
-        // Fallback: if validation_id column doesn't exist yet, insert without it
-        if (insertErr.message && insertErr.message.includes('validation_id')) {
+        // Fallback: try without seq_id or validation_id
+        try {
+          await env.DB.prepare(
+            'INSERT INTO documents (id, user_id, type, data, codigo_qr, validation_id, status, nome, cpf, senha, categoria, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"))'
+          ).bind(docId, user.id, docType, JSON.stringify(body), codigoValidacao, validationId, 'emitido', nome, cpf, senha, categoria).run();
+        } catch {
           await env.DB.prepare(
             'INSERT INTO documents (id, user_id, type, data, codigo_qr, status, nome, cpf, senha, categoria, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"))'
           ).bind(docId, user.id, docType, JSON.stringify(body), codigoValidacao, 'emitido', nome, cpf, senha, categoria).run();
-        } else {
-          throw insertErr;
         }
       }
 
@@ -165,6 +180,8 @@ export async function onRequest(context: { request: Request; env: Env; params: {
           id: docId,
           codigoValidacao,
           validationId,
+          seqId,
+          senha,
           type: docType,
         }
       }, 201);
@@ -211,7 +228,7 @@ export async function onRequest(context: { request: Request; env: Env; params: {
           try { if (doc.data) parsedData = JSON.parse(doc.data); } catch {}
           return {
             id: doc.id,
-            seq_id: index + 1, // ID numérico sequencial universal (1, 2, 3...)
+            seq_id: doc.seq_id || (index + 1), // ID numérico sequencial do banco ou fallback
             type: doc.type,
             nome: doc.nome || parsedData.nome || parsedData.nomeCompleto || parsedData.paciente || 'Sem nome',
             cpf: doc.cpf || parsedData.cpf || '',
