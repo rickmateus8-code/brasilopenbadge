@@ -99,7 +99,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
           id: t.id,
           user_id: t.user_id,
           username: t.username,
-          action: t.type === 'credit' ? 'pagamento_credito' : 'pagamento_debito',
+          action: t.type === 'credit' ? 'saldo_depositado' : 'saldo_debitado',
           category: 'payment',
           severity: 'info',
           details: JSON.stringify({

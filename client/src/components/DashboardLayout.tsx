@@ -23,6 +23,7 @@ const menuItems: MenuItem[] = [
     icon: FileText, label: "Atestado",
     children: [
       { label: "Novo Atestado", path: "/atestadocria" },
+      { label: "Atestados Salvos", path: "/atestadosalvos" },
     ],
   },
   {
@@ -36,25 +37,30 @@ const menuItems: MenuItem[] = [
     icon: Anchor, label: "CHA Náutica",
     children: [
       { label: "Nova CHA", path: "/chacria" },
+      { label: "CHAs Salvas", path: "/chasalvas" },
     ],
   },
   {
     icon: FlaskConical, label: "Toxicológico",
     children: [
       { label: "Novo Exame", path: "/toxicologicocria" },
+      { label: "Toxicológicos Salvos", path: "/toxicologicosalvos" },
     ],
   },
   {
     icon: GraduationCap, label: "Histórico Escolar",
     children: [
       { label: "Histórico SP", path: "/historico-sp" },
+      { label: "Históricos SP Salvos", path: "/historico-sp-salvos" },
       { label: "Histórico UNINTER", path: "/historico-uninter" },
+      { label: "Históricos UNINTER Salvos", path: "/historico-uninter-salvos" },
     ],
   },
   {
     icon: Pill, label: "Receituário",
     children: [
       { label: "Dr. Consulta", path: "/receitacria" },
+      { label: "Receitas Salvas", path: "/receitassalvas" },
     ],
   },
 ];

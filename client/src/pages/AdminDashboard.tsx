@@ -131,7 +131,7 @@ const PAGE_LABELS: Record<string, string> = {
 const LOG_CATEGORIES = [
   { value: "all", label: "Todos", icon: Activity },
   { value: "admin", label: "Admin", icon: Shield },
-  { value: "payment", label: "Pagamentos", icon: CreditCard },
+  { value: "payment", label: "Saldo", icon: CreditCard },
   { value: "error", label: "Erros", icon: AlertCircle },
   { value: "system", label: "Sistema", icon: Monitor },
 ];

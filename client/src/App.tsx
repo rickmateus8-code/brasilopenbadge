@@ -26,8 +26,16 @@ import ValidationReceita from "./pages/ValidationReceita";
 import Extrato from "./pages/Extrato";
 import Recargas from "./pages/Recargas";
 import Configuracoes from "./pages/Configuracoes";
-import CNHSalvas from "./pages/CNHSalvas";
 import NotFound from "./pages/NotFound";
+
+// Páginas Salvas
+import CNHSalvas from "./pages/CNHSalvas";
+import AtestadosSalvos from "./pages/AtestadosSalvos";
+import CHASalvas from "./pages/CHASalvas";
+import ToxicologicoSalvos from "./pages/ToxicologicoSalvos";
+import ReceitasSalvas from "./pages/ReceitasSalvas";
+import HistoricoSPSalvos from "./pages/HistoricoSPSalvos";
+import HistoricoUNINTERSalvos from "./pages/HistoricoUNINTERSalvos";
 
 // ─── Detectar Domínio ──────────────────────────────────────────────────────────
 const isValidationDomain = typeof window !== 'undefined' && 
@@ -78,13 +86,8 @@ function CNHValidationRouter() {
 function ValidationRouter() {
   return (
     <Switch>
-      {/* Rota principal: /verificar/atestado/:id */}
       <Route path="/verificar/atestado/:id" component={Validation} />
-
-      {/* Rota genérica: /verificar/:id */}
       <Route path="/verificar/:id" component={Validation} />
-
-      {/* Rota para código direto: /XXXX.XXXX */}
       <Route path="/:id" component={(props: { params: { id: string } }) => {
         const id = props.params?.id || "";
         if (/^[A-Z0-9]{4}\.[A-Z0-9]{4}$/i.test(id)) {
@@ -92,17 +95,9 @@ function ValidationRouter() {
         }
         return <NotFound />;
       }} />
-
-      {/* Rota raiz: / - Sempre validação */}
       <Route path="/" component={Validation} />
-
-      {/* Rota legacy /validar */}
       <Route path="/validar" component={Validation} />
-
-      {/* Rota legacy /v/:id */}
       <Route path="/v/:id" component={Validation} />
-
-      {/* Qualquer outra rota em validaratestado.digital redireciona para validação */}
       <Route component={Validation} />
     </Switch>
   );
@@ -125,25 +120,36 @@ function DocMasterRouter() {
       {/* Emissão de documentos - slugs principais */}
       <Route path="/atestado" component={AtestadoCria} />
       <Route path="/atestado/editar/:id" component={AtestadoEditar} />
+      <Route path="/atestadosalvos" component={AtestadosSalvos} />
+
       <Route path="/cnh" component={CNHCria} />
+      <Route path="/cnhsalvas" component={CNHSalvas} />
+
       <Route path="/cha" component={CHACria} />
+      <Route path="/chasalvas" component={CHASalvas} />
+
       <Route path="/toxicologico" component={ToxicologicoCria} />
-      {/* Rotas legacy - redirecionam para slugs */}
+      <Route path="/toxicologicosalvos" component={ToxicologicoSalvos} />
+
+      {/* Rotas legacy */}
       <Route path="/atestadocria" component={AtestadoCria} />
       <Route path="/cnhcria" component={CNHCria} />
-      <Route path="/cnhsalvas" component={CNHSalvas} />
       <Route path="/chacria" component={CHACria} />
       <Route path="/toxicologicocria" component={ToxicologicoCria} />
+
       {/* Receituário Médico */}
       <Route path="/receita" component={ReceitaCria} />
       <Route path="/receitacria" component={ReceitaCria} />
       <Route path="/receita/editar/:id" component={ReceitaEditar} />
+      <Route path="/receitassalvas" component={ReceitasSalvas} />
 
       {/* Históricos */}
       <Route path="/historico/atestados" component={AtestadoCria} />
       <Route path="/historico/atestados/:id" component={AtestadoView} />
       <Route path="/historico-sp" component={HistoricoSP} />
+      <Route path="/historico-sp-salvos" component={HistoricoSPSalvos} />
       <Route path="/historico-uninter" component={HistoricoUNINTER} />
+      <Route path="/historico-uninter-salvos" component={HistoricoUNINTERSalvos} />
 
       {/* Financeiro */}
       <Route path="/extrato" component={Extrato} />
@@ -158,7 +164,6 @@ function DocMasterRouter() {
       {/* Validação pública de documentos */}
       <Route path="/validar" component={Validation} />
       <Route path="/v/:id" component={Validation} />
-      {/* Rota direta para validaratestado.digital/:codigo (formato XXXX.XXXX) */}
       <Route path="/:id" component={(props: { params: { id: string } }) => {
         const id = props.params?.id || "";
         if (/^[A-Z0-9]{4}\.[A-Z0-9]{4}$/i.test(id)) {
@@ -181,7 +186,6 @@ function App() {
         <AuthProvider>
           <TooltipProvider>
             <Toaster />
-            {/* Renderizar roteador apropriado baseado no domínio */}
             {isCNHValidationDomain
               ? <CNHValidationRouter />
               : isVerificaMedDomain

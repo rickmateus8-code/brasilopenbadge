@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import CNHDocument, { CNHDocumentHandle, CNHDocumentProps } from "@/components/CNHDocument";
 import {
   Eye, Smartphone, FileText, Trash2, AlertTriangle,
-  Copy, X, Send, Download, RefreshCw, Search
+  Copy, X, Send, Download, RefreshCw, Search, Save
 } from "lucide-react";
 
 interface CNHRecord {
@@ -32,8 +33,11 @@ export default function CNHSalvas() {
   const [appModal, setAppModal] = useState<CNHRecord | null>(null);
   const [previewModal, setPreviewModal] = useState<CNHRecord | null>(null);
   const [fichaModal, setFichaModal] = useState<CNHRecord | null>(null);
+  const [fichaData, setFichaData] = useState<Record<string, string>>({});
+  const [fichaSaving, setFichaSaving] = useState(false);
   const [whatsappPhone, setWhatsappPhone] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const cnhDocRef = useRef<CNHDocumentHandle>(null);
 
   const loadCNHs = useCallback(async () => {
     setLoading(true);
@@ -46,10 +50,10 @@ export default function CNHSalvas() {
           try { parsed = typeof d.data === "string" ? JSON.parse(d.data) : (d.data || {}); } catch {}
           return {
             id: d.id,
-            nome: d.nome || parsed.nome || parsed.nomeCompleto || "—",
-            cpf: parsed.cpf || d.cpf || "—",
-            senha: parsed.senha || parsed.password || String(Math.floor(1000 + Math.random() * 9000)),
-            categoria: parsed.categoria || parsed.cat || "AB",
+            nome: d.nome || parsed.nome || parsed.nomeCompleto || "\u2014",
+            cpf: d.cpf || parsed.cpf || "\u2014",
+            senha: d.senha || parsed.senhaApp || parsed.senha || String(Math.floor(1000 + Math.random() * 9000)),
+            categoria: d.categoria || parsed.categoria || "AB",
             created_at: d.created_at,
             status: d.status || "emitido",
             data: parsed,
@@ -71,45 +75,160 @@ export default function CNHSalvas() {
       const res = await fetch(`/api/documents/${id}`, { method: "DELETE", credentials: "include" });
       const data = await res.json();
       if (data.success) {
-        toast.success("CNH excluída com sucesso!");
+        toast.success("CNH exclu\u00edda com sucesso!");
         setCnhs(prev => prev.filter(c => c.id !== id));
       } else {
         toast.error(data.error || "Erro ao excluir");
       }
     } catch {
-      toast.error("Erro de conexão");
+      toast.error("Erro de conex\u00e3o");
     }
     setDeleteConfirmId(null);
   };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast.success("Copiado para a área de transferência!");
+    toast.success("Copiado para a \u00e1rea de transfer\u00eancia!");
   };
 
   const generateMessage = (cnh: CNHRecord) => {
-    return `Olá! 👋 Aqui estão seus dados de acesso para o App CNH:
-CPF: ${cnh.cpf} 📋
-Senha: ${cnh.senha} 🔑
+    return `Ol\u00e1! \ud83d\udc4b Aqui est\u00e3o seus dados de acesso para o App CNH:
+CPF: ${cnh.cpf} \ud83d\udccb
+Senha: ${cnh.senha} \ud83d\udd11
 
-Links para download: 📱
-Android (GOV): ${APP_LINKS.gov} 📲
-Android (DETRAN): ${APP_LINKS.detran} 📲
-WebApp (DETRAN): ${APP_LINKS.webapp} 🌐
+Links para download: \ud83d\udcf1
+Android (GOV): ${APP_LINKS.gov} \ud83d\udcf2
+Android (DETRAN): ${APP_LINKS.detran} \ud83d\udcf2
+WebApp (DETRAN): ${APP_LINKS.webapp} \ud83c\udf10
 
-Um abraço da equipe DocMaster! 😊🚗💨`;
+Um abra\u00e7o da equipe DocMaster! \ud83d\ude0a\ud83d\ude97\ud83d\udca8`;
   };
 
   const shareWhatsApp = (cnh: CNHRecord) => {
-    if (!whatsappPhone) { toast.error("Digite o número do telefone"); return; }
+    if (!whatsappPhone) { toast.error("Digite o n\u00famero do telefone"); return; }
     const phone = whatsappPhone.replace(/\D/g, "");
     const msg = encodeURIComponent(generateMessage(cnh));
     window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
   };
 
   const formatDate = (d: string) => {
-    if (!d) return "—";
+    if (!d) return "\u2014";
     try { return new Date(d).toLocaleDateString("pt-BR"); } catch { return d; }
+  };
+
+  // Build CNHDocumentProps from a record
+  const buildCNHProps = (cnh: CNHRecord): CNHDocumentProps => {
+    const d = cnh.data || {};
+    return {
+      nome: d.nome || cnh.nome || "",
+      cpf: d.cpf || cnh.cpf || "",
+      rg: d.rg || "",
+      orgaoEmissor: d.orgaoEmissor || "",
+      ufRG: d.ufRG || "",
+      sexo: d.sexo || "",
+      nacionalidade: d.nacionalidade || "BRASILEIRA",
+      dataNascimento: d.dataNascimento || "",
+      localNascimento: d.localNascimento || "",
+      ufNascimento: d.ufNascimento || "",
+      nomePai: d.nomePai || "",
+      nomeMae: d.nomeMae || "",
+      categoria: d.categoria || cnh.categoria || "",
+      tipo: d.tipo || "Definitiva",
+      registro: d.registro || "",
+      espelho: d.espelho || "",
+      validade: d.validade || "",
+      dataEmissao: d.dataEmissao || "",
+      primeiraHabilitacao: d.primeiraHabilitacao || "",
+      localEmissao: d.localEmissao || "",
+      ufEmissao: d.ufEmissao || "",
+      assDigital1: d.assDigital1 || "",
+      assDigital2: d.assDigital2 || "",
+      senhaApp: d.senhaApp || cnh.senha || "",
+      observacoes: d.observacoes || "",
+      fotoUrl: d.fotoUrl || "",
+      assinaturaUrl: d.assinaturaUrl || "",
+      codigoQR: cnh.id,
+      blurred: false,
+    };
+  };
+
+  // Download CNH as image
+  const handleDownloadCNH = async () => {
+    if (!cnhDocRef.current) return;
+    try {
+      const blob = await cnhDocRef.current.exportAsBlob();
+      if (!blob) { toast.error("Erro ao gerar imagem"); return; }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `CNH_${previewModal?.nome?.replace(/\s+/g, "_") || "documento"}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("CNH baixada com sucesso!");
+    } catch {
+      toast.error("Erro ao baixar CNH");
+    }
+  };
+
+  // Open Ficha Técnica with editable data (CPF locked)
+  const openFicha = (cnh: CNHRecord) => {
+    const d = cnh.data || {};
+    setFichaData({
+      nome: d.nome || cnh.nome || "",
+      cpf: d.cpf || cnh.cpf || "",
+      rg: d.rg || "",
+      orgaoEmissor: d.orgaoEmissor || "",
+      ufRG: d.ufRG || "",
+      sexo: d.sexo || "",
+      nacionalidade: d.nacionalidade || "BRASILEIRA",
+      dataNascimento: d.dataNascimento || "",
+      localNascimento: d.localNascimento || "",
+      ufNascimento: d.ufNascimento || "",
+      nomePai: d.nomePai || "",
+      nomeMae: d.nomeMae || "",
+      categoria: d.categoria || cnh.categoria || "",
+      tipo: d.tipo || "Definitiva",
+      registro: d.registro || "",
+      espelho: d.espelho || "",
+      validade: d.validade || "",
+      dataEmissao: d.dataEmissao || "",
+      primeiraHabilitacao: d.primeiraHabilitacao || "",
+      localEmissao: d.localEmissao || "",
+      ufEmissao: d.ufEmissao || "",
+      assDigital1: d.assDigital1 || "",
+      assDigital2: d.assDigital2 || "",
+      senhaApp: d.senhaApp || cnh.senha || "",
+      observacoes: d.observacoes || "",
+    });
+    setFichaModal(cnh);
+  };
+
+  // Save Ficha Técnica
+  const saveFicha = async () => {
+    if (!fichaModal) return;
+    setFichaSaving(true);
+    try {
+      const res = await fetch(`/api/documents/${fichaModal.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ data: fichaData }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        toast.success("Ficha T\u00e9cnica salva com sucesso!");
+        setFichaModal(null);
+        loadCNHs();
+      } else {
+        toast.error(result.error || "Erro ao salvar");
+      }
+    } catch {
+      toast.error("Erro de conex\u00e3o");
+    } finally {
+      setFichaSaving(false);
+    }
   };
 
   const filtered = cnhs.filter(c =>
@@ -117,6 +236,34 @@ Um abraço da equipe DocMaster! 😊🚗💨`;
     c.cpf.includes(search) ||
     c.id.includes(search)
   );
+
+  const FICHA_FIELDS = [
+    { key: "nome", label: "Nome Completo" },
+    { key: "cpf", label: "CPF", locked: true },
+    { key: "rg", label: "RG" },
+    { key: "orgaoEmissor", label: "\u00d3rg\u00e3o Emissor" },
+    { key: "ufRG", label: "UF RG" },
+    { key: "sexo", label: "Sexo" },
+    { key: "nacionalidade", label: "Nacionalidade" },
+    { key: "dataNascimento", label: "Data Nascimento" },
+    { key: "localNascimento", label: "Local Nascimento" },
+    { key: "ufNascimento", label: "UF Nascimento" },
+    { key: "nomePai", label: "Nome do Pai" },
+    { key: "nomeMae", label: "Nome da M\u00e3e" },
+    { key: "categoria", label: "Categoria" },
+    { key: "tipo", label: "Tipo" },
+    { key: "registro", label: "N\u00ba Registro" },
+    { key: "espelho", label: "N\u00ba CNH (Espelho)" },
+    { key: "validade", label: "Validade" },
+    { key: "dataEmissao", label: "Data Emiss\u00e3o" },
+    { key: "primeiraHabilitacao", label: "1\u00aa Habilita\u00e7\u00e3o" },
+    { key: "localEmissao", label: "Local Emiss\u00e3o" },
+    { key: "ufEmissao", label: "UF Emiss\u00e3o" },
+    { key: "assDigital1", label: "Ass. Digital 1" },
+    { key: "assDigital2", label: "Ass. Digital 2" },
+    { key: "senhaApp", label: "Senha App" },
+    { key: "observacoes", label: "Observa\u00e7\u00f5es" },
+  ];
 
   return (
     <DashboardLayout>
@@ -127,8 +274,8 @@ Um abraço da equipe DocMaster! 😊🚗💨`;
         <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 mb-6 flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
           <p className="text-sm text-yellow-800 dark:text-yellow-300">
-            <strong>Atenção:</strong> As CNHs tem uma validade de <strong>30 dias</strong>, após esse período elas são{" "}
-            <strong>excluídas do sistema</strong> e não podem ser mais utilizadas.
+            <strong>Aten\u00e7\u00e3o:</strong> As CNHs tem uma validade de <strong>30 dias</strong>, ap\u00f3s esse per\u00edodo elas s\u00e3o{" "}
+            <strong>exclu\u00eddas do sistema</strong> e n\u00e3o podem ser mais utilizadas.
           </p>
         </div>
 
@@ -169,7 +316,7 @@ Um abraço da equipe DocMaster! 😊🚗💨`;
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">CPF</th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Senha</th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Categoria</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Ações</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">A\u00e7\u00f5es</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
@@ -195,10 +342,10 @@ Um abraço da equipe DocMaster! 😊🚗💨`;
                           App CNH
                         </button>
                         <button
-                          onClick={() => setFichaModal(cnh)}
+                          onClick={() => openFicha(cnh)}
                           className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-yellow-700 hover:bg-yellow-800 text-white transition-colors"
                         >
-                          Ficha Técnica
+                          Ficha T\u00e9cnica
                         </button>
                         <button
                           onClick={() => setDeleteConfirmId(cnh.id)}
@@ -226,7 +373,7 @@ Um abraço da equipe DocMaster! 😊🚗💨`;
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">Excluir CNH</h3>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                Tem certeza que deseja excluir esta CNH permanentemente? Esta ação não pode ser desfeita.
+                Tem certeza que deseja excluir esta CNH permanentemente? Esta a\u00e7\u00e3o n\u00e3o pode ser desfeita.
               </p>
               <div className="flex gap-3 justify-end">
                 <button onClick={() => setDeleteConfirmId(null)} className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
@@ -251,94 +398,61 @@ Um abraço da equipe DocMaster! 😊🚗💨`;
                 </button>
               </div>
 
-              {/* Credentials */}
               <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 mb-4">
                 <p className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-2">Dados de acesso:</p>
                 <p className="text-sm text-gray-700 dark:text-gray-300">CPF: <strong>{appModal.cpf}</strong></p>
                 <p className="text-sm text-gray-700 dark:text-gray-300">Senha: <strong>{appModal.senha}</strong></p>
               </div>
 
-              {/* Android Downloads */}
               <div className="mb-4">
                 <p className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
                   <Download className="w-4 h-4" /> Baixe o App (Android):
                 </p>
                 <div className="space-y-2">
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Opção GOV:</p>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        readOnly
-                        value={APP_LINKS.gov}
-                        className="flex-1 px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400"
-                      />
-                      <button onClick={() => copyToClipboard(APP_LINKS.gov)} className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors">
-                        Copiar
-                      </button>
+                  {[{ label: "Op\u00e7\u00e3o GOV:", link: APP_LINKS.gov }, { label: "Op\u00e7\u00e3o DETRAN:", link: APP_LINKS.detran }].map(item => (
+                    <div key={item.label}>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{item.label}</p>
+                      <div className="flex items-center gap-2">
+                        <input type="text" readOnly value={item.link} className="flex-1 px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400" />
+                        <button onClick={() => copyToClipboard(item.link)} className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors">Copiar</button>
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Opção DETRAN:</p>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        readOnly
-                        value={APP_LINKS.detran}
-                        className="flex-1 px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400"
-                      />
-                      <button onClick={() => copyToClipboard(APP_LINKS.detran)} className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors">
-                        Copiar
-                      </button>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
 
-              {/* WebApp */}
               <div className="mb-4">
                 <p className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-2">WebApp:</p>
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Opção DETRAN:</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Op\u00e7\u00e3o DETRAN:</p>
                   <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      readOnly
-                      value={APP_LINKS.webapp}
-                      className="flex-1 px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400"
-                    />
-                    <button onClick={() => copyToClipboard(APP_LINKS.webapp)} className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors">
-                      Copiar
-                    </button>
+                    <input type="text" readOnly value={APP_LINKS.webapp} className="flex-1 px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400" />
+                    <button onClick={() => copyToClipboard(APP_LINKS.webapp)} className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors">Copiar</button>
                   </div>
                 </div>
               </div>
 
-              {/* Pre-formatted message */}
               <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 mb-4">
                 <pre className="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-sans leading-relaxed">
                   {generateMessage(appModal)}
                 </pre>
               </div>
 
-              {/* Copy message button */}
               <button
                 onClick={() => copyToClipboard(generateMessage(appModal))}
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition-colors mb-4"
               >
-                <Copy className="w-4 h-4" />
-                Copiar mensagem para a área de transferência
+                <Copy className="w-4 h-4" /> Copiar mensagem para a \u00e1rea de transfer\u00eancia
               </button>
 
               <div className="text-center text-sm text-gray-400 dark:text-gray-500 mb-4">OU</div>
 
-              {/* WhatsApp share */}
               <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 mb-4">
                 <p className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-2">Compartilhar com o cliente direto no WhatsApp:</p>
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
-                    placeholder="Digite o número de telefone do cliente"
+                    placeholder="Digite o n\u00famero de telefone do cliente"
                     value={whatsappPhone}
                     onChange={e => setWhatsappPhone(e.target.value)}
                     className="flex-1 px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-400"
@@ -364,59 +478,76 @@ Um abraço da equipe DocMaster! 😊🚗💨`;
         {/* ── PREVIEW CNH MODAL ── */}
         {previewModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setPreviewModal(null)}>
-            <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-2xl w-full shadow-xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-3xl w-full shadow-xl max-h-[95vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">Preview CNH - {previewModal.nome}</h3>
-                <button onClick={() => setPreviewModal(null)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                  <X className="w-5 h-5 text-gray-500" />
-                </button>
-              </div>
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 space-y-2 text-sm">
-                <div className="grid grid-cols-2 gap-3">
-                  <div><span className="text-gray-500">Nome:</span> <strong className="text-gray-800 dark:text-gray-200">{previewModal.nome}</strong></div>
-                  <div><span className="text-gray-500">CPF:</span> <strong className="text-gray-800 dark:text-gray-200">{previewModal.cpf}</strong></div>
-                  <div><span className="text-gray-500">Categoria:</span> <strong className="text-gray-800 dark:text-gray-200">{previewModal.categoria}</strong></div>
-                  <div><span className="text-gray-500">Senha:</span> <strong className="text-gray-800 dark:text-gray-200">{previewModal.senha}</strong></div>
-                  <div><span className="text-gray-500">ID:</span> <strong className="text-gray-800 dark:text-gray-200">{previewModal.id}</strong></div>
-                  <div><span className="text-gray-500">Data:</span> <strong className="text-gray-800 dark:text-gray-200">{formatDate(previewModal.created_at)}</strong></div>
-                  {previewModal.data?.validade && <div><span className="text-gray-500">Validade:</span> <strong className="text-gray-800 dark:text-gray-200">{previewModal.data.validade}</strong></div>}
-                  {previewModal.data?.emissao && <div><span className="text-gray-500">Emissão:</span> <strong className="text-gray-800 dark:text-gray-200">{previewModal.data.emissao}</strong></div>}
-                  {previewModal.data?.primeiraHab && <div><span className="text-gray-500">1ª Hab:</span> <strong className="text-gray-800 dark:text-gray-200">{previewModal.data.primeiraHab}</strong></div>}
-                  {previewModal.data?.rg && <div><span className="text-gray-500">RG:</span> <strong className="text-gray-800 dark:text-gray-200">{previewModal.data.rg}</strong></div>}
-                  {previewModal.data?.nacionalidade && <div><span className="text-gray-500">Nacionalidade:</span> <strong className="text-gray-800 dark:text-gray-200">{previewModal.data.nacionalidade}</strong></div>}
-                  {previewModal.data?.filiacao && <div className="col-span-2"><span className="text-gray-500">Filiação:</span> <strong className="text-gray-800 dark:text-gray-200">{previewModal.data.filiacao}</strong></div>}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleDownloadCNH}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl transition-colors"
+                  >
+                    <Download className="w-4 h-4" /> Baixar CNH
+                  </button>
+                  <button onClick={() => setPreviewModal(null)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
                 </div>
               </div>
-              <div className="flex justify-end mt-4">
-                <button onClick={() => setPreviewModal(null)} className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
-                  Fechar
-                </button>
+              <div className="flex justify-center bg-gray-100 dark:bg-gray-800 rounded-xl p-4">
+                <CNHDocument ref={cnhDocRef} {...buildCNHProps(previewModal)} />
               </div>
             </div>
           </div>
         )}
 
-        {/* ── FICHA TÉCNICA MODAL ── */}
+        {/* ── FICHA T\u00c9CNICA MODAL ── */}
         {fichaModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setFichaModal(null)}>
-            <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-lg w-full shadow-xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-2xl w-full shadow-xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Ficha Técnica</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Ficha T\u00e9cnica - {fichaModal.nome}</h3>
                 <button onClick={() => setFichaModal(null)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                   <X className="w-5 h-5 text-gray-500" />
                 </button>
               </div>
-              <div className="space-y-3 text-sm">
-                {Object.entries(fichaModal.data || {}).map(([key, val]) => (
-                  <div key={key} className="flex items-start gap-2 border-b border-gray-100 dark:border-gray-800 pb-2">
-                    <span className="text-gray-500 dark:text-gray-400 font-medium min-w-[120px] capitalize">{key.replace(/([A-Z])/g, " $1").trim()}:</span>
-                    <span className="text-gray-800 dark:text-gray-200 break-all">{String(val || "—")}</span>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {FICHA_FIELDS.map(field => (
+                  <div key={field.key} className={field.key === "observacoes" ? "col-span-full" : ""}>
+                    <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wider">
+                      {field.label}
+                      {field.locked && <span className="ml-1 text-red-500">(bloqueado)</span>}
+                    </label>
+                    {field.key === "observacoes" ? (
+                      <textarea
+                        value={fichaData[field.key] || ""}
+                        onChange={e => setFichaData(prev => ({ ...prev, [field.key]: e.target.value }))}
+                        rows={3}
+                        className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        value={fichaData[field.key] || ""}
+                        onChange={e => setFichaData(prev => ({ ...prev, [field.key]: e.target.value }))}
+                        disabled={field.locked}
+                        className={`w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 ${field.locked ? "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-500 cursor-not-allowed" : "bg-white dark:bg-gray-900 text-gray-900 dark:text-white"} focus:outline-none focus:ring-2 focus:ring-yellow-400`}
+                      />
+                    )}
                   </div>
                 ))}
               </div>
-              <div className="flex justify-end mt-4">
+
+              <div className="flex gap-3 justify-end mt-6">
                 <button onClick={() => setFichaModal(null)} className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
-                  Fechar
+                  Cancelar
+                </button>
+                <button
+                  onClick={saveFicha}
+                  disabled={fichaSaving}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl transition-colors disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" /> {fichaSaving ? "Salvando..." : "Salvar Altera\u00e7\u00f5es"}
                 </button>
               </div>
             </div>

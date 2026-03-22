@@ -138,6 +138,14 @@ export default function CNHCria() {
     // RG: remover pontos, manter apenas números e letras
     const cleanRG = (val: string): string => val.replace(/\./g, "");
 
+    // Auto-gerar campos automáticos
+    const ufEmissaoVal = get("UF Emiss[aã]o") || data.ufEmissao || "SP";
+    const autoRegistro = get("N[ºo] Registro") || gerarNumero(11);
+    const autoEspelho = get("N[ºo] CNH") || get("Espelho") || gerarNumero(10);
+    const autoAss1 = get("Ass\\.? Digital 1") || gerarNumero(10);
+    const autoAss2 = get("Ass\\.? Digital 2") || (ufEmissaoVal + gerarNumero(8));
+    const autoSenha = get("Senha App") || get("Senha") || String(Math.floor(1000 + Math.random() * 9000));
+
     setData(d => ({
       ...d,
       nome: get("Nome Completo") || d.nome,
@@ -154,15 +162,19 @@ export default function CNHCria() {
       nomeMae: get("Nome da M[aã]e") || d.nomeMae,
       categoria: get("Categoria") || d.categoria,
       tipo: get("Tipo") || d.tipo,
+      registro: autoRegistro,
+      espelho: autoEspelho,
       validade: convertDate(get("Validade")) || d.validade,
       dataEmissao: convertDate(get("Emiss[aã]o")) || d.dataEmissao,
       primeiraHabilitacao: convertDate(get("1[ªa] Habilita[çc][aã]o")) || d.primeiraHabilitacao,
       localEmissao: get("Local Emiss[aã]o") || d.localEmissao,
-      ufEmissao: get("UF Emiss[aã]o") || d.ufEmissao,
-      senhaApp: get("Senha App") || d.senhaApp,
+      ufEmissao: ufEmissaoVal,
+      assDigital1: autoAss1,
+      assDigital2: autoAss2,
+      senhaApp: autoSenha,
       observacoes: get("Observa[çc][oõ]es") || d.observacoes,
     }));
-    toast.success("Dados importados!");
+    toast.success("Dados importados! Nº Registro, Nº CNH e Assinaturas Digitais gerados automaticamente.");
   };
 
   // ─── Foto Upload ───────────────────────────────────────────────────────────
