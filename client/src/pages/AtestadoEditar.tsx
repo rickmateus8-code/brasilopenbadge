@@ -4,6 +4,15 @@ import AttestationDocument from "@/components/AttestationDocument";
 import type { AttestationData } from "@/data/attestations";
 import { exportElementToPDF, generatePDFFilename } from "@/lib/pdfExport";
 import { useAuth } from "@/contexts/AuthContext";
+import { validarCPF } from "@/lib/utils";
+
+function maskCPF(v: string): string {
+  const d = v.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `${d.slice(0,3)}.${d.slice(3)}`;
+  if (d.length <= 9) return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6)}`;
+  return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
+}
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
 const CIDS_CATEGORIZADOS = [
@@ -109,8 +118,10 @@ export default function AtestadoEditar() {
   const [signatureImage, setSignatureImage] = useState<string>("");
   const signatureRef = useRef<HTMLInputElement>(null);
 
-  // ── CPF original (bloqueado) ──────────────────────────────────────────────
+  // ── CPF original (bloqueado se já preenchido) ─────────────────────────────
   const [cpfOriginal, setCpfOriginal] = useState<string>("");
+  const [cpfEditable, setCpfEditable] = useState<boolean>(false);
+  const [cpfInput, setCpfInput] = useState<string>("");
   const [codigoQR, setCodigoQR] = useState<string>("");
 
   // ── Formulário ─────────────────────────────────────────────────────────────
@@ -149,7 +160,10 @@ export default function AtestadoEditar() {
         const d = json.data || json;
         if (!d || !d.id) { setNotFound(true); setLoading(false); return; }
 
-        setCpfOriginal(d.cpf || "");
+        const loadedCpf = d.cpf || "";
+        setCpfOriginal(loadedCpf);
+        setCpfEditable(!loadedCpf); // Se CPF vazio, permitir edição
+        setCpfInput(loadedCpf);
         setCodigoQR(d.codigo_qr || d.codigoQR || "");
         setLogoLeft(d.logo_url || d.logoUrl || "");
         setLogoRight(d.logo_right || d.logoRight || "");
@@ -192,7 +206,14 @@ export default function AtestadoEditar() {
     setSaving(true);
     setSavedMsg("");
     try {
-      const payload = {
+      // Validar CPF se editável e preenchido
+      if (cpfEditable && cpfInput && !validarCPF(cpfInput)) {
+        alert("CPF inválido! Verifique os dígitos informados.");
+        setSaving(false);
+        return;
+      }
+
+      const payload: any = {
         paciente: form.paciente.toUpperCase(),
         sexo: form.sexo,
         nascimento: form.nascimento,
@@ -219,6 +240,12 @@ export default function AtestadoEditar() {
         signatureImage,
         modoCarimbo: form.modoCarimbo,
       };
+
+      // Se CPF era vazio e agora foi preenchido, enviar para salvar
+      if (cpfEditable && cpfInput) {
+        payload.cpf = cpfInput;
+        payload.fillCpf = true; // Flag para o backend saber que deve preencher o CPF
+      }
 
       const res = await fetch(`/api/attestations/${id}`, {
         method: "PUT",
@@ -273,7 +300,7 @@ export default function AtestadoEditar() {
     paciente: form.paciente || "NOME DO PACIENTE",
     sexo: form.sexo,
     nascimento: form.nascimento || "DD/MM/AAAA",
-    cpf: cpfOriginal || "",
+    cpf: cpfInput || cpfOriginal || "",
     cns: "",
     tipoDoc: "CPF",
     nomeMae: form.nomeMae || "NOME DA MÃE",
@@ -410,22 +437,39 @@ export default function AtestadoEditar() {
         {/* ── Formulário (esquerda) ── */}
         <div style={{ flex: "0 0 420px", maxHeight: "calc(100vh - 120px)", overflowY: "auto" }}>
 
-          {/* CPF Bloqueado */}
+          {/* CPF - Bloqueado se já preenchido, editável se vazio */}
           <div style={card}>
-            <div style={secTitle}>CPF do Paciente (Bloqueado)</div>
-            <div style={{
-              background: "#f3f4f6", border: "1px solid #d1d5db", borderRadius: 6,
-              padding: "8px 12px", fontSize: 14, fontWeight: 700, color: "#6b7280",
-              display: "flex", alignItems: "center", gap: 8,
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
-              {cpfOriginal || "CPF não disponível"}
-            </div>
-            <p style={{ fontSize: 10, color: "#9ca3af", marginTop: 4 }}>
-              Por segurança, o CPF é bloqueado após emissão e não pode ser editado.
-            </p>
+            <div style={secTitle}>{cpfEditable ? "CPF do Paciente (Preencher)" : "CPF do Paciente (Bloqueado)"}</div>
+            {cpfEditable ? (
+              <>
+                <input
+                  style={{ ...inp, border: "2px solid #f59e0b", fontWeight: 700, fontSize: 14 }}
+                  value={cpfInput}
+                  onChange={e => setCpfInput(maskCPF(e.target.value))}
+                  placeholder="000.000.000-00"
+                  maxLength={14}
+                />
+                <p style={{ fontSize: 10, color: "#f59e0b", marginTop: 4, fontWeight: 600 }}>
+                  O CPF não foi informado na emissão. Preencha agora para salvar no documento.
+                </p>
+              </>
+            ) : (
+              <>
+                <div style={{
+                  background: "#f3f4f6", border: "1px solid #d1d5db", borderRadius: 6,
+                  padding: "8px 12px", fontSize: 14, fontWeight: 700, color: "#6b7280",
+                  display: "flex", alignItems: "center", gap: 8,
+                }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                  {cpfOriginal}
+                </div>
+                <p style={{ fontSize: 10, color: "#9ca3af", marginTop: 4 }}>
+                  Por segurança, o CPF é bloqueado após emissão e não pode ser editado.
+                </p>
+              </>
+            )}
           </div>
 
           {/* Dados do Paciente */}

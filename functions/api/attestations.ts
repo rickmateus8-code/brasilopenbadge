@@ -353,8 +353,14 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
 
   const body = await request.json<any>();
 
-  // SEGURANÇA: CPF NÃO pode ser alterado após emissão
-  // O campo CPF é ignorado completamente no update
+  // SEGURANÇA: CPF só pode ser preenchido se estava vazio (fillCpf flag)
+  // Se o CPF já existia no banco, ele NÃO pode ser alterado
+  if (body.fillCpf && body.cpf && !attestation.cpf) {
+    // Permitir preencher CPF que estava vazio
+    await env.DB.prepare(
+      'UPDATE attestations SET cpf = ?, tipo_doc = ? WHERE id = ?'
+    ).bind(body.cpf, 'CPF', id).run();
+  }
 
   const now = new Date().toISOString();
 

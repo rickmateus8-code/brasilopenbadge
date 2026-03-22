@@ -1,8 +1,20 @@
 /**
  * /api/documents/[id] — GET, PUT, DELETE para documentos genéricos (CNH, CHA, etc.)
+ * Também trata POST quando [id] é um tipo de documento (cnh, cha, toxicologico, etc.)
  * Tabela: documents (D1)
  */
 import type { Env } from '../../types';
+
+// Known document types — when [id] matches one of these, POST creates a new document
+const DOCUMENT_TYPES = ['cnh', 'cha', 'toxicologico', 'historico-sp', 'historico-uninter'];
+
+const DOCUMENT_PRICES: Record<string, number> = {
+  'cnh': 500,
+  'cha': 500,
+  'toxicologico': 500,
+  'historico-sp': 500,
+  'historico-uninter': 500,
+};
 
 function getSessionToken(request: Request): string | null {
   const cookieHeader = request.headers.get("Cookie") || "";
@@ -26,7 +38,7 @@ async function getAuthUser(env: Env, token: string | null): Promise<any | null> 
 function corsHeaders() {
   return {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Content-Type": "application/json",
   };
@@ -36,9 +48,19 @@ function jsonResponse(data: any, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: corsHeaders() });
 }
 
+function generateCode(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = '';
+  for (let i = 0; i < 8; i++) {
+    if (i === 4) code += '.';
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
 export async function onRequest(context: { request: Request; env: Env; params: { id: string } }) {
   const { request, env, params } = context;
-  const docId = params.id;
+  const idOrType = params.id;
 
   if (request.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders() });
@@ -51,7 +73,56 @@ export async function onRequest(context: { request: Request; env: Env; params: {
   }
 
   try {
+    // ── POST: Create new document (when [id] is a document type like "cnh") ──
+    if (request.method === "POST") {
+      const docType = idOrType.toLowerCase();
+      if (!DOCUMENT_TYPES.includes(docType)) {
+        return jsonResponse({ success: false, error: "Tipo de documento inválido." }, 400);
+      }
+
+      const price = DOCUMENT_PRICES[docType] || 500;
+
+      // Check balance
+      if (user.balance < price) {
+        return jsonResponse({
+          success: false,
+          error: `Saldo insuficiente. Necessário: R$ ${(price / 100).toFixed(2)}. Disponível: R$ ${(user.balance / 100).toFixed(2)}`
+        }, 402);
+      }
+
+      const body = await request.json<any>();
+      const codigoValidacao = generateCode();
+      const docId = codigoValidacao;
+
+      // Deduct balance
+      await env.DB.prepare(
+        'UPDATE users SET balance = balance - ? WHERE id = ?'
+      ).bind(price, user.id).run();
+
+      // Record transaction
+      const txId = crypto.randomUUID();
+      await env.DB.prepare(
+        'INSERT INTO transactions (id, user_id, type, amount, description, document_type, document_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      ).bind(txId, user.id, 'debit', price, `Emissão de ${docType.toUpperCase()}`, docType, docId).run();
+
+      // Save document
+      await env.DB.prepare(
+        'INSERT INTO documents (id, user_id, type, data, codigo_qr, status, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime("now"))'
+      ).bind(docId, user.id, docType, JSON.stringify(body), codigoValidacao, 'emitido').run();
+
+      return jsonResponse({
+        success: true,
+        data: {
+          id: docId,
+          codigoValidacao,
+          type: docType,
+        }
+      }, 201);
+    }
+
+    // ── GET: Retrieve document by ID ──
     if (request.method === "GET") {
+      const docId = idOrType;
       let doc;
       if (user.role === "admin") {
         doc = await env.DB.prepare("SELECT * FROM documents WHERE id = ? LIMIT 1").bind(docId).first<any>();
@@ -69,7 +140,9 @@ export async function onRequest(context: { request: Request; env: Env; params: {
       return jsonResponse({ success: true, data: { ...doc, ...parsedData } });
     }
 
+    // ── PUT: Update document ──
     if (request.method === "PUT") {
+      const docId = idOrType;
       const doc = await env.DB.prepare("SELECT * FROM documents WHERE id = ? LIMIT 1").bind(docId).first<any>();
       if (!doc) return jsonResponse({ success: false, error: "Documento não encontrado." }, 404);
       if (user.role !== "admin" && doc.user_id !== user.id) {
@@ -94,7 +167,9 @@ export async function onRequest(context: { request: Request; env: Env; params: {
       return jsonResponse({ success: true, message: "Documento atualizado com sucesso." });
     }
 
+    // ── DELETE: Cancel document ──
     if (request.method === "DELETE") {
+      const docId = idOrType;
       const doc = await env.DB.prepare("SELECT id, user_id FROM documents WHERE id = ? LIMIT 1").bind(docId).first<any>();
       if (!doc) return jsonResponse({ success: false, error: "Documento não encontrado." }, 404);
       if (user.role !== "admin" && doc.user_id !== user.id) {
