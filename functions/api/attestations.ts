@@ -277,12 +277,11 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
     }
     newBalance = updated.balance;
 
-    // Registrar transação no extrato
+    // Registrar transação no extrato (id is AUTOINCREMENT, omit it)
     await env.DB.prepare(`
-      INSERT INTO transactions (id, user_id, type, amount, description, document_id, created_at)
-      VALUES (?, ?, 'debit', ?, ?, ?, ?)
+      INSERT INTO transactions (user_id, type, amount, description, document_id, created_at)
+      VALUES (?, 'debit', ?, ?, ?, ?)
     `).bind(
-      crypto.randomUUID().replace(/-/g, "").slice(0, 16),
       user.id,
       price,
       `Emissão de Atestado — ${body.paciente?.toUpperCase() || "PACIENTE"}`,

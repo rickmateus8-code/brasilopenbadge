@@ -265,12 +265,12 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
     await env.DB.prepare(
       "UPDATE users SET balance = balance - ? WHERE id = ?"
     ).bind(price, user.id).run();
-    // Registrar transação
+    // Registrar transação (id is AUTOINCREMENT, omit it)
     await env.DB.prepare(`
-      INSERT INTO transactions (id, user_id, type, amount, description, reference_id, created_at)
-      VALUES (?, ?, 'debit', ?, ?, ?, ?)
+      INSERT INTO transactions (user_id, type, amount, description, document_id, created_at)
+      VALUES (?, 'debit', ?, ?, ?, ?)
     `).bind(
-      crypto.randomUUID(), user.id, price,
+      user.id, price,
       `Receita médica emitida — ${body.paciente}`,
       id, now
     ).run().catch(() => {}); // Não falhar se transactions não existir

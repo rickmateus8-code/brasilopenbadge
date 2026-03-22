@@ -99,11 +99,10 @@ export async function onRequest(context: { request: Request; env: Env; params: {
         'UPDATE users SET balance = balance - ? WHERE id = ?'
       ).bind(price, user.id).run();
 
-      // Record transaction
-      const txId = crypto.randomUUID();
+      // Record transaction (id is AUTOINCREMENT, omit it)
       await env.DB.prepare(
-        'INSERT INTO transactions (id, user_id, type, amount, description, document_type, document_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
-      ).bind(txId, user.id, 'debit', price, `Emissão de ${docType.toUpperCase()}`, docType, docId).run();
+        'INSERT INTO transactions (user_id, type, amount, description, document_type, document_id) VALUES (?, ?, ?, ?, ?, ?)'
+      ).bind(user.id, 'debit', price, `Emissão de ${docType.toUpperCase()}`, docType, docId).run();
 
       // Save document
       await env.DB.prepare(
