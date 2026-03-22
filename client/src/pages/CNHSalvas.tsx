@@ -152,25 +152,38 @@ Um abra\u00e7o da equipe DocMaster! \ud83d\ude0a\ud83d\ude97\ud83d\udca8`;
     };
   };
 
-  // Download CNH as image
+  // Download CNH as PDF
   const handleDownloadCNH = async () => {
     if (!cnhDocRef.current) return;
     try {
-      const blob = await cnhDocRef.current.exportAsBlob();
-      if (!blob) { toast.error("Erro ao gerar imagem"); return; }
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `CNH_${previewModal?.nome?.replace(/\s+/g, "_") || "documento"}.jpg`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      toast.success("CNH baixada com sucesso!");
+      await cnhDocRef.current.exportAsPdf();
+      toast.success("PDF da CNH baixado com sucesso!");
     } catch {
-      toast.error("Erro ao baixar CNH");
+      toast.error("Erro ao baixar PDF da CNH");
     }
   };
+
+  // Direct download PDF from table (opens preview then downloads)
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const directDownloadRef = useRef<CNHDocumentHandle>(null);
+  const [directDownloadCnh, setDirectDownloadCnh] = useState<CNHRecord | null>(null);
+
+  useEffect(() => {
+    if (directDownloadCnh && directDownloadRef.current) {
+      const timer = setTimeout(async () => {
+        try {
+          await directDownloadRef.current?.exportAsPdf();
+          toast.success("PDF baixado!");
+        } catch {
+          toast.error("Erro ao gerar PDF");
+        } finally {
+          setDirectDownloadCnh(null);
+          setDownloadingId(null);
+        }
+      }, 1500); // Wait for canvas to render
+      return () => clearTimeout(timer);
+    }
+  }, [directDownloadCnh]);
 
   // Open Ficha Técnica with editable data (CPF locked)
   const openFicha = (cnh: CNHRecord) => {
@@ -345,13 +358,23 @@ Um abra\u00e7o da equipe DocMaster! \ud83d\ude0a\ud83d\ude97\ud83d\udca8`;
                           onClick={() => openFicha(cnh)}
                           className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-yellow-700 hover:bg-yellow-800 text-white transition-colors"
                         >
-                          Ficha T\u00e9cnica
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => {
+                            setDownloadingId(cnh.id);
+                            setDirectDownloadCnh(cnh);
+                          }}
+                          disabled={downloadingId === cnh.id}
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center gap-1 disabled:opacity-50"
+                        >
+                          <Download className="w-3 h-3" /> {downloadingId === cnh.id ? 'Gerando...' : 'PDF'}
                         </button>
                         <button
                           onClick={() => setDeleteConfirmId(cnh.id)}
                           className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500 hover:bg-red-600 text-white transition-colors flex items-center gap-1"
                         >
-                          <Trash2 className="w-3 h-3" /> DELETAR
+                          <Trash2 className="w-3 h-3" /> Excluir
                         </button>
                       </div>
                     </td>
@@ -486,7 +509,7 @@ Um abra\u00e7o da equipe DocMaster! \ud83d\ude0a\ud83d\ude97\ud83d\udca8`;
                     onClick={handleDownloadCNH}
                     className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl transition-colors"
                   >
-                    <Download className="w-4 h-4" /> Baixar CNH
+                    <Download className="w-4 h-4" /> Baixar PDF
                   </button>
                   <button onClick={() => setPreviewModal(null)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                     <X className="w-5 h-5 text-gray-500" />
@@ -501,6 +524,13 @@ Um abra\u00e7o da equipe DocMaster! \ud83d\ude0a\ud83d\ude97\ud83d\udca8`;
         )}
 
         {/* ── FICHA T\u00c9CNICA MODAL ── */}
+        {/* Hidden CNH renderer for direct PDF download */}
+        {directDownloadCnh && (
+          <div className="fixed -left-[9999px] top-0" aria-hidden>
+            <CNHDocument ref={directDownloadRef} {...buildCNHProps(directDownloadCnh)} />
+          </div>
+        )}
+
         {fichaModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setFichaModal(null)}>
             <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-2xl w-full shadow-xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>

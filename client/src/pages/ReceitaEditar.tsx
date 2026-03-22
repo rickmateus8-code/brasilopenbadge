@@ -143,7 +143,8 @@ export default function ReceitaEditar() {
       } finally {
         setLoading(false);
       }
-    }, [id]);
+    })();
+  }, [id]);
 
   // ── Auto-download quando vem de "Baixar PDF" nos Salvos ───────────────────
   useEffect(() => {

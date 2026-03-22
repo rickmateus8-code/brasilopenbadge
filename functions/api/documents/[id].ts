@@ -178,23 +178,40 @@ export async function onRequest(context: { request: Request; env: Env; params: {
       if (DOCUMENT_TYPES.includes(docTypeOrId)) {
         const url = new URL(request.url);
         const limit = parseInt(url.searchParams.get('limit') || '50');
+
+        // Primeiro, contar TODOS os documentos deste tipo para gerar seq_id universal
+        let totalCount = 0;
+        if (user.role === "admin") {
+          const countResult = await env.DB.prepare(
+            "SELECT COUNT(*) as cnt FROM documents WHERE type = ?"
+          ).bind(docTypeOrId).first<{ cnt: number }>();
+          totalCount = countResult?.cnt || 0;
+        } else {
+          const countResult = await env.DB.prepare(
+            "SELECT COUNT(*) as cnt FROM documents WHERE type = ? AND user_id = ?"
+          ).bind(docTypeOrId, user.id).first<{ cnt: number }>();
+          totalCount = countResult?.cnt || 0;
+        }
+
         let results;
         if (user.role === "admin") {
           results = await env.DB.prepare(
-            "SELECT d.*, u.display_name as user_name FROM documents d LEFT JOIN users u ON d.user_id = u.id WHERE d.type = ? ORDER BY d.created_at DESC LIMIT ?"
+            "SELECT d.*, u.display_name as user_name FROM documents d LEFT JOIN users u ON d.user_id = u.id WHERE d.type = ? ORDER BY d.created_at ASC LIMIT ?"
           ).bind(docTypeOrId, limit).all();
         } else {
           results = await env.DB.prepare(
-            "SELECT * FROM documents WHERE type = ? AND user_id = ? ORDER BY created_at DESC LIMIT ?"
+            "SELECT * FROM documents WHERE type = ? AND user_id = ? ORDER BY created_at ASC LIMIT ?"
           ).bind(docTypeOrId, user.id, limit).all();
         }
 
         // Parse JSON data field for each document and extract nome
-        const documents = (results.results || []).map((doc: any) => {
+        // seq_id: 1 = primeiro emitido, crescente
+        const documents = (results.results || []).map((doc: any, index: number) => {
           let parsedData: any = {};
           try { if (doc.data) parsedData = JSON.parse(doc.data); } catch {}
           return {
             id: doc.id,
+            seq_id: index + 1, // ID numérico sequencial universal (1, 2, 3...)
             type: doc.type,
             nome: doc.nome || parsedData.nome || parsedData.nomeCompleto || parsedData.paciente || 'Sem nome',
             cpf: doc.cpf || parsedData.cpf || '',
