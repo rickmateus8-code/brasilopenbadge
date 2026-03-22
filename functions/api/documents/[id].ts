@@ -58,6 +58,24 @@ function generateCode(): string {
   return code;
 }
 
+function generateValidationId(): string {
+  // Generate a UUID v4-like string for QR code validation
+  const hex = '0123456789abcdef';
+  let uuid = '';
+  for (let i = 0; i < 36; i++) {
+    if (i === 8 || i === 13 || i === 18 || i === 23) {
+      uuid += '-';
+    } else if (i === 14) {
+      uuid += '4';
+    } else if (i === 19) {
+      uuid += hex.charAt(Math.floor(Math.random() * 4) + 8);
+    } else {
+      uuid += hex.charAt(Math.floor(Math.random() * 16));
+    }
+  }
+  return uuid;
+}
+
 export async function onRequest(context: { request: Request; env: Env; params: { id: string } }) {
   const { request, env, params } = context;
   const idOrType = params.id;
@@ -92,6 +110,7 @@ export async function onRequest(context: { request: Request; env: Env; params: {
 
       const body = await request.json<any>();
       const codigoValidacao = generateCode();
+      const validationId = generateValidationId();
       const docId = codigoValidacao;
 
       // Deduct balance
@@ -110,16 +129,42 @@ export async function onRequest(context: { request: Request; env: Env; params: {
       const categoria = body.categoria || body.cat || '';
       const senha = String(Math.floor(1000 + Math.random() * 9000));
 
-      // Save document with direct columns
-      await env.DB.prepare(
-        'INSERT INTO documents (id, user_id, type, data, codigo_qr, status, nome, cpf, senha, categoria, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"))'
-      ).bind(docId, user.id, docType, JSON.stringify(body), codigoValidacao, 'emitido', nome, cpf, senha, categoria).run();
+      // Save document with direct columns + validation_id for QR code
+      try {
+        await env.DB.prepare(
+          'INSERT INTO documents (id, user_id, type, data, codigo_qr, validation_id, status, nome, cpf, senha, categoria, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"))'
+        ).bind(docId, user.id, docType, JSON.stringify(body), codigoValidacao, validationId, 'emitido', nome, cpf, senha, categoria).run();
+      } catch (insertErr: any) {
+        // Fallback: if validation_id column doesn't exist yet, insert without it
+        if (insertErr.message && insertErr.message.includes('validation_id')) {
+          await env.DB.prepare(
+            'INSERT INTO documents (id, user_id, type, data, codigo_qr, status, nome, cpf, senha, categoria, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"))'
+          ).bind(docId, user.id, docType, JSON.stringify(body), codigoValidacao, 'emitido', nome, cpf, senha, categoria).run();
+        } else {
+          throw insertErr;
+        }
+      }
+
+      // Log admin notification for new emission
+      try {
+        await env.DB.prepare(
+          `INSERT INTO system_logs (id, user_id, action, category, details, created_at)
+           VALUES (?, ?, ?, ?, ?, datetime('now'))`
+        ).bind(
+          crypto.randomUUID(),
+          user.id,
+          `Documento ${docType.toUpperCase()} emitido por ${user.username}`,
+          'emission',
+          JSON.stringify({ type: docType, nome, cpf, codigo: codigoValidacao, price })
+        ).run();
+      } catch { /* non-critical */ }
 
       return jsonResponse({
         success: true,
         data: {
           id: docId,
           codigoValidacao,
+          validationId,
           type: docType,
         }
       }, 201);
@@ -156,6 +201,7 @@ export async function onRequest(context: { request: Request; env: Env; params: {
             senha: doc.senha || '',
             categoria: doc.categoria || parsedData.categoria || parsedData.cat || '',
             codigo_qr: doc.codigo_qr,
+            validation_id: doc.validation_id || '',
             status: doc.status || 'emitido',
             created_at: doc.created_at,
             user_id: doc.user_id,

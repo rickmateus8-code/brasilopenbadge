@@ -2,9 +2,10 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/DashboardLayout";
+import EmissionModal from "@/components/EmissionModal";
 import { toast } from "sonner";
-import { ArrowLeft, Copy, RefreshCw, Wand2, Save } from "lucide-react";
-import { validarCPF } from "@/lib/utils";
+import { ArrowLeft, Copy, RefreshCw, Wand2, Save, Download } from "lucide-react";
+import { validarCPF, formatarCPF } from "@/lib/utils";
 
 /* ── Constantes ── */
 const LOCAIS_EMISSAO = [
@@ -108,6 +109,10 @@ export default function CHACria() {
   const [loading, setSaving] = useState(false);
   const [importText, setImportText] = useState("");
   const [fotoUrl, setFotoUrl] = useState<string | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [saved, setSaved] = useState(false);
   const canvasFrenteRef = useRef<HTMLCanvasElement>(null);
   const canvasVersoRef = useRef<HTMLCanvasElement>(null);
   const baseFrenteRef = useRef<HTMLImageElement | null>(null);
@@ -115,8 +120,11 @@ export default function CHACria() {
   const fotoImgRef = useRef<HTMLImageElement | null>(null);
   const [basesLoaded, setBasesLoaded] = useState(0);
 
-  const up = (k: keyof CHAForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-    setForm(f => ({ ...f, [k]: e.target.value }));
+  const up = (k: keyof CHAForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    let val = e.target.value;
+    if (k === "cpf") val = formatarCPF(val);
+    setForm(f => ({ ...f, [k]: val }));
+  };
 
   /* ── Load base images ── */
   useEffect(() => {
@@ -277,13 +285,21 @@ export default function CHACria() {
     reader.readAsDataURL(file);
   };
 
-  /* ── Save ── */
-  const handleSave = async () => {
+  /* ── Request emit (abre modal de confirmação) ── */
+  const handleRequestEmit = () => {
     if (!form.nome.trim()) { toast.error("Preencha o nome"); return; }
     if (!form.cpf.trim()) { toast.error("Preencha o CPF"); return; }
     if (!validarCPF(form.cpf)) { toast.error("CPF inválido"); return; }
     if (!form.senha.trim()) { toast.error("Crie uma senha de acesso"); return; }
+    if ((user?.balance || 0) <= 0) {
+      toast.error("Saldo insuficiente. Recarregue para emitir documentos.");
+      return;
+    }
+    setShowConfirmModal(true);
+  };
 
+  /* ── Save (chamado após confirmação) ── */
+  const handleSave = async () => {
     setSaving(true);
     try {
       const res = await fetch("/api/documents/cha", {
@@ -292,6 +308,7 @@ export default function CHACria() {
         credentials: "include",
         body: JSON.stringify({
           nome: form.nome.toUpperCase(),
+          cpf: form.cpf,
           data: {
             ...form,
             nome: form.nome.toUpperCase(),
@@ -301,14 +318,44 @@ export default function CHACria() {
       });
       const json = await res.json();
       if (json.success) {
-        toast.success("CHA salva com sucesso!");
+        setSaved(true);
+        setShowConfirmModal(false);
+        setShowSuccessModal(true);
       } else {
         toast.error(json.error || "Erro ao salvar");
+        setShowConfirmModal(false);
       }
     } catch {
       toast.error("Erro de conexão");
+      setShowConfirmModal(false);
     } finally {
       setSaving(false);
+    }
+  };
+
+  /* ── Download canvas as image ── */
+  const handleDownloadCHA = async () => {
+    setIsDownloading(true);
+    try {
+      const cf = canvasFrenteRef.current;
+      const cv = canvasVersoRef.current;
+      if (cf) {
+        const link = document.createElement("a");
+        link.download = `CHA_${form.nome.replace(/\s+/g, "_") || "DOCUMENTO"}_FRENTE.png`;
+        link.href = cf.toDataURL("image/png");
+        link.click();
+      }
+      if (cv) {
+        await new Promise(r => setTimeout(r, 500));
+        const link = document.createElement("a");
+        link.download = `CHA_${form.nome.replace(/\s+/g, "_") || "DOCUMENTO"}_VERSO.png`;
+        link.href = cv.toDataURL("image/png");
+        link.click();
+      }
+    } catch {
+      toast.error("Erro ao baixar imagens");
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -482,14 +529,26 @@ export default function CHACria() {
             </div>
 
             {/* Save button */}
-            <button
-              onClick={handleSave}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white rounded-xl transition-colors"
-            >
-              <Save className="w-4 h-4" />
-              {loading ? "SALVANDO..." : "SALVAR CADASTRO NO SISTEMA"}
-            </button>
+            {!saved && (
+              <button
+                onClick={handleRequestEmit}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white rounded-xl transition-colors"
+              >
+                <Save className="w-4 h-4" />
+                {loading ? "SALVANDO..." : "EMITIR CHA NAUTICA"}
+              </button>
+            )}
+            {saved && (
+              <button
+                onClick={handleDownloadCHA}
+                disabled={isDownloading}
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white rounded-xl transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                {isDownloading ? "BAIXANDO..." : "BAIXAR CHA NAUTICA"}
+              </button>
+            )}
           </div>
 
           {/* ── RIGHT: Canvas Preview ── */}
@@ -502,6 +561,20 @@ export default function CHACria() {
           </div>
         </div>
       </div>
+
+      {/* Modal de Confirmação + Sucesso */}
+      <EmissionModal
+        docLabel="CHA Nautica"
+        showConfirm={showConfirmModal}
+        showSuccess={showSuccessModal}
+        isEmitting={loading}
+        isDownloading={isDownloading}
+        onConfirm={handleSave}
+        onCancel={() => setShowConfirmModal(false)}
+        onDownload={handleDownloadCHA}
+        onClose={() => setShowSuccessModal(false)}
+        historyPath="/chasalvas"
+      />
     </DashboardLayout>
   );
 }

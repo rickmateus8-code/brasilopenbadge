@@ -169,12 +169,16 @@ export default function AdminDashboard() {
   const [emissions, setEmissions] = useState<EmissionRow[]>([]);
   const [emissionsFilter, setEmissionsFilter] = useState("");
   const [emissionsTypeFilter, setEmissionsTypeFilter] = useState("all");
+  const [emissionsDateFrom, setEmissionsDateFrom] = useState("");
+  const [emissionsDateTo, setEmissionsDateTo] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmDeleteSource, setConfirmDeleteSource] = useState<string>("");
 
   // Monitoring / Presence
   const [presence, setPresence] = useState<PresenceRow[]>([]);
   const [onlineCount, setOnlineCount] = useState(0);
+  const [offlineCount, setOfflineCount] = useState(0);
+  const [totalTracked, setTotalTracked] = useState(0);
 
   // Referral
   const [referralData, setReferralData] = useState<any>({});
@@ -280,14 +284,22 @@ export default function AdminDashboard() {
     finally { setLoading(false); }
   }, [logCategory, logDateFrom, logDateTo]);
 
-  const clearLogs = async (clearType: string = "all") => {
-    if (!confirm(`Tem certeza que deseja limpar os logs (${clearType})?`)) return;
-    try {
-      const res = await fetch(`/api/admin/system-logs?clear=${clearType}`, { method: "DELETE", credentials: "include" });
-      const data = await res.json();
-      if (data.success) { toast.success("Logs limpos com sucesso!"); loadLogs(); }
-      else toast.error(data.error || "Erro ao limpar logs");
-    } catch { toast.error("Erro de conexão"); }
+  const clearLogs = (clearType: string = "all") => {
+    setConfirmModal({
+      open: true,
+      title: "Limpar Logs",
+      message: `Tem certeza que deseja limpar os logs (${clearType})? Esta acao nao pode ser desfeita.`,
+      type: "danger",
+      onConfirm: async () => {
+        setConfirmModal(m => ({ ...m, open: false }));
+        try {
+          const res = await fetch(`/api/admin/system-logs?clear=${clearType}`, { method: "DELETE", credentials: "include" });
+          const data = await res.json();
+          if (data.success) { toast.success("Logs limpos com sucesso!"); loadLogs(); }
+          else toast.error(data.error || "Erro ao limpar logs");
+        } catch { toast.error("Erro de conex\u00e3o"); }
+      },
+    });
   };
 
   const loadReferral = useCallback(async () => {
@@ -389,6 +401,8 @@ export default function AdminDashboard() {
       if (data.success) {
         setPresence(data.presence || []);
         setOnlineCount(data.online_count || 0);
+        setOfflineCount(data.offline_count || (data.presence || []).filter((p: any) => !p.is_online).length);
+        setTotalTracked(data.total_users || (data.presence || []).length);
       }
     } catch { /* silently fail */ }
   }, []);
@@ -716,12 +730,27 @@ export default function AdminDashboard() {
     (l.details || "").toLowerCase().includes(logFilter.toLowerCase())
   );
 
-  const filteredEmissions = emissions.filter(e =>
-    !emissionsFilter ||
-    (e.nome || e.paciente || "").toLowerCase().includes(emissionsFilter.toLowerCase()) ||
-    (e.username || "").toLowerCase().includes(emissionsFilter.toLowerCase()) ||
-    (e.codigo_qr || "").toLowerCase().includes(emissionsFilter.toLowerCase())
-  );
+  const filteredEmissions = emissions.filter(e => {
+    // Filtro de texto
+    const textMatch = !emissionsFilter ||
+      (e.nome || e.paciente || "").toLowerCase().includes(emissionsFilter.toLowerCase()) ||
+      (e.username || "").toLowerCase().includes(emissionsFilter.toLowerCase()) ||
+      (e.codigo_qr || "").toLowerCase().includes(emissionsFilter.toLowerCase());
+    // Filtro de data
+    let dateMatch = true;
+    if (emissionsDateFrom || emissionsDateTo) {
+      const eDate = e.created_at ? new Date(e.created_at).getTime() : 0;
+      if (emissionsDateFrom) {
+        const from = new Date(emissionsDateFrom).getTime();
+        if (eDate < from) dateMatch = false;
+      }
+      if (emissionsDateTo) {
+        const to = new Date(emissionsDateTo + "T23:59:59").getTime();
+        if (eDate > to) dateMatch = false;
+      }
+    }
+    return textMatch && dateMatch;
+  });
 
   const totalBalance = users.reduce((sum, u) => sum + (u.balance || 0), 0);
   const activeUsers = users.filter(u => u.is_active).length;
@@ -952,7 +981,7 @@ export default function AdminDashboard() {
               </div>
               <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center">
                 <WifiOff className="w-6 h-6 mx-auto mb-1 text-gray-400" />
-                <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">{presence.filter(p => !p.is_online).length}</p>
+                <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">{offlineCount}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Offline</p>
               </div>
               <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl p-4 text-center">
@@ -964,8 +993,8 @@ export default function AdminDashboard() {
               </div>
               <div className="bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-800 rounded-xl p-4 text-center">
                 <Globe className="w-6 h-6 mx-auto mb-1 text-purple-500" />
-                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{presence.length}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Total Rastreados</p>
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{totalTracked}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Total Usuarios</p>
               </div>
             </div>
 
@@ -1376,10 +1405,33 @@ export default function AdminDashboard() {
                 <option value="historico-sp">Histórico SP</option>
                 <option value="historico-uninter">Histórico UNINTER</option>
               </select>
+              <div className="flex items-center gap-2">
+                <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                <input
+                  type="date"
+                  value={emissionsDateFrom}
+                  onChange={e => setEmissionsDateFrom(e.target.value)}
+                  className="px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                  title="Data inicial"
+                />
+                <span className="text-xs text-gray-400">ate</span>
+                <input
+                  type="date"
+                  value={emissionsDateTo}
+                  onChange={e => setEmissionsDateTo(e.target.value)}
+                  className="px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                  title="Data final"
+                />
+                {(emissionsDateFrom || emissionsDateTo) && (
+                  <button onClick={() => { setEmissionsDateFrom(""); setEmissionsDateTo(""); }} className="p-1 rounded-lg bg-red-100 dark:bg-red-900/20 text-red-500 hover:bg-red-200 transition-colors" title="Limpar filtro de data">
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
               <button onClick={loadEmissions} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors">
                 <RefreshCw className="w-4 h-4" />
               </button>
-              <span className="text-xs text-gray-500 dark:text-gray-400">{filteredEmissions.length} emissões</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">{filteredEmissions.length} emiss\u00f5es</span>
             </div>
             {loading ? (
               <div className="flex items-center justify-center py-12">

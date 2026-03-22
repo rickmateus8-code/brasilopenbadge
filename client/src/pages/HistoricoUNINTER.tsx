@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Download, GraduationCap, AlertCircle, Plus, Trash2 } from "lucide-react";
 import { exportElementToPDF } from "@/lib/pdfExport";
 import { validarCPF } from "@/lib/utils";
+import EmissionModal from "@/components/EmissionModal";
 
 interface Disciplina {
   nome: string;
@@ -59,6 +60,9 @@ export default function HistoricoUNINTER() {
   const [data, setData] = useState<HistoricoUNINTERData>(EMPTY);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const docRef = useRef<HTMLDivElement>(null);
 
   const update = (k: keyof HistoricoUNINTERData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
@@ -73,13 +77,17 @@ export default function HistoricoUNINTER() {
   const removeDisciplina = (idx: number) =>
     setData(d => ({ ...d, disciplinas: d.disciplinas.filter((_, i) => i !== idx) }));
 
-  const handleSave = async () => {
+  const handleRequestEmit = () => {
     if (!data.nomeAluno || !data.ra) { toast.error("Preencha Nome do Aluno e RA"); return; }
     if (data.cpf && !validarCPF(data.cpf)) { toast.error("CPF inválido! Verifique os dígitos informados."); return; }
     if ((user?.balance || 0) <= 0) {
       toast.error("Saldo insuficiente. Recarregue para emitir documentos.");
       return;
     }
+    setShowConfirmModal(true);
+  };
+
+  const handleSave = async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/documents/historico-uninter", {
@@ -91,11 +99,13 @@ export default function HistoricoUNINTER() {
       const result = await res.json();
       if (result.success) {
         setSaved(true);
-        toast.success("Histórico UNINTER gerado com sucesso!");
+        setShowConfirmModal(false);
+        setShowSuccessModal(true);
       } else {
         toast.error(result.error || "Erro ao gerar histórico");
+        setShowConfirmModal(false);
       }
-    } catch { toast.error("Erro de conexão"); }
+    } catch { toast.error("Erro de conexão"); setShowConfirmModal(false); }
     finally { setLoading(false); }
   };
 
@@ -228,7 +238,7 @@ export default function HistoricoUNINTER() {
             </div>
 
             <div className="flex gap-3">
-              <button onClick={handleSave} disabled={loading || saved}
+              <button onClick={handleRequestEmit} disabled={loading || saved}
                 className="flex-1 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-xl text-sm transition-all disabled:opacity-60">
                 {loading ? "Gerando..." : saved ? "✅ Histórico Emitido" : "✓ CONFIRMAR E EMITIR"}
               </button>
@@ -320,6 +330,23 @@ export default function HistoricoUNINTER() {
           </div>
         </div>
       </div>
+      {/* Modal de Confirmação + Sucesso */}
+      <EmissionModal
+        docLabel="Historico UNINTER"
+        showConfirm={showConfirmModal}
+        showSuccess={showSuccessModal}
+        isEmitting={loading}
+        isDownloading={isDownloading}
+        onConfirm={handleSave}
+        onCancel={() => setShowConfirmModal(false)}
+        onDownload={async () => {
+          setIsDownloading(true);
+          await handleExport();
+          setIsDownloading(false);
+        }}
+        onClose={() => setShowSuccessModal(false)}
+        historyPath="/historico-uninter-salvos"
+      />
     </DashboardLayout>
   );
 }

@@ -17,6 +17,7 @@ import CNHDocument, { type CNHDocumentHandle, type CNHDocumentProps } from "../c
 import { toast } from "sonner";
 import { getQRCodeCNH } from "@/config.qrcode";
 import { validarCPF, formatarCPF as formatarCPFUtil, formatarRG, displayDateToHtml } from "@/lib/utils";
+import EmissionModal from "@/components/EmissionModal";
 import {
   ArrowLeft, Save, Download, MessageCircle, Copy, Zap,
   Upload, Type, Lock, AlertCircle, Car
@@ -80,6 +81,9 @@ export default function CNHCria() {
   const [saved, setSaved] = useState(false);
   const [codigoQR, setCodigoQR] = useState("");
   const [importText, setImportText] = useState("");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const [data, setData] = useState<CNHDocumentProps>({
     nome: "", cpf: "", rg: "", orgaoEmissor: "", ufRG: "",
@@ -221,13 +225,12 @@ export default function CNHCria() {
     toast.success("Assinatura gerada!");
   }, [assTexto, assEstilo]);
 
-  // ─── Salvar Documento ──────────────────────────────────────────────────────
-  const handleSave = async () => {
+  // ─── Abrir modal de confirmação ──────────────────────────────────────────
+  const handleRequestEmit = () => {
     if (!data.nome || !data.cpf) {
       toast.error("Preencha Nome e CPF obrigatoriamente!");
       return;
     }
-    // Validação de CPF universal
     if (!validarCPF(data.cpf)) {
       toast.error("CPF inválido! Verifique os dígitos informados.");
       return;
@@ -236,6 +239,11 @@ export default function CNHCria() {
       toast.error("Saldo insuficiente. Recarregue para emitir documentos.");
       return;
     }
+    setShowConfirmModal(true);
+  };
+
+  // ─── Salvar Documento (chamado após confirmação) ──────────────────────────
+  const handleSave = async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/documents/cnh", {
@@ -250,12 +258,15 @@ export default function CNHCria() {
         setCodigoQR(codigo);
         setData(d => ({ ...d, codigoQR: codigo, blurred: false }));
         setSaved(true);
-        toast.success("CNH Digital emitida com sucesso!");
+        setShowConfirmModal(false);
+        setShowSuccessModal(true);
       } else {
         toast.error(result.error || "Erro ao gerar CNH");
+        setShowConfirmModal(false);
       }
     } catch {
       toast.error("Erro de conexão");
+      setShowConfirmModal(false);
     } finally {
       setLoading(false);
     }
@@ -996,7 +1007,7 @@ export default function CNHCria() {
         {!saved && (
           <button
             className="cnh-floating-save"
-            onClick={handleSave}
+            onClick={handleRequestEmit}
             disabled={loading || saved}
           >
             {loading ? (
@@ -1007,6 +1018,24 @@ export default function CNHCria() {
           </button>
         )}
       </div>
+
+      {/* Modal de Confirmação + Sucesso */}
+      <EmissionModal
+        docLabel="CNH Digital"
+        showConfirm={showConfirmModal}
+        showSuccess={showSuccessModal}
+        isEmitting={loading}
+        isDownloading={isDownloading}
+        onConfirm={handleSave}
+        onCancel={() => setShowConfirmModal(false)}
+        onDownload={async () => {
+          setIsDownloading(true);
+          await handleExportJPEG();
+          setIsDownloading(false);
+        }}
+        onClose={() => setShowSuccessModal(false)}
+        historyPath="/cnhsalvas"
+      />
 
       {/* Animação de spin */}
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>

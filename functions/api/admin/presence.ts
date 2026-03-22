@@ -1,6 +1,7 @@
 /**
  * /api/admin/presence — GET: Lista presença de todos os usuários
  * Mostra quem está online, página atual e ação em andamento
+ * Inclui TODOS os usuários, mesmo os que nunca acessaram o painel
  */
 import type { Env } from '../../types';
 
@@ -44,20 +45,38 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       'UPDATE user_presence SET is_online = 0 WHERE last_seen < ?'
     ).bind(twoMinutesAgo).run();
 
-    // Get all presence data joined with user info
-    const presence = await env.DB.prepare(`
-      SELECT up.*, u.username, u.email, u.role, u.profile_photo
-      FROM user_presence up
-      LEFT JOIN users u ON CAST(up.user_id AS TEXT) = CAST(u.id AS TEXT)
-      ORDER BY up.is_online DESC, up.last_seen DESC
+    // Get ALL users with LEFT JOIN to presence — includes users who never accessed
+    const allUsers = await env.DB.prepare(`
+      SELECT 
+        u.id as user_id,
+        u.username,
+        u.email,
+        u.role,
+        u.profile_photo,
+        u.created_at as user_created_at,
+        COALESCE(up.is_online, 0) as is_online,
+        up.current_page,
+        up.current_action,
+        up.last_seen,
+        up.ip_address,
+        up.user_agent
+      FROM users u
+      LEFT JOIN user_presence up ON CAST(u.id AS TEXT) = CAST(up.user_id AS TEXT)
+      WHERE u.is_active = 1
+      ORDER BY COALESCE(up.is_online, 0) DESC, up.last_seen DESC NULLS LAST
     `).all<any>();
 
-    const onlineCount = (presence.results || []).filter((p: any) => p.is_online === 1).length;
+    const results = allUsers.results || [];
+    const onlineCount = results.filter((p: any) => p.is_online === 1).length;
+    const totalUsers = results.length;
+    const offlineCount = totalUsers - onlineCount;
 
     return new Response(JSON.stringify({
       success: true,
-      presence: presence.results || [],
+      presence: results,
       online_count: onlineCount,
+      offline_count: offlineCount,
+      total_users: totalUsers,
     }), { headers: corsHeaders });
   } catch (err: any) {
     return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers: corsHeaders });
