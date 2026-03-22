@@ -217,7 +217,7 @@ export default function Dashboard() {
               { icon: FileText, label: "Atestados Emitidos", value: stats.atestado ?? 0, color: "yellow" },
               { icon: Car, label: "CNHs Emitidas", value: stats.cnh ?? 0, color: "amber" },
               { icon: Anchor, label: "CHAs Emitidas", value: stats.cha ?? 0, color: "cyan" },
-              { icon: Wallet, label: "Saldo Disponível", value: `R$ ${((user?.balance || 0) / 100).toFixed(2).replace(".", ",")}`, color: "emerald" },
+              { icon: Wallet, label: "Total Depositado", value: `R$ ${((user?.balance || 0) / 100).toFixed(2).replace(".", ",")}`, color: "emerald" },
             ].map(({ icon: Icon, label, value, color }) => {
               const c = colorMap[color];
               return (

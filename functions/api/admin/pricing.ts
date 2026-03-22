@@ -85,6 +85,38 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   }
 };
 
+export const onRequestPut: PagesFunction<Env> = async ({ request, env }) => {
+  try {
+    const admin = await getAuthAdmin(request, env);
+    if (!admin) {
+      return new Response(JSON.stringify({ success: false, error: 'Não autorizado' }), { status: 401, headers: corsHeaders });
+    }
+
+    const body = await request.json() as any;
+    const { prices } = body; // Array of { document_type, price, is_active }
+
+    if (!prices || !Array.isArray(prices)) {
+      return new Response(JSON.stringify({ success: false, error: 'Formato inválido: envie { prices: [...] }' }), { status: 400, headers: corsHeaders });
+    }
+
+    for (const p of prices) {
+      await env.DB.prepare(
+        "UPDATE document_pricing SET price = ?, is_active = ?, updated_at = datetime('now') WHERE document_type = ?"
+      ).bind(p.price, p.is_active !== false ? 1 : 0, p.document_type).run();
+    }
+
+    // Log the action
+    const logId = crypto.randomUUID();
+    await env.DB.prepare(
+      'INSERT INTO admin_logs (id, admin_id, action, target_type, details, created_at) VALUES (?, ?, ?, ?, ?, datetime("now"))'
+    ).bind(logId, admin.id, 'update_pricing_bulk', 'pricing', JSON.stringify({ prices })).run().catch(() => null);
+
+    return new Response(JSON.stringify({ success: true, message: 'Preços atualizados com sucesso!' }), { headers: corsHeaders });
+  } catch (err: any) {
+    return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers: corsHeaders });
+  }
+};
+
 export const onRequestOptions: PagesFunction = async () => {
   return new Response(null, { headers: corsHeaders });
 };

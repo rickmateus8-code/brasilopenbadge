@@ -9,10 +9,11 @@ import {
   Bell, AlertTriangle, CheckCircle, Info, FileText,
   Activity, Database, Search, Eye, X, Save,
   Download, Edit3, Wifi, WifiOff, Monitor, Globe,
-  CreditCard, AlertCircle, Filter
+  CreditCard, AlertCircle, Filter, Gift, Percent,
+  Link, Copy, Calendar, Trash
 } from "lucide-react";
 
-type Tab = "users" | "pricing" | "notices" | "logs" | "emissions" | "monitoring" | "database" | "settings";
+type Tab = "users" | "pricing" | "notices" | "logs" | "emissions" | "monitoring" | "referral" | "database" | "settings";
 
 interface EmissionRow {
   id: string;
@@ -85,6 +86,7 @@ const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "notices", label: "Avisos", icon: Bell },
   { key: "logs", label: "Logs", icon: Activity },
   { key: "emissions", label: "Emissões", icon: FileText },
+  { key: "referral", label: "Indica\u00e7\u00f5es", icon: Gift },
   { key: "database", label: "Banco de Dados", icon: Database },
   { key: "settings", label: "Configurações", icon: Settings },
 ];
@@ -174,6 +176,23 @@ export default function AdminDashboard() {
   const [presence, setPresence] = useState<PresenceRow[]>([]);
   const [onlineCount, setOnlineCount] = useState(0);
 
+  // Referral
+  const [referralData, setReferralData] = useState<any>({});
+  const [referralTab, setReferralTab] = useState<"overview" | "referrals" | "earnings" | "cashback" | "users">("overview");
+  const [referralSettings, setReferralSettings] = useState({
+    referral_percentage: 10, cashback_percentage: 5, referral_enabled: true, cashback_enabled: true
+  });
+  const [editUserRefId, setEditUserRefId] = useState<string | null>(null);
+  const [editUserRefPct, setEditUserRefPct] = useState("");
+  const [editUserCbPct, setEditUserCbPct] = useState("");
+
+  // Log date filters
+  const [logDateFrom, setLogDateFrom] = useState("");
+  const [logDateTo, setLogDateTo] = useState("");
+
+  // Pricing save all
+  const [pricingSaving, setPricingSaving] = useState(false);
+
   // Database
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleteUserConfirm, setDeleteUserConfirm] = useState("");
@@ -242,14 +261,16 @@ export default function AdminDashboard() {
   const loadLogs = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/system-logs?category=${logCategory}&limit=200`, { credentials: "include" });
+      let url = `/api/admin/system-logs?category=${logCategory}&limit=200`;
+      if (logDateFrom) url += `&from=${logDateFrom}`;
+      if (logDateTo) url += `&to=${logDateTo}`;
+      const res = await fetch(url, { credentials: "include" });
       const data = await res.json();
       if (data.success) {
         setLogs(data.logs || []);
         setLogCategories(data.categories || {});
       }
     } catch {
-      // Fallback to old logs endpoint
       try {
         const res = await fetch("/api/admin/logs", { credentials: "include" });
         const data = await res.json();
@@ -257,7 +278,84 @@ export default function AdminDashboard() {
       } catch { toast.error("Erro ao carregar logs"); }
     }
     finally { setLoading(false); }
-  }, [logCategory]);
+  }, [logCategory, logDateFrom, logDateTo]);
+
+  const clearLogs = async (clearType: string = "all") => {
+    if (!confirm(`Tem certeza que deseja limpar os logs (${clearType})?`)) return;
+    try {
+      const res = await fetch(`/api/admin/system-logs?clear=${clearType}`, { method: "DELETE", credentials: "include" });
+      const data = await res.json();
+      if (data.success) { toast.success("Logs limpos com sucesso!"); loadLogs(); }
+      else toast.error(data.error || "Erro ao limpar logs");
+    } catch { toast.error("Erro de conex\u00e3o"); }
+  };
+
+  const loadReferral = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/referral?tab=${referralTab}`, { credentials: "include" });
+      const data = await res.json();
+      setReferralData(data);
+      if (referralTab === "overview" && data.settings) {
+        const s: any = {};
+        for (const item of data.settings) s[item.key] = item.value;
+        setReferralSettings({
+          referral_percentage: parseFloat(s.referral_percentage || "10"),
+          cashback_percentage: parseFloat(s.cashback_percentage || "5"),
+          referral_enabled: s.referral_enabled === "true",
+          cashback_enabled: s.cashback_enabled === "true",
+        });
+      }
+    } catch { toast.error("Erro ao carregar indica\u00e7\u00f5es"); }
+    finally { setLoading(false); }
+  }, [referralTab]);
+
+  const saveReferralSettings = async () => {
+    try {
+      const res = await fetch("/api/admin/referral", {
+        method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
+        body: JSON.stringify({ action: "update_global_settings", ...referralSettings }),
+      });
+      const data = await res.json();
+      if (data.success) toast.success("Configura\u00e7\u00f5es de indica\u00e7\u00e3o salvas!");
+      else toast.error(data.error || "Erro");
+    } catch { toast.error("Erro de conex\u00e3o"); }
+  };
+
+  const saveUserRefSettings = async (userId: string) => {
+    try {
+      const res = await fetch("/api/admin/referral", {
+        method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
+        body: JSON.stringify({
+          action: "update_user_settings", userId,
+          referral_percentage: editUserRefPct ? parseFloat(editUserRefPct) : null,
+          cashback_percentage: editUserCbPct ? parseFloat(editUserCbPct) : null,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) { toast.success("% do usu\u00e1rio atualizado!"); setEditUserRefId(null); loadReferral(); }
+      else toast.error(data.error || "Erro");
+    } catch { toast.error("Erro de conex\u00e3o"); }
+  };
+
+  const saveAllPrices = async () => {
+    setPricingSaving(true);
+    try {
+      const prices = pricing.map(p => ({
+        document_type: p.document_type,
+        price: Math.round(parseFloat(editingPrice[p.document_type] || "0") * 100),
+        is_active: true,
+      }));
+      const res = await fetch("/api/admin/pricing", {
+        method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
+        body: JSON.stringify({ prices }),
+      });
+      const data = await res.json();
+      if (data.success) { toast.success("Todos os pre\u00e7os atualizados com sucesso!"); loadPricing(); }
+      else toast.error(data.error || "Erro ao salvar pre\u00e7os");
+    } catch { toast.error("Erro de conex\u00e3o"); }
+    finally { setPricingSaving(false); }
+  };
 
   const loadEmissions = useCallback(async () => {
     setLoading(true);
@@ -302,7 +400,8 @@ export default function AdminDashboard() {
     if (tab === "logs") loadLogs();
     if (tab === "emissions") loadEmissions();
     if (tab === "monitoring") loadPresence();
-  }, [tab, logCategory, emissionsTypeFilter]);
+    if (tab === "referral") loadReferral();
+  }, [tab, logCategory, logDateFrom, logDateTo, emissionsTypeFilter, referralTab]);
 
   // Load presence count on mount and periodically
   useEffect(() => {
@@ -965,31 +1064,43 @@ export default function AdminDashboard() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {pricing.map(p => (
-                  <div key={p.document_type} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4">
-                    <p className="font-semibold text-gray-800 dark:text-gray-200 text-sm mb-1">{p.display_name}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">{p.document_type}</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-500 dark:text-gray-400">R$</span>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={editingPrice[p.document_type] || ""}
-                        onChange={e => setEditingPrice(prev => ({ ...prev, [p.document_type]: e.target.value }))}
-                        className="flex-1 px-2 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                      />
-                      <button
-                        onClick={() => savePrice(p.document_type)}
-                        className="p-1.5 rounded-lg bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-200 transition-colors"
-                        title="Salvar"
-                      >
-                        <Save className="w-4 h-4" />
-                      </button>
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {pricing.map(p => (
+                    <div key={p.document_type} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4">
+                      <p className="font-semibold text-gray-800 dark:text-gray-200 text-sm mb-1">{p.display_name}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">{p.document_type}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-500 dark:text-gray-400">R$</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={editingPrice[p.document_type] || ""}
+                          onChange={e => setEditingPrice(prev => ({ ...prev, [p.document_type]: e.target.value }))}
+                          className="flex-1 px-2 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        />
+                        <button
+                          onClick={() => savePrice(p.document_type)}
+                          className="p-1.5 rounded-lg bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-200 transition-colors"
+                          title="Salvar individual"
+                        >
+                          <Save className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <button
+                    onClick={saveAllPrices}
+                    disabled={pricingSaving}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
+                  >
+                    <Save className="w-4 h-4" />
+                    {pricingSaving ? "Salvando..." : "Salvar Todos os Pre\u00e7os"}
+                  </button>
+                </div>
+              </>
             )}
           </div>
         )}
@@ -1128,9 +1239,35 @@ export default function AdminDashboard() {
                   </button>
                 ))}
               </div>
-              <button onClick={loadLogs} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors">
+              <button onClick={loadLogs} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors" title="Atualizar">
                 <RefreshCw className="w-4 h-4" />
               </button>
+              <button onClick={() => clearLogs("all")} className="flex items-center gap-1 px-3 py-2 rounded-xl bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-200 transition-colors text-xs font-semibold" title="Limpar todos os logs">
+                <Trash className="w-3.5 h-3.5" />
+                Limpar
+              </button>
+            </div>
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
+              <Calendar className="w-4 h-4 text-gray-400" />
+              <span className="text-xs text-gray-500 dark:text-gray-400">Per\u00edodo:</span>
+              <input
+                type="date"
+                value={logDateFrom}
+                onChange={e => setLogDateFrom(e.target.value)}
+                className="px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              />
+              <span className="text-xs text-gray-400">at\u00e9</span>
+              <input
+                type="date"
+                value={logDateTo}
+                onChange={e => setLogDateTo(e.target.value)}
+                className="px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              />
+              {(logDateFrom || logDateTo) && (
+                <button onClick={() => { setLogDateFrom(""); setLogDateTo(""); }} className="text-xs text-red-500 hover:text-red-700 font-semibold">
+                  Limpar filtro
+                </button>
+              )}
             </div>
             {loading ? (
               <div className="flex items-center justify-center py-12">
@@ -1324,6 +1461,259 @@ export default function AdminDashboard() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── REFERRAL TAB ── */}
+        {tab === "referral" && (
+          <div className="space-y-6">
+            {/* Sub-tabs */}
+            <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+              {(["overview", "referrals", "earnings", "cashback", "users"] as const).map(rt => (
+                <button
+                  key={rt}
+                  onClick={() => setReferralTab(rt)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                    referralTab === rt
+                      ? "bg-yellow-500 text-white"
+                      : "text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700"
+                  }`}
+                >
+                  {rt === "overview" ? "Vis\u00e3o Geral" : rt === "referrals" ? "Indica\u00e7\u00f5es" : rt === "earnings" ? "Ganhos Referral" : rt === "cashback" ? "Cashback" : "Usu\u00e1rios"}
+                </button>
+              ))}
+            </div>
+
+            {referralTab === "overview" && (
+              <div className="space-y-6">
+                {/* Stats cards */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 text-center">
+                    <Gift className="w-6 h-6 mx-auto mb-2 text-purple-500" />
+                    <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{referralData.totalReferrals || 0}</p>
+                    <p className="text-xs text-gray-500">Total Indica\u00e7\u00f5es</p>
+                  </div>
+                  <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 text-center">
+                    <Users className="w-6 h-6 mx-auto mb-2 text-blue-500" />
+                    <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{referralData.activeReferrers || 0}</p>
+                    <p className="text-xs text-gray-500">Indicadores Ativos</p>
+                  </div>
+                  <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 text-center">
+                    <DollarSign className="w-6 h-6 mx-auto mb-2 text-green-500" />
+                    <p className="text-2xl font-bold text-green-600">R$ {((referralData.totalReferralEarnings || 0) / 100).toFixed(2)}</p>
+                    <p className="text-xs text-gray-500">Total Pago (Referral)</p>
+                  </div>
+                  <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 text-center">
+                    <Percent className="w-6 h-6 mx-auto mb-2 text-orange-500" />
+                    <p className="text-2xl font-bold text-orange-600">R$ {((referralData.totalCashbackPaid || 0) / 100).toFixed(2)}</p>
+                    <p className="text-xs text-gray-500">Total Cashback Pago</p>
+                  </div>
+                </div>
+
+                {/* Global settings */}
+                <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">Configura\u00e7\u00f5es Globais</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">% Indica\u00e7\u00e3o (Referral)</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number" step="0.5" min="0" max="100"
+                          value={referralSettings.referral_percentage}
+                          onChange={e => setReferralSettings(s => ({ ...s, referral_percentage: parseFloat(e.target.value) || 0 }))}
+                          className="flex-1 px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        />
+                        <span className="text-sm text-gray-500">%</span>
+                        <button
+                          onClick={() => setReferralSettings(s => ({ ...s, referral_enabled: !s.referral_enabled }))}
+                          className={`p-2 rounded-lg transition-colors ${referralSettings.referral_enabled ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}
+                        >
+                          {referralSettings.referral_enabled ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-gray-400 mt-1">% que o indicador ganha sobre cada dep\u00f3sito do indicado</p>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">% Cashback (Dep\u00f3sito)</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number" step="0.5" min="0" max="100"
+                          value={referralSettings.cashback_percentage}
+                          onChange={e => setReferralSettings(s => ({ ...s, cashback_percentage: parseFloat(e.target.value) || 0 }))}
+                          className="flex-1 px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        />
+                        <span className="text-sm text-gray-500">%</span>
+                        <button
+                          onClick={() => setReferralSettings(s => ({ ...s, cashback_enabled: !s.cashback_enabled }))}
+                          className={`p-2 rounded-lg transition-colors ${referralSettings.cashback_enabled ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}
+                        >
+                          {referralSettings.cashback_enabled ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-gray-400 mt-1">% que o usu\u00e1rio ganha de volta ao depositar</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                    <button onClick={saveReferralSettings} className="flex items-center gap-2 px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl transition-colors">
+                      <Save className="w-4 h-4" /> Salvar Configura\u00e7\u00f5es
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {referralTab === "referrals" && (
+              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Data</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicador</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicado</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">% Custom</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Total Ganho</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                    {(referralData.referrals || []).map((r: any) => (
+                      <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td className="px-4 py-2.5 text-gray-500">{formatDate(r.created_at)}</td>
+                        <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{r.referrer_name} <span className="text-gray-400">({r.referrer_email})</span></td>
+                        <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">{r.referred_name} <span className="text-gray-400">({r.referred_email})</span></td>
+                        <td className="px-4 py-2.5 text-gray-500">{r.referrer_custom_pct != null ? `${r.referrer_custom_pct}%` : "Global"}</td>
+                        <td className="px-4 py-2.5 font-semibold text-green-600">R$ {((r.total_earned || 0) / 100).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {(referralData.referrals || []).length === 0 && (
+                  <div className="text-center py-8 text-gray-400 text-sm">Nenhuma indica\u00e7\u00e3o registrada</div>
+                )}
+              </div>
+            )}
+
+            {referralTab === "earnings" && (
+              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Data</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicador</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicado</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Dep\u00f3sito</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">%</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Ganho</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                    {(referralData.earnings || []).map((e: any) => (
+                      <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td className="px-4 py-2.5 text-gray-500">{formatDate(e.created_at)}</td>
+                        <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{e.referrer_name}</td>
+                        <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">{e.referred_name}</td>
+                        <td className="px-4 py-2.5 text-gray-600">R$ {((e.deposit_amount || 0) / 100).toFixed(2)}</td>
+                        <td className="px-4 py-2.5 text-gray-500">{e.percentage}%</td>
+                        <td className="px-4 py-2.5 font-semibold text-green-600">R$ {((e.earned_amount || 0) / 100).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {(referralData.earnings || []).length === 0 && (
+                  <div className="text-center py-8 text-gray-400 text-sm">Nenhum ganho de indica\u00e7\u00e3o registrado</div>
+                )}
+              </div>
+            )}
+
+            {referralTab === "cashback" && (
+              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Data</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Usu\u00e1rio</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Dep\u00f3sito</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">%</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Cashback</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                    {(referralData.cashback || []).map((c: any) => (
+                      <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td className="px-4 py-2.5 text-gray-500">{formatDate(c.created_at)}</td>
+                        <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{c.user_name} <span className="text-gray-400">({c.user_email})</span></td>
+                        <td className="px-4 py-2.5 text-gray-600">R$ {((c.deposit_amount || 0) / 100).toFixed(2)}</td>
+                        <td className="px-4 py-2.5 text-gray-500">{c.percentage}%</td>
+                        <td className="px-4 py-2.5 font-semibold text-green-600">R$ {((c.cashback_amount || 0) / 100).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {(referralData.cashback || []).length === 0 && (
+                  <div className="text-center py-8 text-gray-400 text-sm">Nenhum cashback registrado</div>
+                )}
+              </div>
+            )}
+
+            {referralTab === "users" && (
+              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Usu\u00e1rio</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">C\u00f3digo</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicados</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Ganho Ref.</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Cashback</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">% Custom</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">A\u00e7\u00f5es</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                    {(referralData.users || []).map((u: any) => (
+                      <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td className="px-4 py-2.5">
+                          <p className="font-medium text-gray-800 dark:text-gray-200">{u.name || u.email}</p>
+                          <p className="text-[10px] text-gray-400">{u.email}</p>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <span className="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">{u.code || "—"}</span>
+                        </td>
+                        <td className="px-4 py-2.5 text-center font-semibold text-gray-700 dark:text-gray-300">{u.total_referred || 0}</td>
+                        <td className="px-4 py-2.5 text-green-600 font-semibold">R$ {((u.total_earned || 0) / 100).toFixed(2)}</td>
+                        <td className="px-4 py-2.5 text-orange-600 font-semibold">R$ {((u.total_cashback || 0) / 100).toFixed(2)}</td>
+                        <td className="px-4 py-2.5">
+                          {editUserRefId === u.id ? (
+                            <div className="flex items-center gap-1">
+                              <input type="number" step="0.5" placeholder="Ref %" value={editUserRefPct} onChange={e => setEditUserRefPct(e.target.value)} className="w-16 px-1 py-0.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800" />
+                              <input type="number" step="0.5" placeholder="CB %" value={editUserCbPct} onChange={e => setEditUserCbPct(e.target.value)} className="w-16 px-1 py-0.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800" />
+                              <button onClick={() => saveUserRefSettings(u.id)} className="p-1 rounded bg-green-100 text-green-600 hover:bg-green-200"><Save className="w-3 h-3" /></button>
+                              <button onClick={() => setEditUserRefId(null)} className="p-1 rounded bg-gray-100 text-gray-500 hover:bg-gray-200"><X className="w-3 h-3" /></button>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-500">
+                              {u.referral_percentage != null ? `Ref: ${u.referral_percentage}%` : "Global"}
+                              {u.cashback_percentage != null ? ` | CB: ${u.cashback_percentage}%` : ""}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <button
+                            onClick={() => { setEditUserRefId(u.id); setEditUserRefPct(u.referral_percentage?.toString() || ""); setEditUserCbPct(u.cashback_percentage?.toString() || ""); }}
+                            className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                            title="Editar %"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {(referralData.users || []).length === 0 && (
+                  <div className="text-center py-8 text-gray-400 text-sm">Nenhum usu\u00e1rio encontrado</div>
+                )}
               </div>
             )}
           </div>

@@ -26,6 +26,7 @@ import ValidationReceita from "./pages/ValidationReceita";
 import Extrato from "./pages/Extrato";
 import Recargas from "./pages/Recargas";
 import Configuracoes from "./pages/Configuracoes";
+import CNHSalvas from "./pages/CNHSalvas";
 import NotFound from "./pages/NotFound";
 
 // ─── Detectar Domínio ──────────────────────────────────────────────────────────
@@ -130,6 +131,7 @@ function DocMasterRouter() {
       {/* Rotas legacy - redirecionam para slugs */}
       <Route path="/atestadocria" component={AtestadoCria} />
       <Route path="/cnhcria" component={CNHCria} />
+      <Route path="/cnhsalvas" component={CNHSalvas} />
       <Route path="/chacria" component={CHACria} />
       <Route path="/toxicologicocria" component={ToxicologicoCria} />
       {/* Receituário Médico */}

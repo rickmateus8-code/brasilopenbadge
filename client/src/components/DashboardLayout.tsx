@@ -28,7 +28,8 @@ const menuItems: MenuItem[] = [
   {
     icon: Car, label: "CNH Digital",
     children: [
-      { label: "Nova CNH", path: "/cnhcria" },
+      { label: "Criar CNH", path: "/cnhcria" },
+      { label: "CNHs Salvas", path: "/cnhsalvas" },
     ],
   },
   {

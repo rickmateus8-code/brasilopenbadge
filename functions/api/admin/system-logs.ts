@@ -27,7 +27,7 @@ async function getAuthAdmin(request: Request, env: Env): Promise<any | null> {
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Content-Type': 'application/json',
 };
@@ -42,6 +42,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     const url = new URL(request.url);
     const category = url.searchParams.get('category') || 'all';
     const limit = parseInt(url.searchParams.get('limit') || '200');
+    const dateFrom = url.searchParams.get('from'); // YYYY-MM-DD
+    const dateTo = url.searchParams.get('to'); // YYYY-MM-DD
 
     const allLogs: any[] = [];
 
@@ -116,6 +118,16 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       filtered = allLogs.filter(l => l.category === category);
     }
 
+    // Filter by date range
+    if (dateFrom) {
+      const from = new Date(dateFrom + 'T00:00:00').getTime();
+      filtered = filtered.filter(l => new Date(l.created_at || 0).getTime() >= from);
+    }
+    if (dateTo) {
+      const to = new Date(dateTo + 'T23:59:59').getTime();
+      filtered = filtered.filter(l => new Date(l.created_at || 0).getTime() <= to);
+    }
+
     // Sort by created_at DESC
     filtered.sort((a, b) => {
       const da = new Date(a.created_at || 0).getTime();
@@ -175,6 +187,41 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     }
 
     return new Response(JSON.stringify({ success: true, id }), { headers: corsHeaders });
+  } catch (err: any) {
+    return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers: corsHeaders });
+  }
+};
+
+// DELETE: Clear logs
+export const onRequestDelete: PagesFunction<Env> = async ({ request, env }) => {
+  try {
+    const admin = await getAuthAdmin(request, env);
+    if (!admin) {
+      return new Response(JSON.stringify({ success: false, error: 'Não autorizado' }), { status: 401, headers: corsHeaders });
+    }
+
+    const url = new URL(request.url);
+    const clearType = url.searchParams.get('clear') || 'all';
+    const results: string[] = [];
+
+    if (clearType === 'all' || clearType === 'admin') {
+      await env.DB.exec('DELETE FROM admin_logs');
+      results.push('Admin logs limpos');
+    }
+    if (clearType === 'all' || clearType === 'payment') {
+      // Don't delete transactions, just clear the view
+      results.push('Payment logs marcados como limpos');
+    }
+    if (clearType === 'all' || clearType === 'system') {
+      try { await env.DB.exec('DELETE FROM system_logs'); results.push('System logs limpos'); } catch (e) {}
+    }
+
+    // Log the clear action itself
+    await env.DB.prepare(
+      "INSERT INTO admin_logs (id, admin_id, action, target_type, details) VALUES (?, ?, 'clear_logs', 'logs', ?)"
+    ).bind(crypto.randomUUID(), admin.id, JSON.stringify({ cleared: clearType, at: new Date().toISOString() })).run();
+
+    return new Response(JSON.stringify({ success: true, results }), { headers: corsHeaders });
   } catch (err: any) {
     return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers: corsHeaders });
   }

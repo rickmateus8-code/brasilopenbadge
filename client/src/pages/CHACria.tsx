@@ -1,232 +1,504 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
-import { ArrowLeft, Download, Anchor, AlertCircle } from "lucide-react";
+import { ArrowLeft, Copy, RefreshCw, Wand2, Save } from "lucide-react";
 import { validarCPF } from "@/lib/utils";
-import { QRCodeSVG } from "qrcode.react";
-import { exportElementToPDF } from "@/lib/pdfExport";
 
-const CATEGORIAS_CHA = ["Arrais-Amador", "Mestre-Amador", "Capitão-Amador", "Motonauta"];
-const TIPOS_EMBARCACAO = ["Lancha", "Veleiro", "Jet Ski", "Barco a Motor", "Catamarã", "Iate"];
+/* ── Constantes ── */
+const LOCAIS_EMISSAO = [
+  { code: "CPSP", label: "CPSP (SP)", num: "381" },
+  { code: "CPRJ", label: "CPRJ (RJ)", num: "391" },
+  { code: "CPES", label: "CPES (ES)", num: "401" },
+  { code: "CPPR", label: "CPPR (PR)", num: "382" },
+  { code: "CPSC", label: "CPSC (SC)", num: "441" },
+  { code: "CPRS", label: "CPRS (RS)", num: "461" },
+  { code: "CPBA", label: "CPBA (BA)", num: "481" },
+  { code: "CPSE", label: "CPSE (SE)", num: "491" },
+  { code: "CPAL", label: "CPAL (AL)", num: "541" },
+  { code: "CPPE", label: "CPPE (PE)", num: "531" },
+  { code: "CPPB", label: "CPPB (PB)", num: "551" },
+  { code: "CPRN", label: "CPRN (RN)", num: "521" },
+  { code: "CPCE", label: "CPCE (CE)", num: "561" },
+  { code: "CPPI", label: "CPPI (PI)", num: "571" },
+  { code: "CPMA", label: "CPMA (MA)", num: "511" },
+  { code: "CFB",  label: "CFB (DF)",  num: "861" },
+  { code: "CFAOC",label: "CFAOC (AM)",num: "661" },
+  { code: "CPAOR",label: "CPAOR (PA)",num: "611" },
+  { code: "CPAP", label: "CPAP (AP)", num: "621" },
+  { code: "CFMT", label: "CFMT (MT)", num: "671" },
+];
 
-interface CHAData {
-  nome: string;
+const CATEGORIAS = ["ARRAIS-AMADOR", "MOTONAUTA", "MESTRE-AMADOR", "CAPITÃO-AMADOR", "VELEIRO"];
+const CATEGORIAS2 = ["NENHUMA", ...CATEGORIAS];
+const TRADUCOES: Record<string, string> = {
+  "ARRAIS-AMADOR": "AMATEUR SKIPPER",
+  "MOTONAUTA": "PERSONAL WATERCRAFT PILOT",
+  "MESTRE-AMADOR": "COASTAL SKIPPER",
+  "CAPITÃO-AMADOR": "AMATEUR CAPTAIN",
+  "VELEIRO": "SAILBOAT SKIPPER",
+};
+
+const MODELO_TEXTO = `Nome Completo:
+CPF:
+Senha de Acesso:
+Nascimento:
+Emissão:
+Validade:
+Categoria 1:
+Categoria 2:
+Local de Emissão:`;
+
+/* ── Canvas field maps ── */
+const jsonFrente = {
+  width: 1600, height: 952,
+  fields: [
+    { label: "NOME", x: 140, y: 420, w: 815, h: 54, size: 32 },
+    { label: "INSCRICAO", x: 590, y: 800, w: 386, h: 59, size: 37 },
+    { label: "CPF", x: 590, y: 550, w: 401, h: 61, size: 37 },
+    { label: "VALIDADE", x: 140, y: 800, w: 376, h: 64, size: 37 },
+    { label: "NASCIMENTO", x: 140, y: 550, w: 376, h: 56, size: 37 },
+    { label: "CATEGORIA", x: 140, y: 680, w: 850, h: 71, size: 35 },
+    { label: "FOTO", x: 1043, y: 456, w: 442, h: 433 },
+  ],
+};
+const jsonVerso = {
+  width: 1600, height: 952,
+  fields: [
+    { label: "LIMITES DA NAVEGAÇÃO", x: 140, y: 90, w: 1070, h: 98, size: 37 },
+    { label: "REQUISITOS", x: 140, y: 268, w: 1071, h: 96, size: 37 },
+    { label: "ORGÃO DE EMISSÃO", x: 140, y: 450, w: 671, h: 58, size: 37 },
+    { label: "DATA DE EMISSAO", x: 1020, y: 450, w: 374, h: 60, size: 37 },
+  ],
+};
+
+interface CHAForm {
   cpf: string;
-  rg: string;
-  dataNascimento: string;
-  naturalidade: string;
-  uf: string;
-  categoria: string;
-  registro: string;
+  senha: string;
+  nome: string;
+  localCode: string;
+  inscricao: string;
+  nascimento: string;
+  emissao: string;
   validade: string;
-  dataEmissao: string;
-  tipoEmbarcacao: string;
-  comprimentoMax: string;
-  potenciaMax: string;
-  areaNavegazao: string;
-  observacoes: string;
+  categoria1: string;
+  categoria2: string;
+  limites: string;
+  requisitos: string;
 }
 
-const EMPTY: CHAData = {
-  nome: "", cpf: "", rg: "", dataNascimento: "", naturalidade: "", uf: "SP",
-  categoria: "Arrais-Amador", registro: "", validade: "", dataEmissao: "",
-  tipoEmbarcacao: "Lancha", comprimentoMax: "", potenciaMax: "", areaNavegazao: "", observacoes: "",
+const today = () => {
+  const d = new Date();
+  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+};
+
+const EMPTY: CHAForm = {
+  cpf: "", senha: "", nome: "", localCode: "CPSP",
+  inscricao: "", nascimento: "", emissao: today(),
+  validade: "", categoria1: "ARRAIS-AMADOR", categoria2: "NENHUMA",
+  limites: "NAVEGAÇÃO INTERIOR\nINLAND NAVIGATION",
+  requisitos: "******** / ********",
 };
 
 export default function CHACria() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
-  const [data, setData] = useState<CHAData>(EMPTY);
-  const [codigoQR, setCodigoQR] = useState("");
-  const [saved, setSaved] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const docRef = useRef<HTMLDivElement>(null);
+  const [form, setForm] = useState<CHAForm>({ ...EMPTY });
+  const [loading, setSaving] = useState(false);
+  const [importText, setImportText] = useState("");
+  const [fotoUrl, setFotoUrl] = useState<string | null>(null);
+  const canvasFrenteRef = useRef<HTMLCanvasElement>(null);
+  const canvasVersoRef = useRef<HTMLCanvasElement>(null);
+  const baseFrenteRef = useRef<HTMLImageElement | null>(null);
+  const baseVersoRef = useRef<HTMLImageElement | null>(null);
+  const fotoImgRef = useRef<HTMLImageElement | null>(null);
+  const [basesLoaded, setBasesLoaded] = useState(0);
 
-  const update = (k: keyof CHAData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-    setData(d => ({ ...d, [k]: e.target.value }));
+  const up = (k: keyof CHAForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+    setForm(f => ({ ...f, [k]: e.target.value }));
 
-  const handleSave = async () => {
-    if (!data.nome || !data.cpf) { toast.error("Preencha Nome e CPF"); return; }
-    if (!validarCPF(data.cpf)) { toast.error("CPF inválido! Verifique os dígitos informados."); return; }
-    if ((user?.balance || 0) <= 0) {
-      toast.error("Saldo insuficiente. Recarregue para emitir documentos.");
-      return;
+  /* ── Load base images ── */
+  useEffect(() => {
+    const f = new Image(); f.crossOrigin = "anonymous"; f.src = "/frentecha.png";
+    const v = new Image(); v.crossOrigin = "anonymous"; v.src = "/versocha.png";
+    f.onload = () => { baseFrenteRef.current = f; setBasesLoaded(p => p + 1); };
+    v.onload = () => { baseVersoRef.current = v; setBasesLoaded(p => p + 1); };
+  }, []);
+
+  /* ── Generate inscription number ── */
+  const gerarInscricao = useCallback(() => {
+    const local = LOCAIS_EMISSAO.find(l => l.code === form.localCode);
+    const prefix = local?.num || "381";
+    const letter = "P";
+    const year = new Date().getFullYear();
+    const rand = String(Math.floor(1000000 + Math.random() * 9000000));
+    return `${prefix}${letter}${year}${rand}`;
+  }, [form.localCode]);
+
+  useEffect(() => {
+    if (!form.inscricao) setForm(f => ({ ...f, inscricao: gerarInscricao() }));
+  }, []);
+
+  /* ── Auto validade (+5 years from emissao) ── */
+  const autoValidade = () => {
+    const em = form.emissao;
+    if (!em) { toast.error("Preencha a data de emissão primeiro"); return; }
+    const parts = em.split("/");
+    if (parts.length === 3) {
+      const y = parseInt(parts[2]) + 5;
+      setForm(f => ({ ...f, validade: `${parts[0]}/${parts[1]}/${y}` }));
     }
-    setLoading(true);
+  };
+
+  /* ── Process import text ── */
+  const processImport = () => {
+    if (!importText.trim()) { toast.error("Cole o texto primeiro"); return; }
+    const lines = importText.split("\n").map(l => l.trim()).filter(Boolean);
+    const extract = (key: string) => {
+      const line = lines.find(l => l.toLowerCase().startsWith(key.toLowerCase()));
+      return line ? line.split(":").slice(1).join(":").trim() : "";
+    };
+    setForm(f => ({
+      ...f,
+      nome: extract("Nome Completo") || extract("Nome") || f.nome,
+      cpf: extract("CPF") || f.cpf,
+      senha: extract("Senha") || extract("Senha de Acesso") || f.senha,
+      nascimento: extract("Nascimento") || extract("Data de Nascimento") || f.nascimento,
+      emissao: extract("Emissão") || extract("Emissao") || f.emissao,
+      validade: extract("Validade") || f.validade,
+      categoria1: extract("Categoria 1") || extract("Categoria") || f.categoria1,
+      categoria2: extract("Categoria 2") || f.categoria2,
+      localCode: extract("Local de Emissão") || extract("Local") || f.localCode,
+    }));
+    toast.success("Dados importados!");
+  };
+
+  /* ── Render canvas ── */
+  const renderCanvas = useCallback(() => {
+    if (basesLoaded < 2) return;
+    const baseF = baseFrenteRef.current;
+    const baseV = baseVersoRef.current;
+    if (!baseF || !baseV) return;
+
+    // Build data object
+    const cat1 = form.categoria1;
+    const cat2 = form.categoria2 !== "NENHUMA" ? form.categoria2 : "";
+    const catText = cat2 ? `${cat1}\n${TRADUCOES[cat1] || ""}\n${cat2}\n${TRADUCOES[cat2] || ""}` : `${cat1}\n${TRADUCOES[cat1] || ""}`;
+
+    const dados: Record<string, string> = {
+      "NOME": form.nome.toUpperCase(),
+      "INSCRICAO": form.inscricao,
+      "CPF": form.cpf,
+      "NASCIMENTO": form.nascimento,
+      "VALIDADE": form.validade,
+      "CATEGORIA": catText,
+      "LIMITES DA NAVEGAÇÃO": form.limites,
+      "REQUISITOS": form.requisitos,
+      "ORGÃO DE EMISSÃO": form.localCode,
+      "DATA DE EMISSAO": form.emissao,
+    };
+
+    // Render frente
+    const cf = canvasFrenteRef.current;
+    if (cf) {
+      cf.width = jsonFrente.width;
+      cf.height = jsonFrente.height;
+      const ctx = cf.getContext("2d")!;
+      ctx.drawImage(baseF, 0, 0, jsonFrente.width, jsonFrente.height);
+
+      for (const f of jsonFrente.fields) {
+        if (f.label === "FOTO") {
+          if (fotoImgRef.current && fotoUrl) {
+            ctx.drawImage(fotoImgRef.current, f.x, f.y, f.w, f.h);
+          }
+          continue;
+        }
+        const txt = dados[f.label];
+        if (!txt) continue;
+        ctx.fillStyle = "#333";
+        ctx.textBaseline = "top";
+        if (txt.includes("\n")) {
+          const lines = txt.split("\n");
+          const lineH = (f.size || 30) + 4;
+          lines.forEach((line, i) => {
+            ctx.font = `bold ${f.size || 30}px Arial`;
+            ctx.fillText(line, f.x + 8, f.y + 8 + i * lineH, f.w - 16);
+          });
+        } else {
+          ctx.font = `bold ${f.size || 30}px Arial`;
+          ctx.fillText(txt, f.x + 8, f.y + 8, f.w - 16);
+        }
+      }
+    }
+
+    // Render verso
+    const cv = canvasVersoRef.current;
+    if (cv) {
+      cv.width = jsonVerso.width;
+      cv.height = jsonVerso.height;
+      const ctx = cv.getContext("2d")!;
+      ctx.drawImage(baseV, 0, 0, jsonVerso.width, jsonVerso.height);
+
+      for (const f of jsonVerso.fields) {
+        const txt = dados[f.label];
+        if (!txt) continue;
+        ctx.fillStyle = "#333";
+        ctx.textBaseline = "top";
+        if (txt.includes("\n")) {
+          const lines = txt.split("\n");
+          const lineH = (f.size || 30) + 4;
+          lines.forEach((line, i) => {
+            ctx.font = `bold ${f.size || 30}px Arial`;
+            ctx.fillText(line, f.x + 8, f.y + 8 + i * lineH, f.w - 16);
+          });
+        } else {
+          ctx.font = `bold ${f.size || 30}px Arial`;
+          ctx.fillText(txt, f.x + 8, f.y + 8, f.w - 16);
+        }
+      }
+    }
+  }, [form, basesLoaded, fotoUrl]);
+
+  useEffect(() => { renderCanvas(); }, [renderCanvas]);
+
+  /* ── Photo upload ── */
+  const handleFoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const url = ev.target?.result as string;
+      setFotoUrl(url);
+      const img = new Image();
+      img.onload = () => { fotoImgRef.current = img; renderCanvas(); };
+      img.src = url;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  /* ── Save ── */
+  const handleSave = async () => {
+    if (!form.nome.trim()) { toast.error("Preencha o nome"); return; }
+    if (!form.cpf.trim()) { toast.error("Preencha o CPF"); return; }
+    if (!validarCPF(form.cpf)) { toast.error("CPF inválido"); return; }
+    if (!form.senha.trim()) { toast.error("Crie uma senha de acesso"); return; }
+
+    setSaving(true);
     try {
       const res = await fetch("/api/documents/cha", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          nome: form.nome.toUpperCase(),
+          data: {
+            ...form,
+            nome: form.nome.toUpperCase(),
+            fotoBase64: fotoUrl || "",
+          },
+        }),
       });
-      const result = await res.json();
-      if (result.success) {
-        setCodigoQR(result.data?.codigoValidacao || "CHA-" + Date.now());
-        setSaved(true);
-        toast.success("CHA Náutica gerada com sucesso!");
+      const json = await res.json();
+      if (json.success) {
+        toast.success("CHA salva com sucesso!");
       } else {
-        toast.error(result.error || "Erro ao gerar CHA");
+        toast.error(json.error || "Erro ao salvar");
       }
-    } catch { toast.error("Erro de conexão"); }
-    finally { setLoading(false); }
+    } catch {
+      toast.error("Erro de conexão");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleExport = async () => {
-    if (!docRef.current) return;
-    setLoading(true);
-    try {
-      await exportElementToPDF(docRef.current, `CHA_${data.nome.replace(/\s+/g, "_")}.pdf`);
-      toast.success("PDF exportado!");
-    } catch { toast.error("Erro ao exportar PDF"); }
-    finally { setLoading(false); }
+  /* ── Copy model ── */
+  const copyModel = () => {
+    navigator.clipboard.writeText(MODELO_TEXTO);
+    toast.success("Modelo copiado!");
+  };
+
+  /* ── Clear ── */
+  const limpar = () => {
+    setForm({ ...EMPTY, inscricao: gerarInscricao() });
+    setFotoUrl(null);
+    fotoImgRef.current = null;
+    setImportText("");
+    toast.info("Formulário limpo");
   };
 
   return (
     <DashboardLayout>
-      <div className="p-6 max-w-5xl mx-auto">
-        <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => setLocation("/dashboard")} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800">
-            <ArrowLeft className="w-5 h-5" />
+      <div className="p-4 max-w-[1400px] mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <button onClick={() => setLocation("/dashboard")} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 transition-colors">
+            <ArrowLeft className="w-4 h-4" /> VOLTAR
           </button>
-          <div className="w-10 h-10 rounded-xl bg-cyan-100 dark:bg-cyan-900/20 flex items-center justify-center">
-            <Anchor className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">CHA Náutica</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Carteira de Habilitação Aquaviária</p>
-          </div>
+          <button onClick={limpar} className="px-4 py-2 text-sm font-semibold border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+            LIMPAR
+          </button>
         </div>
 
-        {(user?.balance || 0) <= 0 && (
-          <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl mb-6">
-            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-            <p className="text-sm text-red-700 dark:text-red-400">
-              Saldo insuficiente. <button onClick={() => setLocation("/recargas")} className="font-semibold underline">Recarregue aqui</button>.
-            </p>
-          </div>
-        )}
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Form */}
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6">
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Dados do Aquaviário</h2>
-            <div className="space-y-4">
-              {[
-                { key: "nome", label: "Nome Completo *", placeholder: "NOME COMPLETO" },
-                { key: "cpf", label: "CPF *", placeholder: "000.000.000-00" },
-                { key: "rg", label: "RG", placeholder: "00.000.000-0" },
-                { key: "dataNascimento", label: "Data de Nascimento", placeholder: "DD/MM/AAAA" },
-                { key: "naturalidade", label: "Naturalidade", placeholder: "Cidade" },
-              ].map(({ key, label, placeholder }) => (
-                <div key={key}>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{label}</label>
-                  <input type="text" value={data[key as keyof CHAData]} onChange={update(key as keyof CHAData)} placeholder={placeholder}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm" />
-                </div>
-              ))}
+          {/* ── LEFT: Form ── */}
+          <div className="space-y-4">
+            <h2 className="text-lg font-bold text-gray-800 dark:text-white">Dados do Cliente</h2>
 
+            {/* Import section */}
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">UF</label>
-                  <input type="text" maxLength={2} value={data.uf} onChange={update("uf")}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm uppercase" />
+                  <p className="text-xs font-semibold text-gray-500 mb-1">1. ENVIAR PARA O CLIENTE</p>
+                  <pre className="text-[10px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-2 h-28 overflow-auto whitespace-pre-wrap text-gray-600 dark:text-gray-400">{MODELO_TEXTO}</pre>
+                  <button onClick={copyModel} className="mt-1 w-full flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 rounded-lg transition-colors">
+                    <Copy className="w-3 h-3" /> COPIAR MODELO
+                  </button>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Categoria</label>
-                  <select value={data.categoria} onChange={update("categoria")}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm">
-                    {CATEGORIAS_CHA.map(c => <option key={c}>{c}</option>)}
-                  </select>
+                  <p className="text-xs font-semibold text-gray-500 mb-1">2. COLAR RESPOSTA</p>
+                  <textarea
+                    value={importText}
+                    onChange={e => setImportText(e.target.value)}
+                    placeholder="Cole aqui..."
+                    className="w-full h-28 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 p-2 resize-none focus:outline-none focus:ring-2 focus:ring-green-400"
+                  />
+                  <button onClick={processImport} className="mt-1 w-full flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors">
+                    <Wand2 className="w-3 h-3" /> PROCESSAR
+                  </button>
                 </div>
               </div>
+            </div>
 
-              {[
-                { key: "registro", label: "Nº Registro", placeholder: "000000000" },
-                { key: "dataEmissao", label: "Data de Emissão", placeholder: "DD/MM/AAAA" },
-                { key: "validade", label: "Validade", placeholder: "DD/MM/AAAA" },
-                { key: "comprimentoMax", label: "Comprimento Máx. (m)", placeholder: "Ex: 10" },
-                { key: "potenciaMax", label: "Potência Máx. (HP)", placeholder: "Ex: 200" },
-                { key: "areaNavegazao", label: "Área de Navegação", placeholder: "Ex: Interior, Mar Aberto" },
-              ].map(({ key, label, placeholder }) => (
-                <div key={key}>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{label}</label>
-                  <input type="text" value={data[key as keyof CHAData]} onChange={update(key as keyof CHAData)} placeholder={placeholder}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm" />
+            {/* Access data */}
+            <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+              <p className="text-xs font-bold text-blue-700 dark:text-blue-400 mb-2">DADOS DE ACESSO (PARA O APP)</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500">CPF (LOGIN)</label>
+                  <input type="text" value={form.cpf} onChange={up("cpf")} placeholder="000.000.000-00"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400" />
                 </div>
-              ))}
+                <div>
+                  <label className="text-xs text-gray-500">SENHA DE ACESSO</label>
+                  <input type="text" value={form.senha} onChange={up("senha")} placeholder="Crie uma senha"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                </div>
+              </div>
             </div>
 
-            <div className="flex gap-3 mt-6">
-              <button onClick={handleSave} disabled={loading || saved}
-                className="flex-1 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-xl text-sm transition-all disabled:opacity-60">
-                {loading ? "Gerando..." : saved ? "✅ CHA Emitida" : "✓ CONFIRMAR E EMITIR"}
-              </button>
+            {/* Name */}
+            <div>
+              <label className="text-xs font-semibold text-gray-500">NOME COMPLETO</label>
+              <input type="text" value={form.nome} onChange={up("nome")}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400" />
             </div>
-            {saved && (
-              <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
-                <p className="text-sm font-semibold text-green-700 dark:text-green-400">✅ CHA Náutica emitida com sucesso!</p>
-                <p className="text-xs text-green-600 dark:text-green-500 mt-1">🔒 Dados excluídos automaticamente após 60 dias</p>
+
+            {/* Local + Inscricao */}
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-500">1. LOCAL DE EMISSÃO</label>
+                <select value={form.localCode} onChange={up("localCode") as any}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400">
+                  {LOCAIS_EMISSAO.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
+                </select>
+                <input type="text" value={form.localCode} readOnly className="mt-1 w-full px-3 py-1 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-500" />
               </div>
-            )}
+              <div>
+                <label className="text-xs font-semibold text-gray-500">2. Nº INSCRIÇÃO</label>
+                <input type="text" value={form.inscricao} onChange={up("inscricao")}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400" />
+              </div>
+              <div className="flex items-end">
+                <button onClick={() => setForm(f => ({ ...f, inscricao: gerarInscricao() }))}
+                  className="w-full px-3 py-2 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center justify-center gap-1">
+                  <RefreshCw className="w-3 h-3" /> GERAR
+                </button>
+              </div>
+            </div>
+
+            {/* Dates */}
+            <div className="grid grid-cols-4 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-500">NASCIMENTO</label>
+                <input type="text" value={form.nascimento} onChange={up("nascimento")} placeholder="DD/MM/AAAA"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500">EMISSÃO</label>
+                <input type="text" value={form.emissao} onChange={up("emissao")} placeholder="Hoje"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500">VALIDADE</label>
+                <input type="text" value={form.validade} onChange={up("validade")}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400" />
+              </div>
+              <div className="flex items-end">
+                <button onClick={autoValidade}
+                  className="w-full px-3 py-2 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                  AUTO
+                </button>
+              </div>
+            </div>
+
+            {/* Categories */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-500">CATEGORIA 1</label>
+                <select value={form.categoria1} onChange={up("categoria1") as any}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400">
+                  {CATEGORIAS.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500">CATEGORIA 2</label>
+                <select value={form.categoria2} onChange={up("categoria2") as any}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400">
+                  {CATEGORIAS2.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {/* Limites */}
+            <div>
+              <label className="text-xs font-semibold text-gray-500">LIMITES DA NAVEGAÇÃO</label>
+              <textarea value={form.limites} onChange={up("limites")} rows={2}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 resize-none focus:outline-none focus:ring-2 focus:ring-green-400" />
+            </div>
+
+            {/* Requisitos */}
+            <div>
+              <label className="text-xs font-semibold text-gray-500">REQUISITOS</label>
+              <input type="text" value={form.requisitos} onChange={up("requisitos")}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400" />
+            </div>
+
+            {/* Photo */}
+            <div>
+              <label className="text-xs font-semibold text-gray-500">FOTO 3X4 (UPLOAD)</label>
+              <input type="file" accept="image/*" onChange={handleFoto}
+                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100" />
+            </div>
+
+            {/* Save button */}
+            <button
+              onClick={handleSave}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white rounded-xl transition-colors"
+            >
+              <Save className="w-4 h-4" />
+              {loading ? "SALVANDO..." : "SALVAR CADASTRO NO SISTEMA"}
+            </button>
           </div>
 
-          {/* Preview */}
-          <div>
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Pré-visualização</h2>
-            <div ref={docRef} className="bg-white rounded-xl shadow-lg overflow-hidden" style={{ fontFamily: "Arial, sans-serif" }}>
-              <div className="bg-gradient-to-r from-cyan-800 to-blue-700 p-4 text-white">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <p className="text-[10px] font-bold tracking-widest opacity-80">MARINHA DO BRASIL</p>
-                    <p className="text-[10px] opacity-70">CARTEIRA DE HABILITAÇÃO AQUAVIÁRIA</p>
-                  </div>
-                  <Anchor className="w-8 h-8 opacity-40" />
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="col-span-2 space-y-1">
-                    <p className="text-[10px] opacity-70">NOME</p>
-                    <p className="text-xs font-bold">{data.nome || "NOME DO AQUAVIÁRIO"}</p>
-                    <p className="text-[10px] opacity-70 mt-1">CPF</p>
-                    <p className="text-xs">{data.cpf || "000.000.000-00"}</p>
-                    <p className="text-[10px] opacity-70 mt-1">CATEGORIA</p>
-                    <p className="text-xs font-bold text-yellow-300">{data.categoria}</p>
-                    <p className="text-[10px] opacity-70 mt-1">VALIDADE</p>
-                    <p className="text-xs font-bold text-yellow-300">{data.validade || "DD/MM/AAAA"}</p>
-                  </div>
-                  <div className="flex flex-col items-center justify-center">
-                    {saved && codigoQR ? (
-                      <div className="bg-white p-1 rounded">
-                        <QRCodeSVG value={`https://docmaster.store/v/${codigoQR}`} size={64} />
-                      </div>
-                    ) : (
-                      <div className="w-16 h-20 bg-cyan-700 rounded flex items-center justify-center">
-                        <Anchor className="w-8 h-8 opacity-30" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="mt-3 pt-3 border-t border-cyan-600 grid grid-cols-3 gap-2 text-[9px]">
-                  <div><p className="opacity-70">REGISTRO</p><p>{data.registro || "—"}</p></div>
-                  <div><p className="opacity-70">EMISSÃO</p><p>{data.dataEmissao || "—"}</p></div>
-                  <div><p className="opacity-70">ÁREA</p><p>{data.areaNavegazao || "—"}</p></div>
-                </div>
-              </div>
-              <div className="bg-gray-100 p-4 grid grid-cols-2 gap-3 text-[10px]">
-                <div><p className="text-gray-500">NASC.</p><p className="font-medium">{data.dataNascimento || "—"}</p></div>
-                <div><p className="text-gray-500">NATURALIDADE</p><p className="font-medium">{data.naturalidade || "—"} - {data.uf}</p></div>
-                <div><p className="text-gray-500">COMP. MÁX.</p><p className="font-medium">{data.comprimentoMax ? `${data.comprimentoMax}m` : "—"}</p></div>
-                <div><p className="text-gray-500">POT. MÁX.</p><p className="font-medium">{data.potenciaMax ? `${data.potenciaMax} HP` : "—"}</p></div>
-              </div>
+          {/* ── RIGHT: Canvas Preview ── */}
+          <div className="space-y-4">
+            <p className="text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">PREVIEW</p>
+            <div className="space-y-4">
+              <canvas ref={canvasFrenteRef} className="w-full rounded-xl shadow-lg border border-gray-200 dark:border-gray-700" />
+              <canvas ref={canvasVersoRef} className="w-full rounded-xl shadow-lg border border-gray-200 dark:border-gray-700" />
             </div>
-            {saved && codigoQR && (
-              <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
-                <p className="text-xs font-semibold text-green-700 dark:text-green-400">CHA gerada com sucesso!</p>
-                <p className="text-xs text-green-600 dark:text-green-500 mt-1">Código: <span className="font-mono font-bold">{codigoQR}</span></p>
-              </div>
-            )}
           </div>
         </div>
       </div>
