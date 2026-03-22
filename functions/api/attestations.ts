@@ -350,7 +350,22 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
     return jsonResponse({ success: false, error: "Atestado não encontrado ou sem permissão." }, 404);
   }
 
-  const body = await request.json<any>();
+  let body = await request.json<any>();
+
+  // Support both { data: { ... } } (from DocumentosSalvos) and flat { ... } (from AtestadoEditar)
+  if (body.data && typeof body.data === 'object' && !Array.isArray(body.data)) {
+    const fillCpf = body.fillCpf;
+    const rawData = body.data;
+    body = { ...rawData };
+    if (fillCpf) body.fillCpf = fillCpf;
+
+    // Map DocumentosSalvos field names to backend field names
+    if (rawData.nome_paciente) body.paciente = rawData.nome_paciente;
+    if (rawData.nome_medico) body.medico = rawData.nome_medico;
+    if (rawData.hora_emissao) body.hora_assinatura = rawData.hora_emissao;
+    if (rawData.dias_afastamento) body.afastamento = rawData.dias_afastamento;
+    if (rawData.observacoes) body.texto_atestado = rawData.observacoes;
+  }
 
   // SEGURANÇA: CPF só pode ser preenchido se estava vazio (fillCpf flag)
   // Se o CPF já existia no banco, ele NÃO pode ser alterado

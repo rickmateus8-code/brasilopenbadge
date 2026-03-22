@@ -174,7 +174,60 @@ export function createApiRouter() {
    */
   router.put("/attestations/:id", (req: Request, res: Response) => {
     try {
-      const updated = updateAttestation(req.params.id, req.body);
+      // Support both { data: { ... } } (from DocumentosSalvos) and flat { ... } (from AtestadoEditar)
+      let payload = req.body;
+      if (payload.data && typeof payload.data === 'object' && !Array.isArray(payload.data)) {
+        // Merge: if there's a fillCpf flag at top level, preserve it
+        const fillCpf = payload.fillCpf;
+        payload = { ...payload.data };
+        if (fillCpf) payload.fillCpf = fillCpf;
+      }
+
+      // Map frontend field names to database column names
+      const fieldMap: Record<string, string> = {
+        nome_paciente: 'paciente',
+        nome_medico: 'medico',
+        uf_crm: 'crm', // CRM already includes UF in some cases
+        tipo_doc: 'tipo_doc',
+        data_emissao: 'data_emissao',
+        hora_emissao: 'hora_assinatura',
+        dias_afastamento: 'afastamento',
+        observacoes: 'texto_atestado',
+        // Direct mappings (same name)
+        cpf: 'cpf',
+        paciente: 'paciente',
+        sexo: 'sexo',
+        nascimento: 'nascimento',
+        nome_mae: 'nome_mae',
+        endereco: 'endereco',
+        cid: 'cid',
+        medico: 'medico',
+        crm: 'crm',
+        especialidade: 'especialidade',
+        data_assinatura: 'data_assinatura',
+        hora_assinatura: 'hora_assinatura',
+        texto_atestado: 'texto_atestado',
+        afastamento: 'afastamento',
+        instituicao: 'instituicao',
+        unidade: 'unidade',
+        endereco_emitente: 'endereco_emitente',
+        cidade: 'cidade',
+        modo_carimbo: 'modo_carimbo',
+        logo_url: 'logo_url',
+        logo_right: 'logo_right',
+        signature_color: 'signature_color',
+        signature_image: 'signature_image',
+      };
+
+      // Remap fields
+      const dbPayload: Record<string, any> = {};
+      for (const [key, value] of Object.entries(payload)) {
+        if (key === 'fillCpf') continue; // Skip meta flags
+        const dbKey = fieldMap[key] || key;
+        dbPayload[dbKey] = value;
+      }
+
+      const updated = updateAttestation(req.params.id, dbPayload);
       if (!updated) {
         return res.status(404).json({ success: false, error: "Attestation not found" });
       }

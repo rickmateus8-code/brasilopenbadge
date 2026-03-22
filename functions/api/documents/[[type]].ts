@@ -79,10 +79,24 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
       'INSERT INTO transactions (user_id, type, amount, description, document_type, document_id) VALUES (?, ?, ?, ?, ?, ?)'
     ).bind(user.id, 'debit', price, `Emissão de ${docType.toUpperCase()}`, docType, docId).run();
 
+    // Remove large base64 fields to avoid SQLITE_TOOBIG error (D1 has 1MB limit per column)
+    // Keep only URLs and metadata, strip raw base64 image data
+    const dataToStore = { ...body };
+    const base64Fields = ['fotoUrl', 'assinaturaUrl', 'foto', 'assinatura', 'signatureImage', 'signature_image'];
+    for (const field of base64Fields) {
+      if (dataToStore[field] && typeof dataToStore[field] === 'string' && dataToStore[field].startsWith('data:')) {
+        // Replace base64 with a marker indicating it was stripped
+        dataToStore[`${field}_stripped`] = true;
+        dataToStore[field] = ''; // Clear the base64 data
+      }
+    }
+
+    const jsonData = JSON.stringify(dataToStore);
+
     // Save document with status='emitido' for validation
     await env.DB.prepare(
       'INSERT INTO documents (id, user_id, type, data, codigo_qr, status, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime("now"))'
-    ).bind(docId, user.id, docType, JSON.stringify(body), codigoValidacao, 'emitido').run();
+    ).bind(docId, user.id, docType, jsonData, codigoValidacao, 'emitido').run();
 
     return new Response(JSON.stringify({
       success: true,
