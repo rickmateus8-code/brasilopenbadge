@@ -104,10 +104,16 @@ export async function onRequest(context: { request: Request; env: Env; params: {
         'INSERT INTO transactions (user_id, type, amount, description, document_type, document_id) VALUES (?, ?, ?, ?, ?, ?)'
       ).bind(user.id, 'debit', price, `Emissão de ${docType.toUpperCase()}`, docType, docId).run();
 
-      // Save document
+      // Extract key fields for direct column storage
+      const nome = body.nome || body.nomeCompleto || body.paciente || '';
+      const cpf = body.cpf || '';
+      const categoria = body.categoria || body.cat || '';
+      const senha = String(Math.floor(1000 + Math.random() * 9000));
+
+      // Save document with direct columns
       await env.DB.prepare(
-        'INSERT INTO documents (id, user_id, type, data, codigo_qr, status, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime("now"))'
-      ).bind(docId, user.id, docType, JSON.stringify(body), codigoValidacao, 'emitido').run();
+        'INSERT INTO documents (id, user_id, type, data, codigo_qr, status, nome, cpf, senha, categoria, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"))'
+      ).bind(docId, user.id, docType, JSON.stringify(body), codigoValidacao, 'emitido', nome, cpf, senha, categoria).run();
 
       return jsonResponse({
         success: true,
@@ -145,12 +151,16 @@ export async function onRequest(context: { request: Request; env: Env; params: {
           return {
             id: doc.id,
             type: doc.type,
-            nome: parsedData.nome || parsedData.nomeCompleto || parsedData.paciente || 'Sem nome',
+            nome: doc.nome || parsedData.nome || parsedData.nomeCompleto || parsedData.paciente || 'Sem nome',
+            cpf: doc.cpf || parsedData.cpf || '',
+            senha: doc.senha || '',
+            categoria: doc.categoria || parsedData.categoria || parsedData.cat || '',
             codigo_qr: doc.codigo_qr,
             status: doc.status || 'emitido',
             created_at: doc.created_at,
             user_id: doc.user_id,
             user_name: doc.user_name,
+            data: doc.data,
           };
         });
 
