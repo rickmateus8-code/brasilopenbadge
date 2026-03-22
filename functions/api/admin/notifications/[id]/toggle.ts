@@ -1,4 +1,4 @@
-import type { Env } from '../../../types';
+import type { Env } from '../../../../types';
 
 function getSessionToken(request: Request): string | null {
   const cookie = request.headers.get('Cookie') || '';
@@ -22,12 +22,12 @@ async function getAuthAdmin(request: Request, env: Env): Promise<any | null> {
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'DELETE, POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Content-Type': 'application/json',
 };
 
-export const onRequestDelete: PagesFunction<Env> = async ({ request, env, params }) => {
+export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }) => {
   try {
     const admin = await getAuthAdmin(request, env);
     if (!admin) {
@@ -39,9 +39,26 @@ export const onRequestDelete: PagesFunction<Env> = async ({ request, env, params
       return new Response(JSON.stringify({ success: false, error: 'ID não fornecido' }), { status: 400, headers: corsHeaders });
     }
 
-    await env.DB.prepare('DELETE FROM notifications WHERE id = ?').bind(id).run();
+    // Get current state
+    const notification = await env.DB.prepare(
+      'SELECT is_active FROM notifications WHERE id = ?'
+    ).bind(id).first<any>();
 
-    return new Response(JSON.stringify({ success: true, message: 'Aviso excluído com sucesso' }), { headers: corsHeaders });
+    if (!notification) {
+      return new Response(JSON.stringify({ success: false, error: 'Aviso não encontrado' }), { status: 404, headers: corsHeaders });
+    }
+
+    // Toggle
+    const newState = notification.is_active ? 0 : 1;
+    await env.DB.prepare(
+      'UPDATE notifications SET is_active = ? WHERE id = ?'
+    ).bind(newState, id).run();
+
+    return new Response(JSON.stringify({
+      success: true,
+      message: newState ? 'Aviso ativado' : 'Aviso desativado',
+      is_active: newState,
+    }), { headers: corsHeaders });
   } catch (err: any) {
     return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers: corsHeaders });
   }

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuth, type AuthUser } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useHeartbeat } from "@/hooks/useHeartbeat";
 import {
   LayoutDashboard, FileText, CreditCard, Receipt, LogOut,
   ChevronDown, ChevronRight, Menu, X, Sun, Moon,
@@ -238,6 +239,7 @@ function UserDropdown({ user, logout, collapsed }: { user: AuthUser; logout: () 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, logout, isAdmin } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  useHeartbeat();
   const [, setLocation] = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);

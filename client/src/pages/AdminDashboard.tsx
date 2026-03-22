@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -7,10 +7,12 @@ import {
   Users, Settings, Plus, Minus, Shield,
   RefreshCw, DollarSign, Trash2, ToggleLeft, ToggleRight,
   Bell, AlertTriangle, CheckCircle, Info, FileText,
-  Activity, Database, Search, Eye, X, Save
+  Activity, Database, Search, Eye, X, Save,
+  Download, Edit3, Wifi, WifiOff, Monitor, Globe,
+  CreditCard, AlertCircle, Filter
 } from "lucide-react";
 
-type Tab = "users" | "pricing" | "notices" | "logs" | "emissions" | "database" | "settings";
+type Tab = "users" | "pricing" | "notices" | "logs" | "emissions" | "monitoring" | "database" | "settings";
 
 interface EmissionRow {
   id: string;
@@ -22,6 +24,7 @@ interface EmissionRow {
   status: string;
   codigo_qr?: string;
   created_at: string;
+  table_source?: string;
 }
 
 interface UserRow {
@@ -42,11 +45,15 @@ interface PricingRow {
 }
 
 interface LogRow {
-  id: number;
-  user_id?: number;
+  id: string;
+  user_id?: string;
   username?: string;
   action: string;
+  category?: string;
+  severity?: string;
   details?: string;
+  target_type?: string;
+  target_id?: string;
   created_at: string;
 }
 
@@ -59,8 +66,21 @@ interface NoticeRow {
   created_at?: string;
 }
 
+interface PresenceRow {
+  user_id: string;
+  username: string;
+  email?: string;
+  role?: string;
+  profile_photo?: string;
+  current_page: string;
+  current_action: string;
+  last_seen: string;
+  is_online: number;
+}
+
 const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "users", label: "Usuários", icon: Users },
+  { key: "monitoring", label: "Monitoramento", icon: Monitor },
   { key: "pricing", label: "Preços", icon: DollarSign },
   { key: "notices", label: "Avisos", icon: Bell },
   { key: "logs", label: "Logs", icon: Activity },
@@ -74,6 +94,44 @@ const NOTICE_TYPES = [
   { value: "warning", label: "Aviso", icon: AlertTriangle },
   { value: "error", label: "Urgente", icon: AlertTriangle },
   { value: "success", label: "Sucesso", icon: CheckCircle },
+];
+
+const DOC_TYPE_LABELS: Record<string, string> = {
+  atestado: "Atestado",
+  receita: "Receita",
+  cnh: "CNH",
+  cha: "CHA",
+  toxicologico: "Toxicológico",
+  "historico-sp": "Histórico SP",
+  "historico-uninter": "Histórico UNINTER",
+};
+
+const PAGE_LABELS: Record<string, string> = {
+  "/dashboard": "Dashboard",
+  "/atestado": "Emitindo Atestado",
+  "/atestadocria": "Emitindo Atestado",
+  "/cnh": "Emitindo CNH",
+  "/cnhcria": "Emitindo CNH",
+  "/cha": "Emitindo CHA",
+  "/chacria": "Emitindo CHA",
+  "/toxicologico": "Emitindo Toxicológico",
+  "/toxicologicocria": "Emitindo Toxicológico",
+  "/receita": "Emitindo Receita",
+  "/receitacria": "Emitindo Receita",
+  "/historico-sp": "Emitindo Histórico SP",
+  "/historico-uninter": "Emitindo Histórico UNINTER",
+  "/admin": "Painel Admin",
+  "/configuracoes": "Configurações",
+  "/extrato": "Extrato",
+  "/recargas": "Recargas",
+};
+
+const LOG_CATEGORIES = [
+  { value: "all", label: "Todos", icon: Activity },
+  { value: "admin", label: "Admin", icon: Shield },
+  { value: "payment", label: "Pagamentos", icon: CreditCard },
+  { value: "error", label: "Erros", icon: AlertCircle },
+  { value: "system", label: "Sistema", icon: Monitor },
 ];
 
 export default function AdminDashboard() {
@@ -102,10 +160,19 @@ export default function AdminDashboard() {
   // Logs
   const [logs, setLogs] = useState<LogRow[]>([]);
   const [logFilter, setLogFilter] = useState("");
+  const [logCategory, setLogCategory] = useState("all");
+  const [logCategories, setLogCategories] = useState<Record<string, number>>({});
 
   // Emissions
   const [emissions, setEmissions] = useState<EmissionRow[]>([]);
   const [emissionsFilter, setEmissionsFilter] = useState("");
+  const [emissionsTypeFilter, setEmissionsTypeFilter] = useState("all");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmDeleteSource, setConfirmDeleteSource] = useState<string>("");
+
+  // Monitoring / Presence
+  const [presence, setPresence] = useState<PresenceRow[]>([]);
+  const [onlineCount, setOnlineCount] = useState(0);
 
   // Database
   const [deleteConfirm, setDeleteConfirm] = useState("");
@@ -124,11 +191,21 @@ export default function AdminDashboard() {
 
   const [loading, setLoading] = useState(false);
 
+  // Confirmation modal
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type: "danger" | "warning" | "info";
+  }>({ open: false, title: "", message: "", onConfirm: () => {}, type: "info" });
+
   if (!isAdmin) {
     setLocation("/dashboard");
     return null;
   }
 
+  // ── Data Loaders ──────────────────────────────────────────────────────────
   const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
@@ -165,29 +242,57 @@ export default function AdminDashboard() {
   const loadLogs = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/logs", { credentials: "include" });
+      const res = await fetch(`/api/admin/system-logs?category=${logCategory}&limit=200`, { credentials: "include" });
       const data = await res.json();
-      if (data.success) setLogs(data.logs || []);
-    } catch { toast.error("Erro ao carregar logs"); }
+      if (data.success) {
+        setLogs(data.logs || []);
+        setLogCategories(data.categories || {});
+      }
+    } catch {
+      // Fallback to old logs endpoint
+      try {
+        const res = await fetch("/api/admin/logs", { credentials: "include" });
+        const data = await res.json();
+        if (data.success) setLogs(data.logs || []);
+      } catch { toast.error("Erro ao carregar logs"); }
+    }
     finally { setLoading(false); }
-  }, []);
+  }, [logCategory]);
 
   const loadEmissions = useCallback(async () => {
     setLoading(true);
     try {
-      // Carregar atestados (admin vê todos)
-      const res = await fetch("/api/attestations", { credentials: "include" });
+      const typeParam = emissionsTypeFilter !== "all" ? `&type=${emissionsTypeFilter}` : "";
+      const res = await fetch(`/api/admin/emissions?limit=200${typeParam}`, { credentials: "include" });
       const data = await res.json();
       if (data.success) {
-        const attestations = (data.data || []).map((a: any) => ({
-          ...a,
-          type: "atestado",
-          nome: a.paciente,
-        }));
-        setEmissions(attestations);
+        setEmissions(data.emissions || []);
       }
-    } catch { toast.error("Erro ao carregar emissões"); }
+    } catch {
+      // Fallback to old attestations-only endpoint
+      try {
+        const res = await fetch("/api/attestations", { credentials: "include" });
+        const data = await res.json();
+        if (data.success) {
+          const attestations = (data.data || []).map((a: any) => ({
+            ...a, type: "atestado", nome: a.paciente, table_source: "attestations",
+          }));
+          setEmissions(attestations);
+        }
+      } catch { toast.error("Erro ao carregar emissões"); }
+    }
     finally { setLoading(false); }
+  }, [emissionsTypeFilter]);
+
+  const loadPresence = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/presence", { credentials: "include" });
+      const data = await res.json();
+      if (data.success) {
+        setPresence(data.presence || []);
+        setOnlineCount(data.online_count || 0);
+      }
+    } catch { /* silently fail */ }
   }, []);
 
   useEffect(() => {
@@ -196,7 +301,15 @@ export default function AdminDashboard() {
     if (tab === "notices") loadNotices();
     if (tab === "logs") loadLogs();
     if (tab === "emissions") loadEmissions();
-  }, [tab]);
+    if (tab === "monitoring") loadPresence();
+  }, [tab, logCategory, emissionsTypeFilter]);
+
+  // Load presence count on mount and periodically
+  useEffect(() => {
+    loadPresence();
+    const interval = setInterval(loadPresence, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // ── Users ──────────────────────────────────────────────────────────────────
   const adjustBalance = async (userId: number, delta: number) => {
@@ -233,18 +346,26 @@ export default function AdminDashboard() {
   };
 
   const deleteUser = async (userId: number, username: string) => {
-    if (!confirm(`Tem certeza que deseja excluir o usuário "${username}"? Esta ação não pode ser desfeita.`)) return;
-    try {
-      const res = await fetch(`/api/admin/users/${userId}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success("Usuário excluído!");
-        loadUsers();
-      }
-    } catch { toast.error("Erro de conexão"); }
+    setConfirmModal({
+      open: true,
+      title: "Excluir Usuário",
+      message: `Tem certeza que deseja excluir o usuário "${username}"? Esta ação não pode ser desfeita.`,
+      type: "danger",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/users/${userId}`, {
+            method: "DELETE",
+            credentials: "include",
+          });
+          const data = await res.json();
+          if (data.success) {
+            toast.success("Usuário excluído!");
+            loadUsers();
+          }
+        } catch { toast.error("Erro de conexão"); }
+        setConfirmModal(m => ({ ...m, open: false }));
+      },
+    });
   };
 
   const openUserDetail = async (u: UserRow) => {
@@ -261,7 +382,7 @@ export default function AdminDashboard() {
   const savePrice = async (docType: string) => {
     const priceReais = parseFloat(editingPrice[docType] || "0");
     if (isNaN(priceReais) || priceReais < 0) { toast.error("Preço inválido"); return; }
-    const price = Math.round(priceReais * 100); // Converter reais para centavos
+    const price = Math.round(priceReais * 100);
     try {
       const res = await fetch("/api/admin/pricing", {
         method: "POST",
@@ -339,18 +460,82 @@ export default function AdminDashboard() {
   };
 
   const deleteNotice = async (id: number) => {
-    if (!confirm("Excluir este aviso?")) return;
-    try {
-      const res = await fetch(`/api/admin/notifications/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success("Aviso excluído!");
-        loadNotices();
-      }
-    } catch { toast.error("Erro de conexão"); }
+    setConfirmModal({
+      open: true,
+      title: "Excluir Aviso",
+      message: "Tem certeza que deseja excluir este aviso?",
+      type: "warning",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/notifications/${id}`, {
+            method: "DELETE",
+            credentials: "include",
+          });
+          const data = await res.json();
+          if (data.success) {
+            toast.success("Aviso excluído!");
+            loadNotices();
+          }
+        } catch { toast.error("Erro de conexão"); }
+        setConfirmModal(m => ({ ...m, open: false }));
+      },
+    });
+  };
+
+  // ── Emissions Actions ─────────────────────────────────────────────────────
+  const deleteEmission = async (id: string, source: string, hard = false) => {
+    setConfirmModal({
+      open: true,
+      title: hard ? "Excluir Permanentemente" : "Cancelar Documento",
+      message: hard
+        ? "Esta ação é IRREVERSÍVEL. O documento será excluído permanentemente do banco de dados."
+        : "O documento será marcado como cancelado. Deseja continuar?",
+      type: hard ? "danger" : "warning",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/emissions/${id}?source=${source}&hard=${hard}`, {
+            method: "DELETE",
+            credentials: "include",
+          });
+          const data = await res.json();
+          if (data.success) {
+            toast.success(hard ? "Documento excluído permanentemente!" : "Documento cancelado!");
+            loadEmissions();
+          } else {
+            toast.error(data.error || "Erro ao excluir");
+          }
+        } catch { toast.error("Erro de conexão"); }
+        setConfirmModal(m => ({ ...m, open: false }));
+      },
+    });
+  };
+
+  const editEmission = (e: EmissionRow) => {
+    // Navigate to the edit page based on type
+    const editRoutes: Record<string, string> = {
+      atestado: `/atestado/editar/${e.id}`,
+      receita: `/receita/editar/${e.id}`,
+    };
+    const route = editRoutes[e.type];
+    if (route) {
+      setLocation(route);
+    } else {
+      toast.info("Edição inline para este tipo de documento será implementada em breve.");
+    }
+  };
+
+  const downloadEmission = async (e: EmissionRow) => {
+    toast.info("Preparando download...");
+    // Navigate to the document view which has download capability
+    const viewRoutes: Record<string, string> = {
+      atestado: `/historico/atestados/${e.id}`,
+    };
+    const route = viewRoutes[e.type];
+    if (route) {
+      window.open(route, "_blank");
+    } else {
+      toast.info("Abra o documento no painel do usuário para baixar.");
+    }
   };
 
   // ── Database ───────────────────────────────────────────────────────────────
@@ -379,6 +564,7 @@ export default function AdminDashboard() {
       }
     } catch { toast.error("Erro de conexão"); }
   };
+
   const deleteAllData = async () => {
     if (deleteConfirm !== "EXCLUIR TUDO") {
       toast.error('Digite "EXCLUIR TUDO" para confirmar');
@@ -407,6 +593,17 @@ export default function AdminDashboard() {
     try { return new Date(d).toLocaleString("pt-BR"); } catch { return d; }
   };
 
+  const timeAgo = (d: string) => {
+    if (!d) return "—";
+    const now = Date.now();
+    const then = new Date(d).getTime();
+    const diff = Math.floor((now - then) / 1000);
+    if (diff < 60) return `${diff}s atrás`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}min atrás`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h atrás`;
+    return `${Math.floor(diff / 86400)}d atrás`;
+  };
+
   const filteredUsers = users.filter(u =>
     !userSearch ||
     u.username.toLowerCase().includes(userSearch.toLowerCase()) ||
@@ -416,7 +613,8 @@ export default function AdminDashboard() {
   const filteredLogs = logs.filter(l =>
     !logFilter ||
     (l.username || "").toLowerCase().includes(logFilter.toLowerCase()) ||
-    l.action.toLowerCase().includes(logFilter.toLowerCase())
+    l.action.toLowerCase().includes(logFilter.toLowerCase()) ||
+    (l.details || "").toLowerCase().includes(logFilter.toLowerCase())
   );
 
   const filteredEmissions = emissions.filter(e =>
@@ -452,6 +650,13 @@ export default function AdminDashboard() {
                 R$ {(totalBalance / 100).toFixed(2).replace(".", ",")}
               </p>
             </div>
+            <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-2 text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Usuários Online</p>
+              <p className="text-lg font-bold text-blue-600 dark:text-blue-400 flex items-center justify-center gap-1.5">
+                <Wifi className="w-4 h-4" />
+                {onlineCount}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -471,6 +676,11 @@ export default function AdminDashboard() {
               >
                 <Icon className="w-3.5 h-3.5" />
                 {t.label}
+                {t.key === "monitoring" && onlineCount > 0 && (
+                  <span className="ml-1 w-5 h-5 rounded-full bg-green-500 text-white text-[10px] flex items-center justify-center font-bold">
+                    {onlineCount}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -531,6 +741,13 @@ export default function AdminDashboard() {
                             }`}>
                               {u.is_active ? "Ativo" : "Inativo"}
                             </span>
+                            {/* Online indicator */}
+                            {presence.find(p => String(p.user_id) === String(u.id) && p.is_online) && (
+                              <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-semibold">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                                Online
+                              </span>
+                            )}
                           </div>
                           <p className="text-xs text-gray-500 dark:text-gray-400">{u.email}</p>
                           <p className="text-xs text-gray-400 dark:text-gray-500">Cadastro: {formatDate(u.created_at)}</p>
@@ -605,6 +822,113 @@ export default function AdminDashboard() {
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── MONITORING TAB ── */}
+        {tab === "monitoring" && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                <Monitor className="w-5 h-5" />
+                Monitoramento de Usuários em Tempo Real
+              </h2>
+              <button onClick={loadPresence} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors">
+                <RefreshCw className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+              <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-xl p-4 text-center">
+                <Wifi className="w-6 h-6 mx-auto mb-1 text-green-500" />
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{onlineCount}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Online Agora</p>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center">
+                <WifiOff className="w-6 h-6 mx-auto mb-1 text-gray-400" />
+                <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">{presence.filter(p => !p.is_online).length}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Offline</p>
+              </div>
+              <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl p-4 text-center">
+                <FileText className="w-6 h-6 mx-auto mb-1 text-blue-500" />
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {presence.filter(p => p.is_online && p.current_action?.includes("emitindo")).length}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Emitindo Docs</p>
+              </div>
+              <div className="bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-800 rounded-xl p-4 text-center">
+                <Globe className="w-6 h-6 mx-auto mb-1 text-purple-500" />
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{presence.length}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Total Rastreados</p>
+              </div>
+            </div>
+
+            {/* User List */}
+            {presence.length === 0 ? (
+              <div className="text-center py-12 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800">
+                <Monitor className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                <p className="text-sm text-gray-500 dark:text-gray-400">Nenhum dado de presença disponível ainda.</p>
+                <p className="text-xs text-gray-400 mt-1">Os dados aparecerão quando os usuários acessarem o painel.</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {presence.map(p => (
+                  <div key={p.user_id} className={`bg-white dark:bg-gray-900 rounded-xl border p-4 transition-all ${
+                    p.is_online
+                      ? "border-green-200 dark:border-green-800 shadow-sm shadow-green-100 dark:shadow-green-900/20"
+                      : "border-gray-100 dark:border-gray-800 opacity-60"
+                  }`}>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden border-2 border-gray-200 dark:border-gray-700">
+                            {p.profile_photo ? (
+                              <img src={p.profile_photo} alt={p.username} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-sm font-bold text-gray-500 dark:text-gray-400">
+                                {(p.username || "?").charAt(0).toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                          <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-gray-900 ${
+                            p.is_online ? "bg-green-500 animate-pulse" : "bg-gray-400"
+                          }`} />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{p.username || `User #${p.user_id}`}</p>
+                            {p.role === "admin" && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 font-semibold">
+                                Admin
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">{p.email}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="flex items-center gap-2 justify-end mb-1">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                            p.is_online
+                              ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400"
+                              : "bg-gray-100 dark:bg-gray-800 text-gray-500"
+                          }`}>
+                            {p.is_online ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+                            {p.is_online ? "Online" : "Offline"}
+                          </span>
+                        </div>
+                        <p className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                          {PAGE_LABELS[p.current_page] || p.current_page || "—"}
+                        </p>
+                        <p className="text-[10px] text-gray-400">{p.current_action || "navegando"}</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">{timeAgo(p.last_seen)}</p>
                       </div>
                     </div>
                   </div>
@@ -774,7 +1098,7 @@ export default function AdminDashboard() {
         {/* ── LOGS TAB ── */}
         {tab === "logs" && (
           <div>
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3 mb-4 flex-wrap">
               <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
@@ -784,6 +1108,25 @@ export default function AdminDashboard() {
                   onChange={e => setLogFilter(e.target.value)}
                   className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
                 />
+              </div>
+              <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                {LOG_CATEGORIES.map(c => (
+                  <button
+                    key={c.value}
+                    onClick={() => setLogCategory(c.value)}
+                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-semibold transition-all ${
+                      logCategory === c.value
+                        ? "bg-yellow-500 text-white"
+                        : "text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700"
+                    }`}
+                  >
+                    <c.icon className="w-3 h-3" />
+                    {c.label}
+                    {logCategories[c.value] !== undefined && (
+                      <span className="ml-0.5 opacity-70">({logCategories[c.value]})</span>
+                    )}
+                  </button>
+                ))}
               </div>
               <button onClick={loadLogs} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors">
                 <RefreshCw className="w-4 h-4" />
@@ -805,31 +1148,62 @@ export default function AdminDashboard() {
                     <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
                       <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Data</th>
                       <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Usuário</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Categoria</th>
                       <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ação</th>
                       <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Detalhes</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-                    {filteredLogs.map(l => (
-                      <tr key={l.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                        <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400 whitespace-nowrap">{formatDate(l.created_at)}</td>
-                        <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{l.username || `#${l.user_id}` || "—"}</td>
-                        <td className="px-4 py-2.5">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full font-semibold ${
-                            l.action.includes("delete") || l.action.includes("exclu")
-                              ? "bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400"
-                              : l.action.includes("emit") || l.action.includes("create")
-                              ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400"
-                              : l.action.includes("login")
-                              ? "bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
-                              : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
-                          }`}>
-                            {l.action}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400 hidden md:table-cell max-w-xs truncate">{l.details || "—"}</td>
-                      </tr>
-                    ))}
+                    {filteredLogs.map(l => {
+                      const severity = l.severity || "info";
+                      const category = l.category || "admin";
+                      return (
+                        <tr key={l.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                          <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400 whitespace-nowrap">{formatDate(l.created_at)}</td>
+                          <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{l.username || `#${l.user_id}` || "Sistema"}</td>
+                          <td className="px-4 py-2.5">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full font-semibold ${
+                              category === "payment"
+                                ? "bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400"
+                                : category === "error"
+                                ? "bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400"
+                                : category === "admin"
+                                ? "bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400"
+                                : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                            }`}>
+                              {category}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full font-semibold ${
+                              severity === "error"
+                                ? "bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400"
+                                : l.action.includes("delete") || l.action.includes("exclu")
+                                ? "bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400"
+                                : l.action.includes("emit") || l.action.includes("create") || l.action.includes("credito")
+                                ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400"
+                                : l.action.includes("login")
+                                ? "bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
+                                : l.action.includes("debito")
+                                ? "bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400"
+                                : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                            }`}>
+                              {l.action}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400 hidden md:table-cell max-w-xs truncate">
+                            {(() => {
+                              try {
+                                const parsed = JSON.parse(l.details || "{}");
+                                if (parsed.amount) return `R$ ${(parsed.amount / 100).toFixed(2)} - ${parsed.description || ""}`;
+                                if (parsed.price) return `Preço: R$ ${(parsed.price / 100).toFixed(2)}`;
+                                return l.details || "—";
+                              } catch { return l.details || "—"; }
+                            })()}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -840,7 +1214,7 @@ export default function AdminDashboard() {
         {/* ── EMISSIONS TAB ── */}
         {tab === "emissions" && (
           <div>
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3 mb-4 flex-wrap">
               <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
@@ -851,6 +1225,20 @@ export default function AdminDashboard() {
                   className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
                 />
               </div>
+              <select
+                value={emissionsTypeFilter}
+                onChange={e => setEmissionsTypeFilter(e.target.value)}
+                className="px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              >
+                <option value="all">Todos os Tipos</option>
+                <option value="atestado">Atestado</option>
+                <option value="receita">Receita</option>
+                <option value="cnh">CNH</option>
+                <option value="cha">CHA</option>
+                <option value="toxicologico">Toxicológico</option>
+                <option value="historico-sp">Histórico SP</option>
+                <option value="historico-uninter">Histórico UNINTER</option>
+              </select>
               <button onClick={loadEmissions} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors">
                 <RefreshCw className="w-4 h-4" />
               </button>
@@ -872,21 +1260,22 @@ export default function AdminDashboard() {
                     <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
                       <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Data</th>
                       <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Usuário</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Paciente</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nome</th>
                       <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Tipo</th>
                       <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Código QR</th>
                       <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                     {filteredEmissions.map(e => (
-                      <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                      <tr key={`${e.table_source}-${e.id}`} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                         <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400 whitespace-nowrap">{formatDate(e.created_at)}</td>
                         <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{e.username || e.user_id || "—"}</td>
                         <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">{e.nome || e.paciente || "—"}</td>
                         <td className="px-4 py-2.5 hidden md:table-cell">
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400">
-                            {e.type || "atestado"}
+                            {DOC_TYPE_LABELS[e.type] || e.type}
                           </span>
                         </td>
                         <td className="px-4 py-2.5 text-gray-400 dark:text-gray-500 font-mono hidden md:table-cell">{e.codigo_qr || "—"}</td>
@@ -898,6 +1287,38 @@ export default function AdminDashboard() {
                           }`}>
                             {e.status}
                           </span>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => editEmission(e)}
+                              className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                              title="Editar"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => downloadEmission(e)}
+                              className="p-1.5 rounded-lg text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+                              title="Baixar"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => deleteEmission(e.id, e.table_source || "documents", false)}
+                              className="p-1.5 rounded-lg text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+                              title="Cancelar"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => deleteEmission(e.id, e.table_source || "documents", true)}
+                              className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                              title="Excluir permanentemente"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -911,7 +1332,6 @@ export default function AdminDashboard() {
         {/* ── DATABASE TAB ── */}
         {tab === "database" && (
           <div className="space-y-6">
-            {/* Delete specific user data */}
             <div className="bg-white dark:bg-gray-900 rounded-2xl border border-orange-200 dark:border-orange-800 p-5">
               <div className="flex items-center gap-2 mb-4">
                 <AlertTriangle className="w-5 h-5 text-orange-500" />
@@ -966,7 +1386,6 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Delete ALL data */}
             <div className="bg-white dark:bg-gray-900 rounded-2xl border border-red-200 dark:border-red-800 p-5">
               <div className="flex items-center gap-2 mb-4">
                 <AlertTriangle className="w-5 h-5 text-red-500" />
@@ -974,7 +1393,7 @@ export default function AdminDashboard() {
               </div>
               <div className="p-3 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-200 dark:border-red-800 mb-4">
                 <p className="text-xs text-red-700 dark:text-red-400 font-semibold">
-                  ⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL. Todos os documentos emitidos de todos os usuários serão permanentemente excluídos.
+                  ATENÇÃO: Esta ação é IRREVERSÍVEL. Todos os documentos emitidos de todos os usuários serão permanentemente excluídos.
                 </p>
               </div>
               <div className="space-y-3">
@@ -1005,7 +1424,6 @@ export default function AdminDashboard() {
         {/* ── SETTINGS TAB ── */}
         {tab === "settings" && (
           <div className="space-y-6">
-            {/* Configurações Gerais */}
             <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Configurações Gerais</h3>
               <div className="space-y-4">
@@ -1046,7 +1464,6 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Upload de Logo */}
             <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Logo do Painel</h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
@@ -1077,7 +1494,6 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Exclusão Automática por Tipo de Documento */}
             <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Exclusão Automática de Documentos</h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
@@ -1163,6 +1579,47 @@ export default function AdminDashboard() {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmModal.open && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md shadow-2xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                confirmModal.type === "danger" ? "bg-red-100 dark:bg-red-900/20" :
+                confirmModal.type === "warning" ? "bg-amber-100 dark:bg-amber-900/20" :
+                "bg-blue-100 dark:bg-blue-900/20"
+              }`}>
+                <AlertTriangle className={`w-5 h-5 ${
+                  confirmModal.type === "danger" ? "text-red-500" :
+                  confirmModal.type === "warning" ? "text-amber-500" :
+                  "text-blue-500"
+                }`} />
+              </div>
+              <h3 className="font-bold text-gray-900 dark:text-white">{confirmModal.title}</h3>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">{confirmModal.message}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmModal(m => ({ ...m, open: false }))}
+                className="flex-1 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-semibold rounded-xl text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmModal.onConfirm}
+                className={`flex-1 py-2.5 text-white font-semibold rounded-xl text-sm transition-colors ${
+                  confirmModal.type === "danger" ? "bg-red-500 hover:bg-red-600" :
+                  confirmModal.type === "warning" ? "bg-amber-500 hover:bg-amber-600" :
+                  "bg-blue-500 hover:bg-blue-600"
+                }`}
+              >
+                Confirmar
+              </button>
             </div>
           </div>
         </div>
