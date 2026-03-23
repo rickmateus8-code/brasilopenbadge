@@ -266,6 +266,11 @@ export default function AtestadoCria() {
   const [cepUPA, setCepUPA] = useState("");
   const [cepUPALoading, setCepUPALoading] = useState(false);
   const [cepUPAErro, setCepUPAErro] = useState("");
+  const [upaResultados, setUpaResultados] = useState<Array<{
+    nome: string; tipo: string; endereco: string; rua: string;
+    numero: string; bairro: string; cidade: string; uf: string; cep: string; cnes: number;
+  }>>([]);
+  const [showUpaResultados, setShowUpaResultados] = useState(false);
 
   // ── Atualizar texto do atestado quando dias mudam ──────────────────────────
   useEffect(() => {
@@ -367,7 +372,15 @@ export default function AtestadoCria() {
       // unidade = local_trabalho do médico (UBS, UPA, Hospital, Clínica etc.)
       instituicao: cidadeMedico ? `PREFEITURA DE ${cidadeMedico}` : (p.instituicao || "CONSULTÓRIO MÉDICO"),
       unidade: localTrabalho || p.unidade,
-      enderecoEmitente: [m.endereco, m.bairro, m.cidade, m.uf_local].filter(Boolean).join(", ").toUpperCase(),
+      enderecoEmitente: (() => {
+        const rua = (m.endereco || "").toUpperCase();
+        const bairroM = (m.bairro || "").toUpperCase();
+        const cidadeM = (m.cidade || "").toUpperCase();
+        const ufM = (m.uf_local || "").toUpperCase();
+        const parteRua = rua;
+        const parteFinal = bairroM ? `${bairroM}, ${cidadeM}/${ufM}` : `${cidadeM}/${ufM}`;
+        return parteRua ? `${parteRua} - ${parteFinal}` : parteFinal;
+      })(),
       cidade: cidadeMedico || p.cidade,
     }));
     setShowResultados(false);
@@ -395,35 +408,47 @@ export default function AtestadoCria() {
     finally { setCepLoading(false); }
   };
 
-  // ── Buscar UPA mais próxima pelo CEP ──────────────────────────────────────────────
+  // ── Buscar UPA mais próxima pelo CEP (via API CNES DataSUS) ────────────────────
   const buscarUPAProxima = async () => {
     const cepLimpo = cepUPA.replace(/\D/g, "");
     if (cepLimpo.length !== 8) { setCepUPAErro("CEP inválido. Digite 8 dígitos."); return; }
     setCepUPALoading(true);
     setCepUPAErro("");
+    setUpaResultados([]);
+    setShowUpaResultados(false);
     try {
-      // 1. Buscar cidade/UF pelo CEP
-      const viaCep = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`).then(r => r.json());
-      if (viaCep.erro) { setCepUPAErro("CEP não encontrado."); return; }
-      const uf = viaCep.uf?.toUpperCase();
-      const cidade = viaCep.localidade?.toUpperCase();
-      const bairro = viaCep.bairro?.toUpperCase();
-      // 2. Buscar médicos com local_trabalho contendo UPA na cidade/bairro
-      let params = `?uf=${uf}&cidade=${encodeURIComponent(cidade)}&limit=50`;
-      if (bairro) params += `&bairro=${encodeURIComponent(bairro)}`;
-      const medicos: MedicoDB[] = await apiFetch(params);
-      // 3. Filtrar por UPA (prioridade) ou qualquer local de saúde pública
-      const upas = medicos.filter(m => /UPA|UNIDADE DE PRONTO|PRONTO SOCORRO|UBS|HOSPITAL MUNICIPAL|HOSPITAL GERAL/i.test(m.local_trabalho || ""));
-      const lista = upas.length > 0 ? upas : medicos;
-      if (lista.length === 0) { setCepUPAErro(`Nenhuma UPA/unidade encontrada em ${cidade}/${uf}. Selecione manualmente.`); return; }
-      // 4. Preencher filtros com a cidade encontrada e exibir resultados
-      setFiltroUF(uf);
-      setFiltroCidade(cidade);
-      setResultados(lista);
-      setShowResultados(true);
+      const res = await fetch(`/api/upa-proxima?cep=${cepLimpo}`);
+      const data = await res.json() as any;
+      if (!res.ok || data.error) { setCepUPAErro(data.error || "Erro ao buscar UPAs."); return; }
+      if (!data.upas || data.upas.length === 0) {
+        setCepUPAErro(`Nenhuma UPA/unidade encontrada em ${data.cidade}/${data.uf}. Selecione manualmente.`);
+        return;
+      }
+      setUpaResultados(data.upas);
+      setShowUpaResultados(true);
       setCepUPAErro("");
     } catch { setCepUPAErro("Erro ao buscar. Verifique a conexão."); }
     finally { setCepUPALoading(false); }
+  };
+
+  // ── Selecionar UPA dos resultados CNES ──────────────────────────────────────────────────
+  const selecionarUPA = (upa: typeof upaResultados[0]) => {
+    // Formatar endereço no padrão {rua}, {Nº} - {bairro}, {cidade}/{uf}
+    const endFormatado = [
+      `${upa.rua}, ${upa.numero}`,
+      upa.bairro ? `${upa.bairro}, ${upa.cidade}/${upa.uf}` : `${upa.cidade}/${upa.uf}`,
+    ].join(" - ");
+    setForm(p => ({
+      ...p,
+      unidade: upa.nome,
+      instituicao: `PREFEITURA DE ${upa.cidade}`,
+      enderecoEmitente: endFormatado,
+      cidade: upa.cidade,
+    }));
+    setFiltroUF(upa.uf);
+    setFiltroCidade(upa.cidade);
+    setShowUpaResultados(false);
+    setShowEditar(true);
   };
 
   // ── Upload de logos ─────────────────────────────────────────────────────────────────
@@ -862,7 +887,34 @@ export default function AtestadoCria() {
                 {cepUPAErro && (
                   <p style={{ fontSize: 11, color: "#dc2626", marginTop: 6 }}>{cepUPAErro}</p>
                 )}
-                <span style={{ fontSize: 10, color: "#3b82f6", marginTop: 4, display: "block" }}>Preenche automaticamente UF, cidade e lista médicos da região do CEP informado.</span>
+                <span style={{ fontSize: 10, color: "#3b82f6", marginTop: 4, display: "block" }}>Busca UPAs, Prontos Socorros e Hospitais reais do DataSUS na cidade do CEP informado.</span>
+
+                {/* Lista de UPAs do CNES */}
+                {showUpaResultados && upaResultados.length > 0 && (
+                  <div style={{ marginTop: 8, maxHeight: 220, overflowY: "auto", border: "1px solid #bfdbfe", borderRadius: 8 }}>
+                    {upaResultados.map((upa, i) => (
+                      <div
+                        key={upa.cnes || i}
+                        onClick={() => selecionarUPA(upa)}
+                        style={{
+                          padding: "8px 12px",
+                          borderBottom: "1px solid #dbeafe",
+                          cursor: "pointer",
+                          fontSize: 12,
+                          background: i % 2 === 0 ? "#eff6ff" : "#dbeafe",
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "#bfdbfe")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = i % 2 === 0 ? "#eff6ff" : "#dbeafe")}
+                      >
+                        <strong style={{ color: "#1d4ed8", fontSize: 12 }}>{upa.nome}</strong>
+                        <span style={{ color: "#3b82f6", fontSize: 10, marginLeft: 8, background: "#dbeafe", padding: "1px 6px", borderRadius: 4 }}>{upa.tipo}</span>
+                        <br />
+                        <span style={{ color: "#374151", fontSize: 11 }}>{upa.endereco}</span>
+                        {upa.cep && <span style={{ color: "#6b7280", fontSize: 10, marginLeft: 8 }}>CEP: {upa.cep}</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 6 }}>
