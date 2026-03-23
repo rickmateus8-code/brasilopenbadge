@@ -271,6 +271,9 @@ export default function AtestadoCria() {
     numero: string; bairro: string; cidade: string; uf: string; cep: string; cnes: number;
   }>>([]);
   const [showUpaResultados, setShowUpaResultados] = useState(false);
+  const [upaExpandido, setUpaExpandido] = useState(true);
+  const [searchUF, setSearchUF] = useState("");
+  const [searchCidade, setSearchCidade] = useState("");
 
   // ── Atualizar texto do atestado quando dias mudam ──────────────────────────
   useEffect(() => {
@@ -861,29 +864,33 @@ export default function AtestadoCria() {
 
               {/* UPA mais próxima pelo CEP */}
               <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "10px 12px", marginBottom: 10 }}>
-                <label style={{ ...lbl, color: "#1d4ed8", fontWeight: 700 }}>🏥 Buscar UPA/Unidade mais próxima pelo CEP</label>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 6, alignItems: "center", marginTop: 4 }}>
-                  <input
-                    style={inp}
-                    value={cepUPA}
-                    onChange={(e) => {
-                      const v = e.target.value.replace(/\D/g, "").slice(0, 8);
-                      const fmt = v.length > 5 ? `${v.slice(0,5)}-${v.slice(5)}` : v;
-                      setCepUPA(fmt);
-                    }}
-                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), buscarUPAProxima())}
-                    placeholder="Digite o CEP do paciente..."
-                    inputMode="numeric"
-                  />
-                  <button
-                    type="button"
-                    style={{ ...btnBlue, padding: "6px 12px", fontSize: 11, background: "#1d4ed8", whiteSpace: "nowrap" }}
-                    onClick={buscarUPAProxima}
-                    disabled={cepUPALoading}
-                  >
-                    {cepUPALoading ? "🔄 Buscando..." : "🏥 BUSCAR UPA"}
-                  </button>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} onClick={() => setUpaExpandido(p => !p)}>
+                  <label style={{ ...lbl, color: "#1d4ed8", fontWeight: 700, cursor: "pointer", marginBottom: 0 }}>🏥 Buscar UPA/Unidade mais próxima pelo CEP</label>
+                  <span style={{ fontSize: 14, color: "#1d4ed8", userSelect: "none" }}>{upaExpandido ? "▲" : "▼"}</span>
                 </div>
+                {upaExpandido && (<div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 6, alignItems: "center", marginTop: 4 }}>
+                    <input
+                      style={inp}
+                      value={cepUPA}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/\D/g, "").slice(0, 8);
+                        const fmt = v.length > 5 ? `${v.slice(0,5)}-${v.slice(5)}` : v;
+                        setCepUPA(fmt);
+                      }}
+                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), buscarUPAProxima())}
+                      placeholder="Digite o CEP do paciente..."
+                      inputMode="numeric"
+                    />
+                    <button
+                      type="button"
+                      style={{ ...btnBlue, padding: "6px 12px", fontSize: 11, background: "#1d4ed8", whiteSpace: "nowrap" }}
+                      onClick={buscarUPAProxima}
+                      disabled={cepUPALoading}
+                    >
+                      {cepUPALoading ? "🔄 Buscando..." : "🏥 BUSCAR UPA"}
+                    </button>
+                  </div>
                 {cepUPAErro && (
                   <p style={{ fontSize: 11, color: "#dc2626", marginTop: 6 }}>{cepUPAErro}</p>
                 )}
@@ -915,22 +922,58 @@ export default function AtestadoCria() {
                     ))}
                   </div>
                 )}
+                </div>)}
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 6 }}>
                 <div>
                   <label style={lbl}>UF *</label>
-                  <select style={sel} value={filtroUF} onChange={(e) => setFiltroUF(e.target.value)}>
-                    <option value="">Selecione a UF...</option>
-                    {UFS.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
-                  </select>
+                  <input
+                    list="uf-list"
+                    style={inp}
+                    value={searchUF || filtroUF}
+                    placeholder="Pesquisar UF..."
+                    onChange={(e) => {
+                      const v = e.target.value.toUpperCase();
+                      setSearchUF(v);
+                      if (UFS.includes(v)) { setFiltroUF(v); setSearchUF(""); }
+                      else if (v === "") { setFiltroUF(""); }
+                    }}
+                    onBlur={(e) => {
+                      const v = e.target.value.toUpperCase();
+                      if (UFS.includes(v)) { setFiltroUF(v); setSearchUF(""); }
+                      else if (!UFS.includes(filtroUF)) { setSearchUF(""); }
+                    }}
+                  />
+                  <datalist id="uf-list">
+                    {UFS.filter(uf => !searchUF || uf.startsWith(searchUF)).map(uf => <option key={uf} value={uf} />)}
+                  </datalist>
                 </div>
                 <div>
                   <label style={lbl}>Cidade</label>
-                  <select style={sel} value={filtroCidade} onChange={(e) => setFiltroCidade(e.target.value)}>
-                    <option value="">Cidade...</option>
-                    {cidades.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <input
+                    list="cidade-list"
+                    style={inp}
+                    value={searchCidade || filtroCidade}
+                    placeholder={filtroUF ? `Pesquisar cidade em ${filtroUF}...` : "Selecione UF primeiro..."}
+                    disabled={!filtroUF}
+                    onChange={(e) => {
+                      const v = e.target.value.toUpperCase();
+                      setSearchCidade(v);
+                      if (cidades.includes(v)) { setFiltroCidade(v); setSearchCidade(""); }
+                      else if (v === "") { setFiltroCidade(""); }
+                    }}
+                    onBlur={(e) => {
+                      const v = e.target.value.toUpperCase();
+                      if (cidades.includes(v)) { setFiltroCidade(v); setSearchCidade(""); }
+                      else if (!cidades.includes(filtroCidade)) { setSearchCidade(""); }
+                    }}
+                  />
+                  <datalist id="cidade-list">
+                    {cidades
+                      .filter(c => !searchCidade || c.toUpperCase().includes(searchCidade))
+                      .map(c => <option key={c} value={c} />)}
+                  </datalist>
                 </div>
                 <div>
                   <label style={lbl}>Bairro</label>
