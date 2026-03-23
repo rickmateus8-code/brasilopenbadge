@@ -4,6 +4,7 @@ import AttestationDocument from "@/components/AttestationDocument";
 import type { AttestationData } from "@/data/attestations";
 import { exportElementToPDF, generatePDFFilename } from "@/lib/pdfExport";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { validarCPF } from "@/lib/utils";
 
 function maskCPF(v: string): string {
@@ -97,6 +98,8 @@ function readFileAsBase64(file: File): Promise<string> {
 // ─── Componente ────────────────────────────────────────────────────────────────
 export default function AtestadoEditar() {
   const { user } = useAuth();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [, navigate] = useLocation();
   const params = useParams<{ id: string }>();
   const id = params?.id || "";
@@ -357,25 +360,27 @@ export default function AtestadoEditar() {
 
   // ── Estilos ─────────────────────────────────────────────────────────────────
   const card: React.CSSProperties = {
-    background: "#fff", borderRadius: 10,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+    background: isDark ? "#1e293b" : "#fff", borderRadius: 10,
+    boxShadow: isDark ? "0 2px 8px rgba(0,0,0,0.3)" : "0 2px 8px rgba(0,0,0,0.08)",
     padding: "14px 16px", marginBottom: 12,
+    border: isDark ? "1px solid #334155" : "none",
   };
   const secTitle: React.CSSProperties = {
     fontSize: 11, fontWeight: 700, textTransform: "uppercase",
-    letterSpacing: 1, color: "#005CA9",
-    borderBottom: "2px solid #005CA9", paddingBottom: 5, marginBottom: 10,
+    letterSpacing: 1, color: isDark ? "#60a5fa" : "#005CA9",
+    borderBottom: isDark ? "2px solid #3b82f6" : "2px solid #005CA9", paddingBottom: 5, marginBottom: 10,
   };
   const lbl: React.CSSProperties = {
     display: "block", fontSize: 11, fontWeight: 600,
-    color: "#000", marginBottom: 3,
+    color: isDark ? "#cbd5e1" : "#000", marginBottom: 3,
   };
   const inp: React.CSSProperties = {
-    width: "100%", padding: "6px 10px", border: "1px solid #d1d5db",
+    width: "100%", padding: "6px 10px", border: isDark ? "1px solid #475569" : "1px solid #d1d5db",
     borderRadius: 6, fontSize: 13, outline: "none",
-    boxSizing: "border-box", fontFamily: "inherit", color: "#000",
+    boxSizing: "border-box", fontFamily: "inherit",
+    color: isDark ? "#e2e8f0" : "#000", background: isDark ? "#0f172a" : "#fff",
   };
-  const sel: React.CSSProperties = { ...inp, background: "#fff" };
+  const sel: React.CSSProperties = { ...inp, background: isDark ? "#0f172a" : "#fff" };
   const btnBlue: React.CSSProperties = {
     background: "#005CA9", color: "#fff", border: "none",
     borderRadius: 7, padding: "8px 16px", fontWeight: 700,
@@ -387,7 +392,8 @@ export default function AtestadoEditar() {
     fontSize: 12, cursor: "pointer",
   };
   const btnGray: React.CSSProperties = {
-    background: "#e2e8f0", color: "#000", border: "1px solid #cbd5e1",
+    background: isDark ? "#334155" : "#e2e8f0", color: isDark ? "#e2e8f0" : "#000",
+    border: isDark ? "1px solid #475569" : "1px solid #cbd5e1",
     borderRadius: 7, padding: "8px 16px", fontWeight: 700,
     fontSize: 12, cursor: "pointer",
   };
@@ -419,7 +425,7 @@ export default function AtestadoEditar() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div style={{ minHeight: "100vh", background: "#f1f5f9", fontFamily: "Roboto, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: isDark ? "#0f172a" : "#f1f5f9", fontFamily: "Roboto, sans-serif", color: isDark ? "#e2e8f0" : "#1e293b" }}>
 
       {/* Header */}
       <div style={{ background: "#d97706", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
