@@ -1244,11 +1244,11 @@ export default function AtestadoCria() {
                               const parteLocalizacao = [bairroViaCep, cidadeViaCep, ufViaCep].filter(Boolean).join(", ");
                               const endFormatado = [parteLogradouro, parteLocalizacao].filter(Boolean).join(" - ");
                               setForm(p => ({ ...p, endereco: endFormatado, cidade: cidadeViaCep || p.cidade }));
-                              // Filtrar médico mais próximo: preencher UF e Cidade no painel de busca
+                              // Filtrar médico mais próximo: preencher UF/Cidade/Bairro e disparar busca automática
                               if (ufViaCep) {
                                 setFiltroUF(ufViaCep);
-                                // Aguardar cidades carregarem e depois selecionar a cidade
                                 if (cidadeViaCep) {
+                                  // Aguardar cidades carregarem (useEffect de filtroUF)
                                   setTimeout(() => {
                                     setFiltroCidade(cidadeViaCep);
                                     setSearchCidade(cidadeViaCep);
@@ -1256,9 +1256,43 @@ export default function AtestadoCria() {
                                       setTimeout(() => {
                                         setFiltroBairro(bairroViaCep);
                                         setSearchBairro(bairroViaCep);
+                                        // Disparar busca automática após bairro ser preenchido
+                                        setTimeout(async () => {
+                                          setBuscando(true);
+                                          setErroBusca("");
+                                          try {
+                                            let params = `/api/medicos/buscar?uf=${ufViaCep}&limit=50`;
+                                            params += `&cidade=${encodeURIComponent(cidadeViaCep)}`;
+                                            params += `&bairro=${encodeURIComponent(bairroViaCep)}`;
+                                            const r = await fetch(params);
+                                            const d = await r.json();
+                                            const lista = d.medicos || [];
+                                            setResultados(lista);
+                                            setShowResultados(lista.length > 0);
+                                            if (lista.length === 0) setErroBusca("Nenhum médico encontrado neste bairro. Tente buscar pela cidade.");
+                                          } catch { setErroBusca("Erro ao buscar médicos. Tente manualmente."); }
+                                          finally { setBuscando(false); }
+                                        }, 300);
                                       }, 600);
+                                    } else {
+                                      // Sem bairro: disparar busca pela cidade
+                                      setTimeout(async () => {
+                                        setBuscando(true);
+                                        setErroBusca("");
+                                        try {
+                                          let params = `/api/medicos/buscar?uf=${ufViaCep}&limit=50`;
+                                          params += `&cidade=${encodeURIComponent(cidadeViaCep)}`;
+                                          const r = await fetch(params);
+                                          const d = await r.json();
+                                          const lista = d.medicos || [];
+                                          setResultados(lista);
+                                          setShowResultados(lista.length > 0);
+                                          if (lista.length === 0) setErroBusca("Nenhum médico encontrado nesta cidade.");
+                                        } catch { setErroBusca("Erro ao buscar médicos. Tente manualmente."); }
+                                        finally { setBuscando(false); }
+                                      }, 300);
                                     }
-                                  }, 600);
+                                  }, 700);
                                 }
                               }
                             }

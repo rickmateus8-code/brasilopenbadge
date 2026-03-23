@@ -77,7 +77,16 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
 
     if (esp) { sql += ` AND UPPER(especialidade) LIKE UPPER(?)`; binds.push(`%${esp}%`); }
-    sql += ` ORDER BY nome_medico ASC LIMIT ?`; binds.push(limit);
+    // Priorizar UPA no topo, depois UBS, Hospital, Clínica, outros
+    sql += ` ORDER BY
+      CASE
+        WHEN UPPER(local_trabalho) LIKE '%UPA %' OR UPPER(local_trabalho) LIKE '%UPA-%' OR UPPER(local_trabalho) LIKE '%UNIDADE DE PRONTO ATENDIMENTO%' THEN 1
+        WHEN UPPER(local_trabalho) LIKE '%UBS %' OR UPPER(local_trabalho) LIKE '%UNIDADE BASICA%' OR UPPER(local_trabalho) LIKE '%UNIDADE BÁSICA%' THEN 2
+        WHEN UPPER(local_trabalho) LIKE '%HOSPITAL%' OR UPPER(local_trabalho) LIKE '%PRONTO SOCORRO%' THEN 3
+        WHEN UPPER(local_trabalho) LIKE '%CLINICA%' OR UPPER(local_trabalho) LIKE '%CLÍNICA%' THEN 4
+        ELSE 5
+      END ASC,
+      nome_medico ASC LIMIT ?`; binds.push(limit);
 
     const r = await env.DB.prepare(sql).bind(...binds).all();
     return new Response(JSON.stringify({ medicos: r.results }), { headers: corsHeaders });
