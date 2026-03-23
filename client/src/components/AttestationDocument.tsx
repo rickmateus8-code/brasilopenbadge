@@ -341,7 +341,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               <strong style={{ fontSize: 9, display: "block" }}>https://validaratestado.digital</strong>
               <div style={{ marginTop: 1 }}>
                 <span style={{ fontWeight: 400, fontSize: 8.5 }}>Código: </span>
-                <strong style={{ fontFamily: "'Courier New', monospace", letterSpacing: 1, fontSize: 9 }}>
+                <strong style={{ fontFamily: "'Courier New', monospace", letterSpacing: 1, fontSize: 9, fontWeight: 900 }}>
                   {isEmitted ? data.codigoQR : "Gerado após emissão"}
                 </strong>
               </div>
@@ -349,10 +349,10 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
             {/* Direita: QR Code + Dados do Médico — moldura compacta */}
             <div style={{
-              border: "1.75px solid #000",
-              padding: "6px 10px 6px 8px",
+              border: "1.5px solid #000",
+              padding: "5px 8px 5px 6px",
               display: "flex",
-              gap: 8,
+              gap: 10,
               alignItems: "center",
               background: "white",
               flex: "0 0 auto",
