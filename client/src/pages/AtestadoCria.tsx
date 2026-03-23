@@ -6,6 +6,130 @@ import { exportElementToPDF, generatePDFFilename } from "@/lib/pdfExport";
 import { useAuth } from "@/contexts/AuthContext";
 import { validarCPF } from "@/lib/utils";
 
+// ─── SearchSelect: select com campo de busca integrado no dropdown ────────────
+function SearchSelect({
+  label, value, options, placeholder, disabled, onChange
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  placeholder?: string;
+  disabled?: boolean;
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+        setSearch("");
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const filtered = options.filter(o => !search || o.toUpperCase().includes(search.toUpperCase()));
+
+  const triggerStyle: React.CSSProperties = {
+    width: "100%",
+    padding: "6px 28px 6px 10px",
+    border: "1px solid #d1d5db",
+    borderRadius: 6,
+    fontSize: 13,
+    background: disabled ? "#f3f4f6" : "#fff",
+    color: value ? "#000" : "#9ca3af",
+    cursor: disabled ? "not-allowed" : "pointer",
+    boxSizing: "border-box" as const,
+    fontFamily: "inherit",
+    position: "relative" as const,
+    userSelect: "none" as const,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    minHeight: 32,
+  };
+
+  return (
+    <div style={{ position: "relative" }} ref={ref}>
+      <div
+        style={triggerStyle}
+        onClick={() => { if (!disabled) { setOpen(o => !o); setSearch(""); } }}
+      >
+        <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {value || placeholder || label + "..."}
+        </span>
+        <span style={{ fontSize: 10, color: "#6b7280", marginLeft: 4 }}>{open ? "▲" : "▼"}</span>
+      </div>
+      {open && (
+        <div style={{
+          position: "absolute",
+          top: "100%",
+          left: 0,
+          right: 0,
+          zIndex: 9999,
+          background: "#fff",
+          border: "1px solid #d1d5db",
+          borderRadius: 6,
+          boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
+          overflow: "hidden",
+        }}>
+          <div style={{ padding: "6px 8px", borderBottom: "1px solid #e5e7eb", background: "#f9fafb" }}>
+            <input
+              autoFocus
+              style={{
+                width: "100%",
+                padding: "4px 8px",
+                border: "1px solid #d1d5db",
+                borderRadius: 4,
+                fontSize: 12,
+                outline: "none",
+                boxSizing: "border-box" as const,
+              }}
+              placeholder="🔍 Pesquisar..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+          <div style={{ maxHeight: 220, overflowY: "auto" }}>
+            <div
+              style={{ padding: "6px 12px", fontSize: 13, color: "#9ca3af", cursor: "pointer" }}
+              onMouseDown={() => { onChange(""); setOpen(false); setSearch(""); }}
+            >
+              {placeholder || label + "..."}
+            </div>
+            {filtered.length === 0 && (
+              <div style={{ padding: "6px 12px", fontSize: 12, color: "#9ca3af" }}>Nenhum resultado</div>
+            )}
+            {filtered.map(o => (
+              <div
+                key={o}
+                style={{
+                  padding: "6px 12px",
+                  fontSize: 13,
+                  cursor: "pointer",
+                  background: o === value ? "#dbeafe" : "transparent",
+                  fontWeight: o === value ? 700 : 400,
+                  color: "#000",
+                }}
+                onMouseDown={() => { onChange(o); setOpen(false); setSearch(""); }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = o === value ? "#dbeafe" : "#f3f4f6")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = o === value ? "#dbeafe" : "transparent")}
+              >
+                {o}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── API de Médicos (Cloudflare D1 — banco unificado) ─────────────────────────
 async function apiFetch(path: string) {
   const controller = new AbortController();
@@ -940,44 +1064,35 @@ export default function AtestadoCria() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 6 }}>
                 <div>
                   <label style={lbl}>UF *</label>
-                  <input
-                    style={{ ...inp, marginBottom: 3 }}
-                    value={searchUF}
-                    placeholder="🔍 Filtrar UF..."
-                    onChange={(e) => setSearchUF(e.target.value.toUpperCase())}
+                  <SearchSelect
+                    label="UF"
+                    value={filtroUF}
+                    options={UFS}
+                    placeholder="UF..."
+                    onChange={(v) => { setFiltroUF(v); setFiltroCidade(""); setFiltroBairro(""); }}
                   />
-                  <select style={sel} value={filtroUF} onChange={(e) => { setFiltroUF(e.target.value); setSearchUF(""); setFiltroCidade(""); setSearchCidade(""); setFiltroBairro(""); setSearchBairro(""); }}>
-                    <option value="">UF...</option>
-                    {UFS.filter(uf => !searchUF || uf.startsWith(searchUF)).map(uf => <option key={uf} value={uf}>{uf}</option>)}
-                  </select>
                 </div>
                 <div>
                   <label style={lbl}>Cidade</label>
-                  <input
-                    style={{ ...inp, marginBottom: 3 }}
-                    value={searchCidade}
-                    placeholder={filtroUF ? `🔍 Filtrar cidade...` : "Selecione UF primeiro..."}
+                  <SearchSelect
+                    label="Cidade"
+                    value={filtroCidade}
+                    options={cidades}
+                    placeholder={filtroUF ? "Cidade..." : "Selecione UF primeiro..."}
                     disabled={!filtroUF}
-                    onChange={(e) => setSearchCidade(e.target.value.toUpperCase())}
+                    onChange={(v) => { setFiltroCidade(v); setFiltroBairro(""); }}
                   />
-                  <select style={sel} value={filtroCidade} disabled={!filtroUF} onChange={(e) => { setFiltroCidade(e.target.value); setSearchCidade(""); setFiltroBairro(""); setSearchBairro(""); }}>
-                    <option value="">Cidade...</option>
-                    {cidades.filter(c => !searchCidade || c.toUpperCase().includes(searchCidade)).map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
                 </div>
                 <div>
                   <label style={lbl}>Bairro</label>
-                  <input
-                    style={{ ...inp, marginBottom: 3 }}
-                    value={searchBairro}
-                    placeholder={filtroCidade ? `🔍 Filtrar bairro...` : "Selecione cidade primeiro..."}
+                  <SearchSelect
+                    label="Bairro"
+                    value={filtroBairro}
+                    options={bairros}
+                    placeholder={filtroCidade ? "Bairro..." : "Selecione cidade primeiro..."}
                     disabled={!filtroCidade}
-                    onChange={(e) => setSearchBairro(e.target.value.toUpperCase())}
+                    onChange={(v) => setFiltroBairro(v)}
                   />
-                  <select style={sel} value={filtroBairro} disabled={!filtroCidade} onChange={(e) => { setFiltroBairro(e.target.value); setSearchBairro(""); }}>
-                    <option value="">Bairro...</option>
-                    {bairros.filter(b => !searchBairro || b.toUpperCase().includes(searchBairro)).map((b) => <option key={b} value={b}>{b}</option>)}
-                  </select>
                 </div>
                 <div>
                   <label style={lbl}>Especialidade</label>
