@@ -1,4 +1,4 @@
-// /api/medicos/locais — Lista locais de trabalho de uma UF + cidade
+// /api/medicos/locais — Lista locais de trabalho Dr. Consulta de uma UF + cidade
 interface Env { DB: D1Database; }
 
 const corsHeaders = {
@@ -11,6 +11,7 @@ const corsHeaders = {
 export const onRequest: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
   try {
     const url = new URL(request.url);
     const uf = url.searchParams.get("uf")?.toUpperCase();
@@ -18,8 +19,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     if (!uf || !cidade) return new Response(JSON.stringify({ locais: [] }), { headers: corsHeaders });
 
     const r = await env.DB.prepare(
-      `SELECT DISTINCT local_trabalho FROM medicos_brasil
+      `SELECT DISTINCT local_trabalho FROM medicos_brasil 
        WHERE uf_local = ? AND UPPER(cidade) = UPPER(?)
+       AND (UPPER(local_trabalho) LIKE '%DR. CONSULTA%' OR UPPER(local_trabalho) LIKE '%DR CONSULTA%' OR UPPER(local_trabalho) LIKE '%DRCONSULTA%')
        AND local_trabalho IS NOT NULL AND local_trabalho != ''
        ORDER BY local_trabalho ASC`
     ).bind(uf, cidade).all();
