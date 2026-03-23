@@ -28,6 +28,7 @@ import ValidationReceita from "./pages/ValidationReceita";
 import Extrato from "./pages/Extrato";
 import Recargas from "./pages/Recargas";
 import Configuracoes from "./pages/Configuracoes";
+import Indicacoes from "./pages/Indicacoes";
 import NotFound from "./pages/NotFound";
 
 // Páginas Salvas
@@ -164,6 +165,9 @@ function DocMasterRouter() {
 
       {/* Configurações do usuário */}
       <Route path="/configuracoes" component={Configuracoes} />
+
+      {/* Indicações */}
+      <Route path="/indicacoes" component={Indicacoes} />
 
       {/* Administração */}
       <Route path="/admin" component={AdminDashboard} />

@@ -224,11 +224,15 @@ export default function AdminDashboard() {
   // Settings
   const [settings, setSettings] = useState({
     site_name: "DocMaster",
-    support_whatsapp: "5511965355468",
+    support_whatsapp: "",
     max_documents_per_day: "100",
     auto_delete_days: "60",
     maintenance_mode: false,
   });
+  const [settingsSaving, setSettingsSaving] = useState(false);
+
+  // Show passwords toggle
+  const [showPasswords, setShowPasswords] = useState(false);
 
   const [loading, setLoading] = useState(false);
 
@@ -247,14 +251,25 @@ export default function AdminDashboard() {
   }
 
   // ── Data Loaders ──────────────────────────────────────────────────────────
-  const loadUsers = useCallback(async () => {
+  const loadUsers = useCallback(async (withPasswords = false) => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/users", { credentials: "include" });
+      const url = withPasswords ? "/api/admin/users?show_passwords=1" : "/api/admin/users";
+      const res = await fetch(url, { credentials: "include" });
       const data = await res.json();
       if (data.success) setUsers(data.users || []);
     } catch { toast.error("Erro ao carregar usuários"); }
     finally { setLoading(false); }
+  }, []);
+
+  const loadSettings = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/settings", { credentials: "include" });
+      const data = await res.json();
+      if (data.success && data.settings) {
+        setSettings(s => ({ ...s, ...data.settings }));
+      }
+    } catch { /* silently fail */ }
   }, []);
 
   const loadPricing = useCallback(async () => {
@@ -428,14 +443,15 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
-    if (tab === "users") loadUsers();
+    if (tab === "users") loadUsers(showPasswords);
     if (tab === "pricing") loadPricing();
     if (tab === "notices") loadNotices();
     if (tab === "logs") loadLogs();
     if (tab === "emissions") loadEmissions();
     if (tab === "monitoring") loadPresence();
     if (tab === "referral") loadReferral();
-  }, [tab, logCategory, logDateFrom, logDateTo, emissionsTypeFilter, referralTab]);
+    if (tab === "settings") loadSettings();
+  }, [tab, logCategory, logDateFrom, logDateTo, emissionsTypeFilter, referralTab, showPasswords]);
 
   // Load presence count on mount and periodically
   useEffect(() => {
@@ -478,22 +494,24 @@ export default function AdminDashboard() {
     } catch { toast.error("Erro de conexão"); }
   };
 
-  const deleteUser = async (userId: number, username: string) => {
+  const deleteUser = async (userId: number | string, username: string) => {
     setConfirmModal({
       open: true,
       title: "Excluir Usuário",
-      message: `Tem certeza que deseja excluir o usuário "${username}"? Esta ação não pode ser desfeita.`,
+      message: `Tem certeza que deseja excluir permanentemente o usuário "${username}" e todos os seus dados? Esta ação NÃO pode ser desfeita.`,
       type: "danger",
       onConfirm: async () => {
         try {
-          const res = await fetch(`/api/admin/users/${userId}`, {
+          const res = await fetch(`/api/admin/users?user_id=${userId}`, {
             method: "DELETE",
             credentials: "include",
           });
           const data = await res.json();
           if (data.success) {
-            toast.success("Usuário excluído!");
-            loadUsers();
+            toast.success(`Usuário "${username}" excluído com sucesso!`);
+            loadUsers(showPasswords);
+          } else {
+            toast.error(data.error || "Erro ao excluir usuário");
           }
         } catch { toast.error("Erro de conexão"); }
         setConfirmModal(m => ({ ...m, open: false }));
@@ -900,8 +918,20 @@ export default function AdminDashboard() {
                   className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
                 />
               </div>
-              <button onClick={loadUsers} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+              <button onClick={() => loadUsers(showPasswords)} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="Atualizar">
                 <RefreshCw className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setShowPasswords(p => !p)}
+                className={`flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-xl transition-colors ${
+                  showPasswords
+                    ? "bg-purple-600 hover:bg-purple-700 text-white"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                }`}
+                title={showPasswords ? "Ocultar senhas" : "Ver senhas"}
+              >
+                {showPasswords ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                <span className="hidden sm:inline">{showPasswords ? "Ocultar Senhas" : "Ver Senhas"}</span>
               </button>
               <button onClick={() => setShowCreateUser(!showCreateUser)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-xl bg-yellow-600 hover:bg-yellow-700 text-white transition-colors">
                 <UserPlus className="w-4 h-4" /> Criar Usuário
@@ -994,6 +1024,11 @@ export default function AdminDashboard() {
                             )}
                           </div>
                           <p className="text-xs text-gray-500 dark:text-gray-400">{u.email}</p>
+                          {showPasswords && (u as any).plain_password && (
+                            <p className="text-xs font-mono bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded flex items-center gap-1">
+                              <Lock className="w-3 h-3" /> {(u as any).plain_password}
+                            </p>
+                          )}
                           <p className="text-xs text-gray-400 dark:text-gray-500">Cadastro: {formatDate(u.created_at)}</p>
                         </div>
                       </div>
@@ -1051,6 +1086,7 @@ export default function AdminDashboard() {
                             onClick={() => {
                               setDeleteTargetUserId(u.id);
                               setDeleteTargetUsername(u.username);
+                              setDeleteUserConfirm("");
                               setTab("database");
                             }}
                             className="p-1.5 rounded-lg text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
@@ -1899,60 +1935,6 @@ export default function AdminDashboard() {
         {/* ── DATABASE TAB ── */}
         {tab === "database" && (
           <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-orange-200 dark:border-orange-800 p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <AlertTriangle className="w-5 h-5 text-orange-500" />
-                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Excluir Dados de Usuário Específico</h3>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                Exclui todos os documentos emitidos por um usuário específico. O usuário em si não será excluído.
-              </p>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Selecionar Usuário</label>
-                  <select
-                    value={deleteTargetUserId || ""}
-                    onChange={e => {
-                      const uid = parseInt(e.target.value);
-                      setDeleteTargetUserId(uid || null);
-                      const u = users.find(u => u.id === uid);
-                      setDeleteTargetUsername(u?.username || "");
-                      setDeleteUserConfirm("");
-                    }}
-                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-400"
-                  >
-                    <option value="">Selecione um usuário...</option>
-                    {users.map(u => (
-                      <option key={u.id} value={u.id}>{u.username} ({u.email})</option>
-                    ))}
-                  </select>
-                </div>
-                {deleteTargetUserId && (
-                  <>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                        Confirme digitando o nome do usuário: <strong className="text-orange-600">{deleteTargetUsername}</strong>
-                      </label>
-                      <input
-                        type="text"
-                        value={deleteUserConfirm}
-                        onChange={e => setDeleteUserConfirm(e.target.value)}
-                        placeholder={`Digite "${deleteTargetUsername}" para confirmar`}
-                        className="w-full px-3 py-2 text-sm rounded-xl border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-400"
-                      />
-                    </div>
-                    <button
-                      onClick={deleteUserData}
-                      disabled={deleteUserConfirm !== deleteTargetUsername}
-                      className="w-full py-2.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors"
-                    >
-                      Excluir Dados do Usuário
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-
             <div className="bg-white dark:bg-gray-900 rounded-2xl border border-red-200 dark:border-red-800 p-5">
               <div className="flex items-center gap-2 mb-4">
                 <AlertTriangle className="w-5 h-5 text-red-500" />
@@ -2023,10 +2005,28 @@ export default function AdminDashboard() {
                   </button>
                 </div>
                 <button
-                  onClick={() => toast.success("Configurações salvas!")}
-                  className="w-full py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-xl text-sm transition-colors"
+                  disabled={settingsSaving}
+                  onClick={async () => {
+                    setSettingsSaving(true);
+                    try {
+                      const res = await fetch("/api/admin/settings", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify(settings),
+                      });
+                      const data = await res.json();
+                      if (data.success) {
+                        toast.success("Configurações salvas com sucesso!");
+                      } else {
+                        toast.error(data.error || "Erro ao salvar configurações");
+                      }
+                    } catch { toast.error("Erro de conexão"); }
+                    finally { setSettingsSaving(false); }
+                  }}
+                  className="w-full py-2.5 bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
                 >
-                  Salvar Configurações
+                  {settingsSaving ? <><RefreshCw className="w-4 h-4 animate-spin" /> Salvando...</> : <><Save className="w-4 h-4" /> Salvar Configurações</>}
                 </button>
               </div>
             </div>

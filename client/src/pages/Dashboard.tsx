@@ -8,7 +8,7 @@ import {
   FileText, Car, Anchor, FlaskConical, GraduationCap,
   Wallet, TrendingUp, BarChart3, ChevronRight, Plus,
   Clock, CheckCircle, Bell, Eye, Download, Trash2, Pill, Pencil, QrCode,
-  Copy, X, Send, RefreshCw, Search, Save, Smartphone, AlertTriangle
+  Copy, X, Send, RefreshCw, Search, Save, Smartphone, AlertTriangle, Gift, Users
 } from "lucide-react";
 
 const quickActions = [
@@ -681,6 +681,29 @@ export default function Dashboard() {
               )}
             </div>
           )}
+        </div>
+
+        {/* Indicações Banner */}
+        <div
+          className="mb-7 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-2xl p-5 flex items-center justify-between gap-4 cursor-pointer hover:from-yellow-600 hover:to-yellow-700 transition-all shadow-sm"
+          onClick={() => setLocation("/indicacoes")}
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+              <Gift className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <p className="text-white font-bold text-base">Programa de Indicações</p>
+              <p className="text-yellow-100 text-xs mt-0.5">Indique amigos e ganhe comissão em cada emissão deles</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="hidden sm:flex items-center gap-1 bg-white/20 rounded-lg px-3 py-1.5">
+              <Users className="w-4 h-4 text-white" />
+              <span className="text-white text-xs font-semibold">Ver Painel</span>
+            </div>
+            <ChevronRight className="w-5 h-5 text-white" />
+          </div>
         </div>
 
         {/* Quick Access */}

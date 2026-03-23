@@ -7,7 +7,7 @@ import {
   LayoutDashboard, FileText, CreditCard, Receipt, LogOut,
   ChevronDown, ChevronRight, Menu, X, Sun, Moon,
   Shield, GraduationCap, Car, Anchor, FlaskConical,
-  User, Wallet, Settings, HelpCircle, Plus, Bell, Pill
+  User, Wallet, Settings, HelpCircle, Plus, Bell, Pill, Gift
 } from "lucide-react";
 
 interface MenuItem {
@@ -19,6 +19,7 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+  { icon: Gift, label: "Indicações", path: "/indicacoes" },
   {
     icon: FileText, label: "Atestado",
     children: [

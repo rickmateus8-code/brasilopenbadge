@@ -21,7 +21,7 @@ async function getAdminUser(request: Request, env: Env): Promise<any | null> {
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Content-Type': 'application/json',
 };
@@ -38,15 +38,22 @@ async function hashPassword(password: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-// GET: List all users
+// GET: List all users (with optional password_hash for admin view)
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   const admin = await getAdminUser(request, env);
   if (!admin) {
     return new Response(JSON.stringify({ success: false, error: 'Acesso negado' }), { status: 403, headers: corsHeaders });
   }
 
+  const url = new URL(request.url);
+  const showPasswords = url.searchParams.get('show_passwords') === '1';
+
+  const fields = showPasswords
+    ? 'id, username, email, display_name, role, balance, is_active, created_at, password_hash'
+    : 'id, username, email, display_name, role, balance, is_active, created_at';
+
   const result = await env.DB.prepare(
-    'SELECT id, username, email, display_name, role, balance, is_active, created_at FROM users ORDER BY created_at DESC'
+    `SELECT ${fields} FROM users ORDER BY created_at DESC`
   ).all<any>();
 
   return new Response(JSON.stringify({ success: true, users: result.results || [] }), { status: 200, headers: corsHeaders });
@@ -100,7 +107,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   }
 };
 
-// PUT: Update user password
+// PUT: Update user (password, role, balance, display_name, email, is_active)
 export const onRequestPut: PagesFunction<Env> = async ({ request, env }) => {
   const admin = await getAdminUser(request, env);
   if (!admin) {
@@ -109,14 +116,10 @@ export const onRequestPut: PagesFunction<Env> = async ({ request, env }) => {
 
   try {
     const body = await request.json() as any;
-    const { user_id, new_password } = body;
+    const { user_id, new_password, display_name, email, role, balance, is_active } = body;
 
-    if (!user_id || !new_password) {
-      return new Response(JSON.stringify({ success: false, error: 'user_id e new_password são obrigatórios' }), { status: 400, headers: corsHeaders });
-    }
-
-    if (new_password.length < 4) {
-      return new Response(JSON.stringify({ success: false, error: 'Senha deve ter no mínimo 4 caracteres' }), { status: 400, headers: corsHeaders });
+    if (!user_id) {
+      return new Response(JSON.stringify({ success: false, error: 'user_id é obrigatório' }), { status: 400, headers: corsHeaders });
     }
 
     const user = await env.DB.prepare('SELECT id, username FROM users WHERE id = ?').bind(user_id).first<any>();
@@ -124,18 +127,83 @@ export const onRequestPut: PagesFunction<Env> = async ({ request, env }) => {
       return new Response(JSON.stringify({ success: false, error: 'Usuário não encontrado' }), { status: 404, headers: corsHeaders });
     }
 
-    const hashedPassword = await hashPassword(new_password);
-    await env.DB.prepare('UPDATE users SET password_hash = ? WHERE id = ?').bind(hashedPassword, user_id).run();
+    // Update password if provided
+    if (new_password) {
+      if (new_password.length < 4) {
+        return new Response(JSON.stringify({ success: false, error: 'Senha deve ter no mínimo 4 caracteres' }), { status: 400, headers: corsHeaders });
+      }
+      const hashedPassword = await hashPassword(new_password);
+      await env.DB.prepare('UPDATE users SET password_hash = ? WHERE id = ?').bind(hashedPassword, user_id).run();
+    }
+
+    // Update other fields if provided
+    if (display_name !== undefined) await env.DB.prepare('UPDATE users SET display_name = ? WHERE id = ?').bind(display_name, user_id).run();
+    if (email !== undefined) await env.DB.prepare('UPDATE users SET email = ? WHERE id = ?').bind(email, user_id).run();
+    if (role !== undefined) await env.DB.prepare('UPDATE users SET role = ? WHERE id = ?').bind(role, user_id).run();
+    if (balance !== undefined) await env.DB.prepare('UPDATE users SET balance = ? WHERE id = ?').bind(balance, user_id).run();
+    if (is_active !== undefined) await env.DB.prepare('UPDATE users SET is_active = ? WHERE id = ?').bind(is_active ? 1 : 0, user_id).run();
 
     // Log action
     await env.DB.prepare(
       `INSERT INTO admin_logs (id, admin_id, action, target_type, target_id, details, created_at)
-       VALUES (?, ?, 'change_password', 'user', ?, ?, datetime('now'))`
+       VALUES (?, ?, 'update_user', 'user', ?, ?, datetime('now'))`
     ).bind(generateId(), admin.id, user_id, JSON.stringify({ username: user.username })).run();
 
-    return new Response(JSON.stringify({ success: true, message: 'Senha alterada com sucesso' }), { status: 200, headers: corsHeaders });
+    return new Response(JSON.stringify({ success: true, message: 'Usuário atualizado com sucesso' }), { status: 200, headers: corsHeaders });
   } catch (err: any) {
     console.error('[admin/users PUT]', err);
+    return new Response(JSON.stringify({ success: false, error: err.message || 'Erro interno' }), { status: 500, headers: corsHeaders });
+  }
+};
+
+// DELETE: Delete user completely
+export const onRequestDelete: PagesFunction<Env> = async ({ request, env }) => {
+  const admin = await getAdminUser(request, env);
+  if (!admin) {
+    return new Response(JSON.stringify({ success: false, error: 'Acesso negado' }), { status: 403, headers: corsHeaders });
+  }
+
+  try {
+    const url = new URL(request.url);
+    const userId = url.searchParams.get('user_id');
+    if (!userId) {
+      return new Response(JSON.stringify({ success: false, error: 'user_id é obrigatório' }), { status: 400, headers: corsHeaders });
+    }
+
+    const user = await env.DB.prepare('SELECT id, username FROM users WHERE id = ?').bind(userId).first<any>();
+    if (!user) {
+      return new Response(JSON.stringify({ success: false, error: 'Usuário não encontrado' }), { status: 404, headers: corsHeaders });
+    }
+
+    // Cannot delete admin itself
+    if (String(user.id) === String(admin.id)) {
+      return new Response(JSON.stringify({ success: false, error: 'Não é possível excluir o próprio usuário admin' }), { status: 400, headers: corsHeaders });
+    }
+
+    // Delete all user data in order
+    const tables = [
+      'sessions', 'atestados', 'receitas', 'cnhs', 'chas', 'toxicologicos',
+      'historicos_sp', 'historicos_uninter', 'documents', 'cashback_earnings',
+      'referral_codes', 'notifications', 'presence'
+    ];
+    for (const table of tables) {
+      try {
+        await env.DB.prepare(`DELETE FROM ${table} WHERE user_id = ?`).bind(userId).run();
+      } catch (_) { /* table may not exist */ }
+    }
+
+    // Delete the user itself
+    await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(userId).run();
+
+    // Log action
+    await env.DB.prepare(
+      `INSERT INTO admin_logs (id, admin_id, action, target_type, target_id, details, created_at)
+       VALUES (?, ?, 'delete_user', 'user', ?, ?, datetime('now'))`
+    ).bind(generateId(), admin.id, userId, JSON.stringify({ username: user.username })).run();
+
+    return new Response(JSON.stringify({ success: true, message: `Usuário "${user.username}" excluído com sucesso` }), { status: 200, headers: corsHeaders });
+  } catch (err: any) {
+    console.error('[admin/users DELETE]', err);
     return new Response(JSON.stringify({ success: false, error: err.message || 'Erro interno' }), { status: 500, headers: corsHeaders });
   }
 };
@@ -144,7 +212,7 @@ export const onRequestOptions: PagesFunction = async () => {
   return new Response(null, {
     headers: {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     }
   });
