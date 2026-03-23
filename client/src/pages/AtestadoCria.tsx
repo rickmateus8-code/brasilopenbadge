@@ -257,6 +257,16 @@ export default function AtestadoCria() {
   const [importTexto, setImportTexto] = useState("");
   const [showImport, setShowImport] = useState(false);
 
+  // ── CEP do paciente ─────────────────────────────────────────────────────────
+  const [cepPaciente, setCepPaciente] = useState("");
+  const [cepNumero, setCepNumero] = useState("");
+  const [cepLoading, setCepLoading] = useState(false);
+
+  // ── CEP para UPA próxima ─────────────────────────────────────────────────────
+  const [cepUPA, setCepUPA] = useState("");
+  const [cepUPALoading, setCepUPALoading] = useState(false);
+  const [cepUPAErro, setCepUPAErro] = useState("");
+
   // ── Atualizar texto do atestado quando dias mudam ──────────────────────────
   useEffect(() => {
     const dias = parseInt(form.afastamento);
@@ -365,7 +375,59 @@ export default function AtestadoCria() {
     setShowEditar(true);
   };
 
-  // ── Upload de logos ─────────────────────────────────────────────────────────
+  // ── Buscar CEP do paciente ─────────────────────────────────────────────────────────
+  const buscarCEP = async (cep: string) => {
+    const cepLimpo = cep.replace(/\D/g, "");
+    if (cepLimpo.length !== 8) return;
+    setCepLoading(true);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+      const data = await res.json();
+      if (data.erro) return;
+      const numero = cepNumero.trim();
+      const endFormatado = [
+        data.logradouro,
+        numero ? `Nº ${numero}` : "",
+        data.bairro,
+        `${data.localidade}/${data.uf}`,
+      ].filter(Boolean).join(", ").toUpperCase();
+      setForm(p => ({ ...p, endereco: endFormatado }));
+    } catch { /* ignora erro silencioso */ }
+    finally { setCepLoading(false); }
+  };
+
+  // ── Buscar UPA mais próxima pelo CEP ──────────────────────────────────────────────
+  const buscarUPAProxima = async () => {
+    const cepLimpo = cepUPA.replace(/\D/g, "");
+    if (cepLimpo.length !== 8) { setCepUPAErro("CEP inválido. Digite 8 dígitos."); return; }
+    setCepUPALoading(true);
+    setCepUPAErro("");
+    try {
+      // 1. Buscar cidade/UF pelo CEP
+      const viaCep = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`).then(r => r.json());
+      if (viaCep.erro) { setCepUPAErro("CEP não encontrado."); return; }
+      const uf = viaCep.uf?.toUpperCase();
+      const cidade = viaCep.localidade?.toUpperCase();
+      const bairro = viaCep.bairro?.toUpperCase();
+      // 2. Buscar médicos com local_trabalho contendo UPA na cidade/bairro
+      let params = `?uf=${uf}&cidade=${encodeURIComponent(cidade)}&limit=50`;
+      if (bairro) params += `&bairro=${encodeURIComponent(bairro)}`;
+      const medicos: MedicoDB[] = await apiFetch(params);
+      // 3. Filtrar por UPA (prioridade) ou qualquer local de saúde pública
+      const upas = medicos.filter(m => /UPA|UNIDADE DE PRONTO|PRONTO SOCORRO|UBS|HOSPITAL MUNICIPAL|HOSPITAL GERAL/i.test(m.local_trabalho || ""));
+      const lista = upas.length > 0 ? upas : medicos;
+      if (lista.length === 0) { setCepUPAErro(`Nenhuma UPA/unidade encontrada em ${cidade}/${uf}. Selecione manualmente.`); return; }
+      // 4. Preencher filtros com a cidade encontrada e exibir resultados
+      setFiltroUF(uf);
+      setFiltroCidade(cidade);
+      setResultados(lista);
+      setShowResultados(true);
+      setCepUPAErro("");
+    } catch { setCepUPAErro("Erro ao buscar. Verifique a conexão."); }
+    finally { setCepUPALoading(false); }
+  };
+
+  // ── Upload de logos ─────────────────────────────────────────────────────────────────
   const handleLogoUpload = async (side: "left" | "right", e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -772,6 +834,38 @@ export default function AtestadoCria() {
             {/* ── 1. Buscar Médico ── */}
             <div style={card}>
               <p style={secTitle}>🔍 1. Buscar Médico</p>
+
+              {/* UPA mais próxima pelo CEP */}
+              <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "10px 12px", marginBottom: 10 }}>
+                <label style={{ ...lbl, color: "#1d4ed8", fontWeight: 700 }}>🏥 Buscar UPA/Unidade mais próxima pelo CEP</label>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 6, alignItems: "center", marginTop: 4 }}>
+                  <input
+                    style={inp}
+                    value={cepUPA}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, "").slice(0, 8);
+                      const fmt = v.length > 5 ? `${v.slice(0,5)}-${v.slice(5)}` : v;
+                      setCepUPA(fmt);
+                    }}
+                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), buscarUPAProxima())}
+                    placeholder="Digite o CEP do paciente..."
+                    inputMode="numeric"
+                  />
+                  <button
+                    type="button"
+                    style={{ ...btnBlue, padding: "6px 12px", fontSize: 11, background: "#1d4ed8", whiteSpace: "nowrap" }}
+                    onClick={buscarUPAProxima}
+                    disabled={cepUPALoading}
+                  >
+                    {cepUPALoading ? "🔄 Buscando..." : "🏥 BUSCAR UPA"}
+                  </button>
+                </div>
+                {cepUPAErro && (
+                  <p style={{ fontSize: 11, color: "#dc2626", marginTop: 6 }}>{cepUPAErro}</p>
+                )}
+                <span style={{ fontSize: 10, color: "#3b82f6", marginTop: 4, display: "block" }}>Preenche automaticamente UF, cidade e lista médicos da região do CEP informado.</span>
+              </div>
+
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 6 }}>
                 <div>
                   <label style={lbl}>UF *</label>
@@ -985,9 +1079,42 @@ export default function AtestadoCria() {
                   <label style={lbl}>Nome da Mãe *</label>
                   <input style={inp} value={form.nomeMae} onChange={(e) => setForm(p => ({ ...p, nomeMae: e.target.value }))} placeholder="Nome da Mãe" required />
                 </div>
+                {/* CEP + Nº do paciente */}
+                <div>
+                  <label style={lbl}>CEP do Paciente</label>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: 6, alignItems: "center" }}>
+                    <input
+                      style={inp}
+                      value={cepPaciente}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/\D/g, "").slice(0, 8);
+                        const fmt = v.length > 5 ? `${v.slice(0,5)}-${v.slice(5)}` : v;
+                        setCepPaciente(fmt);
+                        if (v.length === 8) buscarCEP(v);
+                      }}
+                      placeholder="00000-000"
+                      inputMode="numeric"
+                    />
+                    <input
+                      style={{ ...inp, width: 80 }}
+                      value={cepNumero}
+                      onChange={(e) => setCepNumero(e.target.value)}
+                      placeholder="Nº"
+                    />
+                    <button
+                      type="button"
+                      style={{ ...btnBlue, padding: "6px 10px", fontSize: 11, whiteSpace: "nowrap" }}
+                      onClick={() => buscarCEP(cepPaciente)}
+                      disabled={cepLoading}
+                    >
+                      {cepLoading ? "🔄" : "🔍 CEP"}
+                    </button>
+                  </div>
+                </div>
                 <div>
                   <label style={lbl}>Endereço do Paciente *</label>
                   <input style={inp} value={form.endereco} onChange={(e) => setForm(p => ({ ...p, endereco: e.target.value }))} placeholder="Rua, Número, Bairro, Cidade/UF" required />
+                  <span style={{ fontSize: 10, color: "#666", marginTop: 2, display: "block" }}>Preenchido automaticamente ao digitar o CEP. Edite se necessário.</span>
                 </div>
               </div>
             </div>
