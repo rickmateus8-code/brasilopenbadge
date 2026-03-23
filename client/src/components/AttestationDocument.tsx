@@ -56,9 +56,12 @@ const PAD_V = 60;  // ~16mm left/right
 const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>(
   ({ data, logoUrl, logoLeft, logoRight, signatureColor, signatureImage }, ref) => {
     const isEmitted = data.codigoQR && data.codigoQR !== "XXXX.XXXX";
-    // QR Code aponta para validaratestado.digital
+    // QR Code aponta para validaratestado.digital/validar?codigo=XXXX&data=YYYY-MM-DD
+    const dataEmissaoForQR = data.dataEmissao
+      ? String(data.dataEmissao).substring(0, 10)
+      : undefined;
     const qrValue = isEmitted
-      ? `https://validaratestado.digital/${data.codigoQR}`
+      ? getQRCodeValue(data.codigoQR, dataEmissaoForQR)
       : "https://validaratestado.digital";
 
     const effectiveLogoLeft = logoLeft || logoUrl || (data as any).logoUrl || "";

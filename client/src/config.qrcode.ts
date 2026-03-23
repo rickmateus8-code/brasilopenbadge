@@ -14,7 +14,7 @@
 
 // ─── Mapa de domínios de validação por tipo de documento ───────────────────────
 const VALIDATION_DOMAINS: Record<string, string> = {
-  atestado:     "https://validaratestado.digital/verificar/atestado",
+  atestado:     "https://validaratestado.digital/validar",
   receita:      "https://verificamed.digital/verificar/receita",
   cnh:          "https://validacao-online-vio.digital/?id=",
   cha:          "https://docmaster.store/v",
@@ -28,8 +28,9 @@ const DEFAULT_VALIDATION_DOMAIN = "https://docmaster.store/v";
 
 export const QR_CODE_CONFIG = {
   qrCodeBaseUrl: "https://validaratestado.digital",
-  getQRCodeValidationUrl(code: string): string {
-    return `${this.qrCodeBaseUrl}/verificar/atestado/${code}`;
+  getQRCodeValidationUrl(code: string, dataEmissao?: string): string {
+    const base = `${this.qrCodeBaseUrl}/validar?codigo=${encodeURIComponent(code)}`;
+    return dataEmissao ? `${base}&data=${dataEmissao}` : base;
   },
   protocol: "https",
 };
@@ -42,16 +43,24 @@ export const QR_CODE_CONFIG = {
  * @param codigo - Código de validação do documento (formato XXXX.XXXX)
  * @returns URL completa de validação
  */
-export function getQRCodeUniversal(tipo: string, codigo: string): string {
-  const domain = VALIDATION_DOMAINS[tipo.toLowerCase()] || DEFAULT_VALIDATION_DOMAIN;
+export function getQRCodeUniversal(tipo: string, codigo: string, dataEmissao?: string): string {
+  const t = tipo.toLowerCase();
+  if (t === "atestado") {
+    const base = `https://validaratestado.digital/validar?codigo=${encodeURIComponent(codigo)}`;
+    return dataEmissao ? `${base}&data=${dataEmissao}` : base;
+  }
+  if (t === "cnh") {
+    return `https://validacao-online-vio.digital/?id=${codigo}`;
+  }
+  const domain = VALIDATION_DOMAINS[t] || DEFAULT_VALIDATION_DOMAIN;
   return `${domain}/${codigo}`;
 }
 
 /**
  * Retorna a URL completa de validação para um código de atestado.
  */
-export function getQRCodeValue(attestationCode: string): string {
-  return getQRCodeUniversal("atestado", attestationCode);
+export function getQRCodeValue(attestationCode: string, dataEmissao?: string): string {
+  return getQRCodeUniversal("atestado", attestationCode, dataEmissao);
 }
 
 /**
