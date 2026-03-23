@@ -35,12 +35,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const termo   = rawQ.toUpperCase().replace(/[.\-]/g, "");
     const limit   = Math.min(parseInt(url.searchParams.get("limit") || "50"), 100);
 
-    // ─── Verificar se D1 já tem dados suficientes (>100k) ──────────────────
-    let useD1 = false;
-    try {
-      const cnt = await env.DB.prepare("SELECT COUNT(*) as total FROM medicos_brasil").first<{ total: number }>();
-      useD1 = (cnt?.total ?? 0) > 100000;
-    } catch { useD1 = false; }
+    // ─── Sempre usar Supabase como fonte principal (dados completos do Brasil) ──
+    const useD1 = false;
 
     // ─── Helper: fetch Supabase REST ────────────────────────────────────────
     async function sbGet(path: string): Promise<any[]> {
