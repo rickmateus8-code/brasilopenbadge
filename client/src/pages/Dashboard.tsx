@@ -37,8 +37,6 @@ const HISTORY_TABS = [
   { key: "atestado", label: "Atestado", icon: FileText, color: "yellow" },
   { key: "cnh", label: "CNH", icon: Car, color: "amber" },
   { key: "cha", label: "CHA", icon: Anchor, color: "cyan" },
-  { key: "toxicologico", label: "Toxicológico", icon: FlaskConical, color: "purple" },
-  { key: "toxicria", label: "Laudo Sodré", icon: FlaskConical, color: "emerald" },
   { key: "historico-sp", label: "Histórico SP", icon: GraduationCap, color: "green" },
   { key: "historico-uninter", label: "UNINTER", icon: GraduationCap, color: "indigo" },
   { key: "receita", label: "Receitas", icon: Pill, color: "violet" },
@@ -659,7 +657,7 @@ export default function Dashboard() {
                                 <button
                                   title="Ver documento"
                                   onClick={() => {
-                                    if (activeTab === "atestado") setLocation(`/historico/atestados/${doc.id}`);
+                                    if (activeTab === "atestado") setLocation(`/atestado/editar/${doc.id}`);
                                     else if (activeTab === "receita") setLocation(`/receita/editar/${doc.id}`);
                                     else setLocation(`/v/${doc.codigo_qr || doc.id}`);
                                   }}

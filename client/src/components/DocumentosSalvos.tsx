@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useLocation } from "wouter";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
 import {
@@ -33,7 +34,7 @@ interface DocumentosSalvosProps {
   nameField?: string;
   cpfField?: string;
   extraColumns?: { key: string; label: string; render?: (doc: DocRecord) => string }[];
-  /** Rota para editar o documento (ex: "/atestado/editar"). Se fornecida, o botão Editar navega para lá com ?id=<id>. */
+  /** Rota para editar o documento (ex: "/atestado/editar"). Se fornecida, o botão Editar navega para lá com /{id}. */
   editRoute?: string;
   /** Rota para baixar/visualizar o documento para download (ex: "/atestado/view"). Se fornecida, renderiza botão Baixar PDF. */
   downloadRoute?: string;
@@ -51,10 +52,10 @@ export default function DocumentosSalvos({
   editRoute,
   downloadRoute,
 }: DocumentosSalvosProps) {
+  const [, setLocation] = useLocation();
   const [docs, setDocs] = useState<DocRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [previewModal, setPreviewModal] = useState<DocRecord | null>(null);
   const [editModal, setEditModal] = useState<DocRecord | null>(null);
   const [editData, setEditData] = useState<Record<string, string>>({});
   const [editSaving, setEditSaving] = useState(false);
@@ -72,7 +73,7 @@ export default function DocumentosSalvos({
           return {
             id: d.id || d.codigo_validacao || "",
             nome: d.nome || d.nome_paciente || d.paciente || parsed[nameField] || parsed.nome || parsed.nomeCompleto || parsed.paciente || "—",
-            cpf: d.cpf || d.cpf_paciente || parsed[cpfField] || parsed.cpf || "\u2014",
+            cpf: d.cpf || d.cpf_paciente || parsed[cpfField] || parsed.cpf || "—",
             created_at: d.created_at,
             status: d.status || "emitido",
             data: { ...d, ...parsed },
@@ -98,13 +99,13 @@ export default function DocumentosSalvos({
       const res = await fetch(endpoint, { method: "DELETE", credentials: "include" });
       const data = await res.json();
       if (data.success) {
-        toast.success("Documento exclu\u00eddo com sucesso!");
+        toast.success("Documento excluído com sucesso!");
         setDocs(prev => prev.filter(d => d.id !== id));
       } else {
         toast.error(data.error || "Erro ao excluir");
       }
     } catch {
-      toast.error("Erro de conex\u00e3o");
+      toast.error("Erro de conexão");
     }
     setDeleteConfirmId(null);
   };
@@ -141,15 +142,24 @@ export default function DocumentosSalvos({
         toast.error(result.error || "Erro ao salvar");
       }
     } catch {
-      toast.error("Erro de conex\u00e3o");
+      toast.error("Erro de conexão");
     } finally {
       setEditSaving(false);
     }
   };
 
   const formatDate = (d: string) => {
-    if (!d) return "\u2014";
+    if (!d) return "—";
     try { return new Date(d).toLocaleDateString("pt-BR"); } catch { return d; }
+  };
+
+  const handleVisualize = (doc: DocRecord) => {
+    // Navegar para a rota de edição que mostra o preview completo do documento
+    if (editRoute) {
+      setLocation(`${editRoute}/${doc.id}`);
+    } else if (downloadRoute) {
+      setLocation(`${downloadRoute}/${doc.id}`);
+    }
   };
 
   const filtered = docs.filter(d =>
@@ -167,8 +177,8 @@ export default function DocumentosSalvos({
         <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 mb-6 flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
           <p className="text-sm text-yellow-800 dark:text-yellow-300">
-            <strong>Aten\u00e7\u00e3o:</strong> Os documentos tem uma validade de <strong>{validityDays} dias</strong>, ap\u00f3s esse per\u00edodo s\u00e3o{" "}
-            <strong>exclu\u00eddos do sistema</strong> e n\u00e3o podem ser mais utilizados.
+            <strong>Atenção:</strong> Os documentos têm uma validade de <strong>{validityDays} dias</strong>, após esse período são{" "}
+            <strong>excluídos do sistema</strong> e não podem ser mais utilizados.
           </p>
         </div>
 
@@ -211,7 +221,7 @@ export default function DocumentosSalvos({
                   {extraColumns.map(col => (
                     <th key={col.key} className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">{col.label}</th>
                   ))}
-                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">A\u00e7\u00f5es</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
@@ -223,13 +233,14 @@ export default function DocumentosSalvos({
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{formatDate(doc.created_at)}</td>
                     {extraColumns.map(col => (
                       <td key={col.key} className="px-4 py-3 text-gray-600 dark:text-gray-400">
-                        {col.render ? col.render(doc) : (doc.data?.[col.key] || "\u2014")}
+                        {col.render ? col.render(doc) : (doc.data?.[col.key] || "—")}
                       </td>
                     ))}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2 flex-wrap">
+                        {/* Botão Visualizar — abre o preview completo do documento */}
                         <button
-                          onClick={() => setPreviewModal(doc)}
+                          onClick={() => handleVisualize(doc)}
                           className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-500 hover:bg-green-600 text-white transition-colors flex items-center gap-1"
                         >
                           <Eye className="w-3 h-3" /> Visualizar
@@ -237,7 +248,7 @@ export default function DocumentosSalvos({
                         <button
                           onClick={() => {
                             if (editRoute) {
-                              window.location.href = `${editRoute}/${doc.id}`;
+                              setLocation(`${editRoute}/${doc.id}`);
                             } else {
                               openEdit(doc);
                             }
@@ -249,9 +260,9 @@ export default function DocumentosSalvos({
                         {downloadRoute && (
                           <button
                             onClick={() => {
-                              window.location.href = `${downloadRoute}/${doc.id}?download=1`;
+                              setLocation(`${downloadRoute}/${doc.id}?download=1`);
                             }}
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center gap-1"
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center gap-1"
                           >
                             <Download className="w-3 h-3" /> Baixar PDF
                           </button>
@@ -282,7 +293,7 @@ export default function DocumentosSalvos({
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">Excluir Documento</h3>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                Tem certeza que deseja excluir este documento permanentemente? Esta a\u00e7\u00e3o n\u00e3o pode ser desfeita.
+                Tem certeza que deseja excluir este documento permanentemente? Esta ação não pode ser desfeita.
               </p>
               <div className="flex gap-3 justify-end">
                 <button onClick={() => setDeleteConfirmId(null)} className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
@@ -296,40 +307,7 @@ export default function DocumentosSalvos({
           </div>
         )}
 
-        {/* ── PREVIEW MODAL ── */}
-        {previewModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setPreviewModal(null)}>
-            <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-2xl w-full shadow-xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Visualizar - {previewModal.nome}</h3>
-                <button onClick={() => setPreviewModal(null)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                  <X className="w-5 h-5 text-gray-500" />
-                </button>
-              </div>
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {fields.map(f => {
-                    const val = previewModal.data?.[f.key] || "";
-                    if (!val) return null;
-                    return (
-                      <div key={f.key} className={f.type === "textarea" ? "col-span-full" : ""}>
-                        <span className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase">{f.label}:</span>
-                        <p className="text-sm text-gray-800 dark:text-gray-200 font-medium mt-0.5">{val}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              <div className="flex justify-end mt-4">
-                <button onClick={() => setPreviewModal(null)} className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
-                  Fechar
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── EDIT MODAL ── */}
+        {/* ── EDIT MODAL (apenas quando não há editRoute) ── */}
         {editModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setEditModal(null)}>
             <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-2xl w-full shadow-xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
@@ -385,7 +363,7 @@ export default function DocumentosSalvos({
                   disabled={editSaving}
                   className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl transition-colors disabled:opacity-50"
                 >
-                  <Save className="w-4 h-4" /> {editSaving ? "Salvando..." : "Salvar Altera\u00e7\u00f5es"}
+                  <Save className="w-4 h-4" /> {editSaving ? "Salvando..." : "Salvar Alterações"}
                 </button>
               </div>
             </div>
