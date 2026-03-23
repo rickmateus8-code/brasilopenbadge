@@ -226,7 +226,7 @@ export default function AtestadoCria() {
   const [erroBusca, setErroBusca] = useState("");
   const [showResultados, setShowResultados] = useState(false);
   const [showEditar, setShowEditar] = useState(false);
-  const skipClearUnidade = React.useRef(false);
+  const skipClearUnidade = useRef(false);
 
   // ── Formulário ─────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
