@@ -6,7 +6,7 @@ import {
   CheckCircle, Clock, RefreshCw, ExternalLink, QrCode,
   ChevronRight, AlertCircle, Wallet, Info
 } from "lucide-react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 interface ReferralData {
   code: string;
