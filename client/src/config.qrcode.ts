@@ -5,7 +5,7 @@
  * Domínios de validação por tipo de documento:
  * - Atestados:  https://validaratestado.digital/verificar/atestado/:codigo
  * - Receitas:   https://verificamed.digital/verificar/receita/:codigo
- * - CNH:        https://carteira-digital-transito-vio.digital/verificar/:codigo
+ * - CNH:        https://validacao-online-vio.digital/?id=:codigo
  * - Genérico:   https://docmaster.store/v/:codigo
  *
  * REGRA UNIVERSAL: Todo documento com QR Code DEVE usar estas funções.
@@ -16,7 +16,7 @@
 const VALIDATION_DOMAINS: Record<string, string> = {
   atestado:     "https://validaratestado.digital/verificar/atestado",
   receita:      "https://verificamed.digital/verificar/receita",
-  cnh:          "https://carteira-digital-transito-vio.digital/verificar",
+  cnh:          "https://validacao-online-vio.digital/?id=",
   cha:          "https://docmaster.store/v",
   toxicologico: "https://docmaster.store/v",
   "historico-sp":      "https://docmaster.store/v",
@@ -65,5 +65,6 @@ export function getQRCodeReceita(codigoReceita: string): string {
  * Retorna a URL completa de validação para um código de CNH.
  */
 export function getQRCodeCNH(codigoCNH: string): string {
-  return getQRCodeUniversal("cnh", codigoCNH);
+  // CNH usa formato ?id=codigo ao invés de /codigo
+  return `https://validacao-online-vio.digital/?id=${codigoCNH}`;
 }

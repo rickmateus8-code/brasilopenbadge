@@ -84,6 +84,7 @@ export default function CNHCria() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isApplyingAI, setIsApplyingAI] = useState(false);
 
   const [data, setData] = useState<CNHDocumentProps>({
     nome: "", cpf: "", rg: "", orgaoEmissor: "", ufRG: "",
@@ -181,7 +182,7 @@ export default function CNHCria() {
     toast.success("Dados importados! Nº Registro, Nº CNH e Assinaturas Digitais gerados automaticamente.");
   };
 
-  // ─── Foto Upload ───────────────────────────────────────────────────────────
+  // ─── Foto Upload ─────────────────────────────────────────────────────────────────────
   const handleFotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -190,7 +191,38 @@ export default function CNHCria() {
     reader.readAsDataURL(file);
   };
 
-  // ─── Assinatura Upload ─────────────────────────────────────────────────────
+  // ─── Gemini Nano Banana — Aplicar Ajustes Visuais ─────────────────────────────────
+  const handleApplyAI = async () => {
+    if (!data.fotoUrl) {
+      toast.error("Envie uma foto primeiro!");
+      return;
+    }
+    setIsApplyingAI(true);
+    try {
+      const res = await fetch("https://cnh-digital.manus.space/api/trpc/cnh.applyBiometricAI", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          json: { imageBase64: data.fotoUrl }
+        }),
+      });
+      const result = await res.json();
+      if (result?.result?.data?.json?.success && result?.result?.data?.json?.imageUrl) {
+        setData(d => ({ ...d, fotoUrl: result.result.data.json.imageUrl }));
+        toast.success("Ajustes visuais aplicados com sucesso! Foto biométrica gerada.");
+      } else {
+        const errMsg = result?.result?.data?.json?.error || "Erro ao aplicar ajustes";
+        toast.error(errMsg);
+      }
+    } catch (err) {
+      console.error("AI error:", err);
+      toast.error("Erro de conexão com o serviço de IA");
+    } finally {
+      setIsApplyingAI(false);
+    }
+  };
+
+  // ─── Assinatura Upload ─────────────────────────────────────────────────────────────────────
   const handleAssinaturaUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -969,6 +1001,44 @@ export default function CNHCria() {
                 <span style={{ fontSize: 12, color: "#64748b" }}>Prévia Rosto</span>
               )}
             </div>
+            {/* Botão Aplicar Ajustes Visuais (Gemini Nano Banana) */}
+            {data.fotoUrl && (
+              <button
+                onClick={handleApplyAI}
+                disabled={isApplyingAI}
+                style={{
+                  marginTop: 8,
+                  width: "100%",
+                  padding: "10px 14px",
+                  background: isApplyingAI
+                    ? "linear-gradient(135deg, #6b7280, #9ca3af)"
+                    : "linear-gradient(135deg, #8b5cf6, #a855f7)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 8,
+                  fontWeight: 700,
+                  fontSize: 12,
+                  cursor: isApplyingAI ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  transition: "opacity 0.2s",
+                  boxShadow: "0 4px 12px rgba(139, 92, 246, 0.3)",
+                }}
+              >
+                {isApplyingAI ? (
+                  <>
+                    <div style={{ width: 14, height: 14, border: "2px solid white", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                    Processando IA...
+                  </>
+                ) : (
+                  <>
+                    <Zap size={14} /> Aplicar Ajustes Visuais
+                  </>
+                )}
+              </button>
+            )}
           </div>
 
           {/* Assinatura */}
