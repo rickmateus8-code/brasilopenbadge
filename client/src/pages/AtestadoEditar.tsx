@@ -212,7 +212,8 @@ export default function AtestadoEditar() {
       // Aguardar renderização do preview e disparar download
       const timer = setTimeout(async () => {
         try {
-          const filename = generatePDFFilename(form.paciente || "ATESTADO", "DOWNLOAD");
+          const nomePacEd = (form.paciente || "PACIENTE").trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
+          const filename = `ATESTADO_${nomePacEd}.pdf`;
           await exportElementToPDF(previewRef.current!, { filename, scale: 2, quality: 0.92 });
         } catch (err) {
           console.error("Auto-download falhou:", err);
@@ -292,7 +293,8 @@ export default function AtestadoEditar() {
   const handleDownloadPdf = async () => {
     if (!previewRef.current) return;
     try {
-      const filename = generatePDFFilename(form.paciente || "ATESTADO", "EDITADO");
+      const nomePacEd2 = (form.paciente || "PACIENTE").trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
+      const filename = `ATESTADO_${nomePacEd2}.pdf`;
       await exportElementToPDF(previewRef.current, { filename, scale: 2, quality: 0.92 });
     } catch (err) {
       alert(`Erro ao gerar PDF: ${err instanceof Error ? err.message : "Erro desconhecido"}`);

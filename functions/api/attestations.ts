@@ -378,64 +378,115 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
 
   const now = new Date().toISOString();
 
-  await env.DB.prepare(`
-    UPDATE attestations SET
-      paciente = COALESCE(?, paciente),
-      sexo = COALESCE(?, sexo),
-      nascimento = COALESCE(?, nascimento),
-      nome_mae = COALESCE(?, nome_mae),
-      endereco = COALESCE(?, endereco),
-      cid = COALESCE(?, cid),
-      cid_display = COALESCE(?, cid_display),
-      cid_nome = COALESCE(?, cid_nome),
-      medico = COALESCE(?, medico),
-      crm = COALESCE(?, crm),
-      especialidade = COALESCE(?, especialidade),
-      instituicao = COALESCE(?, instituicao),
-      unidade = COALESCE(?, unidade),
-      endereco_emitente = COALESCE(?, endereco_emitente),
-      texto_atestado = COALESCE(?, texto_atestado),
-      afastamento = COALESCE(?, afastamento),
-      data_assinatura = COALESCE(?, data_assinatura),
-      hora_assinatura = COALESCE(?, hora_assinatura),
-      data_emissao = COALESCE(?, data_emissao),
-      logo_url = COALESCE(?, logo_url),
-      logo_right = COALESCE(?, logo_right),
-      signature_color = COALESCE(?, signature_color),
-      signature_image = COALESCE(?, signature_image),
-      modo_carimbo = COALESCE(?, modo_carimbo),
-      cidade = COALESCE(?, cidade),
-      updated_at = ?
-    WHERE id = ?
-  `).bind(
-    body.paciente?.toUpperCase() || null,
-    body.sexo || null,
-    body.nascimento || null,
-    body.nomeMae?.toUpperCase() || body.nome_mae?.toUpperCase() || null,
-    body.endereco?.toUpperCase() || null,
-    body.cid || null,
-    body.cidDisplay || body.cid_display || null,
-    body.cidNome || body.cid_nome || null,
-    body.medico?.toUpperCase() || null,
-    body.crm || null,
-    body.especialidade?.toUpperCase() || null,
-    body.instituicao?.toUpperCase() || null,
-    body.unidade?.toUpperCase() || null,
-    body.enderecoEmitente?.toUpperCase() || body.endereco_emitente?.toUpperCase() || null,
-    body.textoAtestado || body.texto_atestado || null,
-    body.afastamento || null,
-    body.dataAssinatura || body.data_assinatura || null,
-    body.horaAssinatura || body.hora_assinatura || null,
-    body.dataEmissao || body.data_emissao || null,
-    body.logoUrl || body.logo_url || null,
-    body.logoRight || body.logo_right || null,
-    body.signatureColor || body.signature_color || null,
-    body.signatureImage || body.signature_image || null,
-    body.modoCarimbo !== undefined ? (body.modoCarimbo ? 1 : 0) : null,
-    body.cidade || null,
-    now,
-    id
-  ).run();
+  // Quando vem do AtestadoEditar (campos diretos), substitui diretamente
+  // Quando vem do DocumentosSalvos (body.data), usa COALESCE para não limpar campos não enviados
+  const fromEditor = !body._fromDocList;
+
+  if (fromEditor) {
+    // Editor: substitui todos os campos diretamente (permite limpar campos)
+    await env.DB.prepare(`
+      UPDATE attestations SET
+        paciente = ?, sexo = ?, nascimento = ?, nome_mae = ?, endereco = ?,
+        cid = ?, cid_display = ?, cid_nome = ?,
+        medico = ?, crm = ?, especialidade = ?,
+        instituicao = ?, unidade = ?, endereco_emitente = ?,
+        texto_atestado = ?, afastamento = ?,
+        data_assinatura = ?, hora_assinatura = ?, data_emissao = ?,
+        logo_url = COALESCE(?, logo_url),
+        logo_right = COALESCE(?, logo_right),
+        signature_color = COALESCE(?, signature_color),
+        signature_image = COALESCE(?, signature_image),
+        modo_carimbo = COALESCE(?, modo_carimbo),
+        cidade = ?, updated_at = ?
+      WHERE id = ?
+    `).bind(
+      body.paciente?.toUpperCase() || null,
+      body.sexo || null,
+      body.nascimento || null,
+      body.nomeMae?.toUpperCase() || body.nome_mae?.toUpperCase() || null,
+      body.endereco?.toUpperCase() || null,
+      body.cid || null,
+      body.cidDisplay || body.cid_display || null,
+      body.cidNome || body.cid_nome || null,
+      body.medico?.toUpperCase() || null,
+      body.crm || null,
+      body.especialidade?.toUpperCase() || null,
+      body.instituicao?.toUpperCase() || null,
+      body.unidade?.toUpperCase() || null,
+      body.enderecoEmitente?.toUpperCase() || body.endereco_emitente?.toUpperCase() || null,
+      body.textoAtestado || body.texto_atestado || null,
+      body.afastamento || null,
+      body.dataAssinatura || body.data_assinatura || null,
+      body.horaAssinatura || body.hora_assinatura || null,
+      body.dataEmissao || body.data_emissao || null,
+      body.logoUrl || body.logo_url || null,
+      body.logoRight || body.logo_right || null,
+      body.signatureColor || body.signature_color || null,
+      body.signatureImage || body.signature_image || null,
+      body.modoCarimbo !== undefined ? (body.modoCarimbo ? 1 : 0) : null,
+      body.cidade || null,
+      now, id
+    ).run();
+  } else {
+    // DocumentosSalvos: usa COALESCE para não sobrescrever campos não enviados
+    await env.DB.prepare(`
+      UPDATE attestations SET
+        paciente = COALESCE(?, paciente),
+        sexo = COALESCE(?, sexo),
+        nascimento = COALESCE(?, nascimento),
+        nome_mae = COALESCE(?, nome_mae),
+        endereco = COALESCE(?, endereco),
+        cid = COALESCE(?, cid),
+        cid_display = COALESCE(?, cid_display),
+        cid_nome = COALESCE(?, cid_nome),
+        medico = COALESCE(?, medico),
+        crm = COALESCE(?, crm),
+        especialidade = COALESCE(?, especialidade),
+        instituicao = COALESCE(?, instituicao),
+        unidade = COALESCE(?, unidade),
+        endereco_emitente = COALESCE(?, endereco_emitente),
+        texto_atestado = COALESCE(?, texto_atestado),
+        afastamento = COALESCE(?, afastamento),
+        data_assinatura = COALESCE(?, data_assinatura),
+        hora_assinatura = COALESCE(?, hora_assinatura),
+        data_emissao = COALESCE(?, data_emissao),
+        logo_url = COALESCE(?, logo_url),
+        logo_right = COALESCE(?, logo_right),
+        signature_color = COALESCE(?, signature_color),
+        signature_image = COALESCE(?, signature_image),
+        modo_carimbo = COALESCE(?, modo_carimbo),
+        cidade = COALESCE(?, cidade),
+        updated_at = ?
+      WHERE id = ?
+    `).bind(
+      body.paciente?.toUpperCase() || null,
+      body.sexo || null,
+      body.nascimento || null,
+      body.nomeMae?.toUpperCase() || body.nome_mae?.toUpperCase() || null,
+      body.endereco?.toUpperCase() || null,
+      body.cid || null,
+      body.cidDisplay || body.cid_display || null,
+      body.cidNome || body.cid_nome || null,
+      body.medico?.toUpperCase() || null,
+      body.crm || null,
+      body.especialidade?.toUpperCase() || null,
+      body.instituicao?.toUpperCase() || null,
+      body.unidade?.toUpperCase() || null,
+      body.enderecoEmitente?.toUpperCase() || body.endereco_emitente?.toUpperCase() || null,
+      body.textoAtestado || body.texto_atestado || null,
+      body.afastamento || null,
+      body.dataAssinatura || body.data_assinatura || null,
+      body.horaAssinatura || body.hora_assinatura || null,
+      body.dataEmissao || body.data_emissao || null,
+      body.logoUrl || body.logo_url || null,
+      body.logoRight || body.logo_right || null,
+      body.signatureColor || body.signature_color || null,
+      body.signatureImage || body.signature_image || null,
+      body.modoCarimbo !== undefined ? (body.modoCarimbo ? 1 : 0) : null,
+      body.cidade || null,
+      now, id
+    ).run();
+  }
 
   // Buscar o atestado atualizado
   const updated = await env.DB.prepare(

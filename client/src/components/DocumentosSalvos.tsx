@@ -71,7 +71,7 @@ export default function DocumentosSalvos({
           try { parsed = typeof d.data === "string" ? JSON.parse(d.data) : (d.data || {}); } catch {}
           return {
             id: d.id || d.codigo_validacao || "",
-            nome: d.nome || d.nome_paciente || parsed[nameField] || parsed.nome || parsed.nomeCompleto || "\u2014",
+            nome: d.nome || d.nome_paciente || d.paciente || parsed[nameField] || parsed.nome || parsed.nomeCompleto || parsed.paciente || "—",
             cpf: d.cpf || d.cpf_paciente || parsed[cpfField] || parsed.cpf || "\u2014",
             created_at: d.created_at,
             status: d.status || "emitido",
@@ -205,7 +205,7 @@ export default function DocumentosSalvos({
               <thead>
                 <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">ID</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Nome</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Paciente</th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">CPF</th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Data</th>
                   {extraColumns.map(col => (

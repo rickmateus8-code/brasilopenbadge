@@ -671,7 +671,8 @@ export default function AtestadoCria() {
   const handleDownloadPdf = async () => {
     if (!previewRef.current) return;
     try {
-      const filename = generatePDFFilename(form.paciente || "ATESTADO", "EMITIDO");
+      const nomePac = (form.paciente || "PACIENTE").trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
+      const filename = `ATESTADO_${nomePac}.pdf`;
       await exportElementToPDF(previewRef.current, { filename, scale: 2, quality: 0.92 });
     } catch (err) {
       alert(`Erro ao gerar PDF: ${err instanceof Error ? err.message : "Erro desconhecido"}`);
@@ -891,7 +892,8 @@ export default function AtestadoCria() {
                     setIsDownloadingPdf(true);
                     try {
                       await new Promise(r => setTimeout(r, 300));
-                      const filename = generatePDFFilename(form.paciente || "ATESTADO", "EMITIDO");
+                      const nomePaciente = (form.paciente || "PACIENTE").trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
+                      const filename = `ATESTADO_${nomePaciente}.pdf`;
                       await exportElementToPDF(previewRef.current, { filename, scale: 2, quality: 0.92 });
                     } catch {}
                     setIsDownloadingPdf(false);
@@ -915,7 +917,7 @@ export default function AtestadoCria() {
               </button>
               <button
                 style={{ ...btnGray, width: "100%", padding: "10px 0", fontSize: 12 }}
-                onClick={() => setShowSuccessModal(false)}
+                onClick={() => { setShowSuccessModal(false); navigate("/atestadosalvos"); }}
               >
                 FECHAR
               </button>
