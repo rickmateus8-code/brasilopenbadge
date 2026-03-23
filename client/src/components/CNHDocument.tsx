@@ -118,6 +118,7 @@ export interface CNHDocumentHandle {
   exportAsBlob: () => Promise<Blob | null>;
   exportAsPdf: () => Promise<void>;
   getCanvas: () => HTMLCanvasElement | null;
+  exportCropBlob: (x: number, y: number, w: number, h: number) => Promise<Blob | null>;
 }
 
 const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref) => {
@@ -150,6 +151,19 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       pdf.save(`CNH_${(props as any).nome?.replace(/\s+/g, "_") || "DOCUMENTO"}_${Date.now()}.pdf`);
     },
     getCanvas: () => canvasRef.current,
+    exportCropBlob: async (x: number, y: number, w: number, h: number) => {
+      const cvs = canvasRef.current;
+      if (!cvs) return null;
+      const crop = document.createElement('canvas');
+      crop.width = w;
+      crop.height = h;
+      const cctx = crop.getContext('2d');
+      if (!cctx) return null;
+      cctx.drawImage(cvs, x, y, w, h, 0, 0, w, h);
+      return new Promise<Blob | null>((resolve) => {
+        crop.toBlob((blob) => resolve(blob), 'image/jpeg', 0.92);
+      });
+    },
   }));
 
   useEffect(() => {

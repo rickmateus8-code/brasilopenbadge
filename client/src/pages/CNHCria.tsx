@@ -183,11 +183,35 @@ export default function CNHCria() {
   };
 
   // ─── Foto Upload ─────────────────────────────────────────────────────────────────────
+  // Compress image to max 400x500 JPEG at 0.7 quality (~50-100KB)
+  const compressImage = (dataUrl: string, maxW = 400, maxH = 500, quality = 0.7): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if (w > maxW || h > maxH) {
+          const ratio = Math.min(maxW / w, maxH / h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = dataUrl;
+    });
+  };
+
   const handleFotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => setData(d => ({ ...d, fotoUrl: reader.result as string }));
+    reader.onload = async () => {
+      const compressed = await compressImage(reader.result as string);
+      setData(d => ({ ...d, fotoUrl: compressed }));
+    };
     reader.readAsDataURL(file);
   };
 
@@ -227,7 +251,10 @@ export default function CNHCria() {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => setData(d => ({ ...d, assinaturaUrl: reader.result as string }));
+    reader.onload = async () => {
+      const compressed = await compressImage(reader.result as string, 500, 150, 0.8);
+      setData(d => ({ ...d, assinaturaUrl: compressed }));
+    };
     reader.readAsDataURL(file);
   };
 

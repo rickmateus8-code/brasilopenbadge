@@ -79,24 +79,39 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
       'INSERT INTO transactions (user_id, type, amount, description, document_type, document_id) VALUES (?, ?, ?, ?, ?, ?)'
     ).bind(user.id, 'debit', price, `Emissão de ${docType.toUpperCase()}`, docType, docId).run();
 
-    // Remove large base64 fields to avoid SQLITE_TOOBIG error (D1 has 1MB limit per column)
-    // Keep only URLs and metadata, strip raw base64 image data
+    // Compress base64 images to stay within D1 1MB column limit
+    // Keep fotoUrl and assinaturaUrl (needed for cnh-do-brasil rendering)
+    // but strip other large base64 fields
     const dataToStore = { ...body };
-    const base64Fields = ['fotoUrl', 'assinaturaUrl', 'foto', 'assinatura', 'signatureImage', 'signature_image'];
-    for (const field of base64Fields) {
+    const stripFields = ['foto', 'assinatura', 'signatureImage', 'signature_image'];
+    for (const field of stripFields) {
       if (dataToStore[field] && typeof dataToStore[field] === 'string' && dataToStore[field].startsWith('data:')) {
-        // Replace base64 with a marker indicating it was stripped
-        dataToStore[`${field}_stripped`] = true;
-        dataToStore[field] = ''; // Clear the base64 data
+        dataToStore[field] = '';
       }
     }
+    // Keep fotoUrl and assinaturaUrl as-is (frontend should compress before sending)
+    // If total JSON is too large, strip images as fallback
+    let jsonData = JSON.stringify(dataToStore);
+    if (jsonData.length > 900000) {
+      // Too large - strip fotoUrl and assinaturaUrl as fallback
+      dataToStore.fotoUrl = '';
+      dataToStore.assinaturaUrl = '';
+      dataToStore.fotoUrl_stripped = true;
+      dataToStore.assinaturaUrl_stripped = true;
+      jsonData = JSON.stringify(dataToStore);
+    }
 
-    const jsonData = JSON.stringify(dataToStore);
+    // Extract key fields for top-level columns (used by cnh-do-brasil auth)
+    const cpfValue = body.cpf || '';
+    const senhaValue = body.senhaApp || body.senha || '';
+    const nomeValue = body.nome || body.nomeCompleto || '';
+    const categoriaValue = body.categoria || '';
 
     // Save document with status='emitido' for validation
+    // Include cpf, senha, nome, categoria as separate columns for cnh-do-brasil auth lookup
     await env.DB.prepare(
-      'INSERT INTO documents (id, user_id, type, data, codigo_qr, status, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime("now"))'
-    ).bind(docId, user.id, docType, jsonData, codigoValidacao, 'emitido').run();
+      'INSERT INTO documents (id, user_id, type, data, codigo_qr, status, cpf, senha, nome, categoria, codigo_validacao, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"))'
+    ).bind(docId, user.id, docType, jsonData, codigoValidacao, 'emitido', cpfValue, senhaValue, nomeValue, categoriaValue, codigoValidacao).run();
 
     return new Response(JSON.stringify({
       success: true,
