@@ -303,7 +303,7 @@ export async function onRequest(context: { request: Request; env: Env; params: {
       return jsonResponse({ success: true, message: "Documento atualizado com sucesso." });
     }
 
-    // ── DELETE: Cancel document ──
+    // ── DELETE: Delete document permanently ──
     if (request.method === "DELETE") {
       const docId = idOrType;
       const doc = await env.DB.prepare("SELECT id, user_id FROM documents WHERE id = ? LIMIT 1").bind(docId).first<any>();
@@ -311,8 +311,8 @@ export async function onRequest(context: { request: Request; env: Env; params: {
       if (user.role !== "admin" && doc.user_id !== user.id) {
         return jsonResponse({ success: false, error: "Sem permissão." }, 403);
       }
-      await env.DB.prepare("UPDATE documents SET status = 'cancelado', updated_at = ? WHERE id = ?").bind(new Date().toISOString(), docId).run();
-      return jsonResponse({ success: true, message: "Documento cancelado com sucesso." });
+      await env.DB.prepare("DELETE FROM documents WHERE id = ?").bind(docId).run();
+      return jsonResponse({ success: true, message: "Documento excluído com sucesso." });
     }
 
     return jsonResponse({ success: false, error: "Método não permitido." }, 405);

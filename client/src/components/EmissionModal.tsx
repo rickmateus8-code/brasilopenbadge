@@ -201,7 +201,10 @@ export default function EmissionModal({
             </button>
             <button
               style={btnGray}
-              onClick={onClose}
+              onClick={() => {
+                onClose();
+                setLocation(historyPath);
+              }}
             >
               FECHAR
             </button>

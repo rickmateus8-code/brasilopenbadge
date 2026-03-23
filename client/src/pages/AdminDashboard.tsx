@@ -10,7 +10,7 @@ import {
   Activity, Database, Search, Eye, X, Save,
   Download, Edit3, Wifi, WifiOff, Monitor, Globe,
   CreditCard, AlertCircle, Filter, Gift, Percent,
-  Link, Copy, Calendar, Trash
+  Link, Copy, Calendar, Trash, Lock, UserPlus
 } from "lucide-react";
 
 type Tab = "users" | "pricing" | "notices" | "logs" | "emissions" | "monitoring" | "referral" | "database" | "settings";
@@ -202,6 +202,22 @@ export default function AdminDashboard() {
   const [deleteUserConfirm, setDeleteUserConfirm] = useState("");
   const [deleteTargetUserId, setDeleteTargetUserId] = useState<number | null>(null);
   const [deleteTargetUsername, setDeleteTargetUsername] = useState("");
+
+  // Create user
+  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [newUsername, setNewUsername] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newDisplayName, setNewDisplayName] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newRole, setNewRole] = useState("user");
+  const [newBalance, setNewBalance] = useState("");
+  const [creatingUser, setCreatingUser] = useState(false);
+
+  // Change password
+  const [changePwUserId, setChangePwUserId] = useState<string | null>(null);
+  const [changePwUsername, setChangePwUsername] = useState("");
+  const [changePwValue, setChangePwValue] = useState("");
+  const [changingPw, setChangingPw] = useState(false);
 
   // Settings
   const [settings, setSettings] = useState({
@@ -491,7 +507,59 @@ export default function AdminDashboard() {
     } catch { setUserHistory([]); }
   };
 
-  // ── Pricing ────────────────────────────────────────────────────────────────
+  // ── Create User ───────────────────────────────────────────────────────────────────────
+  const createUser = async () => {
+    if (!newUsername || !newPassword) { toast.error("Username e senha são obrigatórios"); return; }
+    if (newPassword.length < 4) { toast.error("Senha deve ter no mínimo 4 caracteres"); return; }
+    setCreatingUser(true);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          username: newUsername,
+          password: newPassword,
+          display_name: newDisplayName || newUsername,
+          email: newEmail,
+          role: newRole,
+          balance: newBalance ? Math.round(parseFloat(newBalance) * 100) : 0,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Usuário criado com sucesso!");
+        setShowCreateUser(false);
+        setNewUsername(""); setNewPassword(""); setNewDisplayName(""); setNewEmail(""); setNewRole("user"); setNewBalance("");
+        loadUsers();
+      } else {
+        toast.error(data.error || "Erro ao criar usuário");
+      }
+    } catch { toast.error("Erro de conexão"); } finally { setCreatingUser(false); }
+  };
+
+  const changePassword = async () => {
+    if (!changePwUserId || !changePwValue) { toast.error("Nova senha é obrigatória"); return; }
+    if (changePwValue.length < 4) { toast.error("Senha deve ter no mínimo 4 caracteres"); return; }
+    setChangingPw(true);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ user_id: changePwUserId, new_password: changePwValue }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Senha de ${changePwUsername} alterada com sucesso!`);
+        setChangePwUserId(null); setChangePwUsername(""); setChangePwValue("");
+      } else {
+        toast.error(data.error || "Erro ao alterar senha");
+      }
+    } catch { toast.error("Erro de conexão"); } finally { setChangingPw(false); }
+  };
+
+  // ── Pricing ────────────────────────────────────────────────────────────────────────────
   const savePrice = async (docType: string) => {
     const priceReais = parseFloat(editingPrice[docType] || "0");
     if (isNaN(priceReais) || priceReais < 0) { toast.error("Preço inválido"); return; }
@@ -831,7 +899,51 @@ export default function AdminDashboard() {
               <button onClick={loadUsers} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
                 <RefreshCw className="w-4 h-4" />
               </button>
+              <button onClick={() => setShowCreateUser(!showCreateUser)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-xl bg-yellow-600 hover:bg-yellow-700 text-white transition-colors">
+                <UserPlus className="w-4 h-4" /> Criar Usuário
+              </button>
             </div>
+
+            {/* Formulário Criar Usuário */}
+            {showCreateUser && (
+              <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 mb-4">
+                <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2"><UserPlus className="w-4 h-4" /> Novo Usuário</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <input type="text" placeholder="Username *" value={newUsername} onChange={e => setNewUsername(e.target.value)} className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+                  <input type="password" placeholder="Senha *" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+                  <input type="text" placeholder="Nome de Exibição" value={newDisplayName} onChange={e => setNewDisplayName(e.target.value)} className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+                  <input type="email" placeholder="Email" value={newEmail} onChange={e => setNewEmail(e.target.value)} className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+                  <select value={newRole} onChange={e => setNewRole(e.target.value)} className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                    <option value="user">Usuário</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                  <input type="number" placeholder="Saldo Inicial (R$)" value={newBalance} onChange={e => setNewBalance(e.target.value)} className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <button onClick={createUser} disabled={creatingUser} className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl transition-colors disabled:opacity-50">
+                    {creatingUser ? "Criando..." : "Criar Usuário"}
+                  </button>
+                  <button onClick={() => setShowCreateUser(false)} className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Modal Alterar Senha */}
+            {changePwUserId && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => { setChangePwUserId(null); setChangePwValue(""); }}>
+                <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-xl" onClick={e => e.stopPropagation()}>
+                  <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2"><Lock className="w-4 h-4" /> Alterar Senha</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Usuário: <strong>{changePwUsername}</strong></p>
+                  <input type="password" placeholder="Nova senha (mín. 4 caracteres)" value={changePwValue} onChange={e => setChangePwValue(e.target.value)} className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 mb-4" />
+                  <div className="flex gap-2 justify-end">
+                    <button onClick={() => { setChangePwUserId(null); setChangePwValue(""); }} className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">Cancelar</button>
+                    <button onClick={changePassword} disabled={changingPw} className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl transition-colors disabled:opacity-50">{changingPw ? "Salvando..." : "Salvar"}</button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {loading ? (
               <div className="flex items-center justify-center py-12">
@@ -941,6 +1053,13 @@ export default function AdminDashboard() {
                             title="Excluir dados do usuário"
                           >
                             <Database className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => { setChangePwUserId(String(u.id)); setChangePwUsername(u.username); setChangePwValue(""); }}
+                            className="p-1.5 rounded-lg text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+                            title="Alterar senha"
+                          >
+                            <Lock className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => deleteUser(u.id, u.username)}

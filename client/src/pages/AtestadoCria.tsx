@@ -226,6 +226,9 @@ export default function AtestadoCria() {
   const [erroBusca, setErroBusca] = useState("");
   const [showResultados, setShowResultados] = useState(false);
   const [showEditar, setShowEditar] = useState(false);
+  const [cepEnabled, setCepEnabled] = useState(false);
+  const [cepValue, setCepValue] = useState("");
+  const [cepLoading, setCepLoading] = useState(false);
 
   // ── Formulário ─────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
@@ -851,14 +854,15 @@ export default function AtestadoCria() {
               )}
 
               {/* Editar Médico */}
-              <details open={showEditar} style={{ marginTop: 10 }}>
-                <summary
-                  style={{ cursor: "pointer", fontSize: 12, fontWeight: 700, color: "#005CA9", padding: "6px 0", listStyle: "none" }}
-                  onClick={() => setShowEditar(!showEditar)}
+              <div style={{ marginTop: 10 }}>
+                <button
+                  type="button"
+                  style={{ cursor: "pointer", fontSize: 12, fontWeight: 700, color: "#005CA9", padding: "6px 0", background: "none", border: "none", display: "flex", alignItems: "center", gap: 4 }}
+                  onClick={(e) => { e.preventDefault(); setShowEditar(!showEditar); }}
                 >
-                  ✏️ EDITAR MÉDICO / LOCAL / ASSINATURA
-                </summary>
-                <div style={{ paddingTop: 10, display: "grid", gap: 8 }}>
+                  ✏️ EDITAR MÉDICO / LOCAL / ASSINATURA {showEditar ? "▲" : "▼"}
+                </button>
+                {showEditar && <div style={{ paddingTop: 10, display: "grid", gap: 8 }}>
                   <p style={{ ...secTitle, fontSize: 10 }}>Dados do Local</p>
                   {/* Instituição: preenchida automaticamente como PREFEITURA DE {CIDADE} — não exibida no formulário */}
                   {/* Campo oculto — valor gerenciado pelo useEffect de filtroCidade e selecionarMedico */}
@@ -916,8 +920,8 @@ export default function AtestadoCria() {
                       )}
                     </div>
                   </div>
-                </div>
-              </details>
+                </div>}
+              </div>
             </div>
 
             {/* ── 2. Dados do Paciente ── */}
@@ -987,7 +991,53 @@ export default function AtestadoCria() {
                 </div>
                 <div>
                   <label style={lbl}>Endereço do Paciente *</label>
-                  <input style={inp} value={form.endereco} onChange={(e) => setForm(p => ({ ...p, endereco: e.target.value }))} placeholder="Rua, Número, Bairro, Cidade/UF" required />
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <label style={{ fontSize: 11, color: "#555", display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }}>
+                      <input
+                        type="checkbox"
+                        checked={!!cepEnabled}
+                        onChange={(e) => setCepEnabled(e.target.checked)}
+                        style={{ width: 16, height: 16, accentColor: "#005CA9" }}
+                      />
+                      Preencher por CEP
+                    </label>
+                  </div>
+                  {cepEnabled && (
+                    <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
+                      <input
+                        style={{ ...inp, width: 120 }}
+                        value={cepValue}
+                        onChange={(e) => {
+                          const v = e.target.value.replace(/\D/g, "").slice(0, 8);
+                          setCepValue(v.length > 5 ? `${v.slice(0,5)}-${v.slice(5)}` : v);
+                        }}
+                        placeholder="00000-000"
+                        maxLength={9}
+                        inputMode="numeric"
+                      />
+                      <button
+                        type="button"
+                        style={{ padding: "6px 12px", fontSize: 11, fontWeight: 700, background: "#005CA9", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", opacity: cepLoading ? 0.6 : 1 }}
+                        disabled={cepLoading}
+                        onClick={async () => {
+                          const cepClean = cepValue.replace(/\D/g, "");
+                          if (cepClean.length !== 8) return;
+                          setCepLoading(true);
+                          try {
+                            const res = await fetch(`https://viacep.com.br/ws/${cepClean}/json/`);
+                            const data = await res.json();
+                            if (!data.erro) {
+                              const endFormatado = `${data.logradouro?.toUpperCase() || ""}, ${data.bairro?.toUpperCase() || ""}, ${data.localidade?.toUpperCase() || ""}/${data.uf?.toUpperCase() || ""}`;
+                              setForm(p => ({ ...p, endereco: endFormatado, cidade: data.localidade?.toUpperCase() || p.cidade }));
+                            }
+                          } catch {} finally { setCepLoading(false); }
+                        }}
+                      >
+                        {cepLoading ? "..." : "Buscar"}
+                      </button>
+                    </div>
+                  )}
+                  <input style={inp} value={form.endereco} onChange={(e) => setForm(p => ({ ...p, endereco: e.target.value }))} placeholder="RUA ITAJAI, 322 - JARDIM SAO BENTO DO RECREIO, VALINHOS/SP" required />
                 </div>
               </div>
             </div>
@@ -1078,10 +1128,54 @@ export default function AtestadoCria() {
                 </div>
                 <div style={{ gridColumn: "1 / -1" }}>
                   <label style={lbl}>Data de Emissão *</label>
-                  <input style={inp} value={form.dataEmissao} onChange={(e) => {
-                    const v = handleDateInput(e.target.value);
-                    setForm(p => ({ ...p, dataEmissao: v, dataAssinatura: v }));
-                  }} placeholder="DD/MM/AAAA" maxLength={10} inputMode="numeric" required />
+                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <input
+                      style={{ ...inp, width: 60, textAlign: "center", letterSpacing: 2 }}
+                      value={form.dataEmissao?.split("/")[0] || ""}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/\D/g, "").slice(0, 2);
+                        const parts = (form.dataEmissao || "//").split("/");
+                        parts[0] = v;
+                        const full = parts.join("/");
+                        setForm(p => ({ ...p, dataEmissao: full, dataAssinatura: full }));
+                        if (v.length === 2) {
+                          const next = e.target.parentElement?.querySelectorAll("input")[1] as HTMLInputElement;
+                          next?.focus();
+                        }
+                      }}
+                      placeholder="DD" maxLength={2} inputMode="numeric"
+                    />
+                    <span style={{ fontSize: 18, fontWeight: 700, color: "#666" }}>/</span>
+                    <input
+                      style={{ ...inp, width: 60, textAlign: "center", letterSpacing: 2 }}
+                      value={form.dataEmissao?.split("/")[1] || ""}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/\D/g, "").slice(0, 2);
+                        const parts = (form.dataEmissao || "//").split("/");
+                        parts[1] = v;
+                        const full = parts.join("/");
+                        setForm(p => ({ ...p, dataEmissao: full, dataAssinatura: full }));
+                        if (v.length === 2) {
+                          const next = e.target.parentElement?.querySelectorAll("input")[2] as HTMLInputElement;
+                          next?.focus();
+                        }
+                      }}
+                      placeholder="MM" maxLength={2} inputMode="numeric"
+                    />
+                    <span style={{ fontSize: 18, fontWeight: 700, color: "#666" }}>/</span>
+                    <input
+                      style={{ ...inp, width: 80, textAlign: "center", letterSpacing: 2 }}
+                      value={form.dataEmissao?.split("/")[2] || ""}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/\D/g, "").slice(0, 4);
+                        const parts = (form.dataEmissao || "//").split("/");
+                        parts[2] = v;
+                        const full = parts.join("/");
+                        setForm(p => ({ ...p, dataEmissao: full, dataAssinatura: full }));
+                      }}
+                      placeholder="AAAA" maxLength={4} inputMode="numeric"
+                    />
+                  </div>
                   <p style={{ fontSize: 10, color: "#000", marginTop: 3 }}>
                     A data de assinatura reflete automaticamente a data de emissão.
                   </p>
