@@ -226,6 +226,7 @@ export default function AtestadoCria() {
   const [erroBusca, setErroBusca] = useState("");
   const [showResultados, setShowResultados] = useState(false);
   const [showEditar, setShowEditar] = useState(false);
+  const skipClearUnidade = React.useRef(false);
 
   // ── Formulário ─────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
@@ -314,12 +315,21 @@ export default function AtestadoCria() {
     setFiltroLocal("");
     // Preencher automaticamente instituicao como PREFEITURA DE {CIDADE}
     // unidade será preenchida ao selecionar o médico (local_trabalho)
-    setForm(p => ({
-      ...p,
-      instituicao: `PREFEITURA DE ${filtroCidade.toUpperCase()}`,
-      unidade: "", // Limpar unidade ao trocar cidade — será preenchida pelo médico selecionado
-      cidade: filtroCidade.toUpperCase(),
-    }));
+    if (skipClearUnidade.current) {
+      skipClearUnidade.current = false;
+      setForm(p => ({
+        ...p,
+        instituicao: `PREFEITURA DE ${filtroCidade.toUpperCase()}`,
+        cidade: filtroCidade.toUpperCase(),
+      }));
+    } else {
+      setForm(p => ({
+        ...p,
+        instituicao: `PREFEITURA DE ${filtroCidade.toUpperCase()}`,
+        unidade: "",
+        cidade: filtroCidade.toUpperCase(),
+      }));
+    }
   }, [filtroUF, filtroCidade]);
 
   // ── Busca de médicos ─────────────────────────────────────────────────────────────────────────────────────
@@ -448,6 +458,7 @@ export default function AtestadoCria() {
       enderecoEmitente: endFormatado,
       cidade: upa.cidade,
     }));
+    skipClearUnidade.current = true;
     setFiltroUF(upa.uf);
     setFiltroCidade(upa.cidade);
     setShowUpaResultados(false);
