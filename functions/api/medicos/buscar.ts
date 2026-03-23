@@ -1,5 +1,4 @@
 // /api/medicos/buscar — Busca principal de médicos
-// Filtra por locais conhecidos (Dr. Consulta, UPA, UBS, Hospitais, Clínicas, etc.)
 interface Env { DB: D1Database; }
 
 const FIELDS = "nome_medico,crm,uf_crm,especialidade,local_trabalho,cidade,uf_local,endereco,bairro";
@@ -10,28 +9,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type",
   "Content-Type": "application/json",
 };
-
-// Filtros de tipo de local
-const LOCAL_FILTERS: Record<string, string> = {
-  drconsulta: `(UPPER(local_trabalho) LIKE '%DR. CONSULTA%' OR UPPER(local_trabalho) LIKE '%DR CONSULTA%' OR UPPER(local_trabalho) LIKE '%DRCONSULTA%')`,
-  upa: `(UPPER(local_trabalho) LIKE '%UPA %' OR UPPER(local_trabalho) LIKE '%UPA-%' OR UPPER(local_trabalho) LIKE '%UNIDADE DE PRONTO ATENDIMENTO%')`,
-  ubs: `(UPPER(local_trabalho) LIKE '%UBS %' OR UPPER(local_trabalho) LIKE '%UNIDADE BASICA%' OR UPPER(local_trabalho) LIKE '%UNIDADE BÁSICA%')`,
-  hospital: `(UPPER(local_trabalho) LIKE '%HOSPITAL%' OR UPPER(local_trabalho) LIKE '%PRONTO SOCORRO%')`,
-  clinica: `(UPPER(local_trabalho) LIKE '%CLINICA%' OR UPPER(local_trabalho) LIKE '%CLÍNICA%' OR UPPER(local_trabalho) LIKE '%CONSULTORIO%' OR UPPER(local_trabalho) LIKE '%CONSULTÓRIO%')`,
-};
-
-const ALL_LOCALS_FILTER = `(
-  UPPER(local_trabalho) LIKE '%DR. CONSULTA%' OR UPPER(local_trabalho) LIKE '%DR CONSULTA%' OR UPPER(local_trabalho) LIKE '%DRCONSULTA%'
-  OR UPPER(local_trabalho) LIKE '%UPA %' OR UPPER(local_trabalho) LIKE '%UPA-%' OR UPPER(local_trabalho) LIKE '%UNIDADE DE PRONTO ATENDIMENTO%'
-  OR UPPER(local_trabalho) LIKE '%UBS %' OR UPPER(local_trabalho) LIKE '%UNIDADE BASICA%'
-  OR UPPER(local_trabalho) LIKE '%HOSPITAL%' OR UPPER(local_trabalho) LIKE '%PRONTO SOCORRO%'
-  OR UPPER(local_trabalho) LIKE '%CLINICA%' OR UPPER(local_trabalho) LIKE '%CLÍNICA%'
-  OR UPPER(local_trabalho) LIKE '%CONSULTORIO%' OR UPPER(local_trabalho) LIKE '%CONSULTÓRIO%'
-  OR UPPER(local_trabalho) LIKE '%AMBULATORIO%' OR UPPER(local_trabalho) LIKE '%AMBULATÓRIO%'
-  OR UPPER(local_trabalho) LIKE '%CENTRO DE SAUDE%' OR UPPER(local_trabalho) LIKE '%CENTRO DE SAÚDE%'
-  OR UPPER(local_trabalho) LIKE '%POSTO DE SAUDE%' OR UPPER(local_trabalho) LIKE '%POSTO DE SAÚDE%'
-  OR UPPER(local_trabalho) LIKE '%PREFEITURA%'
-)`;
 
 export const onRequest: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
@@ -44,7 +21,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const cidade  = url.searchParams.get("cidade");
     const bairro  = url.searchParams.get("bairro");
     const local   = url.searchParams.get("local");
-    const tipoLocal = url.searchParams.get("tipo_local")?.toLowerCase(); // "upa", "ubs", "hospital", "drconsulta", "clinica"
     const esp     = url.searchParams.get("especialidade") || url.searchParams.get("esp");
     const rawQ    = (url.searchParams.get("nome") || url.searchParams.get("q") || url.searchParams.get("termo") || "").trim();
     const termo   = rawQ.toUpperCase().replace(/[.\-]/g, "");
@@ -54,14 +30,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
     let sql = `SELECT ${FIELDS} FROM medicos_brasil WHERE uf_local = ?`;
     const binds: any[] = [uf];
-
-    // Filtro de tipo de local
-    if (tipoLocal && LOCAL_FILTERS[tipoLocal]) {
-      sql += ` AND ${LOCAL_FILTERS[tipoLocal]}`;
-    } else if (!local) {
-      // Sem tipo específico e sem local exato: usar filtro amplo
-      sql += ` AND ${ALL_LOCALS_FILTER}`;
-    }
 
     if (cidade) { sql += ` AND UPPER(cidade) = UPPER(?)`; binds.push(cidade); }
     if (bairro) { sql += ` AND UPPER(bairro) = UPPER(?)`; binds.push(bairro); }
@@ -74,9 +42,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       } else {
         sql += ` AND (UPPER(nome_medico) LIKE UPPER(?) OR crm LIKE ?)`; binds.push(`%${termo}%`, `%${termo}%`);
       }
+    } else if (!cidade) {
+      // Sem termo e sem cidade → retorna vazio para evitar listagem massiva
+      return new Response(JSON.stringify({ medicos: [] }), { headers: corsHeaders });
     }
 
     if (esp) { sql += ` AND UPPER(especialidade) LIKE UPPER(?)`; binds.push(`%${esp}%`); }
+
     // Priorizar UPA no topo, depois UBS, Hospital, Clínica, outros
     sql += ` ORDER BY
       CASE
