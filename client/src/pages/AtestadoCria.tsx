@@ -226,10 +226,6 @@ export default function AtestadoCria() {
   const [erroBusca, setErroBusca] = useState("");
   const [showResultados, setShowResultados] = useState(false);
   const [showEditar, setShowEditar] = useState(false);
-  const [cepEnabled, setCepEnabled] = useState(false);
-  const [cepValue, setCepValue] = useState("");
-  const [cepNumero, setCepNumero] = useState(""); // Número do endereço do paciente via CEP
-  const [cepLoading, setCepLoading] = useState(false);
 
   // ── Formulário ─────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
@@ -361,17 +357,7 @@ export default function AtestadoCria() {
       // unidade = local_trabalho do médico (UBS, UPA, Hospital, Clínica etc.)
       instituicao: cidadeMedico ? `PREFEITURA DE ${cidadeMedico}` : (p.instituicao || "CONSULTÓRIO MÉDICO"),
       unidade: localTrabalho || p.unidade,
-      enderecoEmitente: (() => {
-        // Formatar no padrão: LOGRADOURO - BAIRRO, CIDADE, UF
-        const partes: string[] = [];
-        if (m.endereco) partes.push(m.endereco.toUpperCase());
-        const resto: string[] = [];
-        if (m.bairro) resto.push(m.bairro.toUpperCase());
-        if (m.cidade) resto.push(m.cidade.toUpperCase());
-        if (m.uf_local) resto.push(m.uf_local.toUpperCase());
-        if (resto.length > 0) partes.push(resto.join(", "));
-        return partes.join(" - ");
-      })(),
+      enderecoEmitente: [m.endereco, m.bairro, m.cidade, m.uf_local].filter(Boolean).join(", ").toUpperCase(),
       cidade: cidadeMedico || p.cidade,
     }));
     setShowResultados(false);
@@ -865,15 +851,14 @@ export default function AtestadoCria() {
               )}
 
               {/* Editar Médico */}
-              <div style={{ marginTop: 10 }}>
-                <button
-                  type="button"
-                  style={{ cursor: "pointer", fontSize: 12, fontWeight: 700, color: "#005CA9", padding: "6px 0", background: "none", border: "none", display: "flex", alignItems: "center", gap: 4 }}
-                  onClick={(e) => { e.preventDefault(); setShowEditar(!showEditar); }}
+              <details open={showEditar} style={{ marginTop: 10 }}>
+                <summary
+                  style={{ cursor: "pointer", fontSize: 12, fontWeight: 700, color: "#005CA9", padding: "6px 0", listStyle: "none" }}
+                  onClick={() => setShowEditar(!showEditar)}
                 >
-                  ✏️ EDITAR MÉDICO / LOCAL / ASSINATURA {showEditar ? "▲" : "▼"}
-                </button>
-                {showEditar && <div style={{ paddingTop: 10, display: "grid", gap: 8 }}>
+                  ✏️ EDITAR MÉDICO / LOCAL / ASSINATURA
+                </summary>
+                <div style={{ paddingTop: 10, display: "grid", gap: 8 }}>
                   <p style={{ ...secTitle, fontSize: 10 }}>Dados do Local</p>
                   {/* Instituição: preenchida automaticamente como PREFEITURA DE {CIDADE} — não exibida no formulário */}
                   {/* Campo oculto — valor gerenciado pelo useEffect de filtroCidade e selecionarMedico */}
@@ -931,8 +916,8 @@ export default function AtestadoCria() {
                       )}
                     </div>
                   </div>
-                </div>}
-              </div>
+                </div>
+              </details>
             </div>
 
             {/* ── 2. Dados do Paciente ── */}
@@ -1002,75 +987,7 @@ export default function AtestadoCria() {
                 </div>
                 <div>
                   <label style={lbl}>Endereço do Paciente *</label>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                    <label style={{ fontSize: 11, color: "#555", display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }}>
-                      <input
-                        type="checkbox"
-                        checked={!!cepEnabled}
-                        onChange={(e) => setCepEnabled(e.target.checked)}
-                        style={{ width: 16, height: 16, accentColor: "#005CA9" }}
-                      />
-                      Preencher por CEP
-                    </label>
-                  </div>
-                  {cepEnabled && (
-                    <div style={{ display: "flex", gap: 6, marginBottom: 6, flexWrap: "wrap" as const }}>
-                      <input
-                        style={{ ...inp, width: 120, flex: "0 0 120px" }}
-                        value={cepValue}
-                        onChange={(e) => {
-                          const v = e.target.value.replace(/\D/g, "").slice(0, 8);
-                          setCepValue(v.length > 5 ? `${v.slice(0,5)}-${v.slice(5)}` : v);
-                        }}
-                        placeholder="00000-000"
-                        maxLength={9}
-                        inputMode="numeric"
-                      />
-                      <input
-                        style={{ ...inp, width: 80, flex: "0 0 80px" }}
-                        value={cepNumero}
-                        onChange={(e) => setCepNumero(e.target.value.toUpperCase())}
-                        placeholder="Nº"
-                        maxLength={10}
-                      />
-                      <button
-                        type="button"
-                        style={{ padding: "6px 12px", fontSize: 11, fontWeight: 700, background: "#005CA9", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", opacity: cepLoading ? 0.6 : 1, flex: "0 0 auto" }}
-                        disabled={cepLoading}
-                        onClick={async () => {
-                          const cepClean = cepValue.replace(/\D/g, "");
-                          if (cepClean.length !== 8) return;
-                          setCepLoading(true);
-                          try {
-                            const res = await fetch(`https://viacep.com.br/ws/${cepClean}/json/`);
-                            const data = await res.json();
-                            if (!data.erro) {
-                              // Formatar no padrão: LOGRADOURO, NUMERO - BAIRRO, CIDADE, UF
-                              const logradouro = data.logradouro?.toUpperCase() || "";
-                              const numero = cepNumero.trim() || "S/N";
-                              const bairroViaCep = data.bairro?.toUpperCase() || "";
-                              const cidadeViaCep = data.localidade?.toUpperCase() || "";
-                              const ufViaCep = data.uf?.toUpperCase() || "";
-                              const parteLogradouro = [logradouro, numero].filter(Boolean).join(", ");
-                              const parteLocalizacao = [bairroViaCep, cidadeViaCep, ufViaCep].filter(Boolean).join(", ");
-                              const endFormatado = [parteLogradouro, parteLocalizacao].filter(Boolean).join(" - ");
-                              setForm(p => ({ ...p, endereco: endFormatado, cidade: cidadeViaCep || p.cidade }));
-                              // Preencher UF e Cidade no painel de busca de médicos
-                              if (ufViaCep) {
-                                setFiltroUF(ufViaCep);
-                                if (cidadeViaCep) {
-                                  setTimeout(() => setFiltroCidade(cidadeViaCep), 600);
-                                }
-                              }
-                            }
-                          } catch {} finally { setCepLoading(false); }
-                        }}
-                      >
-                        {cepLoading ? "⏳ Buscando..." : "🔍 Buscar"}
-                      </button>
-                    </div>
-                  )}
-                  <input style={inp} value={form.endereco} onChange={(e) => setForm(p => ({ ...p, endereco: e.target.value }))} placeholder="RUA CRUZ DAS ALMAS, 290 - VILA CAMPESTRE, SAO PAULO, SP" required />
+                  <input style={inp} value={form.endereco} onChange={(e) => setForm(p => ({ ...p, endereco: e.target.value }))} placeholder="Rua, Número, Bairro, Cidade/UF" required />
                 </div>
               </div>
             </div>
@@ -1161,54 +1078,10 @@ export default function AtestadoCria() {
                 </div>
                 <div style={{ gridColumn: "1 / -1" }}>
                   <label style={lbl}>Data de Emissão *</label>
-                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <input
-                      style={{ ...inp, width: 60, textAlign: "center", letterSpacing: 2 }}
-                      value={form.dataEmissao?.split("/")[0] || ""}
-                      onChange={(e) => {
-                        const v = e.target.value.replace(/\D/g, "").slice(0, 2);
-                        const parts = (form.dataEmissao || "//").split("/");
-                        parts[0] = v;
-                        const full = parts.join("/");
-                        setForm(p => ({ ...p, dataEmissao: full, dataAssinatura: full }));
-                        if (v.length === 2) {
-                          const next = e.target.parentElement?.querySelectorAll("input")[1] as HTMLInputElement;
-                          next?.focus();
-                        }
-                      }}
-                      placeholder="DD" maxLength={2} inputMode="numeric"
-                    />
-                    <span style={{ fontSize: 18, fontWeight: 700, color: "#666" }}>/</span>
-                    <input
-                      style={{ ...inp, width: 60, textAlign: "center", letterSpacing: 2 }}
-                      value={form.dataEmissao?.split("/")[1] || ""}
-                      onChange={(e) => {
-                        const v = e.target.value.replace(/\D/g, "").slice(0, 2);
-                        const parts = (form.dataEmissao || "//").split("/");
-                        parts[1] = v;
-                        const full = parts.join("/");
-                        setForm(p => ({ ...p, dataEmissao: full, dataAssinatura: full }));
-                        if (v.length === 2) {
-                          const next = e.target.parentElement?.querySelectorAll("input")[2] as HTMLInputElement;
-                          next?.focus();
-                        }
-                      }}
-                      placeholder="MM" maxLength={2} inputMode="numeric"
-                    />
-                    <span style={{ fontSize: 18, fontWeight: 700, color: "#666" }}>/</span>
-                    <input
-                      style={{ ...inp, width: 80, textAlign: "center", letterSpacing: 2 }}
-                      value={form.dataEmissao?.split("/")[2] || ""}
-                      onChange={(e) => {
-                        const v = e.target.value.replace(/\D/g, "").slice(0, 4);
-                        const parts = (form.dataEmissao || "//").split("/");
-                        parts[2] = v;
-                        const full = parts.join("/");
-                        setForm(p => ({ ...p, dataEmissao: full, dataAssinatura: full }));
-                      }}
-                      placeholder="AAAA" maxLength={4} inputMode="numeric"
-                    />
-                  </div>
+                  <input style={inp} value={form.dataEmissao} onChange={(e) => {
+                    const v = handleDateInput(e.target.value);
+                    setForm(p => ({ ...p, dataEmissao: v, dataAssinatura: v }));
+                  }} placeholder="DD/MM/AAAA" maxLength={10} inputMode="numeric" required />
                   <p style={{ fontSize: 10, color: "#000", marginTop: 3 }}>
                     A data de assinatura reflete automaticamente a data de emissão.
                   </p>
