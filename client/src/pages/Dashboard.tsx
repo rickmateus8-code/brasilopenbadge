@@ -16,6 +16,7 @@ const quickActions = [
   { icon: Car, label: "Nova CNH", desc: "Emitir CNH digital", path: "/cnhcria", color: "amber" },
   { icon: Anchor, label: "Nova CHA", desc: "Emitir CHA náutica", path: "/chacria", color: "cyan" },
   { icon: FlaskConical, label: "Novo Toxicológico", desc: "Emitir exame toxicológico", path: "/toxicologicocria", color: "purple" },
+  { icon: FlaskConical, label: "Laudo Toxicológico Sodré", desc: "Emitir laudo toxicológico Sodré", path: "/toxicria", color: "emerald" },
   { icon: GraduationCap, label: "Histórico SP", desc: "Emitir histórico escolar SP", path: "/historico-sp", color: "green" },
   { icon: GraduationCap, label: "Histórico UNINTER", desc: "Emitir histórico UNINTER", path: "/historico-uninter", color: "indigo" },
   { icon: Pill, label: "Dr. Consulta", desc: "Emitir receituário médico", path: "/receitacria", color: "violet" },
@@ -37,6 +38,7 @@ const HISTORY_TABS = [
   { key: "cnh", label: "CNH", icon: Car, color: "amber" },
   { key: "cha", label: "CHA", icon: Anchor, color: "cyan" },
   { key: "toxicologico", label: "Toxicológico", icon: FlaskConical, color: "purple" },
+  { key: "toxicria", label: "Laudo Sodré", icon: FlaskConical, color: "emerald" },
   { key: "historico-sp", label: "Histórico SP", icon: GraduationCap, color: "green" },
   { key: "historico-uninter", label: "UNINTER", icon: GraduationCap, color: "indigo" },
   { key: "receita", label: "Receitas", icon: Pill, color: "violet" },
@@ -190,7 +192,7 @@ export default function Dashboard() {
     try {
       let endpoint = `/api/attestations/${id}`;
       if (activeTab === "receita") endpoint = `/api/receitas/${id}`;
-      else if (["cnh", "cha", "toxicologico", "historico-sp", "historico-uninter"].includes(activeTab)) endpoint = `/api/documents/${id}`;
+      else if (["cnh", "cha", "toxicologico", "toxicria", "historico-sp", "historico-uninter"].includes(activeTab)) endpoint = `/api/documents/${id}`;
       const res = await fetch(endpoint, { method: "DELETE", credentials: "include" });
       if (res.ok) {
         setHistory(prev => prev.filter(d => d.id !== id));

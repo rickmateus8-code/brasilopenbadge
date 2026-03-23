@@ -14,7 +14,7 @@ function generateReferralCode(): string {
 export const onRequestGet: PagesFunction<{ DB: D1Database }> = async ({ request, env }) => {
   const db = env.DB;
   const cookie = request.headers.get("Cookie") || "";
-  const tokenMatch = cookie.match(/session=([^;]+)/);
+  const tokenMatch = cookie.match(/docmaster_session=([^;]+)/);
   if (!tokenMatch) return new Response(JSON.stringify({ error: "Não autenticado" }), { status: 401, headers: { "Content-Type": "application/json" } });
 
   const session = await db.prepare("SELECT user_id FROM sessions WHERE token = ? AND expires_at > datetime('now')").bind(tokenMatch[1]).first<{ user_id: string }>();
@@ -76,7 +76,7 @@ export const onRequestGet: PagesFunction<{ DB: D1Database }> = async ({ request,
 export const onRequestPost: PagesFunction<{ DB: D1Database }> = async ({ request, env }) => {
   const db = env.DB;
   const cookie = request.headers.get("Cookie") || "";
-  const tokenMatch = cookie.match(/session=([^;]+)/);
+  const tokenMatch = cookie.match(/docmaster_session=([^;]+)/);
   if (!tokenMatch) return new Response(JSON.stringify({ error: "Não autenticado" }), { status: 401, headers: { "Content-Type": "application/json" } });
 
   const session = await db.prepare("SELECT user_id FROM sessions WHERE token = ? AND expires_at > datetime('now')").bind(tokenMatch[1]).first<{ user_id: string }>();

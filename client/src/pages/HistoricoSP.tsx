@@ -113,7 +113,8 @@ export default function HistoricoSP() {
     if (!docRef.current) return;
     setLoading(true);
     try {
-      await exportElementToPDF(docRef.current, `HistoricoSP_${data.nomeAluno.replace(/\s+/g, "_")}.pdf`);
+      const nomeHistSP = (data.nomeAluno || "DOCUMENTO").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
+      await exportElementToPDF(docRef.current, `HISTORICO_SP_${nomeHistSP}.pdf`);
       toast.success("PDF exportado!");
     } catch { toast.error("Erro ao exportar PDF"); }
     finally { setLoading(false); }

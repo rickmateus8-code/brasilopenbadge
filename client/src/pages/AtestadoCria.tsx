@@ -4,6 +4,7 @@ import AttestationDocument from "@/components/AttestationDocument";
 import type { AttestationData } from "@/data/attestations";
 import { exportElementToPDF, generatePDFFilename } from "@/lib/pdfExport";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { validarCPF } from "@/lib/utils";
 
 // ─── API de Médicos (Cloudflare D1 — banco unificado) ─────────────────────────
@@ -189,6 +190,8 @@ interface MedicoDB {
 // ─── Componente ────────────────────────────────────────────────────────────────
 export default function AtestadoCria() {
   const { user, updateBalance } = useAuth();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [, navigate] = useLocation();
   const previewRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -395,61 +398,131 @@ export default function AtestadoCria() {
   const processarImportacao = () => {
     if (!importTexto.trim()) return;
     const mapa: Record<string, string> = {
+      // Paciente
       "nome completo": "paciente",
       "nome": "paciente",
+      // Documento
       "cpf": "docValue",
       "cns": "docValue",
       "numero do doc": "docValue",
+      "numero do documento": "docValue",
+      "tipo de doc": "_tipoDoc",  // campo especial para definir tipoDoc
+      // Nascimento
       "nascimento": "nascimento",
       "data de nascimento": "nascimento",
+      "data nascimento": "nascimento",
+      // Sexo
       "sexo": "sexo",
+      // Mãe
       "nome da mae": "nomeMae",
       "mae": "nomeMae",
+      "nome mae": "nomeMae",
+      // Endereço
       "endereco do paciente": "endereco",
       "endereco": "endereco",
+      // CID
       "cid": "cid",
+      "codigo da doenca": "cid",
+      // Cidade
+      "cidade de emissao": "cidade",
+      "cidade": "cidade",
+      // Data e hora
       "data do atestado": "dataAssinatura",
       "data": "dataAssinatura",
+      "horario do atendimento": "horaAssinatura",
       "horario": "horaAssinatura",
       "hora": "horaAssinatura",
     };
     const normalize = (s: string) =>
       s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
     const updates: Partial<typeof form> = {};
+    let tipoDocDetectado: "CPF" | "CNS" | null = null;
+
+    // Primeiro passo: detectar tipo de documento
     importTexto.split("\n").forEach((linha) => {
-      const idx = linha.lastIndexOf(":");
+      const idx = linha.indexOf(":");
       if (idx === -1) return;
       const chave = normalize(linha.substring(0, idx));
       const valor = linha.substring(idx + 1).trim().toUpperCase();
       if (!valor) return;
+      if (chave.includes("tipo de doc") || chave.includes("tipo doc")) {
+        tipoDocDetectado = valor.includes("CNS") ? "CNS" : "CPF";
+        setTipoDoc(tipoDocDetectado);
+      }
+    });
+
+    // Segundo passo: processar todos os campos
+    importTexto.split("\n").forEach((linha) => {
+      // Usar indexOf para pegar o PRIMEIRO ":", não o último (evita problemas com horas 10:30)
+      const idx = linha.indexOf(":");
+      if (idx === -1) return;
+      const chave = normalize(linha.substring(0, idx));
+      const valor = linha.substring(idx + 1).trim().toUpperCase();
+      if (!valor) return;
+      // Ignorar campo _tipoDoc (já processado)
+      if (chave.includes("tipo de doc") || chave.includes("tipo doc")) return;
+
       for (const label in mapa) {
-        if (chave.includes(label)) {
+        const labelNorm = normalize(label);
+        if (chave.includes(labelNorm)) {
           const field = mapa[label] as keyof typeof form;
+          if (field === "_tipoDoc") continue;
           if (field === "sexo") {
             (updates as any)[field] = valor.startsWith("M") ? "MALE" : "FEMALE";
           } else if (field === "nascimento" || field === "dataAssinatura") {
             const d = valor.replace(/\D/g, "");
             (updates as any)[field] = d.length === 8 ? `${d.slice(0,2)}/${d.slice(2,4)}/${d.slice(4,8)}` : valor;
+          } else if (field === "horaAssinatura") {
+            // Para hora, pegar tudo após o primeiro ":" incluindo o segundo ":"
+            const fullValue = linha.substring(idx + 1).trim().toUpperCase();
+            (updates as any)[field] = fullValue;
           } else if (field === "docValue") {
-            const isCNS = valor.replace(/\D/g, "").length > 11;
-            if (isCNS) { setTipoDoc("CNS"); (updates as any)[field] = maskCNS(valor); }
-            else { setTipoDoc("CPF"); (updates as any)[field] = maskCPF(valor); }
+            const numeros = valor.replace(/\D/g, "");
+            const isCNS = numeros.length > 11;
+            if (tipoDocDetectado) {
+              // Usar tipo detectado na primeira passagem
+              if (tipoDocDetectado === "CNS") { (updates as any)[field] = maskCNS(valor); }
+              else { (updates as any)[field] = maskCPF(valor); }
+            } else {
+              if (isCNS) { setTipoDoc("CNS"); (updates as any)[field] = maskCNS(valor); }
+              else { setTipoDoc("CPF"); (updates as any)[field] = maskCPF(valor); }
+            }
+          } else if (field === "cidade") {
+            const cidadeVal = valor;
+            (updates as any)[field] = cidadeVal;
+            // Também atualizar instituicao automaticamente
+            if (cidadeVal && !(updates as any).instituicao) {
+              (updates as any).instituicao = `PREFEITURA DE ${cidadeVal}`;
+            }
+          } else if (field === "cid") {
+            // CID: pegar apenas o código (ex: "J06" de "J06 - Infecção das vias aéreas")
+            const cidMatch = valor.match(/^([A-Z]\d{2}\.?\d*)/);
+            (updates as any)[field] = cidMatch ? cidMatch[1] : valor;
+            (updates as any).cidDisplay = valor;
           } else {
             (updates as any)[field] = valor;
           }
+          break; // Parar no primeiro match para evitar duplicatas
         }
       }
     });
     setForm((p) => ({ ...p, ...updates }));
     setImportTexto("");
     setShowImport(false);
+    // Feedback visual
+    const camposPreenchidos = Object.keys(updates).filter(k => !k.startsWith('_')).length;
+    if (camposPreenchidos > 0) {
+      alert(`✅ ${camposPreenchidos} campo(s) importado(s) com sucesso!`);
+    } else {
+      alert('⚠️ Nenhum campo reconhecido. Verifique o formato dos dados colados.');
+    }
   };
 
   // ── Download PDF ────────────────────────────────────────────────────────────
   const handleDownloadPdf = async () => {
     if (!previewRef.current) return;
     try {
-      const filename = generatePDFFilename(form.paciente || "ATESTADO", "EMITIDO");
+      const filename = generatePDFFilename(form.paciente || "ATESTADO", "atestado");
       await exportElementToPDF(previewRef.current, { filename, scale: 2, quality: 0.92 });
     } catch (err) {
       alert(`Erro ao gerar PDF: ${err instanceof Error ? err.message : "Erro desconhecido"}`);
@@ -571,19 +644,20 @@ export default function AtestadoCria() {
 
   // ── Estilos ─────────────────────────────────────────────────────────────────
   const card: React.CSSProperties = {
-    background: "#fff",
+    background: isDark ? "#1e293b" : "#fff",
     borderRadius: 10,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+    boxShadow: isDark ? "0 2px 8px rgba(0,0,0,0.3)" : "0 2px 8px rgba(0,0,0,0.08)",
     padding: "14px 16px",
     marginBottom: 12,
+    border: isDark ? "1px solid #334155" : "none",
   };
   const secTitle: React.CSSProperties = {
     fontSize: 11,
     fontWeight: 700,
     textTransform: "uppercase" as const,
     letterSpacing: 1,
-    color: "#005CA9",
-    borderBottom: "2px solid #005CA9",
+    color: isDark ? "#60a5fa" : "#005CA9",
+    borderBottom: isDark ? "2px solid #3b82f6" : "2px solid #005CA9",
     paddingBottom: 5,
     marginBottom: 10,
   };
@@ -591,21 +665,22 @@ export default function AtestadoCria() {
     display: "block",
     fontSize: 11,
     fontWeight: 600,
-    color: "#000",
+    color: isDark ? "#cbd5e1" : "#000",
     marginBottom: 3,
   };
   const inp: React.CSSProperties = {
     width: "100%",
     padding: "6px 10px",
-    border: "1px solid #d1d5db",
+    border: isDark ? "1px solid #475569" : "1px solid #d1d5db",
     borderRadius: 6,
     fontSize: 13,
     outline: "none",
     boxSizing: "border-box" as const,
     fontFamily: "inherit",
-    color: "#000",
+    color: isDark ? "#e2e8f0" : "#000",
+    background: isDark ? "#0f172a" : "#fff",
   };
-  const sel: React.CSSProperties = { ...inp, background: "#fff" };
+  const sel: React.CSSProperties = { ...inp, background: isDark ? "#0f172a" : "#fff" };
   const btnBlue: React.CSSProperties = {
     background: "#005CA9",
     color: "#fff",
@@ -628,9 +703,9 @@ export default function AtestadoCria() {
     cursor: "pointer",
   };
   const btnGray: React.CSSProperties = {
-    background: "#e2e8f0",
-    color: "#000",
-    border: "1px solid #cbd5e1",
+    background: isDark ? "#334155" : "#e2e8f0",
+    color: isDark ? "#e2e8f0" : "#000",
+    border: isDark ? "1px solid #475569" : "1px solid #cbd5e1",
     borderRadius: 7,
     padding: "8px 16px",
     fontWeight: 700,
@@ -640,7 +715,7 @@ export default function AtestadoCria() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div style={{ minHeight: "100vh", background: "#f1f5f9", fontFamily: "Roboto, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: isDark ? "#0f172a" : "#f1f5f9", fontFamily: "Roboto, sans-serif", color: isDark ? "#e2e8f0" : "#1e293b" }}>
 
       {/* ── Modal de Sucesso ── */}
       {showSuccessModal && (
@@ -650,9 +725,10 @@ export default function AtestadoCria() {
           zIndex: 9999,
         }}>
           <div style={{
-            background: "#fff", borderRadius: 16, padding: "40px 48px",
+            background: isDark ? "#1e293b" : "#fff", borderRadius: 16, padding: "40px 48px",
             textAlign: "center", maxWidth: 440, width: "90%",
             boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+            color: isDark ? "#e2e8f0" : "#1e293b",
           }}>
             <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#dcfce7", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
@@ -669,7 +745,7 @@ export default function AtestadoCria() {
                     setIsDownloadingPdf(true);
                     try {
                       await new Promise(r => setTimeout(r, 300));
-                      const filename = generatePDFFilename(form.paciente || "ATESTADO", "EMITIDO");
+                      const filename = generatePDFFilename(form.paciente || "ATESTADO", "atestado");
                       await exportElementToPDF(previewRef.current, { filename, scale: 2, quality: 0.92 });
                     } catch {}
                     setIsDownloadingPdf(false);
@@ -682,18 +758,17 @@ export default function AtestadoCria() {
                 style={{ ...btnBlue, width: "100%", padding: "12px 0", fontSize: 13, fontWeight: 600 }}
                 onClick={() => {
                   setShowSuccessModal(false);
-                  navigate("/dashboard");
-                  setTimeout(() => {
-                    const el = document.getElementById("historico-atestados");
-                    if (el) el.scrollIntoView({ behavior: "smooth" });
-                  }, 300);
+                  navigate("/atestadosalvos");
                 }}
               >
                 IR PARA HISTÓRICO DE ATESTADOS
               </button>
               <button
                 style={{ ...btnGray, width: "100%", padding: "10px 0", fontSize: 12 }}
-                onClick={() => setShowSuccessModal(false)}
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  navigate("/atestadosalvos");
+                }}
               >
                 FECHAR
               </button>

@@ -55,22 +55,22 @@ Local de Emissão:`;
 const jsonFrente = {
   width: 1600, height: 952,
   fields: [
-    { label: "NOME", x: 140, y: 420, w: 815, h: 54, size: 32 },
-    { label: "INSCRICAO", x: 590, y: 800, w: 386, h: 59, size: 37 },
-    { label: "CPF", x: 590, y: 550, w: 401, h: 61, size: 37 },
-    { label: "VALIDADE", x: 140, y: 800, w: 376, h: 64, size: 37 },
-    { label: "NASCIMENTO", x: 140, y: 550, w: 376, h: 56, size: 37 },
-    { label: "CATEGORIA", x: 140, y: 680, w: 850, h: 71, size: 35 },
-    { label: "FOTO", x: 1043, y: 456, w: 442, h: 433 },
+    { label: "NOME", x: 55, y: 272, w: 920, h: 58, size: 32 },
+    { label: "NASCIMENTO", x: 55, y: 382, w: 320, h: 58, size: 32 },
+    { label: "CPF", x: 445, y: 382, w: 530, h: 58, size: 32 },
+    { label: "CATEGORIA", x: 55, y: 492, w: 920, h: 58, size: 32 },
+    { label: "VALIDADE", x: 55, y: 602, w: 320, h: 58, size: 32 },
+    { label: "INSCRICAO", x: 445, y: 602, w: 530, h: 58, size: 32 },
+    { label: "FOTO", x: 1025, y: 250, w: 530, h: 420 },
   ],
 };
 const jsonVerso = {
   width: 1600, height: 952,
   fields: [
-    { label: "LIMITES DA NAVEGAÇÃO", x: 140, y: 90, w: 1070, h: 98, size: 37 },
-    { label: "REQUISITOS", x: 140, y: 268, w: 1071, h: 96, size: 37 },
-    { label: "ORGÃO DE EMISSÃO", x: 140, y: 450, w: 671, h: 58, size: 37 },
-    { label: "DATA DE EMISSAO", x: 1020, y: 450, w: 374, h: 60, size: 37 },
+    { label: "LIMITES DA NAVEGAÇÃO", x: 55, y: 52, w: 1140, h: 148, size: 30 },
+    { label: "REQUISITOS", x: 55, y: 242, w: 1140, h: 148, size: 30 },
+    { label: "ORGÃO DE EMISSÃO", x: 55, y: 432, w: 660, h: 58, size: 32 },
+    { label: "DATA DE EMISSAO", x: 785, y: 432, w: 410, h: 58, size: 32 },
   ],
 };
 
@@ -341,14 +341,16 @@ export default function CHACria() {
       const cv = canvasVersoRef.current;
       if (cf) {
         const link = document.createElement("a");
-        link.download = `CHA_${form.nome.replace(/\s+/g, "_") || "DOCUMENTO"}_FRENTE.png`;
+        const nomeCHA = (form.nome || "DOCUMENTO").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
+        link.download = `CHA_NAUTICA_${nomeCHA}_FRENTE.png`;
         link.href = cf.toDataURL("image/png");
         link.click();
       }
       if (cv) {
         await new Promise(r => setTimeout(r, 500));
         const link = document.createElement("a");
-        link.download = `CHA_${form.nome.replace(/\s+/g, "_") || "DOCUMENTO"}_VERSO.png`;
+        const nomeCHAVerso = (form.nome || "DOCUMENTO").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
+        link.download = `CHA_NAUTICA_${nomeCHAVerso}_VERSO.png`;
         link.href = cv.toDataURL("image/png");
         link.click();
       }

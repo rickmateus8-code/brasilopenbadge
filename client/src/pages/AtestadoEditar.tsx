@@ -446,18 +446,13 @@ export default function AtestadoEditar() {
         </div>
       )}
 
-      {/* Aviso CPF bloqueado */}
-      <div style={{ background: "#fef3c7", color: "#92400e", padding: "8px 20px", fontSize: 12, textAlign: "center", borderBottom: "1px solid #fbbf24" }}>
-        <strong>Segurança:</strong> O CPF do paciente não pode ser alterado após a emissão do documento.
-      </div>
-
       <div style={{ display: "flex", gap: 16, padding: 16, maxWidth: 1400, margin: "0 auto" }}>
         {/* ── Formulário (esquerda) ── */}
         <div style={{ flex: "0 0 420px", maxHeight: "calc(100vh - 120px)", overflowY: "auto" }}>
 
           {/* CPF - Bloqueado se já preenchido, editável se vazio */}
           <div style={card}>
-            <div style={secTitle}>{cpfEditable ? "CPF do Paciente (Preencher)" : "CPF do Paciente (Bloqueado)"}</div>
+            <div style={secTitle}>{cpfEditable ? "CPF do Paciente (Preencher)" : `CPF ${cpfOriginal}`}</div>
             {cpfEditable ? (
               <>
                 <input
@@ -483,9 +478,7 @@ export default function AtestadoEditar() {
                   </svg>
                   {cpfOriginal}
                 </div>
-                <p style={{ fontSize: 10, color: "#9ca3af", marginTop: 4 }}>
-                  Por segurança, o CPF é bloqueado após emissão e não pode ser editado.
-                </p>
+
               </>
             )}
           </div>

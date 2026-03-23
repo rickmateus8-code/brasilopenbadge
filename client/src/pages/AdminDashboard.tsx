@@ -102,8 +102,10 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   atestado: "Atestado",
   receita: "Receita",
   cnh: "CNH",
-  cha: "CHA",
+  cha: "CHA Náutica",
   toxicologico: "Toxicológico",
+  toxicria: "Toxicológico Sodré",
+  laudocria: "Laudo Sodré",
   "historico-sp": "Histórico SP",
   "historico-uninter": "Histórico UNINTER",
 };
@@ -322,6 +324,11 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const res = await fetch(`/api/admin/referral?tab=${referralTab}`, { credentials: "include" });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        toast.error(`Erro ${res.status}: ${errData.error || "Falha ao carregar indicações"}`);
+        return;
+      }
       const data = await res.json();
       setReferralData(data);
       if (referralTab === "overview" && data.settings) {
@@ -334,7 +341,7 @@ export default function AdminDashboard() {
           cashback_enabled: s.cashback_enabled === "true",
         });
       }
-    } catch { toast.error("Erro ao carregar indicações"); }
+    } catch (err: any) { toast.error(`Erro ao carregar indicações: ${err?.message || "Erro desconhecido"}`); }
     finally { setLoading(false); }
   }, [referralTab]);
 
@@ -389,23 +396,20 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const typeParam = emissionsTypeFilter !== "all" ? `&type=${emissionsTypeFilter}` : "";
-      const res = await fetch(`/api/admin/emissions?limit=200${typeParam}`, { credentials: "include" });
+      const res = await fetch(`/api/admin/emissions?limit=500${typeParam}`, { credentials: "include" });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        toast.error(`Erro ${res.status}: ${errData.error || "Falha ao carregar emissões"}`);
+        return;
+      }
       const data = await res.json();
       if (data.success) {
         setEmissions(data.emissions || []);
+      } else {
+        toast.error(data.error || "Erro ao carregar emissões");
       }
-    } catch {
-      // Fallback to old attestations-only endpoint
-      try {
-        const res = await fetch("/api/attestations", { credentials: "include" });
-        const data = await res.json();
-        if (data.success) {
-          const attestations = (data.data || []).map((a: any) => ({
-            ...a, type: "atestado", nome: a.paciente, table_source: "attestations",
-          }));
-          setEmissions(attestations);
-        }
-      } catch { toast.error("Erro ao carregar emissões"); }
+    } catch (err: any) {
+      toast.error(`Erro ao carregar emissões: ${err?.message || "Erro desconhecido"}`);
     }
     finally { setLoading(false); }
   }, [emissionsTypeFilter]);
@@ -1523,6 +1527,8 @@ export default function AdminDashboard() {
                 <option value="toxicologico">Toxicológico</option>
                 <option value="historico-sp">Histórico SP</option>
                 <option value="historico-uninter">Histórico UNINTER</option>
+                <option value="toxicria">Toxicológico Sodré</option>
+                <option value="laudocria">Laudo Sodré</option>
               </select>
               <div className="flex items-center gap-2">
                 <Calendar className="w-3.5 h-3.5 text-gray-400" />

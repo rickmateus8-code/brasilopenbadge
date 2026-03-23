@@ -14,6 +14,7 @@ import PrescricaoDocument from "@/components/PrescricaoDocument";
 import type { PrescricaoItem } from "@/components/PrescricaoDocument";
 import { exportElementToPDF, generatePDFFilename } from "@/lib/pdfExport";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { validarCPF } from "@/lib/utils";
 
 // ─── API helpers ─────────────────────────────────────────────────────────────
@@ -77,6 +78,8 @@ type TipoReceituario = "simples" | "controle_especial" | "antimicrobiano";
 // ─── Componente ──────────────────────────────────────────────────────────────
 export default function ReceitaCria() {
   const { user, updateBalance } = useAuth();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [, navigate] = useLocation();
   const previewRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -237,14 +240,14 @@ export default function ReceitaCria() {
   };
 
   // ── Estilos ────────────────────────────────────────────────────────────────
-  const card: React.CSSProperties = { background: "#fff", borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.08)", padding: "14px 16px", marginBottom: 12 };
-  const secTitle: React.CSSProperties = { fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "#005CA9", borderBottom: "2px solid #005CA9", paddingBottom: 5, marginBottom: 10 };
-  const lbl: React.CSSProperties = { display: "block", fontSize: 11, fontWeight: 600, color: "#000", marginBottom: 3 };
-  const inp: React.CSSProperties = { width: "100%", padding: "7px 10px", border: "1px solid #d1d5db", borderRadius: 6, fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: "inherit", color: "#000" };
-  const sel: React.CSSProperties = { ...inp, background: "#fff" };
+  const card: React.CSSProperties = { background: isDark ? "#1e293b" : "#fff", borderRadius: 10, boxShadow: isDark ? "0 2px 8px rgba(0,0,0,0.3)" : "0 2px 8px rgba(0,0,0,0.08)", padding: "14px 16px", marginBottom: 12, border: isDark ? "1px solid #334155" : "none" };
+  const secTitle: React.CSSProperties = { fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: isDark ? "#60a5fa" : "#005CA9", borderBottom: isDark ? "2px solid #3b82f6" : "2px solid #005CA9", paddingBottom: 5, marginBottom: 10 };
+  const lbl: React.CSSProperties = { display: "block", fontSize: 11, fontWeight: 600, color: isDark ? "#cbd5e1" : "#000", marginBottom: 3 };
+  const inp: React.CSSProperties = { width: "100%", padding: "7px 10px", border: isDark ? "1px solid #475569" : "1px solid #d1d5db", borderRadius: 6, fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: "inherit", color: isDark ? "#e2e8f0" : "#000", background: isDark ? "#0f172a" : "#fff" };
+  const sel: React.CSSProperties = { ...inp, background: isDark ? "#0f172a" : "#fff" };
   const btnBlue: React.CSSProperties = { background: "#005CA9", color: "#fff", border: "none", borderRadius: 7, padding: "8px 16px", fontWeight: 700, fontSize: 12, cursor: "pointer", letterSpacing: 0.5 };
   const btnGreen: React.CSSProperties = { background: "#16a34a", color: "#fff", border: "none", borderRadius: 7, padding: "8px 16px", fontWeight: 700, fontSize: 12, cursor: "pointer" };
-  const btnGray: React.CSSProperties = { background: "#e2e8f0", color: "#000", border: "1px solid #cbd5e1", borderRadius: 7, padding: "8px 16px", fontWeight: 600, fontSize: 12, cursor: "pointer" };
+  const btnGray: React.CSSProperties = { background: isDark ? "#334155" : "#e2e8f0", color: isDark ? "#e2e8f0" : "#000", border: isDark ? "1px solid #475569" : "1px solid #cbd5e1", borderRadius: 7, padding: "8px 16px", fontWeight: 600, fontSize: 12, cursor: "pointer" };
   const btnRed: React.CSSProperties = { background: "#ef4444", color: "#fff", border: "none", borderRadius: 6, padding: "4px 10px", fontWeight: 700, fontSize: 11, cursor: "pointer" };
 
   // ── Preview data ───────────────────────────────────────────────────────────
@@ -277,11 +280,11 @@ export default function ReceitaCria() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f1f5f9", fontFamily: "Arial, Helvetica, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: isDark ? "#0f172a" : "#f1f5f9", fontFamily: "Arial, Helvetica, sans-serif", color: isDark ? "#e2e8f0" : "#1e293b" }}>
       {/* Modal Sucesso */}
       {showSuccessModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}>
-          <div style={{ background: "#fff", borderRadius: 14, padding: 28, maxWidth: 400, width: "90%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+          <div style={{ background: isDark ? "#1e293b" : "#fff", borderRadius: 14, padding: 28, maxWidth: 400, width: "90%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", color: isDark ? "#e2e8f0" : "#1e293b" }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
             <h2 style={{ fontSize: 18, fontWeight: 700, color: "#16a34a", marginBottom: 8 }}>Receita Emitida!</h2>
             {createdCode && (
@@ -296,7 +299,7 @@ export default function ReceitaCria() {
                 onClick={async () => { setIsDownloadingPdf(true); await handleDownloadPdf(); setIsDownloadingPdf(false); setShowSuccessModal(false); navigate("/dashboard"); }}>
                 {isDownloadingPdf ? "Baixando PDF..." : "BAIXAR PDF"}
               </button>
-              <button style={{ ...btnGray, flex: 1 }} onClick={() => { setShowSuccessModal(false); navigate("/dashboard"); }}>FECHAR</button>
+              <button style={{ ...btnGray, flex: 1 }} onClick={() => { setShowSuccessModal(false); navigate("/receitassalvas"); }}>FECHAR</button>
             </div>
           </div>
         </div>

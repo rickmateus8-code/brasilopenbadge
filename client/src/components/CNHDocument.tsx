@@ -148,7 +148,8 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       const pdf = new jsPDF({ orientation, unit: "mm", format: [wMm, hMm] });
       const imgData = cvs.toDataURL("image/jpeg", 0.95);
       pdf.addImage(imgData, "JPEG", 0, 0, wMm, hMm);
-      pdf.save(`CNH_${(props as any).nome?.replace(/\s+/g, "_") || "DOCUMENTO"}_${Date.now()}.pdf`);
+      const nomeFormatado = ((props as any).nome || "DOCUMENTO").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
+      pdf.save(`CNH_${nomeFormatado}.pdf`);
     },
     getCanvas: () => canvasRef.current,
     exportCropBlob: async (x: number, y: number, w: number, h: number) => {

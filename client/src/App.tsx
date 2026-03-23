@@ -16,6 +16,8 @@ import Validation from "./pages/Validation";
 import CNHCria from "./pages/CNHCria";
 import CHACria from "./pages/CHACria";
 import ToxicologicoCria from "./pages/ToxicologicoCria";
+import ToxicriaCria from "./pages/ToxicriaCria";
+import ToxicriaSalvos from "./pages/ToxicriaSalvos";
 import HistoricoSP from "./pages/HistoricoSP";
 import HistoricoUNINTER from "./pages/HistoricoUNINTER";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -130,6 +132,11 @@ function DocMasterRouter() {
 
       <Route path="/toxicologico" component={ToxicologicoCria} />
       <Route path="/toxicologicosalvos" component={ToxicologicoSalvos} />
+
+      {/* Toxicria - Laudo Toxicológico Sodré */}
+      <Route path="/toxicria" component={ToxicriaCria} />
+      <Route path="/toxicriasalvos" component={ToxicriaSalvos} />
+      <Route path="/toxicriaCria" component={ToxicriaCria} />
 
       {/* Rotas legacy */}
       <Route path="/atestadocria" component={AtestadoCria} />

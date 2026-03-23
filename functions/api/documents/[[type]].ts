@@ -35,6 +35,7 @@ const DOCUMENT_PRICES: Record<string, number> = {
   'cnh': 500,
   'cha': 500,
   'toxicologico': 500,
+  'toxicria': 500,
   'historico-sp': 500,
   'historico-uninter': 500,
 };

@@ -100,7 +100,8 @@ export default function ToxicologicoCria() {
     if (!docRef.current) return;
     setLoading(true);
     try {
-      await exportElementToPDF(docRef.current, `Toxicologico_${data.nome.replace(/\s+/g, "_")}.pdf`);
+      const nomeTox = (data.nome || "DOCUMENTO").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
+      await exportElementToPDF(docRef.current, `TOXICOLOGICO_${nomeTox}.pdf`);
       toast.success("PDF exportado!");
     } catch { toast.error("Erro ao exportar PDF"); }
     finally { setLoading(false); }

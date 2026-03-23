@@ -223,24 +223,23 @@ export default function CNHCria() {
     }
     setIsApplyingAI(true);
     try {
-      const res = await fetch("https://cnh-digital.manus.space/api/trpc/cnh.applyBiometricAI", {
+      const res = await fetch("/api/cnh-ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          json: { imageBase64: data.fotoUrl }
-        }),
+        body: JSON.stringify({ imageBase64: data.fotoUrl }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const result = await res.json();
-      if (result?.result?.data?.json?.success && result?.result?.data?.json?.imageUrl) {
-        setData(d => ({ ...d, fotoUrl: result.result.data.json.imageUrl }));
-        toast.success("Ajustes visuais aplicados com sucesso! Foto biométrica gerada.");
+      if (result?.success && result?.imageUrl) {
+        setData(d => ({ ...d, fotoUrl: result.imageUrl }));
+        toast.success("Ajustes visuais aplicados com sucesso! Foto biométrica processada.");
       } else {
-        const errMsg = result?.result?.data?.json?.error || "Erro ao aplicar ajustes";
+        const errMsg = result?.error || "Erro ao aplicar ajustes visuais";
         toast.error(errMsg);
       }
     } catch (err) {
       console.error("AI error:", err);
-      toast.error("Erro de conexão com o serviço de IA");
+      toast.error("Erro ao processar ajustes visuais. Tente novamente.");
     } finally {
       setIsApplyingAI(false);
     }

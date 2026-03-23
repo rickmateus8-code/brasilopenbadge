@@ -102,8 +102,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       } catch (e) { console.error('Error loading receitas:', e); }
     }
 
-    // 3. Documents (CNH, CHA, Toxicológico, Históricos)
-    const docTypes = ['cnh', 'cha', 'toxicologico', 'historico-sp', 'historico-uninter'];
+    // 3. Documents (CNH, CHA, Toxicológico, Históricos, Toxicria, Laudocria)
+    const docTypes = ['cnh', 'cha', 'toxicologico', 'historico-sp', 'historico-uninter', 'toxicria', 'laudocria'];
     if (typeFilter === 'all' || docTypes.includes(typeFilter)) {
       try {
         let docSql = `
