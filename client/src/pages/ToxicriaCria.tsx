@@ -85,6 +85,15 @@ interface ToxicriaForm {
   dataLiberacao: string;
   validadeExame: string;
   os: string;
+  // Campos adicionais
+  numeroLaudo: string;
+  tituloExame: string;
+  realizadoPor: string;
+  material: string;
+  jDeteccao: string;
+  metodo: string;
+  procedimento: string;
+  valorReferencia: string;
 }
 
 const EMPTY: ToxicriaForm = {
@@ -97,6 +106,15 @@ const EMPTY: ToxicriaForm = {
   dataLiberacao: "",
   validadeExame: "",
   os: "",
+  // Campos adicionais com defaults
+  numeroLaudo: "",
+  tituloExame: "EXAME TOXICOLÓGICO DE LONGA JANELA DE DETECÇÃO",
+  realizadoPor: "LABORATÓRIO SODRÉ",
+  material: "CABELO",
+  jDeteccao: "90 DIAS",
+  metodo: "LC-MS/MS",
+  procedimento: "IMUNOENSAIO / CROMATOGRAFIA LÍQUIDA ACOPLADA À ESPECTROMETRIA DE MASSAS",
+  valorReferencia: "NEGATIVO",
 };
 
 // ─── Componente de Preview do Laudo ──────────────────────────────────────────
@@ -169,7 +187,7 @@ function LaudoPreview({ form, codigoLaudo, validationUrl }: {
           </div>
           <div style={{ marginBottom: 5 }}>
             <span style={{ fontWeight: 700 }}>Material: </span>
-            <span>QUERATINA (CABELO)</span>
+            <span>QUERATINA ({form.material || "CABELO"})</span>
           </div>
           <div style={{ display: "flex", gap: 16, marginBottom: 5 }}>
             <div>
@@ -178,7 +196,7 @@ function LaudoPreview({ form, codigoLaudo, validationUrl }: {
             </div>
             <div>
               <span style={{ fontWeight: 700 }}>J.Detecção: </span>
-              <span>APROX. 90 DIAS</span>
+              <span>APROX. {form.jDeteccao || "90 DIAS"}</span>
             </div>
           </div>
           <div>
@@ -193,11 +211,11 @@ function LaudoPreview({ form, codigoLaudo, validationUrl }: {
             <div style={{ flex: 1 }}>
               <div style={{ marginBottom: 4 }}>
                 <span style={{ fontWeight: 700 }}>Laudo: </span>
-                <span style={{ fontWeight: 700 }}>{codigoLaudo || "—"}</span>
+                <span style={{ fontWeight: 700 }}>{form.numeroLaudo || codigoLaudo || "—"}</span>
                 {form.os && <span style={{ marginLeft: 6 }}>O.S {form.os}</span>}
               </div>
               <div style={{ marginBottom: 3, fontSize: 10 }}>
-                <span style={{ fontWeight: 700 }}>Exame realizado por: </span>LAB.SODRÉ
+                <span style={{ fontWeight: 700 }}>Exame realizado por: </span>{form.realizadoPor || "LAB.SODRÉ"}
               </div>
               <div style={{ marginBottom: 3, fontSize: 10 }}>
                 <span style={{ fontWeight: 700 }}>Data recebimento da amostra: </span>
@@ -212,7 +230,7 @@ function LaudoPreview({ form, codigoLaudo, validationUrl }: {
                 {form.validadeExame || "—"}
               </div>
               <div style={{ marginBottom: 3, fontSize: 10 }}>
-                <span style={{ fontWeight: 700 }}>Realizado pelo laboratório em: </span>SODRÉ
+                <span style={{ fontWeight: 700 }}>Realizado pelo laboratório em: </span>{form.realizadoPor || "SODRÉ"}
               </div>
               <div style={{ marginTop: 6, fontSize: 10 }}>
                 <span style={{ fontWeight: 700 }}>Informações de segurança: </span>
@@ -245,14 +263,14 @@ function LaudoPreview({ form, codigoLaudo, validationUrl }: {
 
       {/* ── Título do Exame ── */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", border: "1px solid #ccc", borderRadius: 4, padding: "8px 12px", marginBottom: 10 }}>
-        <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 0.5 }}>
-          EXAME TOXICOLÓGICO - CNH
+        <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: 0.5 }}>
+          {form.tituloExame || "EXAME TOXICOLÓGICO DE LONGA JANELA DE DETECÇÃO"}
         </div>
         <div style={{ textAlign: "right", fontSize: 10 }}>
-          <div><span style={{ fontWeight: 700 }}>Procedimento: </span>IT.TOX.008/POP.TOX.022/POP.TOX.032/POP.TOX.033</div>
+          <div><span style={{ fontWeight: 700 }}>Procedimento: </span>{form.procedimento || "IT.TOX.008/POP.TOX.022/POP.TOX.032/POP.TOX.033"}</div>
           <div style={{ marginTop: 3 }}>
-            <span style={{ fontWeight: 700 }}>Método: </span>CLAE-EM/EM
-            <span style={{ marginLeft: 16, fontWeight: 700 }}>Valor de referência: </span>CUT OFF
+            <span style={{ fontWeight: 700 }}>Método: </span>{form.metodo || "CLAE-EM/EM"}
+            <span style={{ marginLeft: 16, fontWeight: 700 }}>Valor de referência: </span>{form.valorReferencia || "CUT OFF"}
           </div>
         </div>
       </div>
@@ -378,6 +396,15 @@ export default function ToxicriaCria() {
           dataLiberacao: form.dataLiberacao,
           validadeExame: form.validadeExame,
           os: form.os,
+          // Campos adicionais
+          numeroLaudo: form.numeroLaudo,
+          tituloExame: form.tituloExame,
+          realizadoPor: form.realizadoPor,
+          material: form.material,
+          jDeteccao: form.jDeteccao,
+          metodo: form.metodo,
+          procedimento: form.procedimento,
+          valorReferencia: form.valorReferencia,
           tipo: "toxicria",
         }),
       });
@@ -507,9 +534,15 @@ export default function ToxicriaCria() {
             {/* Dados do Laudo */}
             <div style={card}>
               <div style={secTitle}>Dados do Laudo</div>
-              <div style={{ marginBottom: 10 }}>
-                <label style={lbl}>Número O.S</label>
-                <input style={inp} value={form.os} onChange={e => handleChange("os", e.target.value)} placeholder="56392178" />
+              <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={lbl}>Número O.S</label>
+                  <input style={inp} value={form.os} onChange={e => handleChange("os", e.target.value)} placeholder="56392178" />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={lbl}>Nº do Laudo</label>
+                  <input style={inp} value={form.numeroLaudo} onChange={e => handleChange("numeroLaudo", e.target.value)} placeholder="2024001234" />
+                </div>
               </div>
               <div style={{ marginBottom: 10 }}>
                 <label style={lbl}>Data Recebimento da Amostra</label>
@@ -522,6 +555,41 @@ export default function ToxicriaCria() {
               <div>
                 <label style={lbl}>Validade do Exame</label>
                 <input style={inp} value={form.validadeExame} onChange={e => handleChange("validadeExame", handleDateInput(e.target.value))} placeholder="DD/MM/AAAA" maxLength={10} />
+              </div>
+            </div>
+
+            {/* Informações Técnicas */}
+            <div style={card}>
+              <div style={secTitle}>Informações Técnicas</div>
+              <div style={{ marginBottom: 10 }}>
+                <label style={lbl}>Título do Exame</label>
+                <input style={inp} value={form.tituloExame} onChange={e => handleChange("tituloExame", e.target.value.toUpperCase())} placeholder="EXAME TOXICOLÓGICO DE LONGA JANELA DE DETECÇÃO" />
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <label style={lbl}>Realizado por</label>
+                <input style={inp} value={form.realizadoPor} onChange={e => handleChange("realizadoPor", e.target.value.toUpperCase())} placeholder="LABORATÓRIO SODRÉ" />
+              </div>
+              <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={lbl}>Material</label>
+                  <input style={inp} value={form.material} onChange={e => handleChange("material", e.target.value.toUpperCase())} placeholder="CABELO" />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={lbl}>J. Detecção</label>
+                  <input style={inp} value={form.jDeteccao} onChange={e => handleChange("jDeteccao", e.target.value.toUpperCase())} placeholder="90 DIAS" />
+                </div>
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <label style={lbl}>Método</label>
+                <input style={inp} value={form.metodo} onChange={e => handleChange("metodo", e.target.value.toUpperCase())} placeholder="LC-MS/MS" />
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <label style={lbl}>Procedimento</label>
+                <input style={inp} value={form.procedimento} onChange={e => handleChange("procedimento", e.target.value.toUpperCase())} placeholder="IMUNOENSAIO / CROMATOGRAFIA LÍQUIDA..." />
+              </div>
+              <div>
+                <label style={lbl}>Valor de Referência</label>
+                <input style={inp} value={form.valorReferencia} onChange={e => handleChange("valorReferencia", e.target.value.toUpperCase())} placeholder="NEGATIVO" />
               </div>
             </div>
 
