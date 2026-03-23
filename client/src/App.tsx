@@ -131,19 +131,13 @@ function DocMasterRouter() {
       <Route path="/cha" component={CHACria} />
       <Route path="/chasalvas" component={CHASalvas} />
 
-      <Route path="/toxicologico" component={ToxicologicoCria} />
-      <Route path="/toxicologicosalvos" component={ToxicologicoSalvos} />
 
-      {/* Toxicria - Laudo Toxicológico Sodré */}
-      <Route path="/toxicria" component={ToxicriaCria} />
-      <Route path="/toxicriasalvos" component={ToxicriaSalvos} />
-      <Route path="/toxicriaCria" component={ToxicriaCria} />
 
       {/* Rotas legacy */}
       <Route path="/atestadocria" component={AtestadoCria} />
       <Route path="/cnhcria" component={CNHCria} />
       <Route path="/chacria" component={CHACria} />
-      <Route path="/toxicologicocria" component={ToxicologicoCria} />
+
 
       {/* Receituário Médico */}
       <Route path="/receita" component={ReceitaCria} />

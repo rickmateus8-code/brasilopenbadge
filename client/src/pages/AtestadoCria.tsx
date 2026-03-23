@@ -617,22 +617,47 @@ export default function AtestadoCria() {
   const processarImportacao = () => {
     if (!importTexto.trim()) return;
     const mapa: Record<string, string> = {
+      // Paciente
       "nome completo": "paciente",
       "nome": "paciente",
+      // Documento
+      "tipo de doc": "_tipoDoc",
+      "tipo doc": "_tipoDoc",
+      "numero do doc": "docValue",
+      "numero doc": "docValue",
       "cpf": "docValue",
       "cns": "docValue",
-      "numero do doc": "docValue",
+      // Nascimento
       "nascimento": "nascimento",
       "data de nascimento": "nascimento",
+      "data nascimento": "nascimento",
+      // Sexo
       "sexo": "sexo",
+      // Mãe
       "nome da mae": "nomeMae",
       "mae": "nomeMae",
+      // Endereço
       "endereco do paciente": "endereco",
+      "endereco paciente": "endereco",
       "endereco": "endereco",
+      // CID
+      "cid (codigo da doenca)": "cid",
+      "cid codigo da doenca": "cid",
       "cid": "cid",
+      // Cidade
+      "cidade de emissao": "cidade",
+      "cidade emissao": "cidade",
+      "cidade": "cidade",
+      // Data do atestado
       "data do atestado": "dataAssinatura",
+      "data atestado": "dataAssinatura",
       "data": "dataAssinatura",
+      // Horário
+      "horario do atendimento": "horaAssinatura",
+      "horario atendimento": "horaAssinatura",
       "horario": "horaAssinatura",
+      "hora do atendimento": "horaAssinatura",
+      "hora atendimento": "horaAssinatura",
       "hora": "horaAssinatura",
     };
     const normalize = (s: string) =>
@@ -645,20 +670,29 @@ export default function AtestadoCria() {
       const valor = linha.substring(idx + 1).trim().toUpperCase();
       if (!valor) return;
       for (const label in mapa) {
-        if (chave.includes(label)) {
-          const field = mapa[label] as keyof typeof form;
-          if (field === "sexo") {
+        if (chave === normalize(label) || chave.startsWith(normalize(label))) {
+          const field = mapa[label];
+          if (field === "_tipoDoc") {
+            // Detectar tipo de documento (CPF ou CNS)
+            if (valor.includes("CNS")) setTipoDoc("CNS");
+            else if (valor.includes("CPF")) setTipoDoc("CPF");
+          } else if (field === "sexo") {
             (updates as any)[field] = valor.startsWith("M") ? "MALE" : "FEMALE";
           } else if (field === "nascimento" || field === "dataAssinatura") {
             const d = valor.replace(/\D/g, "");
             (updates as any)[field] = d.length === 8 ? `${d.slice(0,2)}/${d.slice(2,4)}/${d.slice(4,8)}` : valor;
+          } else if (field === "horaAssinatura") {
+            // Formatar hora: aceita HH:MM ou HH:MM:SS
+            const h = valor.replace(/[^0-9:]/g, "");
+            (updates as any)[field] = h.length >= 4 ? h.substring(0, 5) : valor;
           } else if (field === "docValue") {
             const isCNS = valor.replace(/\D/g, "").length > 11;
             if (isCNS) { setTipoDoc("CNS"); (updates as any)[field] = maskCNS(valor); }
             else { setTipoDoc("CPF"); (updates as any)[field] = maskCPF(valor); }
           } else {
-            (updates as any)[field] = valor;
+            (updates as any)[field as keyof typeof form] = valor;
           }
+          break; // Parar no primeiro match para evitar sobreposição
         }
       }
     });
@@ -865,63 +899,58 @@ export default function AtestadoCria() {
   return (
     <div style={{ minHeight: "100vh", background: "#f1f5f9", fontFamily: "Roboto, sans-serif" }}>
 
-      {/* ── Modal de Sucesso ── */}
+      {/* ── Splash de Sucesso ── */}
       {showSuccessModal && (
         <div style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)",
+          position: "fixed", inset: 0, background: "rgba(255,255,255,0.92)",
           display: "flex", alignItems: "center", justifyContent: "center",
-          zIndex: 9999,
+          zIndex: 9999, backdropFilter: "blur(4px)",
         }}>
           <div style={{
-            background: "#fff", borderRadius: 16, padding: "40px 48px",
-            textAlign: "center", maxWidth: 440, width: "90%",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+            background: "#fff", borderRadius: 20, padding: "48px 40px 36px",
+            textAlign: "center", maxWidth: 340, width: "88%",
+            boxShadow: "0 8px 40px rgba(0,0,0,0.12)",
+            animation: "fadeInScale 0.35s cubic-bezier(0.34,1.56,0.64,1)",
           }}>
-            <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#dcfce7", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            <style>{`
+              @keyframes fadeInScale {
+                from { opacity: 0; transform: scale(0.7); }
+                to { opacity: 1; transform: scale(1); }
+              }
+              @keyframes drawCheck {
+                from { stroke-dashoffset: 60; }
+                to { stroke-dashoffset: 0; }
+              }
+            `}</style>
+            {/* Círculo verde com checkmark animado */}
+            <div style={{
+              width: 80, height: 80, borderRadius: "50%",
+              border: "3px solid #86efac",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              margin: "0 auto 20px", background: "#f0fdf4",
+            }}>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M5 13l4 4L19 7"
+                  stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                  strokeDasharray="60" strokeDashoffset="0"
+                  style={{ animation: "drawCheck 0.5s ease 0.2s both" }}
+                />
+              </svg>
             </div>
-            <h2 style={{ fontSize: 22, fontWeight: 800, color: "#15803d", margin: "0 0 20px" }}>
-              DOCUMENTO EMITIDO COM SUCESSO!
-            </h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <button
-                style={{ ...btnGreen, width: "100%", padding: "14px 0", fontSize: 15, fontWeight: 700, opacity: isDownloadingPdf ? 0.7 : 1 }}
-                disabled={isDownloadingPdf}
-                onClick={async () => {
-                  if (previewRef.current) {
-                    setIsDownloadingPdf(true);
-                    try {
-                      await new Promise(r => setTimeout(r, 300));
-                      const nomePaciente = (form.paciente || "PACIENTE").trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
-                      const filename = `ATESTADO_${nomePaciente}.pdf`;
-                      await exportElementToPDF(previewRef.current, { filename, scale: 2, quality: 0.92 });
-                    } catch {}
-                    setIsDownloadingPdf(false);
-                  }
-                }}
-              >
-                {isDownloadingPdf ? "Gerando PDF..." : "BAIXAR ATESTADO"}
-              </button>
-              <button
-                style={{ ...btnBlue, width: "100%", padding: "12px 0", fontSize: 13, fontWeight: 600 }}
-                onClick={() => {
-                  setShowSuccessModal(false);
-                  navigate("/dashboard");
-                  setTimeout(() => {
-                    const el = document.getElementById("historico-atestados");
-                    if (el) el.scrollIntoView({ behavior: "smooth" });
-                  }, 300);
-                }}
-              >
-                IR PARA HISTÓRICO DE ATESTADOS
-              </button>
-              <button
-                style={{ ...btnGray, width: "100%", padding: "10px 0", fontSize: 12 }}
-                onClick={() => { setShowSuccessModal(false); navigate("/dashboard"); }}
-              >
-                FECHAR
-              </button>
-            </div>
+            <h2 style={{ fontSize: 20, fontWeight: 800, color: "#111827", margin: "0 0 8px" }}>Sucesso!</h2>
+            <p style={{ fontSize: 14, color: "#6b7280", margin: "0 0 28px" }}>Documento emitido com sucesso!</p>
+            <button
+              style={{
+                background: "#7c3aed", color: "#fff", border: "none",
+                borderRadius: 10, padding: "12px 40px",
+                fontWeight: 700, fontSize: 15, cursor: "pointer",
+                width: "100%",
+              }}
+              onClick={() => { setShowSuccessModal(false); navigate("/atestados-salvos"); }}
+            >
+              OK
+            </button>
           </div>
         </div>
       )}

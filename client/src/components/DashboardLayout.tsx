@@ -19,7 +19,7 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-  { icon: Gift, label: "Indicações", path: "/indicacoes" },
+
   {
     icon: FileText, label: "Atestado",
     children: [
@@ -41,13 +41,7 @@ const menuItems: MenuItem[] = [
       { label: "CHAs Salvas", path: "/chasalvas" },
     ],
   },
-  {
-    icon: FlaskConical, label: "Toxicológico",
-    children: [
-      { label: "Novo Exame", path: "/toxicologicocria" },
-      { label: "Toxicológicos Salvos", path: "/toxicologicosalvos" },
-    ],
-  },
+
   {
     icon: GraduationCap, label: "Histórico Escolar",
     children: [
@@ -204,6 +198,13 @@ function UserDropdown({ user, logout, collapsed }: { user: AuthUser; logout: () 
             >
               <Settings className="w-4 h-4" />
               Configurações
+            </button>
+            <button
+              onClick={() => { setLocation("/indicacoes"); setOpen(false); }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <Gift className="w-4 h-4" />
+              Indicações
             </button>
             <button
               onClick={() => { setLocation("/extrato"); setOpen(false); }}

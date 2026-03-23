@@ -883,8 +883,8 @@ export default function AdminDashboard() {
           </div>
           <div className="ml-auto flex items-center gap-3 flex-wrap">
             <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-xl px-4 py-2 text-center">
-              <p className="text-xs text-gray-500 dark:text-gray-400">Usuários Ativos</p>
-              <p className="text-lg font-bold text-yellow-600 dark:text-yellow-400">{activeUsers}/{users.length}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Total Usuários</p>
+              <p className="text-lg font-bold text-yellow-600 dark:text-yellow-400">{users.length}</p>
             </div>
             <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-xl px-4 py-2 text-center">
               <p className="text-xs text-gray-500 dark:text-gray-400">Saldo Total</p>
@@ -1204,8 +1204,8 @@ export default function AdminDashboard() {
               </div>
               <div className="bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-800 rounded-xl p-4 text-center">
                 <Globe className="w-6 h-6 mx-auto mb-1 text-purple-500" />
-                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{totalTracked}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Total Usuarios</p>
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{users.length > 0 ? users.length : totalTracked}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Total Usuários</p>
               </div>
             </div>
 

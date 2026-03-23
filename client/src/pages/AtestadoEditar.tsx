@@ -1049,13 +1049,43 @@ export default function AtestadoEditar() {
             </div>
           </div>
           {/* Botões abaixo do preview */}
+          <style>{`
+            @keyframes saveButtonPulse {
+              0%, 100% { box-shadow: 0 0 0 0 rgba(22,163,74,0.4); }
+              50% { box-shadow: 0 0 0 8px rgba(22,163,74,0); }
+            }
+            @keyframes saveSpin {
+              to { transform: rotate(360deg); }
+            }
+            .save-btn-idle {
+              animation: saveButtonPulse 2s infinite;
+              transition: transform 0.15s, opacity 0.15s;
+            }
+            .save-btn-idle:hover {
+              transform: scale(1.03);
+            }
+            .save-btn-idle:active {
+              transform: scale(0.97);
+            }
+          `}</style>
           <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
             <button
-              style={{ ...btnGreen, flex: 2, padding: "12px 0", fontSize: 14, opacity: saving ? 0.7 : 1 }}
+              className={saving ? "" : "save-btn-idle"}
+              style={{ ...btnGreen, flex: 2, padding: "12px 0", fontSize: 14, opacity: saving ? 0.7 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
               disabled={saving}
               onClick={handleSave}
             >
-              {saving ? "Salvando..." : "SALVAR ALTERAÇÕES"}
+              {saving ? (
+                <>
+                  <svg style={{ animation: "saveSpin 1s linear infinite" }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                  Salvando...
+                </>
+              ) : (
+                <>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  ATUALIZAR DADOS
+                </>
+              )}
             </button>
             <button style={{ background: isDark ? "#334155" : "#f1f5f9", color: isDark ? "#e2e8f0" : "#374151", border: isDark ? "1px solid #475569" : "1px solid #d1d5db", borderRadius: 7, padding: "12px 0", fontSize: 14, cursor: "pointer", fontWeight: 700, flex: 1 }} onClick={() => navigate("/dashboard")}>
               CANCELAR
