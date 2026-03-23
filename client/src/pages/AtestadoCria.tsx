@@ -228,6 +228,11 @@ export default function AtestadoCria() {
   const [buscando, setBuscando] = useState(false);
   const [erroBusca, setErroBusca] = useState("");
   const [showResultados, setShowResultados] = useState(false);
+  // ── Pesquisa por texto em cidade e bairro ──────────────────────────────────
+  const [searchCidade, setSearchCidade] = useState("");
+  const [showCidadeDropdown, setShowCidadeDropdown] = useState(false);
+  const [searchBairro, setSearchBairro] = useState("");
+  const [showBairroDropdown, setShowBairroDropdown] = useState(false);
   const [showEditar, setShowEditar] = useState(false);
   const [cepEnabled, setCepEnabled] = useState(false);
   const [cepValue, setCepValue] = useState("");
@@ -283,7 +288,9 @@ export default function AtestadoCria() {
       })
       .catch(() => setCidades([]));
     setFiltroCidade("");
+    setSearchCidade("");
     setFiltroBairro("");
+    setSearchBairro("");
     setBairros([]);
     setLocais([]);
   }, [filtroUF]);
@@ -299,6 +306,7 @@ export default function AtestadoCria() {
       .then((data: string[]) => setLocais(data || []))
       .catch(() => setLocais([]));
     setFiltroBairro("");
+    setSearchBairro("");
     setFiltroLocal("");
     // Preencher automaticamente instituicao como PREFEITURA DE {CIDADE}
     // unidade será preenchida ao selecionar o médico (local_trabalho)
@@ -858,19 +866,125 @@ export default function AtestadoCria() {
                     {UFS.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
                   </select>
                 </div>
-                <div>
+                <div style={{ position: "relative" as const }}>
                   <label style={lbl}>Cidade</label>
-                  <select style={sel} value={filtroCidade} onChange={(e) => setFiltroCidade(e.target.value)}>
-                    <option value="">Cidade...</option>
-                    {cidades.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <input
+                    style={{ ...sel, cursor: "text" }}
+                    placeholder={cidades.length > 0 ? `Pesquisar entre ${cidades.length} cidades...` : "Selecione a UF primeiro..."}
+                    value={searchCidade}
+                    disabled={cidades.length === 0}
+                    onChange={(e) => {
+                      setSearchCidade(e.target.value);
+                      setShowCidadeDropdown(true);
+                      if (!e.target.value) { setFiltroCidade(""); }
+                    }}
+                    onFocus={() => setShowCidadeDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowCidadeDropdown(false), 150)}
+                  />
+                  {filtroCidade && (
+                    <span style={{ position: "absolute" as const, right: 28, top: "50%", transform: "translateY(-50%)", fontSize: 10, color: isDark ? "#86efac" : "#16a34a", fontWeight: 700, pointerEvents: "none" as const }}>
+                      ✓
+                    </span>
+                  )}
+                  {showCidadeDropdown && cidades.length > 0 && (
+                    <div style={{
+                      position: "absolute" as const, zIndex: 999, top: "100%", left: 0, right: 0,
+                      background: isDark ? "#1e293b" : "#fff",
+                      border: `1px solid ${isDark ? "#334155" : "#d1d5db"}`,
+                      borderRadius: 6, maxHeight: 200, overflowY: "auto" as const,
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                    }}>
+                      {cidades
+                        .filter(c => !searchCidade || c.toLowerCase().includes(searchCidade.toLowerCase()))
+                        .slice(0, 50)
+                        .map(c => (
+                          <div
+                            key={c}
+                            onMouseDown={() => {
+                              setFiltroCidade(c);
+                              setSearchCidade(c);
+                              setShowCidadeDropdown(false);
+                            }}
+                            style={{
+                              padding: "7px 10px", cursor: "pointer", fontSize: 12,
+                              color: isDark ? "#f1f5f9" : "#111",
+                              background: filtroCidade === c ? (isDark ? "#1d4ed8" : "#eff6ff") : "transparent",
+                              fontWeight: filtroCidade === c ? 700 : 400,
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.background = isDark ? "#334155" : "#f3f4f6")}
+                            onMouseLeave={e => (e.currentTarget.style.background = filtroCidade === c ? (isDark ? "#1d4ed8" : "#eff6ff") : "transparent")}
+                          >
+                            {c}
+                          </div>
+                        ))
+                      }
+                      {cidades.filter(c => !searchCidade || c.toLowerCase().includes(searchCidade.toLowerCase())).length === 0 && (
+                        <div style={{ padding: "8px 10px", fontSize: 11, color: isDark ? "#94a3b8" : "#6b7280", fontStyle: "italic" }}>
+                          Nenhuma cidade encontrada
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div>
+                <div style={{ position: "relative" as const }}>
                   <label style={lbl}>Bairro</label>
-                  <select style={sel} value={filtroBairro} onChange={(e) => setFiltroBairro(e.target.value)}>
-                    <option value="">Bairro...</option>
-                    {bairros.map((b) => <option key={b} value={b}>{b}</option>)}
-                  </select>
+                  <input
+                    style={{ ...sel, cursor: bairros.length > 0 ? "text" : "default" }}
+                    placeholder={bairros.length > 0 ? `Pesquisar entre ${bairros.length} bairros...` : "Selecione a cidade primeiro..."}
+                    value={searchBairro}
+                    disabled={bairros.length === 0}
+                    onChange={(e) => {
+                      setSearchBairro(e.target.value);
+                      setShowBairroDropdown(true);
+                      if (!e.target.value) { setFiltroBairro(""); }
+                    }}
+                    onFocus={() => setShowBairroDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowBairroDropdown(false), 150)}
+                  />
+                  {filtroBairro && (
+                    <span style={{ position: "absolute" as const, right: 28, top: "50%", transform: "translateY(-50%)", fontSize: 10, color: isDark ? "#86efac" : "#16a34a", fontWeight: 700, pointerEvents: "none" as const }}>
+                      ✓
+                    </span>
+                  )}
+                  {showBairroDropdown && bairros.length > 0 && (
+                    <div style={{
+                      position: "absolute" as const, zIndex: 999, top: "100%", left: 0, right: 0,
+                      background: isDark ? "#1e293b" : "#fff",
+                      border: `1px solid ${isDark ? "#334155" : "#d1d5db"}`,
+                      borderRadius: 6, maxHeight: 200, overflowY: "auto" as const,
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                    }}>
+                      {bairros
+                        .filter(b => !searchBairro || b.toLowerCase().includes(searchBairro.toLowerCase()))
+                        .slice(0, 50)
+                        .map(b => (
+                          <div
+                            key={b}
+                            onMouseDown={() => {
+                              setFiltroBairro(b);
+                              setSearchBairro(b);
+                              setShowBairroDropdown(false);
+                            }}
+                            style={{
+                              padding: "7px 10px", cursor: "pointer", fontSize: 12,
+                              color: isDark ? "#f1f5f9" : "#111",
+                              background: filtroBairro === b ? (isDark ? "#1d4ed8" : "#eff6ff") : "transparent",
+                              fontWeight: filtroBairro === b ? 700 : 400,
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.background = isDark ? "#334155" : "#f3f4f6")}
+                            onMouseLeave={e => (e.currentTarget.style.background = filtroBairro === b ? (isDark ? "#1d4ed8" : "#eff6ff") : "transparent")}
+                          >
+                            {b}
+                          </div>
+                        ))
+                      }
+                      {bairros.filter(b => !searchBairro || b.toLowerCase().includes(searchBairro.toLowerCase())).length === 0 && (
+                        <div style={{ padding: "8px 10px", fontSize: 11, color: isDark ? "#94a3b8" : "#6b7280", fontStyle: "italic" }}>
+                          Nenhum bairro encontrado
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label style={lbl}>Especialidade</label>
