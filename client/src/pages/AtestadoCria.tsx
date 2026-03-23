@@ -275,6 +275,7 @@ export default function AtestadoCria() {
   const [upaExpandido, setUpaExpandido] = useState(true);
   const [searchUF, setSearchUF] = useState("");
   const [searchCidade, setSearchCidade] = useState("");
+  const [searchBairro, setSearchBairro] = useState("");
 
   // ── Atualizar texto do atestado quando dias mudam ──────────────────────────
   useEffect(() => {
@@ -940,57 +941,42 @@ export default function AtestadoCria() {
                 <div>
                   <label style={lbl}>UF *</label>
                   <input
-                    list="uf-list"
-                    style={inp}
-                    value={searchUF || filtroUF}
-                    placeholder="Pesquisar UF..."
-                    onChange={(e) => {
-                      const v = e.target.value.toUpperCase();
-                      setSearchUF(v);
-                      if (UFS.includes(v)) { setFiltroUF(v); setSearchUF(""); }
-                      else if (v === "") { setFiltroUF(""); }
-                    }}
-                    onBlur={(e) => {
-                      const v = e.target.value.toUpperCase();
-                      if (UFS.includes(v)) { setFiltroUF(v); setSearchUF(""); }
-                      else if (!UFS.includes(filtroUF)) { setSearchUF(""); }
-                    }}
+                    style={{ ...inp, marginBottom: 3 }}
+                    value={searchUF}
+                    placeholder="🔍 Filtrar UF..."
+                    onChange={(e) => setSearchUF(e.target.value.toUpperCase())}
                   />
-                  <datalist id="uf-list">
-                    {UFS.filter(uf => !searchUF || uf.startsWith(searchUF)).map(uf => <option key={uf} value={uf} />)}
-                  </datalist>
+                  <select style={sel} value={filtroUF} onChange={(e) => { setFiltroUF(e.target.value); setSearchUF(""); setFiltroCidade(""); setSearchCidade(""); setFiltroBairro(""); setSearchBairro(""); }}>
+                    <option value="">UF...</option>
+                    {UFS.filter(uf => !searchUF || uf.startsWith(searchUF)).map(uf => <option key={uf} value={uf}>{uf}</option>)}
+                  </select>
                 </div>
                 <div>
                   <label style={lbl}>Cidade</label>
                   <input
-                    list="cidade-list"
-                    style={inp}
-                    value={searchCidade || filtroCidade}
-                    placeholder={filtroUF ? `Pesquisar cidade em ${filtroUF}...` : "Selecione UF primeiro..."}
+                    style={{ ...inp, marginBottom: 3 }}
+                    value={searchCidade}
+                    placeholder={filtroUF ? `🔍 Filtrar cidade...` : "Selecione UF primeiro..."}
                     disabled={!filtroUF}
-                    onChange={(e) => {
-                      const v = e.target.value.toUpperCase();
-                      setSearchCidade(v);
-                      if (cidades.includes(v)) { setFiltroCidade(v); setSearchCidade(""); }
-                      else if (v === "") { setFiltroCidade(""); }
-                    }}
-                    onBlur={(e) => {
-                      const v = e.target.value.toUpperCase();
-                      if (cidades.includes(v)) { setFiltroCidade(v); setSearchCidade(""); }
-                      else if (!cidades.includes(filtroCidade)) { setSearchCidade(""); }
-                    }}
+                    onChange={(e) => setSearchCidade(e.target.value.toUpperCase())}
                   />
-                  <datalist id="cidade-list">
-                    {cidades
-                      .filter(c => !searchCidade || c.toUpperCase().includes(searchCidade))
-                      .map(c => <option key={c} value={c} />)}
-                  </datalist>
+                  <select style={sel} value={filtroCidade} disabled={!filtroUF} onChange={(e) => { setFiltroCidade(e.target.value); setSearchCidade(""); setFiltroBairro(""); setSearchBairro(""); }}>
+                    <option value="">Cidade...</option>
+                    {cidades.filter(c => !searchCidade || c.toUpperCase().includes(searchCidade)).map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
                 </div>
                 <div>
                   <label style={lbl}>Bairro</label>
-                  <select style={sel} value={filtroBairro} onChange={(e) => setFiltroBairro(e.target.value)}>
+                  <input
+                    style={{ ...inp, marginBottom: 3 }}
+                    value={searchBairro}
+                    placeholder={filtroCidade ? `🔍 Filtrar bairro...` : "Selecione cidade primeiro..."}
+                    disabled={!filtroCidade}
+                    onChange={(e) => setSearchBairro(e.target.value.toUpperCase())}
+                  />
+                  <select style={sel} value={filtroBairro} disabled={!filtroCidade} onChange={(e) => { setFiltroBairro(e.target.value); setSearchBairro(""); }}>
                     <option value="">Bairro...</option>
-                    {bairros.map((b) => <option key={b} value={b}>{b}</option>)}
+                    {bairros.filter(b => !searchBairro || b.toUpperCase().includes(searchBairro)).map((b) => <option key={b} value={b}>{b}</option>)}
                   </select>
                 </div>
                 <div>
