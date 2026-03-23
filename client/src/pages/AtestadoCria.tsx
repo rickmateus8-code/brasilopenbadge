@@ -385,12 +385,11 @@ export default function AtestadoCria() {
       const data = await res.json();
       if (data.erro) return;
       const numero = cepNumero.trim();
-      const endFormatado = [
-        data.logradouro,
-        numero ? `Nº ${numero}` : "",
-        data.bairro,
-        `${data.localidade}/${data.uf}`,
-      ].filter(Boolean).join(", ").toUpperCase();
+      const parteRua = [data.logradouro, numero].filter(Boolean).join(", ");
+      const parteBairro = data.bairro || "";
+      const parteCidade = `${data.localidade}/${data.uf}`;
+      const endFormatado = [parteRua, parteBairro ? `${parteBairro}, ${parteCidade}` : parteCidade]
+        .filter(Boolean).join(" - ").toUpperCase();
       setForm(p => ({ ...p, endereco: endFormatado }));
     } catch { /* ignora erro silencioso */ }
     finally { setCepLoading(false); }
