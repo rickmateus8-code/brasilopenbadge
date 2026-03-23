@@ -236,6 +236,7 @@ export default function AtestadoCria() {
   const [showEditar, setShowEditar] = useState(false);
   const [cepEnabled, setCepEnabled] = useState(false);
   const [cepValue, setCepValue] = useState("");
+  const [cepNumero, setCepNumero] = useState(""); // Número do endereço do paciente via CEP
   const [cepLoading, setCepLoading] = useState(false);
 
   // ── Formulário ─────────────────────────────────────────────────────────────
@@ -371,7 +372,17 @@ export default function AtestadoCria() {
       // unidade = local_trabalho do médico (UBS, UPA, Hospital, Clínica etc.)
       instituicao: cidadeMedico ? `PREFEITURA DE ${cidadeMedico}` : (p.instituicao || "CONSULTÓRIO MÉDICO"),
       unidade: localTrabalho || p.unidade,
-      enderecoEmitente: [m.endereco, m.bairro, m.cidade, m.uf_local].filter(Boolean).join(", ").toUpperCase(),
+      enderecoEmitente: (() => {
+        // Formatar no padrão: LOGRADOURO - BAIRRO, CIDADE, UF
+        const partes: string[] = [];
+        if (m.endereco) partes.push(m.endereco.toUpperCase());
+        const resto: string[] = [];
+        if (m.bairro) resto.push(m.bairro.toUpperCase());
+        if (m.cidade) resto.push(m.cidade.toUpperCase());
+        if (m.uf_local) resto.push(m.uf_local.toUpperCase());
+        if (resto.length > 0) partes.push(resto.join(", "));
+        return partes.join(" - ");
+      })(),
       cidade: cidadeMedico || p.cidade,
     }));
     setShowResultados(false);
@@ -1192,9 +1203,9 @@ export default function AtestadoCria() {
                     </label>
                   </div>
                   {cepEnabled && (
-                    <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
+                    <div style={{ display: "flex", gap: 6, marginBottom: 6, flexWrap: "wrap" as const }}>
                       <input
-                        style={{ ...inp, width: 120 }}
+                        style={{ ...inp, width: 120, flex: "0 0 120px" }}
                         value={cepValue}
                         onChange={(e) => {
                           const v = e.target.value.replace(/\D/g, "").slice(0, 8);
@@ -1204,9 +1215,16 @@ export default function AtestadoCria() {
                         maxLength={9}
                         inputMode="numeric"
                       />
+                      <input
+                        style={{ ...inp, width: 80, flex: "0 0 80px" }}
+                        value={cepNumero}
+                        onChange={(e) => setCepNumero(e.target.value.toUpperCase())}
+                        placeholder="Nº"
+                        maxLength={10}
+                      />
                       <button
                         type="button"
-                        style={{ padding: "6px 12px", fontSize: 11, fontWeight: 700, background: "#005CA9", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", opacity: cepLoading ? 0.6 : 1 }}
+                        style={{ padding: "6px 12px", fontSize: 11, fontWeight: 700, background: "#005CA9", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", opacity: cepLoading ? 0.6 : 1, flex: "0 0 auto" }}
                         disabled={cepLoading}
                         onClick={async () => {
                           const cepClean = cepValue.replace(/\D/g, "");
@@ -1216,17 +1234,42 @@ export default function AtestadoCria() {
                             const res = await fetch(`https://viacep.com.br/ws/${cepClean}/json/`);
                             const data = await res.json();
                             if (!data.erro) {
-                              const endFormatado = `${data.logradouro?.toUpperCase() || ""}, ${data.bairro?.toUpperCase() || ""}, ${data.localidade?.toUpperCase() || ""}/${data.uf?.toUpperCase() || ""}`;
-                              setForm(p => ({ ...p, endereco: endFormatado, cidade: data.localidade?.toUpperCase() || p.cidade }));
+                              // Formatar no padrão: LOGRADOURO, NUMERO - BAIRRO, CIDADE, UF
+                              const logradouro = data.logradouro?.toUpperCase() || "";
+                              const numero = cepNumero.trim() || "S/N";
+                              const bairroViaCep = data.bairro?.toUpperCase() || "";
+                              const cidadeViaCep = data.localidade?.toUpperCase() || "";
+                              const ufViaCep = data.uf?.toUpperCase() || "";
+                              const parteLogradouro = [logradouro, numero].filter(Boolean).join(", ");
+                              const parteLocalizacao = [bairroViaCep, cidadeViaCep, ufViaCep].filter(Boolean).join(", ");
+                              const endFormatado = [parteLogradouro, parteLocalizacao].filter(Boolean).join(" - ");
+                              setForm(p => ({ ...p, endereco: endFormatado, cidade: cidadeViaCep || p.cidade }));
+                              // Filtrar médico mais próximo: preencher UF e Cidade no painel de busca
+                              if (ufViaCep) {
+                                setFiltroUF(ufViaCep);
+                                // Aguardar cidades carregarem e depois selecionar a cidade
+                                if (cidadeViaCep) {
+                                  setTimeout(() => {
+                                    setFiltroCidade(cidadeViaCep);
+                                    setSearchCidade(cidadeViaCep);
+                                    if (bairroViaCep) {
+                                      setTimeout(() => {
+                                        setFiltroBairro(bairroViaCep);
+                                        setSearchBairro(bairroViaCep);
+                                      }, 600);
+                                    }
+                                  }, 600);
+                                }
+                              }
                             }
                           } catch {} finally { setCepLoading(false); }
                         }}
                       >
-                        {cepLoading ? "..." : "Buscar"}
+                        {cepLoading ? "⏳ Buscando..." : "🔍 Buscar"}
                       </button>
                     </div>
                   )}
-                  <input style={inp} value={form.endereco} onChange={(e) => setForm(p => ({ ...p, endereco: e.target.value }))} placeholder="RUA ITAJAI, 322 - JARDIM SAO BENTO DO RECREIO, VALINHOS/SP" required />
+                  <input style={inp} value={form.endereco} onChange={(e) => setForm(p => ({ ...p, endereco: e.target.value }))} placeholder="RUA CRUZ DAS ALMAS, 290 - VILA CAMPESTRE, SAO PAULO, SP" required />
                 </div>
               </div>
             </div>
