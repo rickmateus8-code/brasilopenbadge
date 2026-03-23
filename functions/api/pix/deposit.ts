@@ -52,6 +52,15 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const HYPERPIX_SK = env.HYPERPIX_SECRET_KEY || 'sk_live_de0f2c5b610735d0659511125bbbf224944748769d56df8a50fe861d2ebbe981';
     const HYPERPIX_API = 'https://api.hyperpix.pro/v1';
 
+    // Montar objeto payer — CPF é opcional
+    const cpfRaw = body.user_cpf ? body.user_cpf.replace(/\D/g, '') : '';
+    const payer: Record<string, string> = {
+      name: body.user_name || user.display_name || user.username || 'CLIENTE DOCMASTER',
+    };
+    if (cpfRaw && cpfRaw.length === 11) {
+      payer.document_value = cpfRaw;
+    }
+
     // Gerar cobrança PIX via HyperPix
     const pixResponse = await fetch(`${HYPERPIX_API}/pix/deposit`, {
       method: 'POST',
@@ -61,10 +70,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       },
       body: JSON.stringify({
         amount: amount,
-        payer: {
-          name: body.user_name || user.display_name || user.username || 'CLIENTE DOCMASTER',
-          document_value: body.user_cpf ? body.user_cpf.replace(/\D/g, '') : '00000000000',
-        },
+        payer,
         callback_url: 'https://docmaster.store/api/pix/webhook',
         metadata: {
           user_id: user.id,
@@ -83,8 +89,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       }), { status: 500, headers: CORS });
     }
 
+    // HyperPix retorna os dados dentro de pixData.data
     const txData = pixData.data || pixData;
     const transactionId = txData.transaction_id || txData.id || crypto.randomUUID();
+
+    // Campos de QR Code — HyperPix usa qr_code e qr_code_base64 (ou qrCode/qrCodeBase64)
+    const qrCode = txData.qr_code || txData.qrCode || txData.copyPaste || '';
+    const qrBase64 = txData.qr_code_base64 || txData.qrCodeBase64 || txData.qr_image || '';
+    const expiresAt = txData.expires_at || txData.expiration || new Date(Date.now() + 30 * 60 * 1000).toISOString();
 
     // Salvar transação pendente no banco
     await env.DB.prepare(`
@@ -103,9 +115,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return new Response(JSON.stringify({
       success: true,
       transaction_id: transactionId,
-      qr_code: txData.qr_code || txData.pix_code || '',
-      qr_code_base64: txData.qr_code_base64 || txData.qr_image || '',
-      expires_at: txData.expires_at || txData.expiration || '',
+      qr_code: qrCode,
+      qr_code_base64: qrBase64,
+      expires_at: expiresAt,
       amount: amount,
     }), { status: 200, headers: CORS });
 
