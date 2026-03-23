@@ -7,7 +7,7 @@ import {
   Users, Settings, Plus, Minus, Shield,
   RefreshCw, DollarSign, Trash2, ToggleLeft, ToggleRight,
   Bell, AlertTriangle, CheckCircle, Info, FileText,
-  Activity, Database, Search, Eye, X, Save,
+  Activity, Database, Search, Eye, EyeOff, X, Save,
   Download, Edit3, Wifi, WifiOff, Monitor, Globe,
   CreditCard, AlertCircle, Filter, Gift, Percent,
   Link, Copy, Calendar, Trash, Lock, UserPlus
