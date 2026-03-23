@@ -216,11 +216,6 @@ export const onRequestDelete: PagesFunction<Env> = async ({ request, env }) => {
       try { await env.DB.exec('DELETE FROM system_logs'); results.push('System logs limpos'); } catch (e) {}
     }
 
-    // Log the clear action itself
-    await env.DB.prepare(
-      "INSERT INTO admin_logs (id, admin_id, action, target_type, details) VALUES (?, ?, 'clear_logs', 'logs', ?)"
-    ).bind(crypto.randomUUID(), admin.id, JSON.stringify({ cleared: clearType, at: new Date().toISOString() })).run();
-
     return new Response(JSON.stringify({ success: true, results }), { headers: corsHeaders });
   } catch (err: any) {
     return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers: corsHeaders });

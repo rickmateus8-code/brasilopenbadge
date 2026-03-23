@@ -11,6 +11,8 @@
  */
 
 import React from "react";
+import { QRCodeSVG } from "qrcode.react";
+import { getQRCodeReceita } from "@/config.qrcode";
 
 export interface PrescricaoItem {
   numero: number;
@@ -293,32 +295,37 @@ function ViaPage({ data, viaNum }: { data: PrescricaoData; viaNum: 1 | 2 }) {
         display: "flex", alignItems: "flex-end", justifyContent: "space-between",
         marginBottom: 28, flexShrink: 0,
       }}>
-        {/* QR Code — 10% maior (132px) */}
+        {/* QR Code — 132px (10% maior) */}
         <div style={{ flexShrink: 0 }}>
-          {data.qr_code_url ? (
-            <img src={data.qr_code_url} alt="QR Code" style={{ width: 132, height: 132, display: "block" }} />
+          {data.codigo_qr ? (
+            /* QR Code real após emissão */
+            <div style={{ lineHeight: 0 }}>
+              <QRCodeSVG
+                value={getQRCodeReceita(data.codigo_qr)}
+                size={132}
+                level="H"
+                includeMargin={false}
+                fgColor="#000000"
+                bgColor="#FFFFFF"
+              />
+            </div>
           ) : (
-            <div style={{ width: 132, height: 132, position: "relative", overflow: "hidden" }}>
-              <svg width={132} height={132} viewBox="0 0 132 132"
-                style={{ display: "block", filter: "blur(3px)", opacity: 0.35 }}>
-                {Array.from({ length: 13 }).map((_, row) =>
-                  Array.from({ length: 13 }).map((_, col) => {
-                    const filled = (row + col + row * col) % 3 !== 0;
-                    return filled ? <rect key={`${row}-${col}`} x={col * 10 + 1} y={row * 10 + 1} width={9} height={9} fill="#000" /> : null;
-                  })
-                )}
-                <rect x={0} y={0} width={33} height={33} fill="none" stroke="#000" strokeWidth={3} />
-                <rect x={5} y={5} width={23} height={23} fill="#000" />
-                <rect x={99} y={0} width={33} height={33} fill="none" stroke="#000" strokeWidth={3} />
-                <rect x={104} y={5} width={23} height={23} fill="#000" />
-                <rect x={0} y={99} width={33} height={33} fill="none" stroke="#000" strokeWidth={3} />
-                <rect x={5} y={104} width={23} height={23} fill="#000" />
-              </svg>
-
+            /* QR Code borrado antes da emissão */
+            <div style={{ width: 132, height: 132, position: "relative", overflow: "hidden", lineHeight: 0 }}>
+              <div style={{ filter: "blur(4px)", opacity: 0.5, lineHeight: 0 }}>
+                <QRCodeSVG
+                  value="https://verificamed.digital"
+                  size={132}
+                  level="H"
+                  includeMargin={false}
+                  fgColor="#1a1a1a"
+                  bgColor="#FFFFFF"
+                />
+              </div>
             </div>
           )}
           {data.codigo_qr && (
-            <div style={{ fontSize: 7, color: "#888", marginTop: 2, textAlign: "center", maxWidth: 132 }}>
+            <div style={{ fontSize: 7, color: "#444", marginTop: 2, textAlign: "center", maxWidth: 132, fontFamily: "'Courier New', monospace", fontWeight: 700, letterSpacing: 0.5 }}>
               {data.codigo_qr}
             </div>
           )}

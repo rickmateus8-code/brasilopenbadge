@@ -658,20 +658,7 @@ export default function AtestadoEditar() {
           <span style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>Editar Atestado</span>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button style={{ ...btnGreen, fontSize: 11, padding: "6px 14px" }} onClick={handleDownloadPdf}>BAIXAR PDF</button>
-          <button
-            style={{ background: "#fff", color: "#374151", border: "1px solid #d1d5db", borderRadius: 6, fontSize: 11, padding: "6px 14px", cursor: "pointer", fontWeight: 600 }}
-            onClick={() => navigate("/dashboard")}
-          >
-            CANCELAR
-          </button>
-          <button
-            style={{ ...btnBlue, fontSize: 11, padding: "6px 14px", opacity: saving ? 0.7 : 1 }}
-            disabled={saving}
-            onClick={handleSave}
-          >
-            {saving ? "SALVANDO..." : "SALVAR ALTERAÇÕES"}
-          </button>
+          <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>ID: {id}</span>
         </div>
       </div>
 
@@ -1039,31 +1026,40 @@ export default function AtestadoEditar() {
             </div>
           </div>
 
-          {/* Botões */}
-          <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+
+        </div>
+
+        {/* ── Preview (direita) ── */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+          {/* Barra de título do preview */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, padding: "8px 12px", background: isDark ? "#1e293b" : "#fff", borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+            <span style={{ fontWeight: 700, color: isDark ? "#e2e8f0" : "#374151", fontSize: 14 }}>Preview do Documento</span>
+            <span style={{ fontSize: 11, color: "#6b7280", background: "#fef3c7", padding: "3px 8px", borderRadius: 5, fontWeight: 600 }}>Código: {codigoQR || "—"}</span>
+          </div>
+          {/* Área de scroll do preview */}
+          <div style={{ flex: 1, overflow: "auto", background: "#525659", borderRadius: 10, padding: 14, maxHeight: "calc(100vh - 200px)" }}>
+            <div ref={previewRef} style={{ width: 794, margin: "0 auto", boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}>
+              <AttestationDocument
+                data={previewData}
+                logoLeft={logoLeft}
+                logoRight={logoRight}
+                signatureColor={signatureColor}
+                signatureImage={signatureImage}
+              />
+            </div>
+          </div>
+          {/* Botões abaixo do preview */}
+          <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
             <button
-              style={{ ...btnGreen, flex: 1, padding: "12px 0", fontSize: 14, opacity: saving ? 0.7 : 1 }}
+              style={{ ...btnGreen, flex: 2, padding: "12px 0", fontSize: 14, opacity: saving ? 0.7 : 1 }}
               disabled={saving}
               onClick={handleSave}
             >
               {saving ? "Salvando..." : "SALVAR ALTERAÇÕES"}
             </button>
-            <button style={{ ...btnGray, flex: 1, padding: "12px 0", fontSize: 14 }} onClick={() => navigate("/dashboard")}>
+            <button style={{ background: isDark ? "#334155" : "#f1f5f9", color: isDark ? "#e2e8f0" : "#374151", border: isDark ? "1px solid #475569" : "1px solid #d1d5db", borderRadius: 7, padding: "12px 0", fontSize: 14, cursor: "pointer", fontWeight: 700, flex: 1 }} onClick={() => navigate("/dashboard")}>
               CANCELAR
             </button>
-          </div>
-        </div>
-
-        {/* ── Preview (direita) ── */}
-        <div style={{ flex: 1, position: "sticky", top: 16, alignSelf: "flex-start" }}>
-          <div ref={previewRef} style={{ background: "#fff", borderRadius: 8, overflow: "hidden", boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
-            <AttestationDocument
-              data={previewData}
-              logoLeft={logoLeft}
-              logoRight={logoRight}
-              signatureColor={signatureColor}
-              signatureImage={signatureImage}
-            />
           </div>
         </div>
       </div>

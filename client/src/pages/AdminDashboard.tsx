@@ -37,6 +37,8 @@ interface UserRow {
   is_active: number;
   created_at: string;
   profile_photo?: string;
+  cashback_percentage?: number | null;
+  referral_percentage?: number | null;
 }
 
 interface PricingRow {
@@ -191,6 +193,9 @@ export default function AdminDashboard() {
   const [editUserRefId, setEditUserRefId] = useState<string | null>(null);
   const [editUserRefPct, setEditUserRefPct] = useState("");
   const [editUserCbPct, setEditUserCbPct] = useState("");
+  // Cashback na aba de usuários
+  const [cashbackEditId, setCashbackEditId] = useState<number | null>(null);
+  const [cashbackEditValue, setCashbackEditValue] = useState("");
 
   // Log date filters
   const [logDateFrom, setLogDateFrom] = useState("");
@@ -369,6 +374,25 @@ export default function AdminDashboard() {
       const data = await res.json();
       if (data.success) toast.success("Configurações de indicação salvas!");
       else toast.error(data.error || "Erro");
+    } catch { toast.error("Erro de conexão"); }
+  };
+
+  const saveCashbackForUser = async (userId: number) => {
+    try {
+      const res = await fetch("/api/admin/referral", {
+        method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
+        body: JSON.stringify({
+          action: "update_user_settings", userId: String(userId),
+          cashback_percentage: cashbackEditValue !== "" ? parseFloat(cashbackEditValue) : null,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("% Cashback atualizado!");
+        setCashbackEditId(null);
+        setCashbackEditValue("");
+        loadUsers(showPasswords);
+      } else toast.error(data.error || "Erro");
     } catch { toast.error("Erro de conexão"); }
   };
 
@@ -1094,6 +1118,34 @@ export default function AdminDashboard() {
                           >
                             <Database className="w-4 h-4" />
                           </button>
+                          {/* % Cashback (Depósito) */}
+                          {cashbackEditId === u.id ? (
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number" step="0.5" min="0" max="100"
+                                placeholder="CB %"
+                                value={cashbackEditValue}
+                                onChange={e => setCashbackEditValue(e.target.value)}
+                                className="w-16 px-1.5 py-1 text-xs rounded-lg border border-orange-300 dark:border-orange-600 bg-orange-50 dark:bg-orange-900/20 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-400"
+                                autoFocus
+                              />
+                              <button onClick={() => saveCashbackForUser(u.id)} className="p-1.5 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors" title="Salvar">
+                                <Save className="w-3.5 h-3.5" />
+                              </button>
+                              <button onClick={() => { setCashbackEditId(null); setCashbackEditValue(""); }} className="p-1.5 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors" title="Cancelar">
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => { setCashbackEditId(u.id); setCashbackEditValue(u.cashback_percentage != null ? String(u.cashback_percentage) : ""); }}
+                              className="flex items-center gap-1 px-2 py-1 text-[10px] rounded-lg bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 hover:bg-orange-100 transition-colors font-semibold"
+                              title="Definir % Cashback no depósito"
+                            >
+                              <span>💰</span>
+                              {u.cashback_percentage != null ? `CB: ${u.cashback_percentage}%` : "CB %"}
+                            </button>
+                          )}
                           <button
                             onClick={() => { setChangePwUserId(String(u.id)); setChangePwUsername(u.username); setChangePwValue(""); }}
                             className="p-1.5 rounded-lg text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"

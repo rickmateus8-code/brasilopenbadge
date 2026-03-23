@@ -49,11 +49,14 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   const showPasswords = url.searchParams.get('show_passwords') === '1';
 
   const fields = showPasswords
-    ? 'id, username, email, display_name, role, balance, is_active, created_at, password_hash'
-    : 'id, username, email, display_name, role, balance, is_active, created_at';
+    ? 'u.id, u.username, u.email, u.display_name, u.role, u.balance, u.is_active, u.created_at, u.password_hash'
+    : 'u.id, u.username, u.email, u.display_name, u.role, u.balance, u.is_active, u.created_at';
 
   const result = await env.DB.prepare(
-    `SELECT ${fields} FROM users ORDER BY created_at DESC`
+    `SELECT ${fields},
+       (SELECT rs.cashback_percentage FROM referral_settings rs WHERE CAST(rs.user_id AS TEXT) = CAST(u.id AS TEXT) LIMIT 1) as cashback_percentage,
+       (SELECT rs.referral_percentage FROM referral_settings rs WHERE CAST(rs.user_id AS TEXT) = CAST(u.id AS TEXT) LIMIT 1) as referral_percentage
+     FROM users u ORDER BY u.created_at DESC`
   ).all<any>();
 
   return new Response(JSON.stringify({ success: true, users: result.results || [] }), { status: 200, headers: corsHeaders });

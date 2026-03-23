@@ -276,7 +276,7 @@ export default function ReceitaCria() {
       nome: p.medicamento, quantidade: p.quantidade, posologia: p.modo_uso,
     })),
     data_emissao: form.dataEmissao || todayBR(),
-    codigo_qr: createdCode || undefined, qr_code_url: createdCode ? `https://docmaster.store/v/${createdCode}` : undefined,
+    codigo_qr: createdCode || undefined,
   };
 
   return (
