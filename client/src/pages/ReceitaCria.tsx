@@ -299,7 +299,7 @@ export default function ReceitaCria() {
                 onClick={async () => { setIsDownloadingPdf(true); await handleDownloadPdf(); setIsDownloadingPdf(false); setShowSuccessModal(false); navigate("/dashboard"); }}>
                 {isDownloadingPdf ? "Baixando PDF..." : "BAIXAR PDF"}
               </button>
-              <button style={{ ...btnGray, flex: 1 }} onClick={() => { setShowSuccessModal(false); navigate("/receitassalvas"); }}>FECHAR</button>
+              <button style={{ ...btnGray, flex: 1 }} onClick={() => { setShowSuccessModal(false); navigate("/dashboard"); }}>FECHAR</button>
             </div>
           </div>
         </div>

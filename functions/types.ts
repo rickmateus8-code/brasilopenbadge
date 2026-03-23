@@ -92,6 +92,9 @@ export interface ValidateResponse {
 export interface Env {
   DB: D1Database;
   ENVIRONMENT: 'production' | 'staging' | 'development';
+  HYPERPIX_SECRET_KEY?: string;
+  APP_DOMAIN?: string;
+  VALIDATION_BASE_URL?: string;
 }
 
 // D1 Database type

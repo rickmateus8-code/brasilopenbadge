@@ -647,9 +647,9 @@ export default function ToxicriaCria() {
         }}
         onClose={() => {
           setShowSuccessModal(false);
-          navigate("/toxicriasalvos");
+          navigate("/dashboard");
         }}
-        historyPath="/toxicriasalvos"
+        historyPath="/dashboard"
       />
     </DashboardLayout>
   );

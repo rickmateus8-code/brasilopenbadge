@@ -203,7 +203,7 @@ export default function EmissionModal({
               style={btnGray}
               onClick={() => {
                 onClose();
-                setLocation(historyPath);
+                setLocation("/dashboard");
               }}
             >
               FECHAR

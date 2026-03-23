@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useParams } from "wouter";
 import AttestationDocument from "@/components/AttestationDocument";
 import type { AttestationData } from "@/data/attestations";
@@ -6,6 +6,69 @@ import { exportElementToPDF, generatePDFFilename } from "@/lib/pdfExport";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { validarCPF } from "@/lib/utils";
+
+// ─── SearchSelect ──────────────────────────────────────────────────────────────
+function SearchSelect({
+  label, value, options, placeholder, disabled, onChange
+}: {
+  label: string; value: string; options: string[];
+  placeholder?: string; disabled?: boolean; onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) { setOpen(false); setSearch(""); }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+  const filtered = options.filter(o => !search || o.toUpperCase().includes(search.toUpperCase()));
+  const triggerStyle: React.CSSProperties = {
+    width: "100%", padding: "6px 28px 6px 10px", border: "1px solid #d1d5db",
+    borderRadius: 6, fontSize: 13, background: disabled ? "#f3f4f6" : "#fff",
+    color: value ? "#000" : "#9ca3af", cursor: disabled ? "not-allowed" : "pointer",
+    boxSizing: "border-box", fontFamily: "inherit", position: "relative",
+    userSelect: "none", display: "flex", alignItems: "center", justifyContent: "space-between",
+  };
+  return (
+    <div ref={ref} style={{ position: "relative", width: "100%" }}>
+      <div style={triggerStyle} onClick={() => { if (!disabled) { setOpen(o => !o); setSearch(""); } }}>
+        <span>{value || placeholder || label + "..."}</span>
+        <span style={{ fontSize: 10, color: "#9ca3af", marginLeft: 4 }}>▼</span>
+      </div>
+      {open && (
+        <div style={{ position: "absolute", top: "100%", left: 0, right: 0, zIndex: 9999, background: "#fff", border: "1px solid #d1d5db", borderRadius: 6, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", maxHeight: 220, overflowY: "auto" }}>
+          <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder={"Buscar " + label + "..."} style={{ width: "100%", padding: "6px 10px", border: "none", borderBottom: "1px solid #e5e7eb", fontSize: 12, outline: "none", boxSizing: "border-box" }} />
+          {value && <div style={{ padding: "6px 12px", fontSize: 13, color: "#9ca3af", cursor: "pointer" }} onMouseDown={() => { onChange(""); setOpen(false); setSearch(""); }}>{placeholder || label + "..."}</div>}
+          {filtered.length === 0 && <div style={{ padding: "6px 12px", fontSize: 12, color: "#9ca3af" }}>Nenhum resultado</div>}
+          {filtered.map(o => (
+            <div key={o} style={{ padding: "6px 12px", fontSize: 13, cursor: "pointer", background: o === value ? "#dbeafe" : "transparent", fontWeight: o === value ? 700 : 400, color: "#000" }}
+              onMouseDown={() => { onChange(o); setOpen(false); setSearch(""); }}
+              onMouseEnter={e => (e.currentTarget.style.background = o === value ? "#dbeafe" : "#f3f4f6")}
+              onMouseLeave={e => (e.currentTarget.style.background = o === value ? "#dbeafe" : "transparent")}
+            >{o}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── API de Médicos ────────────────────────────────────────────────────────────
+async function apiFetch(path: string) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 25000);
+  try {
+    const res = await fetch(`/api/medicos${path}`, { signal: controller.signal, headers: { "Content-Type": "application/json" } });
+    if (!res.ok) throw new Error(`API HTTP ${res.status}`);
+    return res.json();
+  } catch (e: any) {
+    if (e?.name === "AbortError") throw new Error("Timeout. Tente novamente.");
+    throw e;
+  } finally { clearTimeout(timer); }
+}
 
 function maskCPF(v: string): string {
   const d = v.replace(/\D/g, "").slice(0, 11);
@@ -16,6 +79,42 @@ function maskCPF(v: string): string {
 }
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
+const UFS = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"];
+const ESPECIALIDADES = [
+  { value: "", label: "Todas as Áreas" },
+  { value: "CLINICO GERAL", label: "Médico Geral" },
+  { value: "PEDIATRIA", label: "Pediatria" },
+  { value: "GINECOLOGIA", label: "Ginecologia" },
+  { value: "CARDIOLOGIA", label: "Cardiologia" },
+  { value: "ORTOPEDIA", label: "Ortopedia" },
+  { value: "OFTALMOLOGIA", label: "Oftalmologia" },
+  { value: "PSIQUIATRIA", label: "Psiquiatria" },
+  { value: "DERMATOLOGIA", label: "Dermatologia" },
+  { value: "CIRURGIA GERAL", label: "Cirurgia Geral" },
+];
+const LOGOS_PADRAO = [
+  { id: "logo1", label: "Logo 1", src: "/logos/logo1.png" },
+  { id: "logo2", label: "Logo 2", src: "/logos/logo2.png" },
+  { id: "logo3", label: "Logo 3", src: "/logos/logo3.jpg" },
+  { id: "amil", label: "Amil", src: "/logos/amil.png" },
+  { id: "hapvida", label: "Hapvida", src: "/logos/hapvida.png" },
+  { id: "notredame", label: "Notre Dame", src: "/logos/notredame.png" },
+  { id: "sulamerica", label: "Sul América", src: "/logos/sulamerica.png" },
+  { id: "unimed", label: "Unimed", src: "/logos/unimed.png" },
+];
+const TEXTO_PADRAO = `Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico. Necessita de 03 (três) dias de afastamento de suas atividades laborais para repouso e tratamento de saúde.`;
+function gerarTextoAfastamento(dias: number): string {
+  const DIAS_EXT: Record<number,{num:string;ext:string}> = {1:{num:"01",ext:"um"},2:{num:"02",ext:"dois"},3:{num:"03",ext:"três"},4:{num:"04",ext:"quatro"},5:{num:"05",ext:"cinco"},6:{num:"06",ext:"seis"},7:{num:"07",ext:"sete"},8:{num:"08",ext:"oito"},9:{num:"09",ext:"nove"},10:{num:"10",ext:"dez"},11:{num:"11",ext:"onze"},12:{num:"12",ext:"doze"},13:{num:"13",ext:"treze"},14:{num:"14",ext:"quatorze"},15:{num:"15",ext:"quinze"}};
+  const d = DIAS_EXT[dias];
+  if (!d) return TEXTO_PADRAO;
+  const unidade = dias === 1 ? "dia" : "dias";
+  return `Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico. Necessita de ${d.num} (${d.ext}) ${unidade} de afastamento de suas atividades laborais para repouso e tratamento de saúde.`;
+}
+interface MedicoDB {
+  id: number; nome_medico: string; crm: string; uf_crm: string;
+  especialidade: string; local_trabalho: string; cidade: string;
+  uf_local: string; endereco: string; bairro: string;
+}
 const CIDS_CATEGORIZADOS = [
   {
     grupo: "Infecciosos (3-7 dias)",
@@ -126,8 +225,35 @@ export default function AtestadoEditar() {
   const [cpfEditable, setCpfEditable] = useState<boolean>(false);
   const [cpfInput, setCpfInput] = useState<string>("");
   const [codigoQR, setCodigoQR] = useState<string>("");
-
-  // ── Formulário ─────────────────────────────────────────────────────────────
+  // ── Busca de médicos ────────────────────────────────────────────────────────
+  const [filtroUF, setFiltroUF] = useState("");
+  const [filtroCidade, setFiltroCidade] = useState("");
+  const [filtroBairro, setFiltroBairro] = useState("");
+  const [filtroLocal, setFiltroLocal] = useState("");
+  const [filtroEsp, setFiltroEsp] = useState("");
+  const [termoBusca, setTermoBusca] = useState("");
+  const [cidades, setCidades] = useState<string[]>([]);
+  const [bairros, setBairros] = useState<string[]>([]);
+  const [locais, setLocais] = useState<string[]>([]);
+  const [resultados, setResultados] = useState<MedicoDB[]>([]);
+  const [buscando, setBuscando] = useState(false);
+  const [erroBusca, setErroBusca] = useState("");
+  const [showResultados, setShowResultados] = useState(false);
+  const [showEditar, setShowEditar] = useState(true);
+  const skipClearUnidade = useRef(false);
+  // ── CEP do paciente ─────────────────────────────────────────────────────────
+  const [cepPaciente, setCepPaciente] = useState("");
+  const [cepNumero, setCepNumero] = useState("");
+  const [cepLoading, setCepLoading] = useState(false);
+  // ── CEP para UPA ─────────────────────────────────────────────────────────────
+  const [cepUPA, setCepUPA] = useState("");
+  const [cepUPALoading, setCepUPALoading] = useState(false);
+  const [cepUPAErro, setCepUPAErro] = useState("");
+  const [upaResultados, setUpaResultados] = useState<Array<{nome:string;tipo:string;endereco:string;rua:string;numero:string;bairro:string;cidade:string;uf:string;cep:string;cnes:number;}>>([]);
+  const [showUpaResultados, setShowUpaResultados] = useState(false);
+  const [upaExpandido, setUpaExpandido] = useState(false);
+  const [logoSide, setLogoSide] = useState<"left"|"right">("left");
+  // ── Formulário ──────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
     instituicao: "",
     unidade: "",
@@ -189,7 +315,7 @@ export default function AtestadoEditar() {
           cidDisplay: d.cid_display || d.cidDisplay || d.cid || "",
           cidNome: d.cid_nome || d.cidNome || "",
           afastamento: d.afastamento || "3",
-          textoAtestado: d.texto_atestado || d.textoAtestado || "",
+          textoAtestado: (() => { const t = d.texto_atestado || d.textoAtestado || ""; if (t) return t; const dias = parseInt(d.afastamento || "3"); return gerarTextoAfastamento(isNaN(dias) ? 3 : dias); })(),
           dataAssinatura: d.data_assinatura || d.dataAssinatura || "",
           horaAssinatura: d.hora_assinatura || d.horaAssinatura || "",
           dataEmissao: d.data_emissao || d.dataEmissao || "",
@@ -223,7 +349,103 @@ export default function AtestadoEditar() {
     }
   }, [loading, notFound]);
 
-  // ── Salvar edição ──────────────────────────────────────────────────────────
+  // ── Atualizar texto quando dias de afastamento mudam ──────────────────────────────────────────────────────────────────
+  const afastamentoInitialized = useRef(false);
+  useEffect(() => {
+    if (!afastamentoInitialized.current) { afastamentoInitialized.current = true; return; }
+    const dias = parseInt(form.afastamento);
+    if (!isNaN(dias) && dias >= 1 && dias <= 15) {
+      setForm(p => ({ ...p, textoAtestado: gerarTextoAfastamento(dias) }));
+    }
+  }, [form.afastamento]);
+  // ── Carregar cidades quando UF muda ──────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!filtroUF) { setCidades([]); setBairros([]); return; }
+    apiFetch(`?action=cidades&uf=${filtroUF}`).then((data: string[]) => setCidades(data || [])).catch(() => setCidades([]));
+    setFiltroCidade(""); setFiltroBairro(""); setBairros([]); setLocais([]);
+  }, [filtroUF]);
+  // ── Carregar bairros/locais quando cidade muda ──────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!filtroUF || !filtroCidade) { setBairros([]); setLocais([]); return; }
+    apiFetch(`?action=bairros&uf=${filtroUF}&cidade=${encodeURIComponent(filtroCidade)}`).then((data: string[]) => setBairros(data || [])).catch(() => setBairros([]));
+    apiFetch(`?action=locais&uf=${filtroUF}&cidade=${encodeURIComponent(filtroCidade)}`).then((data: string[]) => setLocais(data || [])).catch(() => setLocais([]));
+    setFiltroBairro(""); setFiltroLocal("");
+    if (skipClearUnidade.current) {
+      skipClearUnidade.current = false;
+      setForm(p => ({ ...p, instituicao: `PREFEITURA DE ${filtroCidade.toUpperCase()}`, cidade: filtroCidade.toUpperCase() }));
+    } else {
+      setForm(p => ({ ...p, instituicao: `PREFEITURA DE ${filtroCidade.toUpperCase()}`, unidade: "", cidade: filtroCidade.toUpperCase() }));
+    }
+  }, [filtroUF, filtroCidade]);
+  // ── Busca automática ao selecionar cidade ──────────────────────────────────────────────────────────────────
+  const buscarMedicos = useCallback(async (autoSearch = false) => {
+    const termo = termoBusca.trim().toUpperCase().replace(/[.\-]/g, "");
+    if (!filtroUF) { if (!autoSearch) setErroBusca("Selecione a UF antes de buscar."); return; }
+    if (termo.length < 3 && !filtroCidade) { if (!autoSearch) setErroBusca("Digite ao menos 3 caracteres ou selecione uma Cidade."); return; }
+    setBuscando(true); setErroBusca(""); setShowResultados(true);
+    try {
+      let params = `?uf=${filtroUF}&limit=50`;
+      if (termo.length >= 3) params += `&q=${encodeURIComponent(termo)}`;
+      else if (filtroCidade) { params += `&cidade=${encodeURIComponent(filtroCidade)}`; if (filtroBairro) params += `&bairro=${encodeURIComponent(filtroBairro)}`; }
+      if (filtroEsp) params += `&esp=${encodeURIComponent(filtroEsp)}`;
+      const data: MedicoDB[] = await apiFetch(params);
+      setResultados(data);
+      if (data.length === 0) setErroBusca("Nenhum médico encontrado. Preencha manualmente.");
+    } catch { setErroBusca("Erro ao buscar. Verifique a conexão."); }
+    finally { setBuscando(false); }
+  }, [termoBusca, filtroUF, filtroEsp, filtroCidade, filtroBairro]);
+  useEffect(() => {
+    if (filtroUF && filtroCidade) { const timer = setTimeout(() => buscarMedicos(true), 300); return () => clearTimeout(timer); }
+  }, [filtroUF, filtroCidade, buscarMedicos]);
+  const selecionarMedico = (m: MedicoDB) => {
+    const localTrabalho = m.local_trabalho?.toUpperCase() || "";
+    const cidadeMedico = m.cidade?.toUpperCase() || "";
+    setForm(p => ({
+      ...p,
+      medico: m.nome_medico.toUpperCase(),
+      crm: `CRM/${m.uf_crm || m.uf_local} ${m.crm}`,
+      especialidade: (m.especialidade || "CLÍNICO GERAL").toUpperCase(),
+      instituicao: cidadeMedico ? `PREFEITURA DE ${cidadeMedico}` : (p.instituicao || "CONSULTÓRIO MÉDICO"),
+      unidade: localTrabalho || p.unidade,
+      enderecoEmitente: (() => { const rua = (m.endereco || "").toUpperCase(); const bairroM = (m.bairro || "").toUpperCase(); const cidadeM = (m.cidade || "").toUpperCase(); const ufM = (m.uf_local || "").toUpperCase(); const parteFinal = bairroM ? `${bairroM}, ${cidadeM}/${ufM}` : `${cidadeM}/${ufM}`; return rua ? `${rua} - ${parteFinal}` : parteFinal; })(),
+      cidade: cidadeMedico || p.cidade,
+    }));
+    setShowResultados(false); setTermoBusca(""); setShowEditar(true);
+  };
+  const buscarCEP = async (cep: string) => {
+    const cepLimpo = cep.replace(/\D/g, "");
+    if (cepLimpo.length !== 8) return;
+    setCepLoading(true);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+      const data = await res.json();
+      if (data.erro) return;
+      const numero = cepNumero.trim();
+      const parteRua = [data.logradouro, numero].filter(Boolean).join(", ");
+      const parteBairro = data.bairro || "";
+      const parteCidade = `${data.localidade}/${data.uf}`;
+      const endFormatado = [parteRua, parteBairro ? `${parteBairro}, ${parteCidade}` : parteCidade].filter(Boolean).join(" - ").toUpperCase();
+      setForm(p => ({ ...p, endereco: endFormatado }));
+    } catch { /* silencioso */ } finally { setCepLoading(false); }
+  };
+  const buscarUPAProxima = async () => {
+    const cepLimpo = cepUPA.replace(/\D/g, "");
+    if (cepLimpo.length !== 8) { setCepUPAErro("CEP inválido."); return; }
+    setCepUPALoading(true); setCepUPAErro(""); setUpaResultados([]); setShowUpaResultados(false);
+    try {
+      const res = await fetch(`/api/upa-proxima?cep=${cepLimpo}`);
+      const data = await res.json() as any;
+      if (!res.ok || data.error) { setCepUPAErro(data.error || "Erro ao buscar UPAs."); return; }
+      if (!data.upas || data.upas.length === 0) { setCepUPAErro("Nenhuma UPA encontrada."); return; }
+      setUpaResultados(data.upas); setShowUpaResultados(true);
+    } catch { setCepUPAErro("Erro ao buscar."); } finally { setCepUPALoading(false); }
+  };
+  const selecionarUPA = (upa: typeof upaResultados[0]) => {
+    const endFormatado = [`${upa.rua}, ${upa.numero}`, upa.bairro ? `${upa.bairro}, ${upa.cidade}/${upa.uf}` : `${upa.cidade}/${upa.uf}`].join(" - ");
+    setForm(p => ({ ...p, unidade: upa.nome, instituicao: `PREFEITURA DE ${upa.cidade}`, enderecoEmitente: endFormatado, cidade: upa.cidade }));
+    skipClearUnidade.current = true; setFiltroUF(upa.uf); setFiltroCidade(upa.cidade); setShowUpaResultados(false); setShowEditar(true);
+  };
+  // ── Salvar edição ──────────────────────────────────────────────────────────────────
   const handleSave = async () => {
     setSaving(true);
     setSavedMsg("");
@@ -438,6 +660,12 @@ export default function AtestadoEditar() {
         <div style={{ display: "flex", gap: 8 }}>
           <button style={{ ...btnGreen, fontSize: 11, padding: "6px 14px" }} onClick={handleDownloadPdf}>BAIXAR PDF</button>
           <button
+            style={{ background: "#fff", color: "#374151", border: "1px solid #d1d5db", borderRadius: 6, fontSize: 11, padding: "6px 14px", cursor: "pointer", fontWeight: 600 }}
+            onClick={() => navigate("/dashboard")}
+          >
+            CANCELAR
+          </button>
+          <button
             style={{ ...btnBlue, fontSize: 11, padding: "6px 14px", opacity: saving ? 0.7 : 1 }}
             disabled={saving}
             onClick={handleSave}
@@ -516,13 +744,27 @@ export default function AtestadoEditar() {
                 <label style={lbl}>Nome da Mãe</label>
                 <input style={inp} value={form.nomeMae} onChange={e => setForm(p => ({ ...p, nomeMae: e.target.value.toUpperCase() }))} />
               </div>
+              {/* CEP do paciente */}
+              <div style={{ background: "#f8fafc", borderRadius: 6, padding: 8, border: "1px solid #e2e8f0" }}>
+                <label style={{ ...lbl, fontWeight: 700 }}>Buscar Endereço por CEP</label>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <input style={{ ...inp, flex: 1 }} value={cepPaciente}
+                    onChange={e => { const v = e.target.value.replace(/\D/g, "").slice(0, 8); setCepPaciente(v.length > 5 ? `${v.slice(0,5)}-${v.slice(5)}` : v); }}
+                    onBlur={e => buscarCEP(e.target.value)}
+                    placeholder="00000-000" maxLength={9} />
+                  <input style={{ ...inp, width: 60 }} value={cepNumero} onChange={e => setCepNumero(e.target.value)} placeholder="Nº" />
+                  <button style={{ ...btnGray, fontSize: 11, padding: "6px 10px", whiteSpace: "nowrap" as const }}
+                    onClick={() => buscarCEP(cepPaciente)} disabled={cepLoading}>
+                    {cepLoading ? "..." : "🔍"}
+                  </button>
+                </div>
+              </div>
               <div>
                 <label style={lbl}>Endereço do Paciente</label>
                 <input style={inp} value={form.endereco} onChange={e => setForm(p => ({ ...p, endereco: e.target.value.toUpperCase() }))} />
               </div>
             </div>
           </div>
-
           {/* CID */}
           <div style={card}>
             <div style={secTitle}>CID — Classificação da Doença</div>
@@ -571,29 +813,115 @@ export default function AtestadoEditar() {
 
           {/* Médico */}
           <div style={card}>
-            <div style={secTitle}>Dados do Médico</div>
+            <div style={secTitle}>1. Buscar Médico</div>
             <div style={{ display: "grid", gap: 8 }}>
-              <div>
-                <label style={lbl}>Nome do Médico</label>
-                <input style={inp} value={form.medico} onChange={e => setForm(p => ({ ...p, medico: e.target.value.toUpperCase() }))} />
+              {/* Filtros de UF, Cidade, Bairro, Especialidade */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 8 }}>
+                <div>
+                  <label style={lbl}>UF *</label>
+                  <SearchSelect label="UF" value={filtroUF} options={UFS} onChange={v => setFiltroUF(v)} />
+                </div>
+                <div>
+                  <label style={lbl}>Cidade</label>
+                  <SearchSelect label="Cidade" value={filtroCidade} options={cidades} disabled={!filtroUF} onChange={v => setFiltroCidade(v)} />
+                </div>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                 <div>
-                  <label style={lbl}>CRM</label>
-                  <input style={inp} value={form.crm} onChange={e => setForm(p => ({ ...p, crm: e.target.value }))} />
+                  <label style={lbl}>Bairro</label>
+                  <SearchSelect label="Bairro" value={filtroBairro} options={bairros} disabled={!filtroCidade} onChange={v => setFiltroBairro(v)} />
                 </div>
                 <div>
                   <label style={lbl}>Especialidade</label>
-                  <input style={inp} value={form.especialidade} onChange={e => setForm(p => ({ ...p, especialidade: e.target.value.toUpperCase() }))} />
+                  <select style={sel} value={filtroEsp} onChange={e => setFiltroEsp(e.target.value)}>
+                    {ESPECIALIDADES.map(e => <option key={e.value} value={e.value}>{e.label}</option>)}
+                  </select>
                 </div>
               </div>
+              {/* Campo de busca por nome */}
+              <div style={{ display: "flex", gap: 6 }}>
+                <input style={{ ...inp, flex: 1 }} value={termoBusca} onChange={e => setTermoBusca(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && buscarMedicos()}
+                  placeholder="Buscar por nome do médico..." />
+                <button style={{ ...btnBlue, fontSize: 11, padding: "6px 12px", whiteSpace: "nowrap" as const }}
+                  onClick={() => buscarMedicos()} disabled={buscando}>
+                  {buscando ? "..." : "🔍 Buscar"}
+                </button>
+              </div>
+              {erroBusca && <div style={{ fontSize: 11, color: "#dc2626", padding: "4px 8px", background: "#fef2f2", borderRadius: 4 }}>{erroBusca}</div>}
+              {/* Resultados */}
+              {showResultados && resultados.length > 0 && (
+                <div style={{ maxHeight: 180, overflowY: "auto", border: "1px solid #e5e7eb", borderRadius: 6 }}>
+                  {resultados.map(m => (
+                    <div key={m.id} onClick={() => selecionarMedico(m)}
+                      style={{ padding: "8px 10px", cursor: "pointer", borderBottom: "1px solid #f3f4f6", fontSize: 12 }}
+                      onMouseEnter={e => (e.currentTarget.style.background = "#f0f9ff")}
+                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                      <div style={{ fontWeight: 700, color: "#1e293b" }}>{m.nome_medico}</div>
+                      <div style={{ color: "#6b7280", fontSize: 11 }}>CRM/{m.uf_crm} {m.crm} • {m.especialidade} • {m.local_trabalho}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Campos manuais do médico */}
+              {showEditar && (
+                <div style={{ display: "grid", gap: 8, paddingTop: 4, borderTop: "1px dashed #e5e7eb" }}>
+                  <div>
+                    <label style={lbl}>Nome do Médico</label>
+                    <input style={inp} value={form.medico} onChange={e => setForm(p => ({ ...p, medico: e.target.value.toUpperCase() }))} />
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <div>
+                      <label style={lbl}>CRM</label>
+                      <input style={inp} value={form.crm} onChange={e => setForm(p => ({ ...p, crm: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label style={lbl}>Especialidade</label>
+                      <input style={inp} value={form.especialidade} onChange={e => setForm(p => ({ ...p, especialidade: e.target.value.toUpperCase() }))} />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Emitente */}
           <div style={card}>
-            <div style={secTitle}>Dados do Emitente</div>
+            <div style={secTitle}>2. Dados do Emitente</div>
             <div style={{ display: "grid", gap: 8 }}>
+              {/* Busca por CEP de UPA */}
+              <div style={{ background: "#f0f9ff", borderRadius: 6, padding: 8, border: "1px solid #bae6fd" }}>
+                <label style={{ ...lbl, color: "#0369a1", fontWeight: 700 }}>Buscar UPA/Clínica por CEP</label>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <input style={{ ...inp, flex: 1 }} value={cepUPA}
+                    onChange={e => { const v = e.target.value.replace(/\D/g, "").slice(0, 8); setCepUPA(v.length > 5 ? `${v.slice(0,5)}-${v.slice(5)}` : v); }}
+                    placeholder="00000-000" maxLength={9} />
+                  <button style={{ ...btnBlue, fontSize: 11, padding: "6px 12px", whiteSpace: "nowrap" as const }}
+                    onClick={buscarUPAProxima} disabled={cepUPALoading}>
+                    {cepUPALoading ? "..." : "🏥 Buscar"}
+                  </button>
+                </div>
+                {cepUPAErro && <div style={{ fontSize: 11, color: "#dc2626", marginTop: 4 }}>{cepUPAErro}</div>}
+                {showUpaResultados && upaResultados.length > 0 && (
+                  <div style={{ marginTop: 6, maxHeight: 150, overflowY: "auto", border: "1px solid #e5e7eb", borderRadius: 6, background: "#fff" }}>
+                    {(upaExpandido ? upaResultados : upaResultados.slice(0, 3)).map((upa, i) => (
+                      <div key={i} onClick={() => selecionarUPA(upa)}
+                        style={{ padding: "7px 10px", cursor: "pointer", borderBottom: "1px solid #f3f4f6", fontSize: 11 }}
+                        onMouseEnter={e => (e.currentTarget.style.background = "#f0f9ff")}
+                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                        <div style={{ fontWeight: 700, color: "#1e293b" }}>{upa.nome}</div>
+                        <div style={{ color: "#6b7280" }}>{upa.rua}, {upa.numero} • {upa.bairro} • {upa.cidade}/{upa.uf}</div>
+                      </div>
+                    ))}
+                    {upaResultados.length > 3 && (
+                      <div style={{ padding: "6px 10px", fontSize: 11, color: "#2563eb", cursor: "pointer", textAlign: "center" as const }}
+                        onClick={() => setUpaExpandido(e => !e)}>
+                        {upaExpandido ? "Ver menos" : `Ver mais ${upaResultados.length - 3} resultados`}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
               <div>
                 <label style={lbl}>Instituição</label>
                 <input style={inp} value={form.instituicao} onChange={e => setForm(p => ({ ...p, instituicao: e.target.value.toUpperCase() }))} />
@@ -615,19 +943,33 @@ export default function AtestadoEditar() {
 
           {/* Data e Hora */}
           <div style={card}>
-            <div style={secTitle}>Data e Hora</div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+              <div style={secTitle}>Data e Hora</div>
+              <button style={{ fontSize: 10, padding: "3px 8px", background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 4, cursor: "pointer", color: "#166534", fontWeight: 600 }}
+                onClick={() => {
+                  const now = new Date();
+                  const dd = String(now.getDate()).padStart(2, "0");
+                  const mm = String(now.getMonth() + 1).padStart(2, "0");
+                  const yyyy = now.getFullYear();
+                  const hh = String(now.getHours()).padStart(2, "0");
+                  const min = String(now.getMinutes()).padStart(2, "0");
+                  setForm(p => ({ ...p, dataAssinatura: `${dd}/${mm}/${yyyy}`, horaAssinatura: `${hh}:${min}`, dataEmissao: `${dd}/${mm}/${yyyy}` }));
+                }}>
+                ⏰ Preencher Agora
+              </button>
+            </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
               <div>
                 <label style={lbl}>Data Assinatura</label>
-                <input style={inp} value={form.dataAssinatura} onChange={e => setForm(p => ({ ...p, dataAssinatura: handleDateInput(e.target.value) }))} />
+                <input style={inp} value={form.dataAssinatura} onChange={e => setForm(p => ({ ...p, dataAssinatura: handleDateInput(e.target.value) }))} placeholder="DD/MM/AAAA" />
               </div>
               <div>
                 <label style={lbl}>Hora</label>
-                <input style={inp} value={form.horaAssinatura} onChange={e => setForm(p => ({ ...p, horaAssinatura: e.target.value }))} />
+                <input style={inp} value={form.horaAssinatura} onChange={e => setForm(p => ({ ...p, horaAssinatura: e.target.value }))} placeholder="HH:MM" />
               </div>
               <div>
                 <label style={lbl}>Data Emissão</label>
-                <input style={inp} value={form.dataEmissao} onChange={e => setForm(p => ({ ...p, dataEmissao: handleDateInput(e.target.value) }))} />
+                <input style={inp} value={form.dataEmissao} onChange={e => setForm(p => ({ ...p, dataEmissao: handleDateInput(e.target.value) }))} placeholder="DD/MM/AAAA" />
               </div>
             </div>
           </div>
@@ -636,21 +978,46 @@ export default function AtestadoEditar() {
           <div style={card}>
             <div style={secTitle}>Logos e Assinatura</div>
             <div style={{ display: "grid", gap: 8 }}>
+              {/* Seletor de lado */}
+              <div style={{ display: "flex", gap: 6, marginBottom: 4 }}>
+                <button style={{ flex: 1, padding: "5px 0", fontSize: 11, fontWeight: 700, borderRadius: 5, border: logoSide === "left" ? "2px solid #d97706" : "1px solid #d1d5db", background: logoSide === "left" ? "#fef3c7" : "#f9fafb", cursor: "pointer", color: logoSide === "left" ? "#92400e" : "#374151" }} onClick={() => setLogoSide("left")}>
+                  {logoLeft ? "Logo Esq. ✓" : "Logo Esquerda"}
+                </button>
+                <button style={{ flex: 1, padding: "5px 0", fontSize: 11, fontWeight: 700, borderRadius: 5, border: logoSide === "right" ? "2px solid #d97706" : "1px solid #d1d5db", background: logoSide === "right" ? "#fef3c7" : "#f9fafb", cursor: "pointer", color: logoSide === "right" ? "#92400e" : "#374151" }} onClick={() => setLogoSide("right")}>
+                  {logoRight ? "Logo Dir. ✓" : "Logo Direita"}
+                </button>
+              </div>
+              {/* Galeria de logos padrão */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 6 }}>
+                {LOGOS_PADRAO.map(logo => {
+                  const currentLogo = logoSide === "left" ? logoLeft : logoRight;
+                  const isSelected = currentLogo === logo.src;
+                  return (
+                    <div key={logo.id} onClick={() => { if (logoSide === "left") setLogoLeft(isSelected ? "" : logo.src); else setLogoRight(isSelected ? "" : logo.src); }}
+                      style={{ border: isSelected ? "2px solid #d97706" : "1px solid #e5e7eb", borderRadius: 6, padding: 4, cursor: "pointer", background: isSelected ? "#fef3c7" : "#fff", textAlign: "center" as const }}>
+                      <img src={logo.src} alt={logo.label} style={{ width: "100%", height: 32, objectFit: "contain" }} onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                      <span style={{ fontSize: 9, color: isSelected ? "#92400e" : "#6b7280", display: "block", marginTop: 2 }}>{logo.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Upload personalizado */}
               <div style={{ display: "flex", gap: 8 }}>
                 <div style={{ flex: 1 }}>
-                  <label style={lbl}>Logo Esquerda</label>
                   <input ref={logoLeftRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => handleLogoUpload("left", e)} />
-                  <button style={{ ...btnGray, width: "100%", fontSize: 11 }} onClick={() => logoLeftRef.current?.click()}>
-                    {logoLeft ? "Alterar" : "Upload"}
+                  <button style={{ ...btnGray, width: "100%", fontSize: 10, padding: "5px 0" }} onClick={() => { setLogoSide("left"); logoLeftRef.current?.click(); }}>
+                    {logoLeft ? "📎 Alterar Esq." : "📎 Upload Esq."}
                   </button>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={lbl}>Logo Direita</label>
                   <input ref={logoRightRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => handleLogoUpload("right", e)} />
-                  <button style={{ ...btnGray, width: "100%", fontSize: 11 }} onClick={() => logoRightRef.current?.click()}>
-                    {logoRight ? "Alterar" : "Upload"}
+                  <button style={{ ...btnGray, width: "100%", fontSize: 10, padding: "5px 0" }} onClick={() => { setLogoSide("right"); logoRightRef.current?.click(); }}>
+                    {logoRight ? "📎 Alterar Dir." : "📎 Upload Dir."}
                   </button>
                 </div>
+                {(logoLeft || logoRight) && (
+                  <button style={{ ...btnGray, fontSize: 10, padding: "5px 8px", color: "#dc2626" }} onClick={() => { setLogoLeft(""); setLogoRight(""); }}>✕ Remover</button>
+                )}
               </div>
               <div>
                 <label style={lbl}>Assinatura</label>

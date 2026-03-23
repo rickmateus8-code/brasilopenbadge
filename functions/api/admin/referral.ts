@@ -88,8 +88,8 @@ export const onRequestGet: PagesFunction<{ DB: D1Database }> = async ({ request,
   if (tab === "referrals") {
     const referrals = await safeQueryAll(db, `
       SELECT r.id, r.created_at,
-             u1.name as referrer_name, u1.email as referrer_email, u1.referral_percentage as referrer_custom_pct,
-             u2.name as referred_name, u2.email as referred_email,
+             COALESCE(u1.display_name, u1.username) as referrer_name, u1.email as referrer_email, u1.referral_percentage as referrer_custom_pct,
+             COALESCE(u2.display_name, u2.username) as referred_name, u2.email as referred_email,
              COALESCE(SUM(re.earned_amount), 0) as total_earned
       FROM referrals r
       JOIN users u1 ON r.referrer_id = u1.id
@@ -105,7 +105,7 @@ export const onRequestGet: PagesFunction<{ DB: D1Database }> = async ({ request,
   if (tab === "earnings") {
     const earnings = await safeQueryAll(db, `
       SELECT re.id, re.deposit_amount, re.percentage, re.earned_amount, re.created_at,
-             u1.name as referrer_name, u2.name as referred_name
+             COALESCE(u1.display_name, u1.username) as referrer_name, COALESCE(u2.display_name, u2.username) as referred_name
       FROM referral_earnings re
       JOIN users u1 ON re.referrer_id = u1.id
       JOIN users u2 ON re.referred_id = u2.id
@@ -118,7 +118,7 @@ export const onRequestGet: PagesFunction<{ DB: D1Database }> = async ({ request,
   if (tab === "cashback") {
     const cashback = await safeQueryAll(db, `
       SELECT ce.id, ce.deposit_amount, ce.percentage, ce.cashback_amount, ce.created_at,
-             u.name as user_name, u.email as user_email
+             COALESCE(u.display_name, u.username) as user_name, u.email as user_email
       FROM cashback_earnings ce
       JOIN users u ON ce.user_id = u.id
       ORDER BY ce.created_at DESC
@@ -129,14 +129,14 @@ export const onRequestGet: PagesFunction<{ DB: D1Database }> = async ({ request,
 
   if (tab === "users") {
     const users = await safeQueryAll(db, `
-      SELECT u.id, u.name, u.email, u.referral_code, u.referral_percentage, u.cashback_percentage,
+      SELECT u.id, COALESCE(u.display_name, u.username) as name, u.email, u.referral_code, u.referral_percentage, u.cashback_percentage,
              rc.code,
              (SELECT COUNT(*) FROM referrals WHERE referrer_id = u.id) as total_referred,
              (SELECT COALESCE(SUM(earned_amount), 0) FROM referral_earnings WHERE referrer_id = u.id) as total_earned,
              (SELECT COALESCE(SUM(cashback_amount), 0) FROM cashback_earnings WHERE user_id = u.id) as total_cashback
       FROM users u
       LEFT JOIN referral_codes rc ON rc.user_id = u.id
-      ORDER BY u.name ASC
+      ORDER BY COALESCE(u.display_name, u.username) ASC
       LIMIT 200
     `);
     return new Response(JSON.stringify({ users }), { headers: JSON_HEADERS });

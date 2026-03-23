@@ -39,7 +39,7 @@ export const onRequestGet: PagesFunction<{ DB: D1Database }> = async ({ request,
 
   // Get referred users list
   const referredUsers = await db.prepare(`
-    SELECT r.referred_id, r.created_at, u.name, u.email,
+    SELECT r.referred_id, r.created_at, COALESCE(u.display_name, u.username) as name, u.email,
            COALESCE(SUM(re.earned_amount), 0) as total_earned
     FROM referrals r
     JOIN users u ON r.referred_id = u.id

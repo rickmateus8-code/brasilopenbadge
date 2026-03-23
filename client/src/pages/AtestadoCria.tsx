@@ -917,7 +917,7 @@ export default function AtestadoCria() {
               </button>
               <button
                 style={{ ...btnGray, width: "100%", padding: "10px 0", fontSize: 12 }}
-                onClick={() => { setShowSuccessModal(false); navigate("/atestadosalvos"); }}
+                onClick={() => { setShowSuccessModal(false); navigate("/dashboard"); }}
               >
                 FECHAR
               </button>
