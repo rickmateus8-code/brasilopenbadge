@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useAuth, type AuthUser } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -70,24 +70,36 @@ function SidebarItem({
   onNavigate?: () => void;
 }) {
   const [location, setLocation] = useLocation();
-  const [open, setOpen] = useState(() =>
-    item.children?.some(c => location === c.path) ?? false
-  );
+  const isChildActive = item.children?.some(c => location === c.path) ?? false;
+  const [open, setOpen] = useState(isChildActive);
   const isActive = item.path
     ? location === item.path
-    : item.children?.some(c => location === c.path);
+    : isChildActive;
   const Icon = item.icon;
 
-  const navigate = (path: string) => {
+  // Sincronizar estado open quando a rota muda (corrige bug de piscar)
+  useEffect(() => {
+    if (item.children) {
+      const active = item.children.some(c => location === c.path);
+      if (active) setOpen(true);
+    }
+  }, [location, item.children]);
+
+  const navigate = useCallback((path: string) => {
     setLocation(path);
     onNavigate?.();
-  };
+  }, [setLocation, onNavigate]);
+
+  // Toggle manual — só alterna se não há filho ativo (evita fechar menu ativo)
+  const handleToggle = useCallback(() => {
+    setOpen(o => !o);
+  }, []);
 
   if (item.children) {
     return (
       <div>
         <button
-          onClick={() => setOpen(o => !o)}
+          onClick={handleToggle}
           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all
             ${isActive
               ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
