@@ -2,28 +2,33 @@
  * EmissionModal — Componente reutilizável para fluxo de emissão de documentos
  *
  * Fluxo:
- * 1. Modal de confirmação: "CONFIRMAR E EMITIR / CANCELAR"
+ * 1. Modal de confirmação: exibe custo, saldo atual e saldo após emissão
  * 2. Se confirmar → executa emissão → mostra modal de sucesso
  * 3. Modal de sucesso: "DOCUMENTO EMITIDO COM SUCESSO!" → "Baixar {Documento}" → "FECHAR"
  * 4. FECHAR → redireciona para histórico do documento
  *
  * Props:
- * - docType: tipo do documento (cnh, cha, atestado, receita, etc.)
- * - docLabel: label legível ("CNH", "CHA Náutica", "Atestado", etc.)
- * - onConfirm: callback async que executa a emissão (retorna true se sucesso)
- * - onDownload: callback async para baixar o documento
- * - onClose: callback para fechar o modal
- * - historyPath: caminho para redirecionar ao histórico (ex: "/cnhsalvas")
+ * - docLabel: label legível ("CNH Digital", "CHA Náutica", etc.)
+ * - docEmoji: emoji do documento (ex: "🚗", "⚓", "🧪")
+ * - documentPrice: custo em centavos (buscado via /api/pricing)
+ * - userBalance: saldo atual do usuário em centavos
  * - showConfirm: controla exibição do modal de confirmação
  * - showSuccess: controla exibição do modal de sucesso
  * - isEmitting: indica se está processando a emissão
  * - isDownloading: indica se está gerando o download
+ * - onConfirm: callback async que executa a emissão
+ * - onCancel: callback para cancelar
+ * - onDownload: callback async para baixar o documento
+ * - onClose: callback para fechar o modal
+ * - historyPath: caminho para redirecionar ao histórico
  */
-import { useState } from "react";
 import { useLocation } from "wouter";
 
 interface EmissionModalProps {
   docLabel: string;
+  docEmoji?: string;
+  documentPrice?: number;
+  userBalance?: number;
   showConfirm: boolean;
   showSuccess: boolean;
   isEmitting: boolean;
@@ -37,6 +42,9 @@ interface EmissionModalProps {
 
 export default function EmissionModal({
   docLabel,
+  docEmoji = "📄",
+  documentPrice = 0,
+  userBalance = 0,
   showConfirm,
   showSuccess,
   isEmitting,
@@ -49,6 +57,9 @@ export default function EmissionModal({
 }: EmissionModalProps) {
   const [, setLocation] = useLocation();
 
+  const saldoInsuficiente = documentPrice > 0 && userBalance < documentPrice;
+  const saldoApos = userBalance - documentPrice;
+
   const overlay: React.CSSProperties = {
     position: "fixed",
     inset: 0,
@@ -57,16 +68,17 @@ export default function EmissionModal({
     alignItems: "center",
     justifyContent: "center",
     zIndex: 9999,
+    backdropFilter: "blur(3px)",
   };
 
   const card: React.CSSProperties = {
     background: "#fff",
-    borderRadius: 16,
-    padding: "40px 48px",
+    borderRadius: 18,
+    padding: "36px 32px 28px",
     textAlign: "center",
-    maxWidth: 440,
+    maxWidth: 400,
     width: "90%",
-    boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+    boxShadow: "0 12px 48px rgba(0,0,0,0.18)",
   };
 
   const btnBase: React.CSSProperties = {
@@ -75,88 +87,104 @@ export default function EmissionModal({
     borderRadius: 10,
     fontWeight: 700,
     cursor: "pointer",
-    fontSize: 15,
-    padding: "14px 0",
+    fontSize: 14,
+    padding: "12px 0",
     transition: "opacity 0.2s",
   };
 
-  const btnGreen: React.CSSProperties = {
-    ...btnBase,
-    background: "#16a34a",
-    color: "#fff",
-  };
-
-  const btnRed: React.CSSProperties = {
-    ...btnBase,
-    background: "#ef4444",
-    color: "#fff",
-  };
-
-  const btnBlue: React.CSSProperties = {
-    ...btnBase,
-    background: "#2563eb",
-    color: "#fff",
-    fontSize: 13,
-    padding: "12px 0",
-  };
-
-  const btnGray: React.CSSProperties = {
-    ...btnBase,
-    background: "#f3f4f6",
-    color: "#374151",
-    border: "1px solid #e5e7eb",
-    fontSize: 12,
-    padding: "10px 0",
-  };
+  const btnGreen: React.CSSProperties = { ...btnBase, background: "#16a34a", color: "#fff" };
+  const btnBlue: React.CSSProperties = { ...btnBase, background: "#2563eb", color: "#fff", fontSize: 13, padding: "11px 0" };
+  const btnGray: React.CSSProperties = { ...btnBase, background: "#f3f4f6", color: "#374151", border: "1px solid #e5e7eb", fontSize: 12, padding: "10px 0" };
 
   // ── Modal de Confirmação ──
   if (showConfirm) {
     return (
       <div style={overlay}>
         <div style={card}>
+          {/* Ícone do documento */}
           <div style={{
-            width: 64, height: 64, borderRadius: "50%",
-            background: "#fef3c7", display: "flex", alignItems: "center",
-            justifyContent: "center", margin: "0 auto 16px",
+            width: 72, height: 72, borderRadius: "50%",
+            background: "#fef3c7", border: "3px solid #fcd34d",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            margin: "0 auto 18px", fontSize: 32,
           }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/>
-              <line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
+            {docEmoji}
           </div>
-          <h2 style={{ fontSize: 20, fontWeight: 800, color: "#92400e", margin: "0 0 8px" }}>
-            CONFIRMAR EMISSAO
+
+          <h2 style={{ fontSize: 20, fontWeight: 800, color: "#111827", margin: "0 0 8px" }}>
+            Confirmar Emissão
           </h2>
-          <p style={{ fontSize: 14, color: "#6b7280", margin: "0 0 24px", lineHeight: 1.5 }}>
-            Deseja emitir o documento <strong>{docLabel}</strong>?<br />
-            O valor sera debitado do seu saldo.
+          <p style={{ fontSize: 14, color: "#6b7280", margin: "0 0 20px", lineHeight: 1.5 }}>
+            Você está prestes a emitir um <strong>{docLabel}</strong>.
           </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+
+          {/* Tabela de custo */}
+          <div style={{
+            background: "#f8fafc", borderRadius: 10, padding: "14px 18px",
+            marginBottom: 20, border: "1px solid #e2e8f0", textAlign: "left",
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <span style={{ fontSize: 13, color: "#6b7280" }}>Custo do documento:</span>
+              <span style={{ fontSize: 16, fontWeight: 800, color: documentPrice > 0 ? "#dc2626" : "#16a34a" }}>
+                {documentPrice > 0 ? `R$ ${(documentPrice / 100).toFixed(2).replace(".", ",")}` : "Grátis"}
+              </span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <span style={{ fontSize: 13, color: "#6b7280" }}>Seu saldo atual:</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: userBalance >= documentPrice ? "#16a34a" : "#dc2626" }}>
+                R$ {(userBalance / 100).toFixed(2).replace(".", ",")}
+              </span>
+            </div>
+            {documentPrice > 0 && (
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 8, borderTop: "1px solid #e2e8f0" }}>
+                <span style={{ fontSize: 13, color: "#6b7280" }}>Saldo após emissão:</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: saldoApos >= 0 ? "#374151" : "#dc2626" }}>
+                  R$ {(saldoApos / 100).toFixed(2).replace(".", ",")}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Aviso de saldo insuficiente */}
+          {saldoInsuficiente && (
+            <div style={{
+              background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8,
+              padding: "10px 14px", marginBottom: 16, fontSize: 13, color: "#dc2626", fontWeight: 600,
+            }}>
+              ⚠️ Saldo insuficiente! Recarregue seu saldo para continuar.
+            </div>
+          )}
+
+          <div style={{ display: "flex", gap: 10 }}>
             <button
-              style={{ ...btnGreen, opacity: isEmitting ? 0.7 : 1 }}
+              style={{ ...btnGray, flex: 1, width: "auto" }}
+              onClick={onCancel}
               disabled={isEmitting}
+            >
+              Cancelar
+            </button>
+            <button
+              style={{
+                ...btnGreen, flex: 2, width: "auto",
+                opacity: saldoInsuficiente || isEmitting ? 0.6 : 1,
+                cursor: saldoInsuficiente || isEmitting ? "not-allowed" : "pointer",
+                background: saldoInsuficiente || isEmitting ? "#9ca3af" : "#16a34a",
+              }}
+              disabled={saldoInsuficiente || isEmitting}
               onClick={onConfirm}
             >
               {isEmitting ? (
                 <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                   <span style={{
-                    width: 16, height: 16, border: "2px solid white",
+                    width: 14, height: 14, border: "2px solid white",
                     borderTopColor: "transparent", borderRadius: "50%",
                     animation: "emspin 1s linear infinite", display: "inline-block",
                   }} />
-                  Processando...
+                  Emitindo...
                 </span>
               ) : (
-                "CONFIRMAR E EMITIR"
+                "✅ Confirmar e Emitir"
               )}
-            </button>
-            <button
-              style={btnGray}
-              onClick={onCancel}
-              disabled={isEmitting}
-            >
-              CANCELAR
             </button>
           </div>
         </div>
@@ -171,11 +199,12 @@ export default function EmissionModal({
       <div style={overlay}>
         <div style={card}>
           <div style={{
-            width: 64, height: 64, borderRadius: "50%",
-            background: "#dcfce7", display: "flex", alignItems: "center",
-            justifyContent: "center", margin: "0 auto 16px",
+            width: 72, height: 72, borderRadius: "50%",
+            background: "#dcfce7", border: "3px solid #86efac",
+            display: "flex", alignItems: "center",
+            justifyContent: "center", margin: "0 auto 18px",
           }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20 6 9 17l-5-5"/>
             </svg>
           </div>
@@ -188,7 +217,7 @@ export default function EmissionModal({
               disabled={isDownloading}
               onClick={onDownload}
             >
-              {isDownloading ? "Gerando..." : `BAIXAR ${docLabel.toUpperCase()}`}
+              {isDownloading ? "Gerando PDF..." : `⬇️ BAIXAR ${docLabel.toUpperCase()}`}
             </button>
             <button
               style={btnBlue}
@@ -197,7 +226,7 @@ export default function EmissionModal({
                 setLocation(historyPath);
               }}
             >
-              IR PARA HISTORICO
+              📋 IR PARA HISTÓRICO
             </button>
             <button
               style={btnGray}

@@ -85,6 +85,7 @@ export default function CNHCria() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isApplyingAI, setIsApplyingAI] = useState(false);
+  const [documentPrice, setDocumentPrice] = useState(0);
 
   const [data, setData] = useState<CNHDocumentProps>({
     nome: "", cpf: "", rg: "", orgaoEmissor: "", ufRG: "",
@@ -216,6 +217,35 @@ export default function CNHCria() {
   };
 
   // ─── Gemini Nano Banana — Aplicar Ajustes Visuais ─────────────────────────────────
+  // Aplica ajustes de brilho/contraste/saturação no canvas da foto
+  const applyImageAdjustments = (base64: string, brightness: number, contrast: number, saturation: number): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0);
+
+        // Aplicar ajustes via CSS filter no canvas
+        const brightnessVal = 1 + (brightness / 100);
+        const contrastVal = 1 + (contrast / 100);
+        const saturationVal = 1 + (saturation / 100);
+
+        // Recriar canvas com filtros
+        const canvas2 = document.createElement('canvas');
+        canvas2.width = img.width;
+        canvas2.height = img.height;
+        const ctx2 = canvas2.getContext('2d')!;
+        ctx2.filter = `brightness(${brightnessVal}) contrast(${contrastVal}) saturate(${saturationVal})`;
+        ctx2.drawImage(img, 0, 0);
+        resolve(canvas2.toDataURL('image/jpeg', 0.92));
+      };
+      img.src = base64;
+    });
+  };
+
   const handleApplyAI = async () => {
     if (!data.fotoUrl) {
       toast.error("Envie uma foto primeiro!");
@@ -231,8 +261,25 @@ export default function CNHCria() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const result = await res.json();
       if (result?.success && result?.imageUrl) {
-        setData(d => ({ ...d, fotoUrl: result.imageUrl }));
-        toast.success("Ajustes visuais aplicados com sucesso! Foto biométrica processada.");
+        // Aplicar ajustes retornados pelo Gemini na imagem
+        const adj = result.adjustments || {};
+        const brightness = typeof adj.brightness === 'number' ? adj.brightness : 5;
+        const contrast = typeof adj.contrast === 'number' ? adj.contrast : 10;
+        const saturation = typeof adj.saturation === 'number' ? adj.saturation : -5;
+
+        const adjustedImage = await applyImageAdjustments(result.imageUrl, brightness, contrast, saturation);
+        setData(d => ({ ...d, fotoUrl: adjustedImage }));
+
+        const modelInfo = result.model === 'gemini-2.5-flash' ? ' (Gemini)' : '';
+        const qualityInfo = adj.quality ? ` • Qualidade: ${adj.quality === 'good' ? 'Boa' : adj.quality === 'fair' ? 'Regular' : 'Baixa'}` : '';
+        toast.success(`Ajustes visuais aplicados${modelInfo}!${qualityInfo}`);
+
+        // Mostrar sugestões do Gemini se houver
+        if (adj.suggestions?.length) {
+          setTimeout(() => {
+            toast.info(adj.suggestions[0], { duration: 5000 });
+          }, 1000);
+        }
       } else {
         const errMsg = result?.error || "Erro ao aplicar ajustes visuais";
         toast.error(errMsg);
@@ -284,7 +331,7 @@ export default function CNHCria() {
   }, [assTexto, assEstilo]);
 
   // ─── Abrir modal de confirmação ──────────────────────────────────────────
-  const handleRequestEmit = () => {
+  const handleRequestEmit = async () => {
     if (!data.nome || !data.cpf) {
       toast.error("Preencha Nome e CPF obrigatoriamente!");
       return;
@@ -293,10 +340,12 @@ export default function CNHCria() {
       toast.error("CPF inválido! Verifique os dígitos informados.");
       return;
     }
-    if ((user?.balance || 0) <= 0) {
-      toast.error("Saldo insuficiente. Recarregue para emitir documentos.");
-      return;
-    }
+    // Buscar preço antes de mostrar modal
+    try {
+      const pricingRes = await fetch("/api/pricing", { credentials: "include" });
+      const pricingData = await pricingRes.json();
+      if (pricingData.success && pricingData.pricing?.cnh) setDocumentPrice(pricingData.pricing.cnh.price);
+    } catch { /* usa preço padrão 0 */ }
     setShowConfirmModal(true);
   };
 
@@ -390,7 +439,8 @@ export default function CNHCria() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `CNH_${data.nome.replace(/\s+/g, "_") || "DOCUMENTO"}_${Date.now()}.jpg`;
+      const nomeFormatado = (data.nome || "DOCUMENTO").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
+      a.download = `CNH_${nomeFormatado}.jpg`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -1170,6 +1220,9 @@ export default function CNHCria() {
       {/* Modal de Confirmação + Sucesso */}
       <EmissionModal
         docLabel="CNH Digital"
+        docEmoji="🚗"
+        documentPrice={documentPrice}
+        userBalance={user?.balance ?? 0}
         showConfirm={showConfirmModal}
         showSuccess={showSuccessModal}
         isEmitting={loading}

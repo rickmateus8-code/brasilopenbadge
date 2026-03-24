@@ -113,6 +113,7 @@ export default function CHACria() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [documentPrice, setDocumentPrice] = useState(0);
   const canvasFrenteRef = useRef<HTMLCanvasElement>(null);
   const canvasVersoRef = useRef<HTMLCanvasElement>(null);
   const baseFrenteRef = useRef<HTMLImageElement | null>(null);
@@ -286,15 +287,17 @@ export default function CHACria() {
   };
 
   /* ── Request emit (abre modal de confirmação) ── */
-  const handleRequestEmit = () => {
+  const handleRequestEmit = async () => {
     if (!form.nome.trim()) { toast.error("Preencha o nome"); return; }
     if (!form.cpf.trim()) { toast.error("Preencha o CPF"); return; }
     if (!validarCPF(form.cpf)) { toast.error("CPF inválido"); return; }
     if (!form.senha.trim()) { toast.error("Crie uma senha de acesso"); return; }
-    if ((user?.balance || 0) <= 0) {
-      toast.error("Saldo insuficiente. Recarregue para emitir documentos.");
-      return;
-    }
+    // Buscar preço antes de mostrar modal
+    try {
+      const pricingRes = await fetch("/api/pricing", { credentials: "include" });
+      const pricingData = await pricingRes.json();
+      if (pricingData.success && pricingData.pricing?.cha) setDocumentPrice(pricingData.pricing.cha.price);
+    } catch { /* usa preço padrão 0 */ }
     setShowConfirmModal(true);
   };
 
@@ -342,7 +345,7 @@ export default function CHACria() {
       if (cf) {
         const link = document.createElement("a");
         const nomeCHA = (form.nome || "DOCUMENTO").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
-        link.download = `CHA_NAUTICA_${nomeCHA}_FRENTE.png`;
+        link.download = `CHA_NAUTICA_${nomeCHA}_FRENTE.png`; // CHA tem frente e verso - mantém sufixo para distinção
         link.href = cf.toDataURL("image/png");
         link.click();
       }
@@ -350,7 +353,7 @@ export default function CHACria() {
         await new Promise(r => setTimeout(r, 500));
         const link = document.createElement("a");
         const nomeCHAVerso = (form.nome || "DOCUMENTO").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
-        link.download = `CHA_NAUTICA_${nomeCHAVerso}_VERSO.png`;
+        link.download = `CHA_NAUTICA_${nomeCHAVerso}_VERSO.png`; // CHA tem frente e verso - mantém sufixo para distinção
         link.href = cv.toDataURL("image/png");
         link.click();
       }
@@ -566,7 +569,10 @@ export default function CHACria() {
 
       {/* Modal de Confirmação + Sucesso */}
       <EmissionModal
-        docLabel="CHA Nautica"
+        docLabel="CHA Náutica"
+        docEmoji="⚓"
+        documentPrice={documentPrice}
+        userBalance={user?.balance ?? 0}
         showConfirm={showConfirmModal}
         showSuccess={showSuccessModal}
         isEmitting={loading}

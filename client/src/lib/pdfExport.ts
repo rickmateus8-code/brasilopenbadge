@@ -385,20 +385,21 @@ const DOC_PREFIXES: Record<DocType, string> = {
 
 /**
  * Gera nome de arquivo formatado para o PDF.
+ * Formato universal: {DOCUMENTO}_{NOME_COMPLETO}.pdf
  *
  * @param name - Nome do paciente/titular
  * @param docType - Tipo do documento (padrão: "atestado")
- * @param suffix - Sufixo adicional opcional
+ * @param suffix - Sufixo adicional opcional (ignorado para manter formato limpo)
  *
  * Exemplos:
- * - generatePDFFilename("João Silva") → "ATESTADO_JOAO_SILVA_2026-03-20.pdf"
- * - generatePDFFilename("João Silva", "cnh") → "CNH_JOAO_SILVA_2026-03-20.pdf"
- * - generatePDFFilename("João Silva", "atestado", "EMITIDO") → "ATESTADO_JOAO_SILVA_EMITIDO_2026-03-20.pdf"
+ * - generatePDFFilename("João Silva") → "ATESTADO_JOAO_SILVA.pdf"
+ * - generatePDFFilename("João Silva", "cnh") → "CNH_JOAO_SILVA.pdf"
+ * - generatePDFFilename("João Silva", "receita") → "RECEITA_JOAO_SILVA.pdf"
  */
 export function generatePDFFilename(
   name: string,
   docType: DocType = "atestado",
-  suffix?: string
+  _suffix?: string
 ): string {
   const formatted = name
     .trim()
@@ -409,13 +410,9 @@ export function generatePDFFilename(
     .replace(/[^A-Z0-9_]/g, "");
 
   const prefix = DOC_PREFIXES[docType] || "DOCUMENTO";
-  const timestamp = new Date().toISOString().split("T")[0];
 
-  const parts = [prefix, formatted];
-  if (suffix) parts.push(suffix);
-  parts.push(timestamp);
-
-  return `${parts.join("_")}.pdf`;
+  // Formato universal: {DOCUMENTO}_{NOME_COMPLETO}.pdf
+  return `${prefix}_${formatted}.pdf`;
 }
 
 /**

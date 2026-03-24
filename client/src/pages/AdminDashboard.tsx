@@ -250,20 +250,21 @@ export default function AdminDashboard() {
     type: "danger" | "warning" | "info";
   }>({ open: false, title: "", message: "", onConfirm: () => {}, type: "info" });
 
-  if (!isAdmin) {
-    setLocation("/dashboard");
-    return null;
-  }
-
-  // ── Data Loaders ──────────────────────────────────────────────────────────
+   // ── Data Loaders ──────────────────────────────────────────────────────────
   const loadUsers = useCallback(async (withPasswords = false) => {
     setLoading(true);
     try {
       const url = withPasswords ? "/api/admin/users?show_passwords=1" : "/api/admin/users";
       const res = await fetch(url, { credentials: "include" });
       const data = await res.json();
-      if (data.success) setUsers(data.users || []);
-    } catch { toast.error("Erro ao carregar usuários"); }
+      if (data.success) {
+        setUsers(data.users || []);
+      } else {
+        toast.error(`Erro ao carregar usuários: ${data.error || 'Acesso negado'}`);
+      }
+    } catch (err: any) {
+      toast.error(`Erro ao carregar usuários: ${err?.message || 'Erro de conexão'}`);
+    }
     finally { setLoading(false); }
   }, []);
 
@@ -866,8 +867,14 @@ export default function AdminDashboard() {
     return textMatch && dateMatch;
   });
 
-  const totalBalance = users.reduce((sum, u) => sum + (u.balance || 0), 0);
+   const totalBalance = users.reduce((sum, u) => sum + (u.balance || 0), 0);
   const activeUsers = users.filter(u => u.is_active).length;
+
+  // Verificar permissão admin (após todos os hooks)
+  if (!isAdmin) {
+    setLocation("/dashboard");
+    return null;
+  }
 
   return (
     <DashboardLayout>

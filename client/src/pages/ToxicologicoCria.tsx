@@ -58,18 +58,21 @@ export default function ToxicologicoCria() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [documentPrice, setDocumentPrice] = useState(0);
   const docRef = useRef<HTMLDivElement>(null);
 
   const update = (k: keyof ToxData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setData(d => ({ ...d, [k]: e.target.value as any }));
 
-  const handleRequestEmit = () => {
+  const handleRequestEmit = async () => {
     if (!data.nome || !data.cpf) { toast.error("Preencha Nome e CPF"); return; }
     if (!validarCPF(data.cpf)) { toast.error("CPF inválido! Verifique os dígitos informados."); return; }
-    if ((user?.balance || 0) <= 0) {
-      toast.error("Saldo insuficiente. Recarregue para emitir documentos.");
-      return;
-    }
+    // Buscar preço antes de mostrar modal
+    try {
+      const pricingRes = await fetch("/api/pricing", { credentials: "include" });
+      const pricingData = await pricingRes.json();
+      if (pricingData.success && pricingData.pricing?.toxicologico) setDocumentPrice(pricingData.pricing.toxicologico.price);
+    } catch { /* usa preço padrão 0 */ }
     setShowConfirmModal(true);
   };
 
@@ -101,7 +104,7 @@ export default function ToxicologicoCria() {
     setLoading(true);
     try {
       const nomeTox = (data.nome || "DOCUMENTO").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
-      await exportElementToPDF(docRef.current, `TOXICOLOGICO_${nomeTox}.pdf`);
+      await exportElementToPDF(docRef.current, { filename: `TOXICOLOGICO_${nomeTox}.pdf`, scale: 2, quality: 0.92 });
       toast.success("PDF exportado!");
     } catch { toast.error("Erro ao exportar PDF"); }
     finally { setLoading(false); }
@@ -279,7 +282,10 @@ export default function ToxicologicoCria() {
       </div>
       {/* Modal de Confirmação + Sucesso */}
       <EmissionModal
-        docLabel="Laudo Toxicologico"
+        docLabel="Laudo Toxicológico"
+        docEmoji="🧪"
+        documentPrice={documentPrice}
+        userBalance={user?.balance ?? 0}
         showConfirm={showConfirmModal}
         showSuccess={showSuccessModal}
         isEmitting={loading}

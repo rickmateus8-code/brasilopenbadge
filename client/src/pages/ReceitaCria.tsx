@@ -16,6 +16,7 @@ import { exportElementToPDF, generatePDFFilename } from "@/lib/pdfExport";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { validarCPF } from "@/lib/utils";
+import EmissaoConfirmModal from "@/components/EmissaoConfirmModal";
 
 // ─── API helpers ─────────────────────────────────────────────────────────────
 async function apiFetch(path: string) {
@@ -86,6 +87,8 @@ export default function ReceitaCria() {
   const [createdCode, setCreatedCode] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [documentPrice, setDocumentPrice] = useState(0);
 
   // Assinatura
   const [signatureColor, setSignatureColor] = useState("#0b109f");
@@ -205,15 +208,26 @@ export default function ReceitaCria() {
     } catch (err) { alert(`Erro ao gerar PDF: ${err instanceof Error ? err.message : "Erro"}`); }
   };
 
-  // ── Submit ─────────────────────────────────────────────────────────────────
-  const handleSubmit = async (e: React.FormEvent) => {
+  // ── Mostrar modal de confirmação ──────────────────────────────────────────
+  const handleShowConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) { alert("Faça login para emitir."); return; }
     const prescricaoValida = prescricao.filter(p => p.medicamento.trim());
     if (prescricaoValida.length === 0) { alert("Adicione pelo menos um medicamento."); return; }
     if (!form.medico.trim()) { alert("Preencha o nome do médico."); return; }
     if (form.cpf && !validarCPF(form.cpf)) { alert("CPF inválido! Verifique os dígitos informados."); return; }
+    try {
+      const res = await fetch("/api/pricing", { credentials: "include" });
+      const data = await res.json();
+      if (data.success && data.pricing?.receita) setDocumentPrice(data.pricing.receita.price);
+    } catch { /* usa preço padrão 0 */ }
+    setShowConfirmModal(true);
+  };
 
+  // ── Submit ─────────────────────────────────────────────────────────────────
+  const handleSubmit = async () => {
+    setShowConfirmModal(false);
+    if (!user) { alert("Faça login para emitir."); return; }
     setIsLoading(true);
     try {
       const payload = {
@@ -319,7 +333,7 @@ export default function ReceitaCria() {
       <div style={{ display: "flex", gap: 14, padding: 14, maxWidth: 2000, margin: "0 auto" }}>
         {/* ═══ COLUNA ESQUERDA — FORMULÁRIO ═══ */}
         <div style={{ width: 580, flexShrink: 0, overflowY: "auto", maxHeight: "calc(100vh - 70px)" }}>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleShowConfirm}>
 
             {/* Tipo de Receituário */}
             <div style={card}>
@@ -634,6 +648,19 @@ export default function ReceitaCria() {
           </div>
         </div>
       </div>
+
+      {/* Modal de confirmação de emissão */}
+      {showConfirmModal && (
+        <EmissaoConfirmModal
+          documentoNome="Receituário Médico"
+          documentoEmoji="💊"
+          documentPrice={documentPrice}
+          userBalance={user?.balance ?? 0}
+          isLoading={isLoading}
+          onConfirm={handleSubmit}
+          onCancel={() => setShowConfirmModal(false)}
+        />
+      )}
     </div>
   );
 }
