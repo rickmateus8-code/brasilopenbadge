@@ -164,7 +164,7 @@ export default function NovoDocumentoModal({ open, onClose, userBalance }: NovoD
               Recarregar Agora
             </button>
             <button
-              onClick={() => { setInsufficientDoc(null); onClose(); }}
+              onClick={() => { setInsufficientDoc(null); }}
               style={{
                 flex: 1, padding: "12px 0", borderRadius: 10, border: "none",
                 background: "#6b7280", color: "#fff", fontWeight: 700,

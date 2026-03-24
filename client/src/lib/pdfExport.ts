@@ -277,10 +277,9 @@ ${elementHTML}
     const scaledHeight = imgHeight * ratio;
 
     if (!multiPage || scaledHeight <= pdfHeight) {
-      // Página única — centraliza verticalmente se houver espaço
-      const offsetY = Math.max(0, (pdfHeight - scaledHeight) / 2);
+      // Página única — sempre começa do topo (offsetY = 0)
       const imgData = canvas.toDataURL("image/jpeg", quality);
-      pdf.addImage(imgData, "JPEG", 0, offsetY, scaledWidth, scaledHeight);
+      pdf.addImage(imgData, "JPEG", 0, 0, scaledWidth, scaledHeight);
     } else {
       // Múltiplas páginas — divide o canvas em fatias A4
       let pageIndex = 0;

@@ -15,7 +15,7 @@ interface MenuItem {
   icon: React.ElementType;
   label: string;
   path?: string;
-  children?: { label: string; path: string }[];
+  children?: { label: string; path: string; isCreation?: boolean }[];
 }
 
 const menuItems: MenuItem[] = [
@@ -24,21 +24,21 @@ const menuItems: MenuItem[] = [
   {
     icon: FileText, label: "Atestado",
     children: [
-      { label: "Novo Atestado", path: "/atestadocria" },
+      { label: "Novo Atestado", path: "/atestadocria", isCreation: true },
       { label: "Atestados Salvos", path: "/atestadosalvos" },
     ],
   },
   {
     icon: Car, label: "CNH Digital",
     children: [
-      { label: "Criar CNH", path: "/cnhcria" },
+      { label: "Criar CNH", path: "/cnhcria", isCreation: true },
       { label: "CNHs Salvas", path: "/cnhsalvas" },
     ],
   },
   {
     icon: Anchor, label: "CHA Náutica",
     children: [
-      { label: "Nova CHA", path: "/chacria" },
+      { label: "Nova CHA", path: "/chacria", isCreation: true },
       { label: "CHAs Salvas", path: "/chasalvas" },
     ],
   },
@@ -46,16 +46,16 @@ const menuItems: MenuItem[] = [
   {
     icon: GraduationCap, label: "Histórico Escolar",
     children: [
-      { label: "Histórico SP", path: "/historico-sp" },
+      { label: "Histórico SP", path: "/historico-sp", isCreation: true },
       { label: "Históricos SP Salvos", path: "/historico-sp-salvos" },
-      { label: "Histórico UNINTER", path: "/historico-uninter" },
+      { label: "Histórico UNINTER", path: "/historico-uninter", isCreation: true },
       { label: "Históricos UNINTER Salvos", path: "/historico-uninter-salvos" },
     ],
   },
   {
     icon: Pill, label: "Receituário",
     children: [
-      { label: "Dr. Consulta", path: "/receitacria" },
+      { label: "Dr. Consulta", path: "/receitacria", isCreation: true },
       { label: "Receitas Salvas", path: "/receitassalvas" },
     ],
   },
@@ -65,10 +65,14 @@ function SidebarItem({
   item,
   collapsed,
   onNavigate,
+  userBalance = 0,
+  onInsufficientBalance,
 }: {
   item: MenuItem;
   collapsed: boolean;
   onNavigate?: () => void;
+  userBalance?: number;
+  onInsufficientBalance?: () => void;
 }) {
   const [location, setLocation] = useLocation();
   const isChildActive = item.children?.some(c => location === c.path) ?? false;
@@ -86,10 +90,15 @@ function SidebarItem({
     }
   }, [location, item.children]);
 
-  const navigate = useCallback((path: string) => {
+  const navigate = useCallback((path: string, isCreation?: boolean) => {
+    // Bloquear navegação para criação se saldo zerado
+    if (isCreation && userBalance <= 0) {
+      onInsufficientBalance?.();
+      return;
+    }
     setLocation(path);
     onNavigate?.();
-  }, [setLocation, onNavigate]);
+  }, [setLocation, onNavigate, userBalance, onInsufficientBalance]);
 
   // Toggle manual — só alterna se não há filho ativo (evita fechar menu ativo)
   const handleToggle = useCallback(() => {
@@ -122,7 +131,7 @@ function SidebarItem({
             {item.children.map(child => (
               <button
                 key={child.path}
-                onClick={() => navigate(child.path)}
+                onClick={() => navigate(child.path, child.isCreation)}
                 className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all
                   ${location === child.path
                     ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-medium"
@@ -266,6 +275,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showNovoDocModal, setShowNovoDocModal] = useState(false);
+  const [showInsufficientBalance, setShowInsufficientBalance] = useState(false);
 
   useEffect(() => {
     const handler = () => {
@@ -363,6 +373,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             item={item}
             collapsed={!mobile && collapsed}
             onNavigate={mobile ? () => setMobileOpen(false) : undefined}
+            userBalance={user.balance}
+            onInsufficientBalance={() => {
+              if (mobile) setMobileOpen(false);
+              setShowInsufficientBalance(true);
+            }}
           />
         ))}
       </nav>
@@ -496,6 +511,77 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         onClose={() => setShowNovoDocModal(false)}
         userBalance={user.balance}
       />
+
+      {/* Modal Saldo Insuficiente — acionado pelo submenu */}
+      {showInsufficientBalance && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 9999,
+            background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: "16px",
+          }}
+          onClick={() => setShowInsufficientBalance(false)}
+        >
+          <div
+            style={{
+              background: "#fff", borderRadius: 20, padding: "36px 32px",
+              maxWidth: 380, width: "100%", textAlign: "center",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{
+              width: 72, height: 72, borderRadius: "50%",
+              border: "3px solid #f97316", display: "flex", alignItems: "center",
+              justifyContent: "center", margin: "0 auto 20px",
+            }}>
+              <svg viewBox="0 0 24 24" style={{ width: 36, height: 36, color: "#f97316" }} fill="none" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              </svg>
+            </div>
+            <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111827", marginBottom: 12 }}>
+              Saldo Insuficiente
+            </h2>
+            <p style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.6, marginBottom: 28 }}>
+              Você não possui saldo suficiente para criar um novo documento.
+              Recarregue seu saldo para continuar.
+            </p>
+            <div style={{
+              background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10,
+              padding: "10px 16px", marginBottom: 24, display: "flex",
+              alignItems: "center", justifyContent: "center", gap: 8,
+            }}>
+              <Wallet style={{ width: 16, height: 16, color: "#dc2626" }} />
+              <span style={{ fontSize: 13, color: "#dc2626", fontWeight: 700 }}>
+                Saldo atual: R$ {(user.balance / 100).toFixed(2).replace(".", ",")}
+              </span>
+            </div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <button
+                onClick={() => { setShowInsufficientBalance(false); setLocation("/recargas"); }}
+                style={{
+                  flex: 1, padding: "12px 0", borderRadius: 10, border: "none",
+                  background: "#16a34a", color: "#fff", fontWeight: 700,
+                  fontSize: 14, cursor: "pointer",
+                }}
+              >
+                Recarregar Agora
+              </button>
+              <button
+                onClick={() => setShowInsufficientBalance(false)}
+                style={{
+                  flex: 1, padding: "12px 0", borderRadius: 10, border: "none",
+                  background: "#6b7280", color: "#fff", fontWeight: 700,
+                  fontSize: 14, cursor: "pointer",
+                }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

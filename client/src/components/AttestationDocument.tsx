@@ -264,10 +264,9 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           {/* Linha 3: Endereço */}
           <div>
             <span style={{ fontWeight: 700, color: "#000" }}>Endereço: </span>
-            <span style={{ color: "#000", textTransform: "uppercase" }}>{data.endereco}</span>
+            <span style={{ fontWeight: 700, color: "#000", textTransform: "uppercase" }}>{data.endereco}</span>
           </div>
         </div>
-
         {/* ===== ENDEREÇO EMITENTE ===== */}
         {enderecoEmitente && (
           <div style={{
@@ -282,7 +281,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             flexShrink: 0,
           }}>
             <span style={{ fontWeight: 700 }}>ENDEREÇO EMITENTE: </span>
-            <span style={{ fontWeight: 400 }}>{enderecoEmitente}</span>
+            <span style={{ fontWeight: 700 }}>{enderecoEmitente}</span>
           </div>
         )}
         {/* ===== CORPO DO TEXTO ===== */}
@@ -293,7 +292,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           textAlign: "justify",
           position: "relative",
           zIndex: 2,
-          paddingTop: 32,
+          paddingTop: 48,
           paddingBottom: 8,
           color: "#111",
           fontWeight: 400,
@@ -305,14 +304,14 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             lineHeight: 1.9,
             whiteSpace: "pre-wrap",
           }}>
-            {textoAtestado || "Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico."}
+            {textoAtestado || "        Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico. Necessita de 04 (quatro) dias de afastamento de suas atividades laborais para repouso e tratamento de saúde."}
           </p>
 
           {cidDisplay && (
             <div style={{
               fontWeight: 700,
               fontSize: 11,
-              marginTop: 18,
+              marginTop: 28,
               color: "#000",
               textTransform: "uppercase",
             }}>
@@ -343,9 +342,9 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               <div style={{ fontSize: 8.5 }}>Valide este documento acessando o endereço:</div>
               <strong style={{ fontSize: 9, display: "block" }}>https://validaratestado.digital</strong>
               <div style={{ marginTop: 2, display: "flex", alignItems: "baseline", gap: 3 }}>
-                <span style={{ fontWeight: 600, fontSize: 8.5, whiteSpace: "nowrap" }}>Código:</span>
-                <strong style={{ fontFamily: "'Courier New', monospace", letterSpacing: 1, fontSize: 9, fontWeight: 900, wordBreak: "break-all" }}>
-                  {isEmitted ? data.codigoQR : "Gerado após emissão"}
+                <span style={{ fontWeight: 400, fontSize: 8.5, whiteSpace: "nowrap" }}>Código:</span>
+                <strong style={{ fontFamily: "'Courier New', monospace", letterSpacing: 2, fontSize: 9, fontWeight: 900, wordBreak: "break-all", display: "inline-block" }}>
+                  {isEmitted ? data.codigoQR : "****.****.**** "}
                 </strong>
               </div>
             </div>

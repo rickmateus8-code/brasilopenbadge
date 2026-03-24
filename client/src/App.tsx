@@ -60,11 +60,11 @@ const isCNHValidationDomain = typeof window !== 'undefined' &&
 function VerificaMedRouter() {
   return (
     <Switch>
-      <Route path="/verificar/receita/:id" component={Validation} />
-      <Route path="/verificar-receita/:id" component={Validation} />
-      <Route path="/verificar/:id" component={Validation} />
-      <Route path="/" component={Validation} />
-      <Route component={Validation} />
+      <Route path="/verificar/receita/:id" component={ValidationReceita} />
+      <Route path="/verificar-receita/:id" component={ValidationReceita} />
+      <Route path="/verificar/:id" component={ValidationReceita} />
+      <Route path="/" component={ValidationReceita} />
+      <Route component={ValidationReceita} />
     </Switch>
   );
 }
