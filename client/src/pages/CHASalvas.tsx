@@ -25,6 +25,7 @@ export default function CHASalvas() {
       fields={FIELDS}
       nameField="nome"
       cpfField="cpf"
+      editRoute="/cha/editar"
       extraColumns={[
         { key: "categoria", label: "Categoria" },
       ]}

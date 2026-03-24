@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
+import NovoDocumentoModal from "@/components/NovoDocumentoModal";
 import { toast } from "sonner";
 import CNHDocument, { CNHDocumentHandle, CNHDocumentProps } from "@/components/CNHDocument";
 import AttestationDocument from "@/components/AttestationDocument";
@@ -104,6 +105,7 @@ export default function Dashboard() {
   const [history, setHistory] = useState<DocRecord[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [stats, setStats] = useState<Record<string, number>>({});
+  const [showNovoDocModal, setShowNovoDocModal] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -469,14 +471,11 @@ export default function Dashboard() {
           </p>
           <div className="mt-4 flex items-center gap-3">
             <button
-              onClick={() => {
-                const el = document.getElementById("acesso-rapido");
-                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-              }}
+                      onClick={() => setShowNovoDocModal(true)}
               className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-semibold transition-all"
             >
               <Plus className="w-4 h-4" />
-              Novo Documento
+              + Novo Documento
             </button>
           </div>
         </div>
@@ -583,10 +582,10 @@ export default function Dashboard() {
                     <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
                     <p className="text-sm text-gray-500">Nenhuma CNH emitida ainda</p>
                     <button
-                      onClick={() => setLocation("/cnhcria")}
+                      onClick={() => setShowNovoDocModal(true)}
                       className="mt-3 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-lg transition-colors"
                     >
-                      Emitir agora
+                      + Novo Documento
                     </button>
                   </div>
                 ) : (
@@ -667,10 +666,10 @@ export default function Dashboard() {
                   <Clock className="w-10 h-10 mb-3 opacity-30" />
                   <p className="text-sm">Nenhum documento emitido ainda</p>
                   <button
-                    onClick={() => setLocation(quickActions.find(q => q.path.includes(activeTab.split("-")[0]))?.path || "/atestadocria")}
+                    onClick={() => setShowNovoDocModal(true)}
                     className="mt-3 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-lg transition-colors"
                   >
-                    Emitir agora
+                    + Novo Documento
                   </button>
                 </div>
               ) : (
@@ -1077,6 +1076,11 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      {/* Modal Novo Documento */}
+      <NovoDocumentoModal
+        open={showNovoDocModal}
+        onClose={() => setShowNovoDocModal(false)}
+      />
     </DashboardLayout>
   );
 }

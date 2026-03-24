@@ -345,6 +345,12 @@ Um abraço da equipe DocMaster! 😊🚗💨`;
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2 flex-wrap">
                         <button
+                          onClick={() => window.location.href = `/cnh/editar/${cnh.id}`}
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                        >
+                          ✏️ Editar
+                        </button>
+                        <button
                           onClick={() => setPreviewModal(cnh)}
                           className="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-700 hover:bg-amber-800 text-white transition-colors"
                         >

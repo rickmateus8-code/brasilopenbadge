@@ -6,9 +6,13 @@ const FIELDS = [
   { key: "rg", label: "RG" },
   { key: "dataNascimento", label: "Data Nascimento" },
   { key: "dataColeta", label: "Data Coleta" },
-  { key: "dataResultado", label: "Data Resultado" },
+  { key: "dataEmissao", label: "Data Emissão" },
+  { key: "validade", label: "Validade" },
   { key: "laboratorio", label: "Laboratório" },
   { key: "resultado", label: "Resultado" },
+  { key: "protocolo", label: "Protocolo" },
+  { key: "responsavel", label: "Responsável Técnico" },
+  { key: "crf", label: "CRF" },
   { key: "observacoes", label: "Observações", type: "textarea" as const },
 ];
 
@@ -22,6 +26,10 @@ export default function ToxicologicoSalvos() {
       fields={FIELDS}
       nameField="nome"
       cpfField="cpf"
+      editRoute="/toxicologico/editar"
+      extraColumns={[
+        { key: "resultado", label: "Resultado" },
+      ]}
     />
   );
 }

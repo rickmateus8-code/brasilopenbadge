@@ -260,11 +260,18 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
     now, now
   ).run();
 
-  // 6. Debitar saldo (se aplicável)
+  // 6. Debitar saldo ATÔMICO (evita race condition)
   if (user.role !== "admin" && price > 0) {
-    await env.DB.prepare(
-      "UPDATE users SET balance = balance - ? WHERE id = ?"
-    ).bind(price, user.id).run();
+    const updated = await env.DB.prepare(
+      "UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ? RETURNING balance"
+    ).bind(price, user.id, price).first<{ balance: number }>();
+    if (!updated) {
+      return jsonResponse({
+        success: false,
+        error: 'Saldo insuficiente no momento da emissão. Recarregue seu saldo e tente novamente.',
+        code: 'INSUFFICIENT_BALANCE',
+      }, 402);
+    }
     // Registrar transação (id is AUTOINCREMENT, omit it)
     await env.DB.prepare(`
       INSERT INTO transactions (user_id, type, amount, description, document_id, created_at)

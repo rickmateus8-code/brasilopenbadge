@@ -621,89 +621,113 @@ export default function AtestadoCria() {
   // ── Importação rápida ───────────────────────────────────────────────────────
   const processarImportacao = () => {
     if (!importTexto.trim()) return;
-    const mapa: Record<string, string> = {
-      // Paciente
-      "nome completo": "paciente",
-      "nome": "paciente",
-      // Documento
-      "tipo de doc": "_tipoDoc",
-      "tipo doc": "_tipoDoc",
-      "numero do doc": "docValue",
-      "numero doc": "docValue",
-      "cpf": "docValue",
-      "cns": "docValue",
-      // Nascimento
-      "nascimento": "nascimento",
-      "data de nascimento": "nascimento",
-      "data nascimento": "nascimento",
-      // Sexo
-      "sexo": "sexo",
-      // Mãe
-      "nome da mae": "nomeMae",
-      "mae": "nomeMae",
-      // Endereço
-      "endereco do paciente": "endereco",
-      "endereco paciente": "endereco",
-      "endereco": "endereco",
-      // CID
-      "cid (codigo da doenca)": "cid",
-      "cid codigo da doenca": "cid",
-      "cid": "cid",
-      // Cidade
-      "cidade de emissao": "cidade",
-      "cidade emissao": "cidade",
-      "cidade": "cidade",
-      // Data do atestado
-      "data do atestado": "dataAssinatura",
-      "data atestado": "dataAssinatura",
-      "data": "dataAssinatura",
-      // Horário
-      "horario do atendimento": "horaAssinatura",
-      "horario atendimento": "horaAssinatura",
-      "horario": "horaAssinatura",
-      "hora do atendimento": "horaAssinatura",
-      "hora atendimento": "horaAssinatura",
-      "hora": "horaAssinatura",
-    };
+
+    // IMPORTANTE: Array ordenado — entradas mais específicas PRIMEIRO
+    // Evita matches parciais (ex: "nome da mae" não deve ser capturado por "nome")
+    // Evita "cidade de emissao" ser capturado por "cid"
+    const mapaOrdenado: Array<[string, string]> = [
+      ["nome completo", "paciente"],
+      ["nome da mae", "nomeMae"],
+      ["tipo de doc (cpf ou cns)", "_tipoDoc"],
+      ["tipo de doc", "_tipoDoc"],
+      ["tipo doc", "_tipoDoc"],
+      ["numero do doc", "docValue"],
+      ["numero doc", "docValue"],
+      ["data de nascimento", "nascimento"],
+      ["data nascimento", "nascimento"],
+      ["data do atestado", "dataAssinatura"],
+      ["data atestado", "dataAssinatura"],
+      ["horario do atendimento", "horaAssinatura"],
+      ["horario atendimento", "horaAssinatura"],
+      ["hora do atendimento", "horaAssinatura"],
+      ["hora atendimento", "horaAssinatura"],
+      ["endereco do paciente", "endereco"],
+      ["endereco paciente", "endereco"],
+      ["cid (codigo da doenca)", "cid"],
+      ["cid codigo da doenca", "cid"],
+      ["cidade de emissao", "cidade"],
+      ["cidade emissao", "cidade"],
+      // Genéricos por último
+      ["nascimento", "nascimento"],
+      ["sexo", "sexo"],
+      ["mae", "nomeMae"],
+      ["endereco", "endereco"],
+      ["cid", "cid"],
+      ["cidade", "cidade"],
+      ["cpf", "docValue"],
+      ["cns", "docValue"],
+      ["nome", "paciente"],
+      ["horario", "horaAssinatura"],
+      ["hora", "horaAssinatura"],
+      ["data", "dataAssinatura"],
+    ];
+
     const normalize = (s: string) =>
       s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
     const updates: Partial<typeof form> = {};
+    let newTipoDoc: "CPF" | "CNS" | null = null;
+
     importTexto.split("\n").forEach((linha) => {
-      const idx = linha.lastIndexOf(":");
+      // Usar indexOf (PRIMEIRO ':') para separar chave de valor
+      // Isso evita que "Horário do Atendimento: 14:35" seja cortado em "35"
+      const idx = linha.indexOf(":");
       if (idx === -1) return;
       const chave = normalize(linha.substring(0, idx));
+      // Pegar tudo após o primeiro ':' como valor
       const valor = linha.substring(idx + 1).trim().toUpperCase();
       if (!valor) return;
-      for (const label in mapa) {
-        if (chave === normalize(label) || chave.startsWith(normalize(label))) {
-          const field = mapa[label];
+
+      for (const [label, field] of mapaOrdenado) {
+        const labelNorm = normalize(label);
+        // Match EXATO apenas (sem startsWith para evitar colisões)
+        if (chave === labelNorm) {
           if (field === "_tipoDoc") {
-            // Detectar tipo de documento (CPF ou CNS)
-            if (valor.includes("CNS")) setTipoDoc("CNS");
-            else if (valor.includes("CPF")) setTipoDoc("CPF");
+            if (valor.includes("CNS")) newTipoDoc = "CNS";
+            else if (valor.includes("CPF")) newTipoDoc = "CPF";
           } else if (field === "sexo") {
             (updates as any)[field] = valor.startsWith("M") ? "MALE" : "FEMALE";
           } else if (field === "nascimento" || field === "dataAssinatura") {
             const d = valor.replace(/\D/g, "");
             (updates as any)[field] = d.length === 8 ? `${d.slice(0,2)}/${d.slice(2,4)}/${d.slice(4,8)}` : valor;
           } else if (field === "horaAssinatura") {
-            // Formatar hora: aceita HH:MM ou HH:MM:SS
+            // Formatar hora: pegar HH:MM do início do valor
             const h = valor.replace(/[^0-9:]/g, "");
             (updates as any)[field] = h.length >= 4 ? h.substring(0, 5) : valor;
           } else if (field === "docValue") {
-            const isCNS = valor.replace(/\D/g, "").length > 11;
-            if (isCNS) { setTipoDoc("CNS"); (updates as any)[field] = maskCNS(valor); }
-            else { setTipoDoc("CPF"); (updates as any)[field] = maskCPF(valor); }
+            const digitsOnly = valor.replace(/\D/g, "");
+            const isCNS = digitsOnly.length > 11;
+            if (isCNS) { newTipoDoc = "CNS"; (updates as any)[field] = maskCNS(valor); }
+            else { newTipoDoc = "CPF"; (updates as any)[field] = maskCPF(valor); }
+          } else if (field === "cid") {
+            // Para CID: extrair código e nome separadamente
+            const cidRaw = valor; // Ex: "M54.5 (DOR LOMBAR BAIXA)"
+            const cidCodeMatch = cidRaw.match(/^([A-Z]\d{2}\.?\d?)/i);
+            const cidCode = cidCodeMatch ? cidCodeMatch[1].toUpperCase() : cidRaw.split(" ")[0];
+            const cidNameMatch = cidRaw.match(/\(([^)]+)\)/);
+            const cidName = cidNameMatch ? cidNameMatch[1] : "";
+            (updates as any)["cid"] = cidCode;
+            (updates as any)["cidDisplay"] = cidRaw;
+            if (cidName) (updates as any)["cidNome"] = cidName;
           } else {
             (updates as any)[field as keyof typeof form] = valor;
           }
-          break; // Parar no primeiro match para evitar sobreposição
+          break; // Parar no primeiro match
         }
       }
     });
+
+    // Aplicar tipo de documento se detectado
+    if (newTipoDoc) setTipoDoc(newTipoDoc);
+
     setForm((p) => ({ ...p, ...updates }));
     setImportTexto("");
     setShowImport(false);
+    // Feedback de quantos campos foram preenchidos
+    const count = Object.keys(updates).filter(k => !k.startsWith("cid") || k === "cid").length;
+    if (count > 0) {
+      alert(`✅ ${count} campo(s) importado(s) com sucesso!`);
+    }
   };
 
   //  // ── Download PDF ────────────────────────────────────────────────────────

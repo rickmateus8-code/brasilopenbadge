@@ -24,6 +24,9 @@ import AdminDashboard from "./pages/AdminDashboard";
 import ReceitaCria from "./pages/ReceitaCria";
 import AtestadoEditar from "./pages/AtestadoEditar";
 import ReceitaEditar from "./pages/ReceitaEditar";
+import CNHEditar from "./pages/CNHEditar";
+import CHAEditar from "./pages/CHAEditar";
+import ToxicologicoEditar from "./pages/ToxicologicoEditar";
 import ValidationReceita from "./pages/ValidationReceita";
 import Extrato from "./pages/Extrato";
 import Recargas from "./pages/Recargas";
@@ -126,10 +129,17 @@ function DocMasterRouter() {
       <Route path="/atestadosalvos" component={AtestadosSalvos} />
 
       <Route path="/cnh" component={CNHCria} />
+      <Route path="/cnh/editar/:id" component={CNHEditar} />
       <Route path="/cnhsalvas" component={CNHSalvas} />
 
       <Route path="/cha" component={CHACria} />
+      <Route path="/cha/editar/:id" component={CHAEditar} />
       <Route path="/chasalvas" component={CHASalvas} />
+
+      {/* Toxicológico */}
+      <Route path="/toxicologico" component={ToxicologicoCria} />
+      <Route path="/toxicologico/editar/:id" component={ToxicologicoEditar} />
+      <Route path="/toxicologicosalvos" component={ToxicologicoSalvos} />
 
 
 
