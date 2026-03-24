@@ -319,6 +319,7 @@ export default function AtestadoCria() {
   const [createdCode, setCreatedCode] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [autoDownloadTriggered, setAutoDownloadTriggered] = useState(false);
 
   // ── Logos ──────────────────────────────────────────────────────────────────
   const [logoLeft, setLogoLeft] = useState<string>("");
@@ -701,7 +702,7 @@ export default function AtestadoCria() {
     setShowImport(false);
   };
 
-  // ── Download PDF ────────────────────────────────────────────────────────────
+  //  // ── Download PDF ────────────────────────────────────────────────────────
   const handleDownloadPdf = async () => {
     if (!previewRef.current) return;
     try {
@@ -712,6 +713,35 @@ export default function AtestadoCria() {
       alert(`Erro ao gerar PDF: ${err instanceof Error ? err.message : "Erro desconhecido"}`);
     }
   };
+
+  // ── Auto-download do PDF após sucesso e redirecionamento ─────────────────
+  useEffect(() => {
+    if (showSuccessModal && !autoDownloadTriggered && previewRef.current) {
+      setAutoDownloadTriggered(true);
+      setIsDownloadingPdf(true);
+      setTimeout(async () => {
+        try {
+          const nomePac = (form.paciente || "PACIENTE").trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
+          const filename = `ATESTADO_${nomePac}.pdf`;
+          await exportElementToPDF(previewRef.current!, { filename, scale: 2, quality: 0.92 });
+          // Após download, aguarda 1s e redireciona
+          setTimeout(() => {
+            setShowSuccessModal(false);
+            navigate("/atestados-salvos");
+          }, 1000);
+        } catch (err) {
+          console.error("Erro ao fazer download automático:", err);
+          // Mesmo com erro, redireciona após 2s
+          setTimeout(() => {
+            setShowSuccessModal(false);
+            navigate("/atestados-salvos");
+          }, 2000);
+        } finally {
+          setIsDownloadingPdf(false);
+        }
+      }, 500);
+    }
+  }, [showSuccessModal, autoDownloadTriggered, form.paciente, previewRef]);
 
   // ── Submit — EMISSÃO REAL (backend gera QR Code) ────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
@@ -776,6 +806,7 @@ export default function AtestadoCria() {
         setForm(prev => ({ ...prev, _emittedCode: emittedCode }));
       }
       setShowSuccessModal(true);
+      setAutoDownloadTriggered(false); // Reset para próxima emissão
     } catch (error) {
       alert(`Erro ao emitir: ${error instanceof Error ? error.message : "Erro desconhecido"}`);
     } finally {
@@ -942,14 +973,15 @@ export default function AtestadoCria() {
             <p style={{ fontSize: 14, color: "#6b7280", margin: "0 0 28px" }}>Documento emitido com sucesso!</p>
             <button
               style={{
-                background: "#7c3aed", color: "#fff", border: "none",
+                background: isDownloadingPdf ? "#9ca3af" : "#7c3aed", color: "#fff", border: "none",
                 borderRadius: 10, padding: "12px 40px",
-                fontWeight: 700, fontSize: 15, cursor: "pointer",
+                fontWeight: 700, fontSize: 15, cursor: isDownloadingPdf ? "not-allowed" : "pointer",
                 width: "100%",
               }}
               onClick={() => { setShowSuccessModal(false); navigate("/atestados-salvos"); }}
+              disabled={isDownloadingPdf}
             >
-              OK
+              {isDownloadingPdf ? "⏳ Baixando PDF..." : "OK"}
             </button>
           </div>
         </div>
