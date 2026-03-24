@@ -727,14 +727,14 @@ export default function AtestadoCria() {
           // Após download, aguarda 1s e redireciona
           setTimeout(() => {
             setShowSuccessModal(false);
-            navigate("/atestados-salvos");
+            navigate("/atestadosalvos");
           }, 1000);
         } catch (err) {
           console.error("Erro ao fazer download automático:", err);
           // Mesmo com erro, redireciona após 2s
           setTimeout(() => {
             setShowSuccessModal(false);
-            navigate("/atestados-salvos");
+            navigate("/atestadosalvos");
           }, 2000);
         } finally {
           setIsDownloadingPdf(false);
@@ -978,7 +978,7 @@ export default function AtestadoCria() {
                 fontWeight: 700, fontSize: 15, cursor: isDownloadingPdf ? "not-allowed" : "pointer",
                 width: "100%",
               }}
-              onClick={() => { setShowSuccessModal(false); navigate("/atestados-salvos"); }}
+              onClick={() => { setShowSuccessModal(false); navigate("/atestadosalvos"); }}
               disabled={isDownloadingPdf}
             >
               {isDownloadingPdf ? "⏳ Baixando PDF..." : "OK"}
