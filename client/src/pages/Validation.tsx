@@ -508,60 +508,24 @@ export default function Validation() {
 
           {/* Body */}
           <div style={S.modalBody}>
-            {isGeneratingPdf ? (
-              <div style={{ color: "#fff", fontSize: 15, marginTop: 40, textAlign: "center" }}>
-                <div style={{ fontSize: 32, marginBottom: 12 }}>&#9203;</div>
-                Gerando visualização do documento...
+            {docType === "cnh" && pdfBlobUrl ? (
+              // CNH: exibir imagem JPEG
+              <div style={{ display: "flex", justifyContent: "center", padding: 12 }}>
+                <img
+                  src={pdfBlobUrl}
+                  alt="CNH Digital Validada"
+                  style={{ maxWidth: "100%", maxHeight: "calc(100vh - 120px)", borderRadius: 4, boxShadow: "0 4px 24px rgba(0,0,0,0.4)" }}
+                />
               </div>
-            ) : pdfBlobUrl ? (
-              docType === "cnh" ? (
-                // CNH: exibir imagem JPEG
-                <div style={{ display: "flex", justifyContent: "center", padding: 12 }}>
-                  <img
-                    src={pdfBlobUrl}
-                    alt="CNH Digital Validada"
-                    style={{ maxWidth: "100%", maxHeight: "calc(100vh - 120px)", borderRadius: 4, boxShadow: "0 4px 24px rgba(0,0,0,0.4)" }}
-                  />
-                </div>
-              ) : (
-                // Atestado/Receita: exibir PDF responsivo com escala automática para mobile
-                <div style={{
-                  width: "100%",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "flex-start",
-                  overflow: "hidden",
-                }}>
-                  <div style={{
-                    width: "100%",
-                    maxWidth: "100vw",
-                    aspectRatio: "794 / 1123",
-                    position: "relative",
-                    boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
-                  }}>
-                    <iframe
-                      src={pdfBlobUrl}
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        width: "100%",
-                        height: "100%",
-                        border: "none",
-                      }}
-                      title="Documento Validado"
-                    />
-                  </div>
-                </div>
-              )
             ) : (
-              // Fallback: renderizar documento diretamente com escala responsiva
+              // Atestado/Receita: renderizar documento diretamente com escala responsiva
               <div style={{
                 width: "100%",
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "flex-start",
-                overflow: "hidden",
+                overflow: "auto",
+                padding: "12px 8px",
               }}>
                 <div style={{
                   width: "min(794px, 100vw - 16px)",
