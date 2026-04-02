@@ -340,7 +340,7 @@ export default function Validation() {
       display: "flex",
       alignItems: "flex-start",
       justifyContent: "center",
-      padding: "12px 0",
+      padding: "12px 8px",
     } as React.CSSProperties,
     modalFooter: {
       background: "#fff",
@@ -524,16 +524,56 @@ export default function Validation() {
                   />
                 </div>
               ) : (
-                // Atestado/Receita: exibir PDF em iframe
-                <iframe
-                  src={pdfBlobUrl}
-                  style={{ width: "100%", height: "100%", border: "none", flex: 1 }}
-                  title="Documento Validado"
-                />
+                // Atestado/Receita: exibir PDF responsivo com escala automática para mobile
+                <div style={{
+                  width: "100%",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "flex-start",
+                  overflow: "hidden",
+                }}>
+                  <div style={{
+                    width: "100%",
+                    maxWidth: "100vw",
+                    aspectRatio: "794 / 1123",
+                    position: "relative",
+                    boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
+                  }}>
+                    <iframe
+                      src={pdfBlobUrl}
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                        border: "none",
+                      }}
+                      title="Documento Validado"
+                    />
+                  </div>
+                </div>
               )
             ) : (
-              // Fallback: renderizar documento diretamente
-              renderDocument(false)
+              // Fallback: renderizar documento diretamente com escala responsiva
+              <div style={{
+                width: "100%",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "flex-start",
+                overflow: "hidden",
+              }}>
+                <div style={{
+                  width: "min(794px, 100vw - 16px)",
+                  transformOrigin: "top center",
+                  transform: typeof window !== "undefined" && window.innerWidth < 794
+                    ? `scale(${(window.innerWidth - 16) / 794})`
+                    : "scale(1)",
+                  boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
+                }}>
+                  {renderDocument(false)}
+                </div>
+              </div>
             )}
           </div>
 
