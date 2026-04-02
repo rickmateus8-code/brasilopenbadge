@@ -351,9 +351,9 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               </div>
               <div style={{ fontSize: 8.5 }}>Valide este documento acessando o endereço:</div>
               <strong style={{ fontSize: 9, display: "block" }}>https://validaratestado.digital</strong>
-              <div style={{ marginTop: 2, display: "flex", alignItems: "baseline", gap: 3 }}>
-                <span style={{ fontWeight: 400, fontSize: 8.5, whiteSpace: "nowrap" }}>Código:</span>
-                <strong style={{ fontFamily: "'Courier New', monospace", letterSpacing: 2, fontSize: 9, fontWeight: 900, wordBreak: "break-all", display: "inline-block" }}>
+              <div style={{ marginTop: 2, display: "flex", alignItems: "center", gap: 4, flexWrap: "nowrap" }}>
+                <span style={{ fontWeight: 400, fontSize: 8.5, whiteSpace: "nowrap", lineHeight: 1 }}>Código:</span>
+                <strong style={{ fontFamily: "'Courier New', monospace", letterSpacing: 2, fontSize: 9, fontWeight: 900, whiteSpace: "nowrap", lineHeight: 1 }}>
                   {isEmitted ? data.codigoQR : "****.****.**** "}
                 </strong>
               </div>
