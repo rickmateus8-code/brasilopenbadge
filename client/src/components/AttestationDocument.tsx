@@ -57,8 +57,18 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
   ({ data, logoUrl, logoLeft, logoRight, signatureColor, signatureImage }, ref) => {
     const isEmitted = data.codigoQR && data.codigoQR !== "XXXX.XXXX";
     // QR Code aponta para validaratestado.digital/validar?codigo=XXXX&data=YYYY-MM-DD
+    // A data no banco está em DD/MM/YYYY — converte para YYYY-MM-DD para o parâmetro da URL
     const dataEmissaoForQR = data.dataEmissao
-      ? String(data.dataEmissao).substring(0, 10)
+      ? (() => {
+          const d = String(data.dataEmissao).trim();
+          // Formato DD/MM/YYYY → YYYY-MM-DD
+          const parts = d.split("/");
+          if (parts.length === 3 && parts[2].length === 4) {
+            return `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
+          }
+          // Se já vier em YYYY-MM-DD, retorna direto
+          return d.substring(0, 10);
+        })()
       : undefined;
     const qrValue = isEmitted
       ? getQRCodeValue(data.codigoQR, dataEmissaoForQR)

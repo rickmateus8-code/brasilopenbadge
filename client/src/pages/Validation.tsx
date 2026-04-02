@@ -121,8 +121,14 @@ export default function Validation() {
         // Verificar data de emissão se fornecida
         const dateInput = dateOverride || dataEmissao;
         if (dateInput) {
-          const [y, m, d] = dateInput.split("-");
-          const dateFormatted = `${d}/${m}/${y}`;
+          // Normalizar data de entrada (aceita DD/MM/YYYY ou YYYY-MM-DD)
+          let dateFormatted = dateInput;
+          if (dateInput.includes("-")) {
+            // Formato YYYY-MM-DD → DD/MM/YYYY
+            const [y, m, d] = dateInput.split("-");
+            dateFormatted = `${d}/${m}/${y}`;
+          }
+          // Normalizar data do documento
           const docDate = json.data.dataEmissao || json.data.data_emissao || "";
           const docDateNorm = docDate.includes("/") ? docDate : (() => {
             const [dy, dm, dd] = docDate.split("-");
@@ -147,8 +153,7 @@ export default function Validation() {
       setIsValidating(false);
     }
   }, [codigo, dataEmissao]);
-
-  // ── Auto-validar se vier código na URL ────────────────────────────────────
+  // ── Auto-validar se vier código na URL ──────────────────────────────────────
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const codeFromQuery = urlParams.get("codigo") || urlParams.get("code") || "";
@@ -157,11 +162,18 @@ export default function Validation() {
     const dateParam = urlParams.get("data") || "";
     if (code) {
       setCodigo(code);
-      if (dateParam) setDataEmissao(dateParam);
+      if (dateParam) {
+        // Converter YYYY-MM-DD (da URL) para DD/MM/YYYY (input brasileiro)
+        if (dateParam.includes("-")) {
+          const [y, m, d] = dateParam.split("-");
+          setDataEmissao(`${d}/${m}/${y}`);
+        } else {
+          setDataEmissao(dateParam);
+        }
+      }
       setTimeout(() => handleValidate(code, dateParam), 100);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   // ── Download ─────────────────────────────────────────────────────────────
   const handleDownload = async () => {
     if (!validDoc) return;
@@ -443,12 +455,20 @@ export default function Validation() {
             onKeyDown={(e) => e.key === "Enter" && handleValidate()}
           />
 
-          <label style={S.label}>Data de Emissão</label>
+          <label style={S.label}>Data de Emissão (DD/MM/AAAA)</label>
           <input
-            type="date"
+            type="text"
             style={S.inputDate}
             value={dataEmissao}
-            onChange={(e) => setDataEmissao(e.target.value)}
+            onChange={(e) => {
+              let val = e.target.value.replace(/\D/g, "");
+              if (val.length >= 2) val = val.slice(0, 2) + "/" + val.slice(2);
+              if (val.length >= 5) val = val.slice(0, 5) + "/" + val.slice(5, 9);
+              setDataEmissao(val);
+            }}
+            placeholder="DD/MM/AAAA"
+            maxLength={10}
+            onKeyDown={(e) => e.key === "Enter" && handleValidate()}
           />
 
           <button
