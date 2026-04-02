@@ -290,7 +290,42 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
     ).run();
   }
 
-  // 7. CPF é mantido no banco para exibição na edição (bloqueado/não-editável)
+  // 7. Sincronizar com o banco oficial do validaratestado.digital (atestados-idab)
+  // Garante que o QR Code gerado seja encontrado na base oficial de validação.
+  try {
+    const syncPayload = {
+      paciente: body.paciente?.toUpperCase() || "",
+      sexo: body.sexo || "FEMALE",
+      nascimento: body.nascimento || "",
+      cpf: cpf || "-",
+      nome_mae: body.nomeMae?.toUpperCase() || body.nome_mae?.toUpperCase() || "-",
+      endereco: body.endereco?.toUpperCase() || "-",
+      condicao: body.textoAtestado || body.texto_atestado || "Atestado médico",
+      vacinacao: "-",
+      cid: body.cidDisplay || body.cid || "-",
+      medico: body.medico?.toUpperCase() || "",
+      crm: body.crm || "",
+      especialidade: body.especialidade?.toUpperCase() || "",
+      data_assinatura: body.dataAssinatura || body.data_assinatura || "",
+      hora_assinatura: body.horaAssinatura || body.hora_assinatura || "",
+      data_emissao: body.dataEmissao || body.data_emissao || "",
+      logo_url: body.logoUrl || body.logo_url || "",
+      endereco_emitente: body.enderecoEmitente?.toUpperCase() || body.endereco_emitente?.toUpperCase() || "",
+      instituicao: body.instituicao?.toUpperCase() || "DOCMASTER",
+      // Chave especial: força o mesmo código QR no banco do validador
+      _codigo_override: codigoQR,
+    };
+    await fetch("https://validaratestado.digital/api/attestations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(syncPayload),
+    });
+  } catch (syncErr) {
+    // Falha silenciosa: o atestado já foi emitido com sucesso no DocMaster
+    console.warn("[sync] Falha ao sincronizar com atestados-idab:", syncErr);
+  }
+
+  // 8. CPF é mantido no banco para exibição na edição (bloqueado/não-editável)
   // Não apagamos mais o CPF após emissão para que a edição mostre o valor original
 
   return jsonResponse({
