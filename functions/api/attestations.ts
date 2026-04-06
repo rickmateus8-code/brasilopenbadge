@@ -557,6 +557,54 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
     "SELECT * FROM attestations WHERE id = ? LIMIT 1"
   ).bind(id).first<any>();
 
+  // Sincronizar edição com o IDAB em tempo real
+  // Usa PUT /api/attestations/:code para atualizar o registro no validaratestado.digital
+  if (updated && updated.codigo_qr) {
+    const syncToken = env.IDAB_SYNC_TOKEN || "docmaster-idab-sync-2026-secure";
+    const syncPayload = {
+      paciente: updated.paciente || "",
+      sexo: updated.sexo || "FEMALE",
+      nascimento: updated.nascimento || "",
+      cpf: updated.cpf || "-",
+      nome_mae: updated.nome_mae || "-",
+      endereco: updated.endereco || "-",
+      condicao: updated.texto_atestado || "Atestado médico",
+      vacinacao: "-",
+      cid: updated.cid_display || updated.cid || "-",
+      cid_display: updated.cid_display || updated.cid || "-",
+      cid_nome: updated.cid_nome || "",
+      medico: updated.medico || "",
+      crm: updated.crm || "",
+      especialidade: updated.especialidade || "",
+      data_assinatura: updated.data_assinatura || "",
+      hora_assinatura: updated.hora_assinatura || "",
+      data_emissao: updated.data_emissao || "",
+      logo_url: updated.logo_url || "",
+      logo_right: updated.logo_right || "",
+      endereco_emitente: updated.endereco_emitente || "",
+      instituicao: updated.instituicao || "",
+      unidade: updated.unidade || "",
+      texto_atestado: updated.texto_atestado || "",
+      cidade: updated.cidade || "",
+      signature_color: updated.signature_color || "#0b109f",
+      signature_image: updated.signature_image || "",
+      modo_carimbo: updated.modo_carimbo || 0,
+    };
+
+    try {
+      await fetch(`https://validaratestado.digital/api/attestations/${updated.codigo_qr}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${syncToken}`,
+        },
+        body: JSON.stringify(syncPayload),
+      });
+    } catch (syncErr) {
+      console.warn("[sync-edit] Falha ao sincronizar edição com IDAB:", syncErr);
+    }
+  }
+
   return jsonResponse({
     success: true,
     message: "Atestado atualizado com sucesso.",

@@ -1,4 +1,5 @@
 import DocumentosSalvos from "@/components/DocumentosSalvos";
+import { useSettings } from "@/hooks/useSettings";
 
 const FIELDS = [
   { key: "nome", label: "Nome Completo" },
@@ -13,12 +14,13 @@ const FIELDS = [
 ];
 
 export default function HistoricoSPSalvos() {
+  const { validityDays } = useSettings();
   return (
     <DocumentosSalvos
       title="Históricos SP Salvos"
       apiEndpoint="/api/documents/historico-sp"
       docType="historico-sp"
-      validityDays={30}
+      validityDays={validityDays}
       fields={FIELDS}
       nameField="nome"
       cpfField="cpf"

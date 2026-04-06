@@ -5,6 +5,7 @@ import type { AttestationData } from "@/data/attestations";
 import { exportElementToPDF, generatePDFFilename } from "@/lib/pdfExport";
 import { useAuth } from "@/contexts/AuthContext";
 import { validarCPF } from "@/lib/utils";
+import { useSettings } from "@/hooks/useSettings";
 
 // ─── SearchSelect: select com campo de busca integrado no dropdown ────────────
 function SearchSelect({
@@ -313,6 +314,7 @@ interface MedicoDB {
 // ─── Componente ────────────────────────────────────────────────────────────────
 export default function AtestadoCria() {
   const { user, updateBalance } = useAuth();
+  const { validityDays } = useSettings();
   const [, navigate] = useLocation();
   const previewRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -1129,7 +1131,7 @@ export default function AtestadoCria() {
           <h1 style={{ color: "#fff", fontSize: 16, fontWeight: 700, margin: 0 }}>DocMaster — EMITIR ATESTADO</h1>
         </div>
         <span style={{ fontSize: 11, color: "rgba(255,255,255,0.9)", background: "rgba(0,0,0,0.15)", padding: "4px 12px", borderRadius: 6, fontWeight: 600 }}>
-          🔒 Dados excluídos automaticamente após 60 dias
+          🔒 Dados excluídos automaticamente após {validityDays} dias
         </span>
       </div>
 

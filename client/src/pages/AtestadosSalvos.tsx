@@ -1,4 +1,5 @@
 import DocumentosSalvos from "@/components/DocumentosSalvos";
+import { useSettings } from "@/hooks/useSettings";
 
 const FIELDS = [
   { key: "nome_paciente", label: "Nome do Paciente" },
@@ -17,12 +18,14 @@ const FIELDS = [
 ];
 
 export default function AtestadosSalvos() {
+  const { validityDays } = useSettings();
+
   return (
     <DocumentosSalvos
       title="Atestados Salvos"
       apiEndpoint="/api/attestations"
       docType="attestation"
-      validityDays={30}
+      validityDays={validityDays}
       fields={FIELDS}
       nameField="nome_paciente"
       cpfField="cpf"

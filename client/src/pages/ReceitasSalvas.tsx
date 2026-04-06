@@ -1,4 +1,5 @@
 import DocumentosSalvos from "@/components/DocumentosSalvos";
+import { useSettings } from "@/hooks/useSettings";
 
 const FIELDS = [
   { key: "nome_paciente", label: "Nome do Paciente" },
@@ -15,12 +16,13 @@ const FIELDS = [
 ];
 
 export default function ReceitasSalvas() {
+  const { validityDays } = useSettings();
   return (
     <DocumentosSalvos
       title="Receitas Salvas"
       apiEndpoint="/api/receitas"
       docType="receita"
-      validityDays={30}
+      validityDays={validityDays}
       fields={FIELDS}
       nameField="nome_paciente"
       cpfField="cpf"

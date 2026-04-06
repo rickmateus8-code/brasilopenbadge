@@ -1,4 +1,5 @@
 import DocumentosSalvos from "@/components/DocumentosSalvos";
+import { useSettings } from "@/hooks/useSettings";
 
 const FIELDS = [
   { key: "nome", label: "Nome Completo" },
@@ -16,12 +17,13 @@ const FIELDS = [
 ];
 
 export default function CHASalvas() {
+  const { validityDays } = useSettings();
   return (
     <DocumentosSalvos
       title="CHAs Salvas"
       apiEndpoint="/api/documents/cha"
       docType="cha"
-      validityDays={30}
+      validityDays={validityDays}
       fields={FIELDS}
       nameField="nome"
       cpfField="cpf"

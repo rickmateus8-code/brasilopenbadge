@@ -1,4 +1,5 @@
 import DocumentosSalvos from "@/components/DocumentosSalvos";
+import { useSettings } from "@/hooks/useSettings";
 
 const FIELDS = [
   { key: "nome", label: "Nome Completo" },
@@ -17,12 +18,13 @@ const FIELDS = [
 ];
 
 export default function ToxicologicoSalvos() {
+  const { validityDays } = useSettings();
   return (
     <DocumentosSalvos
       title="Toxicológicos Salvos"
       apiEndpoint="/api/documents/toxicologico"
       docType="toxicologico"
-      validityDays={30}
+      validityDays={validityDays}
       fields={FIELDS}
       nameField="nome"
       cpfField="cpf"
