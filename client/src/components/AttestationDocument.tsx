@@ -277,23 +277,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             <span style={{ fontWeight: 700, color: "#000", textTransform: "uppercase" }}>{data.endereco}</span>
           </div>
         </div>
-        {/* ===== ENDEREÇO EMITENTE ===== */}
-        {enderecoEmitente && (
-          <div style={{
-            fontSize: 10.5,
-            fontWeight: 700,
-            color: "#000",
-            textTransform: "uppercase",
-            marginBottom: 0,
-            marginTop: 4,
-            position: "relative",
-            zIndex: 2,
-            flexShrink: 0,
-          }}>
-            <span style={{ fontWeight: 700 }}>ENDEREÇO EMITENTE: </span>
-            <span style={{ fontWeight: 700 }}>{enderecoEmitente}</span>
-          </div>
-        )}
+        {/* ENDEREÇO EMITENTE: exibido apenas no cabeçalho do documento, não aqui */}
         {/* ===== CORPO DO TEXTO ===== */}
         <div style={{
           flex: "1 1 auto",
@@ -353,7 +337,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               <strong style={{ fontSize: 9, display: "block" }}>https://validaratestado.digital</strong>
               <div style={{ marginTop: 2, display: "flex", alignItems: "center", gap: 3, flexWrap: "nowrap" }}>
                 <span style={{ fontWeight: 400, fontSize: 8.5, whiteSpace: "nowrap", lineHeight: 1 }}>Código:</span>
-                <strong style={{ fontFamily: "'Courier New', monospace", letterSpacing: 0.5, fontSize: 9, fontWeight: 900, whiteSpace: "nowrap", lineHeight: 1 }}>
+                <strong style={{ fontFamily: "'Courier New', monospace", letterSpacing: 0, fontSize: 9, fontWeight: 900, whiteSpace: "nowrap", lineHeight: 1 }}>
                   {isEmitted ? data.codigoQR : "****.****"}
                 </strong>
               </div>
