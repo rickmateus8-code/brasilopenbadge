@@ -107,10 +107,14 @@ export async function onRequest(context: { request: Request; env: Env; params: a
   const url = new URL(request.url);
   const pathParts = url.pathname.split('/').filter(Boolean);
   const attestationId = pathParts.length >= 3 ? pathParts[2] : null;
+  const wantsStats = url.searchParams.get('stats') === '1';
 
   try {
     if (request.method === "GET" && attestationId) {
       return handleGetAttestationById(env, user, attestationId);
+    }
+    if (request.method === "GET" && wantsStats) {
+      return handleGetStats(env, user);
     }
     if (request.method === "GET") {
       return handleGetAttestations(env, user);
@@ -156,6 +160,52 @@ async function handleGetAttestations(env: Env, user: any) {
     success: true,
     data: rows.results || [],
     count: (rows.results || []).length,
+  });
+}
+
+// ─── GET — Estatísticas do dashboard ────────────────────────────────────────
+
+async function handleGetStats(env: Env, user: any) {
+  // Conta atestados emitidos pelo usuário (ou todos se admin)
+  let attCount: { total: number } | null;
+  if (user.role === "admin") {
+    attCount = await env.DB.prepare(
+      "SELECT COUNT(*) as total FROM attestations"
+    ).first<{ total: number }>();
+  } else {
+    attCount = await env.DB.prepare(
+      "SELECT COUNT(*) as total FROM attestations WHERE user_id = ?"
+    ).bind(user.id).first<{ total: number }>();
+  }
+
+  // Conta CNH, CHA, histórico etc. da tabela documents
+  let cnhCount: { total: number } | null = null;
+  let chaCount: { total: number } | null = null;
+  try {
+    if (user.role === "admin") {
+      cnhCount = await env.DB.prepare(
+        "SELECT COUNT(*) as total FROM documents WHERE type = 'cnh'"
+      ).first<{ total: number }>();
+      chaCount = await env.DB.prepare(
+        "SELECT COUNT(*) as total FROM documents WHERE type = 'cha'"
+      ).first<{ total: number }>();
+    } else {
+      cnhCount = await env.DB.prepare(
+        "SELECT COUNT(*) as total FROM documents WHERE user_id = ? AND type = 'cnh'"
+      ).bind(user.id).first<{ total: number }>();
+      chaCount = await env.DB.prepare(
+        "SELECT COUNT(*) as total FROM documents WHERE user_id = ? AND type = 'cha'"
+      ).bind(user.id).first<{ total: number }>();
+    }
+  } catch (_) { /* tabela documents pode não existir */ }
+
+  return jsonResponse({
+    success: true,
+    stats: {
+      atestado: attCount?.total ?? 0,
+      cnh: cnhCount?.total ?? 0,
+      cha: chaCount?.total ?? 0,
+    },
   });
 }
 
