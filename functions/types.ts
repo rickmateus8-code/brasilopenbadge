@@ -95,6 +95,7 @@ export interface Env {
   HYPERPIX_SECRET_KEY?: string;
   APP_DOMAIN?: string;
   VALIDATION_BASE_URL?: string;
+  IDAB_SYNC_TOKEN?: string; // Token de autenticação para sincronização com o Atestados-IDAB
 }
 
 // D1 Database type
