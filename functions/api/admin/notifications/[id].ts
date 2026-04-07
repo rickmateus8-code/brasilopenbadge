@@ -21,7 +21,7 @@ async function getAuthAdmin(request: Request, env: Env): Promise<any | null> {
 }
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://docmaster.store',
   'Access-Control-Allow-Methods': 'DELETE, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Content-Type': 'application/json',

@@ -21,7 +21,7 @@ async function getAdminUser(request: Request, env: Env): Promise<any | null> {
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }) => {
   const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': 'https://docmaster.store',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json',
@@ -69,7 +69,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
 export const onRequestOptions: PagesFunction = async () => {
   return new Response(null, {
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': 'https://docmaster.store',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     }

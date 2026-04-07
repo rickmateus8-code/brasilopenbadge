@@ -600,6 +600,8 @@ export default function AdminDashboard() {
       if (data.success) {
         toast.success(`Senha de ${changePwUsername} alterada com sucesso!`);
         setChangePwUserId(null); setChangePwUsername(""); setChangePwValue("");
+        // Reload users to reflect new plain_password if passwords are visible
+        loadUsers(showPasswords);
       } else {
         toast.error(data.error || "Erro ao alterar senha");
       }
@@ -953,7 +955,11 @@ export default function AdminDashboard() {
                 <RefreshCw className="w-4 h-4" />
               </button>
               <button
-                onClick={() => setShowPasswords(p => !p)}
+                onClick={() => {
+                const next = !showPasswords;
+                setShowPasswords(next);
+                loadUsers(next);
+              }}
                 className={`flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-xl transition-colors ${
                   showPasswords
                     ? "bg-purple-600 hover:bg-purple-700 text-white"
@@ -1055,9 +1061,12 @@ export default function AdminDashboard() {
                             )}
                           </div>
                           <p className="text-xs text-gray-500 dark:text-gray-400">{u.email}</p>
-                          {showPasswords && (u as any).plain_password && (
-                            <p className="text-xs font-mono bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded flex items-center gap-1">
-                              <Lock className="w-3 h-3" /> {(u as any).plain_password}
+                          {showPasswords && (
+                            <p className="text-xs font-mono bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded flex items-center gap-1 mt-0.5">
+                              <Lock className="w-3 h-3" />
+                              {(u as any).plain_password
+                                ? (u as any).plain_password
+                                : <span className="italic opacity-60">senha não registrada</span>}
                             </p>
                           )}
                           <p className="text-xs text-gray-400 dark:text-gray-500">Cadastro: {formatDate(u.created_at)}</p>
