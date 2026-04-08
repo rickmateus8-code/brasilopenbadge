@@ -222,7 +222,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           width: "100%",
           textAlign: "center",
           marginBottom: 14,
-          letterSpacing: 3,
+          letterSpacing: 1.2, // Reduzido o espaçamento horizontal (Etapa 1.2)
           position: "relative",
           zIndex: 2,
           color: "#000",
@@ -274,9 +274,11 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           {/* Linha 3: Endereço */}
           <div>
             <span style={{ fontWeight: 700, color: "#000" }}>Endereço: </span>
-            <span style={{ fontWeight: 700, color: "#000", textTransform: "uppercase" }}>{data.endereco}</span>
+            {/* Removido negrito do valor (Etapa 1.1) */}
+            <span style={{ fontWeight: 400, color: "#000", textTransform: "uppercase" }}>{data.endereco}</span>
           </div>
         </div>
+
         {/* ENDEREÇO EMITENTE: exibido apenas no cabeçalho do documento, não aqui */}
         {/* ===== CORPO DO TEXTO ===== */}
         <div style={{
@@ -319,23 +321,24 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           <div style={{
             borderTop: "2px solid #000",
             marginTop: "auto",
-            paddingTop: 10,
+            paddingTop: 8, // Reduzido paddingTop de 10 para 8 (Etapa 1.3)
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center",
+            alignItems: "flex-end", // Alinhado ao fundo para margens consistentes (Etapa 1.5)
             position: "relative",
             zIndex: 2,
             flexShrink: 0,
             gap: 16,
+            marginBottom: 2, // Margem inferior mínima
           }}>
             {/* Esquerda: cidade/data + URL validação */}
-            <div style={{ fontSize: 9, color: "#000", lineHeight: 1.6, fontFamily: "Arial, Helvetica, sans-serif", flexShrink: 0 }}>
-              <div style={{ fontWeight: 700, textTransform: "uppercase", marginBottom: 1, fontSize: 9 }}>
+            <div style={{ fontSize: 9, color: "#000", lineHeight: 1.4, fontFamily: "Arial, Helvetica, sans-serif", flexShrink: 0 }}>
+              <div style={{ fontWeight: 700, textTransform: "uppercase", marginBottom: 0, fontSize: 9 }}>
                 {dataFormatada || data.dataEmissao}
               </div>
               <div style={{ fontSize: 8.5 }}>Valide este documento acessando o endereço:</div>
-              <strong style={{ fontSize: 9, display: "block" }}>https://validaratestado.digital</strong>
-              <div style={{ marginTop: 2, display: "flex", alignItems: "center", gap: 3, flexWrap: "nowrap" }}>
+              <strong style={{ fontSize: 9, display: "block", marginBottom: 1 }}>https://validaratestado.digital</strong>
+              <div style={{ marginTop: 1, display: "flex", alignItems: "center", gap: 3, flexWrap: "nowrap" }}>
                 <span style={{ fontWeight: 400, fontSize: 8.5, whiteSpace: "nowrap", lineHeight: 1 }}>Código:</span>
                 <strong style={{ fontFamily: "'Courier New', monospace", letterSpacing: 0, fontSize: 9, fontWeight: 900, whiteSpace: "nowrap", lineHeight: 1 }}>
                   {isEmitted ? data.codigoQR : "****.****"}
@@ -346,30 +349,31 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             {/* Direita: QR Code + Dados do Médico — moldura compacta */}
             <div style={{
               border: "1.5px solid #000",
-              padding: "5px 8px 5px 6px",
+              padding: "4px 6px", // Padding mais compacto (Etapa 1.5)
               display: "flex",
-              gap: 10,
+              gap: 8,
               alignItems: "center",
               background: "white",
               flex: "0 0 auto",
+              marginRight: -2, // Alinhamento com a margem direita da moldura (Etapa 1.5)
             }}>
               {/* QR Code */}
               <div style={{ flexShrink: 0, lineHeight: 0 }}>
                 {isEmitted ? (
                   <QRCode
                     value={qrValue}
-                    size={81}
+                    size={78} // Tamanho ligeiramente reduzido para melhor enquadramento
                     level="H"
                     includeMargin={false}
                     fgColor="#000000"
                     bgColor="#FFFFFF"
                   />
                 ) : (
-                  <div style={{ position: "relative", width: 81, height: 81, flexShrink: 0 }}>
+                  <div style={{ position: "relative", width: 78, height: 78, flexShrink: 0 }}>
                     <div style={{ filter: "blur(4px)", opacity: 0.5, lineHeight: 0 }}>
                       <QRCode
                         value="https://validaratestado.digital"
-                        size={81}
+                        size={78}
                         level="H"
                         includeMargin={false}
                         fgColor="#1a1a1a"
@@ -380,14 +384,14 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 )}
               </div>
               {/* Dados do Médico — alinhado à direita conforme referência */}
-              <div style={{ fontSize: 9, textAlign: "right", lineHeight: 1.55, color: "#000", flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 8.5, marginBottom: 2 }}>Documento assinado digitalmente conforme MP nº 2.200-2</div>
-                <strong style={{ fontWeight: 700, fontSize: 10, textTransform: "uppercase", display: "block" }}>
+              <div style={{ fontSize: 8.5, textAlign: "right", lineHeight: 1.4, color: "#000", flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 7.5, marginBottom: 1, opacity: 0.9 }}>Documento assinado digitalmente conforme MP nº 2.200-2</div>
+                <strong style={{ fontWeight: 700, fontSize: 9.5, textTransform: "uppercase", display: "block" }}>
                   {data.medico}
                 </strong>
-                <span style={{ display: "block", fontSize: 9 }}>{data.crm}</span>
-                <span style={{ fontSize: 9, display: "block", textTransform: "uppercase" }}>{data.especialidade}</span>
-                <span style={{ display: "block", marginTop: 1, fontSize: 9 }}>
+                <span style={{ display: "block", fontSize: 8.5 }}>{data.crm}</span>
+                <span style={{ fontSize: 8.5, display: "block", textTransform: "uppercase" }}>{data.especialidade}</span>
+                <span style={{ display: "block", marginTop: 0, fontSize: 8 }}>
                   Assinado em {data.dataAssinatura} {data.horaAssinatura}
                 </span>
               </div>
