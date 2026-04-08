@@ -138,20 +138,25 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
     const nomeValue = body.nome || body.nomeCompleto || '';
     const categoriaValue = body.categoria || '';
 
-    // Save document with status='emitido' for validation
+    // Save     // Save document with status='emitido' for validation
     // Include cpf, senha, nome, categoria as separate columns for cnh-do-brasil auth lookup
     await env.DB.prepare(
       'INSERT INTO documents (id, user_id, type, data, codigo_qr, status, cpf, senha, nome, categoria, codigo_validacao, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"))'
     ).bind(docId, user.id, docType, jsonData, codigoValidacao, 'emitido', cpfValue, senhaValue, nomeValue, categoriaValue, codigoValidacao).run();
 
+    // Buscar saldo atualizado após débito para atualização em tempo real no frontend
+    const updatedUser = await env.DB.prepare(
+      'SELECT balance FROM users WHERE id = ? LIMIT 1'
+    ).bind(user.id).first<{ balance: number }>();
+
     return new Response(JSON.stringify({
       success: true,
+      balance: updatedUser?.balance ?? 0,
       data: {
         id: docId,
         codigoValidacao,
         type: docType,
-      },
-      newBalance,
+      }
     }), { status: 201, headers: CORS_HEADERS });
   } catch (err: any) {
     return new Response(JSON.stringify({ success: false, error: err.message || 'Erro interno' }), { status: 500, headers: CORS_HEADERS });

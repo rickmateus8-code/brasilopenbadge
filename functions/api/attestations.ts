@@ -431,7 +431,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
       dataEmissao: body.dataEmissao || body.data_emissao,
       status: "emitido",
     },
-    newBalance,
+    balance: newBalance,
   }, 201);
 }
 
