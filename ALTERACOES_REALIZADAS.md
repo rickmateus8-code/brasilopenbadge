@@ -197,6 +197,26 @@ Esta rota permite:
 
 ---
 
+## 9. Etapa 1: Refino de Layout e Fidelidade Visual (08/04/2026)
+
+Conforme planejado no roteiro de handover, a **Etapa 1** foi concluída com as seguintes melhorias técnicas nos componentes de atestado:
+
+### 9.1. Correções de Tipografia e Estilo
+- **Remoção de Negrito Indesejado:** No campo "Endereço:", o rótulo permanece em negrito, mas o valor do endereço agora utiliza `fontWeight: 400` (normal), garantindo a legibilidade e conformidade com o padrão visual.
+- **Ajuste "ATESTADO MÉDICO":** O `letter-spacing` do título principal foi reduzido de `3` para `1.2`, aproximando as letras e tornando o título mais coeso.
+
+### 9.2. Ajustes de Espaçamento e Alinhamento
+- **Otimização do Rodapé:** O `paddingTop` do rodapé digital foi reduzido para `8px` e o `lineHeight` dos textos informativos foi ajustado para `1.4`, diminuindo o "vazio" vertical e melhorando o enquadramento.
+- **Alinhamento do QR Code:** 
+  - O contêiner do QR Code e dados do médico agora utiliza `alignItems: flex-end` para garantir que a base do QR Code esteja perfeitamente alinhada com as informações da esquerda.
+  - O padding da moldura foi reduzido para `4px 6px` para um visual mais "clean" e profissional.
+  - Adicionado `marginRight: -2px` para alinhar a borda da moldura rigorosamente com a margem direita do documento.
+
+### 9.3. Paridade 100% entre Sistemas
+- As mesmas alterações foram replicadas no repositório `atestados-idab`, garantindo que o documento visualizado no portal de validação seja um espelho exato do documento emitido no DocMaster.
+
+---
+
 ## Resumo Técnico
 
 | Aspecto | Status |
@@ -207,9 +227,10 @@ Esta rota permite:
 | Validação Automática | ✓ Completo |
 | Testes Funcionais | ✓ Completo |
 | Documentação | ✓ Completo |
+| **Etapa 1 (Refino)** | ✓ Concluída |
 
 ---
 
-**Data:** 18 de Março de 2026  
-**Versão:** 1.0.0  
+**Data:** 08 de Abril de 2026  
+**Versão:** 1.1.0  
 **Status:** Pronto para Produção
