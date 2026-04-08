@@ -103,7 +103,7 @@ const EMPTY: CHAForm = {
 };
 
 export default function CHACria() {
-  const { user } = useAuth();
+  const { user, updateBalance } = useAuth();
   const [, setLocation] = useLocation();
   const [form, setForm] = useState<CHAForm>({ ...EMPTY });
   const [loading, setSaving] = useState(false);

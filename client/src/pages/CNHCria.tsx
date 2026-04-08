@@ -73,7 +73,7 @@ function formatarCPFInput(v: string): string {
 
 // ─── Componente ──────────────────────────────────────────────────────────────
 export default function CNHCria() {
-  const { user } = useAuth();
+  const { user, updateBalance } = useAuth();
   const [, setLocation] = useLocation();
   const docRef = useRef<CNHDocumentHandle>(null);
 
@@ -367,6 +367,8 @@ export default function CNHCria() {
         setSaved(true);
         setShowConfirmModal(false);
         setShowSuccessModal(true);
+        // Atualizar saldo em tempo real
+        if (result.newBalance !== undefined) updateBalance(result.newBalance);
 
         // ─── Sincronizar credenciais com o site de validação CNH Digital ───
         try {

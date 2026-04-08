@@ -86,6 +86,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
     const docId = codigoValidacao;
 
     // 4. Débito ATÔMICO (apenas para não-admin)
+    let newBalance = user.balance; // Default: saldo anterior (para admin)
     if (user.role !== 'admin' && price > 0) {
       const updated = await env.DB.prepare(
         'UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ? RETURNING balance'
@@ -99,6 +100,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
           code: 'INSUFFICIENT_BALANCE',
         }), { status: 402, headers: CORS_HEADERS });
       }
+      newBalance = updated.balance; // Atualizar com o novo saldo
     }
 
     // 5. Registrar transação para auditoria
@@ -148,7 +150,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
         id: docId,
         codigoValidacao,
         type: docType,
-      }
+      },
+      newBalance,
     }), { status: 201, headers: CORS_HEADERS });
   } catch (err: any) {
     return new Response(JSON.stringify({ success: false, error: err.message || 'Erro interno' }), { status: 500, headers: CORS_HEADERS });

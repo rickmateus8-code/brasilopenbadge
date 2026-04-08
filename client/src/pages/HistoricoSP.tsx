@@ -55,7 +55,7 @@ const EMPTY: HistoricoSPData = {
 };
 
 export default function HistoricoSP() {
-  const { user } = useAuth();
+  const { user, updateBalance } = useAuth();
   const [, setLocation] = useLocation();
   const [data, setData] = useState<HistoricoSPData>(EMPTY);
   const [saved, setSaved] = useState(false);
@@ -98,6 +98,7 @@ export default function HistoricoSP() {
       });
       const result = await res.json();
       if (result.success) {
+        if (result.newBalance !== undefined) updateBalance(result.newBalance);
         setSaved(true);
         setShowConfirmModal(false);
         setShowSuccessModal(true);

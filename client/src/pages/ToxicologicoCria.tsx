@@ -49,7 +49,7 @@ const EMPTY: ToxData = {
 };
 
 export default function ToxicologicoCria() {
-  const { user } = useAuth();
+  const { user, updateBalance } = useAuth();
   const [, setLocation] = useLocation();
   const [data, setData] = useState<ToxData>(EMPTY);
   const [codigoQR, setCodigoQR] = useState("");
@@ -87,6 +87,7 @@ export default function ToxicologicoCria() {
       });
       const result = await res.json();
       if (result.success) {
+        if (result.newBalance !== undefined) updateBalance(result.newBalance);
         setCodigoQR(result.data?.codigoValidacao || "TOX-" + Date.now());
         setSaved(true);
         setShowConfirmModal(false);

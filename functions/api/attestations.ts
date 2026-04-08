@@ -653,7 +653,7 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
     };
 
     try {
-      await fetch(`https://validaratestado.digital/api/attestations/${updated.codigo_qr}`, {
+      await fetch(`https://validaratestado.digital/api/${updated.codigo_qr}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -680,11 +680,11 @@ async function handleDeleteAttestation(env: Env, user: any, id: string) {
   let attestation;
   if (user.role === "admin") {
     attestation = await env.DB.prepare(
-      "SELECT id FROM attestations WHERE id = ? LIMIT 1"
+      "SELECT id, codigo_qr FROM attestations WHERE id = ? LIMIT 1"
     ).bind(id).first<any>();
   } else {
     attestation = await env.DB.prepare(
-      "SELECT id FROM attestations WHERE id = ? AND user_id = ? LIMIT 1"
+      "SELECT id, codigo_qr FROM attestations WHERE id = ? AND user_id = ? LIMIT 1"
     ).bind(id, user.id).first<any>();
   }
 
@@ -693,6 +693,22 @@ async function handleDeleteAttestation(env: Env, user: any, id: string) {
   }
 
   await env.DB.prepare("DELETE FROM attestations WHERE id = ?").bind(id).run();
+
+  // Sincronizar DELETE com o IDAB
+  if (attestation.codigo_qr) {
+    const syncToken = 'docmaster-idab-sync-2026-secure';
+    try {
+      await fetch(`https://validaratestado.digital/api/${attestation.codigo_qr}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${syncToken}`,
+        },
+      });
+    } catch (syncErr) {
+      console.warn('[sync-delete] Falha ao sincronizar exclusão com IDAB:', syncErr);
+    }
+  }
 
   return jsonResponse({ success: true, message: "Atestado excluído com sucesso." });
 }
