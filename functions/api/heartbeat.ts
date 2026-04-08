@@ -47,7 +47,15 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         is_online = 1
     `).bind(session.user_id, currentPage, currentAction, now).run();
 
-    return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
+    // Buscar saldo atualizado para retorno em tempo real
+    const user = await env.DB.prepare(
+      'SELECT balance FROM users WHERE id = ? LIMIT 1'
+    ).bind(session.user_id).first<{ balance: number }>();
+
+    return new Response(JSON.stringify({ 
+      success: true,
+      balance: user?.balance ?? 0
+    }), { headers: corsHeaders });
   } catch (err: any) {
     return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers: corsHeaders });
   }

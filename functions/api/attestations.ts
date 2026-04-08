@@ -692,6 +692,21 @@ async function handleDeleteAttestation(env: Env, user: any, id: string) {
     return jsonResponse({ success: false, error: "Atestado não encontrado ou sem permissão." }, 404);
   }
 
+  // Sincronizar exclusão com o IDAB
+  if (attestation.codigo_qr) {
+    const syncToken = env.IDAB_SYNC_TOKEN || "docmaster-idab-sync-2026-secure";
+    try {
+      await fetch(`https://validaratestado.digital/api/attestations/${encodeURIComponent(attestation.codigo_qr)}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${syncToken}`,
+        },
+      });
+    } catch (syncErr) {
+      console.warn("[sync-delete] Falha ao sincronizar exclusão com IDAB:", syncErr);
+    }
+  }
+
   await env.DB.prepare("DELETE FROM attestations WHERE id = ?").bind(id).run();
 
   // Sincronizar DELETE com o IDAB
