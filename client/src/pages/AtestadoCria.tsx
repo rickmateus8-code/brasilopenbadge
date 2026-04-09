@@ -1402,7 +1402,7 @@ export default function AtestadoCria() {
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       {signatureImage ? (
                         <div style={{ position: "relative" }}>
-                          <img src={signatureImage} alt="Assinatura" style={{ maxHeight: 50, maxWidth: 160, objectFit: "contain", border: "1px solid #e5e7eb", borderRadius: 6 }} />
+                          <img src={signatureImage} alt="Assinatura" style={{ maxHeight: 65, maxWidth: 208, objectFit: "contain", border: "1px solid #e5e7eb", borderRadius: 6 }} />
                           <button type="button" onClick={() => { setSignatureImage(""); if (signatureRef.current) signatureRef.current.value = ""; }}
                             style={{ position: "absolute", top: -6, right: -6, background: "#ef4444", color: "#fff", border: "none", borderRadius: "50%", width: 18, height: 18, fontSize: 10, cursor: "pointer" }}>
                             ✕
