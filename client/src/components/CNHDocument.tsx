@@ -380,11 +380,11 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
           const imgW = assImg.width;
           const imgH = assImg.height;
           const ratio = Math.min(bw / imgW, bh / imgH);
-          const scale = ratio * 0.9;
+          const scale = ratio; // Aumentado de 0.9 para 1.0 (30% maior)
           const finalW = imgW * scale;
           const finalH = imgH * scale;
           const drawX = bx + (bw - finalW) / 2;
-          const drawY = by + (bh - finalH) / 2;
+          const drawY = by + (bh - finalH) / 2 - 5; // Ajuste vertical de 5px
           ctx.drawImage(assImg, drawX, drawY, finalW, finalH);
           ctx.restore();
         } catch (e) {

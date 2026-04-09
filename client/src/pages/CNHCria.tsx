@@ -185,7 +185,7 @@ export default function CNHCria() {
 
   // ─── Foto Upload ─────────────────────────────────────────────────────────────────────
   // Compress image to max 400x500 JPEG at 0.7 quality (~50-100KB)
-  const compressImage = (dataUrl: string, maxW = 400, maxH = 500, quality = 0.7): Promise<string> => {
+  const compressImage = (dataUrl: string, maxW = 400, maxH = 500, quality = 0.7, preserveTransparency = false): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
@@ -198,8 +198,16 @@ export default function CNHCria() {
         }
         canvas.width = w; canvas.height = h;
         const ctx = canvas.getContext('2d')!;
-        ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', quality));
+        if (preserveTransparency) {
+          ctx.clearRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/png'));
+        } else {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        }
       };
       img.src = dataUrl;
     });
@@ -298,7 +306,7 @@ export default function CNHCria() {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = async () => {
-      const compressed = await compressImage(reader.result as string, 500, 150, 0.8);
+      const compressed = await compressImage(reader.result as string, 500, 150, 0.8, true);
       setData(d => ({ ...d, assinaturaUrl: compressed }));
     };
     reader.readAsDataURL(file);
