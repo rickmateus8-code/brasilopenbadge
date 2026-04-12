@@ -12,12 +12,12 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const body = await request.json() as { username: string; password: string; email?: string; displayName?: string };
     const { username, password, email, displayName } = body;
 
-    if (!username || !password) {
+    if (!username || !password || password.trim() === '') {
       return new Response(JSON.stringify({ success: false, error: 'Usuário e senha são obrigatórios' }), { status: 400, headers: corsHeaders });
     }
 
     if (password.length < 6) {
-      return new Response(JSON.stringify({ success: false, error: 'Senha deve ter pelo menos 6 caracteres' }), { status: 400, headers: corsHeaders });
+      return new Response(JSON.stringify({ success: false, error: 'A senha deve conter no mínimo 6 caracteres' }), { status: 400, headers: corsHeaders });
     }
 
     // Check if username already exists

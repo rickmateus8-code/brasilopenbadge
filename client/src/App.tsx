@@ -3,7 +3,30 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { useLocation } from "wouter";
+import { useEffect } from "react";
+
+// Helper for protected routes
+function ProtectedRoute({ component: Component, adminOnly = false, ...rest }: any) {
+  const { user, loading, isAdmin } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!loading) {
+      if (!user) {
+        setLocation("/login");
+      } else if (adminOnly && !isAdmin) {
+        setLocation("/dashboard");
+      }
+    }
+  }, [user, loading, isAdmin, adminOnly, setLocation]);
+
+  if (loading) return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
+  if (!user || (adminOnly && !isAdmin)) return null;
+
+  return <Component {...rest} />;
+}
 
 // Pages
 import Home from "./pages/Home";
@@ -121,60 +144,119 @@ function DocMasterRouter() {
       <Route path="/register" component={Register} />
 
       {/* Painel principal */}
-      <Route path="/dashboard" component={Dashboard} />
+      <Route path="/dashboard">
+        <ProtectedRoute component={Dashboard} />
+      </Route>
 
       {/* Emissão de documentos - slugs principais */}
-      <Route path="/atestado" component={AtestadoCria} />
-      <Route path="/atestado/editar/:id" component={AtestadoEditar} />
-      <Route path="/atestadosalvos" component={AtestadosSalvos} />
+      <Route path="/atestado">
+        <ProtectedRoute component={AtestadoCria} />
+      </Route>
+      <Route path="/atestado/editar/:id">
+        {(params) => <ProtectedRoute component={AtestadoEditar} params={params} />}
+      </Route>
+      <Route path="/atestadosalvos">
+        <ProtectedRoute component={AtestadosSalvos} />
+      </Route>
 
-      <Route path="/cnh" component={CNHCria} />
-      <Route path="/cnh/editar/:id" component={CNHEditar} />
-      <Route path="/cnhsalvas" component={CNHSalvas} />
+      <Route path="/cnh">
+        <ProtectedRoute component={CNHCria} />
+      </Route>
+      <Route path="/cnh/editar/:id">
+        {(params) => <ProtectedRoute component={CNHEditar} params={params} />}
+      </Route>
+      <Route path="/cnhsalvas">
+        <ProtectedRoute component={CNHSalvas} />
+      </Route>
 
-      <Route path="/cha" component={CHACria} />
-      <Route path="/cha/editar/:id" component={CHAEditar} />
-      <Route path="/chasalvas" component={CHASalvas} />
+      <Route path="/cha">
+        <ProtectedRoute component={CHACria} />
+      </Route>
+      <Route path="/cha/editar/:id">
+        {(params) => <ProtectedRoute component={CHAEditar} params={params} />}
+      </Route>
+      <Route path="/chasalvas">
+        <ProtectedRoute component={CHASalvas} />
+      </Route>
 
       {/* Toxicológico */}
-      <Route path="/toxicologico" component={ToxicologicoCria} />
-      <Route path="/toxicologico/editar/:id" component={ToxicologicoEditar} />
-      <Route path="/toxicologicosalvos" component={ToxicologicoSalvos} />
-
-
+      <Route path="/toxicologico">
+        <ProtectedRoute component={ToxicologicoCria} />
+      </Route>
+      <Route path="/toxicologico/editar/:id">
+        {(params) => <ProtectedRoute component={ToxicologicoEditar} params={params} />}
+      </Route>
+      <Route path="/toxicologicosalvos">
+        <ProtectedRoute component={ToxicologicoSalvos} />
+      </Route>
 
       {/* Rotas legacy */}
-      <Route path="/atestadocria" component={AtestadoCria} />
-      <Route path="/cnhcria" component={CNHCria} />
-      <Route path="/chacria" component={CHACria} />
-
+      <Route path="/atestadocria">
+        <ProtectedRoute component={AtestadoCria} />
+      </Route>
+      <Route path="/cnhcria">
+        <ProtectedRoute component={CNHCria} />
+      </Route>
+      <Route path="/chacria">
+        <ProtectedRoute component={CHACria} />
+      </Route>
 
       {/* Receituário Médico */}
-      <Route path="/receita" component={ReceitaCria} />
-      <Route path="/receitacria" component={ReceitaCria} />
-      <Route path="/receita/editar/:id" component={ReceitaEditar} />
-      <Route path="/receitassalvas" component={ReceitasSalvas} />
+      <Route path="/receita">
+        <ProtectedRoute component={ReceitaCria} />
+      </Route>
+      <Route path="/receitacria">
+        <ProtectedRoute component={ReceitaCria} />
+      </Route>
+      <Route path="/receita/editar/:id">
+        {(params) => <ProtectedRoute component={ReceitaEditar} params={params} />}
+      </Route>
+      <Route path="/receitassalvas">
+        <ProtectedRoute component={ReceitasSalvas} />
+      </Route>
 
       {/* Históricos */}
-      <Route path="/historico/atestados" component={AtestadoCria} />
-      <Route path="/historico/atestados/:id" component={AtestadoView} />
-      <Route path="/historico-sp" component={HistoricoSP} />
-      <Route path="/historico-sp-salvos" component={HistoricoSPSalvos} />
-      <Route path="/historico-uninter" component={HistoricoUNINTER} />
-      <Route path="/historico-uninter-salvos" component={HistoricoUNINTERSalvos} />
+      <Route path="/historico/atestados">
+        <ProtectedRoute component={AtestadoCria} />
+      </Route>
+      <Route path="/historico/atestados/:id">
+        {(params) => <ProtectedRoute component={AtestadoView} params={params} />}
+      </Route>
+      <Route path="/historico-sp">
+        <ProtectedRoute component={HistoricoSP} />
+      </Route>
+      <Route path="/historico-sp-salvos">
+        <ProtectedRoute component={HistoricoSPSalvos} />
+      </Route>
+      <Route path="/historico-uninter">
+        <ProtectedRoute component={HistoricoUNINTER} />
+      </Route>
+      <Route path="/historico-uninter-salvos">
+        <ProtectedRoute component={HistoricoUNINTERSalvos} />
+      </Route>
 
       {/* Financeiro */}
-      <Route path="/extrato" component={Extrato} />
-      <Route path="/recargas" component={Recargas} />
+      <Route path="/extrato">
+        <ProtectedRoute component={Extrato} />
+      </Route>
+      <Route path="/recargas">
+        <ProtectedRoute component={Recargas} />
+      </Route>
 
       {/* Configurações do usuário */}
-      <Route path="/configuracoes" component={Configuracoes} />
+      <Route path="/configuracoes">
+        <ProtectedRoute component={Configuracoes} />
+      </Route>
 
       {/* Indicações */}
-      <Route path="/indicacoes" component={Indicacoes} />
+      <Route path="/indicacoes">
+        <ProtectedRoute component={Indicacoes} />
+      </Route>
 
       {/* Administração */}
-      <Route path="/admin" component={AdminDashboard} />
+      <Route path="/admin">
+        <ProtectedRoute component={AdminDashboard} adminOnly={true} />
+      </Route>
 
       {/* Validação pública de documentos */}
       <Route path="/validar" component={Validation} />

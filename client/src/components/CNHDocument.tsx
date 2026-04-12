@@ -374,18 +374,27 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
           ctx.beginPath();
           ctx.rect(bx, by, bw, bh);
           ctx.clip();
-          // Filtro idêntico ao elitedoc: contraste alto + escurecer + grayscale
-          ctx.filter = "contrast(5) brightness(0.3) grayscale(1)";
+
+          // Fix: Garantir que PNG com transparência não fique preto
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = assImg.width;
+          tempCanvas.height = assImg.height;
+          const tctx = tempCanvas.getContext('2d')!;
+          tctx.fillStyle = '#FFFFFF';
+          tctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+          tctx.drawImage(assImg, 0, 0);
 
           const imgW = assImg.width;
           const imgH = assImg.height;
           const ratio = Math.min(bw / imgW, bh / imgH);
-          const scale = ratio; // Aumentado de 0.9 para 1.0 (30% maior)
-          const finalW = imgW * scale;
-          const finalH = imgH * scale;
-          const drawX = bx + (bw - finalW) / 2;
-          const drawY = by + (bh - finalH) / 2 - 5; // Ajuste vertical de 5px
-          ctx.drawImage(assImg, drawX, drawY, finalW, finalH);
+          const drawW = imgW * ratio;
+          const drawH = imgH * ratio;
+          const drawX = bx + (bw - drawW) / 2;
+          const drawY = by + (bh - drawH) / 2;
+
+          // Filtro idêntico ao elitedoc: contraste alto + escurecer + grayscale
+          ctx.filter = "contrast(5) brightness(0.3) grayscale(1)";
+          ctx.drawImage(tempCanvas, drawX, drawY, drawW, drawH);
           ctx.restore();
         } catch (e) {
           console.warn("Erro ao carregar assinatura:", e);

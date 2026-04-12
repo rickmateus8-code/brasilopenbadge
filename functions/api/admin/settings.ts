@@ -32,6 +32,12 @@ const ALLOWED_KEYS = [
   'max_documents_per_day',
   'auto_delete_days',
   'maintenance_mode',
+  'auto_delete_atestado',
+  'auto_delete_receita',
+  'auto_delete_cnh',
+  'auto_delete_cha',
+  'auto_delete_toxicologico',
+  'auto_delete_historico',
 ];
 
 // Ensure settings table exists and has defaults
