@@ -32,6 +32,7 @@ const ALLOWED_KEYS = [
   'max_documents_per_day',
   'auto_delete_days',
   'maintenance_mode',
+  // auto-delete por tipo de documento
   'auto_delete_atestado',
   'auto_delete_receita',
   'auto_delete_cnh',

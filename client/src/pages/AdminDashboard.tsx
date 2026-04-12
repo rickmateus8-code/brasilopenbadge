@@ -53,6 +53,7 @@ export const AdminDashboard: React.FC = () => {
   const [settings, setSettings] = useState<any>({});
   const [balanceInputs, setBalanceInputs] = useState<Record<number, string>>({});
   const [showPasswords, setShowPasswords] = useState(false);
+  const [passwordRevealLogged, setPasswordRevealLogged] = useState(false);
   const [changePwUserId, setChangePwUserId] = useState<string | null>(null);
   const [changePwUsername, setChangePwUsername] = useState("");
   const [changePwValue, setChangePwValue] = useState("");
@@ -73,13 +74,9 @@ export const AdminDashboard: React.FC = () => {
       ]);
       
       if (usersRes.data) setUsers(usersRes.data);
-      if (settingsRes.data) {
-        // Map settings array to object
-        const settingsObj = settingsRes.data.reduce((acc: any, curr: any) => {
-          acc[curr.key] = curr.value;
-          return acc;
-        }, {});
-        setSettings(settingsObj);
+      if (settingsRes.data?.settings) {
+        // Backend returns { success: true, settings: { key: value, ... } }
+        setSettings(settingsRes.data.settings);
       }
       if (presenceRes.data) setPresence(presenceRes.data);
     } catch (error) {
@@ -235,7 +232,23 @@ export const AdminDashboard: React.FC = () => {
             </h2>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setShowPasswords(!showPasswords)}
+                onClick={async () => {
+                  const next = !showPasswords;
+                  setShowPasswords(next);
+                  // Log de auditoria ao revelar senhas (apenas uma vez por sessão)
+                  if (next && !passwordRevealLogged) {
+                    setPasswordRevealLogged(true);
+                    try {
+                      await apiClient.post("/api/admin/system-logs", {
+                        user_id: user?.id,
+                        action: "REVEAL_PASSWORDS",
+                        category: "security",
+                        severity: "warning",
+                        details: `Admin ${user?.username} visualizou as senhas dos usuários em ${new Date().toLocaleString('pt-BR')}`
+                      });
+                    } catch (_) { /* silently ignore log errors */ }
+                  }
+                }}
                 className={`p-2 rounded-lg transition-colors flex items-center gap-2 text-xs font-medium ${
                   showPasswords 
                     ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300" 
@@ -387,13 +400,13 @@ export const AdminDashboard: React.FC = () => {
                 <div className="flex gap-2">
                   <input 
                     type="text"
-                    value={settings.whatsapp_support || ""}
-                    onChange={e => setSettings({...settings, whatsapp_support: e.target.value})}
+                    value={settings.support_whatsapp || ""}
+                    onChange={e => setSettings({...settings, support_whatsapp: e.target.value})}
                     placeholder="Ex: 5511999999999"
                     className="flex-1 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all"
                   />
                   <button 
-                    onClick={() => updateSetting("whatsapp_support", settings.whatsapp_support)}
+                    onClick={() => updateSetting("support_whatsapp", settings.support_whatsapp)}
                     className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold rounded-xl transition-colors text-sm"
                   >
                     Salvar
@@ -408,10 +421,10 @@ export const AdminDashboard: React.FC = () => {
                 </h3>
                 <div className="space-y-3">
                   {[
-                    { key: "auto_delete_atestados", label: "Atestados" },
+                    { key: "auto_delete_atestado", label: "Atestados" },
                     { key: "auto_delete_cnh", label: "CNH/CHA" },
                     { key: "auto_delete_toxicologico", label: "Toxicológico" },
-                    { key: "auto_delete_historicos", label: "Históricos" }
+                    { key: "auto_delete_historico", label: "Históricos" }
                   ].map(item => (
                     <div key={item.key} className="flex items-center justify-between gap-4">
                       <span className="text-xs text-gray-600 dark:text-gray-400">{item.label}</span>
