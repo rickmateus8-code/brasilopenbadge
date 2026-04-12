@@ -3,16 +3,15 @@
  * Layout: SPDocumentPage (réplica visual do histórico oficial SP)
  * Fluxo: DocMaster (useAuth, fetch, EmissionModal, exportElementToPDF)
  */
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
 import {
   ArrowLeft, Download, ZoomIn, ZoomOut,
-  Eye, EyeOff, PanelLeftClose, PanelLeft
+  PanelLeftClose, PanelLeft
 } from "lucide-react";
-import { exportElementToPDF } from "@/lib/pdfExport";
 import EmissionModal from "@/components/EmissionModal";
 import { useSPSubstitution } from "@/hooks/useSPSubstitution";
 import SPSubstitutionPanel from "@/components/SPSubstitutionPanel";
@@ -118,7 +117,7 @@ export default function HistoricoSP() {
   const [, setLocation] = useLocation();
 
   const [zoom, setZoom] = useState(() => getInitialZoom(true));
-  const [showHighlights, setShowHighlights] = useState(true);
+  const showHighlights = false; // Destaques sempre desligados
   const [isExporting, setIsExporting] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -298,13 +297,6 @@ export default function HistoricoSP() {
                 {modifiedCount} alterações
               </span>
             )}
-            <button
-              className="flex items-center gap-1 text-xs h-7 px-3 rounded border border-[#2a2a3a] text-[#aaaacc] hover:bg-[#1a1a2a] transition-colors"
-              onClick={() => setShowHighlights(!showHighlights)}
-            >
-              {showHighlights ? <Eye size={13} className="mr-1" /> : <EyeOff size={13} className="mr-1" />}
-              {showHighlights ? "Destaques ON" : "Destaques OFF"}
-            </button>
             <button
               className="flex items-center gap-1 text-xs h-7 px-3 rounded bg-gradient-to-r from-[#2d8c4e] to-[#1a6b35] hover:from-[#35a05a] hover:to-[#1f7a3e] text-white font-semibold transition-all disabled:opacity-60"
               onClick={handleRequestEmit}
