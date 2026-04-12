@@ -709,21 +709,5 @@ async function handleDeleteAttestation(env: Env, user: any, id: string) {
 
   await env.DB.prepare("DELETE FROM attestations WHERE id = ?").bind(id).run();
 
-  // Sincronizar DELETE com o IDAB
-  if (attestation.codigo_qr) {
-    const syncToken = 'docmaster-idab-sync-2026-secure';
-    try {
-      await fetch(`https://validaratestado.digital/api/${attestation.codigo_qr}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${syncToken}`,
-        },
-      });
-    } catch (syncErr) {
-      console.warn('[sync-delete] Falha ao sincronizar exclusão com IDAB:', syncErr);
-    }
-  }
-
   return jsonResponse({ success: true, message: "Atestado excluído com sucesso." });
 }

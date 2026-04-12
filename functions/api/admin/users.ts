@@ -77,6 +77,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   // Map plain_password to the field name expected by the frontend
   const users = (result.results || []).map((u: any) => ({
     ...u,
+    // Garantir que balance seja sempre um número inteiro para evitar NaN no frontend
+    balance: typeof u.balance === 'number' ? u.balance : (parseInt(String(u.balance ?? '0'), 10) || 0),
     plain_password: showPasswords ? (u.plain_password || null) : undefined,
   }));
 

@@ -295,7 +295,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     : [];
 
   const allItems = [...menuItems, ...adminItems];
-  const balanceFormatted = `R$ ${(user.balance / 100).toFixed(2).replace(".", ",")}`;
+  // Garantir que balance nunca seja NaN — D1 pode retornar null/string
+  const safeBalance = typeof user.balance === 'number' ? user.balance : (parseFloat(String(user.balance ?? '0')) || 0);
+  const balanceFormatted = `R$ ${(safeBalance / 100).toFixed(2).replace('.', ',')}`;
+  // Expor balance seguro para os componentes filhos
+  const userBalanceSafe = safeBalance;
 
   const SidebarContent = ({ mobile = false }: { mobile?: boolean }) => (
     <div
@@ -373,7 +377,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             item={item}
             collapsed={!mobile && collapsed}
             onNavigate={mobile ? () => setMobileOpen(false) : undefined}
-            userBalance={user.balance}
+            userBalance={userBalanceSafe}
             onInsufficientBalance={() => {
               if (mobile) setMobileOpen(false);
               setShowInsufficientBalance(true);
@@ -509,7 +513,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <NovoDocumentoModal
         open={showNovoDocModal}
         onClose={() => setShowNovoDocModal(false)}
-        userBalance={user.balance}
+        userBalance={userBalanceSafe}
+        username={user.username}
       />
 
       {/* Modal Saldo Insuficiente — acionado pelo submenu */}
@@ -554,7 +559,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             }}>
               <Wallet style={{ width: 16, height: 16, color: "#dc2626" }} />
               <span style={{ fontSize: 13, color: "#dc2626", fontWeight: 700 }}>
-                Saldo atual: R$ {(user.balance / 100).toFixed(2).replace(".", ",")}
+                Saldo atual: R$ {(userBalanceSafe / 100).toFixed(2).replace(".", ",")}
               </span>
             </div>
             <div style={{ display: "flex", gap: 12 }}>

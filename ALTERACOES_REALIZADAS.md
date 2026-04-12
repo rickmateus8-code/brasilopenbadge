@@ -234,3 +234,70 @@ Conforme planejado no roteiro de handover, a **Etapa 1** foi concluída com as s
 **Data:** 08 de Abril de 2026  
 **Versão:** 1.1.0  
 **Status:** Pronto para Produção
+
+---
+
+## Sessão: 12/04/2026 — Gestão de Preços com Nome Editável, Fallback PIX e Correções
+
+### 1. AdminDashboard — Aba de Preços com edição de nome
+
+**Arquivo:** `client/src/pages/AdminDashboard.tsx`
+
+- Adicionada aba **"Preços"** (`DollarSign`) no painel administrativo com quatro colunas: Ativo, Tipo, Nome Exibido e Preço.
+- Campo **"Nome Exibido"** totalmente editável — o admin pode renomear qualquer documento (ex: "Atestado Médico" → "Atestado de Saúde").
+- Campo **"Preço"** editável em Reais (convertido para centavos antes de salvar).
+- Toggle **Ativo/Inativo** por documento.
+- Botão **"Salvar"** individual por linha e botão **"Salvar Todos"** para salvar em lote.
+
+### 2. Endpoint `/api/admin/pricing` — Auto-criação da tabela e dados iniciais
+
+**Arquivo:** `functions/api/admin/pricing.ts`
+
+- Adicionada função `ensurePricingTable()` que cria a tabela `document_pricing` automaticamente se não existir.
+- Inserção automática de 8 documentos padrão quando a tabela está vazia.
+- Método `PUT` (salvar em lote) atualizado para incluir `display_name` no upsert.
+- Validação de `priceInt` com `Number()` para evitar NaN.
+
+### 3. Endpoint público `/api/settings/public` *(novo)*
+
+**Arquivo:** `functions/api/settings/public.ts`
+
+- Endpoint GET sem autenticação que expõe apenas `support_whatsapp`.
+- Usado pelo frontend para exibir o botão de WhatsApp no fallback de PIX.
+
+### 4. Página `Recargas.tsx` — Fallback PIX via WhatsApp
+
+**Arquivo:** `client/src/pages/Recargas.tsx`
+
+- Novo estado `"unavailable"` para quando o gateway PIX retorna erro ou está indisponível.
+- Quando o PIX falha, exibe card laranja com instruções de recarga manual e botão **"Falar com Suporte (WhatsApp)"**.
+- Link do WhatsApp pré-preenchido com usuário e valor desejado.
+- Botão de WhatsApp também visível no estado `"error"` (PIX expirado).
+
+### 5. Componente `NovoDocumentoModal.tsx` — Fallback WhatsApp no saldo insuficiente
+
+**Arquivo:** `client/src/components/NovoDocumentoModal.tsx`
+
+- Reescrito para buscar preços dinamicamente do endpoint `/api/pricing`.
+- Exibe `display_name` atualizado pelo admin (não mais hardcoded).
+- Pop-up de **"Saldo Insuficiente"** agora inclui botão **"Solicitar via WhatsApp"**.
+- Indicador visual de "Saldo insuficiente" em vermelho para documentos que o usuário não pode pagar.
+
+### 6. Correção do NaN no saldo
+
+**Arquivos:** `client/src/components/DashboardLayout.tsx`, `functions/api/auth/me.ts`, `functions/api/admin/users.ts`
+
+- `balance` normalizado para `parseInt(...) || 0` antes de retornar ao frontend.
+- `safeBalance` com fallback no DashboardLayout para quando o D1 retorna `null` ou string.
+
+### 7. Correção da sincronização IDAB — DELETE duplicado
+
+**Arquivo:** `functions/api/attestations.ts`
+
+- Removido o segundo bloco de sincronização DELETE duplicado que usava URL e token diferentes.
+- Evita duas requisições DELETE desnecessárias para o IDAB.
+
+---
+
+**Data:** 12 de Abril de 2026
+**Versão:** 1.2.0

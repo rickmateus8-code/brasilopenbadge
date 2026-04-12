@@ -38,7 +38,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         email: user.email || '',
         displayName: user.display_name || user.username,
         role: user.role,
-        balance: user.balance,
+        balance: typeof user.balance === 'number' ? user.balance : (parseInt(String(user.balance ?? '0'), 10) || 0),
         profilePhoto: user.profile_photo || null,
       }
     }), { status: 200, headers: corsHeaders });

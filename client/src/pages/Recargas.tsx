@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
-import { CreditCard, Copy, Check, RefreshCw, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { CreditCard, Copy, Check, RefreshCw, CheckCircle, Clock, AlertCircle, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
 const RECHARGE_OPTIONS = [
@@ -15,7 +15,7 @@ const RECHARGE_OPTIONS = [
   { label: "R$ 500,00", value: 500 },
 ];
 
-type PaymentStatus = "idle" | "generating" | "waiting" | "paid" | "error";
+type PaymentStatus = "idle" | "generating" | "waiting" | "paid" | "error" | "unavailable";
 
 export default function Recargas() {
   const { user, updateBalance } = useAuth();
@@ -34,10 +34,29 @@ export default function Recargas() {
   const [copied, setCopied] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [pollCount, setPollCount] = useState(0);
+  const [pixErrorMsg, setPixErrorMsg] = useState("");
+  const [supportWhatsapp, setSupportWhatsapp] = useState("");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const amount = selected ?? (customValue ? parseFloat(customValue) : null);
+
+  // Buscar número de suporte do admin
+  useEffect(() => {
+    fetch("/api/settings/public", { credentials: "include" })
+      .then(r => r.json())
+      .then(data => {
+        if (data.support_whatsapp) setSupportWhatsapp(data.support_whatsapp);
+      })
+      .catch(() => {});
+    // Fallback: tentar via /api/admin/settings (se for admin)
+    fetch("/api/admin/settings", { credentials: "include" })
+      .then(r => r.json())
+      .then(data => {
+        if (data.settings?.support_whatsapp) setSupportWhatsapp(data.settings.support_whatsapp);
+      })
+      .catch(() => {});
+  }, []);
 
   function maskCPF(v: string) {
     const d = v.replace(/\D/g, "").slice(0, 11);
@@ -63,6 +82,7 @@ export default function Recargas() {
       setTimeLeft(diff);
       if (diff <= 0) {
         setStatus("error");
+        setPixErrorMsg("O QR Code PIX expirou. Gere um novo ou entre em contato com o suporte.");
         if (pollRef.current) clearInterval(pollRef.current);
         if (timerRef.current) clearInterval(timerRef.current);
       }
@@ -98,18 +118,24 @@ export default function Recargas() {
     if (!amount || amount < 5) { toast.error("Valor mínimo: R$ 5,00"); return; }
     if (amount > 10000) { toast.error("Valor máximo: R$ 10.000,00"); return; }
     setStatus("generating");
+    setPixErrorMsg("");
     try {
       const res = await fetch("/api/pix/deposit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amount,
-          user_name: user?.display_name || user?.username || "CLIENTE",
+          user_name: user?.displayName || user?.username || "CLIENTE",
           user_cpf: cpf.replace(/\D/g, "") || undefined,
         }),
       });
       const data = await res.json() as any;
-      if (!data.success) throw new Error(data.error || "Erro ao gerar PIX");
+      if (!data.success) {
+        // Gateway indisponível — mostrar fallback WhatsApp
+        setStatus("unavailable");
+        setPixErrorMsg(data.error || "Gateway PIX temporariamente indisponível.");
+        return;
+      }
       setQrCode(data.qr_code || "");
       setQrBase64(data.qr_code_base64 || "");
       setTransactionId(data.transaction_id || "");
@@ -118,8 +144,8 @@ export default function Recargas() {
       startPolling(data.transaction_id);
       toast.success("PIX gerado! Escaneie o QR Code para pagar.");
     } catch (err: any) {
-      setStatus("error");
-      toast.error(err.message || "Erro ao gerar PIX. Tente novamente.");
+      setStatus("unavailable");
+      setPixErrorMsg("Não foi possível conectar ao gateway de pagamento. Tente novamente mais tarde.");
     }
   };
 
@@ -134,7 +160,9 @@ export default function Recargas() {
   const handleReset = () => {
     if (pollRef.current) clearInterval(pollRef.current);
     if (timerRef.current) clearInterval(timerRef.current);
-    setStatus("idle"); setQrCode(""); setQrBase64(""); setTransactionId(""); setExpiresAt(""); setTimeLeft(0); setPollCount(0);
+    setStatus("idle");
+    setQrCode(""); setQrBase64(""); setTransactionId(""); setExpiresAt("");
+    setTimeLeft(0); setPollCount(0); setPixErrorMsg("");
   };
 
   const formatTime = (s: number) => `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
@@ -144,6 +172,13 @@ export default function Recargas() {
   const border = isDark ? "#334155" : "#e2e8f0";
   const textColor = isDark ? "#e2e8f0" : "#1e293b";
   const muted = isDark ? "#94a3b8" : "#64748b";
+
+  // Montar link WhatsApp com mensagem pré-preenchida
+  const whatsappLink = supportWhatsapp
+    ? `https://wa.me/${supportWhatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
+        `Olá! Preciso adicionar saldo no DocMaster.\nUsuário: ${user?.username || ""}\nValor desejado: R$ ${amount ? amount.toFixed(2) : "?"}`
+      )}`
+    : null;
 
   return (
     <DashboardLayout>
@@ -238,15 +273,70 @@ export default function Recargas() {
             </div>
           )}
 
-          {/* ERRO */}
+          {/* ERRO — PIX expirado */}
           {status === "error" && (
             <div style={{ background: "#fef2f2", border: "2px solid #ef4444", borderRadius: 16, padding: 24, textAlign: "center", marginBottom: 16 }}>
               <AlertCircle size={40} color="#ef4444" style={{ marginBottom: 12 }} />
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: "#dc2626", margin: "0 0 8px" }}>PIX expirado ou erro</h3>
-              <p style={{ fontSize: 13, color: "#7f1d1d", margin: "0 0 16px" }}>O QR Code expirou ou houve um erro. Gere um novo PIX.</p>
-              <button onClick={handleReset} style={{ background: "#ef4444", color: "#fff", border: "none", borderRadius: 10, padding: "10px 24px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-                Tentar Novamente
-              </button>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: "#dc2626", margin: "0 0 8px" }}>PIX expirado</h3>
+              <p style={{ fontSize: 13, color: "#7f1d1d", margin: "0 0 16px" }}>
+                {pixErrorMsg || "O QR Code expirou. Gere um novo PIX."}
+              </p>
+              <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+                <button onClick={handleReset} style={{ background: "#ef4444", color: "#fff", border: "none", borderRadius: 10, padding: "10px 24px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                  Tentar Novamente
+                </button>
+                {whatsappLink && (
+                  <a href={whatsappLink} target="_blank" rel="noopener noreferrer" style={{ background: "#16a34a", color: "#fff", border: "none", borderRadius: 10, padding: "10px 24px", fontSize: 13, fontWeight: 700, cursor: "pointer", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
+                    <MessageCircle size={14} />
+                    Falar com Suporte
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* INDISPONÍVEL — Gateway PIX fora do ar */}
+          {status === "unavailable" && (
+            <div style={{ background: isDark ? "#1e293b" : "#fff7ed", border: "2px solid #f97316", borderRadius: 16, padding: 28, textAlign: "center", marginBottom: 16 }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>⚠️</div>
+              <h3 style={{ fontSize: 17, fontWeight: 800, color: "#c2410c", margin: "0 0 10px" }}>
+                Gateway PIX Indisponível
+              </h3>
+              <p style={{ fontSize: 13, color: isDark ? "#94a3b8" : "#7c3aed", margin: "0 0 8px", lineHeight: 1.6 }}>
+                {pixErrorMsg || "O sistema de pagamento PIX está temporariamente indisponível."}
+              </p>
+              <p style={{ fontSize: 13, color: isDark ? "#cbd5e1" : "#374151", margin: "0 0 20px", lineHeight: 1.6 }}>
+                Entre em contato com o suporte para adicionar saldo manualmente.
+              </p>
+
+              {/* Instruções de recarga manual */}
+              <div style={{ background: isDark ? "#0f172a" : "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 12, padding: "14px 18px", marginBottom: 20, textAlign: "left" }}>
+                <p style={{ fontSize: 12, color: "#166534", margin: 0, lineHeight: 1.8, fontWeight: 600 }}>
+                  📋 Como solicitar recarga manual:
+                </p>
+                <p style={{ fontSize: 12, color: isDark ? "#94a3b8" : "#374151", margin: "6px 0 0", lineHeight: 1.7 }}>
+                  1. Clique em "Falar com Suporte" abaixo<br />
+                  2. Informe seu usuário: <strong>{user?.username}</strong><br />
+                  3. Informe o valor desejado<br />
+                  4. Aguarde a confirmação do admin
+                </p>
+              </div>
+
+              <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+                <button onClick={handleReset} style={{ background: "transparent", color: isDark ? "#94a3b8" : "#6b7280", border: `1px solid ${border}`, borderRadius: 10, padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                  Tentar Novamente
+                </button>
+                {whatsappLink ? (
+                  <a href={whatsappLink} target="_blank" rel="noopener noreferrer" style={{ background: "#16a34a", color: "#fff", border: "none", borderRadius: 10, padding: "10px 24px", fontSize: 13, fontWeight: 700, cursor: "pointer", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
+                    <MessageCircle size={14} />
+                    Falar com Suporte (WhatsApp)
+                  </a>
+                ) : (
+                  <div style={{ background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 20px", fontSize: 12, color: "#6b7280" }}>
+                    Entre em contato com o administrador
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -308,6 +398,24 @@ export default function Recargas() {
                   <><span style={{ fontSize: 20 }}>⚡</span>{amount && amount >= 5 ? `GERAR PIX — R$ ${amount.toFixed(2).replace(".", ",")}` : "GERAR PIX"}</>
                 )}
               </button>
+
+              {/* Fallback WhatsApp visível no formulário quando suporte configurado */}
+              {whatsappLink && (
+                <div style={{ marginTop: 12, textAlign: "center" }}>
+                  <p style={{ fontSize: 11, color: muted, marginBottom: 6 }}>
+                    Prefere pagar de outra forma?
+                  </p>
+                  <a
+                    href={whatsappLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "#16a34a", fontWeight: 700, textDecoration: "none" }}
+                  >
+                    <MessageCircle size={13} />
+                    Solicitar recarga via WhatsApp
+                  </a>
+                </div>
+              )}
 
               <p style={{ fontSize: 11, color: muted, textAlign: "center", marginTop: 12 }}>
                 Pagamento 100% seguro · Confirmação automática em segundos

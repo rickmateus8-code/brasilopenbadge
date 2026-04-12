@@ -5,12 +5,13 @@
  * Fluxo:
  *  - Usuário tem saldo suficiente → navega para a página de criação
  *  - Usuário NÃO tem saldo → exibe pop-up "Saldo Insuficiente" com botão "Recarregar Agora"
+ *    e, se configurado, botão de WhatsApp para solicitar recarga manual
  */
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import {
   X, FileText, Car, Anchor, FlaskConical, GraduationCap,
-  Pill, AlertTriangle, Wallet, CreditCard
+  Pill, AlertTriangle, Wallet, CreditCard, MessageCircle
 } from "lucide-react";
 
 interface DocOption {
@@ -26,6 +27,7 @@ interface NovoDocumentoModalProps {
   open: boolean;
   onClose: () => void;
   userBalance: number;
+  username?: string;
 }
 
 // Mapeamento de ícones por tipo de documento
@@ -52,11 +54,12 @@ const DOC_PATHS: Record<string, string> = {
   receita: "/receitacria",
 };
 
-export default function NovoDocumentoModal({ open, onClose, userBalance }: NovoDocumentoModalProps) {
+export default function NovoDocumentoModal({ open, onClose, userBalance, username }: NovoDocumentoModalProps) {
   const [, setLocation] = useLocation();
   const [docs, setDocs] = useState<DocOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [insufficientDoc, setInsufficientDoc] = useState<DocOption | null>(null);
+  const [supportWhatsapp, setSupportWhatsapp] = useState("");
 
   // Buscar preços do backend
   useEffect(() => {
@@ -83,6 +86,17 @@ export default function NovoDocumentoModal({ open, onClose, userBalance }: NovoD
       .finally(() => setLoading(false));
   }, [open]);
 
+  // Buscar WhatsApp de suporte
+  useEffect(() => {
+    if (!open) return;
+    fetch("/api/settings/public")
+      .then(r => r.json())
+      .then(data => {
+        if (data.support_whatsapp) setSupportWhatsapp(data.support_whatsapp);
+      })
+      .catch(() => {});
+  }, [open]);
+
   if (!open) return null;
 
   const handleSelectDoc = (doc: DocOption) => {
@@ -99,6 +113,13 @@ export default function NovoDocumentoModal({ open, onClose, userBalance }: NovoD
     setLocation("/recargas");
   };
 
+  // Montar link WhatsApp com mensagem pré-preenchida
+  const whatsappLink = supportWhatsapp
+    ? `https://wa.me/${supportWhatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
+        `Olá! Preciso adicionar saldo no DocMaster.\nUsuário: ${username || ""}\nDocumento desejado: ${insufficientDoc?.label || ""}`
+      )}`
+    : null;
+
   // Pop-up de Saldo Insuficiente
   if (insufficientDoc) {
     return (
@@ -114,7 +135,7 @@ export default function NovoDocumentoModal({ open, onClose, userBalance }: NovoD
         <div
           style={{
             background: "#fff", borderRadius: 20, padding: "36px 32px",
-            maxWidth: 380, width: "100%", textAlign: "center",
+            maxWidth: 400, width: "100%", textAlign: "center",
             boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
           }}
           onClick={e => e.stopPropagation()}
@@ -131,16 +152,16 @@ export default function NovoDocumentoModal({ open, onClose, userBalance }: NovoD
           <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111827", marginBottom: 12 }}>
             Saldo Insuficiente
           </h2>
-          <p style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.6, marginBottom: 28 }}>
+          <p style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.6, marginBottom: 20 }}>
             O valor deste documento é{" "}
             <strong style={{ color: "#dc2626" }}>{insufficientDoc.priceFormatted}</strong>.
-            Seu saldo é insuficiente.
+            Seu saldo atual é insuficiente.
           </p>
 
           {/* Saldo atual */}
           <div style={{
             background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10,
-            padding: "10px 16px", marginBottom: 24, display: "flex",
+            padding: "10px 16px", marginBottom: 20, display: "flex",
             alignItems: "center", justifyContent: "center", gap: 8,
           }}>
             <Wallet style={{ width: 16, height: 16, color: "#dc2626" }} />
@@ -150,31 +171,48 @@ export default function NovoDocumentoModal({ open, onClose, userBalance }: NovoD
           </div>
 
           {/* Botões */}
-          <div style={{ display: "flex", gap: 12 }}>
-            <button
-              onClick={handleRecarregar}
-              style={{
-                flex: 1, padding: "12px 0", borderRadius: 10, border: "none",
-                background: "#16a34a", color: "#fff", fontWeight: 700,
-                fontSize: 14, cursor: "pointer", transition: "background 0.2s",
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = "#15803d")}
-              onMouseLeave={e => (e.currentTarget.style.background = "#16a34a")}
-            >
-              Recarregar Agora
-            </button>
-            <button
-              onClick={() => { setInsufficientDoc(null); }}
-              style={{
-                flex: 1, padding: "12px 0", borderRadius: 10, border: "none",
-                background: "#6b7280", color: "#fff", fontWeight: 700,
-                fontSize: 14, cursor: "pointer", transition: "background 0.2s",
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = "#4b5563")}
-              onMouseLeave={e => (e.currentTarget.style.background = "#6b7280")}
-            >
-              Cancelar
-            </button>
+          <div style={{ display: "flex", gap: 10, flexDirection: "column" }}>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={handleRecarregar}
+                style={{
+                  flex: 1, padding: "12px 0", borderRadius: 10, border: "none",
+                  background: "#16a34a", color: "#fff", fontWeight: 700,
+                  fontSize: 14, cursor: "pointer",
+                }}
+              >
+                Recarregar Agora
+              </button>
+              <button
+                onClick={() => setInsufficientDoc(null)}
+                style={{
+                  flex: 1, padding: "12px 0", borderRadius: 10, border: "none",
+                  background: "#6b7280", color: "#fff", fontWeight: 700,
+                  fontSize: 14, cursor: "pointer",
+                }}
+              >
+                Cancelar
+              </button>
+            </div>
+
+            {/* Fallback WhatsApp */}
+            {whatsappLink && (
+              <a
+                href={whatsappLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  padding: "11px 0", borderRadius: 10,
+                  background: "#f0fdf4", border: "1.5px solid #bbf7d0",
+                  color: "#15803d", fontWeight: 700, fontSize: 13,
+                  textDecoration: "none",
+                }}
+              >
+                <MessageCircle style={{ width: 15, height: 15 }} />
+                Solicitar via WhatsApp
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -295,6 +333,7 @@ export default function NovoDocumentoModal({ open, onClose, userBalance }: NovoD
         <div style={{
           marginTop: 20, paddingTop: 16, borderTop: "1px solid #f3f4f6",
           display: "flex", alignItems: "center", justifyContent: "space-between",
+          flexWrap: "wrap", gap: 8,
         }}>
           <button
             onClick={() => { onClose(); setLocation("/recargas"); }}
@@ -310,6 +349,23 @@ export default function NovoDocumentoModal({ open, onClose, userBalance }: NovoD
             <CreditCard style={{ width: 14, height: 14 }} />
             Recarregar Saldo
           </button>
+
+          {/* Link WhatsApp no rodapé */}
+          {whatsappLink && (
+            <a
+              href={`https://wa.me/${supportWhatsapp.replace(/\D/g, "")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                fontSize: 12, color: "#16a34a", fontWeight: 600, textDecoration: "none",
+              }}
+            >
+              <MessageCircle style={{ width: 13, height: 13 }} />
+              Suporte
+            </a>
+          )}
+
           <button
             onClick={onClose}
             style={{
