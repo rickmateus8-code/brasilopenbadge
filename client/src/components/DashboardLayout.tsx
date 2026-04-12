@@ -584,7 +584,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 }}>
                   <GraduationCap style={{ width: 22, height: 22, color: "#fff" }} />
                 </div>
-                <p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 4px" }} className="text-gray-800 dark:text-gray-200">Histórico Escolar</p>
+                <p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 4px", color: "#111827" }} className="dark:text-white">Histórico Escolar</p>
                 <p style={{ fontSize: 11, margin: 0 }} className="text-gray-500 dark:text-gray-400">Estado de SP</p>
               </button>
 
@@ -610,7 +610,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 }}>
                   <GraduationCap style={{ width: 22, height: 22, color: "#fff" }} />
                 </div>
-                <p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 4px" }} className="text-gray-800 dark:text-gray-200">Histórico UNINTER</p>
+                <p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 4px", color: "#111827" }} className="dark:text-white">Histórico UNINTER</p>
                 <p style={{ fontSize: 11, margin: 0 }} className="text-gray-500 dark:text-gray-400">Centro Universitário</p>
               </button>
             </div>
