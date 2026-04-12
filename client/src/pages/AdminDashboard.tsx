@@ -58,6 +58,9 @@ export const AdminDashboard: React.FC = () => {
   const [changePwUsername, setChangePwUsername] = useState("");
   const [changePwValue, setChangePwValue] = useState("");
   const [isChangingPw, setIsChangingPw] = useState(false);
+  const [systemLogs, setSystemLogs] = useState<any[]>([]);
+  const [isClearingLogs, setIsClearingLogs] = useState(false);
+  const [logFilter, setLogFilter] = useState<"all" | "admin" | "system">("all");
 
   useEffect(() => {
     fetchData();
@@ -67,10 +70,11 @@ export const AdminDashboard: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      const [usersRes, settingsRes, presenceRes] = await Promise.all([
+      const [usersRes, settingsRes, presenceRes, logsRes] = await Promise.all([
         apiClient.get("/api/admin/users"),
         apiClient.get("/api/admin/settings"),
-        apiClient.get("/api/admin/presence")
+        apiClient.get("/api/admin/presence"),
+        apiClient.get("/api/admin/system-logs?limit=50")
       ]);
       
       if (usersRes.data) setUsers(usersRes.data);
@@ -78,11 +82,26 @@ export const AdminDashboard: React.FC = () => {
         // Backend returns { success: true, settings: { key: value, ... } }
         setSettings(settingsRes.data.settings);
       }
-      if (presenceRes.data) setPresence(presenceRes.data);
+      if (presenceRes.data?.presence) setPresence(presenceRes.data.presence);
+      if (logsRes.data?.logs) setSystemLogs(logsRes.data.logs);
     } catch (error) {
       console.error("Erro ao buscar dados do admin:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleClearLogs = async (type: "all" | "admin" | "system") => {
+    if (!confirm(`Tem certeza que deseja limpar os logs ${type === "all" ? "de todos os tipos" : type}? Esta ação é irreversível.`)) return;
+    setIsClearingLogs(true);
+    try {
+      await apiClient.delete(`/api/admin/system-logs?clear=${type}`);
+      setSystemLogs([]);
+      alert("Logs limpos com sucesso!");
+    } catch (error) {
+      alert("Erro ao limpar logs");
+    } finally {
+      setIsClearingLogs(false);
     }
   };
 
@@ -462,6 +481,68 @@ export const AdminDashboard: React.FC = () => {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* System Logs Section */}
+      <div className="p-6 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <FileText className="w-5 h-5 text-yellow-500" />
+            Logs do Sistema
+            <span className="text-xs font-normal text-gray-400 ml-1">({systemLogs.length} registros)</span>
+          </h2>
+          <div className="flex items-center gap-2">
+            <select
+              value={logFilter}
+              onChange={e => setLogFilter(e.target.value as any)}
+              className="text-xs px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+            >
+              <option value="all">Todos</option>
+              <option value="system">Sistema</option>
+              <option value="admin">Admin</option>
+            </select>
+            <button
+              onClick={() => handleClearLogs(logFilter)}
+              disabled={isClearingLogs || systemLogs.length === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {isClearingLogs ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+              Limpar Logs
+            </button>
+          </div>
+        </div>
+        {systemLogs.length === 0 ? (
+          <div className="text-center py-8 text-gray-400 dark:text-gray-600">
+            <FileText className="w-10 h-10 mx-auto mb-2 opacity-30" />
+            <p className="text-sm">Nenhum log registrado</p>
+          </div>
+        ) : (
+          <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+            {systemLogs.map((log: any, i: number) => (
+              <div key={log.id || i} className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800">
+                <div className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${
+                  log.severity === 'error' ? 'bg-red-500' :
+                  log.severity === 'warning' ? 'bg-yellow-500' :
+                  log.severity === 'info' ? 'bg-blue-500' : 'bg-gray-400'
+                }`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{log.action || log.category || 'LOG'}</span>
+                    {log.severity && (
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                        log.severity === 'error' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' :
+                        log.severity === 'warning' ? 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                        'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                      }`}>{log.severity}</span>
+                    )}
+                    <span className="text-[10px] text-gray-400 ml-auto">{log.created_at ? formatDate(log.created_at) : ''}</span>
+                  </div>
+                  {log.details && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{log.details}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Change Password Modal */}
