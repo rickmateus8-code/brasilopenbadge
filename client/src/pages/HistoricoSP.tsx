@@ -1,100 +1,202 @@
-import { useState, useRef } from "react";
+/**
+ * Histórico Escolar SP — DocMaster
+ * Layout: SPDocumentPage (réplica visual do histórico oficial SP)
+ * Fluxo: DocMaster (useAuth, fetch, EmissionModal, exportElementToPDF)
+ */
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
-import { ArrowLeft, Download, GraduationCap, AlertCircle, Plus, Trash2 } from "lucide-react";
+import {
+  ArrowLeft, Download, ZoomIn, ZoomOut,
+  Eye, EyeOff, PanelLeftClose, PanelLeft
+} from "lucide-react";
 import { exportElementToPDF } from "@/lib/pdfExport";
-import { validarCPF } from "@/lib/utils";
 import EmissionModal from "@/components/EmissionModal";
+import { useSPSubstitution } from "@/hooks/useSPSubstitution";
+import SPSubstitutionPanel from "@/components/SPSubstitutionPanel";
+import { SPPage1 } from "@/components/SPDocumentPage";
+import { SIG_GERENTE_B64, SIG_DIRETOR_B64 } from "@/lib/spAssets";
 
-interface Disciplina {
-  nome: string;
-  nota1: string;
-  nota2: string;
-  nota3: string;
-  nota4: string;
-  media: string;
-  faltas: string;
-  situacao: string;
+const A4_WIDTH_PX = 794;
+const A4_HEIGHT_PX = 1123;
+
+function getInitialZoom(sidebarVisible = true) {
+  if (typeof window === "undefined") return 0.64;
+  const sidebarWidth = sidebarVisible ? 360 : 56;
+  const horizontalSpacing = 96;
+  const verticalSpacing = 152;
+  const availableWidth = Math.max(320, window.innerWidth - sidebarWidth - horizontalSpacing);
+  const availableHeight = Math.max(320, window.innerHeight - verticalSpacing);
+  const fitZoom = Math.min(availableWidth / A4_WIDTH_PX, availableHeight / A4_HEIGHT_PX);
+  return Math.max(0.42, Math.min(0.72, fitZoom));
 }
 
-interface HistoricoSPData {
-  nomeAluno: string;
-  rg: string;
-  cpf: string;
-  dataNascimento: string;
-  nomeMae: string;
-  nomePai: string;
-  naturalidade: string;
-  escola: string;
-  diretoriaEnsino: string;
-  municipio: string;
-  curso: string;
-  serie: string;
-  anoLetivo: string;
-  turma: string;
-  turno: string;
-  disciplinas: Disciplina[];
+function buildSPExportIframeCSS() {
+  return `
+    * { box-sizing: border-box; }
+    @page { size: A4 portrait; margin: 0; }
+    html, body {
+      margin: 0; padding: 0;
+      width: 210mm; height: 297mm;
+      background: #fff; color: #000;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    img { display: block; max-width: 100%; height: auto; }
+    .sp-export-shell { width: 210mm; height: 297mm; overflow: hidden; background: #fff; position: relative; }
+    .doc-page-sp {
+      width: 210mm !important; height: 297mm !important;
+      min-height: 297mm !important; max-height: 297mm !important;
+      margin: 0 !important; box-shadow: none !important;
+    }
+    @media print {
+      html, body { overflow: hidden; }
+      .sp-export-shell { break-inside: avoid-page; page-break-inside: avoid; }
+    }
+  `;
 }
 
-const DISCIPLINA_VAZIA: Disciplina = {
-  nome: "", nota1: "", nota2: "", nota3: "", nota4: "", media: "", faltas: "", situacao: "APROVADO"
-};
+async function imageUrlToBase64(url: string): Promise<string> {
+  if (!url) return "";
+  if (url.startsWith("data:")) return url;
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error("Falha ao converter imagem para base64."));
+      reader.readAsDataURL(blob);
+    });
+  } catch { return url; }
+}
 
-const DISCIPLINAS_PADRAO = [
-  "Língua Portuguesa", "Matemática", "História", "Geografia", "Ciências",
-  "Educação Física", "Arte", "Inglês", "Biologia", "Física", "Química"
-];
+async function preloadPageImagesAsBase64(root: HTMLElement): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  const imgs = Array.from(root.querySelectorAll("img"));
+  const uniqueSrc = Array.from(new Set(imgs.map((img) => img.getAttribute("src") || "").filter(Boolean)));
+  await Promise.all(uniqueSrc.map(async (src) => {
+    try {
+      const b64 = await imageUrlToBase64(src);
+      if (b64) map.set(src, b64);
+    } catch { /* mantém src original */ }
+  }));
+  return map;
+}
 
-const EMPTY: HistoricoSPData = {
-  nomeAluno: "", rg: "", cpf: "", dataNascimento: "", nomeMae: "", nomePai: "",
-  naturalidade: "", escola: "", diretoriaEnsino: "Diretoria de Ensino — Região",
-  municipio: "", curso: "Ensino Médio", serie: "3ª", anoLetivo: "2024", turma: "A", turno: "Manhã",
-  disciplinas: DISCIPLINAS_PADRAO.slice(0, 6).map(nome => ({ ...DISCIPLINA_VAZIA, nome })),
-};
+function replaceImageUrls(html: string, urlMap: Map<string, string>) {
+  let result = html;
+  urlMap.forEach((b64, url) => { result = result.split(url).join(b64); });
+  return result;
+}
+
+async function waitForImagesInElement(element: HTMLElement) {
+  const images = element.querySelectorAll("img");
+  await Promise.all(Array.from(images).map((img) =>
+    new Promise<void>((resolve) => {
+      if (img.complete && img.naturalWidth > 0) { resolve(); return; }
+      const done = () => resolve();
+      img.addEventListener("load", done, { once: true });
+      img.addEventListener("error", done, { once: true });
+    })
+  ));
+}
+
+function normalizeFileSegment(value: string): string {
+  return (value || "DOCUMENTO")
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "_")
+    .replace(/[^A-Z0-9_]/g, "");
+}
 
 export default function HistoricoSP() {
   const { user, updateBalance } = useAuth();
   const [, setLocation] = useLocation();
-  const [data, setData] = useState<HistoricoSPData>(EMPTY);
-  const [saved, setSaved] = useState(false);
-  const [loading, setLoading] = useState(false);
+
+  const [zoom, setZoom] = useState(() => getInitialZoom(true));
+  const [showHighlights, setShowHighlights] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const docRef = useRef<HTMLDivElement>(null);
 
-  const update = (k: keyof HistoricoSPData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-    setData(d => ({ ...d, [k]: e.target.value }));
+  const {
+    fields,
+    fieldMap,
+    modifiedCount,
+    currentGrades,
+    importText,
+    brasaoUrl,
+    hasCustomBrasao,
+    updateField,
+    setImportText,
+    applyImportText,
+    generateSecurityCode,
+    generateRA,
+    resetToOriginal,
+    handleBrasaoUpload,
+    resetBrasaoUpload,
+  } = useSPSubstitution();
 
-  const updateDisciplina = (idx: number, k: keyof Disciplina, val: string) =>
-    setData(d => ({ ...d, disciplinas: d.disciplinas.map((disc, i) => i === idx ? { ...disc, [k]: val } : disc) }));
+  const [assinaturaGerenteUrl, setAssinaturaGerenteUrl] = useState<string | null>(null);
+  const [assinaturaDiretorUrl, setAssinaturaDiretorUrl] = useState<string | null>(null);
 
-  const addDisciplina = () =>
-    setData(d => ({ ...d, disciplinas: [...d.disciplinas, { ...DISCIPLINA_VAZIA }] }));
+  const handleAssinaturaGerenteUpload = useCallback((file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => { setAssinaturaGerenteUrl(e.target?.result as string); toast.success("Assinatura do Gerente carregada!"); };
+    reader.readAsDataURL(file);
+  }, []);
 
-  const removeDisciplina = (idx: number) =>
-    setData(d => ({ ...d, disciplinas: d.disciplinas.filter((_, i) => i !== idx) }));
+  const handleAssinaturaDiretorUpload = useCallback((file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => { setAssinaturaDiretorUrl(e.target?.result as string); toast.success("Assinatura do Diretor carregada!"); };
+    reader.readAsDataURL(file);
+  }, []);
 
-  const handleRequestEmit = () => {
-    if (!data.nomeAluno || !data.escola) { toast.error("Preencha Nome do Aluno e Escola"); return; }
-    if (data.cpf && !validarCPF(data.cpf)) { toast.error("CPF inválido! Verifique os dígitos informados."); return; }
+  const handleResetAll = useCallback(() => {
+    resetToOriginal();
+    setAssinaturaGerenteUrl(null);
+    setAssinaturaDiretorUrl(null);
+    toast.success("Formulário redefinido para o estado vazio.");
+  }, [resetToOriginal]);
+
+  // Validação e abertura do modal de confirmação
+  const handleRequestEmit = useCallback(() => {
+    if (!fieldMap.nome_aluno) { toast.error("Preencha o Nome do Aluno"); return; }
+    if (!fieldMap.nome_escola) { toast.error("Preencha o Nome da Escola"); return; }
     if ((user?.balance || 0) <= 0) {
       toast.error("Saldo insuficiente. Recarregue para emitir documentos.");
       return;
     }
     setShowConfirmModal(true);
-  };
+  }, [fieldMap.nome_aluno, fieldMap.nome_escola, user?.balance]);
 
-  const handleSave = async () => {
-    setLoading(true);
+  // Salvar no backend e cobrar saldo
+  const handleSave = useCallback(async () => {
+    setIsExporting(true);
     try {
+      const payload = {
+        nome: fieldMap.nome_aluno || "",
+        cpf: fieldMap.cpf || "",
+        rg: fieldMap.rg || "",
+        ra: fieldMap.ra || "",
+        curso: "Ensino Médio",
+        instituicao: fieldMap.nome_escola_full || fieldMap.nome_escola || "",
+        dataEmissao: fieldMap.data_emissao || "",
+        dataConclusao: fieldMap.ano_conclusao || "",
+        ...fieldMap,
+      };
       const res = await fetch("/api/documents/historico-sp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
       const result = await res.json();
       if (result.success) {
@@ -107,259 +209,221 @@ export default function HistoricoSP() {
         setShowConfirmModal(false);
       }
     } catch { toast.error("Erro de conexão"); setShowConfirmModal(false); }
-    finally { setLoading(false); }
-  };
+    finally { setIsExporting(false); }
+  }, [fieldMap, updateBalance]);
 
-  const handleExport = async () => {
-    if (!docRef.current) return;
-    setLoading(true);
+  // Exportar PDF via iframe isolado (método do RAR)
+  const handleExportPDF = useCallback(async () => {
+    setIsDownloading(true);
+    let iframe: HTMLIFrameElement | null = null;
+    let releaseByAfterPrint = false;
+
     try {
-      const nomeHistSP = (data.nomeAluno || "DOCUMENTO").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
-      await exportElementToPDF(docRef.current, `HISTORICO_SP_${nomeHistSP}.pdf`);
-      toast.success("PDF exportado!");
-    } catch { toast.error("Erro ao exportar PDF"); }
-    finally { setLoading(false); }
-  };
+      const exportSourcePage = document.getElementById("doc-page-sp-export") as HTMLElement | null;
+      if (!exportSourcePage) throw new Error("Layout base não encontrado para exportação.");
+
+      await waitForImagesInElement(exportSourcePage);
+      await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+      const imageMap = await preloadPageImagesAsBase64(exportSourcePage);
+
+      iframe = document.createElement("iframe");
+      iframe.style.cssText = `position:fixed;left:-99999px;top:0;width:210mm;height:297mm;border:none;background:#fff;`;
+      document.body.appendChild(iframe);
+
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc) throw new Error("Falha ao preparar ambiente isolado para exportação.");
+
+      const captureNode = exportSourcePage.cloneNode(true) as HTMLElement;
+      captureNode.id = "doc-page-sp-capture";
+      const captureHtml = replaceImageUrls(captureNode.outerHTML, imageMap);
+
+      iframeDoc.open();
+      iframeDoc.write(`<!DOCTYPE html><html><head><meta charset="utf-8"/><style>${buildSPExportIframeCSS()}</style></head><body><div class="sp-export-shell">${captureHtml}</div></body></html>`);
+      iframeDoc.close();
+
+      const iframeCapturePage = iframeDoc.getElementById("doc-page-sp-capture") as HTMLElement | null;
+      if (!iframeCapturePage) throw new Error("Não foi possível montar a página para exportação.");
+
+      await waitForImagesInElement(iframeCapturePage);
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
+      const fileBaseName = `HISTORICO_ESCOLAR_${normalizeFileSegment(fieldMap.nome_aluno || "DOCUMENTO")}`;
+      iframeDoc.title = fileBaseName;
+
+      const frameWindow = iframe.contentWindow;
+      if (!frameWindow) throw new Error("Não foi possível abrir o contexto de impressão.");
+
+      releaseByAfterPrint = true;
+      let cleanedUp = false;
+      let fallbackTimer = 0;
+      const cleanup = () => {
+        if (cleanedUp) return;
+        cleanedUp = true;
+        if (fallbackTimer) window.clearTimeout(fallbackTimer);
+        if (iframe && document.body.contains(iframe)) document.body.removeChild(iframe);
+        iframe = null;
+      };
+      frameWindow.onafterprint = cleanup;
+      fallbackTimer = window.setTimeout(cleanup, 120000);
+      frameWindow.focus();
+      frameWindow.print();
+      toast.success("Janela de impressão aberta. Use 'Salvar como PDF' no Chrome.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro desconhecido";
+      toast.error("Erro ao preparar impressão PDF: " + message);
+    } finally {
+      if (!releaseByAfterPrint && iframe && document.body.contains(iframe)) document.body.removeChild(iframe);
+      setIsDownloading(false);
+    }
+  }, [fieldMap.nome_aluno]);
 
   return (
     <DashboardLayout>
-      <div className="p-6 max-w-6xl mx-auto">
-        <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => setLocation("/dashboard")} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800">
-            <ArrowLeft className="w-5 h-5" />
+      <div className="h-[calc(100vh-64px)] flex flex-col overflow-hidden bg-[#0a0a0f]">
+        {/* Top Bar */}
+        <header className="h-12 border-b border-[#1a1a2a] bg-[#0d0d14] flex items-center px-4 gap-3 shrink-0">
+          <button
+            onClick={() => setLocation("/dashboard")}
+            className="flex items-center gap-1 text-[#666688] hover:text-white text-sm px-2 py-1 rounded transition-colors"
+          >
+            <ArrowLeft size={15} className="mr-1" /> Voltar
           </button>
-          <div className="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
-            <GraduationCap className="w-5 h-5 text-green-600 dark:text-green-400" />
+          <div className="h-6 w-px bg-[#2a2a3a]" />
+          <h1 className="text-sm font-semibold tracking-wide text-white">
+            Histórico Escolar SP — Visualizador Interativo
+          </h1>
+          <div className="ml-auto flex items-center gap-2">
+            {modifiedCount > 0 && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-900/50 text-emerald-400 font-medium">
+                {modifiedCount} alterações
+              </span>
+            )}
+            <button
+              className="flex items-center gap-1 text-xs h-7 px-3 rounded border border-[#2a2a3a] text-[#aaaacc] hover:bg-[#1a1a2a] transition-colors"
+              onClick={() => setShowHighlights(!showHighlights)}
+            >
+              {showHighlights ? <Eye size={13} className="mr-1" /> : <EyeOff size={13} className="mr-1" />}
+              {showHighlights ? "Destaques ON" : "Destaques OFF"}
+            </button>
+            <button
+              className="flex items-center gap-1 text-xs h-7 px-3 rounded bg-gradient-to-r from-[#2d8c4e] to-[#1a6b35] hover:from-[#35a05a] hover:to-[#1f7a3e] text-white font-semibold transition-all disabled:opacity-60"
+              onClick={handleRequestEmit}
+              disabled={isExporting || saved}
+            >
+              <Download size={13} className="mr-1" />
+              {saved ? "✅ Emitido" : isExporting ? "Processando..." : "Emitir e Exportar PDF"}
+            </button>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Histórico Escolar SP</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Secretaria de Educação do Estado de São Paulo</p>
-          </div>
-        </div>
+        </header>
 
-        {(user?.balance || 0) <= 0 && (
-          <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl mb-6">
-            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-            <p className="text-sm text-red-700 dark:text-red-400">
-              Saldo insuficiente. <button onClick={() => setLocation("/recargas")} className="font-semibold underline">Recarregue aqui</button>.
-            </p>
-          </div>
-        )}
+        <div className="flex flex-1 overflow-hidden">
+          {sidebarOpen && (
+            <aside className="w-80 border-r border-[#1a1a2a] bg-[#0d0d14] shrink-0 flex flex-col overflow-hidden">
+              <SPSubstitutionPanel
+                fields={fields}
+                modifiedCount={modifiedCount}
+                importText={importText}
+                onUpdateImportText={setImportText}
+                onApplyImportText={applyImportText}
+                onUpdateField={updateField}
+                onGenerateSecurityCode={generateSecurityCode}
+                onGenerateRA={generateRA}
+                onReset={handleResetAll}
+                onBrasaoUpload={handleBrasaoUpload}
+                onBrasaoReset={resetBrasaoUpload}
+                brasaoUrl={brasaoUrl}
+                hasCustomBrasao={hasCustomBrasao}
+                onAssinaturaGerenteUpload={handleAssinaturaGerenteUpload}
+                onAssinaturaGerenteReset={() => { setAssinaturaGerenteUrl(null); toast.success("Assinatura restaurada."); }}
+                onAssinaturaDiretorUpload={handleAssinaturaDiretorUpload}
+                onAssinaturaDiretorReset={() => { setAssinaturaDiretorUrl(null); toast.success("Assinatura restaurada."); }}
+                assinaturaGerenteUrl={assinaturaGerenteUrl || SIG_GERENTE_B64}
+                assinaturaDiretorUrl={assinaturaDiretorUrl || SIG_DIRETOR_B64}
+                hasCustomAssinaturaGerente={!!assinaturaGerenteUrl}
+                hasCustomAssinaturaDiretor={!!assinaturaDiretorUrl}
+              />
+            </aside>
+          )}
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          {/* Form */}
-          <div className="space-y-4">
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6">
-              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Dados do Aluno</h2>
-              <div className="space-y-3">
-                {[
-                  { key: "nomeAluno", label: "Nome do Aluno *", placeholder: "NOME COMPLETO DO ALUNO" },
-                  { key: "rg", label: "RG", placeholder: "00.000.000-0" },
-                  { key: "cpf", label: "CPF", placeholder: "000.000.000-00" },
-                  { key: "dataNascimento", label: "Data de Nascimento", placeholder: "DD/MM/AAAA" },
-                  { key: "nomeMae", label: "Nome da Mãe", placeholder: "NOME DA MÃE" },
-                  { key: "nomePai", label: "Nome do Pai", placeholder: "NOME DO PAI" },
-                  { key: "naturalidade", label: "Naturalidade", placeholder: "Cidade - UF" },
-                ].map(({ key, label, placeholder }) => (
-                  <div key={key}>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{label}</label>
-                    <input type="text" value={data[key as keyof HistoricoSPData] as string} onChange={update(key as keyof HistoricoSPData)} placeholder={placeholder}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm" />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6">
-              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Dados da Escola</h2>
-              <div className="space-y-3">
-                {[
-                  { key: "escola", label: "Nome da Escola *", placeholder: "E.E. NOME DA ESCOLA" },
-                  { key: "diretoriaEnsino", label: "Diretoria de Ensino", placeholder: "Diretoria de Ensino — Região" },
-                  { key: "municipio", label: "Município", placeholder: "São Paulo" },
-                  { key: "curso", label: "Curso", placeholder: "Ensino Médio" },
-                ].map(({ key, label, placeholder }) => (
-                  <div key={key}>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{label}</label>
-                    <input type="text" value={data[key as keyof HistoricoSPData] as string} onChange={update(key as keyof HistoricoSPData)} placeholder={placeholder}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm" />
-                  </div>
-                ))}
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { key: "serie", label: "Série", placeholder: "3ª" },
-                    { key: "anoLetivo", label: "Ano Letivo", placeholder: "2024" },
-                    { key: "turno", label: "Turno", placeholder: "Manhã" },
-                  ].map(({ key, label, placeholder }) => (
-                    <div key={key}>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{label}</label>
-                      <input type="text" value={data[key as keyof HistoricoSPData] as string} onChange={update(key as keyof HistoricoSPData)} placeholder={placeholder}
-                        className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Disciplinas */}
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Disciplinas</h2>
-                <button onClick={addDisciplina} className="flex items-center gap-1.5 px-3 py-1.5 bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg text-xs font-medium hover:bg-green-200 dark:hover:bg-green-900/40">
-                  <Plus className="w-3.5 h-3.5" />Adicionar
+          <main className="flex-1 flex flex-col overflow-hidden">
+            <div className="h-10 border-b border-[#1a1a2a] bg-[#0a0a0f]/50 flex items-center px-3 gap-2 shrink-0">
+              <button
+                className="h-7 w-7 p-0 flex items-center justify-center text-[#666688] hover:text-white rounded transition-colors"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+              >
+                {sidebarOpen ? <PanelLeftClose size={15} /> : <PanelLeft size={15} />}
+              </button>
+              <div className="h-4 w-px bg-[#2a2a3a] mx-1" />
+              <span className="text-xs text-[#555566]">Histórico Escolar – Ensino Médio (SP)</span>
+              <div className="ml-auto flex items-center gap-1">
+                <button
+                  className="h-7 w-7 p-0 flex items-center justify-center text-[#666688] hover:text-white rounded transition-colors"
+                  onClick={() => setZoom(Math.max(0.4, zoom - 0.1))}
+                >
+                  <ZoomOut size={14} />
+                </button>
+                <span className="text-xs text-[#aaaacc] w-10 text-center">{Math.round(zoom * 100)}%</span>
+                <button
+                  className="h-7 w-7 p-0 flex items-center justify-center text-[#666688] hover:text-white rounded transition-colors"
+                  onClick={() => setZoom(Math.min(1.5, zoom + 0.1))}
+                >
+                  <ZoomIn size={14} />
                 </button>
               </div>
-              <div className="space-y-3">
-                {data.disciplinas.map((disc, idx) => (
-                  <div key={idx} className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <input type="text" value={disc.nome} onChange={e => updateDisciplina(idx, "nome", e.target.value)}
-                        placeholder="Nome da disciplina"
-                        className="flex-1 px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-green-500" />
-                      <button onClick={() => removeDisciplina(idx)} className="p-1.5 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-4 gap-2">
-                      {["nota1", "nota2", "nota3", "nota4"].map((k, i) => (
-                        <div key={k}>
-                          <label className="block text-[10px] text-gray-500 mb-0.5">{i + 1}º Bim.</label>
-                          <input type="text" value={disc[k as keyof Disciplina]} onChange={e => updateDisciplina(idx, k as keyof Disciplina, e.target.value)}
-                            placeholder="0.0"
-                            className="w-full px-2 py-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-xs text-center focus:outline-none focus:ring-1 focus:ring-green-500" />
-                        </div>
-                      ))}
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 mt-2">
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-0.5">Média</label>
-                        <input type="text" value={disc.media} onChange={e => updateDisciplina(idx, "media", e.target.value)} placeholder="0.0"
-                          className="w-full px-2 py-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-xs text-center focus:outline-none focus:ring-1 focus:ring-green-500" />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-0.5">Faltas</label>
-                        <input type="text" value={disc.faltas} onChange={e => updateDisciplina(idx, "faltas", e.target.value)} placeholder="0"
-                          className="w-full px-2 py-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-xs text-center focus:outline-none focus:ring-1 focus:ring-green-500" />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-0.5">Situação</label>
-                        <select value={disc.situacao} onChange={e => updateDisciplina(idx, "situacao", e.target.value)}
-                          className="w-full px-2 py-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-green-500">
-                          <option>APROVADO</option>
-                          <option>REPROVADO</option>
-                          <option>RECUPERAÇÃO</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
 
-            <div className="flex gap-3">
-              <button onClick={handleRequestEmit} disabled={loading || saved}
-                className="flex-1 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-xl text-sm transition-all disabled:opacity-60">
-                {loading ? "Gerando..." : saved ? "✅ Histórico Emitido" : "✓ CONFIRMAR E EMITIR"}
-              </button>
-            </div>
-            {saved && (
-              <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
-                <p className="text-sm font-semibold text-green-700 dark:text-green-400">✅ Histórico Escolar SP emitido com sucesso!</p>
-                <p className="text-xs text-green-600 dark:text-green-500 mt-1">🔒 Dados excluídos automaticamente após 60 dias</p>
-              </div>
-            )}
-          </div>
-
-          {/* Preview */}
-          <div>
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Pré-visualização</h2>
-            <div ref={docRef} className="bg-white rounded-xl shadow-lg overflow-hidden text-gray-900 text-[10px]" style={{ fontFamily: "Arial, sans-serif" }}>
-              {/* Header */}
-              <div className="bg-blue-800 text-white p-3 text-center">
-                <p className="font-bold text-xs">SECRETARIA DE ESTADO DA EDUCAÇÃO</p>
-                <p className="opacity-80 text-[9px]">{data.diretoriaEnsino || "Diretoria de Ensino"}</p>
-                <p className="font-bold mt-1">{data.escola || "NOME DA ESCOLA"}</p>
-                <p className="opacity-70 text-[9px]">{data.municipio || "Município"} - SP</p>
-              </div>
-              <div className="p-3">
-                <p className="text-center font-bold text-xs mb-2 uppercase">Histórico Escolar</p>
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  <div><span className="text-gray-500">Aluno: </span><span className="font-bold">{data.nomeAluno || "—"}</span></div>
-                  <div><span className="text-gray-500">RG: </span><span>{data.rg || "—"}</span></div>
-                  <div><span className="text-gray-500">Curso: </span><span>{data.curso}</span></div>
-                  <div><span className="text-gray-500">Série: </span><span>{data.serie} — {data.anoLetivo}</span></div>
-                  <div><span className="text-gray-500">Turno: </span><span>{data.turno}</span></div>
-                  <div><span className="text-gray-500">Nasc.: </span><span>{data.dataNascimento || "—"}</span></div>
-                </div>
-
-                {/* Table */}
-                <table className="w-full border-collapse text-[9px]">
-                  <thead>
-                    <tr className="bg-gray-100">
-                      <th className="border border-gray-300 px-1.5 py-1 text-left">Disciplina</th>
-                      <th className="border border-gray-300 px-1 py-1">1º</th>
-                      <th className="border border-gray-300 px-1 py-1">2º</th>
-                      <th className="border border-gray-300 px-1 py-1">3º</th>
-                      <th className="border border-gray-300 px-1 py-1">4º</th>
-                      <th className="border border-gray-300 px-1 py-1">Méd.</th>
-                      <th className="border border-gray-300 px-1 py-1">Falt.</th>
-                      <th className="border border-gray-300 px-1 py-1">Sit.</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.disciplinas.map((disc, i) => (
-                      <tr key={i} className={i % 2 === 0 ? "" : "bg-gray-50"}>
-                        <td className="border border-gray-300 px-1.5 py-0.5">{disc.nome || "—"}</td>
-                        <td className="border border-gray-300 px-1 py-0.5 text-center">{disc.nota1 || "—"}</td>
-                        <td className="border border-gray-300 px-1 py-0.5 text-center">{disc.nota2 || "—"}</td>
-                        <td className="border border-gray-300 px-1 py-0.5 text-center">{disc.nota3 || "—"}</td>
-                        <td className="border border-gray-300 px-1 py-0.5 text-center">{disc.nota4 || "—"}</td>
-                        <td className="border border-gray-300 px-1 py-0.5 text-center font-bold">{disc.media || "—"}</td>
-                        <td className="border border-gray-300 px-1 py-0.5 text-center">{disc.faltas || "0"}</td>
-                        <td className={`border border-gray-300 px-1 py-0.5 text-center text-[8px] font-bold ${disc.situacao === "APROVADO" ? "text-green-600" : disc.situacao === "REPROVADO" ? "text-red-600" : "text-yellow-600"}`}>
-                          {disc.situacao === "APROVADO" ? "APR" : disc.situacao === "REPROVADO" ? "REP" : "REC"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                <div className="mt-3 flex justify-between items-end">
-                  <div>
-                    <p className="text-gray-500">Mãe: {data.nomeMae || "—"}</p>
-                    <p className="text-gray-500">Pai: {data.nomePai || "—"}</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="border-t border-gray-400 pt-1 w-32">
-                      <p className="text-[8px] text-gray-500">Diretor(a)</p>
-                    </div>
-                  </div>
+            <div className="flex-1 overflow-auto flex justify-center py-6" style={{ background: "#e8e8e8" }}>
+              <div style={{ transform: `scale(${zoom})`, transformOrigin: "top center" }}>
+                <div style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.15), 0 1px 4px rgba(0,0,0,0.1)", borderRadius: 2 }}>
+                  <SPPage1
+                    f={fieldMap}
+                    highlightModified={showHighlights}
+                    grades={currentGrades}
+                    brasaoUrl={brasaoUrl || undefined}
+                    assinaturaGerenteUrl={assinaturaGerenteUrl || undefined}
+                    assinaturaDiretorUrl={assinaturaDiretorUrl || undefined}
+                    pageId="doc-page-sp-preview"
+                  />
                 </div>
               </div>
             </div>
+          </main>
+        </div>
 
-            {saved && (
-              <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
-                <p className="text-xs font-semibold text-green-700 dark:text-green-400">Histórico gerado com sucesso!</p>
-              </div>
-            )}
-          </div>
+        {/* Base real de exportação (fora do zoom) */}
+        <div
+          aria-hidden
+          style={{
+            position: "fixed", left: "-99999px", top: 0,
+            width: "210mm", height: "297mm",
+            opacity: 0, pointerEvents: "none", overflow: "hidden", background: "#fff",
+          }}
+        >
+          <SPPage1
+            f={fieldMap}
+            highlightModified={false}
+            grades={currentGrades}
+            brasaoUrl={brasaoUrl || undefined}
+            assinaturaGerenteUrl={assinaturaGerenteUrl || undefined}
+            assinaturaDiretorUrl={assinaturaDiretorUrl || undefined}
+            pageId="doc-page-sp-export"
+          />
         </div>
       </div>
+
       {/* Modal de Confirmação + Sucesso */}
       <EmissionModal
-        docLabel="Historico Escolar SP"
+        docLabel="Histórico Escolar SP"
+        docEmoji="🎓"
+        documentPrice={500}
+        userBalance={user?.balance ?? 0}
         showConfirm={showConfirmModal}
         showSuccess={showSuccessModal}
-        isEmitting={loading}
+        isEmitting={isExporting}
         isDownloading={isDownloading}
         onConfirm={handleSave}
         onCancel={() => setShowConfirmModal(false)}
-        onDownload={async () => {
-          setIsDownloading(true);
-          await handleExport();
-          setIsDownloading(false);
-        }}
+        onDownload={handleExportPDF}
         onClose={() => setShowSuccessModal(false)}
         historyPath="/historico-sp-salvos"
       />

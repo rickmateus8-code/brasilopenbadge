@@ -25,10 +25,18 @@ import {
   Save,
   Tag
 } from "lucide-react";
-import { apiClient } from "../lib/apiClient";
 import { useAuth } from "../contexts/AuthContext";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+// apiClient substituído por fetch direto para compatibilidade
+const apiClient = {
+  get: (url: string) => fetch(url, { credentials: "include" }).then(r => r.json()),
+  post: (url: string, body?: unknown) => fetch(url, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(r => r.json()),
+  put: (url: string, body?: unknown) => fetch(url, { method: "PUT", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(r => r.json()),
+  patch: (url: string, body?: unknown) => fetch(url, { method: "PATCH", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(r => r.json()),
+  delete: (url: string) => fetch(url, { method: "DELETE", credentials: "include" }).then(r => r.json()),
+};
 
 interface User {
   id: number;
@@ -882,3 +890,5 @@ export const AdminDashboard: React.FC = () => {
     </div>
   );
 };
+
+export default AdminDashboard;

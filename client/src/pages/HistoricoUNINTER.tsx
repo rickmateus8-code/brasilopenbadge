@@ -1,100 +1,188 @@
-import { useState, useRef } from "react";
+/**
+ * Histórico UNINTER — DocMaster
+ * Layout: DocumentPages (réplica visual do histórico UNINTER — 6 páginas)
+ * Fluxo: DocMaster (useAuth, fetch, EmissionModal, jsPDF + html2canvas)
+ */
+import { useState, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
-import { ArrowLeft, Download, GraduationCap, AlertCircle, Plus, Trash2 } from "lucide-react";
-import { exportElementToPDF } from "@/lib/pdfExport";
-import { validarCPF } from "@/lib/utils";
+import {
+  ArrowLeft, Download, ZoomIn, ZoomOut,
+  ChevronLeft, ChevronRight, Eye, EyeOff,
+  PanelLeftClose, PanelLeft
+} from "lucide-react";
 import EmissionModal from "@/components/EmissionModal";
+import { useSubstitutionUninter } from "@/hooks/useSubstitutionUninter";
+import SubstitutionPanelUninter from "@/components/SubstitutionPanelUninter";
+import { Page1, Page2, Page3, Page4, Page5, Page6 } from "@/components/DocumentPages";
+import { LOGO_URL, ASSINATURA_URL, SELO_URL, PROFILES } from "@/lib/documentData_uninter";
 
-interface Disciplina {
-  nome: string;
-  cargaHoraria: string;
-  nota: string;
-  situacao: string;
-  periodo: string;
-}
-
-interface HistoricoUNINTERData {
-  nomeAluno: string;
-  ra: string;
-  cpf: string;
-  dataNascimento: string;
-  curso: string;
-  modalidade: string;
-  polo: string;
-  municipio: string;
-  uf: string;
-  dataIngresso: string;
-  previsaoConclusao: string;
-  cargaHorariaTotal: string;
-  disciplinas: Disciplina[];
-}
-
-const DISCIPLINA_VAZIA: Disciplina = {
-  nome: "", cargaHoraria: "60", nota: "", situacao: "APROVADO", periodo: "1"
-};
-
-const DISCIPLINAS_PADRAO = [
-  { nome: "Fundamentos de Administração", cargaHoraria: "60" },
-  { nome: "Comunicação Empresarial", cargaHoraria: "60" },
-  { nome: "Matemática Financeira", cargaHoraria: "60" },
-  { nome: "Gestão de Pessoas", cargaHoraria: "60" },
-  { nome: "Marketing", cargaHoraria: "60" },
-  { nome: "Contabilidade Geral", cargaHoraria: "60" },
+const TOTAL_PAGES = 6;
+const PAGE_LABELS = [
+  "Informativo Colação",
+  "Certificado Conclusão",
+  "Histórico Escolar",
+  "Selo UNINTER",
+  "Componentes Curriculares (1)",
+  "Componentes Curriculares (2)",
 ];
 
-const EMPTY: HistoricoUNINTERData = {
-  nomeAluno: "", ra: "", cpf: "", dataNascimento: "", curso: "Administração",
-  modalidade: "EAD", polo: "", municipio: "", uf: "SP",
-  dataIngresso: "", previsaoConclusao: "", cargaHorariaTotal: "1600",
-  disciplinas: DISCIPLINAS_PADRAO.map((d, i) => ({
-    ...DISCIPLINA_VAZIA, nome: d.nome, cargaHoraria: d.cargaHoraria, periodo: String(Math.floor(i / 2) + 1)
-  })),
-};
+const PAGE_WIDTH_MM = 207.53;
+const PAGE_HEIGHT_MM = 293.47;
+
+async function imageUrlToBase64(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { reject("No canvas context"); return; }
+      ctx.drawImage(img, 0, 0);
+      try {
+        resolve(canvas.toDataURL("image/png"));
+      } catch {
+        fetch(url).then(r => r.blob()).then(blob => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = () => reject("FileReader error");
+          reader.readAsDataURL(blob);
+        }).catch(reject);
+      }
+    };
+    img.onerror = () => {
+      fetch(url).then(r => r.blob()).then(blob => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = () => reject("FileReader error");
+        reader.readAsDataURL(blob);
+      }).catch(reject);
+    };
+    img.src = url;
+  });
+}
+
+async function preloadImagesAsBase64(): Promise<Map<string, string>> {
+  const urlMap = new Map<string, string>();
+  const urls = [LOGO_URL, ASSINATURA_URL, SELO_URL];
+  for (const url of urls) {
+    try {
+      const b64 = await imageUrlToBase64(url);
+      urlMap.set(url, b64);
+    } catch { /* mantém src original */ }
+  }
+  return urlMap;
+}
+
+function replaceImageUrls(html: string, urlMap: Map<string, string>): string {
+  let result = html;
+  urlMap.forEach((b64, url) => { result = result.split(url).join(b64); });
+  return result;
+}
+
+function buildIframeCSS(widthMm: number, heightMm: number): string {
+  return `
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { margin: 0; padding: 0; background: white; color: #000; }
+    .doc-page {
+      width: ${widthMm}mm; height: ${heightMm}mm;
+      min-height: ${heightMm}mm; max-height: ${heightMm}mm;
+      background: white; padding: 18mm 22mm 15mm 22mm;
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 11pt; line-height: 1.35; color: #000;
+      position: relative; box-sizing: border-box; overflow: visible;
+    }
+    .doc-page .fieldset-box { border: 1px solid #000; padding: 8px 10px; margin: 8px 0; position: relative; }
+    .doc-page .fieldset-box .legend { position: absolute; top: -10px; left: 10px; background: #fff; padding: 0 5px; font-weight: bold; font-size: 10pt; }
+    .doc-page .grade-table { width: 100%; border-collapse: collapse; font-size: 8pt; margin-top: 4px; }
+    .doc-page .grade-table th { text-align: left; font-weight: bold; border-bottom: 1px solid #000; padding: 2px 4px; font-size: 8pt; }
+    .doc-page .grade-table td { padding: 2px 4px; border-bottom: 0.5px solid #ccc; vertical-align: top; font-size: 8pt; }
+    .editable-field { position: relative; }
+    .editable-field.modified { background-color: rgba(232, 163, 23, 0.12); border-radius: 2px; }
+    img { display: block; max-width: 100%; height: auto; }
+    b, strong { font-weight: bold; } i, em { font-style: italic; } a { color: #000; text-decoration: underline; }
+  `;
+}
+
+function normalizeFileSegment(value: string): string {
+  return (value || "DOCUMENTO")
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "_")
+    .replace(/[^A-Z0-9_]/g, "");
+}
 
 export default function HistoricoUNINTER() {
   const { user, updateBalance } = useAuth();
   const [, setLocation] = useLocation();
-  const [data, setData] = useState<HistoricoUNINTERData>(EMPTY);
-  const [saved, setSaved] = useState(false);
-  const [loading, setLoading] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [zoom, setZoom] = useState(0.75);
+  const [showHighlights, setShowHighlights] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const docRef = useRef<HTMLDivElement>(null);
+  const printRef = useRef<HTMLDivElement>(null);
 
-  const update = (k: keyof HistoricoUNINTERData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-    setData(d => ({ ...d, [k]: e.target.value }));
+  const {
+    fields,
+    fieldMap,
+    activeHistorico,
+    activeProfile,
+    modifiedCount,
+    importText,
+    applyHistorico,
+    updateField,
+    resetToOriginal,
+    setImportText,
+    applyImportText,
+    generateMatricula,
+  } = useSubstitutionUninter();
 
-  const updateDisciplina = (idx: number, k: keyof Disciplina, val: string) =>
-    setData(d => ({ ...d, disciplinas: d.disciplinas.map((disc, i) => i === idx ? { ...disc, [k]: val } : disc) }));
+  const goToPage = useCallback((page: number) => {
+    if (page >= 1 && page <= TOTAL_PAGES) setCurrentPage(page);
+  }, []);
 
-  const addDisciplina = () =>
-    setData(d => ({ ...d, disciplinas: [...d.disciplinas, { ...DISCIPLINA_VAZIA }] }));
-
-  const removeDisciplina = (idx: number) =>
-    setData(d => ({ ...d, disciplinas: d.disciplinas.filter((_, i) => i !== idx) }));
-
-  const handleRequestEmit = () => {
-    if (!data.nomeAluno || !data.ra) { toast.error("Preencha Nome do Aluno e RA"); return; }
-    if (data.cpf && !validarCPF(data.cpf)) { toast.error("CPF inválido! Verifique os dígitos informados."); return; }
+  const handleRequestEmit = useCallback(() => {
+    const nome = fieldMap.nome || fieldMap.nome_aluno || fieldMap.nome_completo || "";
+    if (!nome) { toast.error("Preencha o Nome do Aluno"); return; }
     if ((user?.balance || 0) <= 0) {
       toast.error("Saldo insuficiente. Recarregue para emitir documentos.");
       return;
     }
     setShowConfirmModal(true);
-  };
+  }, [fieldMap, user?.balance]);
 
-  const handleSave = async () => {
-    setLoading(true);
+  const handleSave = useCallback(async () => {
+    setIsExporting(true);
     try {
+      const nome = fieldMap.nome || fieldMap.nome_aluno || fieldMap.nome_completo || "";
+      const payload = {
+        nome,
+        cpf: fieldMap.cpf || "",
+        rg: fieldMap.rg || "",
+        ra: fieldMap.matricula || "",
+        curso: fieldMap.curso || "",
+        polo: fieldMap.polo || "",
+        dataEmissao: fieldMap.data_expedicao_historico || "",
+        dataConclusao: fieldMap.conclusao_curso || "",
+        historicoKey: activeHistorico,
+        profileKey: activeProfile,
+        ...fieldMap,
+      };
       const res = await fetch("/api/documents/historico-uninter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
       const result = await res.json();
       if (result.success) {
@@ -107,245 +195,245 @@ export default function HistoricoUNINTER() {
         setShowConfirmModal(false);
       }
     } catch { toast.error("Erro de conexão"); setShowConfirmModal(false); }
-    finally { setLoading(false); }
-  };
+    finally { setIsExporting(false); }
+  }, [fieldMap, activeHistorico, activeProfile, updateBalance]);
 
-  const handleExport = async () => {
-    if (!docRef.current) return;
-    setLoading(true);
+  const handleExportPDF = useCallback(async () => {
+    setIsDownloading(true);
+    toast.info("Gerando PDF — carregando imagens...");
     try {
-      const nomeHistUNINTER = (data.nomeAluno || "DOCUMENTO").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
-      await exportElementToPDF(docRef.current, `HISTORICO_UNINTER_${nomeHistUNINTER}.pdf`);
-      toast.success("PDF exportado!");
-    } catch { toast.error("Erro ao exportar PDF"); }
-    finally { setLoading(false); }
+      const imageMap = await preloadImagesAsBase64();
+      const { default: jsPDF } = await import("jspdf");
+      const { default: html2canvas } = await import("html2canvas");
+
+      const container = printRef.current;
+      if (!container) { toast.error("Container de impressão não encontrado"); return; }
+
+      const docPages = container.querySelectorAll(".doc-page");
+      if (docPages.length === 0) { toast.error("Nenhuma página encontrada"); return; }
+
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: [PAGE_WIDTH_MM, PAGE_HEIGHT_MM] });
+      const iframeCSS = buildIframeCSS(PAGE_WIDTH_MM, PAGE_HEIGHT_MM);
+
+      for (let i = 0; i < docPages.length; i++) {
+        toast.info(`Processando página ${i + 1}/${docPages.length}...`);
+        const pageEl = docPages[i] as HTMLElement;
+
+        const iframe = document.createElement("iframe");
+        iframe.style.cssText = `position:fixed;left:0;top:0;width:${PAGE_WIDTH_MM}mm;height:${PAGE_HEIGHT_MM}mm;border:none;z-index:99999;opacity:1;background:white;`;
+        document.body.appendChild(iframe);
+
+        await new Promise<void>((resolve) => { iframe.onload = () => resolve(); setTimeout(resolve, 200); });
+
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (!iframeDoc) { document.body.removeChild(iframe); continue; }
+
+        let clonedHTML = pageEl.outerHTML;
+        clonedHTML = replaceImageUrls(clonedHTML, imageMap);
+
+        iframeDoc.open();
+        iframeDoc.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><style>${iframeCSS}</style></head><body>${clonedHTML}</body></html>`);
+        iframeDoc.close();
+
+        const iframeImages = iframeDoc.querySelectorAll("img");
+        await Promise.all(Array.from(iframeImages).map((img) =>
+          new Promise<void>((resolve) => {
+            if (img.complete && img.naturalWidth > 0) { resolve(); return; }
+            img.onload = () => resolve();
+            img.onerror = () => resolve();
+          })
+        ));
+
+        await new Promise((r) => setTimeout(r, 300));
+
+        const iframePage = iframeDoc.querySelector(".doc-page") as HTMLElement;
+        if (!iframePage) { document.body.removeChild(iframe); continue; }
+
+        const canvas = await html2canvas(iframePage, {
+          scale: 2, useCORS: true, allowTaint: true,
+          backgroundColor: "#ffffff", logging: false,
+          windowWidth: iframePage.scrollWidth, windowHeight: iframePage.scrollHeight,
+        });
+
+        if (i > 0) pdf.addPage([PAGE_WIDTH_MM, PAGE_HEIGHT_MM], "portrait");
+        const imgData = canvas.toDataURL("image/jpeg", 0.98);
+        pdf.addImage(imgData, "JPEG", 0, 0, PAGE_WIDTH_MM, PAGE_HEIGHT_MM);
+        document.body.removeChild(iframe);
+      }
+
+      const nome = fieldMap.nome || fieldMap.nome_aluno || fieldMap.nome_completo || "DOCUMENTO";
+      const filename = `HISTORICO_UNINTER_${normalizeFileSegment(nome)}.pdf`;
+      pdf.save(filename);
+      toast.success("PDF exportado com sucesso!");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro desconhecido";
+      toast.error("Erro ao exportar PDF: " + message);
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [fieldMap]);
+
+  const renderCurrentPage = () => {
+    const props = { f: fieldMap, highlightModified: showHighlights, profileKey: activeProfile };
+    switch (currentPage) {
+      case 1: return <Page1 {...props} />;
+      case 2: return <Page2 {...props} />;
+      case 3: return <Page3 {...props} />;
+      case 4: return <Page4 />;
+      case 5: return <Page5 {...props} />;
+      case 6: return <Page6 {...props} />;
+      default: return <Page1 {...props} />;
+    }
   };
 
   return (
     <DashboardLayout>
-      <div className="p-6 max-w-6xl mx-auto">
-        <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => setLocation("/dashboard")} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800">
-            <ArrowLeft className="w-5 h-5" />
+      <div className="h-[calc(100vh-64px)] flex flex-col overflow-hidden bg-[#0a0a0f]">
+        {/* Top Bar */}
+        <header className="h-12 border-b border-[#1a1a2a] bg-[#0d0d14] flex items-center px-4 gap-3 shrink-0">
+          <button
+            onClick={() => setLocation("/dashboard")}
+            className="flex items-center gap-1 text-[#666688] hover:text-white text-sm px-2 py-1 rounded transition-colors"
+          >
+            <ArrowLeft size={15} className="mr-1" /> Voltar
           </button>
-          <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/20 flex items-center justify-center">
-            <GraduationCap className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+          <div className="h-6 w-px bg-[#2a2a3a]" />
+          <h1 className="text-sm font-semibold tracking-wide text-white">
+            Histórico UNINTER — Visualizador Interativo
+          </h1>
+          <div className="ml-auto flex items-center gap-2">
+            {modifiedCount > 0 && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-900/50 text-amber-400 font-medium">
+                {modifiedCount} alterações
+              </span>
+            )}
+            <button
+              className="flex items-center gap-1 text-xs h-7 px-3 rounded border border-[#2a2a3a] text-[#aaaacc] hover:bg-[#1a1a2a] transition-colors"
+              onClick={() => setShowHighlights(!showHighlights)}
+            >
+              {showHighlights ? <Eye size={13} className="mr-1" /> : <EyeOff size={13} className="mr-1" />}
+              {showHighlights ? "Destaques ON" : "Destaques OFF"}
+            </button>
+            <button
+              className="flex items-center gap-1 text-xs h-7 px-3 rounded bg-gradient-to-r from-[#c8aa32] to-[#a08828] hover:from-[#d4b83a] hover:to-[#b09830] text-[#0a0a0f] font-semibold transition-all disabled:opacity-60"
+              onClick={handleRequestEmit}
+              disabled={isExporting || saved}
+            >
+              <Download size={13} className="mr-1" />
+              {saved ? "✅ Emitido" : isExporting ? "Processando..." : "Emitir e Exportar PDF"}
+            </button>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Histórico UNINTER</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Centro Universitário Internacional UNINTER</p>
-          </div>
-        </div>
+        </header>
 
-        {(user?.balance || 0) <= 0 && (
-          <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl mb-6">
-            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-            <p className="text-sm text-red-700 dark:text-red-400">
-              Saldo insuficiente. <button onClick={() => setLocation("/recargas")} className="font-semibold underline">Recarregue aqui</button>.
-            </p>
-          </div>
-        )}
+        <div className="flex flex-1 overflow-hidden">
+          {sidebarOpen && (
+            <aside className="w-80 border-r border-[#1a1a2a] bg-[#0d0d14] shrink-0 flex flex-col overflow-hidden">
+              <SubstitutionPanelUninter
+                fields={fields}
+                activeHistorico={activeHistorico}
+                modifiedCount={modifiedCount}
+                importText={importText}
+                onUpdateImportText={setImportText}
+                onApplyImportText={applyImportText}
+                onApplyHistorico={applyHistorico}
+                onUpdateField={updateField}
+                onGenerateMatricula={generateMatricula}
+                onReset={resetToOriginal}
+              />
+            </aside>
+          )}
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          {/* Form */}
-          <div className="space-y-4">
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6">
-              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Dados do Aluno</h2>
-              <div className="space-y-3">
-                {[
-                  { key: "nomeAluno", label: "Nome do Aluno *", placeholder: "NOME COMPLETO DO ALUNO" },
-                  { key: "ra", label: "RA (Registro Acadêmico) *", placeholder: "000000000" },
-                  { key: "cpf", label: "CPF", placeholder: "000.000.000-00" },
-                  { key: "dataNascimento", label: "Data de Nascimento", placeholder: "DD/MM/AAAA" },
-                  { key: "curso", label: "Curso", placeholder: "Ex: Administração" },
-                  { key: "polo", label: "Polo", placeholder: "Nome do Polo" },
-                  { key: "municipio", label: "Município", placeholder: "Cidade" },
-                  { key: "dataIngresso", label: "Data de Ingresso", placeholder: "MM/AAAA" },
-                  { key: "previsaoConclusao", label: "Previsão de Conclusão", placeholder: "MM/AAAA" },
-                  { key: "cargaHorariaTotal", label: "Carga Horária Total (h)", placeholder: "1600" },
-                ].map(({ key, label, placeholder }) => (
-                  <div key={key}>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{label}</label>
-                    <input type="text" value={data[key as keyof HistoricoUNINTERData] as string} onChange={update(key as keyof HistoricoUNINTERData)} placeholder={placeholder}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
-                  </div>
+          <main className="flex-1 flex flex-col overflow-hidden">
+            <div className="h-10 border-b border-[#1a1a2a] bg-[#0a0a0f]/50 flex items-center px-3 gap-2 shrink-0">
+              <button
+                className="h-7 w-7 p-0 flex items-center justify-center text-[#666688] hover:text-white rounded transition-colors"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+              >
+                {sidebarOpen ? <PanelLeftClose size={15} /> : <PanelLeft size={15} />}
+              </button>
+              <div className="h-4 w-px bg-[#2a2a3a] mx-1" />
+              <button
+                className="h-7 w-7 p-0 flex items-center justify-center text-[#666688] hover:text-white rounded transition-colors disabled:opacity-40"
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft size={15} />
+              </button>
+              <div className="flex gap-1">
+                {Array.from({ length: TOTAL_PAGES }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => goToPage(p)}
+                    className={`h-7 min-w-[28px] px-2 rounded text-xs font-medium transition-colors ${
+                      p === currentPage ? "bg-[#c8aa32] text-[#0a0a0f]" : "hover:bg-[#1a1a2a] text-[#666688]"
+                    }`}
+                  >
+                    {p}
+                  </button>
                 ))}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Modalidade</label>
-                    <select value={data.modalidade} onChange={update("modalidade")}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
-                      <option>EAD</option>
-                      <option>Presencial</option>
-                      <option>Semipresencial</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">UF</label>
-                    <input type="text" maxLength={2} value={data.uf} onChange={update("uf")}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm uppercase" />
-                  </div>
-                </div>
               </div>
-            </div>
-
-            {/* Disciplinas */}
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Disciplinas</h2>
-                <button onClick={addDisciplina} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-medium hover:bg-indigo-200 dark:hover:bg-indigo-900/40">
-                  <Plus className="w-3.5 h-3.5" />Adicionar
+              <button
+                className="h-7 w-7 p-0 flex items-center justify-center text-[#666688] hover:text-white rounded transition-colors disabled:opacity-40"
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === TOTAL_PAGES}
+              >
+                <ChevronRight size={15} />
+              </button>
+              <span className="text-xs text-[#555566] ml-2">{PAGE_LABELS[currentPage - 1]}</span>
+              <div className="ml-auto flex items-center gap-1">
+                <button
+                  className="h-7 w-7 p-0 flex items-center justify-center text-[#666688] hover:text-white rounded transition-colors"
+                  onClick={() => setZoom(Math.max(0.5, zoom - 0.1))}
+                >
+                  <ZoomOut size={14} />
+                </button>
+                <span className="text-xs text-[#aaaacc] w-10 text-center">{Math.round(zoom * 100)}%</span>
+                <button
+                  className="h-7 w-7 p-0 flex items-center justify-center text-[#666688] hover:text-white rounded transition-colors"
+                  onClick={() => setZoom(Math.min(1.5, zoom + 0.1))}
+                >
+                  <ZoomIn size={14} />
                 </button>
               </div>
-              <div className="space-y-3">
-                {data.disciplinas.map((disc, idx) => (
-                  <div key={idx} className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <input type="text" value={disc.nome} onChange={e => updateDisciplina(idx, "nome", e.target.value)}
-                        placeholder="Nome da disciplina"
-                        className="flex-1 px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500" />
-                      <button onClick={() => removeDisciplina(idx)} className="p-1.5 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-4 gap-2">
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-0.5">Período</label>
-                        <input type="text" value={disc.periodo} onChange={e => updateDisciplina(idx, "periodo", e.target.value)} placeholder="1"
-                          className="w-full px-2 py-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-xs text-center focus:outline-none focus:ring-1 focus:ring-indigo-500" />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-0.5">C.H. (h)</label>
-                        <input type="text" value={disc.cargaHoraria} onChange={e => updateDisciplina(idx, "cargaHoraria", e.target.value)} placeholder="60"
-                          className="w-full px-2 py-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-xs text-center focus:outline-none focus:ring-1 focus:ring-indigo-500" />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-0.5">Nota</label>
-                        <input type="text" value={disc.nota} onChange={e => updateDisciplina(idx, "nota", e.target.value)} placeholder="0.0"
-                          className="w-full px-2 py-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-xs text-center focus:outline-none focus:ring-1 focus:ring-indigo-500" />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-0.5">Situação</label>
-                        <select value={disc.situacao} onChange={e => updateDisciplina(idx, "situacao", e.target.value)}
-                          className="w-full px-2 py-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                          <option>APROVADO</option>
-                          <option>REPROVADO</option>
-                          <option>CURSANDO</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
 
-            <div className="flex gap-3">
-              <button onClick={handleRequestEmit} disabled={loading || saved}
-                className="flex-1 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-xl text-sm transition-all disabled:opacity-60">
-                {loading ? "Gerando..." : saved ? "✅ Histórico Emitido" : "✓ CONFIRMAR E EMITIR"}
-              </button>
-            </div>
-            {saved && (
-              <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
-                <p className="text-sm font-semibold text-green-700 dark:text-green-400">✅ Histórico UNINTER emitido com sucesso!</p>
-                <p className="text-xs text-green-600 dark:text-green-500 mt-1">🔒 Dados excluídos automaticamente após 60 dias</p>
-              </div>
-            )}
-          </div>
-
-          {/* Preview */}
-          <div>
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Pré-visualização</h2>
-            <div ref={docRef} className="bg-white rounded-xl shadow-lg overflow-hidden text-gray-900 text-[10px]" style={{ fontFamily: "Arial, sans-serif" }}>
-              {/* UNINTER Header */}
-              <div className="bg-red-700 text-white p-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-bold text-sm">UNINTER</p>
-                    <p className="text-[9px] opacity-80">Centro Universitário Internacional</p>
-                  </div>
-                  <div className="text-right text-[9px] opacity-80">
-                    <p>Credenciado pelo MEC</p>
-                    <p>Portaria nº 1.282/2010</p>
-                  </div>
-                </div>
-              </div>
-              <div className="p-3">
-                <p className="text-center font-bold text-xs mb-3 uppercase border-b border-gray-200 pb-2">Histórico Escolar</p>
-                <div className="grid grid-cols-2 gap-2 mb-3 text-[9px]">
-                  <div><span className="text-gray-500">Aluno: </span><span className="font-bold">{data.nomeAluno || "—"}</span></div>
-                  <div><span className="text-gray-500">RA: </span><span className="font-bold">{data.ra || "—"}</span></div>
-                  <div><span className="text-gray-500">Curso: </span><span>{data.curso}</span></div>
-                  <div><span className="text-gray-500">Modalidade: </span><span>{data.modalidade}</span></div>
-                  <div><span className="text-gray-500">Polo: </span><span>{data.polo || "—"}</span></div>
-                  <div><span className="text-gray-500">Ingresso: </span><span>{data.dataIngresso || "—"}</span></div>
-                  <div><span className="text-gray-500">Previsão: </span><span>{data.previsaoConclusao || "—"}</span></div>
-                  <div><span className="text-gray-500">C.H. Total: </span><span>{data.cargaHorariaTotal}h</span></div>
-                </div>
-
-                <table className="w-full border-collapse text-[9px]">
-                  <thead>
-                    <tr className="bg-red-700 text-white">
-                      <th className="px-1.5 py-1 text-left">Disciplina</th>
-                      <th className="px-1 py-1">Per.</th>
-                      <th className="px-1 py-1">C.H.</th>
-                      <th className="px-1 py-1">Nota</th>
-                      <th className="px-1 py-1">Sit.</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.disciplinas.map((disc, i) => (
-                      <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                        <td className="border border-gray-200 px-1.5 py-0.5">{disc.nome || "—"}</td>
-                        <td className="border border-gray-200 px-1 py-0.5 text-center">{disc.periodo}</td>
-                        <td className="border border-gray-200 px-1 py-0.5 text-center">{disc.cargaHoraria}h</td>
-                        <td className="border border-gray-200 px-1 py-0.5 text-center font-bold">{disc.nota || "—"}</td>
-                        <td className={`border border-gray-200 px-1 py-0.5 text-center font-bold text-[8px] ${
-                          disc.situacao === "APROVADO" ? "text-green-600" : disc.situacao === "REPROVADO" ? "text-red-600" : "text-blue-600"
-                        }`}>
-                          {disc.situacao === "APROVADO" ? "APR" : disc.situacao === "REPROVADO" ? "REP" : "CUR"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                <div className="mt-3 flex justify-between items-end">
-                  <div className="text-[9px] text-gray-500">
-                    <p>Emitido em: {new Date().toLocaleDateString("pt-BR")}</p>
-                    <p>Documento gerado eletronicamente</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="border-t border-gray-400 pt-1 w-32">
-                      <p className="text-[8px] text-gray-500">Secretaria Acadêmica</p>
-                    </div>
-                  </div>
+            <div className="flex-1 overflow-auto flex justify-center py-6" style={{ background: "#e8e8e8" }}>
+              <div style={{ transform: `scale(${zoom})`, transformOrigin: "top center" }}>
+                <div style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.15), 0 1px 4px rgba(0,0,0,0.1)", borderRadius: 2 }}>
+                  {renderCurrentPage()}
                 </div>
               </div>
             </div>
+          </main>
+        </div>
 
-            {saved && (
-              <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
-                <p className="text-xs font-semibold text-green-700 dark:text-green-400">Histórico UNINTER gerado com sucesso!</p>
-              </div>
-            )}
-          </div>
+        {/* Container oculto com TODAS as páginas para exportação PDF */}
+        <div
+          ref={printRef}
+          style={{ position: "fixed", left: "-9999px", top: 0, width: `${PAGE_WIDTH_MM}mm`, background: "white", color: "#000" }}
+        >
+          <Page1 f={fieldMap} profileKey={activeProfile} />
+          <Page2 f={fieldMap} profileKey={activeProfile} />
+          <Page3 f={fieldMap} profileKey={activeProfile} />
+          <Page4 />
+          <Page5 f={fieldMap} profileKey={activeProfile} />
+          <Page6 f={fieldMap} profileKey={activeProfile} />
         </div>
       </div>
+
       {/* Modal de Confirmação + Sucesso */}
       <EmissionModal
-        docLabel="Historico UNINTER"
+        docLabel="Histórico UNINTER"
+        docEmoji="🎓"
+        documentPrice={500}
+        userBalance={user?.balance ?? 0}
         showConfirm={showConfirmModal}
         showSuccess={showSuccessModal}
-        isEmitting={loading}
+        isEmitting={isExporting}
         isDownloading={isDownloading}
         onConfirm={handleSave}
         onCancel={() => setShowConfirmModal(false)}
-        onDownload={async () => {
-          setIsDownloading(true);
-          await handleExport();
-          setIsDownloading(false);
-        }}
+        onDownload={handleExportPDF}
         onClose={() => setShowSuccessModal(false)}
         historyPath="/historico-uninter-salvos"
       />

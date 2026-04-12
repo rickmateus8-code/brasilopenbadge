@@ -43,15 +43,7 @@ const menuItems: MenuItem[] = [
     ],
   },
 
-  {
-    icon: GraduationCap, label: "Histórico Escolar",
-    children: [
-      { label: "Histórico SP", path: "/historico-sp", isCreation: true },
-      { label: "Históricos SP Salvos", path: "/historico-sp-salvos" },
-      { label: "Histórico UNINTER", path: "/historico-uninter", isCreation: true },
-      { label: "Históricos UNINTER Salvos", path: "/historico-uninter-salvos" },
-    ],
-  },
+
   {
     icon: Pill, label: "Receituário",
     children: [
@@ -276,6 +268,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showNovoDocModal, setShowNovoDocModal] = useState(false);
   const [showInsufficientBalance, setShowInsufficientBalance] = useState(false);
+  const [showHistoricoModal, setShowHistoricoModal] = useState(false);
 
   useEffect(() => {
     const handler = () => {
@@ -365,7 +358,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           title="Novo Documento"
         >
           <FilePlus className="w-4 h-4 flex-shrink-0" />
-          {(!collapsed || mobile) && <span>+ Novo Documento</span>}
+          {(!collapsed || mobile) && <span>Novo Documento</span>}
         </button>
       </div>
 
@@ -384,6 +377,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             }}
           />
         ))}
+        {/* Item HISTÓRICO — abre pop-up de seleção */}
+        <button
+          onClick={() => { setShowHistoricoModal(true); if (mobile) setMobileOpen(false); }}
+          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all
+            text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 hover:text-gray-900 dark:hover:text-gray-100`}
+        >
+          <GraduationCap className="w-4 h-4 flex-shrink-0" />
+          {(!collapsed || mobile) && <span>Histórico</span>}
+        </button>
       </nav>
 
       {/* Footer */}
@@ -516,6 +518,129 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         userBalance={userBalanceSafe}
         username={user.username}
       />
+
+      {/* Modal HISTÓRICO — seleção de tipo */}
+      {showHistoricoModal && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 9999,
+            background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: "16px",
+          }}
+          onClick={() => setShowHistoricoModal(false)}
+        >
+          <div
+            style={{
+              background: "var(--modal-bg, #fff)", borderRadius: 20, padding: "32px 28px",
+              maxWidth: 420, width: "100%",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
+            }}
+            className="dark:bg-gray-900"
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10,
+                  background: "linear-gradient(135deg, #6366f1, #4f46e5)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <GraduationCap style={{ width: 18, height: 18, color: "#fff" }} />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: 18, fontWeight: 800, color: "inherit", margin: 0 }} className="text-gray-900 dark:text-white">Histórico</h2>
+                  <p style={{ fontSize: 12, margin: 0 }} className="text-gray-500 dark:text-gray-400">Selecione o tipo de histórico</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowHistoricoModal(false)}
+                className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              {/* Histórico Escolar SP */}
+              <button
+                onClick={() => {
+                  setShowHistoricoModal(false);
+                  if (userBalanceSafe <= 0) { setShowInsufficientBalance(true); return; }
+                  setLocation("/historico-sp");
+                }}
+                style={{
+                  border: "2px solid #e5e7eb", borderRadius: 14, padding: "20px 12px",
+                  background: "transparent", cursor: "pointer", textAlign: "center",
+                  transition: "all 0.15s",
+                }}
+                className="hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 dark:border-gray-700 group"
+              >
+                <div style={{
+                  width: 48, height: 48, borderRadius: 12,
+                  background: "linear-gradient(135deg, #3b82f6, #1d4ed8)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  margin: "0 auto 10px",
+                }}>
+                  <GraduationCap style={{ width: 22, height: 22, color: "#fff" }} />
+                </div>
+                <p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 4px" }} className="text-gray-800 dark:text-gray-200">Histórico Escolar</p>
+                <p style={{ fontSize: 11, margin: 0 }} className="text-gray-500 dark:text-gray-400">Estado de SP</p>
+              </button>
+
+              {/* Histórico UNINTER */}
+              <button
+                onClick={() => {
+                  setShowHistoricoModal(false);
+                  if (userBalanceSafe <= 0) { setShowInsufficientBalance(true); return; }
+                  setLocation("/historico-uninter");
+                }}
+                style={{
+                  border: "2px solid #e5e7eb", borderRadius: 14, padding: "20px 12px",
+                  background: "transparent", cursor: "pointer", textAlign: "center",
+                  transition: "all 0.15s",
+                }}
+                className="hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 dark:border-gray-700 group"
+              >
+                <div style={{
+                  width: 48, height: 48, borderRadius: 12,
+                  background: "linear-gradient(135deg, #f59e0b, #d97706)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  margin: "0 auto 10px",
+                }}>
+                  <GraduationCap style={{ width: 22, height: 22, color: "#fff" }} />
+                </div>
+                <p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 4px" }} className="text-gray-800 dark:text-gray-200">Histórico UNINTER</p>
+                <p style={{ fontSize: 11, margin: 0 }} className="text-gray-500 dark:text-gray-400">Centro Universitário</p>
+              </button>
+            </div>
+
+            {/* Links para salvos */}
+            <div style={{ marginTop: 16, display: "flex", gap: 8 }}>
+              <button
+                onClick={() => { setShowHistoricoModal(false); setLocation("/historico-sp-salvos"); }}
+                style={{
+                  flex: 1, padding: "8px 0", borderRadius: 8, border: "none",
+                  background: "#f3f4f6", fontSize: 12, cursor: "pointer",
+                }}
+                className="text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                Históricos SP Salvos
+              </button>
+              <button
+                onClick={() => { setShowHistoricoModal(false); setLocation("/historico-uninter-salvos"); }}
+                style={{
+                  flex: 1, padding: "8px 0", borderRadius: 8, border: "none",
+                  background: "#f3f4f6", fontSize: 12, cursor: "pointer",
+                }}
+                className="text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                Históricos UNINTER Salvos
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal Saldo Insuficiente — acionado pelo submenu */}
       {showInsufficientBalance && (
