@@ -460,6 +460,7 @@ export default function AtestadoCria() {
   const [cepPaciente, setCepPaciente] = useState("");
   const [cepNumero, setCepNumero] = useState("");
   const [cepLoading, setCepLoading] = useState(false);
+  const [cepUFPreenchida, setCepUFPreenchida] = useState(""); // UF preenchida via CEP
 
   // ── CEP para UPA próxima ─────────────────────────────────────────────────────
   const [cepUPA, setCepUPA] = useState("");
@@ -619,7 +620,13 @@ export default function AtestadoCria() {
       const parteCidade = `${data.localidade}/${data.uf}`;
       const endFormatado = [parteRua, parteBairro ? `${parteBairro}, ${parteCidade}` : parteCidade]
         .filter(Boolean).join(" - ").toUpperCase();
-      setForm(p => ({ ...p, endereco: endFormatado }));
+      // Preencher cidade de emissão e UF automaticamente
+      setCepUFPreenchida(data.uf?.toUpperCase() || "");
+      setForm(p => ({
+        ...p,
+        endereco: endFormatado,
+        cidade: data.localidade?.toUpperCase() || p.cidade,
+      }));
     } catch { /* ignora erro silencioso */ }
     finally { setCepLoading(false); }
   };
@@ -1815,9 +1822,37 @@ export default function AtestadoCria() {
             <div style={card}>
               <p style={secTitle}>📅 4. Data de Emissão</p>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                <div style={{ gridColumn: "1 / -1" }}>
+                <div>
                   <label style={lbl}>Cidade de Emissão</label>
-                  <input style={inp} value={form.cidade} onChange={(e) => setForm(p => ({ ...p, cidade: e.target.value.toUpperCase() }))} placeholder="Ex: SÃO PAULO" />
+                  <div style={{ position: "relative" }}>
+                    <input
+                      style={{ ...inp, paddingRight: cepUFPreenchida ? 28 : undefined }}
+                      value={form.cidade}
+                      onChange={(e) => setForm(p => ({ ...p, cidade: e.target.value.toUpperCase() }))}
+                      placeholder="Ex: SÃO PAULO"
+                    />
+                    {cepUFPreenchida && (
+                      <span style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", fontSize: 10, color: "#16a34a", fontWeight: 700 }}>✓</span>
+                    )}
+                  </div>
+                  {cepUFPreenchida && (
+                    <span style={{ fontSize: 10, color: "#16a34a", marginTop: 2, display: "block" }}>✅ Preenchido via CEP</span>
+                  )}
+                </div>
+                <div>
+                  <label style={lbl}>UF</label>
+                  <div style={{ position: "relative" }}>
+                    <input
+                      style={{ ...inp, textTransform: "uppercase" }}
+                      value={cepUFPreenchida}
+                      onChange={(e) => setCepUFPreenchida(e.target.value.toUpperCase().slice(0, 2))}
+                      placeholder="Ex: SP"
+                      maxLength={2}
+                    />
+                  </div>
+                  {cepUFPreenchida && (
+                    <span style={{ fontSize: 10, color: "#16a34a", marginTop: 2, display: "block" }}>✅ Preenchido via CEP</span>
+                  )}
                 </div>
                 <div style={{ gridColumn: "1 / -1" }}>
                   <label style={lbl}>Data de Emissão *</label>

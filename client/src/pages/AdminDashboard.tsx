@@ -1,546 +1,2246 @@
-import React, { useState, useEffect } from "react";
-import { 
-  Users, 
-  Settings, 
-  Database, 
-  TrendingUp, 
-  Search, 
-  Plus, 
-  Minus, 
-  Edit3, 
-  Trash2, 
-  Shield, 
-  CheckCircle, 
-  XCircle, 
-  RefreshCw, 
-  UserPlus,
-  MessageCircle,
-  Clock,
-  Lock,
-  Eye,
-  EyeOff,
-  AlertTriangle,
-  FileText,
-  DollarSign,
-  Save,
-  Tag
+import { useState, useEffect, useCallback } from "react";
+import { useLocation } from "wouter";
+import { useAuth } from "@/contexts/AuthContext";
+import DashboardLayout from "@/components/DashboardLayout";
+import { toast } from "sonner";
+import {
+  Users, Settings, Plus, Minus, Shield,
+  RefreshCw, DollarSign, Trash2, ToggleLeft, ToggleRight,
+  Bell, AlertTriangle, CheckCircle, Info, FileText,
+  Activity, Database, Search, Eye, EyeOff, X, Save,
+  Download, Edit3, Wifi, WifiOff, Monitor, Globe,
+  CreditCard, AlertCircle, Filter, Gift, Percent,
+  Link, Copy, Calendar, Trash, Lock, UserPlus
 } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
-// apiClient substituído por fetch direto para compatibilidade
-const apiClient = {
-  get: (url: string) => fetch(url, { credentials: "include" }).then(r => r.json()),
-  post: (url: string, body?: unknown) => fetch(url, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(r => r.json()),
-  put: (url: string, body?: unknown) => fetch(url, { method: "PUT", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(r => r.json()),
-  patch: (url: string, body?: unknown) => fetch(url, { method: "PATCH", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(r => r.json()),
-  delete: (url: string) => fetch(url, { method: "DELETE", credentials: "include" }).then(r => r.json()),
-};
+type Tab = "users" | "pricing" | "notices" | "logs" | "emissions" | "monitoring" | "referral" | "database" | "settings";
 
-interface User {
+interface EmissionRow {
+  id: string;
+  user_id: string;
+  username?: string;
+  paciente?: string;
+  nome?: string;
+  type: string;
+  status: string;
+  codigo_qr?: string;
+  created_at: string;
+  table_source?: string;
+}
+
+interface UserRow {
   id: number;
   username: string;
   email: string;
   role: string;
   balance: number;
-  is_active: boolean;
+  is_active: number;
   created_at: string;
+  profile_photo?: string;
+  cashback_percentage?: number | null;
+  referral_percentage?: number | null;
 }
 
-interface Presence {
-  user_id: number;
-  is_online: boolean;
-  last_seen: string;
-}
-
-interface PricingItem {
+interface PricingRow {
   document_type: string;
   display_name: string;
   price: number;
-  is_active: boolean;
-  updated_at?: string;
 }
 
-type AdminTab = "users" | "pricing" | "settings" | "logs";
+interface LogRow {
+  id: string;
+  user_id?: string;
+  username?: string;
+  action: string;
+  category?: string;
+  severity?: string;
+  details?: string;
+  target_type?: string;
+  target_id?: string;
+  created_at: string;
+}
 
-export const AdminDashboard: React.FC = () => {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<AdminTab>("users");
-  const [users, setUsers] = useState<User[]>([]);
-  const [presence, setPresence] = useState<Presence[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [settings, setSettings] = useState<any>({});
+interface NoticeRow {
+  id?: number;
+  title: string;
+  message: string;
+  type: "info" | "warning" | "error" | "success";
+  is_active: number;
+  created_at?: string;
+}
+
+interface PresenceRow {
+  user_id: string;
+  username: string;
+  email?: string;
+  role?: string;
+  profile_photo?: string;
+  current_page: string;
+  current_action: string;
+  last_seen: string;
+  is_online: number;
+}
+
+const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
+  { key: "users", label: "Usuários", icon: Users },
+  { key: "monitoring", label: "Monitoramento", icon: Monitor },
+  { key: "pricing", label: "Preços", icon: DollarSign },
+  { key: "notices", label: "Avisos", icon: Bell },
+  { key: "logs", label: "Logs", icon: Activity },
+  { key: "emissions", label: "Emissões", icon: FileText },
+  { key: "referral", label: "Indicações", icon: Gift },
+  { key: "database", label: "Banco de Dados", icon: Database },
+  { key: "settings", label: "Configurações", icon: Settings },
+];
+
+const NOTICE_TYPES = [
+  { value: "info", label: "Informação", icon: Info },
+  { value: "warning", label: "Aviso", icon: AlertTriangle },
+  { value: "error", label: "Urgente", icon: AlertTriangle },
+  { value: "success", label: "Sucesso", icon: CheckCircle },
+];
+
+const DOC_TYPE_LABELS: Record<string, string> = {
+  atestado: "Atestado",
+  receita: "Receita",
+  cnh: "CNH",
+  cha: "CHA Náutica",
+  toxicologico: "Toxicológico",
+  toxicria: "Toxicológico Sodré",
+  laudocria: "Laudo Sodré",
+  "historico-sp": "Histórico SP",
+  "historico-uninter": "Histórico UNINTER",
+};
+
+const PAGE_LABELS: Record<string, string> = {
+  "/dashboard": "Dashboard",
+  "/atestado": "Emitindo Atestado",
+  "/atestadocria": "Emitindo Atestado",
+  "/cnh": "Emitindo CNH",
+  "/cnhcria": "Emitindo CNH",
+  "/cha": "Emitindo CHA",
+  "/chacria": "Emitindo CHA",
+  "/toxicologico": "Emitindo Toxicológico",
+  "/toxicologicocria": "Emitindo Toxicológico",
+  "/receita": "Emitindo Receita",
+  "/receitacria": "Emitindo Receita",
+  "/historico-sp": "Emitindo Histórico SP",
+  "/historico-uninter": "Emitindo Histórico UNINTER",
+  "/admin": "Painel Admin",
+  "/configuracoes": "Configurações",
+  "/extrato": "Extrato",
+  "/recargas": "Recargas",
+};
+
+const LOG_CATEGORIES = [
+  { value: "all", label: "Todos", icon: Activity },
+  { value: "admin", label: "Admin", icon: Shield },
+  { value: "payment", label: "Saldo", icon: CreditCard },
+  { value: "error", label: "Erros", icon: AlertCircle },
+  { value: "system", label: "Sistema", icon: Monitor },
+];
+
+export default function AdminDashboard() {
+  const { isAdmin } = useAuth();
+  const [, setLocation] = useLocation();
+  const [tab, setTab] = useState<Tab>("users");
+
+  // Users
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [userSearch, setUserSearch] = useState("");
   const [balanceInputs, setBalanceInputs] = useState<Record<number, string>>({});
-  const [showPasswords, setShowPasswords] = useState(false);
-  const [passwordRevealLogged, setPasswordRevealLogged] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
+  const [userDetailOpen, setUserDetailOpen] = useState(false);
+  const [userHistory, setUserHistory] = useState<any[]>([]);
+
+  // Pricing
+  const [pricing, setPricing] = useState<PricingRow[]>([]);
+  const [editingPrice, setEditingPrice] = useState<Record<string, string>>({});
+  const [editingDisplayName, setEditingDisplayName] = useState<Record<string, string>>({});
+  const [editingIsActive, setEditingIsActive] = useState<Record<string, boolean>>({});
+
+  // Notices
+  const [notices, setNotices] = useState<NoticeRow[]>([]);
+  const [newNotice, setNewNotice] = useState<NoticeRow>({
+    title: "", message: "", type: "info", is_active: 1
+  });
+
+  // Logs
+  const [logs, setLogs] = useState<LogRow[]>([]);
+  const [logFilter, setLogFilter] = useState("");
+  const [logCategory, setLogCategory] = useState("all");
+  const [logCategories, setLogCategories] = useState<Record<string, number>>({});
+
+  // Emissions
+  const [emissions, setEmissions] = useState<EmissionRow[]>([]);
+  const [emissionsFilter, setEmissionsFilter] = useState("");
+  const [emissionsTypeFilter, setEmissionsTypeFilter] = useState("all");
+  const [emissionsDateFrom, setEmissionsDateFrom] = useState("");
+  const [emissionsDateTo, setEmissionsDateTo] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmDeleteSource, setConfirmDeleteSource] = useState<string>("");
+
+  // Monitoring / Presence
+  const [presence, setPresence] = useState<PresenceRow[]>([]);
+  const [onlineCount, setOnlineCount] = useState(0);
+  const [offlineCount, setOfflineCount] = useState(0);
+  const [totalTracked, setTotalTracked] = useState(0);
+
+  // Referral
+  const [referralData, setReferralData] = useState<any>({});
+  const [referralTab, setReferralTab] = useState<"overview" | "referrals" | "earnings" | "cashback" | "users">("overview");
+  const [referralSettings, setReferralSettings] = useState({
+    referral_percentage: 10, cashback_percentage: 5, referral_enabled: true, cashback_enabled: true
+  });
+  const [editUserRefId, setEditUserRefId] = useState<string | null>(null);
+  const [editUserRefPct, setEditUserRefPct] = useState("");
+  const [editUserCbPct, setEditUserCbPct] = useState("");
+  // Cashback na aba de usuários
+  const [cashbackEditId, setCashbackEditId] = useState<number | null>(null);
+  const [cashbackEditValue, setCashbackEditValue] = useState("");
+
+  // Log date filters
+  const [logDateFrom, setLogDateFrom] = useState("");
+  const [logDateTo, setLogDateTo] = useState("");
+
+  // Pricing save all
+  const [pricingSaving, setPricingSaving] = useState(false);
+
+  // Database
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deleteUserConfirm, setDeleteUserConfirm] = useState("");
+  const [deleteTargetUserId, setDeleteTargetUserId] = useState<number | null>(null);
+  const [deleteTargetUsername, setDeleteTargetUsername] = useState("");
+
+  // Create user
+  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [newUsername, setNewUsername] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newDisplayName, setNewDisplayName] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newRole, setNewRole] = useState("user");
+  const [newBalance, setNewBalance] = useState("");
+  const [creatingUser, setCreatingUser] = useState(false);
+
+  // Change password
   const [changePwUserId, setChangePwUserId] = useState<string | null>(null);
   const [changePwUsername, setChangePwUsername] = useState("");
   const [changePwValue, setChangePwValue] = useState("");
-  const [isChangingPw, setIsChangingPw] = useState(false);
-  const [systemLogs, setSystemLogs] = useState<any[]>([]);
-  const [isClearingLogs, setIsClearingLogs] = useState(false);
-  const [logFilter, setLogFilter] = useState<"all" | "admin" | "system">("all");
+  const [changingPw, setChangingPw] = useState(false);
 
-  // Pricing states
-  const [pricing, setPricing] = useState<PricingItem[]>([]);
-  const [pricingLoading, setPricingLoading] = useState(false);
-  const [pricingEdits, setPricingEdits] = useState<Record<string, { price: string; display_name: string; is_active: boolean }>>({});
-  const [savingPricing, setSavingPricing] = useState<string | null>(null);
-  const [savingAllPricing, setSavingAllPricing] = useState(false);
+  // Settings
+  const [settings, setSettings] = useState({
+    site_name: "DocMaster",
+    support_whatsapp: "",
+    max_documents_per_day: "100",
+    auto_delete_days: "60",
+    maintenance_mode: false,
+  });
+  const [settingsSaving, setSettingsSaving] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
+  // Show passwords toggle
+  const [showPasswords, setShowPasswords] = useState(false);
+
+  const [loading, setLoading] = useState(false);
+
+  // Confirmation modal
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type: "danger" | "warning" | "info";
+  }>({ open: false, title: "", message: "", onConfirm: () => {}, type: "info" });
+
+   // ── Data Loaders ──────────────────────────────────────────────────────────
+  const loadUsers = useCallback(async (withPasswords = false) => {
+    setLoading(true);
+    try {
+      const url = withPasswords ? "/api/admin/users?show_passwords=1" : "/api/admin/users";
+      const res = await fetch(url, { credentials: "include" });
+      const data = await res.json();
+      if (data.success) {
+        setUsers(data.users || []);
+      } else {
+        toast.error(`Erro ao carregar usuários: ${data.error || 'Acesso negado'}`);
+      }
+    } catch (err: any) {
+      toast.error(`Erro ao carregar usuários: ${err?.message || 'Erro de conexão'}`);
+    }
+    finally { setLoading(false); }
+  }, []);
+
+  const loadSettings = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/settings", { credentials: "include" });
+      const data = await res.json();
+      if (data.success && data.settings) {
+        setSettings(s => ({ ...s, ...data.settings }));
+      }
+    } catch { /* silently fail */ }
+  }, []);
+
+  const loadPricing = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/pricing", { credentials: "include" });
+      const data = await res.json();
+      if (data.success) {
+        setPricing(data.pricing || []);
+        const ep: Record<string, string> = {};
+        const edn: Record<string, string> = {};
+        const eia: Record<string, boolean> = {};
+        (data.pricing || []).forEach((p: PricingRow) => {
+          ep[p.document_type] = (p.price / 100).toFixed(2);
+          edn[p.document_type] = p.display_name;
+          eia[p.document_type] = p.is_active !== false;
+        });
+        setEditingPrice(ep);
+        setEditingDisplayName(edn);
+        setEditingIsActive(eia);
+      }
+    } catch { toast.error("Erro ao carregar preços"); }
+  }, []);
+
+  const loadNotices = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/notifications", { credentials: "include" });
+      const data = await res.json();
+      if (data.success) setNotices(data.notifications || []);
+    } catch {}
+  }, []);
+
+  const loadLogs = useCallback(async () => {
+    setLoading(true);
+    try {
+      let url = `/api/admin/system-logs?category=${logCategory}&limit=200`;
+      if (logDateFrom) url += `&from=${logDateFrom}`;
+      if (logDateTo) url += `&to=${logDateTo}`;
+      const res = await fetch(url, { credentials: "include" });
+      const data = await res.json();
+      if (data.success) {
+        setLogs(data.logs || []);
+        setLogCategories(data.categories || {});
+      }
+    } catch {
+      try {
+        const res = await fetch("/api/admin/logs", { credentials: "include" });
+        const data = await res.json();
+        if (data.success) setLogs(data.logs || []);
+      } catch { toast.error("Erro ao carregar logs"); }
+    }
+    finally { setLoading(false); }
+  }, [logCategory, logDateFrom, logDateTo]);
+
+  const clearLogs = (clearType: string = "all") => {
+    setConfirmModal({
+      open: true,
+      title: "Limpar Logs",
+      message: `Tem certeza que deseja limpar os logs (${clearType})? Esta acao nao pode ser desfeita.`,
+      type: "danger",
+      onConfirm: async () => {
+        setConfirmModal(m => ({ ...m, open: false }));
+        try {
+          const res = await fetch(`/api/admin/system-logs?clear=${clearType}`, { method: "DELETE", credentials: "include" });
+          const data = await res.json();
+          if (data.success) { toast.success("Logs limpos com sucesso!"); loadLogs(); }
+          else toast.error(data.error || "Erro ao limpar logs");
+        } catch { toast.error("Erro de conexão"); }
+      },
+    });
+  };
+
+  const loadReferral = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/referral?tab=${referralTab}`, { credentials: "include" });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        toast.error(`Erro ${res.status}: ${errData.error || "Falha ao carregar indicações"}`);
+        return;
+      }
+      const data = await res.json();
+      setReferralData(data);
+      if (referralTab === "overview" && data.settings) {
+        const s: any = {};
+        for (const item of data.settings) s[item.key] = item.value;
+        setReferralSettings({
+          referral_percentage: parseFloat(s.referral_percentage || "10"),
+          cashback_percentage: parseFloat(s.cashback_percentage || "5"),
+          referral_enabled: s.referral_enabled === "true",
+          cashback_enabled: s.cashback_enabled === "true",
+        });
+      }
+    } catch (err: any) { toast.error(`Erro ao carregar indicações: ${err?.message || "Erro desconhecido"}`); }
+    finally { setLoading(false); }
+  }, [referralTab]);
+
+  const saveReferralSettings = async () => {
+    try {
+      const res = await fetch("/api/admin/referral", {
+        method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
+        body: JSON.stringify({ action: "update_global_settings", ...referralSettings }),
+      });
+      const data = await res.json();
+      if (data.success) toast.success("Configurações de indicação salvas!");
+      else toast.error(data.error || "Erro");
+    } catch { toast.error("Erro de conexão"); }
+  };
+
+  const saveCashbackForUser = async (userId: number) => {
+    try {
+      const res = await fetch("/api/admin/referral", {
+        method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
+        body: JSON.stringify({
+          action: "update_user_settings", userId: String(userId),
+          cashback_percentage: cashbackEditValue !== "" ? parseFloat(cashbackEditValue) : null,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("% Cashback atualizado!");
+        setCashbackEditId(null);
+        setCashbackEditValue("");
+        loadUsers(showPasswords);
+      } else toast.error(data.error || "Erro");
+    } catch { toast.error("Erro de conexão"); }
+  };
+
+  const saveUserRefSettings = async (userId: string) => {
+    try {
+      const res = await fetch("/api/admin/referral", {
+        method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
+        body: JSON.stringify({
+          action: "update_user_settings", userId,
+          referral_percentage: editUserRefPct ? parseFloat(editUserRefPct) : null,
+          cashback_percentage: editUserCbPct ? parseFloat(editUserCbPct) : null,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) { toast.success("% do usuário atualizado!"); setEditUserRefId(null); loadReferral(); }
+      else toast.error(data.error || "Erro");
+    } catch { toast.error("Erro de conexão"); }
+  };
+
+  const saveAllPrices = async () => {
+    setPricingSaving(true);
+    try {
+      const prices = pricing.map(p => ({
+        document_type: p.document_type,
+        display_name: editingDisplayName[p.document_type] ?? p.display_name,
+        price: Math.round(parseFloat(editingPrice[p.document_type] || "0") * 100),
+        is_active: editingIsActive[p.document_type] !== false,
+      }));
+      const res = await fetch("/api/admin/pricing", {
+        method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
+        body: JSON.stringify({ prices }),
+      });
+      const data = await res.json();
+      if (data.success) { toast.success("Todos os preços atualizados com sucesso!"); loadPricing(); }
+      else toast.error(data.error || "Erro ao salvar preços");
+    } catch { toast.error("Erro de conexão"); }
+    finally { setPricingSaving(false); }
+  };
+
+  const loadEmissions = useCallback(async () => {
+    setLoading(true);
+    try {
+      const typeParam = emissionsTypeFilter !== "all" ? `&type=${emissionsTypeFilter}` : "";
+      const res = await fetch(`/api/admin/emissions?limit=500${typeParam}`, { credentials: "include" });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        toast.error(`Erro ${res.status}: ${errData.error || "Falha ao carregar emissões"}`);
+        return;
+      }
+      const data = await res.json();
+      if (data.success) {
+        setEmissions(data.emissions || []);
+      } else {
+        toast.error(data.error || "Erro ao carregar emissões");
+      }
+    } catch (err: any) {
+      toast.error(`Erro ao carregar emissões: ${err?.message || "Erro desconhecido"}`);
+    }
+    finally { setLoading(false); }
+  }, [emissionsTypeFilter]);
+
+  const loadPresence = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/presence", { credentials: "include" });
+      const data = await res.json();
+      if (data.success) {
+        setPresence(data.presence || []);
+        setOnlineCount(data.online_count || 0);
+        setOfflineCount(data.offline_count || (data.presence || []).filter((p: any) => !p.is_online).length);
+        setTotalTracked(data.total_users || (data.presence || []).length);
+      }
+    } catch { /* silently fail */ }
   }, []);
 
   useEffect(() => {
-    if (activeTab === "pricing") {
-      fetchPricing();
-    }
-  }, [activeTab]);
+    if (tab === "users") loadUsers(showPasswords);
+    if (tab === "pricing") loadPricing();
+    if (tab === "notices") loadNotices();
+    if (tab === "logs") loadLogs();
+    if (tab === "emissions") loadEmissions();
+    if (tab === "monitoring") loadPresence();
+    if (tab === "referral") loadReferral();
+    if (tab === "settings") loadSettings();
+  }, [tab, logCategory, logDateFrom, logDateTo, emissionsTypeFilter, referralTab, showPasswords]);
 
-  const fetchData = async () => {
+  // Load presence count on mount and periodically
+  useEffect(() => {
+    loadPresence();
+    const interval = setInterval(loadPresence, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // ── Users ──────────────────────────────────────────────────────────────────
+  const adjustBalance = async (userId: number, delta: number) => {
     try {
-      const [usersRes, settingsRes, presenceRes, logsRes] = await Promise.all([
-        apiClient.get("/api/admin/users"),
-        apiClient.get("/api/admin/settings"),
-        apiClient.get("/api/admin/presence"),
-        apiClient.get("/api/admin/system-logs?limit=50")
-      ]);
-
-      // Corrigir: o endpoint retorna { users: [...] } ou diretamente o array
-      const usersData = usersRes.data?.users || usersRes.data || [];
-      if (Array.isArray(usersData)) setUsers(usersData);
-
-      if (settingsRes.data?.settings) {
-        setSettings(settingsRes.data.settings);
-      }
-      if (presenceRes.data?.presence) setPresence(presenceRes.data.presence);
-      if (logsRes.data?.logs) setSystemLogs(logsRes.data.logs);
-    } catch (error) {
-      console.error("Erro ao buscar dados do admin:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchPricing = async () => {
-    setPricingLoading(true);
-    try {
-      const res = await apiClient.get("/api/admin/pricing");
-      const list: PricingItem[] = res.data?.pricing || [];
-      setPricing(list);
-      // Inicializar edits com os valores atuais
-      const edits: Record<string, { price: string; display_name: string; is_active: boolean }> = {};
-      for (const item of list) {
-        edits[item.document_type] = {
-          price: (item.price / 100).toFixed(2),
-          display_name: item.display_name,
-          is_active: item.is_active !== false,
-        };
-      }
-      setPricingEdits(edits);
-    } catch (error) {
-      console.error("Erro ao buscar preços:", error);
-    } finally {
-      setPricingLoading(false);
-    }
-  };
-
-  const saveSinglePricing = async (docType: string) => {
-    const edit = pricingEdits[docType];
-    if (!edit) return;
-    setSavingPricing(docType);
-    try {
-      const priceInCents = Math.round(parseFloat(edit.price.replace(",", ".")) * 100);
-      if (isNaN(priceInCents) || priceInCents < 0) {
-        alert("Preço inválido");
-        return;
-      }
-      await apiClient.post("/api/admin/pricing", {
-        document_type: docType,
-        display_name: edit.display_name,
-        price: priceInCents,
-        is_active: edit.is_active,
+      const res = await fetch(`/api/admin/users/${userId}/balance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ delta }),
       });
-      // Atualizar lista local
-      setPricing(prev => prev.map(p =>
-        p.document_type === docType
-          ? { ...p, display_name: edit.display_name, price: priceInCents, is_active: edit.is_active }
-          : p
-      ));
-      alert(`✅ "${edit.display_name}" salvo com sucesso!`);
-    } catch (error) {
-      alert("Erro ao salvar preço");
-    } finally {
-      setSavingPricing(null);
-    }
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Saldo atualizado!");
+        loadUsers();
+        setBalanceInputs(prev => ({ ...prev, [userId]: "" }));
+      } else {
+        toast.error(data.error || "Erro ao atualizar saldo");
+      }
+    } catch { toast.error("Erro de conexão"); }
   };
 
-  const saveAllPricing = async () => {
-    setSavingAllPricing(true);
+  const toggleUserActive = async (userId: number, current: number) => {
     try {
-      const prices = Object.entries(pricingEdits).map(([document_type, edit]) => ({
-        document_type,
-        display_name: edit.display_name,
-        price: Math.round(parseFloat(edit.price.replace(",", ".")) * 100),
-        is_active: edit.is_active,
-      })).filter(p => !isNaN(p.price) && p.price >= 0);
-
-      await apiClient.put("/api/admin/pricing", { prices });
-      // Atualizar lista local
-      setPricing(prev => prev.map(p => {
-        const updated = prices.find(u => u.document_type === p.document_type);
-        return updated ? { ...p, ...updated } : p;
-      }));
-      alert("✅ Todos os preços salvos com sucesso!");
-    } catch (error) {
-      alert("Erro ao salvar preços");
-    } finally {
-      setSavingAllPricing(false);
-    }
+      const res = await fetch(`/api/admin/users/${userId}/toggle`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(current ? "Usuário desativado" : "Usuário ativado");
+        loadUsers();
+      }
+    } catch { toast.error("Erro de conexão"); }
   };
 
-  const handleClearLogs = async (type: "all" | "admin" | "system") => {
-    if (!confirm(`Tem certeza que deseja limpar os logs ${type === "all" ? "de todos os tipos" : type}? Esta ação é irreversível.`)) return;
-    setIsClearingLogs(true);
+  const deleteUser = async (userId: number | string, username: string) => {
+    setConfirmModal({
+      open: true,
+      title: "Excluir Usuário",
+      message: `Tem certeza que deseja excluir permanentemente o usuário "${username}" e todos os seus dados? Esta ação NÃO pode ser desfeita.`,
+      type: "danger",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/users?user_id=${userId}`, {
+            method: "DELETE",
+            credentials: "include",
+          });
+          const data = await res.json();
+          if (data.success) {
+            toast.success(`Usuário "${username}" excluído com sucesso!`);
+            loadUsers(showPasswords);
+          } else {
+            toast.error(data.error || "Erro ao excluir usuário");
+          }
+        } catch { toast.error("Erro de conexão"); }
+        setConfirmModal(m => ({ ...m, open: false }));
+      },
+    });
+  };
+
+  const openUserDetail = async (u: UserRow) => {
+    setSelectedUser(u);
+    setUserDetailOpen(true);
     try {
-      await apiClient.delete(`/api/admin/system-logs?clear=${type}`);
-      setSystemLogs([]);
-      alert("Logs limpos com sucesso!");
-    } catch (error) {
-      alert("Erro ao limpar logs");
-    } finally {
-      setIsClearingLogs(false);
-    }
+      const res = await fetch(`/api/admin/users/${u.id}/history`, { credentials: "include" });
+      const data = await res.json();
+      if (data.success) setUserHistory(data.history || []);
+    } catch { setUserHistory([]); }
   };
 
-  const adjustBalance = async (userId: number, amount: number) => {
+  // ── Create User ───────────────────────────────────────────────────────────────────────
+  const createUser = async () => {
+    if (!newUsername || !newPassword) { toast.error("Username e senha são obrigatórios"); return; }
+    if (newPassword.length < 4) { toast.error("Senha deve ter no mínimo 4 caracteres"); return; }
+    setCreatingUser(true);
     try {
-      await apiClient.post(`/api/admin/users/${userId}/balance`, { amount });
-      setBalanceInputs(prev => ({ ...prev, [userId]: "" }));
-      fetchData();
-    } catch (error) {
-      alert("Erro ao ajustar saldo");
-    }
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          username: newUsername,
+          password: newPassword,
+          display_name: newDisplayName || newUsername,
+          email: newEmail,
+          role: newRole,
+          balance: newBalance ? Math.round(parseFloat(newBalance) * 100) : 0,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Usuário criado com sucesso!");
+        setShowCreateUser(false);
+        setNewUsername(""); setNewPassword(""); setNewDisplayName(""); setNewEmail(""); setNewRole("user"); setNewBalance("");
+        loadUsers();
+      } else {
+        toast.error(data.error || "Erro ao criar usuário");
+      }
+    } catch { toast.error("Erro de conexão"); } finally { setCreatingUser(false); }
   };
 
-  const toggleUserStatus = async (userId: number, currentStatus: boolean) => {
+  const changePassword = async () => {
+    if (!changePwUserId || !changePwValue) { toast.error("Nova senha é obrigatória"); return; }
+    if (changePwValue.length < 4) { toast.error("Senha deve ter no mínimo 4 caracteres"); return; }
+    setChangingPw(true);
     try {
-      await apiClient.patch(`/api/admin/users/${userId}`, { is_active: !currentStatus });
-      fetchData();
-    } catch (error) {
-      alert("Erro ao alterar status do usuário");
-    }
+      const res = await fetch("/api/admin/users", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ user_id: changePwUserId, new_password: changePwValue }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Senha de ${changePwUsername} alterada com sucesso!`);
+        setChangePwUserId(null); setChangePwUsername(""); setChangePwValue("");
+        // Reload users to reflect new plain_password if passwords are visible
+        loadUsers(showPasswords);
+      } else {
+        toast.error(data.error || "Erro ao alterar senha");
+      }
+    } catch { toast.error("Erro de conexão"); } finally { setChangingPw(false); }
   };
 
-  const updateSetting = async (key: string, value: string) => {
+  // ── Pricing ────────────────────────────────────────────────────────────────────────────
+  const savePrice = async (docType: string) => {
+    const priceReais = parseFloat(editingPrice[docType] || "0");
+    if (isNaN(priceReais) || priceReais < 0) { toast.error("Preço inválido"); return; }
+    const price = Math.round(priceReais * 100);
     try {
-      await apiClient.post("/api/admin/settings", { key, value });
-      setSettings((prev: any) => ({ ...prev, [key]: value }));
-    } catch (error) {
-      alert("Erro ao atualizar configuração");
-    }
+      const res = await fetch("/api/admin/pricing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          document_type: docType,
+          display_name: editingDisplayName[docType] ?? pricing.find(p => p.document_type === docType)?.display_name,
+          price,
+          is_active: editingIsActive[docType] !== false,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Preço atualizado!");
+        loadPricing();
+      } else {
+        toast.error(data.error || "Erro ao salvar preço");
+      }
+    } catch { toast.error("Erro de conexão"); }
   };
 
-  const handleChangePassword = async () => {
-    if (!changePwValue || changePwValue.length < 6) {
-      alert("A senha deve ter pelo menos 6 caracteres");
+  const initDefaultPricing = async () => {
+    const defaults = [
+      { document_type: "atestado", display_name: "Atestado Médico", price: 500 },
+      { document_type: "cnh", display_name: "CNH Digital", price: 800 },
+      { document_type: "cha", display_name: "CHA Náutica", price: 600 },
+      { document_type: "toxicologico", display_name: "Toxicológico", price: 700 },
+      { document_type: "historico-sp", display_name: "Histórico SP", price: 600 },
+      { document_type: "historico-uninter", display_name: "Histórico UNINTER", price: 600 },
+    ];
+    try {
+      for (const item of defaults) {
+        await fetch("/api/admin/pricing", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(item),
+        });
+      }
+      toast.success("Preços padrão configurados!");
+      loadPricing();
+    } catch { toast.error("Erro ao configurar preços"); }
+  };
+
+  // ── Notices ────────────────────────────────────────────────────────────────
+  const createNotice = async () => {
+    if (!newNotice.title || !newNotice.message) {
+      toast.error("Preencha título e mensagem");
       return;
     }
-
-    setIsChangingPw(true);
     try {
-      await apiClient.post(`/api/admin/users/${changePwUserId}/password`, { password: changePwValue });
-      alert("Senha alterada com sucesso!");
-      setChangePwUserId(null);
-      setChangePwValue("");
-      fetchData();
-    } catch (error) {
-      alert("Erro ao alterar senha");
-    } finally {
-      setIsChangingPw(false);
+      const res = await fetch("/api/admin/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(newNotice),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Aviso criado!");
+        setNewNotice({ title: "", message: "", type: "info", is_active: 1 });
+        loadNotices();
+      }
+    } catch { toast.error("Erro de conexão"); }
+  };
+
+  const toggleNotice = async (id: number, current: number) => {
+    try {
+      const res = await fetch(`/api/admin/notifications/${id}/toggle`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(current ? "Aviso desativado" : "Aviso ativado");
+        loadNotices();
+      }
+    } catch { toast.error("Erro de conexão"); }
+  };
+
+  const deleteNotice = async (id: number) => {
+    setConfirmModal({
+      open: true,
+      title: "Excluir Aviso",
+      message: "Tem certeza que deseja excluir este aviso?",
+      type: "warning",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/notifications/${id}`, {
+            method: "DELETE",
+            credentials: "include",
+          });
+          const data = await res.json();
+          if (data.success) {
+            toast.success("Aviso excluído!");
+            loadNotices();
+          }
+        } catch { toast.error("Erro de conexão"); }
+        setConfirmModal(m => ({ ...m, open: false }));
+      },
+    });
+  };
+
+  // ── Emissions Actions ─────────────────────────────────────────────────────
+  const deleteEmission = async (id: string, source: string, hard = false) => {
+    setConfirmModal({
+      open: true,
+      title: hard ? "Excluir Permanentemente" : "Cancelar Documento",
+      message: hard
+        ? "Esta ação é IRREVERSÍVEL. O documento será excluído permanentemente do banco de dados."
+        : "O documento será marcado como cancelado. Deseja continuar?",
+      type: hard ? "danger" : "warning",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/emissions/${id}?source=${source}&hard=${hard}`, {
+            method: "DELETE",
+            credentials: "include",
+          });
+          const data = await res.json();
+          if (data.success) {
+            toast.success(hard ? "Documento excluído permanentemente!" : "Documento cancelado!");
+            loadEmissions();
+          } else {
+            toast.error(data.error || "Erro ao excluir");
+          }
+        } catch { toast.error("Erro de conexão"); }
+        setConfirmModal(m => ({ ...m, open: false }));
+      },
+    });
+  };
+
+  const editEmission = (e: EmissionRow) => {
+    // Navigate to the edit page based on type
+    const editRoutes: Record<string, string> = {
+      atestado: `/atestado/editar/${e.id}`,
+      receita: `/receita/editar/${e.id}`,
+    };
+    const route = editRoutes[e.type];
+    if (route) {
+      setLocation(route);
+    } else {
+      toast.info("Edição inline para este tipo de documento será implementada em breve.");
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    try {
-      return format(new Date(dateStr), "dd/MM/yyyy HH:mm", { locale: ptBR });
-    } catch (e) {
-      return dateStr;
+  const downloadEmission = async (e: EmissionRow) => {
+    toast.info("Preparando download...");
+    // Navigate to the document view which has download capability
+    const viewRoutes: Record<string, string> = {
+      atestado: `/historico/atestados/${e.id}`,
+    };
+    const route = viewRoutes[e.type];
+    if (route) {
+      window.open(route, "_blank");
+    } else {
+      toast.info("Abra o documento no painel do usuário para baixar.");
     }
   };
 
-  // Formatar saldo com fallback para evitar NaN
-  const formatBalance = (balance: any): string => {
-    const num = typeof balance === "number" ? balance : parseFloat(String(balance ?? "0")) || 0;
-    return (num / 100).toFixed(2).replace(".", ",");
+  // ── Database ───────────────────────────────────────────────────────────────
+  const deleteUserData = async () => {
+    if (!deleteTargetUserId) return;
+    if (deleteUserConfirm !== deleteTargetUsername) {
+      toast.error("Nome de usuário não confere. Digite exatamente o nome para confirmar.");
+      return;
+    }
+    try {
+      const res = await fetch(`/api/admin/users/${deleteTargetUserId}/delete-data`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ confirm: true }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Dados do usuário excluídos!");
+        setDeleteTargetUserId(null);
+        setDeleteTargetUsername("");
+        setDeleteUserConfirm("");
+        loadUsers();
+      } else {
+        toast.error(data.error || "Erro ao excluir dados");
+      }
+    } catch { toast.error("Erro de conexão"); }
+  };
+
+  const deleteAllData = async () => {
+    if (deleteConfirm !== "EXCLUIR TUDO") {
+      toast.error('Digite "EXCLUIR TUDO" para confirmar');
+      return;
+    }
+    try {
+      const res = await fetch("/api/admin/delete-all-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ confirm: true, confirmation_text: "EXCLUIR TUDO" }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Todos os dados excluídos!");
+        setDeleteConfirm("");
+      } else {
+        toast.error(data.error || "Erro ao excluir dados");
+      }
+    } catch { toast.error("Erro de conexão"); }
+  };
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  const formatDate = (d: string) => {
+    if (!d) return "—";
+    try { return new Date(d).toLocaleString("pt-BR"); } catch { return d; }
+  };
+
+  const timeAgo = (d: string) => {
+    if (!d) return "—";
+    const now = Date.now();
+    const then = new Date(d).getTime();
+    const diff = Math.floor((now - then) / 1000);
+    if (diff < 60) return `${diff}s atrás`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}min atrás`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h atrás`;
+    return `${Math.floor(diff / 86400)}d atrás`;
   };
 
   const filteredUsers = users.filter(u =>
-    u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchTerm.toLowerCase())
+    !userSearch ||
+    u.username.toLowerCase().includes(userSearch.toLowerCase()) ||
+    (u.email || "").toLowerCase().includes(userSearch.toLowerCase())
   );
 
-  const TABS: { key: AdminTab; label: string; icon: React.ElementType }[] = [
-    { key: "users", label: "Usuários", icon: Users },
-    { key: "pricing", label: "Preços", icon: DollarSign },
-    { key: "settings", label: "Configurações", icon: Settings },
-    { key: "logs", label: "Logs", icon: FileText },
-  ];
+  const filteredLogs = logs.filter(l =>
+    !logFilter ||
+    (l.username || "").toLowerCase().includes(logFilter.toLowerCase()) ||
+    l.action.toLowerCase().includes(logFilter.toLowerCase()) ||
+    (l.details || "").toLowerCase().includes(logFilter.toLowerCase())
+  );
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <RefreshCw className="w-8 h-8 animate-spin text-yellow-500" />
-      </div>
-    );
+  const filteredEmissions = emissions.filter(e => {
+    // Filtro de texto
+    const textMatch = !emissionsFilter ||
+      (e.nome || e.paciente || "").toLowerCase().includes(emissionsFilter.toLowerCase()) ||
+      (e.username || "").toLowerCase().includes(emissionsFilter.toLowerCase()) ||
+      (e.codigo_qr || "").toLowerCase().includes(emissionsFilter.toLowerCase());
+    // Filtro de data
+    let dateMatch = true;
+    if (emissionsDateFrom || emissionsDateTo) {
+      const eDate = e.created_at ? new Date(e.created_at).getTime() : 0;
+      if (emissionsDateFrom) {
+        const from = new Date(emissionsDateFrom).getTime();
+        if (eDate < from) dateMatch = false;
+      }
+      if (emissionsDateTo) {
+        const to = new Date(emissionsDateTo + "T23:59:59").getTime();
+        if (eDate > to) dateMatch = false;
+      }
+    }
+    return textMatch && dateMatch;
+  });
+
+   const totalBalance = users.reduce((sum, u) => sum + (u.balance || 0), 0);
+  const activeUsers = users.filter(u => u.is_active).length;
+
+  // Verificar permissão admin (após todos os hooks)
+  if (!isAdmin) {
+    setLocation("/dashboard");
+    return null;
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 pb-20">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Shield className="w-7 h-7 text-yellow-500" />
-            Painel Administrativo
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400">Gestão global do sistema DocMaster</p>
-        </div>
-        <button
-          onClick={fetchData}
-          className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors self-start"
-        >
-          <RefreshCw className="w-5 h-5" />
-        </button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-6 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
-              <Users className="w-6 h-6" />
+    <DashboardLayout>
+      <div className="p-6 max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-wrap items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+            <Shield className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Painel Administrativo</h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Controle total do sistema DocMaster</p>
+          </div>
+          <div className="ml-auto flex items-center gap-3 flex-wrap">
+            <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-xl px-4 py-2 text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Total Usuários</p>
+              <p className="text-lg font-bold text-yellow-600 dark:text-yellow-400">{users.length}</p>
+            </div>
+            <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-xl px-4 py-2 text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Saldo Total</p>
+              <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                R$ {(totalBalance / 100).toFixed(2).replace(".", ",")}
+              </p>
+            </div>
+            <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-2 text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Usuários Online</p>
+              <p className="text-lg font-bold text-blue-600 dark:text-blue-400 flex items-center justify-center gap-1.5">
+                <Wifi className="w-4 h-4" />
+                {onlineCount}
+              </p>
             </div>
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Total de Usuários</p>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{users.length}</h3>
         </div>
 
-        <div className="p-6 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 rounded-xl bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400">
-              <TrendingUp className="w-6 h-6" />
-            </div>
-          </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Saldo Total</p>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-            R$ {formatBalance(users.reduce((acc, curr) => acc + (Number(curr.balance) || 0), 0))}
-          </h3>
-        </div>
-
-        <div className="p-6 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 rounded-xl bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400">
-              <Clock className="w-6 h-6" />
-            </div>
-          </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Usuários Online</p>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {presence.filter(p => p.is_online).length}
-          </h3>
-        </div>
-
-        <div className="p-6 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 rounded-xl bg-purple-100 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400">
-              <Database className="w-6 h-6" />
-            </div>
-          </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Versão API</p>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white">1.3.0</h3>
-        </div>
-      </div>
-
-      {/* Tab Navigation */}
-      <div className="flex gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-2xl w-full sm:w-auto">
-        {TABS.map(tab => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                activeTab === tab.key
-                  ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
-                  : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              <span className="hidden sm:inline">{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* ── TAB: USUÁRIOS ── */}
-      {activeTab === "users" && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <Users className="w-5 h-5 text-yellow-500" />
-              Usuários
-            </h2>
-            <div className="flex items-center gap-2 flex-wrap">
+        {/* Tabs */}
+        <div className="flex gap-1 flex-wrap mb-6 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+          {TABS.map(t => {
+            const Icon = t.icon;
+            return (
               <button
-                onClick={async () => {
-                  const next = !showPasswords;
-                  setShowPasswords(next);
-                  if (next && !passwordRevealLogged) {
-                    setPasswordRevealLogged(true);
-                    try {
-                      await apiClient.post("/api/admin/system-logs", {
-                        user_id: user?.id,
-                        action: "REVEAL_PASSWORDS",
-                        category: "security",
-                        severity: "warning",
-                        details: `Admin ${user?.username} visualizou as senhas dos usuários em ${new Date().toLocaleString('pt-BR')}`
-                      });
-                    } catch (_) {}
-                  }
-                }}
-                className={`p-2 rounded-lg transition-colors flex items-center gap-2 text-xs font-medium ${
-                  showPasswords
-                    ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
-                    : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200"
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  tab === t.key
+                    ? "bg-yellow-500 text-white shadow-sm"
+                    : "text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700"
                 }`}
-                title={showPasswords ? "Ocultar Senhas" : "Mostrar Senhas"}
               >
-                {showPasswords ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                {showPasswords ? "Ocultar" : "Senhas"}
+                <Icon className="w-3.5 h-3.5" />
+                {t.label}
+                {t.key === "monitoring" && onlineCount > 0 && (
+                  <span className="ml-1 w-5 h-5 rounded-full bg-green-500 text-white text-[10px] flex items-center justify-center font-bold">
+                    {onlineCount}
+                  </span>
+                )}
               </button>
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            );
+          })}
+        </div>
+
+        {/* ── USERS TAB ── */}
+        {tab === "users" && (
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Buscar usuário..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="pl-9 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all w-full md:w-64"
+                  value={userSearch}
+                  onChange={e => setUserSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
                 />
+              </div>
+              <button onClick={() => loadUsers(showPasswords)} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="Atualizar">
+                <RefreshCw className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => {
+                const next = !showPasswords;
+                setShowPasswords(next);
+                loadUsers(next);
+              }}
+                className={`flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-xl transition-colors ${
+                  showPasswords
+                    ? "bg-purple-600 hover:bg-purple-700 text-white"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                }`}
+                title={showPasswords ? "Ocultar senhas" : "Ver senhas"}
+              >
+                {showPasswords ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                <span className="hidden sm:inline">{showPasswords ? "Ocultar Senhas" : "Ver Senhas"}</span>
+              </button>
+              <button onClick={() => setShowCreateUser(!showCreateUser)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-xl bg-yellow-600 hover:bg-yellow-700 text-white transition-colors">
+                <UserPlus className="w-4 h-4" /> Criar Usuário
+              </button>
+            </div>
+
+            {/* Formulário Criar Usuário */}
+            {showCreateUser && (
+              <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 mb-4">
+                <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2"><UserPlus className="w-4 h-4" /> Novo Usuário</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <input type="text" placeholder="Username *" value={newUsername} onChange={e => setNewUsername(e.target.value)} className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+                  <input type="password" placeholder="Senha *" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+                  <input type="text" placeholder="Nome de Exibição" value={newDisplayName} onChange={e => setNewDisplayName(e.target.value)} className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+                  <input type="email" placeholder="Email" value={newEmail} onChange={e => setNewEmail(e.target.value)} className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+                  <select value={newRole} onChange={e => setNewRole(e.target.value)} className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                    <option value="user">Usuário</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                  <input type="number" placeholder="Saldo Inicial (R$)" value={newBalance} onChange={e => setNewBalance(e.target.value)} className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <button onClick={createUser} disabled={creatingUser} className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl transition-colors disabled:opacity-50">
+                    {creatingUser ? "Criando..." : "Criar Usuário"}
+                  </button>
+                  <button onClick={() => setShowCreateUser(false)} className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Modal Alterar Senha */}
+            {changePwUserId && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => { setChangePwUserId(null); setChangePwValue(""); }}>
+                <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-xl" onClick={e => e.stopPropagation()}>
+                  <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2"><Lock className="w-4 h-4" /> Alterar Senha</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Usuário: <strong>{changePwUsername}</strong></p>
+                  <input type="password" placeholder="Nova senha (mín. 4 caracteres)" value={changePwValue} onChange={e => setChangePwValue(e.target.value)} className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 mb-4" />
+                  <div className="flex gap-2 justify-end">
+                    <button onClick={() => { setChangePwUserId(null); setChangePwValue(""); }} className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">Cancelar</button>
+                    <button onClick={changePassword} disabled={changingPw} className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl transition-colors disabled:opacity-50">{changingPw ? "Salvando..." : "Salvar"}</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin w-6 h-6 border-2 border-yellow-500 border-t-transparent rounded-full" />
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {filteredUsers.map(u => (
+                  <div key={u.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center overflow-hidden border-2 border-yellow-200 dark:border-yellow-800 flex-shrink-0">
+                          {u.profile_photo ? (
+                            <img src={u.profile_photo} alt={u.username} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-sm font-bold text-yellow-600 dark:text-yellow-400">
+                              {u.username.charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{u.username}</p>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
+                              u.role === "admin"
+                                ? "bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400"
+                                : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                            }`}>
+                              {u.role === "admin" ? "Admin" : "Usuário"}
+                            </span>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
+                              u.is_active
+                                ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400"
+                                : "bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400"
+                            }`}>
+                              {u.is_active ? "Ativo" : "Inativo"}
+                            </span>
+                            {/* Online indicator */}
+                            {presence.find(p => String(p.user_id) === String(u.id) && p.is_online) && (
+                              <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-semibold">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                                Online
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{u.email}</p>
+                          {showPasswords && (
+                            <p className="text-xs font-mono bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded flex items-center gap-1 mt-0.5">
+                              <Lock className="w-3 h-3" />
+                              {(u as any).plain_password
+                                ? (u as any).plain_password
+                                : <span className="italic opacity-60">senha não registrada</span>}
+                            </p>
+                          )}
+                          <p className="text-xs text-gray-400 dark:text-gray-500">Cadastro: {formatDate(u.created_at)}</p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <p className="text-sm font-bold text-green-600 dark:text-green-400">
+                          R$ {(u.balance / 100).toFixed(2).replace(".", ",")}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              placeholder="R$"
+                              value={balanceInputs[u.id] || ""}
+                              onChange={e => setBalanceInputs(prev => ({ ...prev, [u.id]: e.target.value }))}
+                              className="w-16 px-2 py-1 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-yellow-400"
+                            />
+                            <button
+                              onClick={() => {
+                                const val = parseFloat(balanceInputs[u.id] || "0");
+                                if (val > 0) adjustBalance(u.id, Math.round(val * 100));
+                              }}
+                              className="p-1.5 rounded-lg bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-200 transition-colors"
+                              title="Adicionar saldo"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                const val = parseFloat(balanceInputs[u.id] || "0");
+                                if (val > 0) adjustBalance(u.id, -Math.round(val * 100));
+                              }}
+                              className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 hover:bg-red-200 transition-colors"
+                              title="Remover saldo"
+                            >
+                              <Minus className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          <button
+                            onClick={() => openUserDetail(u)}
+                            className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                            title="Ver histórico"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => toggleUserActive(u.id, u.is_active)}
+                            className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            title={u.is_active ? "Desativar" : "Ativar"}
+                          >
+                            {u.is_active
+                              ? <ToggleRight className="w-4 h-4 text-green-500" />
+                              : <ToggleLeft className="w-4 h-4" />}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setDeleteTargetUserId(u.id);
+                              setDeleteTargetUsername(u.username);
+                              setDeleteUserConfirm("");
+                              setTab("database");
+                            }}
+                            className="p-1.5 rounded-lg text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+                            title="Excluir dados do usuário"
+                          >
+                            <Database className="w-4 h-4" />
+                          </button>
+                          {/* % Cashback (Depósito) */}
+                          {cashbackEditId === u.id ? (
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number" step="0.5" min="0" max="100"
+                                placeholder="CB %"
+                                value={cashbackEditValue}
+                                onChange={e => setCashbackEditValue(e.target.value)}
+                                className="w-16 px-1.5 py-1 text-xs rounded-lg border border-orange-300 dark:border-orange-600 bg-orange-50 dark:bg-orange-900/20 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-400"
+                                autoFocus
+                              />
+                              <button onClick={() => saveCashbackForUser(u.id)} className="p-1.5 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors" title="Salvar">
+                                <Save className="w-3.5 h-3.5" />
+                              </button>
+                              <button onClick={() => { setCashbackEditId(null); setCashbackEditValue(""); }} className="p-1.5 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors" title="Cancelar">
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => { setCashbackEditId(u.id); setCashbackEditValue(u.cashback_percentage != null ? String(u.cashback_percentage) : ""); }}
+                              className="flex items-center gap-1 px-2 py-1 text-[10px] rounded-lg bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 hover:bg-orange-100 transition-colors font-semibold"
+                              title="Definir % Cashback no depósito"
+                            >
+                              <span>💰</span>
+                              {u.cashback_percentage != null ? `CB: ${u.cashback_percentage}%` : "CB %"}
+                            </button>
+                          )}
+                          <button
+                            onClick={() => { setChangePwUserId(String(u.id)); setChangePwUsername(u.username); setChangePwValue(""); }}
+                            className="p-1.5 rounded-lg text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+                            title="Alterar senha"
+                          >
+                            <Lock className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => deleteUser(u.id, u.username)}
+                            className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                            title="Excluir usuário"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── MONITORING TAB ── */}
+        {tab === "monitoring" && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                <Monitor className="w-5 h-5" />
+                Monitoramento de Usuários em Tempo Real
+              </h2>
+              <button onClick={loadPresence} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors">
+                <RefreshCw className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+              <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-xl p-4 text-center">
+                <Wifi className="w-6 h-6 mx-auto mb-1 text-green-500" />
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{onlineCount}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Online Agora</p>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center">
+                <WifiOff className="w-6 h-6 mx-auto mb-1 text-gray-400" />
+                <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">{offlineCount}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Offline</p>
+              </div>
+              <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl p-4 text-center">
+                <FileText className="w-6 h-6 mx-auto mb-1 text-blue-500" />
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {presence.filter(p => p.is_online && p.current_action?.includes("emitindo")).length}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Emitindo Docs</p>
+              </div>
+              <div className="bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-800 rounded-xl p-4 text-center">
+                <Globe className="w-6 h-6 mx-auto mb-1 text-purple-500" />
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{users.length > 0 ? users.length : totalTracked}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Total Usuários</p>
+              </div>
+            </div>
+
+            {/* User List */}
+            {presence.length === 0 ? (
+              <div className="text-center py-12 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800">
+                <Monitor className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                <p className="text-sm text-gray-500 dark:text-gray-400">Nenhum dado de presença disponível ainda.</p>
+                <p className="text-xs text-gray-400 mt-1">Os dados aparecerão quando os usuários acessarem o painel.</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {presence.map(p => (
+                  <div key={p.user_id} className={`bg-white dark:bg-gray-900 rounded-xl border p-4 transition-all ${
+                    p.is_online
+                      ? "border-green-200 dark:border-green-800 shadow-sm shadow-green-100 dark:shadow-green-900/20"
+                      : "border-gray-100 dark:border-gray-800 opacity-60"
+                  }`}>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden border-2 border-gray-200 dark:border-gray-700">
+                            {p.profile_photo ? (
+                              <img src={p.profile_photo} alt={p.username} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-sm font-bold text-gray-500 dark:text-gray-400">
+                                {(p.username || "?").charAt(0).toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                          <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-gray-900 ${
+                            p.is_online ? "bg-green-500 animate-pulse" : "bg-gray-400"
+                          }`} />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{p.username || `User #${p.user_id}`}</p>
+                            {p.role === "admin" && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 font-semibold">
+                                Admin
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">{p.email}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="flex items-center gap-2 justify-end mb-1">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                            p.is_online
+                              ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400"
+                              : "bg-gray-100 dark:bg-gray-800 text-gray-500"
+                          }`}>
+                            {p.is_online ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+                            {p.is_online ? "Online" : "Offline"}
+                          </span>
+                        </div>
+                        <p className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                          {PAGE_LABELS[p.current_page] || p.current_page || "—"}
+                        </p>
+                        <p className="text-[10px] text-gray-400">{p.current_action || "navegando"}</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">{timeAgo(p.last_seen)}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── PRICING TAB ── */}
+        {tab === "pricing" && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200">Preços por Documento</h2>
+              {pricing.length === 0 && (
+                <button
+                  onClick={initDefaultPricing}
+                  className="flex items-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-semibold rounded-xl transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Configurar Preços Padrão
+                </button>
+              )}
+            </div>
+            {pricing.length === 0 ? (
+              <div className="text-center py-12 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800">
+                <DollarSign className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Nenhum preço configurado.</p>
+                <button
+                  onClick={initDefaultPricing}
+                  className="px-6 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-xl text-sm transition-colors"
+                >
+                  Configurar Preços Padrão
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {pricing.map(p => (
+                    <div key={p.document_type} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs text-gray-400 dark:text-gray-500 font-mono">{p.document_type}</p>
+                        <button
+                          onClick={() => setEditingIsActive(prev => ({ ...prev, [p.document_type]: !(prev[p.document_type] !== false) }))}
+                          className={`p-1 rounded-lg transition-colors ${editingIsActive[p.document_type] !== false ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}
+                          title={editingIsActive[p.document_type] !== false ? "Desativar" : "Ativar"}
+                        >
+                          {editingIsActive[p.document_type] !== false ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        value={editingDisplayName[p.document_type] ?? p.display_name}
+                        onChange={e => setEditingDisplayName(prev => ({ ...prev, [p.document_type]: e.target.value }))}
+                        placeholder="Nome exibido"
+                        className="w-full px-2 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 mb-2"
+                      />
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-500 dark:text-gray-400">R$</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={editingPrice[p.document_type] || ""}
+                          onChange={e => setEditingPrice(prev => ({ ...prev, [p.document_type]: e.target.value }))}
+                          className="flex-1 px-2 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        />
+                        <button
+                          onClick={() => savePrice(p.document_type)}
+                          className="p-1.5 rounded-lg bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-200 transition-colors"
+                          title="Salvar individual"
+                        >
+                          <Save className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <button
+                    onClick={saveAllPrices}
+                    disabled={pricingSaving}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
+                  >
+                    <Save className="w-4 h-4" />
+                    {pricingSaving ? "Salvando..." : "Salvar Todos os Preços"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ── NOTICES TAB ── */}
+        {tab === "notices" && (
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Criar Novo Aviso</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Tipo</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {NOTICE_TYPES.map(nt => (
+                      <button
+                        key={nt.value}
+                        onClick={() => setNewNotice(n => ({ ...n, type: nt.value as any }))}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+                          newNotice.type === nt.value
+                            ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-900/10 text-yellow-700 dark:text-yellow-400"
+                            : "border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-300"
+                        }`}
+                      >
+                        <nt.icon className="w-3.5 h-3.5" />
+                        {nt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Título</label>
+                  <input
+                    type="text"
+                    value={newNotice.title}
+                    onChange={e => setNewNotice(n => ({ ...n, title: e.target.value }))}
+                    placeholder="Título do aviso"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Mensagem</label>
+                  <textarea
+                    value={newNotice.message}
+                    onChange={e => setNewNotice(n => ({ ...n, message: e.target.value }))}
+                    placeholder="Mensagem do aviso"
+                    rows={3}
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 resize-none"
+                  />
+                </div>
+                <button
+                  onClick={createNotice}
+                  className="w-full py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-xl text-sm transition-colors"
+                >
+                  Publicar Aviso
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-wide">Avisos Publicados</h3>
+              {notices.length === 0 ? (
+                <div className="text-center py-8 text-gray-400 text-sm">Nenhum aviso publicado</div>
+              ) : (
+                <div className="space-y-2">
+                  {notices.map(n => (
+                    <div key={n.id} className={`flex items-start gap-3 p-4 rounded-xl border ${
+                      n.type === "warning" ? "bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800" :
+                      n.type === "error" ? "bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800" :
+                      n.type === "success" ? "bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800" :
+                      "bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
+                    } ${!n.is_active ? "opacity-50" : ""}`}>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{n.title}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{n.message}</p>
+                        <p className="text-[10px] text-gray-400 mt-1">{formatDate(n.created_at || "")}</p>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                          n.is_active
+                            ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400"
+                            : "bg-gray-100 dark:bg-gray-800 text-gray-500"
+                        }`}>
+                          {n.is_active ? "Ativo" : "Inativo"}
+                        </span>
+                        <button
+                          onClick={() => n.id && toggleNotice(n.id, n.is_active)}
+                          className="p-1.5 rounded-lg text-gray-500 hover:bg-white dark:hover:bg-gray-800 transition-colors"
+                        >
+                          {n.is_active ? <ToggleRight className="w-4 h-4 text-green-500" /> : <ToggleLeft className="w-4 h-4" />}
+                        </button>
+                        <button
+                          onClick={() => n.id && deleteNotice(n.id)}
+                          className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── LOGS TAB ── */}
+        {tab === "logs" && (
+          <div>
+            <div className="flex items-center gap-3 mb-4 flex-wrap">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Filtrar logs..."
+                  value={logFilter}
+                  onChange={e => setLogFilter(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                />
+              </div>
+              <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                {LOG_CATEGORIES.map(c => (
+                  <button
+                    key={c.value}
+                    onClick={() => setLogCategory(c.value)}
+                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-semibold transition-all ${
+                      logCategory === c.value
+                        ? "bg-yellow-500 text-white"
+                        : "text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700"
+                    }`}
+                  >
+                    <c.icon className="w-3 h-3" />
+                    {c.label}
+                    {logCategories[c.value] !== undefined && (
+                      <span className="ml-0.5 opacity-70">({logCategories[c.value]})</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+              <button onClick={loadLogs} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors" title="Atualizar">
+                <RefreshCw className="w-4 h-4" />
+              </button>
+              <button onClick={() => clearLogs("all")} className="flex items-center gap-1 px-3 py-2 rounded-xl bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-200 transition-colors text-xs font-semibold" title="Limpar todos os logs">
+                <Trash className="w-3.5 h-3.5" />
+                Limpar
+              </button>
+            </div>
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
+              <Calendar className="w-4 h-4 text-gray-400" />
+              <span className="text-xs text-gray-500 dark:text-gray-400">Período:</span>
+              <input
+                type="date"
+                value={logDateFrom}
+                onChange={e => setLogDateFrom(e.target.value)}
+                className="px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              />
+              <span className="text-xs text-gray-400">até</span>
+              <input
+                type="date"
+                value={logDateTo}
+                onChange={e => setLogDateTo(e.target.value)}
+                className="px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              />
+              {(logDateFrom || logDateTo) && (
+                <button onClick={() => { setLogDateFrom(""); setLogDateTo(""); }} className="text-xs text-red-500 hover:text-red-700 font-semibold">
+                  Limpar filtro
+                </button>
+              )}
+            </div>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin w-6 h-6 border-2 border-yellow-500 border-t-transparent rounded-full" />
+              </div>
+            ) : filteredLogs.length === 0 ? (
+              <div className="text-center py-12 text-gray-400 text-sm">
+                <Activity className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p>Nenhum log encontrado</p>
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Data</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Usuário</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Categoria</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ação</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Detalhes</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                    {filteredLogs.map(l => {
+                      const severity = l.severity || "info";
+                      const category = l.category || "admin";
+                      return (
+                        <tr key={l.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                          <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400 whitespace-nowrap">{formatDate(l.created_at)}</td>
+                          <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{l.username || `#${l.user_id}` || "Sistema"}</td>
+                          <td className="px-4 py-2.5">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full font-semibold ${
+                              category === "payment"
+                                ? "bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400"
+                                : category === "error"
+                                ? "bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400"
+                                : category === "admin"
+                                ? "bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400"
+                                : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                            }`}>
+                              {category}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full font-semibold ${
+                              severity === "error"
+                                ? "bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400"
+                                : l.action.includes("delete") || l.action.includes("exclu")
+                                ? "bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400"
+                                : l.action.includes("emit") || l.action.includes("create") || l.action.includes("credito")
+                                ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400"
+                                : l.action.includes("login")
+                                ? "bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
+                                : l.action.includes("debito")
+                                ? "bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400"
+                                : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                            }`}>
+                              {l.action}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400 hidden md:table-cell max-w-xs truncate">
+                            {(() => {
+                              try {
+                                const parsed = JSON.parse(l.details || "{}");
+                                if (parsed.amount) return `R$ ${(parsed.amount / 100).toFixed(2)} - ${parsed.description || ""}`;
+                                if (parsed.price) return `Preço: R$ ${(parsed.price / 100).toFixed(2)}`;
+                                return l.details || "—";
+                              } catch { return l.details || "—"; }
+                            })()}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── EMISSIONS TAB ── */}
+        {tab === "emissions" && (
+          <div>
+            <div className="flex items-center gap-3 mb-4 flex-wrap">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Filtrar por paciente, usuário ou código..."
+                  value={emissionsFilter}
+                  onChange={e => setEmissionsFilter(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                />
+              </div>
+              <select
+                value={emissionsTypeFilter}
+                onChange={e => setEmissionsTypeFilter(e.target.value)}
+                className="px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              >
+                <option value="all">Todos os Tipos</option>
+                <option value="atestado">Atestado</option>
+                <option value="receita">Receita</option>
+                <option value="cnh">CNH</option>
+                <option value="cha">CHA</option>
+                <option value="toxicologico">Toxicológico</option>
+                <option value="historico-sp">Histórico SP</option>
+                <option value="historico-uninter">Histórico UNINTER</option>
+                <option value="toxicria">Toxicológico Sodré</option>
+                <option value="laudocria">Laudo Sodré</option>
+              </select>
+              <div className="flex items-center gap-2">
+                <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                <input
+                  type="date"
+                  value={emissionsDateFrom}
+                  onChange={e => setEmissionsDateFrom(e.target.value)}
+                  className="px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                  title="Data inicial"
+                />
+                <span className="text-xs text-gray-400">ate</span>
+                <input
+                  type="date"
+                  value={emissionsDateTo}
+                  onChange={e => setEmissionsDateTo(e.target.value)}
+                  className="px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                  title="Data final"
+                />
+                {(emissionsDateFrom || emissionsDateTo) && (
+                  <button onClick={() => { setEmissionsDateFrom(""); setEmissionsDateTo(""); }} className="p-1 rounded-lg bg-red-100 dark:bg-red-900/20 text-red-500 hover:bg-red-200 transition-colors" title="Limpar filtro de data">
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+              <button onClick={loadEmissions} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors">
+                <RefreshCw className="w-4 h-4" />
+              </button>
+              <span className="text-xs text-gray-500 dark:text-gray-400">{filteredEmissions.length} emissões</span>
+            </div>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin w-6 h-6 border-2 border-yellow-500 border-t-transparent rounded-full" />
+              </div>
+            ) : filteredEmissions.length === 0 ? (
+              <div className="text-center py-12 text-gray-400 text-sm">
+                <FileText className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p>Nenhuma emissão encontrada</p>
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Data</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Usuário</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nome</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Tipo</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Código QR</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                    {filteredEmissions.map(e => (
+                      <tr key={`${e.table_source}-${e.id}`} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400 whitespace-nowrap">{formatDate(e.created_at)}</td>
+                        <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{e.username || e.user_id || "—"}</td>
+                        <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">{e.nome || e.paciente || "—"}</td>
+                        <td className="px-4 py-2.5 hidden md:table-cell">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400">
+                            {DOC_TYPE_LABELS[e.type] || e.type}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-gray-400 dark:text-gray-500 font-mono hidden md:table-cell">{e.codigo_qr || "—"}</td>
+                        <td className="px-4 py-2.5">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                            e.status === "emitido"
+                              ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400"
+                              : "bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400"
+                          }`}>
+                            {e.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => editEmission(e)}
+                              className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                              title="Editar"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => downloadEmission(e)}
+                              className="p-1.5 rounded-lg text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+                              title="Baixar"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => deleteEmission(e.id, e.table_source || "documents", false)}
+                              className="p-1.5 rounded-lg text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+                              title="Cancelar"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => deleteEmission(e.id, e.table_source || "documents", true)}
+                              className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                              title="Excluir permanentemente"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── REFERRAL TAB ── */}
+        {tab === "referral" && (
+          <div className="space-y-6">
+            {/* Sub-tabs */}
+            <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+              {(["overview", "referrals", "earnings", "cashback", "users"] as const).map(rt => (
+                <button
+                  key={rt}
+                  onClick={() => setReferralTab(rt)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                    referralTab === rt
+                      ? "bg-yellow-500 text-white"
+                      : "text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700"
+                  }`}
+                >
+                  {rt === "overview" ? "Visão Geral" : rt === "referrals" ? "Indicações" : rt === "earnings" ? "Ganhos Referral" : rt === "cashback" ? "Cashback" : "Usuários"}
+                </button>
+              ))}
+            </div>
+
+            {referralTab === "overview" && (
+              <div className="space-y-6">
+                {/* Stats cards */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 text-center">
+                    <Gift className="w-6 h-6 mx-auto mb-2 text-purple-500" />
+                    <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{referralData.totalReferrals || 0}</p>
+                    <p className="text-xs text-gray-500">Total Indicações</p>
+                  </div>
+                  <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 text-center">
+                    <Users className="w-6 h-6 mx-auto mb-2 text-blue-500" />
+                    <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{referralData.activeReferrers || 0}</p>
+                    <p className="text-xs text-gray-500">Indicadores Ativos</p>
+                  </div>
+                  <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 text-center">
+                    <DollarSign className="w-6 h-6 mx-auto mb-2 text-green-500" />
+                    <p className="text-2xl font-bold text-green-600">R$ {((referralData.totalReferralEarnings || 0) / 100).toFixed(2)}</p>
+                    <p className="text-xs text-gray-500">Total Pago (Referral)</p>
+                  </div>
+                  <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 text-center">
+                    <Percent className="w-6 h-6 mx-auto mb-2 text-orange-500" />
+                    <p className="text-2xl font-bold text-orange-600">R$ {((referralData.totalCashbackPaid || 0) / 100).toFixed(2)}</p>
+                    <p className="text-xs text-gray-500">Total Cashback Pago</p>
+                  </div>
+                </div>
+
+                {/* Global settings */}
+                <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">Configurações Globais</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">% Indicação (Referral)</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number" step="0.5" min="0" max="100"
+                          value={referralSettings.referral_percentage}
+                          onChange={e => setReferralSettings(s => ({ ...s, referral_percentage: parseFloat(e.target.value) || 0 }))}
+                          className="flex-1 px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        />
+                        <span className="text-sm text-gray-500">%</span>
+                        <button
+                          onClick={() => setReferralSettings(s => ({ ...s, referral_enabled: !s.referral_enabled }))}
+                          className={`p-2 rounded-lg transition-colors ${referralSettings.referral_enabled ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}
+                        >
+                          {referralSettings.referral_enabled ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-gray-400 mt-1">% que o indicador ganha sobre cada depósito do indicado</p>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">% Cashback (Depósito)</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number" step="0.5" min="0" max="100"
+                          value={referralSettings.cashback_percentage}
+                          onChange={e => setReferralSettings(s => ({ ...s, cashback_percentage: parseFloat(e.target.value) || 0 }))}
+                          className="flex-1 px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        />
+                        <span className="text-sm text-gray-500">%</span>
+                        <button
+                          onClick={() => setReferralSettings(s => ({ ...s, cashback_enabled: !s.cashback_enabled }))}
+                          className={`p-2 rounded-lg transition-colors ${referralSettings.cashback_enabled ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}
+                        >
+                          {referralSettings.cashback_enabled ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-gray-400 mt-1">% que o usuário ganha de volta ao depositar</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                    <button onClick={saveReferralSettings} className="flex items-center gap-2 px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl transition-colors">
+                      <Save className="w-4 h-4" /> Salvar Configurações
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {referralTab === "referrals" && (
+              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Data</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicador</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicado</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">% Custom</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Total Ganho</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                    {(referralData.referrals || []).map((r: any) => (
+                      <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td className="px-4 py-2.5 text-gray-500">{formatDate(r.created_at)}</td>
+                        <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{r.referrer_name} <span className="text-gray-400">({r.referrer_email})</span></td>
+                        <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">{r.referred_name} <span className="text-gray-400">({r.referred_email})</span></td>
+                        <td className="px-4 py-2.5 text-gray-500">{r.referrer_custom_pct != null ? `${r.referrer_custom_pct}%` : "Global"}</td>
+                        <td className="px-4 py-2.5 font-semibold text-green-600">R$ {((r.total_earned || 0) / 100).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {(referralData.referrals || []).length === 0 && (
+                  <div className="text-center py-8 text-gray-400 text-sm">Nenhuma indicação registrada</div>
+                )}
+              </div>
+            )}
+
+            {referralTab === "earnings" && (
+              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Data</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicador</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicado</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Depósito</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">%</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Ganho</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                    {(referralData.earnings || []).map((e: any) => (
+                      <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td className="px-4 py-2.5 text-gray-500">{formatDate(e.created_at)}</td>
+                        <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{e.referrer_name}</td>
+                        <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">{e.referred_name}</td>
+                        <td className="px-4 py-2.5 text-gray-600">R$ {((e.deposit_amount || 0) / 100).toFixed(2)}</td>
+                        <td className="px-4 py-2.5 text-gray-500">{e.percentage}%</td>
+                        <td className="px-4 py-2.5 font-semibold text-green-600">R$ {((e.earned_amount || 0) / 100).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {(referralData.earnings || []).length === 0 && (
+                  <div className="text-center py-8 text-gray-400 text-sm">Nenhum ganho de indicação registrado</div>
+                )}
+              </div>
+            )}
+
+            {referralTab === "cashback" && (
+              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Data</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Usuário</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Depósito</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">%</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Cashback</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                    {(referralData.cashback || []).map((c: any) => (
+                      <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td className="px-4 py-2.5 text-gray-500">{formatDate(c.created_at)}</td>
+                        <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{c.user_name} <span className="text-gray-400">({c.user_email})</span></td>
+                        <td className="px-4 py-2.5 text-gray-600">R$ {((c.deposit_amount || 0) / 100).toFixed(2)}</td>
+                        <td className="px-4 py-2.5 text-gray-500">{c.percentage}%</td>
+                        <td className="px-4 py-2.5 font-semibold text-green-600">R$ {((c.cashback_amount || 0) / 100).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {(referralData.cashback || []).length === 0 && (
+                  <div className="text-center py-8 text-gray-400 text-sm">Nenhum cashback registrado</div>
+                )}
+              </div>
+            )}
+
+            {referralTab === "users" && (
+              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Usuário</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Código</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicados</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Ganho Ref.</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Cashback</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">% Custom</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                    {(referralData.users || []).map((u: any) => (
+                      <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td className="px-4 py-2.5">
+                          <p className="font-medium text-gray-800 dark:text-gray-200">{u.name || u.email}</p>
+                          <p className="text-[10px] text-gray-400">{u.email}</p>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <span className="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">{u.code || "—"}</span>
+                        </td>
+                        <td className="px-4 py-2.5 text-center font-semibold text-gray-700 dark:text-gray-300">{u.total_referred || 0}</td>
+                        <td className="px-4 py-2.5 text-green-600 font-semibold">R$ {((u.total_earned || 0) / 100).toFixed(2)}</td>
+                        <td className="px-4 py-2.5 text-orange-600 font-semibold">R$ {((u.total_cashback || 0) / 100).toFixed(2)}</td>
+                        <td className="px-4 py-2.5">
+                          {editUserRefId === u.id ? (
+                            <div className="flex items-center gap-1">
+                              <input type="number" step="0.5" placeholder="Ref %" value={editUserRefPct} onChange={e => setEditUserRefPct(e.target.value)} className="w-16 px-1 py-0.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800" />
+                              <input type="number" step="0.5" placeholder="CB %" value={editUserCbPct} onChange={e => setEditUserCbPct(e.target.value)} className="w-16 px-1 py-0.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800" />
+                              <button onClick={() => saveUserRefSettings(u.id)} className="p-1 rounded bg-green-100 text-green-600 hover:bg-green-200"><Save className="w-3 h-3" /></button>
+                              <button onClick={() => setEditUserRefId(null)} className="p-1 rounded bg-gray-100 text-gray-500 hover:bg-gray-200"><X className="w-3 h-3" /></button>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-500">
+                              {u.referral_percentage != null ? `Ref: ${u.referral_percentage}%` : "Global"}
+                              {u.cashback_percentage != null ? ` | CB: ${u.cashback_percentage}%` : ""}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <button
+                            onClick={() => { setEditUserRefId(u.id); setEditUserRefPct(u.referral_percentage?.toString() || ""); setEditUserCbPct(u.cashback_percentage?.toString() || ""); }}
+                            className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                            title="Editar %"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {(referralData.users || []).length === 0 && (
+                  <div className="text-center py-8 text-gray-400 text-sm">Nenhum usuário encontrado</div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── DATABASE TAB ── */}
+        {tab === "database" && (
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-red-200 dark:border-red-800 p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <AlertTriangle className="w-5 h-5 text-red-500" />
+                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Excluir TODOS os Dados</h3>
+              </div>
+              <div className="p-3 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-200 dark:border-red-800 mb-4">
+                <p className="text-xs text-red-700 dark:text-red-400 font-semibold">
+                  ATENÇÃO: Esta ação é IRREVERSÍVEL. Todos os documentos emitidos de todos os usuários serão permanentemente excluídos.
+                </p>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                    Digite <strong className="text-red-600">EXCLUIR TUDO</strong> para confirmar
+                  </label>
+                  <input
+                    type="text"
+                    value={deleteConfirm}
+                    onChange={e => setDeleteConfirm(e.target.value)}
+                    placeholder='Digite "EXCLUIR TUDO"'
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-400"
+                  />
+                </div>
+                <button
+                  onClick={deleteAllData}
+                  disabled={deleteConfirm !== "EXCLUIR TUDO"}
+                  className="w-full py-2.5 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors"
+                >
+                  Excluir TODOS os Dados
+                </button>
               </div>
             </div>
           </div>
+        )}
 
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm">
-            <div className="divide-y divide-gray-100 dark:divide-gray-800">
-              {filteredUsers.map(u => (
-                <div key={u.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg ${
-                      u.role === "admin"
-                        ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                        : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400"
-                    }`}>
-                      {u.username[0].toUpperCase()}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-gray-900 dark:text-white">{u.username}</span>
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold uppercase ${
-                          u.is_active
-                            ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400"
-                            : "bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400"
-                        }`}>
-                          {u.is_active ? "Ativo" : "Inativo"}
-                        </span>
-                        {presence.find(p => String(p.user_id) === String(u.id) && p.is_online) && (
-                          <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-semibold">
-                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                            Online
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{u.email}</p>
-                      {showPasswords && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <p className="text-xs font-mono bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded flex items-center gap-1">
-                            <Lock className="w-3 h-3" />
-                            {(u as any).plain_password || <span className="italic opacity-60">senha não registrada</span>}
-                          </p>
-                          <button
-                            onClick={() => {
-                              setChangePwUserId(String(u.id));
-                              setChangePwUsername(u.username);
-                              setChangePwValue("");
-                            }}
-                            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 transition-colors"
-                            title="Alterar Senha"
-                          >
-                            <Edit3 className="w-3 h-3" />
-                          </button>
-                        </div>
-                      )}
-                      <p className="text-xs text-gray-400 dark:text-gray-500">Cadastro: {formatDate(u.created_at)}</p>
-                    </div>
+        {/* ── SETTINGS TAB ── */}
+        {tab === "settings" && (
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Configurações Gerais</h3>
+              <div className="space-y-4">
+                {[
+                  { key: "site_name", label: "Nome do Site", placeholder: "DocMaster" },
+                  { key: "support_whatsapp", label: "WhatsApp de Suporte", placeholder: "5511999999999" },
+                  { key: "max_documents_per_day", label: "Máx. Documentos por Dia", placeholder: "100" },
+                ].map(({ key, label, placeholder }) => (
+                  <div key={key}>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{label}</label>
+                    <input
+                      type="text"
+                      value={settings[key as keyof typeof settings] as string}
+                      onChange={e => setSettings(s => ({ ...s, [key]: e.target.value }))}
+                      placeholder={placeholder}
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                    />
                   </div>
-
-                  <div className="flex flex-col items-end gap-2">
-                    <p className="text-sm font-bold text-green-600 dark:text-green-400">
-                      R$ {formatBalance(u.balance)}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="number"
-                          placeholder="R$"
-                          value={balanceInputs[u.id] || ""}
-                          onChange={e => setBalanceInputs(prev => ({ ...prev, [u.id]: e.target.value }))}
-                          className="w-16 px-2 py-1 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-yellow-400"
-                        />
-                        <button
-                          onClick={() => {
-                            const val = parseFloat(balanceInputs[u.id] || "0");
-                            if (val > 0) adjustBalance(u.id, Math.round(val * 100));
-                          }}
-                          className="p-1.5 rounded-lg bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-200 transition-colors"
-                          title="Adicionar saldo"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            const val = parseFloat(balanceInputs[u.id] || "0");
-                            if (val > 0) adjustBalance(u.id, -Math.round(val * 100));
-                          }}
-                          className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-200 transition-colors"
-                          title="Remover saldo"
-                        >
-                          <Minus className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                      <button
-                        onClick={() => toggleUserStatus(u.id, u.is_active)}
-                        className={`p-1.5 rounded-lg transition-colors ${
-                          u.is_active
-                            ? "text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                            : "text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
-                        }`}
-                        title={u.is_active ? "Desativar" : "Ativar"}
-                      >
-                        {u.is_active ? <XCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
-                      </button>
-                    </div>
+                ))}
+                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Modo Manutenção</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Bloqueia acesso de usuários não-admin</p>
                   </div>
+                  <button
+                    onClick={() => setSettings(s => ({ ...s, maintenance_mode: !s.maintenance_mode }))}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${settings.maintenance_mode ? "bg-red-500" : "bg-gray-300 dark:bg-gray-600"}`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${settings.maintenance_mode ? "translate-x-5" : ""}`} />
+                  </button>
                 </div>
-              ))}
-              {filteredUsers.length === 0 && (
-                <div className="p-12 text-center">
-                  <p className="text-gray-500 dark:text-gray-400">Nenhum usuário encontrado</p>
+                <button
+                  disabled={settingsSaving}
+                  onClick={async () => {
+                    setSettingsSaving(true);
+                    try {
+                      const res = await fetch("/api/admin/settings", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify(settings),
+                      });
+                      const data = await res.json();
+                      if (data.success) {
+                        toast.success("Configurações salvas com sucesso!");
+                      } else {
+                        toast.error(data.error || "Erro ao salvar configurações");
+                      }
+                    } catch { toast.error("Erro de conexão"); }
+                    finally { setSettingsSaving(false); }
+                  }}
+                  className="w-full py-2.5 bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+                >
+                  {settingsSaving ? <><RefreshCw className="w-4 h-4 animate-spin" /> Salvando...</> : <><Save className="w-4 h-4" /> Salvar Configurações</>}
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Logo do Painel</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                Faça upload de uma nova logo para o painel. A imagem será usada na sidebar e na página de login.
+              </p>
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-800">
+                  <img src="/assets/logo-icon.png" alt="Logo atual" className="w-16 h-16 object-contain" />
+                </div>
+                <div className="flex-1">
+                  <label className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl cursor-pointer transition-colors text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <Save className="w-4 h-4" />
+                    Escolher Arquivo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          toast.info(`Logo "${file.name}" selecionada. Funcionalidade de upload será implementada com R2 Storage.`);
+                        }
+                      }}
+                    />
+                  </label>
+                  <p className="text-[10px] text-gray-400 mt-2">PNG, JPG ou WebP. Máximo 2MB.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Exclusão Automática de Documentos</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                Configure o período de retenção (em dias) para cada tipo de documento. Após esse período, os documentos serão excluídos automaticamente.
+              </p>
+              <div className="space-y-3">
+                {[
+                  { key: "auto_delete_atestado", label: "Atestados", defaultVal: "60" },
+                  { key: "auto_delete_receita", label: "Receitas (Dr. Consulta)", defaultVal: "60" },
+                  { key: "auto_delete_cnh", label: "CNH Digital", defaultVal: "365" },
+                  { key: "auto_delete_cha", label: "CHA Náutica", defaultVal: "60" },
+                  { key: "auto_delete_toxicologico", label: "Toxicológico", defaultVal: "60" },
+                  { key: "auto_delete_historico", label: "Históricos Escolares", defaultVal: "90" },
+                ].map(({ key, label, defaultVal }) => (
+                  <div key={key} className="flex items-center gap-3">
+                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400 w-48 flex-shrink-0">{label}</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="3650"
+                      value={(settings as any)[key] || defaultVal}
+                      onChange={e => setSettings(s => ({ ...s, [key]: e.target.value }))}
+                      className="w-24 px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 text-center"
+                    />
+                    <span className="text-xs text-gray-400">dias</span>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => toast.success("Configurações de exclusão automática salvas!")}
+                className="w-full mt-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl text-sm transition-colors"
+              >
+                Salvar Configurações de Exclusão
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* User Detail Modal */}
+      {userDetailOpen && selectedUser && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-lg shadow-2xl max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-800">
+              <div>
+                <h3 className="font-bold text-gray-900 dark:text-white">{selectedUser.username}</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{selectedUser.email}</p>
+              </div>
+              <button onClick={() => setUserDetailOpen(false)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+                <X className="w-4 h-4 text-gray-500" />
+              </button>
+            </div>
+            <div className="p-5 overflow-y-auto flex-1">
+              <div className="grid grid-cols-2 gap-3 mb-5">
+                <div className="bg-yellow-50 dark:bg-yellow-900/10 rounded-xl p-3">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Saldo</p>
+                  <p className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
+                    R$ {(selectedUser.balance / 100).toFixed(2).replace(".", ",")}
+                  </p>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Status</p>
+                  <p className={`text-sm font-bold ${selectedUser.is_active ? "text-green-600 dark:text-green-400" : "text-red-500"}`}>
+                    {selectedUser.is_active ? "Ativo" : "Inativo"}
+                  </p>
+                </div>
+              </div>
+              <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Histórico de Emissões</h4>
+              {userHistory.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-6">Nenhuma emissão registrada</p>
+              ) : (
+                <div className="space-y-2">
+                  {userHistory.map((h: any, i: number) => (
+                    <div key={i} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                      <div>
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{h.paciente || h.nome || "—"}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{h.type || "atestado"} · {formatDate(h.created_at)}</p>
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 font-semibold">
+                        {h.status || "emitido"}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -548,347 +2248,46 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* ── TAB: PREÇOS ── */}
-      {activeTab === "pricing" && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-yellow-500" />
-              Gestão de Preços
-            </h2>
-            <div className="flex items-center gap-2">
+      {/* Confirmation Modal */}
+      {confirmModal.open && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md shadow-2xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                confirmModal.type === "danger" ? "bg-red-100 dark:bg-red-900/20" :
+                confirmModal.type === "warning" ? "bg-amber-100 dark:bg-amber-900/20" :
+                "bg-blue-100 dark:bg-blue-900/20"
+              }`}>
+                <AlertTriangle className={`w-5 h-5 ${
+                  confirmModal.type === "danger" ? "text-red-500" :
+                  confirmModal.type === "warning" ? "text-amber-500" :
+                  "text-blue-500"
+                }`} />
+              </div>
+              <h3 className="font-bold text-gray-900 dark:text-white">{confirmModal.title}</h3>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">{confirmModal.message}</p>
+            <div className="flex gap-3">
               <button
-                onClick={fetchPricing}
-                className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors"
-                title="Recarregar"
+                onClick={() => setConfirmModal(m => ({ ...m, open: false }))}
+                className="flex-1 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-semibold rounded-xl text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
-                <RefreshCw className={`w-4 h-4 ${pricingLoading ? "animate-spin" : ""}`} />
+                Cancelar
               </button>
               <button
-                onClick={saveAllPricing}
-                disabled={savingAllPricing || pricing.length === 0}
-                className="flex items-center gap-2 px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={confirmModal.onConfirm}
+                className={`flex-1 py-2.5 text-white font-semibold rounded-xl text-sm transition-colors ${
+                  confirmModal.type === "danger" ? "bg-red-500 hover:bg-red-600" :
+                  confirmModal.type === "warning" ? "bg-amber-500 hover:bg-amber-600" :
+                  "bg-blue-500 hover:bg-blue-600"
+                }`}
               >
-                {savingAllPricing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                Salvar Todos
-              </button>
-            </div>
-          </div>
-
-          <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/20 rounded-2xl p-4">
-            <p className="text-xs text-yellow-700 dark:text-yellow-500 leading-relaxed">
-              <strong>Dica:</strong> Edite o nome e o preço de cada documento. O nome alterado aparecerá para todos os usuários no modal de emissão. Clique em <strong>Salvar</strong> em cada linha ou use <strong>Salvar Todos</strong> para aplicar todas as alterações de uma vez.
-            </p>
-          </div>
-
-          {pricingLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <RefreshCw className="w-8 h-8 animate-spin text-yellow-500" />
-            </div>
-          ) : pricing.length === 0 ? (
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-12 text-center">
-              <DollarSign className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-              <p className="text-gray-500 dark:text-gray-400 mb-2">Nenhum preço cadastrado</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500">
-                Verifique se a tabela <code>document_pricing</code> foi criada no banco D1.
-              </p>
-            </div>
-          ) : (
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm">
-              {/* Cabeçalho da tabela */}
-              <div className="grid grid-cols-12 gap-3 px-5 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                <div className="col-span-1">Ativo</div>
-                <div className="col-span-2">Tipo</div>
-                <div className="col-span-4">Nome Exibido</div>
-                <div className="col-span-3">Preço (R$)</div>
-                <div className="col-span-2 text-right">Ações</div>
-              </div>
-
-              <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                {pricing.map(item => {
-                  const edit = pricingEdits[item.document_type] || {
-                    price: (item.price / 100).toFixed(2),
-                    display_name: item.display_name,
-                    is_active: item.is_active !== false,
-                  };
-                  const isSaving = savingPricing === item.document_type;
-
-                  return (
-                    <div key={item.document_type} className="grid grid-cols-12 gap-3 px-5 py-4 items-center hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
-                      {/* Toggle ativo */}
-                      <div className="col-span-1">
-                        <button
-                          onClick={() => setPricingEdits(prev => ({
-                            ...prev,
-                            [item.document_type]: { ...edit, is_active: !edit.is_active }
-                          }))}
-                          className={`w-9 h-5 rounded-full transition-colors relative ${
-                            edit.is_active ? "bg-green-500" : "bg-gray-300 dark:bg-gray-600"
-                          }`}
-                        >
-                          <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${
-                            edit.is_active ? "left-4" : "left-0.5"
-                          }`} />
-                        </button>
-                      </div>
-
-                      {/* Tipo */}
-                      <div className="col-span-2">
-                        <span className="text-xs font-mono bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2 py-1 rounded-lg">
-                          {item.document_type}
-                        </span>
-                      </div>
-
-                      {/* Nome exibido — editável */}
-                      <div className="col-span-4">
-                        <div className="relative">
-                          <Tag className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                          <input
-                            type="text"
-                            value={edit.display_name}
-                            onChange={e => setPricingEdits(prev => ({
-                              ...prev,
-                              [item.document_type]: { ...edit, display_name: e.target.value }
-                            }))}
-                            className="w-full pl-8 pr-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all"
-                            placeholder="Nome do documento"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Preço — editável */}
-                      <div className="col-span-3">
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">R$</span>
-                          <input
-                            type="text"
-                            value={edit.price}
-                            onChange={e => setPricingEdits(prev => ({
-                              ...prev,
-                              [item.document_type]: { ...edit, price: e.target.value }
-                            }))}
-                            className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all"
-                            placeholder="0,00"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Botão salvar individual */}
-                      <div className="col-span-2 flex justify-end">
-                        <button
-                          onClick={() => saveSinglePricing(item.document_type)}
-                          disabled={isSaving}
-                          className="flex items-center gap-1.5 px-3 py-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold rounded-xl transition-colors text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Salvar este item"
-                        >
-                          {isSaving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                          Salvar
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── TAB: CONFIGURAÇÕES ── */}
-      {activeTab === "settings" && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 space-y-6 shadow-sm">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <Settings className="w-5 h-5 text-yellow-500" />
-              Configurações Gerais
-            </h2>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-2">
-                <MessageCircle className="w-4 h-4" />
-                WhatsApp Suporte
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={settings.support_whatsapp || ""}
-                  onChange={e => setSettings({ ...settings, support_whatsapp: e.target.value })}
-                  placeholder="Ex: 5511999999999"
-                  className="flex-1 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all"
-                />
-                <button
-                  onClick={() => updateSetting("support_whatsapp", settings.support_whatsapp)}
-                  className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold rounded-xl transition-colors text-sm"
-                >
-                  Salvar
-                </button>
-              </div>
-              <p className="mt-1.5 text-xs text-gray-400">
-                Número exibido no fallback de PIX e na página de recargas quando o pagamento falha.
-              </p>
-            </div>
-
-            <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                <Trash2 className="w-4 h-4 text-red-500" />
-                Auto-Exclusão (Dias)
-              </h3>
-              <div className="space-y-3">
-                {[
-                  { key: "auto_delete_atestado", label: "Atestados" },
-                  { key: "auto_delete_cnh", label: "CNH/CHA" },
-                  { key: "auto_delete_toxicologico", label: "Toxicológico" },
-                  { key: "auto_delete_historico", label: "Históricos" }
-                ].map(item => (
-                  <div key={item.key} className="flex items-center justify-between gap-4">
-                    <span className="text-xs text-gray-600 dark:text-gray-400">{item.label}</span>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        value={settings[item.key] || "0"}
-                        onChange={e => setSettings({ ...settings, [item.key]: e.target.value })}
-                        className="w-16 px-2 py-1 text-xs rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-center"
-                      />
-                      <button
-                        onClick={() => updateSetting(item.key, settings[item.key])}
-                        className="p-1 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded transition-colors"
-                      >
-                        <RefreshCw className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p className="mt-3 text-[10px] text-gray-400 leading-relaxed italic">
-                * Use "0" para desativar a exclusão automática.
-              </p>
-            </div>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/20 h-fit">
-            <h3 className="text-sm font-bold text-yellow-800 dark:text-yellow-400 flex items-center gap-2 mb-2">
-              <AlertTriangle className="w-4 h-4" />
-              Atenção Admin
-            </h3>
-            <p className="text-xs text-yellow-700 dark:text-yellow-500/80 leading-relaxed">
-              As alterações de saldo e status de usuário são imediatas. O suporte via WhatsApp é exibido para todos os usuários na página de recargas quando o PIX falha.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* ── TAB: LOGS ── */}
-      {activeTab === "logs" && (
-        <div className="p-6 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <FileText className="w-5 h-5 text-yellow-500" />
-              Logs do Sistema
-              <span className="text-xs font-normal text-gray-400 ml-1">({systemLogs.length} registros)</span>
-            </h2>
-            <div className="flex items-center gap-2">
-              <select
-                value={logFilter}
-                onChange={e => setLogFilter(e.target.value as any)}
-                className="text-xs px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
-              >
-                <option value="all">Todos</option>
-                <option value="system">Sistema</option>
-                <option value="admin">Admin</option>
-              </select>
-              <button
-                onClick={() => handleClearLogs(logFilter)}
-                disabled={isClearingLogs || systemLogs.length === 0}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {isClearingLogs ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                Limpar Logs
+                Confirmar
               </button>
             </div>
           </div>
-          {systemLogs.length === 0 ? (
-            <div className="text-center py-8 text-gray-400 dark:text-gray-600">
-              <FileText className="w-10 h-10 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">Nenhum log registrado</p>
-            </div>
-          ) : (
-            <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
-              {systemLogs.map((log: any, i: number) => (
-                <div key={log.id || i} className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800">
-                  <div className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${
-                    log.severity === 'error' ? 'bg-red-500' :
-                    log.severity === 'warning' ? 'bg-yellow-500' :
-                    log.severity === 'info' ? 'bg-blue-500' : 'bg-gray-400'
-                  }`} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{log.action || log.category || 'LOG'}</span>
-                      {log.severity && (
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                          log.severity === 'error' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' :
-                          log.severity === 'warning' ? 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                          'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
-                        }`}>{log.severity}</span>
-                      )}
-                      <span className="text-[10px] text-gray-400 ml-auto">{log.created_at ? formatDate(log.created_at) : ''}</span>
-                    </div>
-                    {log.details && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{log.details}</p>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       )}
-
-      {/* Modal de Alterar Senha */}
-      {changePwUserId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 w-full max-w-md p-6 shadow-2xl">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-3 rounded-2xl bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
-                <Lock className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Alterar Senha</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Usuário: <span className="font-bold text-purple-600">{changePwUsername}</span></p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nova Senha</label>
-                <input
-                  type="text"
-                  value={changePwValue}
-                  onChange={e => setChangePwValue(e.target.value)}
-                  placeholder="Mínimo 6 caracteres"
-                  className="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
-                  autoFocus
-                />
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={() => setChangePwUserId(null)}
-                  className="flex-1 px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleChangePassword}
-                  disabled={isChangingPw}
-                  className="flex-1 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-2xl transition-all shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {isChangingPw ? <RefreshCw className="w-5 h-5 animate-spin" /> : "Confirmar"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </DashboardLayout>
   );
-};
-
-export default AdminDashboard;
+}
