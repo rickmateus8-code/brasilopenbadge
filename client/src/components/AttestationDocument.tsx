@@ -310,20 +310,24 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             <span style={{ color: "#000", textTransform: "uppercase" }}>{data.endereco}</span>
           </div>
 
-          {/* Linha 4: Endereço Emitente (Reposicionado conforme imagem) */}
-          {enderecoEmitente && (
-            <div style={{ 
-              borderTop: "1px solid #000", 
-              marginTop: 4, 
-              paddingTop: 4,
-              fontSize: 10.5,
-              color: "#000"
-            }}>
-              <span style={{ fontWeight: 700 }}>ENDEREÇO EMITENTE: </span>
-              <span style={{ fontWeight: 400, textTransform: "uppercase" }}>{enderecoEmitente}</span>
-            </div>
-          )}
         </div>
+
+        {/* ===== ENDEREÇO EMITENTE (Sem moldura, abaixo da caixa de dados) ===== */}
+        {enderecoEmitente && (
+          <div style={{ 
+            marginTop: 4, 
+            padding: "2px 10px",
+            fontSize: 10.5,
+            color: "#000",
+            textAlign: "left",
+            position: "relative",
+            zIndex: 2,
+            flexShrink: 0,
+          }}>
+            <span style={{ fontWeight: 700 }}>ENDEREÇO EMITENTE: </span>
+            <span style={{ fontWeight: 400, textTransform: "uppercase" }}>{enderecoEmitente}</span>
+          </div>
+        )}
         {/* ENDEREÇO EMITENTE: exibido apenas no cabeçalho do documento, não aqui */}
 
         {/* ===== CORPO DO TEXTO ===== */}
