@@ -475,7 +475,7 @@ export default function Dashboard() {
               className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-semibold transition-all"
             >
               <Plus className="w-4 h-4" />
-              + Novo Documento
+              Novo Documento
             </button>
           </div>
         </div>
@@ -585,7 +585,7 @@ export default function Dashboard() {
                       onClick={() => setShowNovoDocModal(true)}
                       className="mt-3 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-lg transition-colors"
                     >
-                      + Novo Documento
+                      Novo Documento
                     </button>
                   </div>
                 ) : (
@@ -669,7 +669,7 @@ export default function Dashboard() {
                     onClick={() => setShowNovoDocModal(true)}
                     className="mt-3 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-lg transition-colors"
                   >
-                    + Novo Documento
+                    Novo Documento
                   </button>
                 </div>
               ) : (
