@@ -366,6 +366,9 @@ export default function AtestadoCria() {
   // ── Tipo de documento do paciente ──────────────────────────────────────────
   const [tipoDoc, setTipoDoc] = useState<"CPF" | "CNS">("CPF");
 
+  // ── Tipo de documento (Atestado ou Laudo) ──────────────────────────────────
+  const [documentType, setDocumentType] = useState<'atestado' | 'laudo'>('atestado');
+
   // ── API de CPF ─────────────────────────────────────────────────────────────
   const [cpfLoading, setCpfLoading] = useState(false);
   const [cpfStatus, setCpfStatus] = useState<"idle" | "ok" | "error" | "not_found">("idle");
@@ -1060,6 +1063,7 @@ export default function AtestadoCria() {
     cidNome: form.cidNome,
     cidade: form.cidade,
     modoCarimbo: form.modoCarimbo,
+    documentType,
     logoLeftScale,
     logoRightScale,
     logoLeftX,
@@ -1781,6 +1785,37 @@ export default function AtestadoCria() {
               <p style={secTitle}>🩺 3. Dados Médicos</p>
               <div style={{ display: "grid", gap: 8 }}>
 
+                {/* Tipo de Documento: Atestado ou Laudo */}
+                <div>
+                  <label style={lbl}>Tipo de Documento *</label>
+                  <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
+                    <button
+                      type="button"
+                      onClick={() => setDocumentType('atestado')}
+                      style={{
+                        flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
+                        background: documentType === 'atestado' ? "#005CA9" : "#e2e8f0",
+                        color: documentType === 'atestado' ? "#fff" : "#374151",
+                        border: documentType === 'atestado' ? "2px solid #005CA9" : "2px solid #d1d5db",
+                      }}
+                    >
+                      ATESTADO MÉDICO
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDocumentType('laudo')}
+                      style={{
+                        flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
+                        background: documentType === 'laudo' ? "#005CA9" : "#e2e8f0",
+                        color: documentType === 'laudo' ? "#fff" : "#374151",
+                        border: documentType === 'laudo' ? "2px solid #005CA9" : "2px solid #d1d5db",
+                      }}
+                    >
+                      LAUDO MÉDICO
+                    </button>
+                  </div>
+                </div>
+
                 {/* Dias de Afastamento */}
                 <div>
                   <label style={lbl}>Dias de Afastamento (1-15)</label>
@@ -2087,6 +2122,7 @@ export default function AtestadoCria() {
                 logoRight={logoRight}
                 signatureColor={signatureColor}
                 signatureImage={signatureImage}
+                documentType={documentType}
                 logoLeftScale={logoLeftScale}
                 logoRightScale={logoRightScale}
                 logoLeftX={logoLeftX}

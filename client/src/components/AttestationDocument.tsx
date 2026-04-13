@@ -32,6 +32,7 @@ interface AttestationDocumentProps {
   logoRight?: string;
   signatureColor?: string;
   signatureImage?: string;
+  documentType?: 'atestado' | 'laudo';
   logoLeftScale?: number;
   logoRightScale?: number;
   logoLeftX?: number;
@@ -60,7 +61,7 @@ const PAD_H = 56;  // ~15mm top/bottom
 const PAD_V = 60;  // ~16mm left/right
 
 const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>(
-  ({ data, logoUrl, logoLeft, logoRight, signatureColor, signatureImage, logoLeftScale = 1, logoRightScale = 1, logoLeftX = 0, logoLeftY = 0, logoRightX = 0, logoRightY = 0 }, ref) => {
+  ({ data, logoUrl, logoLeft, logoRight, signatureColor, signatureImage, documentType, logoLeftScale = 1, logoRightScale = 1, logoLeftX = 0, logoLeftY = 0, logoRightX = 0, logoRightY = 0 }, ref) => {
     const isEmitted = data.codigoQR && data.codigoQR !== "XXXX.XXXX";
     // QR Code aponta para validaratestado.digital/validar?codigo=XXXX&data=YYYY-MM-DD
     // A data no banco está em DD/MM/YYYY — converte para YYYY-MM-DD para o parâmetro da URL
@@ -93,6 +94,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const cidNome = (data as any).cidNome || "";
     const cidade = (data as any).cidade || "";
     const modoCarimbo = (data as any).modoCarimbo || false;
+    const docType = documentType || (data as any).documentType || 'atestado';
 
     // Tipo de documento do paciente
     const tipoDoc = (data as any).tipoDoc || "CPF";
@@ -233,38 +235,36 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
         {/* ===== TÍTULO ===== */}
         <div style={{
-          fontWeight: 700,
-          fontSize: 19.44,
+          fontWeight: 900,
+          fontSize: 21.0,
           textTransform: "uppercase",
+          borderTop: "2px solid #000",
           borderBottom: "2px solid #000",
           display: "block",
           padding: "5px 0",
           width: "100%",
           textAlign: "center",
           marginBottom: 14,
-          letterSpacing: 0,
+          letterSpacing: 3,
           position: "relative",
           zIndex: 2,
           color: "#000",
           flexShrink: 0,
         }}>
-          ATESTADO MÉDICO
+          {docType === 'laudo' ? 'LAUDO MÉDICO' : 'ATESTADO MÉDICO'}
         </div>
 
         {/* ===== DADOS DO PACIENTE ===== */}
         <div style={{
           border: "1px solid #000",
-          padding: "6px 10px",
+          padding: "7px 10px",
           fontSize: 10.5,
-          marginBottom: 6,
-          lineHeight: 1.55,
+          marginBottom: 0,
+          lineHeight: 1.7,
           position: "relative",
           zIndex: 2,
           background: "rgba(255,255,255,0.9)",
           flexShrink: 0,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
         }}>
           {/* Linha 1: Paciente | Sexo | Nasc */}
           <div style={{ display: "flex", gap: 12, marginBottom: 2 }}>
@@ -297,9 +297,30 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           {/* Linha 3: Endereço */}
           <div>
             <span style={{ fontWeight: 700, color: "#000" }}>Endereço: </span>
-            <span style={{ fontWeight: 400, color: "#000", textTransform: "uppercase" }}>{data.endereco}</span>
+            <span style={{ color: "#000", textTransform: "uppercase" }}>{data.endereco}</span>
           </div>
         </div>
+
+        {/* ===== ENDEREÇO EMITENTE ===== */}
+        {enderecoEmitente && (
+          <div style={{
+            border: "1px solid #000",
+            borderTop: "none",
+            padding: "6px 10px",
+            fontSize: 10,
+            fontWeight: 700,
+            textTransform: "uppercase",
+            marginBottom: 6,
+            position: "relative",
+            zIndex: 2,
+            background: "rgba(255,255,255,0.9)",
+            flexShrink: 0,
+            color: "#000",
+          }}>
+            <span style={{ fontWeight: 700 }}>ENDEREÇO EMITENTE: </span>
+            {enderecoEmitente}
+          </div>
+        )}
         {/* ENDEREÇO EMITENTE: exibido apenas no cabeçalho do documento, não aqui */}
 
         {/* ===== CORPO DO TEXTO ===== */}
@@ -358,14 +379,14 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             }}>
               {/* Esquerda: cidade/data + URL validação */}
               <div style={{ color: "#000", lineHeight: 1.25, fontFamily: "Arial, Helvetica, sans-serif", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-                <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 9.92 }}>
+                <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.42 }}>
                   {dataFormatada || data.dataEmissao}
                 </div>
-                <div style={{ fontSize: 9.38 }}>Valide este documento acessando o endereço:</div>
-                <strong style={{ fontSize: 9.92, display: "block" }}>https://validaratestado.digital</strong>
+                <div style={{ fontSize: 9.85 }}>Valide este documento acessando o endereço:</div>
+                <strong style={{ fontSize: 10.42, display: "block" }}>https://validaratestado.digital</strong>
                 <div style={{ display: "flex", alignItems: "center", gap: 3, flexWrap: "nowrap" }}>
-                  <span style={{ fontWeight: 400, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 9.38, whiteSpace: "nowrap", lineHeight: 1 }}>Código:</span>
-                  <strong style={{ fontFamily: "'Courier New', monospace", letterSpacing: 0, fontSize: 9.92, fontWeight: 900, whiteSpace: "nowrap", lineHeight: 1 }}>
+                  <span style={{ fontWeight: 400, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 9.85, whiteSpace: "nowrap", lineHeight: 1 }}>Código:</span>
+                  <strong style={{ fontFamily: "'Courier New', monospace", letterSpacing: 0, fontSize: 10.42, fontWeight: 900, whiteSpace: "nowrap", lineHeight: 1 }}>
                     {isEmitted ? data.codigoQR : "****.****"}
                   </strong>
                 </div>
