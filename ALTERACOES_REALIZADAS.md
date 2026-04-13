@@ -332,3 +332,24 @@ Conforme solicitação do usuário, foram realizadas as seguintes otimizações 
 **Commits:** 
 - DocMaster: `1a4e371`
 - IDAB: `3bf42c7`
+
+
+---
+
+## 11. Correção de Posicionamento: Endereço Emitente (08/04/2026)
+
+Após análise da imagem de referência, foram realizadas as seguintes correções de posicionamento:
+
+### 11.1. Remoção de Duplicatas
+- **Limpeza:** Removido o bloco "ENDEREÇO EMITENTE" que estava posicionado incorretamente logo abaixo da linha preta superior (marcado em azul na referência).
+
+### 11.2. Novo Posicionamento (Fiel à Referência)
+- **Integração:** O "ENDEREÇO EMITENTE" foi movido para dentro da moldura principal de dados do paciente.
+- **Localização:** Posicionado na parte inferior da moldura, logo abaixo do endereço do paciente, separado por uma linha horizontal (`borderTop: 1px solid #000`).
+- **Alinhamento:** Alinhado perfeitamente à esquerda, respeitando os limites internos da moldura.
+
+### 11.3. Estilização
+- **Moldura:** Removida a moldura externa individual que envolvia o endereço do emitente.
+- **Tipografia:** Mantido o rótulo em negrito e o valor em texto normal (`fontWeight: 400`), seguindo o padrão do documento.
+
+**Status:** ✅ Concluído e Sincronizado (DocMaster & IDAB)
