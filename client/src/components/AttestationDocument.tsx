@@ -266,10 +266,10 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
         {/* ===== DADOS DO PACIENTE ===== */}
         <div style={{
-          border: "1px solid #000",
+          border: "1px solid #000", // Moldura completa mantida
           padding: "7px 10px",
           fontSize: 10.5,
-          marginBottom: 0,
+          marginBottom: 4, // Espaçamento para o texto abaixo
           lineHeight: 1.7,
           position: "relative",
           zIndex: 2,
@@ -315,14 +315,14 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         {/* ===== ENDEREÇO EMITENTE (Sem moldura, abaixo da caixa de dados) ===== */}
         {enderecoEmitente && (
           <div style={{ 
-            marginTop: 4, 
-            padding: "2px 10px",
+            padding: "0 10px",
             fontSize: 10.5,
             color: "#000",
             textAlign: "left",
             position: "relative",
             zIndex: 2,
             flexShrink: 0,
+            marginBottom: 10, // Espaçamento para o corpo do texto
           }}>
             <span style={{ fontWeight: 700 }}>ENDEREÇO EMITENTE: </span>
             <span style={{ fontWeight: 400, textTransform: "uppercase" }}>{enderecoEmitente}</span>
