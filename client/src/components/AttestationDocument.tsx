@@ -349,16 +349,16 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           flexShrink: 0,
           gap: 16,
           }}>
-            {/* Esquerda: cidade/data + URL validação — fontes +5% */}
+            {/* Esquerda: cidade/data + URL validação — fontes +5% acumulado | fonte original Arial + Courier New no código */}
             <div style={{ color: "#000", lineHeight: 1.25, fontFamily: "Arial, Helvetica, sans-serif", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-              <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 9.45 }}>
+              <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 9.92 }}>
                 {dataFormatada || data.dataEmissao}
               </div>
-              <div style={{ fontSize: 8.93 }}>Valide este documento acessando o endereço:</div>
-              <strong style={{ fontSize: 9.45, display: "block" }}>https://validaratestado.digital</strong>
+              <div style={{ fontSize: 9.38 }}>Valide este documento acessando o endereço:</div>
+              <strong style={{ fontSize: 9.92, display: "block" }}>https://validaratestado.digital</strong>
               <div style={{ display: "flex", alignItems: "center", gap: 3, flexWrap: "nowrap" }}>
-                <span style={{ fontWeight: 400, fontSize: 8.93, whiteSpace: "nowrap", lineHeight: 1 }}>Código:</span>
-                <strong style={{ fontFamily: "'Courier New', monospace", letterSpacing: 0, fontSize: 9.45, fontWeight: 900, whiteSpace: "nowrap", lineHeight: 1 }}>
+                <span style={{ fontWeight: 400, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 9.38, whiteSpace: "nowrap", lineHeight: 1 }}>Código:</span>
+                <strong style={{ fontFamily: "'Courier New', monospace", letterSpacing: 0, fontSize: 9.92, fontWeight: 900, whiteSpace: "nowrap", lineHeight: 1 }}>
                   {isEmitted ? data.codigoQR : "****.****"}
                 </strong>
               </div>
