@@ -337,98 +337,80 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
         {/* ===== RODAPÉ DIGITAL ===== */}
         {!modoCarimbo && (
-          /* ===== RODAPÉ DIGITAL — footer_strip spec ===== */
-          /* 32mm×210mm | bg #E6E6E6 | border 0.25mm | pad L8/R10/T5/B5 mm */
           <div style={{
+            borderTop: "2px solid #000",
             marginTop: "auto",
-            flexShrink: 0,
-            position: "relative",
-            zIndex: 2,
-            /* 32mm = ~121px; inclui a borda superior */
-            height: 121,
-            background: "#E6E6E6",
-            border: "1px solid #000000",
-            /* padding: T=19px R=38px B=19px L=30px (5/10/5/8 mm) */
-            padding: "19px 38px 19px 30px",
-            boxSizing: "border-box",
-            display: "flex",
-            alignItems: "center",
-            gap: 0,
+            paddingTop: 10,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-end",
+          position: "relative",
+          zIndex: 2,
+          flexShrink: 0,
+          gap: 16,
           }}>
-            {/* QR Code — 24mm = ~91px, alinhado à esquerda do bloco */}
-            <div style={{ flexShrink: 0, lineHeight: 0 }}>
-              {isEmitted ? (
-                <QRCode
-                  value={qrValue}
-                  size={91}
-                  level="H"
-                  includeMargin={false}
-                  fgColor="#000000"
-                  bgColor="#E6E6E6"
-                />
-              ) : (
-                <div style={{ position: "relative", width: 91, height: 91, flexShrink: 0 }}>
-                  <div style={{ filter: "blur(4px)", opacity: 0.5, lineHeight: 0 }}>
-                    <QRCode
-                      value="https://validaratestado.digital"
-                      size={91}
-                      level="H"
-                      includeMargin={false}
-                      fgColor="#1a1a1a"
-                      bgColor="#E6E6E6"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Bloco de texto — offset 10mm = ~38px do QR */}
-            <div style={{
-              marginLeft: 38,
-              flex: 1,
-              minWidth: 0,
-              fontFamily: "Arial, Helvetica, sans-serif",
-              color: "#000",
-              lineHeight: 0.98,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              gap: 0,
-            }}>
-              {/* Linha 1: 8pt = ~10.7px, regular — "Documento assinado..." */}
-              <div style={{ fontSize: 10.7, fontWeight: 400, whiteSpace: "nowrap", marginBottom: 0 }}>Documento assinado digitalmente conforme MP nº 2.200-2</div>
-              {/* Linha 2: 11pt = ~14.7px, bold — NOME DO MÉDICO */}
-              <div style={{ fontSize: 14.7, fontWeight: 700, textTransform: "uppercase", marginBottom: 0 }}>{data.medico}</div>
-              {/* Linha 3: 8.5pt = ~11.3px, regular — CRM/UF */}
-              <div style={{ fontSize: 11.3, fontWeight: 400, marginBottom: 0 }}>{data.crm}</div>
-              {/* Linha 4: 8.5pt = ~11.3px, regular — ESPECIALIDADE */}
-              <div style={{ fontSize: 11.3, fontWeight: 400, textTransform: "uppercase", marginBottom: 0 }}>{data.especialidade}</div>
-              {/* Linha 5: 8pt = ~10.7px, regular — Assinado em ... */}
-              <div style={{ fontSize: 10.7, fontWeight: 400, marginBottom: 0 }}>Assinado em {data.dataAssinatura} {data.horaAssinatura}</div>
-            </div>
-
-            {/* Bloco esquerdo: data + URL validação — alinhado à direita */}
-            <div style={{
-              flexShrink: 0,
-              marginLeft: 16,
-              fontFamily: "Arial, Helvetica, sans-serif",
-              color: "#000",
-              fontSize: 8,
-              lineHeight: 0.98,
-              textAlign: "right",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              gap: 0,
-            }}>
-              <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 8 }}>{dataFormatada || data.dataEmissao}</div>
-              <div style={{ fontSize: 8 }}>Valide este documento acessando o endereço:</div>
-              <strong style={{ fontSize: 8, display: "block" }}>https://validaratestado.digital</strong>
-              <div style={{ display: "flex", alignItems: "center", gap: 3, flexWrap: "nowrap", justifyContent: "flex-end" }}>
-                <span style={{ fontWeight: 400, fontSize: 8, whiteSpace: "nowrap" }}>Código:</span>
-                <strong style={{ fontFamily: "'Courier New', monospace", letterSpacing: 0, fontSize: 8, fontWeight: 900, whiteSpace: "nowrap" }}>
+            {/* Esquerda: cidade/data + URL validação */}
+            <div style={{ fontSize: 9, color: "#000", lineHeight: 1.25, fontFamily: "Arial, Helvetica, sans-serif", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+              <div style={{ fontWeight: 700, textTransform: "uppercase", marginBottom: 0, fontSize: 9 }}>
+                {dataFormatada || data.dataEmissao}
+              </div>
+              <div style={{ fontSize: 8.5 }}>Valide este documento acessando o endereço:</div>
+              <strong style={{ fontSize: 9, display: "block" }}>https://validaratestado.digital</strong>
+              <div style={{ marginTop: 0, display: "flex", alignItems: "center", gap: 3, flexWrap: "nowrap" }}>
+                <span style={{ fontWeight: 400, fontSize: 8.5, whiteSpace: "nowrap", lineHeight: 1 }}>Código:</span>
+                <strong style={{ fontFamily: "'Courier New', monospace", letterSpacing: 0, fontSize: 9, fontWeight: 900, whiteSpace: "nowrap", lineHeight: 1 }}>
                   {isEmitted ? data.codigoQR : "****.****"}
                 </strong>
+              </div>
+            </div>
+
+            {/* Direita: QR Code + Dados do Médico — moldura compacta */}
+            <div style={{
+              border: "1px solid #000",
+              padding: "6px 10px 6px 14px",
+              display: "flex",
+              gap: 14,
+              alignItems: "center",
+              background: "white",
+              flex: "0 0 auto",
+            }}>
+              {/* QR Code */}
+              <div style={{ flexShrink: 0, lineHeight: 0 }}>
+                {isEmitted ? (
+                  <QRCode
+                    value={qrValue}
+                    size={96}
+                    level="H"
+                    includeMargin={false}
+                    fgColor="#000000"
+                    bgColor="#FFFFFF"
+                  />
+                ) : (
+                  <div style={{ position: "relative", width: 96, height: 96, flexShrink: 0 }}>
+                    <div style={{ filter: "blur(4px)", opacity: 0.5, lineHeight: 0 }}>
+                      <QRCode
+                        value="https://validaratestado.digital"
+                        size={96}
+                        level="H"
+                        includeMargin={false}
+                        fgColor="#1a1a1a"
+                        bgColor="#FFFFFF"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+              {/* Dados do Médico — alinhado à direita conforme referência */}
+              <div style={{ fontSize: 9, textAlign: "right", lineHeight: 1.55, color: "#000", flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 9.8, marginBottom: 2, whiteSpace: "nowrap" }}>Documento assinado digitalmente conforme MP nº 2.200-2</div>
+                <strong style={{ fontWeight: 700, fontSize: 11.5, textTransform: "uppercase", display: "block" }}>
+                  {data.medico}
+                </strong>
+                <span style={{ display: "block", fontSize: 10.4 }}>{data.crm}</span>
+                <span style={{ fontSize: 10.4, display: "block", textTransform: "uppercase" }}>{data.especialidade}</span>
+                <span style={{ display: "block", marginTop: 1, fontSize: 10.4 }}>
+                  Assinado em {data.dataAssinatura} {data.horaAssinatura}
+                </span>
               </div>
             </div>
           </div>
