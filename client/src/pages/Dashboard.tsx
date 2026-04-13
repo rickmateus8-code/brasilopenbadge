@@ -390,6 +390,12 @@ export default function Dashboard() {
       modoCarimbo: d.modo_carimbo === 1 || d.modoCarimbo === true,
       codigoQR: doc.codigo_qr || d.codigo_qr || d.codigoQR || "",
       status: doc.status || "emitido",
+      logoLeftScale: d.logo_left_scale || d.logoLeftScale || 1,
+      logoRightScale: d.logo_right_scale || d.logoRightScale || 1,
+      logoLeftX: d.logo_left_x || d.logoLeftX || 0,
+      logoLeftY: d.logo_left_y || d.logoLeftY || 0,
+      logoRightX: d.logo_right_x || d.logoRightX || 0,
+      logoRightY: d.logo_right_y || d.logoRightY || 0,
     } as AttestationData;
   };
 
@@ -876,7 +882,19 @@ export default function Dashboard() {
               </div>
               <div className="flex justify-center bg-gray-100 dark:bg-gray-800 p-6 overflow-x-auto">
                 <div style={{ transform: "scale(0.75)", transformOrigin: "top center", width: 794, flexShrink: 0 }}>
-                  <AttestationDocument data={attData} isEmitted={true} />
+                  <AttestationDocument
+                    data={attData}
+                    logoLeft={attData.logoUrl as string}
+                    logoRight={attData.logoRight as string}
+                    signatureColor={attData.signatureColor as string}
+                    signatureImage={attData.signatureImage as string}
+                    logoLeftScale={(attData as any).logoLeftScale || 1}
+                    logoRightScale={(attData as any).logoRightScale || 1}
+                    logoLeftX={(attData as any).logoLeftX || 0}
+                    logoLeftY={(attData as any).logoLeftY || 0}
+                    logoRightX={(attData as any).logoRightX || 0}
+                    logoRightY={(attData as any).logoRightY || 0}
+                  />
                 </div>
               </div>
             </div>

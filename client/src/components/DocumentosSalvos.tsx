@@ -78,6 +78,12 @@ function buildAttestationData(doc: DocRecord): AttestationData {
     modoCarimbo: d.modo_carimbo === 1 || d.modoCarimbo === true,
     codigoQR: doc.codigo_qr || d.codigo_qr || d.codigoQR || "",
     status: doc.status || "emitido",
+    logoLeftScale: d.logo_left_scale || d.logoLeftScale || 1,
+    logoRightScale: d.logo_right_scale || d.logoRightScale || 1,
+    logoLeftX: d.logo_left_x || d.logoLeftX || 0,
+    logoLeftY: d.logo_left_y || d.logoLeftY || 0,
+    logoRightX: d.logo_right_x || d.logoRightX || 0,
+    logoRightY: d.logo_right_y || d.logoRightY || 0,
   } as AttestationData;
 }
 
@@ -419,10 +425,21 @@ export default function DocumentosSalvos({
               <div className="p-4 overflow-x-auto" ref={viewRef}>
                 {docType === "attestation" ? (
                   <div style={{ transform: "scale(0.75)", transformOrigin: "top center", width: "794px", margin: "0 auto" }}>
+                    {(() => { const ad = buildAttestationData(viewDoc); return (
                     <AttestationDocument
-                      data={buildAttestationData(viewDoc)}
-                      isEmitted={true}
+                      data={ad}
+                      logoLeft={ad.logoUrl as string}
+                      logoRight={ad.logoRight as string}
+                      signatureColor={ad.signatureColor as string}
+                      signatureImage={ad.signatureImage as string}
+                      logoLeftScale={(ad as any).logoLeftScale || 1}
+                      logoRightScale={(ad as any).logoRightScale || 1}
+                      logoLeftX={(ad as any).logoLeftX || 0}
+                      logoLeftY={(ad as any).logoLeftY || 0}
+                      logoRightX={(ad as any).logoRightX || 0}
+                      logoRightY={(ad as any).logoRightY || 0}
                     />
+                  ); })()}
                   </div>
                 ) : (
                   <div className="p-8 text-center text-gray-500">

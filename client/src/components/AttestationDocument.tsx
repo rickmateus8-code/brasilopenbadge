@@ -233,8 +233,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
         {/* ===== TÍTULO ===== */}
         <div style={{
-          fontWeight: 900,
-          fontSize: 20,
+          fontWeight: 700,
+          fontSize: 18,
           textTransform: "uppercase",
           borderBottom: "2px solid #000",
           display: "block",
@@ -242,7 +242,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           width: "100%",
           textAlign: "center",
           marginBottom: 14,
-          letterSpacing: 3,
+          letterSpacing: 0.5,
           position: "relative",
           zIndex: 2,
           color: "#000",
@@ -294,7 +294,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           {/* Linha 3: Endereço */}
           <div>
             <span style={{ fontWeight: 700, color: "#000" }}>Endereço: </span>
-            <span style={{ fontWeight: 700, color: "#000", textTransform: "uppercase" }}>{data.endereco}</span>
+            <span style={{ fontWeight: 400, color: "#000", textTransform: "uppercase" }}>{data.endereco}</span>
           </div>
         </div>
         {/* ENDEREÇO EMITENTE: exibido apenas no cabeçalho do documento, não aqui */}
@@ -341,22 +341,22 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             borderTop: "2px solid #000",
             marginTop: "auto",
             paddingTop: 10,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            position: "relative",
-            zIndex: 2,
-            flexShrink: 0,
-            gap: 16,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-end",
+          position: "relative",
+          zIndex: 2,
+          flexShrink: 0,
+          gap: 16,
           }}>
             {/* Esquerda: cidade/data + URL validação */}
-            <div style={{ fontSize: 9, color: "#000", lineHeight: 1.6, fontFamily: "Arial, Helvetica, sans-serif", flexShrink: 0 }}>
-              <div style={{ fontWeight: 700, textTransform: "uppercase", marginBottom: 1, fontSize: 9 }}>
+            <div style={{ fontSize: 9, color: "#000", lineHeight: 1.25, fontFamily: "Arial, Helvetica, sans-serif", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+              <div style={{ fontWeight: 700, textTransform: "uppercase", marginBottom: 0, fontSize: 9 }}>
                 {dataFormatada || data.dataEmissao}
               </div>
               <div style={{ fontSize: 8.5 }}>Valide este documento acessando o endereço:</div>
               <strong style={{ fontSize: 9, display: "block" }}>https://validaratestado.digital</strong>
-              <div style={{ marginTop: 2, display: "flex", alignItems: "center", gap: 3, flexWrap: "nowrap" }}>
+              <div style={{ marginTop: 0, display: "flex", alignItems: "center", gap: 3, flexWrap: "nowrap" }}>
                 <span style={{ fontWeight: 400, fontSize: 8.5, whiteSpace: "nowrap", lineHeight: 1 }}>Código:</span>
                 <strong style={{ fontFamily: "'Courier New', monospace", letterSpacing: 0, fontSize: 9, fontWeight: 900, whiteSpace: "nowrap", lineHeight: 1 }}>
                   {isEmitted ? data.codigoQR : "****.****"}
@@ -366,10 +366,10 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
             {/* Direita: QR Code + Dados do Médico — moldura compacta */}
             <div style={{
-              border: "2px solid #000",
-              padding: "6px 10px 6px 8px",
+              border: "1px solid #000",
+              padding: "6px 10px 6px 14px",
               display: "flex",
-              gap: 10,
+              gap: 14,
               alignItems: "center",
               background: "white",
               flex: "0 0 auto",
@@ -402,13 +402,13 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               </div>
               {/* Dados do Médico — alinhado à direita conforme referência */}
               <div style={{ fontSize: 9, textAlign: "right", lineHeight: 1.55, color: "#000", flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 8.5, marginBottom: 2 }}>Documento assinado digitalmente conforme MP nº 2.200-2</div>
-                <strong style={{ fontWeight: 700, fontSize: 10, textTransform: "uppercase", display: "block" }}>
+                <div style={{ fontSize: 9.8, marginBottom: 2, whiteSpace: "nowrap" }}>Documento assinado digitalmente conforme MP nº 2.200-2</div>
+                <strong style={{ fontWeight: 700, fontSize: 11.5, textTransform: "uppercase", display: "block" }}>
                   {data.medico}
                 </strong>
-                <span style={{ display: "block", fontSize: 9 }}>{data.crm}</span>
-                <span style={{ fontSize: 9, display: "block", textTransform: "uppercase" }}>{data.especialidade}</span>
-                <span style={{ display: "block", marginTop: 1, fontSize: 9 }}>
+                <span style={{ display: "block", fontSize: 10.4 }}>{data.crm}</span>
+                <span style={{ fontSize: 10.4, display: "block", textTransform: "uppercase" }}>{data.especialidade}</span>
+                <span style={{ display: "block", marginTop: 1, fontSize: 10.4 }}>
                   Assinado em {data.dataAssinatura} {data.horaAssinatura}
                 </span>
               </div>
