@@ -366,6 +366,49 @@ export default function AtestadoCria() {
   // ── Tipo de documento do paciente ──────────────────────────────────────────
   const [tipoDoc, setTipoDoc] = useState<"CPF" | "CNS">("CPF");
 
+  // ── API de CPF ─────────────────────────────────────────────────────────────
+  const [cpfLoading, setCpfLoading] = useState(false);
+  const [cpfStatus, setCpfStatus] = useState<"idle" | "ok" | "error" | "not_found">("idle");
+  const [cpfMsg, setCpfMsg] = useState("");
+
+  const buscarDadosCPF = async (cpfMasked: string) => {
+    const cpfLimpo = cpfMasked.replace(/\D/g, "");
+    if (cpfLimpo.length !== 11) return;
+    // Validação básica antes de chamar a API
+    if (!validarCPF(cpfMasked)) {
+      setCpfStatus("error");
+      setCpfMsg("CPF inválido.");
+      return;
+    }
+    setCpfLoading(true);
+    setCpfStatus("idle");
+    setCpfMsg("");
+    try {
+      const res = await fetch(`/api/cpf-lookup?cpf=${cpfLimpo}`, { credentials: "include" });
+      const data = await res.json() as any;
+      if (!res.ok || !data.success) {
+        setCpfStatus(res.status === 404 ? "not_found" : "error");
+        setCpfMsg(data.error || "Erro ao consultar CPF.");
+        return;
+      }
+      const d = data.data;
+      setForm(p => ({
+        ...p,
+        paciente: d.nome || p.paciente,
+        nascimento: d.nascimento || p.nascimento,
+        sexo: (d.sexo as "MALE" | "FEMALE") || p.sexo,
+        nomeMae: d.nomeMae || p.nomeMae,
+      }));
+      setCpfStatus("ok");
+      setCpfMsg(`✅ Dados preenchidos automaticamente via CPF.`);
+    } catch {
+      setCpfStatus("error");
+      setCpfMsg("Erro ao consultar CPF. Preencha manualmente.");
+    } finally {
+      setCpfLoading(false);
+    }
+  };
+
   // ── Busca de médicos ────────────────────────────────────────────────────────
   const [filtroUF, setFiltroUF] = useState("");
   const [filtroCidade, setFiltroCidade] = useState("");
@@ -642,13 +685,25 @@ export default function AtestadoCria() {
     setSignatureImage(b64);
   };
 
-  // ── Máscara do documento do paciente ───────────────────────────────────────
+  // ── Máscara do documento do paciente ──────────────────────────────────────────
   const handleDocInput = (v: string) => {
     const masked = tipoDoc === "CPF" ? maskCPF(v) : maskCNS(v);
     setForm(p => ({ ...p, docValue: masked }));
+    // Ao completar CPF (14 chars com máscara = 11 dígitos), buscar dados automaticamente
+    if (tipoDoc === "CPF") {
+      const digits = masked.replace(/\D/g, "");
+      if (digits.length === 11) {
+        setCpfStatus("idle");
+        setCpfMsg("");
+        buscarDadosCPF(masked);
+      } else {
+        setCpfStatus("idle");
+        setCpfMsg("");
+      }
+    }
   };
 
-  // ── Importação rápida ───────────────────────────────────────────────────────
+  // ── Importação rápida ─────────────────────────────────────────────────────────────
   const processarImportacao = () => {
     if (!importTexto.trim()) return;
 
@@ -656,6 +711,7 @@ export default function AtestadoCria() {
     // Evita matches parciais (ex: "nome da mae" não deve ser capturado por "nome")
     // Evita "cidade de emissao" ser capturado por "cid"
     const mapaOrdenado: Array<[string, string]> = [
+      // Paciente
       ["nome completo", "paciente"],
       ["nome da mae", "nomeMae"],
       ["tipo de doc (cpf ou cns)", "_tipoDoc"],
@@ -665,18 +721,38 @@ export default function AtestadoCria() {
       ["numero doc", "docValue"],
       ["data de nascimento", "nascimento"],
       ["data nascimento", "nascimento"],
+      // Atestado
+      ["dias de afastamento", "afastamento"],
+      ["dias afastamento", "afastamento"],
+      ["afastamento", "afastamento"],
       ["data do atestado", "dataAssinatura"],
       ["data atestado", "dataAssinatura"],
       ["horario do atendimento", "horaAssinatura"],
       ["horario atendimento", "horaAssinatura"],
       ["hora do atendimento", "horaAssinatura"],
       ["hora atendimento", "horaAssinatura"],
+      // Paciente - endereço
       ["endereco do paciente", "endereco"],
       ["endereco paciente", "endereco"],
       ["cid (codigo da doenca)", "cid"],
       ["cid codigo da doenca", "cid"],
       ["cidade de emissao", "cidade"],
       ["cidade emissao", "cidade"],
+      // Local de atendimento (emitente)
+      ["local de atendimento", "unidade"],
+      ["local atendimento", "unidade"],
+      ["unidade de saude", "unidade"],
+      ["unidade saude", "unidade"],
+      ["unidade", "unidade"],
+      ["endereco completo", "enderecoEmitente"],
+      ["endereco emitente", "enderecoEmitente"],
+      ["endereco da clinica", "enderecoEmitente"],
+      // Médico
+      ["especialidade", "especialidade"],
+      ["nome completo medico", "medico"],
+      ["nome medico", "medico"],
+      ["medico", "medico"],
+      ["crm", "crm"],
       // Genéricos por último
       ["nascimento", "nascimento"],
       ["sexo", "sexo"],
@@ -729,6 +805,21 @@ export default function AtestadoCria() {
             const isCNS = digitsOnly.length > 11;
             if (isCNS) { newTipoDoc = "CNS"; (updates as any)[field] = maskCNS(valor); }
             else { newTipoDoc = "CPF"; (updates as any)[field] = maskCPF(valor); }
+          } else if (field === "afastamento") {
+            // Extrair número de dias (1-15) do valor
+            const diasMatch = valor.match(/(\d+)/);
+            if (diasMatch) {
+              const dias = parseInt(diasMatch[1]);
+              if (dias >= 1 && dias <= 15) {
+                (updates as any)["afastamento"] = String(dias);
+                // Atualizar texto do atestado automaticamente
+                const d = DIAS_EXTENSO[dias];
+                if (d) {
+                  const unidade = dias === 1 ? "dia" : "dias";
+                  (updates as any)["textoAtestado"] = `Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico. Necessita de ${d.num} (${d.ext}) ${unidade} de afastamento de suas atividades laborais para repouso e tratamento de saúde.`;
+                }
+              }
+            }
           } else if (field === "cid") {
             // Para CID: extrair código e nome separadamente
             const cidRaw = valor; // Ex: "M54.5 (DOR LOMBAR BAIXA)"
@@ -1020,11 +1111,26 @@ export default function AtestadoCria() {
     fontWeight: 700,
     fontSize: 12,
     cursor: "pointer",
-  };
-
-  // ── Render ──────────────────────────────────────────────────────────────────
+  };  // ── Render ──────────────────────────────────────────────────────────────────────
   return (
     <div style={{ minHeight: "100vh", background: "#f1f5f9", fontFamily: "Roboto, sans-serif" }}>
+      <style>{`
+        /* Responsividade mobile para AtestadoCria */
+        @media (max-width: 900px) {
+          .atestado-layout { flex-direction: column !important; padding: 8px !important; }
+          .atestado-form-col { width: 100% !important; max-height: none !important; overflow-y: visible !important; }
+          .atestado-preview-col { display: none !important; }
+          .atestado-header { flex-direction: column !important; gap: 6px !important; align-items: flex-start !important; }
+          .atestado-header-title { font-size: 13px !important; }
+          .atestado-import-grid { grid-template-columns: 1fr !important; }
+          .atestado-grid-2 { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 480px) {
+          .atestado-card { padding: 10px 10px !important; }
+          .atestado-btn-row { flex-direction: column !important; }
+          .atestado-btn-row button { width: 100% !important; }
+        }
+      `}</style>
 
       {/* ── Splash de Sucesso ── */}
       {showSuccessModal && (
@@ -1165,7 +1271,7 @@ export default function AtestadoCria() {
       )}
 
       {/* Header */}
-      <div style={{ background: "#d97706", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div className="atestado-header" style={{ background: "#d97706", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <button style={{ ...btnGray, padding: "5px 12px", fontSize: 11 }} onClick={() => navigate("/dashboard")}>← VOLTAR</button>
           <h1 style={{ color: "#fff", fontSize: 16, fontWeight: 700, margin: 0 }}>DocMaster — EMITIR ATESTADO</h1>
@@ -1175,10 +1281,10 @@ export default function AtestadoCria() {
         </span>
       </div>
 
-      <div style={{ display: "flex", gap: 14, padding: 14, maxWidth: 2000, margin: "0 auto" }}>
+      <div className="atestado-layout" style={{ display: "flex", gap: 14, padding: 14, maxWidth: 2000, margin: "0 auto" }}>
 
         {/* ═══ COLUNA ESQUERDA — FORMULÁRIO ═══ */}
-        <div style={{ width: 612, flexShrink: 0, overflowY: "auto", maxHeight: "calc(100vh - 70px)" }}>
+        <div className="atestado-form-col" style={{ width: 612, flexShrink: 0, overflowY: "auto", maxHeight: "calc(100vh - 70px)" }}>
           <form onSubmit={handleShowConfirm}>
 
             {/* ── Importação Rápida ── */}
@@ -1190,16 +1296,16 @@ export default function AtestadoCria() {
                 </button>
               </div>
               {showImport && (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div className="atestado-import-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   {/* Painel 1 — Modelo para enviar ao cliente */}
                   <div>
                     <p style={{ fontSize: 11, fontWeight: 700, color: "#005CA9", marginBottom: 6, textTransform: "uppercase" as const }}>1. Envie para o Cliente</p>
-                    <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 6, padding: "8px 10px", fontFamily: "monospace", fontSize: 11, color: "#374151", lineHeight: 1.8, whiteSpace: "pre" as const }}>{`Nome Completo: \nTipo de Doc (CPF ou CNS): \nNúmero do Doc: \nNascimento: \nSexo (M/F): \nNome da Mãe: \nEndereço do Paciente: \nCID (Código da Doença): \nCidade de Emissão: \nData do Atestado: \nHorário do Atendimento:`}</div>
+                    <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 6, padding: "8px 10px", fontFamily: "monospace", fontSize: 11, color: "#374151", lineHeight: 1.8, whiteSpace: "pre" as const }}>{`Nome Completo: \nTipo de Doc (CPF ou CNS): \nNúmero do Doc: \nNascimento: \nSexo (M/F): \nNome da Mãe: \nEndereço do Paciente: \nCID (Código da Doença): \nDias de Afastamento: \nCidade de Emissão: \nData do Atestado: \nHorário do Atendimento: \n\nLocal de Atendimento: \nEndereço Emitente: \nEspecialidade: \nMédico: \nCRM:`}</div>
                     <button
                       type="button"
                       style={{ ...btnBlue, width: "100%", marginTop: 8, fontSize: 11 }}
                       onClick={() => {
-                        const modelo = `Nome Completo: \nTipo de Doc (CPF ou CNS): \nNúmero do Doc: \nNascimento: \nSexo (M/F): \nNome da Mãe: \nEndereço do Paciente: \nCID (Código da Doença): \nCidade de Emissão: \nData do Atestado: \nHorário do Atendimento: `;
+                        const modelo = `Nome Completo: \nTipo de Doc (CPF ou CNS): \nNúmero do Doc: \nNascimento: \nSexo (M/F): \nNome da Mãe: \nEndereço do Paciente: \nCID (Código da Doença): \nDias de Afastamento: \nCidade de Emissão: \nData do Atestado: \nHorário do Atendimento: \n\nLocal de Atendimento: \nEndereço Emitente: \nEspecialidade: \nMédico: \nCRM: `;
                         navigator.clipboard.writeText(modelo)
                           .then(() => alert("✅ Modelo copiado! Envie para o cliente preencher."))
                           .catch(() => {
@@ -1464,31 +1570,14 @@ export default function AtestadoCria() {
             <div style={card}>
               <p style={secTitle}>👤 2. Dados do Paciente</p>
               <div style={{ display: "grid", gap: 8 }}>
-                <div>
-                  <label style={lbl}>Nome Completo *</label>
-                  <input style={inp} value={form.paciente} onChange={(e) => setForm(p => ({ ...p, paciente: e.target.value }))} placeholder="Nome Completo do Paciente" required />
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                  <div>
-                    <label style={lbl}>Sexo</label>
-                    <select style={sel} value={form.sexo} onChange={(e) => setForm(p => ({ ...p, sexo: e.target.value as "MALE" | "FEMALE" }))}>
-                      <option value="FEMALE">Feminino</option>
-                      <option value="MALE">Masculino</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={lbl}>Data de Nascimento *</label>
-                    <input style={inp} value={form.nascimento} onChange={(e) => setForm(p => ({ ...p, nascimento: handleDateInput(e.target.value) }))} placeholder="DD/MM/AAAA" maxLength={10} inputMode="numeric" required />
-                  </div>
-                </div>
 
-                {/* CPF ou CNS */}
+                {/* CPF ou CNS — PRIMEIRO para permitir preenchimento automático */}
                 <div>
                   <label style={lbl}>Tipo de Documento *</label>
                   <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
                     <button
                       type="button"
-                      onClick={() => { setTipoDoc("CPF"); setForm(p => ({ ...p, docValue: "" })); }}
+                      onClick={() => { setTipoDoc("CPF"); setForm(p => ({ ...p, docValue: "" })); setCpfStatus("idle"); setCpfMsg(""); }}
                       style={{
                         flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
                         background: tipoDoc === "CPF" ? "#005CA9" : "#e2e8f0",
@@ -1500,7 +1589,7 @@ export default function AtestadoCria() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => { setTipoDoc("CNS"); setForm(p => ({ ...p, docValue: "" })); }}
+                      onClick={() => { setTipoDoc("CNS"); setForm(p => ({ ...p, docValue: "" })); setCpfStatus("idle"); setCpfMsg(""); }}
                       style={{
                         flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
                         background: tipoDoc === "CNS" ? "#005CA9" : "#e2e8f0",
@@ -1511,19 +1600,100 @@ export default function AtestadoCria() {
                       CNS — Cartão Nacional de Saúde
                     </button>
                   </div>
+                  <div style={{ position: "relative" }}>
+                    <input
+                      style={{
+                        ...inp,
+                        borderColor: cpfStatus === "error" ? "#dc2626" : cpfStatus === "ok" ? "#16a34a" : undefined,
+                        paddingRight: tipoDoc === "CPF" && cpfLoading ? 32 : undefined,
+                      }}
+                      value={form.docValue}
+                      onChange={(e) => handleDocInput(e.target.value)}
+                      placeholder={tipoDoc === "CPF" ? "000.000.000-00" : "000 0000 0000 0000"}
+                      inputMode="numeric"
+                      required
+                    />
+                    {tipoDoc === "CPF" && cpfLoading && (
+                      <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: 14 }}>⏳</span>
+                    )}
+                  </div>
+                  {/* Feedback da API de CPF */}
+                  {tipoDoc === "CPF" && cpfMsg && (
+                    <div style={{
+                      marginTop: 4, padding: "5px 8px", borderRadius: 5, fontSize: 11, fontWeight: 600,
+                      background: cpfStatus === "ok" ? "#f0fdf4" : cpfStatus === "not_found" ? "#fffbeb" : "#fef2f2",
+                      color: cpfStatus === "ok" ? "#16a34a" : cpfStatus === "not_found" ? "#d97706" : "#dc2626",
+                      border: `1px solid ${cpfStatus === "ok" ? "#bbf7d0" : cpfStatus === "not_found" ? "#fde68a" : "#fecaca"}`,
+                    }}>
+                      {cpfMsg}
+                      {cpfStatus === "not_found" && " Preencha os dados manualmente."}
+                    </div>
+                  )}
+                  {tipoDoc === "CPF" && form.docValue.replace(/\D/g, "").length === 11 && !validarCPF(form.docValue) && (
+                    <div style={{ marginTop: 4, padding: "5px 8px", borderRadius: 5, fontSize: 11, fontWeight: 600, background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>
+                      ⚠️ CPF inválido. Verifique os dígitos.
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label style={lbl}>Nome Completo *</label>
                   <input
-                    style={inp}
-                    value={form.docValue}
-                    onChange={(e) => handleDocInput(e.target.value)}
-                    placeholder={tipoDoc === "CPF" ? "000.000.000-00" : "000 0000 0000 0000"}
-                    inputMode="numeric"
+                    style={{ ...inp, background: cpfStatus === "ok" && form.paciente ? "#f0fdf4" : undefined }}
+                    value={form.paciente}
+                    onChange={(e) => setForm(p => ({ ...p, paciente: e.target.value }))}
+                    placeholder="Nome Completo do Paciente"
                     required
                   />
+                  {cpfStatus === "ok" && form.paciente && (
+                    <span style={{ fontSize: 10, color: "#16a34a", marginTop: 2, display: "block" }}>✅ Preenchido via CPF</span>
+                  )}
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  <div>
+                    <label style={lbl}>Sexo</label>
+                    <select
+                      style={{ ...sel, background: cpfStatus === "ok" ? "#f0fdf4" : undefined }}
+                      value={form.sexo}
+                      onChange={(e) => setForm(p => ({ ...p, sexo: e.target.value as "MALE" | "FEMALE" }))}
+                    >
+                      <option value="FEMALE">Feminino (F)</option>
+                      <option value="MALE">Masculino (M)</option>
+                    </select>
+                    {cpfStatus === "ok" && (
+                      <span style={{ fontSize: 10, color: "#16a34a", marginTop: 2, display: "block" }}>✅ Preenchido via CPF</span>
+                    )}
+                  </div>
+                  <div>
+                    <label style={lbl}>Data de Nascimento *</label>
+                    <input
+                      style={{ ...inp, background: cpfStatus === "ok" && form.nascimento ? "#f0fdf4" : undefined }}
+                      value={form.nascimento}
+                      onChange={(e) => setForm(p => ({ ...p, nascimento: handleDateInput(e.target.value) }))}
+                      placeholder="DD/MM/AAAA"
+                      maxLength={10}
+                      inputMode="numeric"
+                      required
+                    />
+                    {cpfStatus === "ok" && form.nascimento && (
+                      <span style={{ fontSize: 10, color: "#16a34a", marginTop: 2, display: "block" }}>✅ Preenchido via CPF</span>
+                    )}
+                  </div>
                 </div>
 
                 <div>
                   <label style={lbl}>Nome da Mãe *</label>
-                  <input style={inp} value={form.nomeMae} onChange={(e) => setForm(p => ({ ...p, nomeMae: e.target.value }))} placeholder="Nome da Mãe" required />
+                  <input
+                    style={{ ...inp, background: cpfStatus === "ok" && form.nomeMae ? "#f0fdf4" : undefined }}
+                    value={form.nomeMae}
+                    onChange={(e) => setForm(p => ({ ...p, nomeMae: e.target.value }))}
+                    placeholder="Nome da Mãe"
+                    required
+                  />
+                  {cpfStatus === "ok" && form.nomeMae && (
+                    <span style={{ fontSize: 10, color: "#16a34a", marginTop: 2, display: "block" }}>✅ Preenchido via CPF</span>
+                  )}
                 </div>
                 {/* CEP + Nº do paciente */}
                 <div>
@@ -1827,7 +1997,7 @@ export default function AtestadoCria() {
         </div>
 
         {/* ═══ COLUNA DIREITA — PREVIEW ═══ */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+        <div className="atestado-preview-col" style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
             marginBottom: 10, padding: "8px 12px", background: "#fff",
