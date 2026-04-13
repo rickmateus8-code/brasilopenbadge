@@ -323,7 +323,14 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             <div style={{ flex: "0 0 45%", border: "2px solid #000", padding: "10px 12px", background: "#fff", display: "flex", gap: 10, alignItems: "flex-start" }}>
               {/* QR Code à esquerda dentro da moldura */}
               <div style={{ flexShrink: 0, lineHeight: 0 }}>
-                <QRCode value={qrValue} size={90} level="M" />
+                <QRCode
+                  value={qrValue}
+                  size={90}
+                  level="H"
+                  includeMargin={false}
+                  fgColor="#000000"
+                  bgColor="#FFFFFF"
+                />
               </div>
               {/* Dados do Médico à direita dentro da moldura */}
               <div style={{ fontSize: 8, color: "#000", lineHeight: 1.4, flex: 1 }}>
