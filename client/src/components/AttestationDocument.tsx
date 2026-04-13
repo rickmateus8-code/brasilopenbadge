@@ -241,10 +241,10 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           borderTop: "none",
           borderBottom: "none",
           display: "block",
-          padding: "5px 0",
+          padding: "5px 0 0 0", // Removido padding inferior
           width: "100%",
           textAlign: "center",
-          marginBottom: 2, // Reduzido para aproximar a linha do título
+          marginBottom: 0, // Removido marginBottom para aproximar ao máximo
           letterSpacing: 0.5,
           position: "relative",
           zIndex: 2,
