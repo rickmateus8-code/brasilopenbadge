@@ -236,16 +236,16 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         {/* ===== TÍTULO ===== */}
         <div style={{
           fontWeight: 900,
-          fontSize: 21.0,
+          fontSize: 19.95, // Reduzido de 21.0 para 19.95 (5% de redução)
           textTransform: "uppercase",
-          borderTop: "2px solid #000",
-          borderBottom: "2px solid #000",
+          borderTop: "none", // Removido borderTop
+          borderBottom: "none", // Removido borderBottom
           display: "block",
           padding: "5px 0",
           width: "100%",
           textAlign: "center",
-          marginBottom: 14,
-          letterSpacing: 3,
+          marginBottom: 8, // Reduzido de 14 para 8 (espaçamento mais próximo)
+          letterSpacing: 0.5, // Reduzido de 3 para 0.5 (letras mais juntas)
           position: "relative",
           zIndex: 2,
           color: "#000",
@@ -253,6 +253,26 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         }}>
           {docType === 'laudo' ? 'LAUDO MÉDICO' : 'ATESTADO MÉDICO'}
         </div>
+
+        {/* ===== ENDEREÇO EMITENTE (MOLDURA SUPERIOR APENAS) ===== */}
+        {enderecoEmitente && (
+          <div style={{
+            borderTop: "2px solid #000",
+            borderLeft: "none",
+            borderRight: "none",
+            borderBottom: "none",
+            padding: "4px 0 4px 0",
+            fontSize: 9,
+            marginBottom: 6,
+            position: "relative",
+            zIndex: 2,
+            textAlign: "left",
+            flexShrink: 0,
+          }}>
+            <span style={{ fontWeight: 700 }}>ENDEREÇO EMITENTE: </span>
+            <span style={{ fontWeight: 400 }}>{enderecoEmitente}</span>
+          </div>
+        )}
 
         {/* ===== DADOS DO PACIENTE ===== */}
         <div style={{
