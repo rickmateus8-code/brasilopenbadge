@@ -1,3 +1,8 @@
+/**
+ * DocumentPages — Histórico UNINTER
+ * Todas as classes CSS foram convertidas para estilos inline para garantir
+ * que o layout funcione sem depender de CSS global no DocMaster.
+ */
 import {
   LOGO_URL, ASSINATURA_URL, SELO_URL,
   COURSE_METADATA, getGradesForProfile,
@@ -5,19 +10,74 @@ import {
 } from "@/lib/documentData_uninter";
 
 interface Props {
-  f: Record<string, string>; // fieldMap
+  f: Record<string, string>;
   highlightModified?: boolean;
   profileKey?: ProfileKey;
   gradeRows?: GradeRow[];
 }
 
-// Helper to mark modified fields
+// ── Estilos base ──────────────────────────────────────────────────────────────
+const PAGE_STYLE: React.CSSProperties = {
+  width: "207.53mm",
+  minHeight: "293.47mm",
+  background: "white",
+  padding: "18mm 22mm 15mm 22mm",
+  fontFamily: "'Times New Roman', Times, serif",
+  fontSize: "11pt",
+  lineHeight: 1.35,
+  color: "#000",
+  position: "relative",
+  boxSizing: "border-box",
+  overflow: "visible",
+};
+
+const FIELDSET_STYLE: React.CSSProperties = {
+  border: "1px solid #000",
+  padding: "8px 10px",
+  margin: "8px 0",
+  position: "relative",
+};
+
+const LEGEND_STYLE: React.CSSProperties = {
+  position: "absolute",
+  top: -10,
+  left: 10,
+  background: "#fff",
+  padding: "0 5px",
+  fontWeight: "bold",
+  fontSize: "10pt",
+};
+
+const TABLE_STYLE: React.CSSProperties = {
+  width: "100%",
+  borderCollapse: "collapse",
+  fontSize: "8pt",
+  marginTop: 4,
+};
+
+const TH_STYLE: React.CSSProperties = {
+  textAlign: "left",
+  fontWeight: "bold",
+  borderBottom: "1px solid #000",
+  padding: "2px 4px",
+  fontSize: "8pt",
+};
+
+const TD_STYLE: React.CSSProperties = {
+  padding: "2px 4px",
+  borderBottom: "0.5px solid #ccc",
+  verticalAlign: "top",
+  fontSize: "8pt",
+};
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function V({ val, orig, highlight }: { val: string; orig: string; highlight?: boolean }) {
   const isModified = val !== orig;
   return (
     <span
-      className={isModified && highlight ? "editable-field modified" : ""}
-      style={isModified && highlight ? { padding: "0 2px", borderBottom: "2px solid #e8a317" } : {}}
+      style={isModified && highlight
+        ? { padding: "0 2px", borderBottom: "2px solid #e8a317", backgroundColor: "rgba(232,163,23,0.12)", borderRadius: 2 }
+        : {}}
     >
       {val}
     </span>
@@ -26,28 +86,28 @@ function V({ val, orig, highlight }: { val: string; orig: string; highlight?: bo
 
 function GradeTable({ rows }: { rows: GradeRow[] }) {
   return (
-    <table className="grade-table">
+    <table style={TABLE_STYLE}>
       <thead>
         <tr>
-          <th style={{ width: 50 }}>Ano/Mês*</th>
-          <th>Disciplinas</th>
-          <th style={{ width: 30 }}>C.H.</th>
-          <th style={{ width: 30 }}>Média</th>
-          <th style={{ width: 70 }}>Resultado</th>
-          <th style={{ width: 120 }}>Docente</th>
-          <th style={{ width: 75 }}>Titulação</th>
+          <th style={{ ...TH_STYLE, width: 50 }}>Ano/Mês*</th>
+          <th style={TH_STYLE}>Disciplinas</th>
+          <th style={{ ...TH_STYLE, width: 30 }}>C.H.</th>
+          <th style={{ ...TH_STYLE, width: 30 }}>Média</th>
+          <th style={{ ...TH_STYLE, width: 70 }}>Resultado</th>
+          <th style={{ ...TH_STYLE, width: 120 }}>Docente</th>
+          <th style={{ ...TH_STYLE, width: 75 }}>Titulação</th>
         </tr>
       </thead>
       <tbody>
         {rows.map((r, i) => (
           <tr key={i}>
-            <td>{r.anoMes}</td>
-            <td>{r.disciplina}</td>
-            <td style={{ textAlign: "center" }}>{r.ch}</td>
-            <td style={{ textAlign: "center" }}>{r.media}</td>
-            <td style={{ textAlign: "center" }}>{r.resultado}</td>
-            <td style={{ textAlign: "center" }}>{r.docente}</td>
-            <td>{r.titulacao}</td>
+            <td style={TD_STYLE}>{r.anoMes}</td>
+            <td style={TD_STYLE}>{r.disciplina}</td>
+            <td style={{ ...TD_STYLE, textAlign: "center" }}>{r.ch}</td>
+            <td style={{ ...TD_STYLE, textAlign: "center" }}>{r.media}</td>
+            <td style={{ ...TD_STYLE, textAlign: "center" }}>{r.resultado}</td>
+            <td style={{ ...TD_STYLE, textAlign: "center" }}>{r.docente}</td>
+            <td style={TD_STYLE}>{r.titulacao}</td>
           </tr>
         ))}
       </tbody>
@@ -59,15 +119,10 @@ function splitGradeRowsSmart(rows: GradeRow[]) {
   if (rows.length <= 24) {
     return { page5Rows: rows, page6Rows: [] as GradeRow[] };
   }
-
   const maxPage5 = 27;
   const minPage6 = 8;
   let page5Count = Math.min(maxPage5, rows.length - minPage6);
-
-  if (page5Count < 20) {
-    page5Count = Math.min(20, rows.length);
-  }
-
+  if (page5Count < 20) page5Count = Math.min(20, rows.length);
   return {
     page5Rows: rows.slice(0, page5Count),
     page6Rows: rows.slice(page5Count),
@@ -90,35 +145,30 @@ function computeGradeStats(rows: GradeRow[]) {
   let totalHours = 0;
   let weightedMediaSum = 0;
   let weightedHours = 0;
-
   for (const row of rows) {
     const hours = parseHours(row.ch);
     totalHours += hours;
-
     const media = parseMedia(row.media);
     if (media !== null && hours > 0) {
       weightedMediaSum += media * hours;
       weightedHours += hours;
     }
   }
-
   return {
     totalHours,
     weightedAverage: weightedHours > 0 ? weightedMediaSum / weightedHours : null,
   };
 }
 
-// ===== HELPER: resolve profile key from props =====
 function resolveKey(profileKey?: ProfileKey): ProfileKey {
   return profileKey || "lindomar";
 }
 
-// ===== HELPER: get course metadata =====
 function getMeta(profileKey?: ProfileKey) {
   return COURSE_METADATA[resolveKey(profileKey)];
 }
 
-// Shared footer — appears on pages 1, 2
+// ── Shared components ─────────────────────────────────────────────────────────
 function DocFooter({ profileKey }: { profileKey?: ProfileKey }) {
   const meta = getMeta(profileKey);
   return (
@@ -146,7 +196,6 @@ function DocFooter({ profileKey }: { profileKey?: ProfileKey }) {
   );
 }
 
-// Signature block
 function Signature({ showLine = true }: { showLine?: boolean }) {
   return (
     <div style={{ textAlign: "center", margin: "15px 0 10px 0" }}>
@@ -154,11 +203,7 @@ function Signature({ showLine = true }: { showLine?: boolean }) {
         <div style={{ borderTop: "1px solid #000", width: "100%", margin: "0 auto 12px auto" }} />
       )}
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-        <img
-          src={ASSINATURA_URL}
-          alt="Assinatura"
-          style={{ width: 90, height: "auto", display: "block" }}
-        />
+        <img src={ASSINATURA_URL} alt="Assinatura" style={{ width: 90, height: "auto", display: "block" }} />
       </div>
       <b style={{ fontSize: "10pt", letterSpacing: "0.3px", display: "block", marginTop: 2 }}>SIMONE RAMOS DE OLIVEIRA</b>
       <span style={{ fontSize: "9.5pt", display: "block", marginTop: 1 }}>Secretária Geral de Gestão Acadêmica</span>
@@ -166,11 +211,20 @@ function Signature({ showLine = true }: { showLine?: boolean }) {
   );
 }
 
-// Logo component
 function Logo() {
   return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: 12 }}>
       <img src={LOGO_URL} alt="Logo UNINTER" style={{ width: 160, height: "auto", display: "block" }} />
+    </div>
+  );
+}
+
+// ── Fieldset helper ───────────────────────────────────────────────────────────
+function Fieldset({ legend, children, style }: { legend: string; children: React.ReactNode; style?: React.CSSProperties }) {
+  return (
+    <div style={{ ...FIELDSET_STYLE, ...style }}>
+      <span style={LEGEND_STYLE}>{legend}</span>
+      {children}
     </div>
   );
 }
@@ -181,7 +235,7 @@ export function Page1({ f, highlightModified, profileKey }: Props) {
   const O = "LINDOMAR DE OLIVEIRA DUARTE";
   const meta = getMeta(profileKey);
   return (
-    <div className="doc-page" id="doc-page-1">
+    <div className="doc-page" id="doc-page-1" style={PAGE_STYLE}>
       <Logo />
       <div style={{ textAlign: "center", fontWeight: "bold", fontSize: "13pt", lineHeight: 1.4, margin: "16px 0 14px 0" }}>
         INFORMATIVO SOBRE COLAÇÃO DE GRAU E EVENTO FESTIVO E<br />
@@ -220,7 +274,7 @@ export function Page2({ f, highlightModified, profileKey }: Props) {
   const hl = highlightModified;
   const meta = getMeta(profileKey);
   return (
-    <div className="doc-page" id="doc-page-2">
+    <div className="doc-page" id="doc-page-2" style={PAGE_STYLE}>
       <Logo />
       <div style={{ textAlign: "center", fontWeight: "bold", fontSize: "13pt", margin: "20px 0 18px 0", textDecoration: "underline" }}>
         CERTIFICADO DE CONCLUSÃO DE CURSO
@@ -242,54 +296,42 @@ export function Page3({ f, highlightModified, profileKey }: Props) {
   const hl = highlightModified;
   const meta = getMeta(profileKey);
   return (
-    <div className="doc-page" id="doc-page-3" style={{ fontSize: "9pt" }}>
+    <div className="doc-page" id="doc-page-3" style={{ ...PAGE_STYLE, fontSize: "9pt" }}>
       <Logo />
       <div style={{ textAlign: "center", fontWeight: "bold", fontSize: "13pt", margin: "10px 0 10px 0" }}>
         HISTÓRICO ESCOLAR
       </div>
 
-      {/* IDENTIFICAÇÃO DO ALUNO */}
-      <div className="fieldset-box">
-        <div className="legend">IDENTIFICAÇÃO DO ALUNO</div>
+      <Fieldset legend="IDENTIFICAÇÃO DO ALUNO">
         <p style={{ margin: "2px 0" }}><b>Nome:</b> <V val={f.nome} orig="LINDOMAR DE OLIVEIRA DUARTE" highlight={hl} /></p>
         <p style={{ margin: "2px 0" }}><b>CPF:</b> <V val={f.cpf} orig="247.920.528-23" highlight={hl} /> &nbsp;&nbsp; <b>RG:</b> <V val={f.rg} orig="27.204.902-5" highlight={hl} /> - <V val={f.rg_orgao} orig="SSP/SP" highlight={hl} /></p>
         <p style={{ margin: "2px 0" }}><b>Data de Nascimento/UF:</b> <V val={f.data_nascimento} orig="12/09/1976" highlight={hl} /> / <V val={f.uf_nascimento} orig="PR" highlight={hl} /> &nbsp;&nbsp; <b>Nacionalidade:</b> <V val={f.nacionalidade} orig="BRASILEIRA" highlight={hl} /></p>
         <p style={{ margin: "2px 0" }}><b>Matrícula:</b> <V val={f.matricula} orig="1022071" highlight={hl} /> &nbsp;&nbsp; <b>Situação de Matrícula:</b> <V val={f.situacao_matricula} orig="FORMADO" highlight={hl} /></p>
-      </div>
+      </Fieldset>
 
-      {/* IDENTIFICAÇÃO DA INSTITUIÇÃO */}
-      <div className="fieldset-box">
-        <div className="legend">IDENTIFICAÇÃO DA INSTITUIÇÃO</div>
+      <Fieldset legend="IDENTIFICAÇÃO DA INSTITUIÇÃO">
         <p style={{ margin: "2px 0" }}><b>Instituição:</b> CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER | POLO TIRADENTES (CENTRO) - PR</p>
         <p style={{ margin: "2px 0" }}><b>Ato Autorizativo de Credenciamento e Recredenciamento:</b> Portaria n.º 688 de 25/05/2012 publicada no D.O.U. n.º 102 de 28/05/2012, seção 1, p.23. Recredenciado pela Portaria n.º 1.219 de 28/11/2019 publicada no D.O.U. n.º 208, seção 1, p.24</p>
         <p style={{ margin: "2px 0" }}><b>Endereço:</b> <V val={f.endereco} orig="Rua do Rosário, 147 | Centro - Curitiba/PR | CEP 80020-110" highlight={hl} /></p>
-      </div>
+      </Fieldset>
 
-      {/* IDENTIFICAÇÃO DO CURSO */}
-      <div className="fieldset-box">
-        <div className="legend">IDENTIFICAÇÃO DO CURSO</div>
+      <Fieldset legend="IDENTIFICAÇÃO DO CURSO">
         <p style={{ margin: "2px 0" }}><b>Curso:</b> {meta.cursoCompleto}</p>
         <p style={{ margin: "2px 0" }}><b>Ato Autorizativo de Reconhecimento:</b> {meta.reconhecimento}</p>
         <p style={{ margin: "2px 0" }}><b>Número do Processo e-MEC*:</b> 201605151</p>
-      </div>
+      </Fieldset>
 
-      {/* FORMA DE INGRESSO */}
-      <div className="fieldset-box">
-        <div className="legend">FORMA DE INGRESSO</div>
+      <Fieldset legend="FORMA DE INGRESSO">
         <p style={{ margin: "2px 0" }}><b>Processo Seletivo:</b> VESTIBULAR</p>
         <p style={{ margin: "2px 0" }}><b>Mês / Ano de Realização:</b> {meta.ingressoMesAno} &nbsp;&nbsp; <b>Ano de Ingresso:</b> {meta.ingressoAno}</p>
-      </div>
+      </Fieldset>
 
-      {/* DADOS DE CONCLUSÃO */}
-      <div className="fieldset-box">
-        <div className="legend">DADOS DE CONCLUSÃO</div>
+      <Fieldset legend="DADOS DE CONCLUSÃO">
         <p style={{ margin: "2px 0" }}><b>Conclusão do Curso:</b> <V val={f.conclusao_curso} orig="08/07/2019" highlight={hl} /> &nbsp;&nbsp; <b>Colação de Grau:</b> <V val={f.colacao_grau} orig="08/07/2019" highlight={hl} /></p>
         <p style={{ margin: "2px 0" }}><b>Expedição do Diploma:</b> <V val={f.expedicao_diploma} orig="08/07/2019" highlight={hl} /> &nbsp;&nbsp; <b>Expedição do Histórico de Conclusão:</b> <V val={f.expedicao_historico} orig="08/07/2019" highlight={hl} /></p>
-      </div>
+      </Fieldset>
 
-      {/* CRITÉRIOS DE AVALIAÇÃO */}
-      <div className="fieldset-box">
-        <div className="legend">CRITÉRIOS DE AVALIAÇÃO</div>
+      <Fieldset legend="CRITÉRIOS DE AVALIAÇÃO">
         <p style={{ margin: "1px 0" }}>O resultado do processo de avaliação adotado é expresso sob forma de notas (de 0.0 a 10.0), a saber:</p>
         <p style={{ margin: "1px 0" }}>APR.MÉDIA: para resultado de notas de 7.0 (sete) a 10.0 (dez) na primeira fase de avaliação.</p>
         <p style={{ margin: "1px 0" }}>APR.EXAME: para resultado de notas de 5.0 (cinco) a 10.0 (dez) na segunda fase de avaliação.</p>
@@ -299,22 +341,18 @@ export function Page3({ f, highlightModified, profileKey }: Props) {
         <p style={{ margin: "1px 0" }}>REP.RECUP: para resultado de notas de 0.0 (zero) a 4.9 (quatro e nove décimos) na terceira fase de avaliação.</p>
         <p style={{ margin: "1px 0" }}>CONCLUÍDA: cumprimento de carga horária através de atividades pedagógicas.</p>
         <p style={{ margin: "1px 0" }}>Estágio Supervisionado: aprovado para nota final igual ou superior a 5.0 (cinco).</p>
-      </div>
+      </Fieldset>
 
-      {/* ENADE */}
-      <div className="fieldset-box">
-        <div className="legend">ENADE</div>
+      <Fieldset legend="ENADE">
         <p style={{ margin: "2px 0" }}>O Exame Nacional de Desempenho dos Estudantes é componente obrigatório dos cursos de graduação, conforme Lei nº 10.861, de 14 de abril de 2004, Art. 5º § 5º.</p>
         <p style={{ margin: "2px 0" }}><b>Situação do ENADE:</b> Estudante REGULAR</p>
-      </div>
+      </Fieldset>
 
-      {/* OBSERVAÇÕES */}
-      <div className="fieldset-box">
-        <div className="legend">OBSERVAÇÕES COMPLEMENTARES</div>
+      <Fieldset legend="OBSERVAÇÕES COMPLEMENTARES">
         <p style={{ margin: "1px 0" }}>* Informação válida para cursos em processo de reconhecimento ou renovação de reconhecimento de acordo com o Art. 17 IX da Portaria n.º 1.095/2018.</p>
         <p style={{ margin: "1px 0" }}>Histórico Escolar emitido digitalmente amparado pelo Ofício n.º 38/CES/CNE/MEC de 04/03/2011 e pelo Ofício n.º 387/2016/CES/SAO/CNE/CNE-MEC.</p>
         <p style={{ margin: "1px 0" }}>A validação da veracidade é dada por meio do endereço eletrônico <span style={{ textDecoration: "underline" }}>https://uninter-meudiploma.online</span> a partir dos dados contidos no rodapé deste documento.</p>
-      </div>
+      </Fieldset>
     </div>
   );
 }
@@ -322,12 +360,12 @@ export function Page3({ f, highlightModified, profileKey }: Props) {
 // ==================== PAGE 4 ====================
 export function Page4() {
   return (
-    <div className="doc-page" id="doc-page-4" style={{ padding: 0 }}>
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100%", height: "100%" }}>
+    <div className="doc-page" id="doc-page-4" style={{ ...PAGE_STYLE, padding: 0 }}>
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100%", height: "293.47mm" }}>
         <img
           src={SELO_URL}
           alt="Selo UNINTER"
-          style={{ width: 120, height: "auto", display: "block" }}
+          style={{ width: 220, height: "auto", display: "block" }}
         />
       </div>
     </div>
@@ -344,19 +382,17 @@ export function Page5({ f, highlightModified, profileKey, gradeRows }: Props) {
   })();
   const rows = splitGradeRowsSmart(gradeRows && gradeRows.length > 0 ? gradeRows : fallback).page5Rows;
   return (
-    <div className="doc-page" id="doc-page-5" style={{ fontSize: "8.5pt", paddingTop: "15mm" }}>
-      <div className="fieldset-box">
-        <div className="legend">IDENTIFICAÇÃO DO ALUNO</div>
+    <div className="doc-page" id="doc-page-5" style={{ ...PAGE_STYLE, fontSize: "8.5pt", paddingTop: "15mm" }}>
+      <Fieldset legend="IDENTIFICAÇÃO DO ALUNO">
         <p style={{ margin: "2px 0" }}><b>Nome:</b> <V val={f.nome} orig="LINDOMAR DE OLIVEIRA DUARTE" highlight={hl} /></p>
         <p style={{ margin: "2px 0" }}><b>CPF:</b> <V val={f.cpf} orig="247.920.528-23" highlight={hl} /> &nbsp;&nbsp; <b>RG:</b> <V val={f.rg} orig="27.204.902-5" highlight={hl} /> - <V val={f.rg_orgao} orig="SSP/SP" highlight={hl} /></p>
         <p style={{ margin: "2px 0" }}><b>Data de Nascimento/UF:</b> <V val={f.data_nascimento} orig="12/09/1976" highlight={hl} /> / <V val={f.uf_nascimento} orig="PR" highlight={hl} /> &nbsp;&nbsp; <b>Nacionalidade:</b> <V val={f.nacionalidade} orig="BRASILEIRA" highlight={hl} /></p>
         <p style={{ margin: "2px 0" }}><b>Matrícula:</b> <V val={f.matricula} orig="1022071" highlight={hl} /> &nbsp;&nbsp; <b>Situação de Matrícula:</b> <V val={f.situacao_matricula} orig="FORMADO" highlight={hl} /></p>
-      </div>
+      </Fieldset>
 
-      <div className="fieldset-box" style={{ paddingTop: 8 }}>
-        <div className="legend">COMPONENTES CURRICULARES</div>
+      <Fieldset legend="COMPONENTES CURRICULARES" style={{ paddingTop: 8 }}>
         <GradeTable rows={rows} />
-      </div>
+      </Fieldset>
     </div>
   );
 }
@@ -377,8 +413,8 @@ export function Page6({ f, highlightModified, profileKey, gradeRows }: Props) {
   const cargaHorariaValor = isEngenharia ? `${stats.totalHours}h` : `${f.carga_horaria}h`;
   const mediaGeral = stats.weightedAverage !== null ? stats.weightedAverage.toFixed(2).replace(".", ",") : "-";
   return (
-    <div className="doc-page" id="doc-page-6" style={{ fontSize: "8.5pt", paddingTop: "12mm" }}>
-      <div className="fieldset-box" style={{ borderTop: "none", paddingTop: 3 }}>
+    <div className="doc-page" id="doc-page-6" style={{ ...PAGE_STYLE, fontSize: "8.5pt", paddingTop: "12mm" }}>
+      <div style={{ ...FIELDSET_STYLE, borderTop: "none", paddingTop: 3, position: "relative" }}>
         <GradeTable rows={page6Rows} />
         <div style={{ marginTop: 6, fontSize: "9pt", lineHeight: 1.3 }}>
           <b>Carga Horária Cursada:</b> <V val={cargaHorariaValor} orig="2870h" highlight={hl} /> &nbsp;&nbsp;&nbsp;
