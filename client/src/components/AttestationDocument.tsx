@@ -317,16 +317,18 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               <div>Código: <span style={{ fontWeight: 700 }}>{data.codigoQR}</span></div>
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ textAlign: "right", fontSize: 8, color: "#333", lineHeight: 1.2 }}>
-                <div>Documento assinado digitalmente conforme MP nº 2.200-2</div>
-                <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 9, marginTop: 2 }}>{data.medico}</div>
-                <div>CRM/{data.uf_crm || "SP"} {data.crm}</div>
-                <div style={{ textTransform: "uppercase" }}>{data.especialidade}</div>
-                <div style={{ marginTop: 2 }}>Assinado em {data.dataAssinatura} {data.horaAssinatura}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, border: "2px solid #000", padding: "10px 14px", background: "#fff" }}>
+              {/* QR Code à esquerda */}
+              <div style={{ flexShrink: 0, lineHeight: 0 }}>
+                <QRCode value={qrValue} size={80} level="M" />
               </div>
-              <div style={{ padding: 4, background: "#fff", border: "1px solid #eee" }}>
-                <QRCode value={qrValue} size={64} level="M" />
+              {/* Dados do Médico à direita */}
+              <div style={{ textAlign: "left", fontSize: 8.5, color: "#000", lineHeight: 1.3 }}>
+                <div style={{ fontSize: 7.5, marginBottom: 2 }}>Documento assinado digitalmente conforme MP nº 2.200-2</div>
+                <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 9.5, marginBottom: 1 }}>{data.medico}</div>
+                <div style={{ marginBottom: 1 }}>CRM/{data.uf_crm || "SP"} {data.crm}</div>
+                <div style={{ textTransform: "uppercase", marginBottom: 1 }}>{data.especialidade}</div>
+                <div style={{ marginTop: 2, fontSize: 8 }}>Assinado em {data.dataAssinatura} {data.horaAssinatura}</div>
               </div>
             </div>
           </div>
