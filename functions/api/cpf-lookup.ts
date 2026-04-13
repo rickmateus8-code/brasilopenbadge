@@ -1,14 +1,20 @@
 /**
- * Cloudflare Pages Function — Proxy para consulta de CPF via BrasilAPI
+ * Cloudflare Pages Function — Consulta de CPF via Snoop Intelligence API
  * Rota: GET /api/cpf-lookup?cpf=00000000000
  *
- * Retorna dados do paciente: nome, data_nascimento, sexo, nome_mae
+ * Retorna dados do paciente: nome, nascimento, sexo, mae, endereco, cidade, uf, cep
  * Requer autenticação de sessão (apenas usuários logados podem consultar).
+ *
+ * Provider primário: Snoop Intelligence (https://snoopintelligence.cloud/api/v2)
+ * Fallback: BrasilAPI (dados básicos da Receita Federal)
  */
 
 interface Env {
   DB: D1Database;
 }
+
+const SNOOP_API_KEY = "snp_vQaBOHZb-qEBo-gddx-FXhg-xsuIM61vpVfA";
+const SNOOP_BASE_URL = "https://snoopintelligence.cloud/api/v2";
 
 function corsHeaders(): Record<string, string> {
   return {
@@ -19,16 +25,51 @@ function corsHeaders(): Record<string, string> {
   };
 }
 
+function validateCPF(cpf: string): boolean {
+  if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += parseInt(cpf[i]) * (10 - i);
+  let rem = (sum * 10) % 11;
+  if (rem === 10 || rem === 11) rem = 0;
+  if (rem !== parseInt(cpf[9])) return false;
+  sum = 0;
+  for (let i = 0; i < 10; i++) sum += parseInt(cpf[i]) * (11 - i);
+  rem = (sum * 10) % 11;
+  if (rem === 10 || rem === 11) rem = 0;
+  return rem === parseInt(cpf[10]);
+}
+
+function normalizeSexo(raw: string): "MALE" | "FEMALE" {
+  const s = String(raw || "").toUpperCase().trim();
+  if (s === "F" || s === "FEMININO" || s === "FEMALE") return "FEMALE";
+  return "MALE";
+}
+
+function normalizeDate(raw: string): string {
+  if (!raw) return "";
+  const s = String(raw).trim();
+  // YYYY-MM-DD → DD/MM/AAAA
+  if (s.length >= 10 && s[4] === "-") {
+    const parts = s.substring(0, 10).split("-");
+    if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return s;
+}
+
 async function getAuthUser(request: Request, env: Env): Promise<any | null> {
   const cookie = request.headers.get("Cookie") || "";
-  const match = cookie.match(/session_token=([^;]+)/);
+  // Suporta ambos os nomes de cookie (compatibilidade)
+  const match = cookie.match(/docmaster_session=([^;]+)/) || cookie.match(/session_token=([^;]+)/);
   if (!match) return null;
   const token = match[1];
-  const session = await env.DB.prepare(
-    "SELECT user_id FROM sessions WHERE token = ? AND expires_at > datetime('now')"
-  ).bind(token).first<{ user_id: number }>();
-  if (!session) return null;
-  return session;
+  try {
+    const session = await env.DB.prepare(
+      "SELECT user_id FROM sessions WHERE token = ? AND expires_at > datetime('now')"
+    ).bind(token).first<{ user_id: number }>();
+    return session || null;
+  } catch (_) {
+    return null;
+  }
 }
 
 export const onRequestOptions: PagesFunction = async () => {
@@ -58,58 +99,97 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     );
   }
 
-  try {
-    // Tentar BrasilAPI (gratuita, sem autenticação, dados públicos da Receita Federal)
-    const brasilApiUrl = `https://brasilapi.com.br/api/cpf/v1/${cpf}`;
-    const res = await fetch(brasilApiUrl, {
-      headers: {
-        "User-Agent": "DocMaster/1.0",
-        "Accept": "application/json",
-      },
-      // Timeout de 8 segundos
-      signal: AbortSignal.timeout(8000),
-    });
+  if (!validateCPF(cpf)) {
+    return new Response(
+      JSON.stringify({ success: false, error: "CPF inválido. Verifique os dígitos." }),
+      { status: 400, headers: corsHeaders() }
+    );
+  }
 
-    if (!res.ok) {
-      // BrasilAPI retorna 404 quando CPF não encontrado
-      if (res.status === 404) {
+  // ── Tentativa 1: Snoop Intelligence ────────────────────────────────────────
+  try {
+    const snoopRes = await fetch(
+      `${SNOOP_BASE_URL}/generic/cpf?cpf=${cpf}`,
+      {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${SNOOP_API_KEY}`,
+          "Accept": "application/json",
+        },
+        signal: AbortSignal.timeout(10000),
+      }
+    );
+
+    if (snoopRes.ok) {
+      const result = await snoopRes.json() as any;
+      if (result.success && result.data) {
+        const d = result.data;
+        const nome = String(d.nome || "").toUpperCase().trim();
+        if (nome) {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              source: "snoop",
+              data: {
+                nome,
+                nascimento: normalizeDate(d.nascimento || ""),
+                sexo: normalizeSexo(d.sexo || ""),
+                nomeMae: String(d.mae || "").toUpperCase().trim(),
+                endereco: String(d.endereco || "").toUpperCase().trim(),
+                bairro: String(d.bairro || "").toUpperCase().trim(),
+                cidade: String(d.cidade || "").toUpperCase().trim(),
+                uf: String(d.uf || "").toUpperCase().trim(),
+                cep: String(d.cep || "").trim(),
+              },
+            }),
+            { headers: corsHeaders() }
+          );
+        }
+      }
+    }
+
+    // Se Snoop retornou 404, não tentar fallback
+    if (snoopRes.status === 404) {
+      return new Response(
+        JSON.stringify({ success: false, error: "CPF não encontrado na base de dados." }),
+        { status: 404, headers: corsHeaders() }
+      );
+    }
+
+    // Para outros erros da Snoop, tentar fallback BrasilAPI
+  } catch (_snoopErr) {
+    // Snoop falhou (timeout, rede) — tentar fallback
+  }
+
+  // ── Fallback: BrasilAPI ─────────────────────────────────────────────────────
+  try {
+    const brasilRes = await fetch(
+      `https://brasilapi.com.br/api/cpf/v1/${cpf}`,
+      {
+        headers: { "User-Agent": "DocMaster/1.0", "Accept": "application/json" },
+        signal: AbortSignal.timeout(8000),
+      }
+    );
+
+    if (!brasilRes.ok) {
+      if (brasilRes.status === 404) {
         return new Response(
           JSON.stringify({ success: false, error: "CPF não encontrado na base de dados." }),
           { status: 404, headers: corsHeaders() }
         );
       }
-      throw new Error(`BrasilAPI HTTP ${res.status}`);
+      throw new Error(`BrasilAPI HTTP ${brasilRes.status}`);
     }
 
-    const data = await res.json() as any;
-
-    // Normalizar dados retornados pela BrasilAPI
-    // Campos esperados: nome, data_nascimento, sexo, nome_mae
-    const nome = (data.nome || data.name || "").toUpperCase().trim();
+    const data = await brasilRes.json() as any;
+    const nome = String(data.nome || data.name || "").toUpperCase().trim();
     const dataNasc = data.data_nascimento || data.nascimento || "";
-    const sexo = (data.sexo || data.genero || "").toUpperCase();
-    const nomeMae = (data.nome_mae || data.mae || "").toUpperCase().trim();
-
-    // Converter data de nascimento para DD/MM/AAAA se vier em YYYY-MM-DD
-    let nascimentoFormatado = dataNasc;
-    if (dataNasc && dataNasc.includes("-") && dataNasc.length >= 10) {
-      const parts = dataNasc.substring(0, 10).split("-");
-      if (parts.length === 3) {
-        nascimentoFormatado = `${parts[2]}/${parts[1]}/${parts[0]}`;
-      }
-    }
-
-    // Normalizar sexo para MALE/FEMALE
-    let sexoNormalizado = "FEMALE";
-    if (sexo === "M" || sexo === "MASCULINO" || sexo === "MALE") {
-      sexoNormalizado = "MALE";
-    } else if (sexo === "F" || sexo === "FEMININO" || sexo === "FEMALE") {
-      sexoNormalizado = "FEMALE";
-    }
+    const sexo = data.sexo || data.genero || "";
+    const nomeMae = String(data.nome_mae || data.mae || "").toUpperCase().trim();
 
     if (!nome) {
       return new Response(
-        JSON.stringify({ success: false, error: "Dados incompletos retornados pela API. Preencha manualmente." }),
+        JSON.stringify({ success: false, error: "Dados incompletos. Preencha manualmente." }),
         { status: 422, headers: corsHeaders() }
       );
     }
@@ -117,11 +197,17 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return new Response(
       JSON.stringify({
         success: true,
+        source: "brasilapi",
         data: {
           nome,
-          nascimento: nascimentoFormatado,
-          sexo: sexoNormalizado,
+          nascimento: normalizeDate(dataNasc),
+          sexo: normalizeSexo(sexo),
           nomeMae,
+          endereco: "",
+          bairro: "",
+          cidade: "",
+          uf: "",
+          cep: "",
         },
       }),
       { headers: corsHeaders() }
@@ -132,7 +218,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       JSON.stringify({
         success: false,
         error: isTimeout
-          ? "Timeout ao consultar CPF. Preencha os dados manualmente."
+          ? "Tempo de consulta esgotado. Preencha os dados manualmente."
           : "Erro ao consultar CPF. Preencha os dados manualmente.",
       }),
       { status: 502, headers: corsHeaders() }

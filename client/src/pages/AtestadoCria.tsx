@@ -392,15 +392,32 @@ export default function AtestadoCria() {
         return;
       }
       const d = data.data;
+      // Preencher dados do paciente
       setForm(p => ({
         ...p,
         paciente: d.nome || p.paciente,
         nascimento: d.nascimento || p.nascimento,
         sexo: (d.sexo as "MALE" | "FEMALE") || p.sexo,
         nomeMae: d.nomeMae || p.nomeMae,
+        // Se Snoop retornou endereço completo, preencher também
+        endereco: d.endereco
+          ? [d.endereco, d.bairro, d.cidade && d.uf ? `${d.cidade}/${d.uf}` : (d.cidade || "")].filter(Boolean).join(" - ")
+          : p.endereco,
+        // Preencher cidade de emissão se disponivel
+        cidade: d.cidade || p.cidade,
       }));
+      // Preencher UF se disponivel
+      if (d.uf) setCepUFPreenchida(d.uf);
+      // Preencher CEP do paciente se disponivel
+      if (d.cep) {
+        const cepNum = d.cep.replace(/\D/g, "");
+        if (cepNum.length === 8) {
+          setCepPaciente(`${cepNum.slice(0,5)}-${cepNum.slice(5)}`);
+        }
+      }
+      const source = data.source === "snoop" ? "Snoop Intelligence" : "BrasilAPI";
       setCpfStatus("ok");
-      setCpfMsg(`✅ Dados preenchidos automaticamente via CPF.`);
+      setCpfMsg(`✅ Dados preenchidos via ${source}.`);
     } catch {
       setCpfStatus("error");
       setCpfMsg("Erro ao consultar CPF. Preencha manualmente.");
@@ -1624,6 +1641,23 @@ export default function AtestadoCria() {
                       <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: 14 }}>⏳</span>
                     )}
                   </div>
+                  {/* Botão de preenchimento manual via CPF */}
+                  {tipoDoc === "CPF" && !cpfLoading && validarCPF(form.docValue) && cpfStatus !== "ok" && (
+                    <button
+                      type="button"
+                      onClick={() => buscarDadosCPF(form.docValue)}
+                      style={{
+                        marginTop: 6, width: "100%", padding: "8px 0",
+                        borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
+                        background: "#005CA9", color: "#fff",
+                        border: "2px solid #005CA9",
+                        display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                        transition: "background 0.2s",
+                      }}
+                    >
+                      🔍 Buscar dados via CPF
+                    </button>
+                  )}
                   {/* Feedback da API de CPF */}
                   {tipoDoc === "CPF" && cpfMsg && (
                     <div style={{

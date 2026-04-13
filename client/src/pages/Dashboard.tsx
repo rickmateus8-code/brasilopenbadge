@@ -1080,6 +1080,8 @@ export default function Dashboard() {
       <NovoDocumentoModal
         open={showNovoDocModal}
         onClose={() => setShowNovoDocModal(false)}
+        userBalance={typeof user?.balance === 'number' ? user.balance : (parseFloat(String(user?.balance ?? '0')) || 0)}
+        username={user?.username}
       />
     </DashboardLayout>
   );

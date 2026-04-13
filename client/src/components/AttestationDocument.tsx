@@ -366,8 +366,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
             {/* Direita: QR Code + Dados do Médico — moldura compacta */}
             <div style={{
-              border: "1.5px solid #000",
-              padding: "5px 8px 5px 6px",
+              border: "2px solid #000",
+              padding: "6px 10px 6px 8px",
               display: "flex",
               gap: 10,
               alignItems: "center",
@@ -379,18 +379,18 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 {isEmitted ? (
                   <QRCode
                     value={qrValue}
-                    size={81}
+                    size={96}
                     level="H"
                     includeMargin={false}
                     fgColor="#000000"
                     bgColor="#FFFFFF"
                   />
                 ) : (
-                  <div style={{ position: "relative", width: 81, height: 81, flexShrink: 0 }}>
+                  <div style={{ position: "relative", width: 96, height: 96, flexShrink: 0 }}>
                     <div style={{ filter: "blur(4px)", opacity: 0.5, lineHeight: 0 }}>
                       <QRCode
                         value="https://validaratestado.digital"
-                        size={81}
+                        size={96}
                         level="H"
                         includeMargin={false}
                         fgColor="#1a1a1a"
