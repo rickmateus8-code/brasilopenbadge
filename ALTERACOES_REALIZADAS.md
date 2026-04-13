@@ -301,3 +301,34 @@ Conforme planejado no roteiro de handover, a **Etapa 1** foi concluída com as s
 
 **Data:** 12 de Abril de 2026
 **Versão:** 1.2.0
+
+
+---
+
+## 10. Ajustes Adicionais de Layout: Atestado e Laudo Médico (08/04/2026)
+
+Conforme solicitação do usuário, foram realizadas as seguintes otimizações visuais nos títulos "Atestado Médico" e "Laudo Médico":
+
+### 10.1. Redução de Tamanho de Fonte
+- **Redução de 5%:** O tamanho do título foi reduzido de 21.0px para 19.95px (DocMaster) e de 22.68px para 21.55px (IDAB), garantindo uma proporção visual mais equilibrada.
+
+### 10.2. Remoção de Linhas de Borda
+- **Remoção de Bordas:** As linhas superior e inferior (`borderTop` e `borderBottom`) foram removidas do título, deixando o documento com uma aparência mais limpa e minimalista.
+
+### 10.3. Redução de Espaçamento Entre Letras
+- **Letter-spacing Reduzido:** O espaçamento entre as letras foi reduzido de 3 para 0.5, aproximando as letras e tornando o título mais compacto e profissional.
+
+### 10.4. Ajuste de Margem Inferior
+- **Margem Reduzida:** O `marginBottom` foi reduzido de 14 para 8, diminuindo o espaço em branco entre o título e a próxima seção do documento.
+
+### 10.5. Moldura do Endereço Emitente
+- **Moldura Superior Apenas:** A moldura em volta de "ENDEREÇO EMITENTE: ENDEREÇO DA CLÍNICA" foi modificada para exibir apenas a linha superior (`borderTop: 2px solid #000`), removendo as laterais e a base.
+- **Alinhamento à Esquerda:** O texto foi alinhado à esquerda, respeitando os limites do enquadramento geral do documento.
+
+### 10.6. Paridade 100% Mantida
+- As mesmas alterações foram aplicadas simultaneamente no **DocMaster** e no **IDAB**, garantindo que o documento emitido e validado sejam visualmente idênticos.
+
+**Status:** ✓ Concluída
+**Commits:** 
+- DocMaster: `1a4e371`
+- IDAB: `3bf42c7`
