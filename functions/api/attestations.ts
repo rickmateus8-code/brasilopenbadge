@@ -269,6 +269,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
       medico, crm, especialidade, instituicao, unidade, endereco_emitente,
       texto_atestado, afastamento, data_assinatura, hora_assinatura, data_emissao,
       logo_url, logo_right, signature_color, signature_image, modo_carimbo,
+      logo_left_scale, logo_right_scale, logo_left_x, logo_left_y, logo_right_x, logo_right_y,
       cidade, status, created_at, updated_at
     ) VALUES (
       ?, ?, ?, ?, ?, ?, ?, ?, ?,
@@ -276,6 +277,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
       ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?, ?,
       ?, 'emitido', ?, ?
     )
   `).bind(
@@ -305,6 +307,12 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
     body.signatureColor || "#0b109f",
     body.signatureImage || "",
     body.modoCarimbo ? 1 : 0,
+    body.logoLeftScale ?? 1.0,
+    body.logoRightScale ?? 1.0,
+    body.logoLeftX ?? 0,
+    body.logoLeftY ?? 0,
+    body.logoRightX ?? 0,
+    body.logoRightY ?? 0,
     body.cidade || "",
     now, now
   ).run();
@@ -374,6 +382,12 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
       signature_color: body.signatureColor || body.signature_color || "#0b109f",
       signature_image: body.signatureImage || body.signature_image || "",
       modo_carimbo: body.modoCarimbo ?? body.modo_carimbo ?? false,
+      logo_left_scale: body.logoLeftScale ?? body.logo_left_scale ?? 1.0,
+      logo_right_scale: body.logoRightScale ?? body.logo_right_scale ?? 1.0,
+      logo_left_x: body.logoLeftX ?? body.logo_left_x ?? 0,
+      logo_left_y: body.logoLeftY ?? body.logo_left_y ?? 0,
+      logo_right_x: body.logoRightX ?? body.logo_right_x ?? 0,
+      logo_right_y: body.logoRightY ?? body.logo_right_y ?? 0,
       // Chave especial: força o mesmo código QR no banco do validador
       _codigo_override: codigoQR,
     };
@@ -522,6 +536,12 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
         signature_color = COALESCE(?, signature_color),
         signature_image = COALESCE(?, signature_image),
         modo_carimbo = COALESCE(?, modo_carimbo),
+        logo_left_scale = COALESCE(?, logo_left_scale),
+        logo_right_scale = COALESCE(?, logo_right_scale),
+        logo_left_x = COALESCE(?, logo_left_x),
+        logo_left_y = COALESCE(?, logo_left_y),
+        logo_right_x = COALESCE(?, logo_right_x),
+        logo_right_y = COALESCE(?, logo_right_y),
         cidade = ?, updated_at = ?
       WHERE id = ?
     `).bind(
@@ -549,6 +569,12 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
       body.signatureColor || body.signature_color || null,
       body.signatureImage || body.signature_image || null,
       body.modoCarimbo !== undefined ? (body.modoCarimbo ? 1 : 0) : null,
+      body.logoLeftScale !== undefined ? body.logoLeftScale : null,
+      body.logoRightScale !== undefined ? body.logoRightScale : null,
+      body.logoLeftX !== undefined ? body.logoLeftX : null,
+      body.logoLeftY !== undefined ? body.logoLeftY : null,
+      body.logoRightX !== undefined ? body.logoRightX : null,
+      body.logoRightY !== undefined ? body.logoRightY : null,
       body.cidade || null,
       now, id
     ).run();
@@ -580,6 +606,12 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
         signature_color = COALESCE(?, signature_color),
         signature_image = COALESCE(?, signature_image),
         modo_carimbo = COALESCE(?, modo_carimbo),
+        logo_left_scale = COALESCE(?, logo_left_scale),
+        logo_right_scale = COALESCE(?, logo_right_scale),
+        logo_left_x = COALESCE(?, logo_left_x),
+        logo_left_y = COALESCE(?, logo_left_y),
+        logo_right_x = COALESCE(?, logo_right_x),
+        logo_right_y = COALESCE(?, logo_right_y),
         cidade = COALESCE(?, cidade),
         updated_at = ?
       WHERE id = ?
@@ -608,6 +640,12 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
       body.signatureColor || body.signature_color || null,
       body.signatureImage || body.signature_image || null,
       body.modoCarimbo !== undefined ? (body.modoCarimbo ? 1 : 0) : null,
+      body.logoLeftScale !== undefined ? body.logoLeftScale : null,
+      body.logoRightScale !== undefined ? body.logoRightScale : null,
+      body.logoLeftX !== undefined ? body.logoLeftX : null,
+      body.logoLeftY !== undefined ? body.logoLeftY : null,
+      body.logoRightX !== undefined ? body.logoRightX : null,
+      body.logoRightY !== undefined ? body.logoRightY : null,
       body.cidade || null,
       now, id
     ).run();
@@ -650,6 +688,12 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
       signature_color: updated.signature_color || "#0b109f",
       signature_image: updated.signature_image || "",
       modo_carimbo: updated.modo_carimbo || 0,
+      logo_left_scale: updated.logo_left_scale ?? 1.0,
+      logo_right_scale: updated.logo_right_scale ?? 1.0,
+      logo_left_x: updated.logo_left_x ?? 0,
+      logo_left_y: updated.logo_left_y ?? 0,
+      logo_right_x: updated.logo_right_x ?? 0,
+      logo_right_y: updated.logo_right_y ?? 0,
     };
 
     try {

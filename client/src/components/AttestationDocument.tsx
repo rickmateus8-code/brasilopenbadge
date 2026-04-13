@@ -32,6 +32,12 @@ interface AttestationDocumentProps {
   logoRight?: string;
   signatureColor?: string;
   signatureImage?: string;
+  logoLeftScale?: number;
+  logoRightScale?: number;
+  logoLeftX?: number;
+  logoLeftY?: number;
+  logoRightX?: number;
+  logoRightY?: number;
 }
 
 // Gerar rubrica cursiva a partir do nome do médico
@@ -53,7 +59,7 @@ const PAD_H = 56;
 const PAD_V = 60;
 
 const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>(
-  ({ data, logoUrl, logoLeft, logoRight, signatureColor, signatureImage }, ref) => {
+  ({ data, logoUrl, logoLeft, logoRight, signatureColor, signatureImage, logoLeftScale = 1, logoRightScale = 1, logoLeftX = 0, logoLeftY = 0, logoRightX = 0, logoRightY = 0 }, ref) => {
     const isEmitted = data.codigoQR && data.codigoQR !== "XXXX.XXXX";
     const dataEmissaoForQR = data.dataEmissao
       ? (() => {
@@ -156,13 +162,20 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           zIndex: 2,
           flexShrink: 0,
         }}>
-          <div style={{ width: 154, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start", flexShrink: 0 }}>
+          <div style={{ width: 154, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start", flexShrink: 0, overflow: "visible" }}>
             {effectiveLogoLeft && (
               <img
                 src={effectiveLogoLeft}
                 alt="Logo"
                 crossOrigin="anonymous"
-                style={{ maxHeight: "100%", maxWidth: 154, objectFit: "contain" }}
+                style={{
+                  maxHeight: "100%",
+                  maxWidth: 154,
+                  objectFit: "contain",
+                  transform: `scale(${logoLeftScale}) translate(${logoLeftX}px, ${logoLeftY}px)`,
+                  transformOrigin: "left center",
+                  transition: "transform 0.1s",
+                }}
               />
             )}
           </div>
@@ -185,13 +198,20 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             )}
           </div>
 
-          <div style={{ width: 154, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-end", flexShrink: 0 }}>
+          <div style={{ width: 154, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, overflow: "visible" }}>
             {effectiveLogoRight && (
               <img
                 src={effectiveLogoRight}
                 alt="Logo Direita"
                 crossOrigin="anonymous"
-                style={{ maxHeight: "100%", maxWidth: 154, objectFit: "contain" }}
+                style={{
+                  maxHeight: "100%",
+                  maxWidth: 154,
+                  objectFit: "contain",
+                  transform: `scale(${logoRightScale}) translate(${logoRightX}px, ${logoRightY}px)`,
+                  transformOrigin: "right center",
+                  transition: "transform 0.1s",
+                }}
               />
             )}
           </div>

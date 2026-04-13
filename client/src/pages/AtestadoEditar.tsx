@@ -215,6 +215,32 @@ export default function AtestadoEditar() {
   const logoLeftRef = useRef<HTMLInputElement>(null);
   const logoRightRef = useRef<HTMLInputElement>(null);
 
+  // ── Escala e posição dos logos ─────────────────────────────────────────────
+  const [logoLeftScale, setLogoLeftScale] = useState<number>(1);
+  const [logoRightScale, setLogoRightScale] = useState<number>(1);
+  const [logoLeftX, setLogoLeftX] = useState<number>(0);
+  const [logoLeftY, setLogoLeftY] = useState<number>(0);
+  const [logoRightX, setLogoRightX] = useState<number>(0);
+  const [logoRightY, setLogoRightY] = useState<number>(0);
+  const SCALE_STEP = 0.05;
+  const POS_STEP = 2;
+  const adjustScale = (side: "left" | "right", delta: number) => {
+    if (side === "left") setLogoLeftScale(v => Math.max(0.1, Math.min(3, parseFloat((v + delta).toFixed(2)))));
+    else setLogoRightScale(v => Math.max(0.1, Math.min(3, parseFloat((v + delta).toFixed(2)))));
+  };
+  const adjustX = (side: "left" | "right", delta: number) => {
+    if (side === "left") setLogoLeftX(v => v + delta);
+    else setLogoRightX(v => v + delta);
+  };
+  const adjustY = (side: "left" | "right", delta: number) => {
+    if (side === "left") setLogoLeftY(v => v + delta);
+    else setLogoRightY(v => v + delta);
+  };
+  const resetLogoTransform = (side: "left" | "right") => {
+    if (side === "left") { setLogoLeftScale(1); setLogoLeftX(0); setLogoLeftY(0); }
+    else { setLogoRightScale(1); setLogoRightX(0); setLogoRightY(0); }
+  };
+
   // ── Assinatura ─────────────────────────────────────────────────────────────
   const [signatureColor, setSignatureColor] = useState<string>("#0b109f");
   const [signatureImage, setSignatureImage] = useState<string>("");
@@ -296,6 +322,12 @@ export default function AtestadoEditar() {
         setCodigoQR(d.codigo_qr || d.codigoQR || "");
         setLogoLeft(d.logo_url || d.logoUrl || "");
         setLogoRight(d.logo_right || d.logoRight || "");
+        setLogoLeftScale(typeof d.logo_left_scale === "number" ? d.logo_left_scale : 1);
+        setLogoRightScale(typeof d.logo_right_scale === "number" ? d.logo_right_scale : 1);
+        setLogoLeftX(typeof d.logo_left_x === "number" ? d.logo_left_x : 0);
+        setLogoLeftY(typeof d.logo_left_y === "number" ? d.logo_left_y : 0);
+        setLogoRightX(typeof d.logo_right_x === "number" ? d.logo_right_x : 0);
+        setLogoRightY(typeof d.logo_right_y === "number" ? d.logo_right_y : 0);
         setSignatureColor(d.signature_color || d.signatureColor || "#0b109f");
         setSignatureImage(d.signature_image || d.signatureImage || "");
 
@@ -474,6 +506,12 @@ export default function AtestadoEditar() {
         dataEmissao: form.dataEmissao,
         logoUrl: logoLeft || "",
         logoRight: logoRight || "",
+        logo_left_scale: logoLeftScale,
+        logo_right_scale: logoRightScale,
+        logo_left_x: logoLeftX,
+        logo_left_y: logoLeftY,
+        logo_right_x: logoRightX,
+        logo_right_y: logoRightY,
         instituicao: form.instituicao,
         unidade: form.unidade,
         enderecoEmitente: form.enderecoEmitente,
@@ -570,6 +608,12 @@ export default function AtestadoEditar() {
     })(),
     logoUrl: logoLeft,
     logoRight: logoRight,
+    logoLeftScale,
+    logoRightScale,
+    logoLeftX,
+    logoLeftY,
+    logoRightX,
+    logoRightY,
     instituicao: form.instituicao || "INSTITUIÇÃO",
     unidade: form.unidade || "LOCAL DE ATENDIMENTO",
     enderecoEmitente: form.enderecoEmitente || "ENDEREÇO DA CLÍNICA",
@@ -1006,6 +1050,49 @@ export default function AtestadoEditar() {
                   <button style={{ ...btnGray, fontSize: 10, padding: "5px 8px", color: "#dc2626" }} onClick={() => { setLogoLeft(""); setLogoRight(""); }}>✕ Remover</button>
                 )}
               </div>
+
+              {/* Controles de Tamanho e Posição */}
+              {(logoSide === "left" ? logoLeft : logoRight) && (
+                <div style={{ background: "#f0f4ff", border: "1px solid #c7d2fe", borderRadius: 8, padding: "8px 10px" }}>
+                  <p style={{ fontSize: 10, fontWeight: 700, color: "#3730a3", margin: "0 0 6px" }}>
+                    🔧 Ajustar Logo {logoSide === "left" ? "Esquerda" : "Direita"}
+                  </p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                    <span style={{ fontSize: 10, color: "#374151", width: 60 }}>Tamanho:</span>
+                    <button type="button" onClick={() => adjustScale(logoSide, -SCALE_STEP)}
+                      style={{ width: 26, height: 26, borderRadius: 5, border: "1px solid #6366f1", background: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 14, color: "#4f46e5" }}>−</button>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "#1e1b4b", minWidth: 36, textAlign: "center" }}>
+                      {Math.round((logoSide === "left" ? logoLeftScale : logoRightScale) * 100)}%
+                    </span>
+                    <button type="button" onClick={() => adjustScale(logoSide, SCALE_STEP)}
+                      style={{ width: 26, height: 26, borderRadius: 5, border: "1px solid #6366f1", background: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 14, color: "#4f46e5" }}>+</button>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                    <span style={{ fontSize: 10, color: "#374151", width: 60 }}>Horiz.:</span>
+                    <button type="button" onClick={() => adjustX(logoSide, -POS_STEP)}
+                      style={{ width: 26, height: 26, borderRadius: 5, border: "1px solid #6366f1", background: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 14, color: "#4f46e5" }}>←</button>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "#1e1b4b", minWidth: 36, textAlign: "center" }}>
+                      {logoSide === "left" ? logoLeftX : logoRightX}px
+                    </span>
+                    <button type="button" onClick={() => adjustX(logoSide, POS_STEP)}
+                      style={{ width: 26, height: 26, borderRadius: 5, border: "1px solid #6366f1", background: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 14, color: "#4f46e5" }}>→</button>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                    <span style={{ fontSize: 10, color: "#374151", width: 60 }}>Vert.:</span>
+                    <button type="button" onClick={() => adjustY(logoSide, -POS_STEP)}
+                      style={{ width: 26, height: 26, borderRadius: 5, border: "1px solid #6366f1", background: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 14, color: "#4f46e5" }}>↑</button>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "#1e1b4b", minWidth: 36, textAlign: "center" }}>
+                      {logoSide === "left" ? logoLeftY : logoRightY}px
+                    </span>
+                    <button type="button" onClick={() => adjustY(logoSide, POS_STEP)}
+                      style={{ width: 26, height: 26, borderRadius: 5, border: "1px solid #6366f1", background: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 14, color: "#4f46e5" }}>↓</button>
+                  </div>
+                  <button type="button" onClick={() => resetLogoTransform(logoSide)}
+                    style={{ fontSize: 10, color: "#6b7280", background: "none", border: "none", cursor: "pointer", textDecoration: "underline", padding: 0 }}>
+                    ↺ Resetar posição
+                  </button>
+                </div>
+              )}
               <div>
                 <label style={lbl}>Assinatura</label>
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -1043,6 +1130,12 @@ export default function AtestadoEditar() {
                 data={previewData}
                 logoLeft={logoLeft}
                 logoRight={logoRight}
+                logoLeftScale={logoLeftScale}
+                logoRightScale={logoRightScale}
+                logoLeftX={logoLeftX}
+                logoLeftY={logoLeftY}
+                logoRightX={logoRightX}
+                logoRightY={logoRightY}
                 signatureColor={signatureColor}
                 signatureImage={signatureImage}
               />
