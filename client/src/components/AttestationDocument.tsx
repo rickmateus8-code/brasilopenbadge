@@ -254,25 +254,15 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           {docType === 'laudo' ? 'LAUDO MÉDICO' : 'ATESTADO MÉDICO'}
         </div>
 
-        {/* ===== ENDEREÇO EMITENTE (MOLDURA SUPERIOR APENAS) ===== */}
-        {enderecoEmitente && (
-          <div style={{
-            borderTop: "2px solid #000",
-            borderLeft: "none",
-            borderRight: "none",
-            borderBottom: "none",
-            padding: "4px 0 4px 0",
-            fontSize: 9,
-            marginBottom: 6,
-            position: "relative",
-            zIndex: 2,
-            textAlign: "left",
-            flexShrink: 0,
-          }}>
-            <span style={{ fontWeight: 700 }}>ENDEREÇO EMITENTE: </span>
-            <span style={{ fontWeight: 400 }}>{enderecoEmitente}</span>
-          </div>
-        )}
+        {/* Moldura Superior (Linha Preta) */}
+        <div style={{
+          borderTop: "2px solid #000",
+          width: "100%",
+          marginBottom: 6,
+          position: "relative",
+          zIndex: 2,
+          flexShrink: 0,
+        }} />
 
         {/* ===== DADOS DO PACIENTE ===== */}
         <div style={{
@@ -315,32 +305,25 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </div>
 
           {/* Linha 3: Endereço */}
-          <div>
+          <div style={{ marginBottom: 4 }}>
             <span style={{ fontWeight: 700, color: "#000" }}>Endereço: </span>
             <span style={{ color: "#000", textTransform: "uppercase" }}>{data.endereco}</span>
           </div>
-        </div>
 
-        {/* ===== ENDEREÇO EMITENTE ===== */}
-        {enderecoEmitente && (
-          <div style={{
-            border: "1px solid #000",
-            borderTop: "none",
-            padding: "6px 10px",
-            fontSize: 10,
-            fontWeight: 700,
-            textTransform: "uppercase",
-            marginBottom: 6,
-            position: "relative",
-            zIndex: 2,
-            background: "rgba(255,255,255,0.9)",
-            flexShrink: 0,
-            color: "#000",
-          }}>
-            <span style={{ fontWeight: 700 }}>ENDEREÇO EMITENTE: </span>
-            {enderecoEmitente}
-          </div>
-        )}
+          {/* Linha 4: Endereço Emitente (Reposicionado conforme imagem) */}
+          {enderecoEmitente && (
+            <div style={{ 
+              borderTop: "1px solid #000", 
+              marginTop: 4, 
+              paddingTop: 4,
+              fontSize: 10.5,
+              color: "#000"
+            }}>
+              <span style={{ fontWeight: 700 }}>ENDEREÇO EMITENTE: </span>
+              <span style={{ fontWeight: 400, textTransform: "uppercase" }}>{enderecoEmitente}</span>
+            </div>
+          )}
+        </div>
         {/* ENDEREÇO EMITENTE: exibido apenas no cabeçalho do documento, não aqui */}
 
         {/* ===== CORPO DO TEXTO ===== */}
