@@ -234,7 +234,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         {/* ===== TÍTULO ===== */}
         <div style={{
           fontWeight: 700,
-          fontSize: 18,
+          fontSize: 19.44,
           textTransform: "uppercase",
           borderBottom: "2px solid #000",
           display: "block",
@@ -242,7 +242,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           width: "100%",
           textAlign: "center",
           marginBottom: 14,
-          letterSpacing: 0.5,
+          letterSpacing: 0,
           position: "relative",
           zIndex: 2,
           color: "#000",
@@ -254,14 +254,17 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         {/* ===== DADOS DO PACIENTE ===== */}
         <div style={{
           border: "1px solid #000",
-          padding: "7px 10px",
+          padding: "6px 10px",
           fontSize: 10.5,
           marginBottom: 6,
-          lineHeight: 1.7,
+          lineHeight: 1.55,
           position: "relative",
           zIndex: 2,
           background: "rgba(255,255,255,0.9)",
           flexShrink: 0,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
         }}>
           {/* Linha 1: Paciente | Sexo | Nasc */}
           <div style={{ display: "flex", gap: 12, marginBottom: 2 }}>
@@ -368,18 +371,20 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 </div>
               </div>
 
-              {/* Moldura: QR à esquerda + texto médico à DIREITA (alinhado à esquerda conforme referência) */}
+              {/* Moldura: 385×111px | QR centralizado à esquerda | texto à DIREITA */}
               <div style={{
                 border: "1px solid #000",
-                padding: "5px 12px 5px 6px",
+                width: 385,
+                height: 111,
+                boxSizing: "border-box",
                 display: "flex",
-                gap: 10,
-                alignItems: "center",
+                alignItems: "stretch",
                 background: "white",
                 flex: "0 0 auto",
+                overflow: "hidden",
               }}>
-                {/* QR Code — próximo à borda esquerda da moldura */}
-                <div style={{ flexShrink: 0, lineHeight: 0 }}>
+                {/* Coluna esquerda: QR centralizado | padding 6px left/right, 19px top/bottom */}
+                <div style={{ width: 108, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "19px 6px" }}>
                   {isEmitted ? (
                     <QRCode
                       value={qrValue}
@@ -404,8 +409,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                     </div>
                   )}
                 </div>
-                {/* Dados do Médico — alinhado à ESQUERDA conforme imagem de referência */}
-                <div style={{ textAlign: "left", lineHeight: 1.2, color: "#000", flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center" }}>
+                {/* Coluna direita: texto médico alinhado à DIREITA, centralizado verticalmente */}
+                <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "center", textAlign: "right", lineHeight: 1.2, color: "#000", paddingRight: 10 }}>
                   <div style={{ fontSize: 9.5, fontWeight: 400, whiteSpace: "nowrap" }}>Documento assinado digitalmente conforme MP nº 2.200-2</div>
                   <strong style={{ fontWeight: 700, fontSize: 11.2, textTransform: "uppercase", display: "block" }}>
                     {data.medico}
