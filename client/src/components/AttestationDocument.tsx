@@ -301,34 +301,37 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           <div style={{
             borderTop: "2px solid #000",
             marginTop: "auto",
-            paddingTop: 16,
-            marginBottom: 10,
+            paddingTop: 12,
+            marginBottom: 8,
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center",
+            alignItems: "flex-start",
             position: "relative",
             zIndex: 2,
             flexShrink: 0,
+            gap: 16,
           }}>
-            <div style={{ fontSize: 8.5, color: "#333", lineHeight: 1.4, maxWidth: "60%" }}>
-              <div style={{ fontWeight: 700, textTransform: "uppercase", marginBottom: 2 }}>{cidadeFormatada}{data.dataEmissao}</div>
-              <div>Valide este documento acessando o endereço:</div>
-              <div style={{ fontWeight: 700 }}>validaratestado.digital/validar</div>
-              <div>Código: <span style={{ fontWeight: 700 }}>{data.codigoQR}</span></div>
+            {/* ESQUERDA: Data, URL e Código */}
+            <div style={{ fontSize: 8.5, color: "#000", lineHeight: 1.5, flex: "0 0 55%" }}>
+              <div style={{ fontWeight: 700, textTransform: "uppercase", marginBottom: 2, fontSize: 9 }}>{cidadeFormatada}{data.dataEmissao}</div>
+              <div style={{ fontSize: 8 }}>Valide este documento acessando o endereço:</div>
+              <div style={{ fontWeight: 700, fontSize: 8.5 }}>valide-atestado.digital/validar</div>
+              <div style={{ fontSize: 8, marginTop: 1 }}>Código: <span style={{ fontWeight: 900, fontFamily: "'Courier New', monospace" }}>{data.codigoQR}</span></div>
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: 12, border: "2px solid #000", padding: "10px 14px", background: "#fff" }}>
-              {/* QR Code à esquerda */}
+            {/* DIREITA: Moldura com QR Code e Dados do Médico */}
+            <div style={{ flex: "0 0 45%", border: "2px solid #000", padding: "10px 12px", background: "#fff", display: "flex", gap: 10, alignItems: "flex-start" }}>
+              {/* QR Code à esquerda dentro da moldura */}
               <div style={{ flexShrink: 0, lineHeight: 0 }}>
-                <QRCode value={qrValue} size={80} level="M" />
+                <QRCode value={qrValue} size={90} level="M" />
               </div>
-              {/* Dados do Médico à direita */}
-              <div style={{ textAlign: "left", fontSize: 8.5, color: "#000", lineHeight: 1.3 }}>
-                <div style={{ fontSize: 7.5, marginBottom: 2 }}>Documento assinado digitalmente conforme MP nº 2.200-2</div>
-                <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 9.5, marginBottom: 1 }}>{data.medico}</div>
-                <div style={{ marginBottom: 1 }}>CRM/{data.uf_crm || "SP"} {data.crm}</div>
-                <div style={{ textTransform: "uppercase", marginBottom: 1 }}>{data.especialidade}</div>
-                <div style={{ marginTop: 2, fontSize: 8 }}>Assinado em {data.dataAssinatura} {data.horaAssinatura}</div>
+              {/* Dados do Médico à direita dentro da moldura */}
+              <div style={{ fontSize: 8, color: "#000", lineHeight: 1.4, flex: 1 }}>
+                <div style={{ fontSize: 7, marginBottom: 3, opacity: 0.85 }}>Documento assinado digitalmente conforme MP nº 2.200-2</div>
+                <div style={{ fontWeight: 900, textTransform: "uppercase", fontSize: 9, marginBottom: 2 }}>{data.medico}</div>
+                <div style={{ fontSize: 8, marginBottom: 1 }}>CRM/{data.uf_crm || "SP"} {data.crm}</div>
+                <div style={{ fontSize: 8, textTransform: "uppercase", marginBottom: 2 }}>{data.especialidade}</div>
+                <div style={{ fontSize: 7.5, marginTop: 2 }}>Assinado em {data.dataAssinatura} {data.horaAssinatura}</div>
               </div>
             </div>
           </div>
