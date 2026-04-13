@@ -238,14 +238,14 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           fontWeight: 900,
           fontSize: 19.95, // Reduzido de 21.0 para 19.95 (5% de redução)
           textTransform: "uppercase",
-          borderTop: "none", // Removido borderTop
-          borderBottom: "none", // Removido borderBottom
+          borderTop: "none",
+          borderBottom: "none",
           display: "block",
           padding: "5px 0",
           width: "100%",
           textAlign: "center",
-          marginBottom: 8, // Reduzido de 14 para 8 (espaçamento mais próximo)
-          letterSpacing: 0.5, // Reduzido de 3 para 0.5 (letras mais juntas)
+          marginBottom: 2, // Reduzido para aproximar a linha do título
+          letterSpacing: 0.5,
           position: "relative",
           zIndex: 2,
           color: "#000",
@@ -258,7 +258,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         <div style={{
           borderTop: "2px solid #000",
           width: "100%",
-          marginBottom: 6,
+          marginBottom: 10, // Aumentado para manter espaçamento com a moldura inferior
           position: "relative",
           zIndex: 2,
           flexShrink: 0,
