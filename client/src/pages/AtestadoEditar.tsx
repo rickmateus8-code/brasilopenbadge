@@ -600,9 +600,8 @@ export default function AtestadoEditar() {
     medico: form.medico || "NOME DO MÉDICO",
     crm: form.crm || "CRM/UF 00000",    especialidade: form.especialidade || "ESPECIALIDADE",
     dataEmissao: form.dataEmissao || "DD/MM/AAAA",
-    documentType: documentType,
-  };
-  const dataEmissaoFormatada = (() => {
+    documentType,
+    dataEmissaoFormatada: (() => {
       if (!form.dataEmissao || form.dataEmissao.length < 10) return "";
       const [dd, mm, yyyy] = form.dataEmissao.split("/");
       const meses = ["JANEIRO","FEVEREIRO","MARÇO","ABRIL","MAIO","JUNHO","JULHO","AGOSTO","SETEMBRO","OUTUBRO","NOVEMBRO","DEZEMBRO"];
@@ -611,7 +610,7 @@ export default function AtestadoEditar() {
       return cidade ? `${cidade}, ${parseInt(dd)} DE ${meses[m] || mm} DE ${yyyy}` : `${parseInt(dd)} DE ${meses[m] || mm} DE ${yyyy}`;
     })(),
     logoUrl: logoLeft,
-    logoRight: logoRight,
+    logoRight,
     logoLeftScale,
     logoRightScale,
     logoLeftX,

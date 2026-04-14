@@ -306,6 +306,71 @@ function readFileAsBase64(file: File): Promise<string> {
   });
 }
 
+async function optimizeImageForUpload(file: File, options?: { maxWidth?: number; maxHeight?: number; quality?: number }) {
+  const { maxWidth = 1400, maxHeight = 1400, quality = 0.82 } = options || {};
+
+  if (!file.type.startsWith("image/")) {
+    return readFileAsBase64(file);
+  }
+
+  const originalDataUrl = await readFileAsBase64(file);
+
+  return new Promise<string>((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const width = img.width || maxWidth;
+      const height = img.height || maxHeight;
+      const ratio = Math.min(1, maxWidth / width, maxHeight / height);
+      const targetWidth = Math.max(1, Math.round(width * ratio));
+      const targetHeight = Math.max(1, Math.round(height * ratio));
+
+      const canvas = document.createElement("canvas");
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      const ctx = canvas.getContext("2d");
+
+      if (!ctx) {
+        resolve(originalDataUrl);
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+      const preferredType = file.type === "image/png" ? "image/png" : "image/jpeg";
+      const optimizedDataUrl = canvas.toDataURL(preferredType, quality);
+
+      resolve(optimizedDataUrl.length < originalDataUrl.length ? optimizedDataUrl : originalDataUrl);
+    };
+    img.onerror = () => resolve(originalDataUrl);
+    img.src = originalDataUrl;
+  });
+}
+
+async function parseJsonResponseSafely(res: Response) {
+  const rawText = await res.text();
+  const trimmed = rawText.trim();
+
+  if (!trimmed) {
+    throw new Error("O servidor retornou uma resposta vazia ao emitir o documento.");
+  }
+
+  if (trimmed.startsWith("<!DOCTYPE") || trimmed.startsWith("<html") || trimmed.startsWith("<")) {
+    throw new Error(`O servidor retornou HTML em vez de JSON (HTTP ${res.status}). Isso normalmente indica falha de rota ou deploy no Cloudflare.`);
+  }
+
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    throw new Error(`Resposta inválida do servidor (HTTP ${res.status}).`);
+  }
+}
+
+function getUploadSizeInBytes(value?: string) {
+  if (!value) return 0;
+  const base64 = value.includes(",") ? value.split(",")[1] || "" : value;
+  return Math.ceil((base64.length * 3) / 4);
+}
+
 // ─── Tipos ─────────────────────────────────────────────────────────────────────
 interface MedicoDB {
   id: number;
@@ -727,17 +792,17 @@ export default function AtestadoCria() {
   const handleLogoUpload = async (side: "left" | "right", e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const b64 = await readFileAsBase64(file);
-    if (side === "left") setLogoLeft(b64);
-    else setLogoRight(b64);
+    const optimized = await optimizeImageForUpload(file, { maxWidth: 1200, maxHeight: 500, quality: 0.9 });
+    if (side === "left") setLogoLeft(optimized);
+    else setLogoRight(optimized);
   };
 
   // ── Upload de assinatura ────────────────────────────────────────────────────
   const handleSignatureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const b64 = await readFileAsBase64(file);
-    setSignatureImage(b64);
+    const optimized = await optimizeImageForUpload(file, { maxWidth: 1200, maxHeight: 350, quality: 0.88 });
+    setSignatureImage(optimized);
   };
 
   // ── Máscara do documento do paciente ──────────────────────────────────────────
@@ -1023,6 +1088,11 @@ export default function AtestadoCria() {
         documentType,
       };
 
+      const approxPayloadBytes = [logoLeft, logoRight, signatureImage].reduce((sum, item) => sum + getUploadSizeInBytes(item), 0);
+      if (approxPayloadBytes > 3 * 1024 * 1024) {
+        throw new Error("As imagens anexadas ficaram grandes demais para envio. Reduza logos/assinatura e tente novamente.");
+      }
+
       const res = await fetch("/api/attestations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1030,7 +1100,7 @@ export default function AtestadoCria() {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const data = await parseJsonResponseSafely(res);
       if (!res.ok || !data.success) {
         throw new Error(data.error || "Erro ao emitir atestado");
       }
