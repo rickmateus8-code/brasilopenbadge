@@ -51,6 +51,7 @@ const menuItems: MenuItem[] = [
       { label: "Receitas Salvas", path: "/receitassalvas" },
     ],
   },
+  { icon: Gift, label: "Indique e Ganhe", path: "/indicacoes" },
 ];
 
 function SidebarItem({

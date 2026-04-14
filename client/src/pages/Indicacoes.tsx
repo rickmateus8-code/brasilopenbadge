@@ -1,354 +1,267 @@
-import { useEffect, useState, useCallback } from "react";
-import { useLocation } from "wouter";
-import DashboardLayout from "../components/DashboardLayout";
-import {
-  Gift, Copy, Share2, Users, DollarSign, TrendingUp,
-  CheckCircle, Clock, RefreshCw, ExternalLink, QrCode,
-  ChevronRight, AlertCircle, Wallet, Info
-} from "lucide-react";
+import { useState, useEffect } from "react";
+import DashboardLayout from "@/components/DashboardLayout";
+import { useAuth } from "@/contexts/AuthContext";
+import { Copy, Check, Users, TrendingUp, Wallet, Gift, ArrowUpRight, X } from "lucide-react";
 import { toast } from "sonner";
+import { useLocation } from "wouter";
 
-interface ReferralData {
-  code: string;
-  referralLink: string;
-  totalReferred: number;
-  totalEarnings: number;
-  totalCashback: number;
-  referredUsers: Array<{
-    referred_id: string;
-    name: string;
-    email: string;
-    created_at: string;
-    total_earned: number;
-  }>;
-  globalReferralPercentage: number;
-  globalCashbackPercentage: number;
-  userReferralPercentage?: number;
-  userCashbackPercentage?: number;
+interface ReferralStats {
+  totalReferrals: number;
+  activeReferrals: number;
+  totalCommissions: number;
+  referralCode: string;
+}
+
+interface ReferralUser {
+  username: string;
+  created_at: string;
+  status: 'ATIVO' | 'PENDENTE';
+}
+
+interface CommissionHistory {
+  referee_username: string;
+  date: string;
+  amount: number;
 }
 
 export default function Indicacoes() {
+  const { user } = useAuth();
   const [, setLocation] = useLocation();
-  const [data, setData] = useState<ReferralData | null>(null);
+  const [stats, setStats] = useState<ReferralStats>({
+    totalReferrals: 0,
+    activeReferrals: 0,
+    totalCommissions: 0,
+    referralCode: ""
+  });
+  const [network, setNetwork] = useState<ReferralUser[]>([]);
+  const [history, setHistory] = useState<CommissionHistory[]>([]);
+  const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [copied, setCopied] = useState<"code" | "link" | null>(null);
-  const [applyCode, setApplyCode] = useState("");
-  const [applyLoading, setApplyLoading] = useState(false);
+  const [supportWhatsapp, setSupportWhatsapp] = useState("");
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/referral", { credentials: "include" });
-      if (!res.ok) {
-        if (res.status === 401) { setLocation("/login"); return; }
-        toast.error("Erro ao carregar dados de indicação");
-        return;
-      }
-      const json = await res.json();
-      setData(json);
-    } catch {
-      toast.error("Erro de conexão");
-    } finally {
-      setLoading(false);
-    }
-  }, [setLocation]);
+  const referralLink = `${window.location.origin}/register?ref=${stats.referralCode || user?.username || ""}`;
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    fetch("/api/settings/public", { credentials: "include" })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.support_whatsapp) setSupportWhatsapp(data.support_whatsapp);
+      })
+      .catch(() => {});
+  }, []);
 
-  const copyToClipboard = async (text: string, type: "code" | "link") => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(type);
-      toast.success(type === "code" ? "Código copiado!" : "Link copiado!");
-      setTimeout(() => setCopied(null), 2000);
-    } catch {
-      toast.error("Erro ao copiar");
-    }
-  };
-
-  const shareLink = async () => {
-    if (!data) return;
-    if (navigator.share) {
+  useEffect(() => {
+    async function fetchData() {
       try {
-        await navigator.share({
-          title: "DocMaster — Emissão de Documentos",
-          text: `Use meu código ${data.code} e ganhe cashback no DocMaster!`,
-          url: data.referralLink,
-        });
-      } catch {}
-    } else {
-      copyToClipboard(data.referralLink, "link");
-    }
-  };
-
-  const applyReferralCode = async () => {
-    if (!applyCode.trim()) { toast.error("Digite um código de indicação"); return; }
-    setApplyLoading(true);
-    try {
-      const res = await fetch("/api/referral", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ referralCode: applyCode.trim().toUpperCase() }),
-      });
-      const json = await res.json();
-      if (json.success) {
-        toast.success("Código de indicação aplicado com sucesso! Você receberá cashback nas suas compras.");
-        setApplyCode("");
-        loadData();
-      } else {
-        toast.error(json.error || "Erro ao aplicar código");
+        const response = await fetch("/api/referral", { credentials: "include" });
+        const data = await response.json();
+        
+        // Mapear dados do backend existente para o novo layout
+        if (data.code) {
+          setStats({
+            totalReferrals: data.totalReferred || 0,
+            activeReferrals: data.referredUsers?.length || 0,
+            totalCommissions: data.totalEarnings || 0,
+            referralCode: data.code
+          });
+          
+          setNetwork(data.referredUsers?.map((u: any) => ({
+            username: u.name || u.email || "Usuário",
+            created_at: u.created_at,
+            status: 'ATIVO'
+          })) || []);
+          
+          // O histórico de comissões pode ser derivado ou buscado separadamente se necessário
+          setHistory(data.referredUsers?.filter((u: any) => u.total_earned > 0).map((u: any) => ({
+            referee_username: u.name || u.email || "Usuário",
+            date: u.created_at,
+            amount: u.total_earned
+          })) || []);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar dados de indicação:", error);
+      } finally {
+        setLoading(false);
       }
-    } catch {
-      toast.error("Erro de conexão");
-    } finally {
-      setApplyLoading(false);
     }
-  };
+    fetchData();
+  }, [user]);
 
-  const refPct = data?.userReferralPercentage ?? data?.globalReferralPercentage ?? 10;
-  const cbPct = data?.userCashbackPercentage ?? data?.globalCashbackPercentage ?? 5;
+  const handleCopy = () => {
+    navigator.clipboard.writeText(referralLink);
+    setCopied(true);
+    toast.success("Link de indicação copiado!");
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <Gift className="w-6 h-6 text-yellow-500" />
-              Programa de Indicações
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              Indique amigos e ganhe comissão em cada emissão deles
-            </p>
-          </div>
-          <button
-            onClick={loadData}
-            className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            title="Atualizar"
+      <div className="min-h-screen bg-[#f1f5f9] dark:bg-[#0f172a] flex items-center justify-center p-4 md:p-8 font-sans">
+        
+        {/* Modal Estilo elitedoc.store */}
+        <div className="w-full max-w-[480px] bg-white dark:bg-slate-900 rounded-[32px] overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 relative">
+          
+          {/* Botão Fechar */}
+          <button 
+            onClick={() => setLocation("/dashboard")}
+            className="absolute top-6 right-6 w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors z-10"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            <X size={18} />
           </button>
-        </div>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <RefreshCw className="w-8 h-8 animate-spin text-yellow-500" />
+          {/* Header do Modal */}
+          <div className="p-8 pb-0">
+            <h1 className="text-2xl font-black text-[#1e293b] dark:text-white flex items-center gap-3 mb-2">
+              <Gift className="text-[#10b981]" size={28} />
+              Indique e Ganhe
+            </h1>
           </div>
-        ) : data ? (
-          <>
-            {/* Como funciona */}
-            <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-2xl p-5 text-white">
-              <h2 className="font-bold text-base mb-3 flex items-center gap-2">
-                <Info className="w-5 h-5" /> Como funciona
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {[
-                  { step: "1", title: "Compartilhe seu link", desc: "Envie seu código ou link para amigos" },
-                  { step: "2", title: "Amigo se cadastra", desc: "Ele usa seu código ao criar a conta" },
-                  { step: "3", title: "Você ganha", desc: `${refPct}% de comissão em cada emissão dele` },
-                ].map(item => (
-                  <div key={item.step} className="bg-white/20 rounded-xl p-3 flex items-start gap-3">
-                    <span className="w-7 h-7 rounded-full bg-white text-yellow-600 font-bold text-sm flex items-center justify-center flex-shrink-0">
-                      {item.step}
-                    </span>
-                    <div>
-                      <p className="font-semibold text-sm">{item.title}</p>
-                      <p className="text-xs text-yellow-100">{item.desc}</p>
+
+          <div className="p-8 pt-4 space-y-6">
+            {/* Banner de Ganho */}
+            <div className="bg-[#f0fdf4] dark:bg-emerald-500/10 border border-[#dcfce7] dark:border-emerald-500/20 rounded-2xl p-5">
+              <p className="text-[#166534] dark:text-emerald-400 text-[15px] font-bold leading-snug mb-2">
+                Ganhe 10% de TODAS as recargas dos seus amigos, para sempre!
+              </p>
+              <p className="text-[#14532d] dark:text-emerald-500/80 text-xs font-medium leading-relaxed">
+                Você recebe 10% de comissão em saldo sobre cada transação realizada pelos seus indicados para gerar documentos.
+              </p>
+            </div>
+
+            {/* Link de Afiliado */}
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Seu Link Exclusivo</label>
+              <div className="flex gap-2">
+                <div className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-500 dark:text-slate-400 font-mono text-[11px] truncate flex items-center">
+                  {referralLink}
+                </div>
+                <button 
+                  onClick={handleCopy}
+                  className="bg-[#1e293b] dark:bg-white text-white dark:text-slate-900 px-6 py-3 rounded-xl font-black text-xs hover:opacity-90 transition-all active:scale-95"
+                >
+                  {copied ? "COPIADO" : "COPIAR"}
+                </button>
+              </div>
+            </div>
+
+            {/* Minha Rede */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <Users size={14} />
+                Minha Rede
+              </div>
+              
+              <div className="space-y-2 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
+                {network.length > 0 ? network.map((member, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-950/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-500 uppercase">
+                        {member.username.charAt(0)}
+                      </div>
+                      <div>
+                        <div className="text-[11px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">{member.username}</div>
+                        <div className="text-[9px] text-slate-400 font-medium">{new Date(member.created_at).toLocaleDateString('pt-BR')}</div>
+                      </div>
+                    </div>
+                    <div className="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[8px] font-black rounded-full uppercase">
+                      {member.status}
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <div className="text-center py-4 text-slate-400 text-[11px] font-medium italic">
+                    Nenhum indicado ainda...
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Estatísticas */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                { icon: Users, label: "Indicados", value: data.totalReferred, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20" },
-                { icon: DollarSign, label: "Ganhos Totais", value: `R$ ${(data.totalEarnings / 100).toFixed(2).replace(".", ",")}`, color: "text-green-500", bg: "bg-green-50 dark:bg-green-900/20" },
-                { icon: Wallet, label: "Cashback Recebido", value: `R$ ${(data.totalCashback / 100).toFixed(2).replace(".", ",")}`, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-900/20" },
-                { icon: TrendingUp, label: "Sua Comissão", value: `${refPct}%`, color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-900/20" },
-              ].map(item => (
-                <div key={item.label} className={`${item.bg} rounded-2xl p-4`}>
-                  <item.icon className={`w-5 h-5 ${item.color} mb-2`} />
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{item.label}</p>
-                  <p className={`text-lg font-bold ${item.color}`}>{item.value}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Seu código e link */}
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 space-y-4">
-              <h2 className="font-bold text-sm text-gray-700 dark:text-gray-300 uppercase tracking-wide flex items-center gap-2">
-                <QrCode className="w-4 h-4" /> Seu Código de Indicação
-              </h2>
-
-              {/* Código */}
-              <div className="flex items-center gap-3">
-                <div className="flex-1 bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 border-2 border-dashed border-yellow-400">
-                  <p className="text-2xl font-mono font-bold text-yellow-600 dark:text-yellow-400 tracking-widest text-center">
-                    {data.code}
-                  </p>
-                </div>
-                <button
-                  onClick={() => copyToClipboard(data.code, "code")}
-                  className={`p-3 rounded-xl transition-colors ${
-                    copied === "code"
-                      ? "bg-green-500 text-white"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
-                  }`}
-                  title="Copiar código"
-                >
-                  {copied === "code" ? <CheckCircle className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-                </button>
+            {/* Últimos Ganhos */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <TrendingUp size={14} />
+                Últimos Ganhos
               </div>
-
-              {/* Link */}
-              <div className="flex items-center gap-2">
-                <div className="flex-1 bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2 border border-gray-200 dark:border-gray-700 overflow-hidden">
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{data.referralLink}</p>
-                </div>
-                <button
-                  onClick={() => copyToClipboard(data.referralLink, "link")}
-                  className={`p-2 rounded-xl transition-colors ${
-                    copied === "link"
-                      ? "bg-green-500 text-white"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
-                  }`}
-                  title="Copiar link"
-                >
-                  {copied === "link" ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                </button>
-                <button
-                  onClick={shareLink}
-                  className="p-2 rounded-xl bg-yellow-500 hover:bg-yellow-600 text-white transition-colors"
-                  title="Compartilhar"
-                >
-                  <Share2 className="w-4 h-4" />
-                </button>
-                <a
-                  href={data.referralLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-xl bg-blue-500 hover:bg-blue-600 text-white transition-colors"
-                  title="Abrir link"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </a>
-              </div>
-
-              {/* Botões de compartilhamento rápido */}
-              <div className="flex flex-wrap gap-2 pt-1">
-                <button
-                  onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Use meu código *${data.code}* no DocMaster e ganhe cashback! 🎁\n${data.referralLink}`)}`, "_blank")}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-green-500 hover:bg-green-600 text-white transition-colors"
-                >
-                  <Share2 className="w-3.5 h-3.5" /> WhatsApp
-                </button>
-                <button
-                  onClick={() => window.open(`https://t.me/share/url?url=${encodeURIComponent(data.referralLink)}&text=${encodeURIComponent(`Use meu código ${data.code} no DocMaster!`)}`, "_blank")}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors"
-                >
-                  <Share2 className="w-3.5 h-3.5" /> Telegram
-                </button>
-              </div>
-            </div>
-
-            {/* Aplicar código de indicação */}
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
-              <h2 className="font-bold text-sm text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3 flex items-center gap-2">
-                <Gift className="w-4 h-4" /> Fui Indicado por Alguém
-              </h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                Se alguém te indicou, insira o código deles para ativar o cashback de <strong>{cbPct}%</strong> nas suas emissões.
-              </p>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Ex: ABC12345"
-                  value={applyCode}
-                  onChange={e => setApplyCode(e.target.value.toUpperCase())}
-                  maxLength={8}
-                  className="flex-1 px-3 py-2 text-sm font-mono rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 uppercase"
-                />
-                <button
-                  onClick={applyReferralCode}
-                  disabled={applyLoading || !applyCode.trim()}
-                  className="px-4 py-2 text-sm font-semibold rounded-xl bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 text-white transition-colors flex items-center gap-1.5"
-                >
-                  {applyLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                  Aplicar
-                </button>
-              </div>
-            </div>
-
-            {/* Lista de indicados */}
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
-              <h2 className="font-bold text-sm text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-4 flex items-center gap-2">
-                <Users className="w-4 h-4" /> Meus Indicados ({data.totalReferred})
-              </h2>
-              {data.referredUsers.length === 0 ? (
-                <div className="text-center py-8">
-                  <Users className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Nenhum indicado ainda</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                    Compartilhe seu código e comece a ganhar!
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {data.referredUsers.map(u => (
-                    <div key={u.referred_id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-                          <span className="text-sm font-bold text-yellow-600 dark:text-yellow-400">
-                            {(u.name || u.email || "?").charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{u.name || u.email}</p>
-                          <p className="text-xs text-gray-400 flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {new Date(u.created_at).toLocaleDateString("pt-BR")}
-                          </p>
-                        </div>
+              
+              <div className="space-y-3 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
+                {history.length > 0 ? history.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between group">
+                    <div className="flex items-center gap-3">
+                      <div className="p-1.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg text-emerald-600">
+                        <ArrowUpRight size={12} />
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-bold text-green-600 dark:text-green-400">
-                          + R$ {(u.total_earned / 100).toFixed(2).replace(".", ",")}
-                        </p>
-                        <p className="text-xs text-gray-400">ganho</p>
+                      <div>
+                        <div className="text-[11px] font-black text-slate-800 dark:text-slate-200 uppercase">{item.referee_username}</div>
+                        <div className="text-[9px] text-slate-400 font-medium">{new Date(item.date).toLocaleDateString('pt-BR')}</div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Aviso */}
-            <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl p-4 flex gap-3">
-              <AlertCircle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs font-semibold text-blue-700 dark:text-blue-300">Como os ganhos funcionam</p>
-                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                  Você recebe <strong>{refPct}%</strong> de comissão sobre cada emissão de documento realizada pelos seus indicados.
-                  Os ganhos são creditados automaticamente no seu saldo DocMaster.
-                  Seus indicados recebem <strong>{cbPct}%</strong> de cashback em suas próprias emissões.
-                </p>
+                    <div className="text-[11px] font-black text-emerald-600 dark:text-emerald-400">
+                      + R$ {(item.amount / 100).toFixed(2).replace('.', ',')}
+                    </div>
+                  </div>
+                )) : (
+                  <div className="text-center py-4 text-slate-400 text-[11px] font-medium italic">
+                    Nenhuma comissão recebida.
+                  </div>
+                )}
               </div>
             </div>
-          </>
-        ) : (
-          <div className="text-center py-20">
-            <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
-            <p className="text-gray-500 dark:text-gray-400">Erro ao carregar dados</p>
-            <button onClick={loadData} className="mt-3 px-4 py-2 text-sm rounded-xl bg-yellow-500 text-white hover:bg-yellow-600 transition-colors">
-              Tentar novamente
-            </button>
+
+            {/* Footer do Modal */}
+            <div className="pt-4 border-t border-dashed border-slate-200 dark:border-slate-800">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2 text-slate-400">
+                  <Wallet size={16} />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Total Ganho</span>
+                </div>
+                <div className="text-xl font-black text-[#1e293b] dark:text-white">
+                  R$ {(stats.totalCommissions / 100).toFixed(2).replace('.', ',')}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-center gap-2 text-[#ef4444] text-[10px] font-bold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#ef4444] animate-pulse" />
+                  Não fazemos devolução ou transferência de saldo.
+                </div>
+                <a 
+                  href={supportWhatsapp ? `https://wa.me/${supportWhatsapp.replace(/\D/g, "")}` : "#"}
+                  target="_blank"
+                  className="flex items-center justify-center gap-2 w-full h-12 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-500 dark:text-slate-400 text-[13px] font-bold hover:bg-slate-100 transition-all"
+                >
+                  <MessageCircleIcon size={16} className="text-[#22c55e]" />
+                  Suporte com o Pagamento
+                </a>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
       </div>
+
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+      `}</style>
     </DashboardLayout>
+  );
+}
+
+function MessageCircleIcon({ size, className }: { size: number, className?: string }) {
+  return (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      width={size} 
+      height={size} 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      className={className}
+    >
+      <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+    </svg>
   );
 }
