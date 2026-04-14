@@ -202,12 +202,12 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           {/* Centro — Nome da Instituição / Unidade / Endereço */}
           <div style={{ flex: 1, padding: "0 12px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
             {instituicao && (
-              <div style={{ fontSize: 14, fontWeight: 700, textTransform: "uppercase", marginBottom: 1, color: "#000", letterSpacing: 0.5, lineHeight: 1.3 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", letterSpacing: 0.5, lineHeight: 1.3 }}>
                 {instituicao}
               </div>
             )}
             {unidade && (
-              <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", marginBottom: 1, color: "#000", lineHeight: 1.3 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", lineHeight: 1.3 }}>
                 {unidade}
               </div>
             )}
@@ -264,7 +264,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         <div style={{
           borderTop: "2px solid #000",
           width: "100%",
-          marginBottom: 15,
+          marginBottom: 25,
           position: "relative",
           zIndex: 2,
           flexShrink: 0,
@@ -283,7 +283,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           flexShrink: 0,
         }}>
           {/* Linha 1: Paciente | Sexo | Nasc */}
-          <div style={{ display: "flex", gap: 12, marginBottom: 2 }}>
+          <div style={{ display: "flex", gap: 12, marginBottom: 3 }}>
             <div style={{ flex: 3 }}>
               <span style={{ fontWeight: 700, color: "#000" }}>Paciente: </span>
               <span style={{ color: "#000", textTransform: "uppercase" }}>{data.paciente}</span>
@@ -299,7 +299,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </div>
 
           {/* Linha 2: CPF/CNS | Nome da Mãe */}
-          <div style={{ display: "flex", gap: 12, marginBottom: 2 }}>
+          <div style={{ display: "flex", gap: 12, marginBottom: 3 }}>
             <div style={{ flex: 1 }}>
               <span style={{ fontWeight: 700, color: "#000" }}>{docLabel} </span>
               <span style={{ color: "#000", textTransform: "uppercase" }}>{docValue}</span>
@@ -328,7 +328,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             position: "relative",
             zIndex: 2,
             flexShrink: 0,
-            marginBottom: 10, 
+            marginBottom: 20, 
             fontWeight: 700, // Todo o bloco em negrito
             textTransform: "uppercase"
           }}>
@@ -419,7 +419,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                   {dataFormatada || data.dataEmissao}
                 </div>
                 <div style={{ fontSize: 9.85 }}>Valide este documento acessando o endereço:</div>
-                <strong style={{ fontSize: 10.42, display: "block", marginBottom: 2 }}>https://validaratestado.digital</strong>
+                <strong style={{ fontSize: 10.42, display: "block", marginBottom: 3 }}>https://validaratestado.digital</strong>
                 <div style={{ display: "flex", alignItems: "center", gap: 3, flexWrap: "nowrap" }}>
                   <span style={{ fontWeight: 400, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 9.85, whiteSpace: "nowrap", lineHeight: 1 }}>Código:</span>
                   <strong style={{ fontSize: 10.42, fontWeight: 700, whiteSpace: "nowrap", lineHeight: 1, marginLeft: "2px" }}>
@@ -495,11 +495,11 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             width: "100%",
             position: "relative",
             zIndex: 2,
-            paddingBottom: 16,
+            paddingBottom: 46,
             marginTop: "auto",
             flexShrink: 0,
           }}>
-            <div style={{ fontWeight: 700, textTransform: "uppercase", marginBottom: 20, fontSize: 11 }}>
+            <div style={{ fontWeight: 700, textTransform: "uppercase", marginBottom: 30, fontSize: 11 }}>
               {dataFormatada || data.dataEmissao}
             </div>
 
