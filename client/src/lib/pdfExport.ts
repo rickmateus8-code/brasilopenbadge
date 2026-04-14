@@ -201,6 +201,14 @@ export async function exportElementToPDF(
     height: ${multiPage ? "auto" : DOC_REAL_HEIGHT + "px"};
     overflow: ${multiPage ? "visible" : "hidden"};
     font-family: Arial, Helvetica, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  #attestation-document {
+    margin: 0 auto !important;
+    box-shadow: none !important;
   }
 </style>
 </head>
@@ -459,6 +467,14 @@ export async function exportElementToPDFBlob(
     height: ${multiPage ? "auto" : DOC_REAL_HEIGHT + "px"};
     overflow: ${multiPage ? "visible" : "hidden"};
     font-family: Arial, Helvetica, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  #attestation-document {
+    margin: 0 auto !important;
+    box-shadow: none !important;
   }
 </style>
 </head>

@@ -236,15 +236,16 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         {/* ===== TÍTULO ===== */}
         <div style={{
           fontWeight: 900,
-          fontSize: 19.95, // Reduzido de 21.0 para 19.95 (5% de redução)
+          fontSize: 21,
           textTransform: "uppercase",
           borderTop: "none",
           borderBottom: "none",
           display: "block",
-          padding: "0", // Removido todo padding
+          padding: "0",
           width: "100%",
           textAlign: "center",
-          marginBottom: 4, // Espaçamento adequado entre título e linha
+          marginTop: 12,
+          marginBottom: 8,
           letterSpacing: 0.5,
           position: "relative",
           zIndex: 2,
@@ -258,7 +259,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         <div style={{
           borderTop: "2px solid #000",
           width: "100%",
-          marginBottom: 10, // Aumentado para manter espaçamento com a moldura inferior
+          marginBottom: 15,
           position: "relative",
           zIndex: 2,
           flexShrink: 0,
