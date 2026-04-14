@@ -469,8 +469,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                       style={{ display: "block" }}
                     />
                   ) : (
-                    <div style={{ position: "relative", width: 96, height: 96, flexShrink: 0 }}>
-                      <div style={{ opacity: 0.3, lineHeight: 0 }}>
+                    <div style={{ position: "relative", width: 96, height: 96, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <div style={{ filter: "blur(2.5px)", opacity: 0.45, lineHeight: 0 }}>
                         <QRCode
                           value="https://validaratestado.digital"
                           size={96}
@@ -480,6 +480,30 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                           bgColor="#ffffff"
                           style={{ display: "block" }}
                         />
+                      </div>
+                      <div style={{ 
+                        position: "absolute", 
+                        inset: 0, 
+                        display: "flex", 
+                        alignItems: "center", 
+                        justifyContent: "center",
+                        zIndex: 10
+                      }}>
+                        <div style={{ 
+                          background: "rgba(255,255,255,0.8)", 
+                          padding: "2px 6px", 
+                          borderRadius: "4px",
+                          border: "1px solid #ddd",
+                          fontSize: "9px",
+                          fontWeight: "bold",
+                          color: "#666",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.5px",
+                          whiteSpace: "nowrap",
+                          boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                        }}>
+                          Aguardando Emissão
+                        </div>
                       </div>
                     </div>
                   )}
