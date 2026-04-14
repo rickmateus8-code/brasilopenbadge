@@ -142,6 +142,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           height: `${DOC_HEIGHT_PX}px`,
           background: "#ffffff !important",
           backgroundColor: "#ffffff !important",
+          backgroundAttachment: "fixed", // Prevenir qualquer vazamento de cor de fundo externa
           paddingTop: `${PAD_H}px`,
           paddingBottom: `${PAD_H}px`,
           paddingLeft: `${PAD_V}px`,
@@ -261,10 +262,16 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         }}>
           {docType === 'laudo' ? (
             <>
-              {prefeituraLabel && <div style={{ fontSize: 16, marginBottom: 4 }}>{prefeituraLabel}</div>}
-              <div>LAUDO MÉDICO</div>
+              {prefeituraLabel && (
+                <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4, color: "#000" }}>
+                  {prefeituraLabel}
+                </div>
+              )}
+              <div style={{ fontSize: 21, fontWeight: 900 }}>LAUDO MÉDICO</div>
             </>
-          ) : 'ATESTADO MÉDICO'}
+          ) : (
+            <div style={{ fontSize: 21, fontWeight: 900 }}>ATESTADO MÉDICO</div>
+          )}
         </div>
 
         {/* Moldura Superior (Linha Preta) */}

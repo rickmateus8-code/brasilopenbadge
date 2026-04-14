@@ -1,0 +1,7 @@
+2026-04-14
+- https://validaratestado.digital abriu corretamente a página 'Validação Oficial'.
+- A interface pública exibe campos 'Código de Autenticação' e 'Data de Emissão (DD/MM/AAAA)'.
+- O domínio parece ativo e servindo frontend, sem erro visível na raiz.
+Também foi verificado em navegador que `https://docmaster.store/api/attestations` responde com JSON de não autenticado, o que confirma que a rota principal da API do DocMaster está ativa em produção e não retorna HTML nesse cenário sem sessão.
+O endpoint `https://validaratestado.digital/api/attestations` também está ativo em produção e retorna JSON público com registros que incluem `documentType` equivalente a `laudo` em alguns itens, o que confirma persistência de ambos os tipos no IDAB.
+No teste público com `https://validaratestado.digital/validar?codigo=KZPY.WXEB&data=2026-04-14`, o validador carregou corretamente um registro do tipo `laudo` e exibiu explicitamente o título `LAUDO MÉDICO`, confirmando que a alternância pública no IDAB está funcional para pelo menos um caso real.

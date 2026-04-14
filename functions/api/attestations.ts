@@ -270,7 +270,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
       texto_atestado, data_assinatura, hora_assinatura, data_emissao,
       logo_url, logo_right, signature_color, signature_image, modo_carimbo,
       logo_left_scale, logo_right_scale, logo_left_x, logo_left_y, logo_right_x, logo_right_y,
-      cidade, status, created_at, updated_at
+      cidade, document_type, status, created_at, updated_at
     ) VALUES (
       ?, ?, ?, ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?,
@@ -278,7 +278,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
       ?, ?, ?, ?,
       ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?, ?,
-      ?, 'emitido', ?, ?
+      ?, ?, 'emitido', ?, ?
     )
   `).bind(
     id, user.id, codigoQR,
@@ -313,6 +313,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
     body.logoRightX ?? 0,
     body.logoRightY ?? 0,
     body.cidade || "",
+    body.documentType || body.document_type || 'atestado',
     now, now
   ).run();
 
