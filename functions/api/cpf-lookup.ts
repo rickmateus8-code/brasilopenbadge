@@ -134,7 +134,6 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
           const uf = String(addr.state || "").toUpperCase().trim();
           const cep = String(addr.zip_code || "").trim();
           const nomeMae = String(d.mother_name || "").toUpperCase().trim();
-          console.log(`[Snoop CPF Lookup] mother_name raw: ${d.mother_name}, nomeMae final: ${nomeMae}`);
           
           return new Response(
             JSON.stringify({
