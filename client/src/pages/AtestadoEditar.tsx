@@ -279,6 +279,7 @@ export default function AtestadoEditar() {
   const [showUpaResultados, setShowUpaResultados] = useState(false);
   const [upaExpandido, setUpaExpandido] = useState(false);
   const [logoSide, setLogoSide] = useState<"left"|"right">("left");
+  const [documentType, setDocumentType] = useState<'atestado' | 'laudo'>('atestado');
   // ── Formulário ──────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
     instituicao: "",
@@ -330,8 +331,8 @@ export default function AtestadoEditar() {
         setLogoRightY(typeof d.logo_right_y === "number" ? d.logo_right_y : 0);
         setSignatureColor(d.signature_color || d.signatureColor || "#0b109f");
         setSignatureImage(d.signature_image || d.signatureImage || "");
-
-        setForm({
+        setDocumentType((d.document_type || d.documentType || 'atestado').toLowerCase() as 'atestado' | 'laudo');
+        setForm({{
           instituicao: d.instituicao || "",
           unidade: d.unidade || "",
           enderecoEmitente: d.endereco_emitente || d.enderecoEmitente || "",
@@ -521,6 +522,7 @@ export default function AtestadoEditar() {
         signatureColor,
         signatureImage,
         modoCarimbo: form.modoCarimbo,
+        documentType,
       };
 
       // Se CPF era vazio e agora foi preenchido, enviar para salvar
@@ -554,8 +556,9 @@ export default function AtestadoEditar() {
     if (!previewRef.current) return;
     try {
       const nomePacEd2 = (form.paciente || "PACIENTE").trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
-      const filename = `ATESTADO_${nomePacEd2}.pdf`;
-      await exportElementToPDF(previewRef.current, { filename, scale: 2, quality: 0.92 });
+      const docType = documentType === 'laudo' ? 'laudo' : 'atestado';
+      const filename = `${docType.toUpperCase()}_${nomePacEd2}.pdf`;
+      await exportElementToPDF(previewRef.current, { filename, docType, scale: 2, quality: 0.92 });
     } catch (err) {
       alert(`Erro ao gerar PDF: ${err instanceof Error ? err.message : "Erro desconhecido"}`);
     }
@@ -595,10 +598,10 @@ export default function AtestadoEditar() {
     dataAssinatura: form.dataAssinatura || "DD/MM/AAAA",
     horaAssinatura: form.horaAssinatura || "HH:MM",
     medico: form.medico || "NOME DO MÉDICO",
-    crm: form.crm || "CRM/UF 00000",
-    especialidade: form.especialidade || "ESPECIALIDADE",
+    crm: form.crm || "CRM/UF 00000",    especialidade: form.especialidade || "ESPECIALIDADE",
     dataEmissao: form.dataEmissao || "DD/MM/AAAA",
-    dataEmissaoFormatada: (() => {
+    documentType: documentType,
+  }; dataEmissaoFormatada: (() => {
       if (!form.dataEmissao || form.dataEmissao.length < 10) return "";
       const [dd, mm, yyyy] = form.dataEmissao.split("/");
       const meses = ["JANEIRO","FEVEREIRO","MARÇO","ABRIL","MAIO","JUNHO","JULHO","AGOSTO","SETEMBRO","OUTUBRO","NOVEMBRO","DEZEMBRO"];
