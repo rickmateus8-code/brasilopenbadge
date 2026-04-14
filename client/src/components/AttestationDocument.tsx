@@ -465,19 +465,19 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                       level="H"
                       includeMargin={false}
                       fgColor="#000000"
-                      bgColor="#ffffff"
+                      bgColor="#FFFFFF"
                       style={{ display: "block" }}
                     />
                   ) : (
                     <div style={{ position: "relative", width: 96, height: 96, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <div style={{ filter: "blur(4px)", opacity: 0.4, lineHeight: 0 }}>
+                      <div style={{ filter: "blur(4px)", opacity: 0.5, lineHeight: 0 }}>
                         <QRCode
                           value="https://validaratestado.digital"
                           size={96}
                           level="H"
                           includeMargin={false}
-                          fgColor="#000000"
-                          bgColor="#ffffff"
+                          fgColor="#1a1a1a"
+                          bgColor="#FFFFFF"
                           style={{ display: "block" }}
                         />
                       </div>
