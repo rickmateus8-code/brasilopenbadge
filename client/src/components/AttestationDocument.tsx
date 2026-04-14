@@ -335,7 +335,6 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             ENDEREÇO EMITENTE: {enderecoEmitente}
           </div>
         )}
-        {/* ENDEREÇO EMITENTE: exibido apenas no cabeçalho do documento, não aqui */}
 
         {/* ===== CORPO DO TEXTO ===== */}
         <div style={{
@@ -372,7 +371,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             </div>
           )}
         </div>
-        {/* ===== ROD APÉ DIGITAL ===== */}
+
+        {/* ===== RODAPÉ DIGITAL ===== */}
         {!modoCarimbo && (
           <div style={{
             marginTop: "auto",
@@ -400,13 +400,26 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               paddingLeft: 0,
               paddingRight: 0,
             }}>
-              {/* Esquerda: cidade/data + URL validação */}
-              <div style={{ color: "#000", lineHeight: 1.25, fontFamily: "Arial, Helvetica, sans-serif", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "flex-end", marginRight: "auto", height: 111, boxSizing: "border-box", paddingLeft: 2 }}>
-                <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.42 }}>
+              {/* Esquerda: cidade/data + URL validação — AGORA ALINHADO À MOLDURA */}
+              <div style={{ 
+                color: "#000", 
+                lineHeight: 1.25, 
+                fontFamily: "Arial, Helvetica, sans-serif", 
+                flexShrink: 0, 
+                display: "flex", 
+                flexDirection: "column", 
+                justifyContent: "flex-end", 
+                marginRight: "auto", 
+                height: 111, 
+                boxSizing: "border-box", 
+                paddingLeft: 2,
+                paddingBottom: 1 // Garante alinhamento com a base da moldura
+              }}>
+                <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.42, marginBottom: 2 }}>
                   {dataFormatada || data.dataEmissao}
                 </div>
                 <div style={{ fontSize: 9.85 }}>Valide este documento acessando o endereço:</div>
-                <strong style={{ fontSize: 10.42, display: "block" }}>https://validaratestado.digital</strong>
+                <strong style={{ fontSize: 10.42, display: "block", marginBottom: 1 }}>https://validaratestado.digital</strong>
                 <div style={{ display: "flex", alignItems: "center", gap: 3, flexWrap: "nowrap" }}>
                   <span style={{ fontWeight: 400, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 9.85, whiteSpace: "nowrap", lineHeight: 1 }}>Código:</span>
                   <strong className="courier-prime" style={{ letterSpacing: "-0.3px", fontSize: "11px", fontWeight: 700, whiteSpace: "nowrap", lineHeight: 1, marginLeft: "2px" }}>
@@ -442,13 +455,13 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                     />
                   ) : (
                     <div style={{ position: "relative", width: 96, height: 96, flexShrink: 0 }}>
-                      <div style={{ filter: "blur(4px)", opacity: 0.5, lineHeight: 0 }}>
+                      <div style={{ filter: "none", opacity: 1, lineHeight: 0 }}>
                         <QRCode
                           value="https://validaratestado.digital"
                           size={96}
                           level="H"
                           includeMargin={false}
-                          fgColor="#1a1a1a"
+                          fgColor="#000000"
                           bgColor="#FFFFFF"
                         />
                       </div>
