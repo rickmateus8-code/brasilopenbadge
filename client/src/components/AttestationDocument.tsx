@@ -94,7 +94,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const cidNome = (data as any).cidNome || "";
     const cidade = (data as any).cidade || "";
     const modoCarimbo = (data as any).modoCarimbo || false;
-    const docType = documentType || (data as any).documentType || 'atestado';
+    const docType = (documentType || (data as any).documentType || (data as any).document_type || 'atestado').toLowerCase();
 
     // Tipo de documento do paciente
     const tipoDoc = (data as any).tipoDoc || "CPF";
