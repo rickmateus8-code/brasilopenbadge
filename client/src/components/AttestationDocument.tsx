@@ -371,14 +371,19 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             </div>
           )}
         </div>
-
-        {/* ===== RODAPÉ DIGITAL ===== */}
+        {/* ===== ROD APÉ DIGITAL ===== */}
         {!modoCarimbo && (
           <div style={{
             marginTop: "auto",
             position: "relative",
             zIndex: 2,
             flexShrink: 0,
+            width: "100%",
+            boxSizing: "border-box",
+            paddingLeft: 0,
+            paddingRight: 0,
+            marginLeft: 0,
+            marginRight: 0,
           }}>
             {/* Linha de divisão do cabeçalho — separa o corpo do rodapé */}
             <div style={{ borderTop: "2px solid #000", marginBottom: 6 }} />
@@ -386,12 +391,16 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             {/* Linha do rodapé: bloco data/validação à esquerda + moldura QR+médico à direita */}
             <div style={{
               display: "flex",
-              justifyContent: "space-between",
+              justifyContent: "flex-start",
               alignItems: "flex-end",
-              gap: 16,
+              gap: 0,
+              width: "100%",
+              boxSizing: "border-box",
+              paddingLeft: 0,
+              paddingRight: 0,
             }}>
               {/* Esquerda: cidade/data + URL validação */}
-              <div style={{ color: "#000", lineHeight: 1.25, fontFamily: "Arial, Helvetica, sans-serif", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+              <div style={{ color: "#000", lineHeight: 1.25, fontFamily: "Arial, Helvetica, sans-serif", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "flex-end", marginRight: "auto" }}>
                 <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.42 }}>
                   {dataFormatada || data.dataEmissao}
                 </div>
@@ -416,6 +425,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 background: "white",
                 flex: "0 0 auto",
                 overflow: "hidden",
+                marginLeft: "auto",
+                marginRight: 0,
               }}>
                 {/* Coluna esquerda: QR centralizado | padding 6px left/right, 19px top/bottom */}
                 <div style={{ width: 108, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "19px 6px" }}>
