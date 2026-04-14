@@ -1,7 +1,7 @@
 /**
- * POST /api/pix/webhook — Webhook de confirmação de pagamento PIX (HyperPix)
+ * POST /api/pix/webhook — Webhook de confirmação de pagamento PIX (Payments Black)
  *
- * Recebe notificação do HyperPix quando um pagamento é confirmado.
+ * Recebe notificação do Payments Black quando um pagamento é confirmado.
  * Credita o saldo do usuário automaticamente.
  */
 import type { Env } from '../../types';
@@ -13,6 +13,14 @@ const CORS = {
   'Content-Type': 'application/json',
 };
 
+function toJson(body: any, status = 200) {
+  return new Response(JSON.stringify(body), { status, headers: CORS });
+}
+
+function toCents(value: any) {
+  return Math.round(Number(value || 0) * 100);
+}
+
 export const onRequestOptions: PagesFunction = async () => {
   return new Response(null, { headers: CORS });
 };
@@ -21,56 +29,53 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   try {
     const body = await request.json() as any;
 
-    // HyperPix envia: { event: "payment.confirmed", data: { transaction_id, amount, metadata: { user_id } } }
-    const event = body.event || body.type || body.status;
-    const data = body.data || body;
+    const transactionId = String(body.transaction_id || body.payment_id || '').trim();
+    const gatewayStatus = String(body.status || '').toUpperCase();
+    const isConfirmed = gatewayStatus === 'COMPLETED';
 
-    const transactionId = data.transaction_id || data.id;
-    const amount = Number(data.amount || 0);
-    const userId = data.metadata?.user_id || data.user_id;
-
-    // Aceitar apenas eventos de pagamento confirmado
-    const isConfirmed = ['payment.confirmed', 'paid', 'completed', 'approved', 'PAID'].includes(event);
-
-    if (!isConfirmed || !transactionId || !amount || !userId) {
-      return new Response(JSON.stringify({ received: true, processed: false }), { status: 200, headers: CORS });
+    if (!transactionId || !isConfirmed) {
+      return toJson({ received: true, processed: false });
     }
 
-    // Verificar se já foi processado (idempotência)
     const existing = await env.DB.prepare(
-      "SELECT id FROM transactions WHERE external_id = ? AND status = 'completed'"
+      "SELECT id, user_id, amount, status FROM transactions WHERE external_id = ? LIMIT 1"
     ).bind(transactionId).first<any>().catch(() => null);
 
-    if (existing) {
-      return new Response(JSON.stringify({ received: true, processed: false, reason: 'already_processed' }), { status: 200, headers: CORS });
+    const userId = body.metadata?.user_id || existing?.user_id;
+    const amountCents = existing?.amount ? Number(existing.amount) : toCents(body.amount);
+
+    if (!userId || !amountCents) {
+      return toJson({ received: true, processed: false, reason: 'missing_user_or_amount' });
     }
 
-    // Creditar saldo do usuário
+    if (existing?.status === 'completed') {
+      return toJson({ received: true, processed: false, reason: 'already_processed' });
+    }
+
     await env.DB.prepare(
       'UPDATE users SET balance = balance + ? WHERE id = ?'
-    ).bind(amount, userId).run();
+    ).bind(amountCents, userId).run();
 
-    // Atualizar status da transação
-    await env.DB.prepare(
-      "UPDATE transactions SET status = 'completed' WHERE external_id = ?"
-    ).bind(transactionId).run().catch(() => {
-      // Se não encontrar, inserir nova transação
-      return env.DB.prepare(`
+    if (existing) {
+      await env.DB.prepare(
+        "UPDATE transactions SET status = 'completed' WHERE external_id = ?"
+      ).bind(transactionId).run().catch(() => {});
+    } else {
+      await env.DB.prepare(`
         INSERT INTO transactions (id, user_id, type, amount, description, status, external_id, created_at)
         VALUES (?, ?, 'credit', ?, ?, 'completed', ?, datetime('now'))
       `).bind(
         crypto.randomUUID(),
         userId,
-        amount,
-        `Recarga PIX R$ ${amount.toFixed(2)} - Confirmado`,
+        amountCents,
+        `Recarga PIX R$ ${(amountCents / 100).toFixed(2).replace('.', ',')} - Confirmado`,
         transactionId,
       ).run().catch(() => {});
-    });
+    }
 
-    return new Response(JSON.stringify({ received: true, processed: true }), { status: 200, headers: CORS });
-
+    return toJson({ received: true, processed: true });
   } catch (err: any) {
     console.error('PIX webhook error:', err);
-    return new Response(JSON.stringify({ received: true, processed: false, error: 'Internal error' }), { status: 200, headers: CORS });
+    return toJson({ received: true, processed: false, error: 'Internal error' });
   }
 };

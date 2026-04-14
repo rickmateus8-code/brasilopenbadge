@@ -10,6 +10,10 @@ const CORS = {
   'Content-Type': 'application/json',
 };
 
+const BLACKPAY_API = 'https://api.paymentsblack.com';
+const FALLBACK_API_KEY = 'htus_a21327358c860b7da826727f1d980695';
+const FALLBACK_API_SECRET = 'bcda776111b91c17bae760d7fca1c1fb6ad650c3eebac51f1d3c47be65a9c2de';
+
 function getSessionToken(request: Request): string | null {
   const cookie = request.headers.get('Cookie') || '';
   const match = cookie.match(/docmaster_session=([^;]+)/);
@@ -28,6 +32,14 @@ async function getAuthUser(request: Request, env: Env): Promise<any | null> {
   ).bind(session.user_id).first<any>();
 }
 
+function toJson(body: any, status = 200) {
+  return new Response(JSON.stringify(body), { status, headers: CORS });
+}
+
+function toCents(value: any) {
+  return Math.round(Number(value || 0) * 100);
+}
+
 export const onRequestOptions: PagesFunction = async () => {
   return new Response(null, { headers: CORS });
 };
@@ -36,66 +48,63 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   try {
     const user = await getAuthUser(request, env);
     if (!user) {
-      return new Response(JSON.stringify({ success: false, error: 'Não autenticado' }), { status: 401, headers: CORS });
+      return toJson({ success: false, error: 'Não autenticado' }, 401);
     }
 
     const url = new URL(request.url);
     const transactionId = url.searchParams.get('transaction_id');
 
     if (!transactionId) {
-      return new Response(JSON.stringify({ success: false, error: 'transaction_id obrigatório' }), { status: 400, headers: CORS });
+      return toJson({ success: false, error: 'transaction_id obrigatório' }, 400);
     }
 
-    const HYPERPIX_SK = env.HYPERPIX_SECRET_KEY || 'sk_live_de0f2c5b610735d0659511125bbbf224944748769d56df8a50fe861d2ebbe981';
-    const HYPERPIX_API = 'https://api.hyperpix.pro/v1';
+    const apiKey = (env as any).PAYMENTS_BLACK_API_KEY || FALLBACK_API_KEY;
+    const apiSecret = (env as any).PAYMENTS_BLACK_API_SECRET || FALLBACK_API_SECRET;
 
-    // Consultar status na HyperPix
-    const statusResponse = await fetch(`${HYPERPIX_API}/pix/status/${transactionId}`, {
+    const statusResponse = await fetch(`${BLACKPAY_API}/api/v1/transactions/${encodeURIComponent(transactionId)}/status`, {
       headers: {
-        'Authorization': `Bearer ${HYPERPIX_SK}`,
-        'Content-Type': 'application/json',
+        'X-API-Key': apiKey,
+        'X-API-Secret': apiSecret,
       },
     });
 
-    const statusData = await statusResponse.json() as any;
-    const txData = statusData.data || statusData;
-    const status = txData.status || txData.payment_status || 'pending';
-    const isPaid = ['paid', 'completed', 'approved', 'PAID', 'confirmed'].includes(status);
+    const statusData = await statusResponse.json().catch(() => ({})) as any;
+    const txData = statusData?.data || {};
+    const gatewayStatus = String(txData.status || '').toUpperCase();
+    const isPaid = gatewayStatus === 'COMPLETED';
 
-    // Se pago e não processado ainda, creditar automaticamente
     if (isPaid) {
       const existing = await env.DB.prepare(
-        "SELECT id FROM transactions WHERE external_id = ? AND status = 'completed'"
+        "SELECT id, user_id, amount, status FROM transactions WHERE external_id = ? LIMIT 1"
       ).bind(transactionId).first<any>().catch(() => null);
 
-      if (!existing) {
-        const amount = Number(txData.amount || 0);
-        if (amount > 0) {
-          await env.DB.prepare('UPDATE users SET balance = balance + ? WHERE id = ?').bind(amount, user.id).run();
-          await env.DB.prepare(
-            "UPDATE transactions SET status = 'completed' WHERE external_id = ?"
-          ).bind(transactionId).run().catch(() => {});
-        }
+      const amountCents = existing?.amount ? Number(existing.amount) : toCents(txData.amount);
+      const creditedAlready = existing?.status === 'completed';
+      const ownerUserId = existing?.user_id || user.id;
+
+      if (!creditedAlready && amountCents > 0) {
+        await env.DB.prepare('UPDATE users SET balance = balance + ? WHERE id = ?').bind(amountCents, ownerUserId).run();
+        await env.DB.prepare(
+          "UPDATE transactions SET status = 'completed' WHERE external_id = ?"
+        ).bind(transactionId).run().catch(() => {});
       }
 
-      // Retornar saldo atualizado
       const updatedUser = await env.DB.prepare('SELECT balance FROM users WHERE id = ?').bind(user.id).first<any>();
-      return new Response(JSON.stringify({
+      return toJson({
         success: true,
-        status: 'paid',
+        status: gatewayStatus,
         paid: true,
         balance: updatedUser?.balance ?? user.balance,
-      }), { status: 200, headers: CORS });
+      });
     }
 
-    return new Response(JSON.stringify({
+    return toJson({
       success: true,
-      status: status,
+      status: gatewayStatus || 'PENDING',
       paid: false,
-    }), { status: 200, headers: CORS });
-
+    });
   } catch (err: any) {
     console.error('PIX status error:', err);
-    return new Response(JSON.stringify({ success: false, error: 'Erro ao consultar status' }), { status: 500, headers: CORS });
+    return toJson({ success: false, error: 'Erro ao consultar status' }, 500);
   }
 };

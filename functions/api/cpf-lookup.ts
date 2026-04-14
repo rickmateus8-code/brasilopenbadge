@@ -41,24 +41,95 @@ function validateCPF(cpf: string): boolean {
 
 function normalizeSexo(raw: string): "MALE" | "FEMALE" {
   const s = String(raw || "").toUpperCase().trim();
-  if (s === "F" || s === "FEMININO" || s === "FEMALE") return "FEMALE";
+  if (["F", "FEMININO", "FEMALE"].includes(s)) return "FEMALE";
+  if (["M", "MASCULINO", "MALE"].includes(s)) return "MALE";
   return "MALE";
 }
 
 function normalizeDate(raw: string): string {
   if (!raw) return "";
   const s = String(raw).trim();
+
   // YYYY-MM-DD → DD/MM/AAAA
   if (s.length >= 10 && s[4] === "-") {
     const parts = s.substring(0, 10).split("-");
     if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
   }
+
   return s;
+}
+
+function firstNonEmpty(...values: any[]): string {
+  for (const value of values) {
+    const normalized = String(value ?? "").trim();
+    if (normalized) return normalized;
+  }
+  return "";
+}
+
+function normalizeSnoopPayload(result: any) {
+  const payload = result?.data || result?.body || result;
+  if (!payload || typeof payload !== "object") return null;
+
+  const address = payload.address || payload.endereco || {};
+
+  const nome = firstNonEmpty(payload.nome, payload.name).toUpperCase();
+  if (!nome) return null;
+
+  const nomeMae = firstNonEmpty(
+    payload.mae,
+    payload.nome_mae,
+    payload.mother_name,
+    payload.nomeMae
+  ).toUpperCase();
+
+  const endereco = firstNonEmpty(
+    payload.endereco,
+    address.street,
+    address.address,
+    address.logradouro,
+    payload.logradouro
+  ).toUpperCase();
+
+  const bairro = firstNonEmpty(
+    payload.bairro,
+    address.neighborhood,
+    address.bairro
+  ).toUpperCase();
+
+  const cidade = firstNonEmpty(
+    payload.cidade,
+    address.city,
+    address.cidade
+  ).toUpperCase();
+
+  const uf = firstNonEmpty(
+    payload.uf,
+    address.state,
+    address.uf
+  ).toUpperCase();
+
+  const cep = firstNonEmpty(
+    payload.cep,
+    address.zip_code,
+    address.cep
+  );
+
+  return {
+    nome,
+    nascimento: normalizeDate(firstNonEmpty(payload.nascimento, payload.birth_date, payload.data_nascimento)),
+    sexo: normalizeSexo(firstNonEmpty(payload.sexo, payload.gender)),
+    nomeMae,
+    endereco,
+    bairro,
+    cidade,
+    uf,
+    cep,
+  };
 }
 
 async function getAuthUser(request: Request, env: Env): Promise<any | null> {
   const cookie = request.headers.get("Cookie") || "";
-  // Suporta ambos os nomes de cookie (compatibilidade)
   const match = cookie.match(/docmaster_session=([^;]+)/) || cookie.match(/session_token=([^;]+)/);
   if (!match) return null;
   const token = match[1];
@@ -79,7 +150,6 @@ export const onRequestOptions: PagesFunction = async () => {
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
 
-  // Verificar autenticação
   const user = await getAuthUser(request, env);
   if (!user) {
     return new Response(
@@ -106,71 +176,48 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     );
   }
 
-  // ── Tentativa 1: Snoop Intelligence ────────────────────────────────────────
   try {
-    const snoopRes = await fetch(
+    const snoopEndpoints = [
+      `${SNOOP_BASE_URL}/cpf?cpf=${cpf}`,
       `${SNOOP_BASE_URL}/generic/cpf?cpf=${cpf}`,
-      {
+    ];
+
+    for (const endpoint of snoopEndpoints) {
+      const snoopRes = await fetch(endpoint, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${SNOOP_API_KEY}`,
           "Accept": "application/json",
         },
         signal: AbortSignal.timeout(10000),
-      }
-    );
+      });
 
-    if (snoopRes.ok) {
+      if (snoopRes.status === 404) {
+        continue;
+      }
+
+      if (!snoopRes.ok) {
+        continue;
+      }
+
       const result = await snoopRes.json() as any;
-      // Snoop retorna { statusCode: 200, body: { ... } }
-      if (result.statusCode === 200 && result.body) {
-        const d = result.body;
-        const nome = String(d.name || "").toUpperCase().trim();
-        if (nome) {
-          const addr = d.address || {};
-          const endereco = String(addr.street || "").toUpperCase().trim();
-          const bairro = String(addr.neighborhood || "").toUpperCase().trim();
-          const cidade = String(addr.city || "").toUpperCase().trim();
-          const uf = String(addr.state || "").toUpperCase().trim();
-          const cep = String(addr.zip_code || "").trim();
-          const nomeMae = String(d.mother_name || "").toUpperCase().trim();
-          
-          return new Response(
-            JSON.stringify({
-              success: true,
-              source: "snoop",
-              data: {
-                nome,
-                nascimento: normalizeDate(d.birth_date || ""),
-                sexo: normalizeSexo(d.gender || ""),
-                nomeMae,
-                endereco,
-                bairro,
-                cidade,
-                uf,
-                cep,
-              },
-            }),
-            { headers: corsHeaders() }
-          );
-        }
+      const normalized = normalizeSnoopPayload(result);
+
+      if (normalized?.nome) {
+        return new Response(
+          JSON.stringify({
+            success: true,
+            source: "snoop",
+            data: normalized,
+          }),
+          { headers: corsHeaders() }
+        );
       }
     }
-
-    // Se Snoop retornou 404, não tentar fallback
-    if (snoopRes.status === 404) {
-      return new Response(
-        JSON.stringify({ success: false, error: "CPF não encontrado na base de dados." }),
-        { status: 404, headers: corsHeaders() }
-      );
-    }
-
-    // Para outros erros da Snoop, tentar fallback BrasilAPI
   } catch (_snoopErr) {
     // Snoop falhou (timeout, rede) — tentar fallback
   }
 
-  // ── Fallback: BrasilAPI ─────────────────────────────────────────────────────
   try {
     const brasilRes = await fetch(
       `https://brasilapi.com.br/api/cpf/v1/${cpf}`,
