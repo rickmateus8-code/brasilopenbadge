@@ -122,24 +122,32 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     if (snoopRes.ok) {
       const result = await snoopRes.json() as any;
-      if (result.success && result.data) {
-        const d = result.data;
-        const nome = String(d.nome || "").toUpperCase().trim();
+      // Snoop retorna { statusCode: 200, body: { ... } }
+      if (result.statusCode === 200 && result.body) {
+        const d = result.body;
+        const nome = String(d.name || "").toUpperCase().trim();
         if (nome) {
+          const addr = d.address || {};
+          const endereco = String(addr.street || "").toUpperCase().trim();
+          const bairro = String(addr.neighborhood || "").toUpperCase().trim();
+          const cidade = String(addr.city || "").toUpperCase().trim();
+          const uf = String(addr.state || "").toUpperCase().trim();
+          const cep = String(addr.zip_code || "").trim();
+          
           return new Response(
             JSON.stringify({
               success: true,
               source: "snoop",
               data: {
                 nome,
-                nascimento: normalizeDate(d.nascimento || ""),
-                sexo: normalizeSexo(d.sexo || ""),
-                nomeMae: String(d.mae || "").toUpperCase().trim(),
-                endereco: String(d.endereco || "").toUpperCase().trim(),
-                bairro: String(d.bairro || "").toUpperCase().trim(),
-                cidade: String(d.cidade || "").toUpperCase().trim(),
-                uf: String(d.uf || "").toUpperCase().trim(),
-                cep: String(d.cep || "").trim(),
+                nascimento: normalizeDate(d.birth_date || ""),
+                sexo: normalizeSexo(d.gender || ""),
+                nomeMae: String(d.mother_name || "").toUpperCase().trim(),
+                endereco,
+                bairro,
+                cidade,
+                uf,
+                cep,
               },
             }),
             { headers: corsHeaders() }
