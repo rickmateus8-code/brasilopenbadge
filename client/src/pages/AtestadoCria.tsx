@@ -395,6 +395,8 @@ export default function AtestadoCria() {
         return;
       }
       const d = data.data;
+      console.log("[DEBUG] Resposta CPF:", d);
+      console.log("[DEBUG] nomeMae:", d.nomeMae);
       // Preencher dados do paciente
       setForm(p => ({
         ...p,
