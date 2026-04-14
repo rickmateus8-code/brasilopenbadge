@@ -241,6 +241,12 @@ export default function AdminDashboard() {
   // Show passwords toggle
   const [showPasswords, setShowPasswords] = useState(false);
 
+  // Manual Referral Link
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkReferrerId, setLinkReferrerId] = useState("");
+  const [linkReferredId, setLinkReferredId] = useState("");
+  const [linking, setLinking] = useState(false);
+
   const [loading, setLoading] = useState(false);
 
   // Confirmation modal
@@ -495,26 +501,60 @@ export default function AdminDashboard() {
   }, []);
 
   // ── Users ──────────────────────────────────────────────────────────────────
-  const adjustBalance = async (userId: number, delta: number) => {
+  const adjustBalance = async (userId: number, amount: number) => {
     try {
-      const res = await fetch(`/api/admin/users/${userId}/balance`, {
-        method: "POST",
+      const res = await fetch("/api/admin/users", {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ delta }),
+        body: JSON.stringify({ user_id: userId, balance_adjustment: amount }),
+        credentials: "include"
       });
       const data = await res.json();
       if (data.success) {
-        toast.success("Saldo atualizado!");
-        loadUsers();
+        toast.success(`Saldo ${amount > 0 ? "adicionado" : "removido"} com sucesso`);
+        loadUsers(showPasswords);
         setBalanceInputs(prev => ({ ...prev, [userId]: "" }));
       } else {
-        toast.error(data.error || "Erro ao atualizar saldo");
+        toast.error(data.error || "Erro ao ajustar saldo");
       }
-    } catch { toast.error("Erro de conexão"); }
+    } catch (err: any) {
+      toast.error("Erro ao conectar ao servidor");
+    }
   };
 
-  const toggleUserActive = async (userId: number, current: number) => {
+  const linkManualReferral = async () => {
+    if (!linkReferrerId || !linkReferredId) {
+      toast.error("Selecione o indicador e o indicado");
+      return;
+    }
+    setLinking(true);
+    try {
+      const res = await fetch("/api/admin/referral", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          action: "link_manual", 
+          referrer_id: linkReferrerId, 
+          referred_id: linkReferredId 
+        }),
+        credentials: "include"
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Vínculo de indicação criado com sucesso");
+        setShowLinkModal(false);
+        setLinkReferrerId("");
+        setLinkReferredId("");
+        if (tab === "referral") loadReferralData(referralTab);
+      } else {
+        toast.error(data.error || "Erro ao criar vínculo");
+      }
+    } catch (err: any) {
+      toast.error("Erro ao conectar ao servidor");
+    } finally {
+      setLinking(false);
+    }
+  };
     try {
       const res = await fetch(`/api/admin/users/${userId}/toggle`, {
         method: "POST",
@@ -1780,21 +1820,93 @@ export default function AdminDashboard() {
         {tab === "referral" && (
           <div className="space-y-6">
             {/* Sub-tabs */}
-            <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-              {(["overview", "referrals", "earnings", "cashback", "users"] as const).map(rt => (
-                <button
-                  key={rt}
-                  onClick={() => setReferralTab(rt)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                    referralTab === rt
-                      ? "bg-yellow-500 text-white"
-                      : "text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700"
-                  }`}
-                >
-                  {rt === "overview" ? "Visão Geral" : rt === "referrals" ? "Indicações" : rt === "earnings" ? "Ganhos Referral" : rt === "cashback" ? "Cashback" : "Usuários"}
-                </button>
-              ))}
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                {(["overview", "referrals", "earnings", "cashback", "users"] as const).map(rt => (
+                  <button
+                    key={rt}
+                    onClick={() => setReferralTab(rt)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                      referralTab === rt
+                        ? "bg-yellow-500 text-white"
+                        : "text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700"
+                    }`}
+                  >
+                    {rt === "overview" ? "Visão Geral" : rt === "referrals" ? "Indicações" : rt === "earnings" ? "Ganhos Referral" : rt === "cashback" ? "Cashback" : "Usuários"}
+                  </button>
+                ))}
+              </div>
+              <button 
+                onClick={() => setShowLinkModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 text-xs font-bold rounded-xl hover:bg-yellow-200 transition-colors border border-yellow-200 dark:border-yellow-800"
+              >
+                <UserPlus className="w-4 h-4" />
+                Vincular Indicação Manual
+              </button>
             </div>
+
+            {/* Modal de Vínculo Manual */}
+            {showLinkModal && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4" onClick={() => setShowLinkModal(false)}>
+                <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-md w-full shadow-2xl border border-gray-100 dark:border-gray-800" onClick={e => e.stopPropagation()}>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                      <UserPlus className="w-5 h-5 text-yellow-500" />
+                      Vincular Indicação
+                    </h3>
+                    <button onClick={() => setShowLinkModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+                      <X className="w-5 h-5 text-gray-400" />
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Quem indicou? (Indicador)</label>
+                      <select 
+                        value={linkReferrerId} 
+                        onChange={e => setLinkReferrerId(e.target.value)}
+                        className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      >
+                        <option value="">Selecione o indicador...</option>
+                        {users.map(u => (
+                          <option key={u.id} value={String(u.id)}>{u.username} ({u.email})</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Quem foi indicado? (Indicado)</label>
+                      <select 
+                        value={linkReferredId} 
+                        onChange={e => setLinkReferredId(e.target.value)}
+                        className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      >
+                        <option value="">Selecione o indicado...</option>
+                        {users.map(u => (
+                          <option key={u.id} value={String(u.id)}>{u.username} ({u.email})</option>
+                        ))}
+                      </select>
+                      <p className="mt-2 text-[10px] text-gray-400 italic">O indicado passará a gerar comissões para o indicador selecionado em todos os seus futuros depósitos.</p>
+                    </div>
+
+                    <div className="pt-2">
+                      <button 
+                        onClick={linkManualReferral}
+                        disabled={linking || !linkReferrerId || !linkReferredId}
+                        className="w-full h-11 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-yellow-200 dark:shadow-none disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {linking ? (
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <CheckCircle className="w-4 h-4" />
+                        )}
+                        Confirmar Vínculo Manual
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {referralTab === "overview" && (
               <div className="space-y-6">

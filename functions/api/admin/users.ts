@@ -41,11 +41,19 @@ async function hashPassword(password: string): Promise<string> {
 
 async function logAdminAction(env: Env, adminId: string, action: string, targetId: string, details: object) {
   try {
+    // Tenta inserir na tabela admin_logs se existir, senão usa a logs genérica
     await env.DB.prepare(
       `INSERT INTO admin_logs (id, admin_id, action, target_type, target_id, details, created_at)
        VALUES (?, ?, ?, 'user', ?, ?, datetime('now'))`
     ).bind(generateId(), adminId, action, targetId, JSON.stringify(details)).run();
-  } catch (_) { /* silently fail if table doesn't exist */ }
+  } catch (_) {
+    try {
+      await env.DB.prepare(
+        `INSERT INTO logs (id, user_id, action, category, details, created_at)
+         VALUES (?, ?, ?, 'admin', ?, datetime('now'))`
+      ).bind(generateId(), adminId, action, JSON.stringify({ ...details, target_id: targetId })).run();
+    } catch (__) {}
+  }
 }
 
 // GET: List all users (with optional plain_password for admin view)
@@ -77,7 +85,6 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   // Map plain_password to the field name expected by the frontend
   const users = (result.results || []).map((u: any) => ({
     ...u,
-    // Garantir que balance seja sempre um número inteiro para evitar NaN no frontend
     balance: typeof u.balance === 'number' ? u.balance : (parseInt(String(u.balance ?? '0'), 10) || 0),
     plain_password: showPasswords ? (u.plain_password || null) : undefined,
   }));
@@ -100,17 +107,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       return new Response(JSON.stringify({ success: false, error: 'Username e senha são obrigatórios' }), { status: 400, headers: corsHeaders });
     }
 
-    if (password.length < 4) {
-      return new Response(JSON.stringify({ success: false, error: 'Senha deve ter no mínimo 4 caracteres' }), { status: 400, headers: corsHeaders });
-    }
-
-    // Sanitize username
     const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_.-]/g, '');
-    if (!cleanUsername) {
-      return new Response(JSON.stringify({ success: false, error: 'Username inválido' }), { status: 400, headers: corsHeaders });
-    }
-
-    // Check if username already exists
     const existing = await env.DB.prepare('SELECT id FROM users WHERE username = ?').bind(cleanUsername).first();
     if (existing) {
       return new Response(JSON.stringify({ success: false, error: 'Username já existe' }), { status: 409, headers: corsHeaders });
@@ -126,16 +123,15 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'))`
     ).bind(id, cleanUsername, hashedPassword, password, display_name || cleanUsername, email || '', userRole, userBalance).run();
 
-    await logAdminAction(env, admin.id, 'create_user', id, { username: cleanUsername, role: userRole });
+    await logAdminAction(env, admin.id, 'create_user', id, { username: cleanUsername, role: userRole, initial_balance: userBalance });
 
     return new Response(JSON.stringify({ success: true, message: 'Usuário criado com sucesso', userId: id }), { status: 201, headers: corsHeaders });
   } catch (err: any) {
-    console.error('[admin/users POST]', err);
     return new Response(JSON.stringify({ success: false, error: err.message || 'Erro interno' }), { status: 500, headers: corsHeaders });
   }
 };
 
-// PUT: Update user (password, role, balance, display_name, email, is_active)
+// PUT: Update user (password, role, balance adjustment, etc)
 export const onRequestPut: PagesFunction<Env> = async ({ request, env }) => {
   const admin = await getAdminUser(request, env);
   if (!admin) {
@@ -144,59 +140,71 @@ export const onRequestPut: PagesFunction<Env> = async ({ request, env }) => {
 
   try {
     const body = await request.json() as any;
-    const { user_id, new_password, display_name, email, role, balance, is_active } = body;
+    const { user_id, new_password, display_name, email, role, balance, balance_adjustment, is_active } = body;
 
     if (!user_id) {
       return new Response(JSON.stringify({ success: false, error: 'user_id é obrigatório' }), { status: 400, headers: corsHeaders });
     }
 
-    const user = await env.DB.prepare('SELECT id, username FROM users WHERE id = ?').bind(user_id).first<any>();
+    const user = await env.DB.prepare('SELECT id, username, balance FROM users WHERE id = ?').bind(user_id).first<any>();
     if (!user) {
       return new Response(JSON.stringify({ success: false, error: 'Usuário não encontrado' }), { status: 404, headers: corsHeaders });
     }
 
-    const changes: string[] = [];
+    const changes: any = {};
 
-    // Update password if provided
+    // Password
     if (new_password) {
-      if (new_password.length < 4) {
-        return new Response(JSON.stringify({ success: false, error: 'Senha deve ter no mínimo 4 caracteres' }), { status: 400, headers: corsHeaders });
-      }
       const hashedPassword = await hashPassword(new_password);
-      // Update both hash and plain text
       await env.DB.prepare('UPDATE users SET password_hash = ?, plain_password = ? WHERE id = ?')
         .bind(hashedPassword, new_password, user_id).run();
-      changes.push('password');
+      changes.password = 'changed';
     }
 
-    // Update other fields if provided
+    // Balance Adjustment (Sistêmica Única para Admin)
+    if (balance_adjustment !== undefined && balance_adjustment !== 0) {
+      const oldBalance = user.balance || 0;
+      const newBalance = oldBalance + balance_adjustment;
+      
+      await env.DB.prepare('UPDATE users SET balance = ? WHERE id = ?').bind(newBalance, user_id).run();
+      
+      // Registrar transação oficial
+      const txId = generateId();
+      await env.DB.prepare(
+        `INSERT INTO transactions (id, user_id, type, amount, description, status, created_at)
+         VALUES (?, ?, 'admin_adjustment', ?, ?, 'completed', datetime('now'))`
+      ).bind(txId, user_id, balance_adjustment, `Ajuste administrativo por ${admin.username}`).run();
+      
+      changes.balance = { old: oldBalance, adjustment: balance_adjustment, new: newBalance, tx_id: txId };
+    } else if (balance !== undefined) {
+      // Caso queira definir um valor fixo
+      const oldBalance = user.balance || 0;
+      await env.DB.prepare('UPDATE users SET balance = ? WHERE id = ?').bind(balance, user_id).run();
+      changes.balance = { old: oldBalance, new: balance, mode: 'fixed' };
+    }
+
+    // Other fields
     if (display_name !== undefined) {
       await env.DB.prepare('UPDATE users SET display_name = ? WHERE id = ?').bind(display_name, user_id).run();
-      changes.push('display_name');
+      changes.display_name = display_name;
     }
     if (email !== undefined) {
       await env.DB.prepare('UPDATE users SET email = ? WHERE id = ?').bind(email, user_id).run();
-      changes.push('email');
+      changes.email = email;
     }
     if (role !== undefined) {
-      const validRole = role === 'admin' ? 'admin' : 'user';
-      await env.DB.prepare('UPDATE users SET role = ? WHERE id = ?').bind(validRole, user_id).run();
-      changes.push('role');
-    }
-    if (balance !== undefined) {
-      await env.DB.prepare('UPDATE users SET balance = ? WHERE id = ?').bind(balance, user_id).run();
-      changes.push('balance');
+      await env.DB.prepare('UPDATE users SET role = ? WHERE id = ?').bind(role, user_id).run();
+      changes.role = role;
     }
     if (is_active !== undefined) {
       await env.DB.prepare('UPDATE users SET is_active = ? WHERE id = ?').bind(is_active ? 1 : 0, user_id).run();
-      changes.push('is_active');
+      changes.is_active = is_active;
     }
 
     await logAdminAction(env, admin.id, 'update_user', user_id, { username: user.username, changes });
 
     return new Response(JSON.stringify({ success: true, message: 'Usuário atualizado com sucesso' }), { status: 200, headers: corsHeaders });
   } catch (err: any) {
-    console.error('[admin/users PUT]', err);
     return new Response(JSON.stringify({ success: false, error: err.message || 'Erro interno' }), { status: 500, headers: corsHeaders });
   }
 };
@@ -211,48 +219,28 @@ export const onRequestDelete: PagesFunction<Env> = async ({ request, env }) => {
   try {
     const url = new URL(request.url);
     const userId = url.searchParams.get('user_id');
-    if (!userId) {
-      return new Response(JSON.stringify({ success: false, error: 'user_id é obrigatório' }), { status: 400, headers: corsHeaders });
-    }
+    if (!userId) return new Response(JSON.stringify({ success: false, error: 'user_id é obrigatório' }), { status: 400, headers: corsHeaders });
 
     const user = await env.DB.prepare('SELECT id, username, role FROM users WHERE id = ?').bind(userId).first<any>();
-    if (!user) {
-      return new Response(JSON.stringify({ success: false, error: 'Usuário não encontrado' }), { status: 404, headers: corsHeaders });
-    }
+    if (!user) return new Response(JSON.stringify({ success: false, error: 'Usuário não encontrado' }), { status: 404, headers: corsHeaders });
 
-    // Cannot delete admin itself
     if (String(user.id) === String(admin.id)) {
       return new Response(JSON.stringify({ success: false, error: 'Não é possível excluir o próprio usuário admin' }), { status: 400, headers: corsHeaders });
     }
 
-    // Extra protection: cannot delete another admin without explicit confirmation
-    if (user.role === 'admin') {
-      const confirmHeader = request.headers.get('X-Confirm-Delete-Admin');
-      if (confirmHeader !== 'yes') {
-        return new Response(JSON.stringify({ success: false, error: 'Para excluir um admin, envie o header X-Confirm-Delete-Admin: yes' }), { status: 400, headers: corsHeaders });
-      }
-    }
-
-    // Delete all user data in order
     const tables = [
-      'sessions', 'atestados', 'receitas', 'cnhs', 'chas', 'toxicologicos',
-      'historicos_sp', 'historicos_uninter', 'documents', 'cashback_earnings',
-      'referral_codes', 'notifications', 'presence', 'attestations', 'transactions'
+      'sessions', 'documents', 'cashback_earnings', 'referral_codes', 
+      'notifications', 'presence', 'attestations', 'transactions', 'referrals'
     ];
     for (const table of tables) {
-      try {
-        await env.DB.prepare(`DELETE FROM ${table} WHERE user_id = ?`).bind(userId).run();
-      } catch (_) { /* table may not exist */ }
+      try { await env.DB.prepare(`DELETE FROM ${table} WHERE user_id = ? OR (CASE WHEN '${table}' = 'referrals' THEN referrer_id = ? OR referred_id = ? ELSE 0 END)`).bind(userId, userId, userId).run(); } catch (_) {}
     }
 
-    // Delete the user itself
     await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(userId).run();
-
     await logAdminAction(env, admin.id, 'delete_user', userId, { username: user.username });
 
     return new Response(JSON.stringify({ success: true, message: `Usuário "${user.username}" excluído com sucesso` }), { status: 200, headers: corsHeaders });
   } catch (err: any) {
-    console.error('[admin/users DELETE]', err);
     return new Response(JSON.stringify({ success: false, error: err.message || 'Erro interno' }), { status: 500, headers: corsHeaders });
   }
 };

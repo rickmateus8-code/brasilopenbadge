@@ -1,9 +1,16 @@
 // Admin referral management endpoints
 // GET: List all referrals, earnings, and settings
 // PUT: Update referral/cashback settings (global or per-user)
+// POST: Manually link a user to a referrer
 // DELETE: Clear referral logs
 
-const JSON_HEADERS = { "Content-Type": "application/json" };
+const JSON_HEADERS = { 
+  "Content-Type": "application/json",
+  "Access-Control-Allow-Origin": "https://docmaster.store",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Credentials": "true",
+};
 
 // Auto-cria as tabelas de referral se não existirem
 async function ensureReferralTables(db: D1Database) {
@@ -47,6 +54,14 @@ async function safeQueryAll<T>(db: D1Database, sql: string, params: any[] = []):
     const result = await stmt.all<T>();
     return result?.results || [];
   } catch { return []; }
+}
+
+async function logAdminAction(db: D1Database, adminId: string, action: string, details: any) {
+  try {
+    await db.prepare(
+      "INSERT INTO admin_logs (id, admin_id, action, details, created_at) VALUES (?, ?, ?, ?, datetime('now'))"
+    ).bind(crypto.randomUUID(), adminId, action, JSON.stringify(details)).run();
+  } catch {}
 }
 
 export const onRequestGet: PagesFunction<{ DB: D1Database }> = async ({ request, env }) => {
@@ -145,6 +160,55 @@ export const onRequestGet: PagesFunction<{ DB: D1Database }> = async ({ request,
   return new Response(JSON.stringify({ error: "Tab inválida" }), { status: 400, headers: JSON_HEADERS });
 };
 
+export const onRequestPost: PagesFunction<{ DB: D1Database }> = async ({ request, env }) => {
+  const db = env.DB;
+  const cookie = request.headers.get("Cookie") || "";
+  const tokenMatch = cookie.match(/docmaster_session=([^;]+)/);
+  if (!tokenMatch) return new Response(JSON.stringify({ error: "Não autenticado" }), { status: 401, headers: JSON_HEADERS });
+
+  const session = await safeQuery<{ user_id: string; role: string }>(db,
+    "SELECT s.user_id, u.role FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token = ? AND s.expires_at > datetime('now')",
+    [tokenMatch[1]]
+  );
+  if (!session || session.role !== "admin") return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403, headers: JSON_HEADERS });
+
+  await ensureReferralTables(db);
+
+  const body = await request.json() as any;
+  const { action } = body;
+
+  if (action === "link_manual") {
+    const { referrer_id, referred_id } = body;
+    if (!referrer_id || !referred_id) {
+      return new Response(JSON.stringify({ error: "IDs de indicador e indicado são obrigatórios" }), { status: 400, headers: JSON_HEADERS });
+    }
+
+    if (referrer_id === referred_id) {
+      return new Response(JSON.stringify({ error: "Um usuário não pode indicar a si mesmo" }), { status: 400, headers: JSON_HEADERS });
+    }
+
+    // Verificar se o indicado já tem um indicador
+    const existing = await safeQuery(db, "SELECT id FROM referrals WHERE referred_id = ?", [referred_id]);
+    if (existing) {
+      return new Response(JSON.stringify({ error: "Este usuário já possui um indicador vinculado" }), { status: 400, headers: JSON_HEADERS });
+    }
+
+    // Criar o vínculo
+    await db.prepare("INSERT INTO referrals (referrer_id, referred_id) VALUES (?, ?)")
+      .bind(referrer_id, referred_id).run();
+    
+    // Atualizar o campo referred_by na tabela users para consistência
+    await db.prepare("UPDATE users SET referred_by = ? WHERE id = ?")
+      .bind(referrer_id, referred_id).run();
+
+    await logAdminAction(db, session.user_id, "link_referral_manual", { referrer_id, referred_id });
+
+    return new Response(JSON.stringify({ success: true, message: "Vínculo de indicação criado com sucesso" }), { headers: JSON_HEADERS });
+  }
+
+  return new Response(JSON.stringify({ error: "Ação inválida" }), { status: 400, headers: JSON_HEADERS });
+};
+
 export const onRequestPut: PagesFunction<{ DB: D1Database }> = async ({ request, env }) => {
   const db = env.DB;
   const cookie = request.headers.get("Cookie") || "";
@@ -176,6 +240,9 @@ export const onRequestPut: PagesFunction<{ DB: D1Database }> = async ({ request,
     if (cashback_enabled !== undefined) {
       await db.prepare("INSERT OR REPLACE INTO system_settings (key, value, updated_at) VALUES ('cashback_enabled', ?, datetime('now'))").bind(String(cashback_enabled)).run();
     }
+    
+    await logAdminAction(db, session.user_id, "update_referral_global_settings", body);
+    
     return new Response(JSON.stringify({ success: true }), { headers: JSON_HEADERS });
   }
 
@@ -198,6 +265,8 @@ export const onRequestPut: PagesFunction<{ DB: D1Database }> = async ({ request,
       await db.prepare("UPDATE users SET referral_percentage = ?, cashback_percentage = ? WHERE id = ?")
         .bind(referral_percentage ?? null, cashback_percentage ?? null, userId).run();
     }
+
+    await logAdminAction(db, session.user_id, "update_user_referral_settings", { userId, referral_percentage, cashback_percentage });
 
     return new Response(JSON.stringify({ success: true }), { headers: JSON_HEADERS });
   }
@@ -224,10 +293,12 @@ export const onRequestDelete: PagesFunction<{ DB: D1Database }> = async ({ reque
     if (clearType === "earnings") {
       await db.exec("DELETE FROM referral_earnings");
       await db.exec("DELETE FROM cashback_earnings");
+      await logAdminAction(db, session.user_id, "clear_referral_earnings", {});
       return new Response(JSON.stringify({ success: true, message: "Ganhos limpos" }), { headers: JSON_HEADERS });
     }
     if (clearType === "referrals") {
       await db.exec("DELETE FROM referrals");
+      await logAdminAction(db, session.user_id, "clear_referrals", {});
       return new Response(JSON.stringify({ success: true, message: "Indicações limpas" }), { headers: JSON_HEADERS });
     }
   } catch (e: any) {
@@ -235,4 +306,15 @@ export const onRequestDelete: PagesFunction<{ DB: D1Database }> = async ({ reque
   }
 
   return new Response(JSON.stringify({ error: "Tipo de limpeza inválido" }), { status: 400, headers: JSON_HEADERS });
+};
+
+export const onRequestOptions: PagesFunction = async () => {
+  return new Response(null, {
+    headers: {
+      "Access-Control-Allow-Origin": "https://docmaster.store",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Credentials": "true",
+    }
+  });
 };
