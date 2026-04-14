@@ -95,6 +95,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const cidade = (data as any).cidade || "";
     const modoCarimbo = (data as any).modoCarimbo || false;
     const docType = (documentType || (data as any).documentType || (data as any).document_type || 'atestado').toLowerCase();
+    const prefeituraLabel = cidade ? `PREFEITURA DE ${cidade.toUpperCase()}` : "";
 
     // Tipo de documento do paciente
     const tipoDoc = (data as any).tipoDoc || "CPF";
@@ -139,7 +140,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           width: `${DOC_WIDTH_PX}px`,
           minHeight: `${DOC_HEIGHT_PX}px`,
           height: `${DOC_HEIGHT_PX}px`,
-          background: "#ffffff",
+          background: "#ffffff !important",
+          backgroundColor: "#ffffff !important",
           paddingTop: `${PAD_H}px`,
           paddingBottom: `${PAD_H}px`,
           paddingLeft: `${PAD_V}px`,
@@ -257,7 +259,12 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           color: "#000",
           flexShrink: 0,
         }}>
-          {docType === 'laudo' ? 'LAUDO MÉDICO' : 'ATESTADO MÉDICO'}
+          {docType === 'laudo' ? (
+            <>
+              {prefeituraLabel && <div style={{ fontSize: 16, marginBottom: 4 }}>{prefeituraLabel}</div>}
+              <div>LAUDO MÉDICO</div>
+            </>
+          ) : 'ATESTADO MÉDICO'}
         </div>
 
         {/* Moldura Superior (Linha Preta) */}

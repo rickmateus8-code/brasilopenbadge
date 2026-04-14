@@ -336,19 +336,24 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
     }
     newBalance = updated.balance;
 
-    // Registrar transação no extrato (id is TEXT PRIMARY KEY, generate it)
+    // Registrar transação no extrato
     const transactionId = crypto.randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase();
-    await env.DB.prepare(`
-      INSERT INTO transactions (id, user_id, type, amount, description, document_id, created_at)
-      VALUES (?, ?, 'debit', ?, ?, ?, ?)
-    `).bind(
-      transactionId,
-      user.id,
-      price,
-      `Emissão de Atestado — ${body.paciente?.toUpperCase() || "PACIENTE"}`,
-      id,
-      now
-    ).run();
+    try {
+      await env.DB.prepare(`
+        INSERT INTO transactions (id, user_id, type, amount, description, document_id, created_at)
+        VALUES (?, ?, 'debit', ?, ?, ?, ?)
+      `).bind(
+        transactionId,
+        user.id,
+        price,
+        `Emissão de Atestado — ${body.paciente?.toUpperCase() || "PACIENTE"}`,
+        id,
+        now
+      ).run();
+    } catch (transErr) {
+      console.error("[transactions] Erro ao registrar transação:", transErr);
+      // Não interrompe a emissão se apenas o log da transação falhar
+    }
   }
 
   // 7. Sincronizar com o banco oficial do validaratestado.digital (atestados-idab)
