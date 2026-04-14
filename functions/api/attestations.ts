@@ -388,6 +388,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
       logo_left_y: body.logoLeftY ?? body.logo_left_y ?? 0,
       logo_right_x: body.logoRightX ?? body.logo_right_x ?? 0,
       logo_right_y: body.logoRightY ?? body.logo_right_y ?? 0,
+      document_type: body.documentType || body.document_type || 'atestado',
       // Chave especial: força o mesmo código QR no banco do validador
       _codigo_override: codigoQR,
     };
@@ -694,6 +695,7 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
       logo_left_y: updated.logo_left_y ?? 0,
       logo_right_x: updated.logo_right_x ?? 0,
       logo_right_y: updated.logo_right_y ?? 0,
+      document_type: updated.document_type || 'atestado',
     };
 
     try {
