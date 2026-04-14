@@ -400,10 +400,10 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               paddingLeft: 0,
               paddingRight: 0,
             }}>
-              {/* Esquerda: cidade/data + URL validação — AGORA ALINHADO À MOLDURA */}
+              {/* Esquerda: cidade/data + URL validação — AJUSTADO PARA NÃO ULTRAPASSAR LIMITE INFERIOR */}
               <div style={{ 
                 color: "#000", 
-                lineHeight: 1.25, 
+                lineHeight: 1.2, 
                 fontFamily: "Arial, Helvetica, sans-serif", 
                 flexShrink: 0, 
                 display: "flex", 
@@ -413,13 +413,13 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 height: 111, 
                 boxSizing: "border-box", 
                 paddingLeft: 2,
-                paddingBottom: 1 // Garante alinhamento com a base da moldura
+                paddingBottom: 4 // Aumentado para subir o texto e respeitar o limite inferior
               }}>
-                <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.42, marginBottom: 2 }}>
+                <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.42, marginBottom: 3 }}>
                   {dataFormatada || data.dataEmissao}
                 </div>
                 <div style={{ fontSize: 9.85 }}>Valide este documento acessando o endereço:</div>
-                <strong style={{ fontSize: 10.42, display: "block", marginBottom: 1 }}>https://validaratestado.digital</strong>
+                <strong style={{ fontSize: 10.42, display: "block", marginBottom: 2 }}>https://validaratestado.digital</strong>
                 <div style={{ display: "flex", alignItems: "center", gap: 3, flexWrap: "nowrap" }}>
                   <span style={{ fontWeight: 400, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 9.85, whiteSpace: "nowrap", lineHeight: 1 }}>Código:</span>
                   <strong style={{ fontSize: 10.42, fontWeight: 700, whiteSpace: "nowrap", lineHeight: 1, marginLeft: "2px" }}>
