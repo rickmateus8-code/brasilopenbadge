@@ -400,7 +400,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               paddingRight: 0,
             }}>
               {/* Esquerda: cidade/data + URL validação */}
-              <div style={{ color: "#000", lineHeight: 1.25, fontFamily: "Arial, Helvetica, sans-serif", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "flex-end", marginRight: "auto" }}>
+              <div style={{ color: "#000", lineHeight: 1.25, fontFamily: "Arial, Helvetica, sans-serif", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "flex-end", marginRight: "auto", height: 111, boxSizing: "border-box" }}>
                 <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.42 }}>
                   {dataFormatada || data.dataEmissao}
                 </div>

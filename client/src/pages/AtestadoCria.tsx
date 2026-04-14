@@ -1020,6 +1020,7 @@ export default function AtestadoCria() {
         logoLeftY,
         logoRightX,
         logoRightY,
+        documentType,
       };
 
       const res = await fetch("/api/attestations", {
