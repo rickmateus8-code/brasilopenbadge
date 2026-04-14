@@ -332,7 +332,7 @@ export default function AtestadoEditar() {
         setSignatureColor(d.signature_color || d.signatureColor || "#0b109f");
         setSignatureImage(d.signature_image || d.signatureImage || "");
         setDocumentType((d.document_type || d.documentType || 'atestado').toLowerCase() as 'atestado' | 'laudo');
-        setForm({{
+        setForm({
           instituicao: d.instituicao || "",
           unidade: d.unidade || "",
           enderecoEmitente: d.endereco_emitente || d.enderecoEmitente || "",
@@ -601,7 +601,8 @@ export default function AtestadoEditar() {
     crm: form.crm || "CRM/UF 00000",    especialidade: form.especialidade || "ESPECIALIDADE",
     dataEmissao: form.dataEmissao || "DD/MM/AAAA",
     documentType: documentType,
-  }; dataEmissaoFormatada: (() => {
+  };
+  const dataEmissaoFormatada = (() => {
       if (!form.dataEmissao || form.dataEmissao.length < 10) return "";
       const [dd, mm, yyyy] = form.dataEmissao.split("/");
       const meses = ["JANEIRO","FEVEREIRO","MARÇO","ABRIL","MAIO","JUNHO","JULHO","AGOSTO","SETEMBRO","OUTUBRO","NOVEMBRO","DEZEMBRO"];

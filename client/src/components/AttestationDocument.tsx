@@ -155,6 +155,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Herr+Von+Muellerhoff&family=Courier+Prime:wght@400;700&display=swap');
           #attestation-document * { box-sizing: border-box; }
+          #attestation-document .courier-prime { font-family: 'Courier Prime', 'Courier New', monospace !important; }
         `}</style>
 
         {/* Background de segurança */}
@@ -400,7 +401,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               paddingRight: 0,
             }}>
               {/* Esquerda: cidade/data + URL validação */}
-              <div style={{ color: "#000", lineHeight: 1.25, fontFamily: "Arial, Helvetica, sans-serif", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "flex-end", marginRight: "auto", height: 111, boxSizing: "border-box", paddingLeft: 1 }}>
+              <div style={{ color: "#000", lineHeight: 1.25, fontFamily: "Arial, Helvetica, sans-serif", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "flex-end", marginRight: "auto", height: 111, boxSizing: "border-box", paddingLeft: 2 }}>
                 <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.42 }}>
                   {dataFormatada || data.dataEmissao}
                 </div>
@@ -408,7 +409,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 <strong style={{ fontSize: 10.42, display: "block" }}>https://validaratestado.digital</strong>
                 <div style={{ display: "flex", alignItems: "center", gap: 3, flexWrap: "nowrap" }}>
                   <span style={{ fontWeight: 400, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 9.85, whiteSpace: "nowrap", lineHeight: 1 }}>Código:</span>
-                  <strong style={{ fontFamily: "'Courier Prime', 'Courier New', monospace", letterSpacing: -0.5, fontSize: 11, fontWeight: 700, whiteSpace: "nowrap", lineHeight: 1 }}>
+                  <strong className="courier-prime" style={{ letterSpacing: "-0.3px", fontSize: "11px", fontWeight: 700, whiteSpace: "nowrap", lineHeight: 1, marginLeft: "2px" }}>
                     {isEmitted ? data.codigoQR : "****.****"}
                   </strong>
                 </div>
