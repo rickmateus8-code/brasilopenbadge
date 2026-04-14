@@ -882,9 +882,9 @@ export default function AtestadoCria() {
   const handleDownloadPdf = async () => {
     if (!previewRef.current) return;
     try {
-      const nomePac = (form.paciente || "PACIENTE").trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
-      const filename = `ATESTADO_${nomePac}.pdf`;
-      await exportElementToPDF(previewRef.current, { filename, scale: 2, quality: 0.92 });
+      const docType = documentType === 'laudo' ? 'laudo' : 'atestado';
+      const filename = generatePDFFilename(form.paciente || "PACIENTE", docType);
+      await exportElementToPDF(previewRef.current, { filename, docType, scale: 2, quality: 0.92 });
     } catch (err) {
       alert(`Erro ao gerar PDF: ${err instanceof Error ? err.message : "Erro desconhecido"}`);
     }
@@ -897,9 +897,9 @@ export default function AtestadoCria() {
       setIsDownloadingPdf(true);
       setTimeout(async () => {
         try {
-          const nomePac = (form.paciente || "PACIENTE").trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
-          const filename = `ATESTADO_${nomePac}.pdf`;
-          await exportElementToPDF(previewRef.current!, { filename, scale: 2, quality: 0.92 });
+          const docType = documentType === 'laudo' ? 'laudo' : 'atestado';
+          const filename = generatePDFFilename(form.paciente || "PACIENTE", docType);
+          await exportElementToPDF(previewRef.current!, { filename, docType, scale: 2, quality: 0.92 });
           // Após download, aguarda 1s e redireciona
           setTimeout(() => {
             setShowSuccessModal(false);

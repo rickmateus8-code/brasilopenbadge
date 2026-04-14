@@ -244,7 +244,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           padding: "0", // Removido todo padding
           width: "100%",
           textAlign: "center",
-          marginBottom: -4, // Margem negativa para subir a linha abaixo do texto
+          marginBottom: 4, // Espaçamento adequado entre título e linha
           letterSpacing: 0.5,
           position: "relative",
           zIndex: 2,

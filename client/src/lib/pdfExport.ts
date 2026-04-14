@@ -77,6 +77,7 @@ export const DOC_REAL_HEIGHT = 1123;
 
 export type DocType =
   | "atestado"
+  | "laudo"
   | "cnh"
   | "cha"
   | "toxicologico"
@@ -373,6 +374,7 @@ export function usePDFExport() {
 /** Prefixos de arquivo por tipo de documento */
 const DOC_PREFIXES: Record<DocType, string> = {
   atestado: "ATESTADO",
+  laudo: "LAUDO",
   cnh: "CNH",
   cha: "CHA_NAUTICA",
   toxicologico: "TOXICOLOGICO",
