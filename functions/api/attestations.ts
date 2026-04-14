@@ -336,11 +336,13 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
     }
     newBalance = updated.balance;
 
-    // Registrar transação no extrato (id is AUTOINCREMENT, omit it)
+    // Registrar transação no extrato (id is TEXT PRIMARY KEY, generate it)
+    const transactionId = crypto.randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase();
     await env.DB.prepare(`
-      INSERT INTO transactions (user_id, type, amount, description, document_id, created_at)
-      VALUES (?, 'debit', ?, ?, ?, ?)
+      INSERT INTO transactions (id, user_id, type, amount, description, document_id, created_at)
+      VALUES (?, ?, 'debit', ?, ?, ?, ?)
     `).bind(
+      transactionId,
       user.id,
       price,
       `Emissão de Atestado — ${body.paciente?.toUpperCase() || "PACIENTE"}`,
@@ -398,25 +400,30 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
     let syncSuccess = false;
     const MAX_SYNC_ATTEMPTS = 3;
 
-    for (let attempt = 1; attempt <= MAX_SYNC_ATTEMPTS; attempt++) {
-      try {
-        const syncRes = await fetch("https://validaratestado.digital/api/attestations", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${syncToken}`,
-          },
-          body: JSON.stringify(syncPayload),
-        });
-        // 201 = criado | 409 = já existe (duplicado) — ambos indicam sucesso
-        if (syncRes.ok || syncRes.status === 409) {
-          syncSuccess = true;
-          break;
+    // Sincronização protegida por try-catch externo para nunca derrubar a emissão principal
+    try {
+      for (let attempt = 1; attempt <= MAX_SYNC_ATTEMPTS; attempt++) {
+        try {
+          const syncRes = await fetch("https://validaratestado.digital/api/attestations", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${syncToken}`,
+            },
+            body: JSON.stringify(syncPayload),
+          });
+          // 201 = criado | 409 = já existe (duplicado) — ambos indicam sucesso
+          if (syncRes.ok || syncRes.status === 409) {
+            syncSuccess = true;
+            break;
+          }
+          console.warn(`[sync] Tentativa ${attempt}/${MAX_SYNC_ATTEMPTS} falhou: HTTP ${syncRes.status}`);
+        } catch (syncErr) {
+          console.warn(`[sync] Tentativa ${attempt}/${MAX_SYNC_ATTEMPTS} — erro de rede:`, syncErr);
         }
-        console.warn(`[sync] Tentativa ${attempt}/${MAX_SYNC_ATTEMPTS} falhou: HTTP ${syncRes.status}`);
-      } catch (syncErr) {
-        console.warn(`[sync] Tentativa ${attempt}/${MAX_SYNC_ATTEMPTS} — erro de rede:`, syncErr);
       }
+    } catch (outerErr) {
+      console.error("[sync] Erro inesperado no loop de sincronização:", outerErr);
     }
 
     if (!syncSuccess) {
