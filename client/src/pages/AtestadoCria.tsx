@@ -255,6 +255,16 @@ function gerarTextoAfastamento(dias: number): string {
 // ─── Texto padrão do atestado ─────────────────────────────────────────────────
 const TEXTO_PADRAO = `Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico. Necessita de 03 (três) dia(s) de afastamento de suas atividades laborais para repouso e tratamento de saúde.`;
 
+// ─── Texto padrão do laudo ─────────────────────────────────────────────────
+const TEXTO_LAUDO = `Declaro, para os devidos fins, que a paciente acima mencionada apresenta limitações físicas decorrentes de procedimento cirúrgico na coluna vertebral.
+
+Atualmente, a mesma não possui condições de exercer atividades laborativas, devido às seguintes restrições:
+• Necessidade de uso de apoio para deambulação (locomoção);
+• Dificuldade para permanecer em pé por períodos prolongados;
+• Limitação funcional que compromete atividades que exigem esforço físico ou permanência contínua em postura ortostática (em pé).
+
+Diante do quadro apresentado, recomenda-se afastamento de atividades trabalhistas por tempo indeterminado, devendo ser reavaliada periodicamente conforme evolução clínica.`;
+
 // ─── Máscaras ─────────────────────────────────────────────────────────────────
 function maskCPF(v: string): string {
   const d = v.replace(/\D/g, "").slice(0, 11);
@@ -510,6 +520,24 @@ export default function AtestadoCria() {
       setForm(p => ({ ...p, textoAtestado: textoBase }));
     }
   }, [form.afastamento]);
+
+  // ── Mudar texto quando documentType muda (ATESTADO ou LAUDO) ─────────────────
+  useEffect(() => {
+    if (documentType === 'laudo') {
+      setForm(p => ({ ...p, textoAtestado: TEXTO_LAUDO }));
+    } else {
+      // Se for atestado, usar o texto padrão ou gerar baseado no afastamento
+      const dias = parseInt(form.afastamento);
+      if (!isNaN(dias) && dias >= 1 && dias <= 15) {
+        const d = DIAS_EXTENSO[dias];
+        const unidade = dias === 1 ? "dia" : "dias";
+        const textoBase = `Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico. Necessita de ${d.num} (${d.ext}) ${unidade} de afastamento de suas atividades laborais para repouso e tratamento de saúde.`;
+        setForm(p => ({ ...p, textoAtestado: textoBase }));
+      } else {
+        setForm(p => ({ ...p, textoAtestado: TEXTO_PADRAO }));
+      }
+    }
+  }, [documentType]);
 
   // ── Carregar cidades quando UF muda ────────────────────────────────────────
   useEffect(() => {
