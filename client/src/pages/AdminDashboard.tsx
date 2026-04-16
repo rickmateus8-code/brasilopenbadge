@@ -559,6 +559,8 @@ export default function AdminDashboard() {
       setLinking(false);
     }
   };
+
+  const toggleUserActive = async (userId: number | string, current: boolean) => {
     try {
       const res = await fetch(`/api/admin/users/${userId}/toggle`, {
         method: "POST",
