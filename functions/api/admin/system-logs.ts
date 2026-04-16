@@ -215,6 +215,9 @@ export const onRequestDelete: PagesFunction<Env> = async ({ request, env }) => {
     if (clearType === 'all' || clearType === 'system') {
       try { await env.DB.exec('DELETE FROM system_logs'); results.push('System logs limpos'); } catch (e) {}
     }
+    if (clearType === 'all' || clearType === 'monitoring') {
+      try { await env.DB.exec('DELETE FROM user_presence'); results.push('Dados de monitoramento limpos'); } catch (e) {}
+    }
 
     return new Response(JSON.stringify({ success: true, results }), { headers: corsHeaders });
   } catch (err: any) {

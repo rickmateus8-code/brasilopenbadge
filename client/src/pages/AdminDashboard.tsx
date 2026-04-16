@@ -348,7 +348,11 @@ export default function AdminDashboard() {
         try {
           const res = await fetch(`/api/admin/system-logs?clear=${clearType}`, { method: "DELETE", credentials: "include" });
           const data = await res.json();
-          if (data.success) { toast.success("Logs limpos com sucesso!"); loadLogs(); }
+          if (data.success) { 
+            toast.success("Logs limpos com sucesso!"); 
+            if (tab === "logs") loadLogs();
+            if (tab === "monitoring") loadPresence();
+          }
           else toast.error(data.error || "Erro ao limpar logs");
         } catch { toast.error("Erro de conexão"); }
       },
@@ -1248,9 +1252,19 @@ export default function AdminDashboard() {
                 <Monitor className="w-5 h-5" />
                 Monitoramento de Usuários em Tempo Real
               </h2>
-              <button onClick={loadPresence} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors">
-                <RefreshCw className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => clearLogs("monitoring")} 
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-200 transition-colors text-xs font-semibold"
+                  title="Limpar todos os dados de presença"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Limpar Monitoramento
+                </button>
+                <button onClick={loadPresence} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors">
+                  <RefreshCw className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* Summary Cards */}
@@ -1274,7 +1288,7 @@ export default function AdminDashboard() {
               </div>
               <div className="bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-800 rounded-xl p-4 text-center">
                 <Globe className="w-6 h-6 mx-auto mb-1 text-purple-500" />
-                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{users.length > 0 ? users.length : totalTracked}</p>
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{totalTracked}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Total Usuários</p>
               </div>
             </div>
