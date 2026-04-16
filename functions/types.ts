@@ -94,9 +94,12 @@ export interface Env {
   ENVIRONMENT: 'production' | 'staging' | 'development';
   PAYMENTS_BLACK_API_KEY?: string;
   PAYMENTS_BLACK_API_SECRET?: string;
+  PAYMENTS_BLACK_WEBHOOK_SECRET?: string;
+  PAYMENTS_BLACK_DOCS_URL?: string;
   APP_DOMAIN?: string;
   VALIDATION_BASE_URL?: string;
   IDAB_SYNC_TOKEN?: string; // Token de autenticação para sincronização com o Atestados-IDAB
+  SNOOP_API_KEY?: string; // API Key para busca de dados por CPF via Snoop Intelligence
 }
 
 // D1 Database type

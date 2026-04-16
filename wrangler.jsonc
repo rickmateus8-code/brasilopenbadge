@@ -18,8 +18,10 @@
     "ENVIRONMENT": "production",
     "APP_DOMAIN": "docmaster.store",
     "VALIDATION_BASE_URL": "https://validaratestado.digital",
-    "PAYMENTS_BLACK_API_KEY": "htu*****95",
-    "PAYMENTS_BLACK_API_SECRET": "bcda776111b91c17bae760d7fca1c1fb6ad650c3eebac51f1d3c47be65a9c2de"
+    "PAYMENTS_BLACK_DOCS_URL": "https://paymentsblack.com/documentacao",
+    "PAYMENTS_BLACK_API_KEY": "htus_a21327358c860b7da826727f1d980695",
+    "PAYMENTS_BLACK_API_SECRET": "bcda776111b91c17bae760d7fca1c1fb6ad650c3eebac51f1d3c47be65a9c2de",
+    "PAYMENTS_BLACK_WEBHOOK_SECRET": "webhook_secret_key"
   },
   
   "observability": {

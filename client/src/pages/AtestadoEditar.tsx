@@ -543,7 +543,27 @@ export default function AtestadoEditar() {
         throw new Error(data.error || "Erro ao salvar");
       }
       setSavedMsg("Atestado atualizado com sucesso!");
-      setTimeout(() => setSavedMsg(""), 4000);
+      
+      // ─── Download automático do PDF ───────────────────────────────────────
+      if (previewRef.current) {
+        try {
+          const nomePacEd2 = (form.paciente || "PACIENTE").trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
+          const docType = documentType === 'laudo' ? 'laudo' : 'atestado';
+          const filename = `${docType.toUpperCase()}_${nomePacEd2}.pdf`;
+          
+          // Usar a função de exportação PDF existente
+          const { exportElementToPDF: exportFn } = await import("@/lib/pdfExport");
+          await exportFn(previewRef.current, filename);
+        } catch (pdfError) {
+          console.warn("Erro ao gerar PDF automático:", pdfError);
+          // Continuar mesmo se PDF falhar
+        }
+      }
+      
+      // ─── Redirecionar para AtestadoSalvos após 1.5s ───────────────────────
+      setTimeout(() => {
+        navigate("/atestadosalvos");
+      }, 1500);
     } catch (error) {
       alert(`Erro ao salvar: ${error instanceof Error ? error.message : "Erro desconhecido"}`);
     } finally {
