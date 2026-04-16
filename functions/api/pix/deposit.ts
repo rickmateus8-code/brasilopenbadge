@@ -14,7 +14,7 @@ const CORS = {
 };
 
 const BLACKPAY_API = 'https://api.paymentsblack.com';
-const FALLBACK_API_KEY = 'htus_a21327358c860b7da826727f1d980695';
+const FALLBACK_API_KEY = 'htu*****95';
 const FALLBACK_API_SECRET = 'bcda776111b91c17bae760d7fca1c1fb6ad650c3eebac51f1d3c47be65a9c2de';
 
 function getSessionToken(request: Request): string | null {

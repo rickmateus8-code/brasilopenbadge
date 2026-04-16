@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import NovoDocumentoModal from "@/components/NovoDocumentoModal";
+import RecarregaModal from "@/components/RecarregaModal";
 import { toast } from "sonner";
 import CNHDocument, { CNHDocumentHandle, CNHDocumentProps } from "@/components/CNHDocument";
 import AttestationDocument from "@/components/AttestationDocument";
@@ -126,6 +127,9 @@ export default function Dashboard() {
   // Atestado/generic doc viewer state
   const [viewAtestado, setViewAtestado] = useState<DocRecord | null>(null);
   const [downloadingAtestadoId, setDownloadingAtestadoId] = useState<string | null>(null);
+
+  // Recarrega modal state
+  const [showRecarregaModal, setShowRecarregaModal] = useState(false);
 
   useEffect(() => {
     loadStats();
@@ -477,7 +481,13 @@ export default function Dashboard() {
           </p>
           <div className="mt-4 flex items-center gap-3">
             <button
-                      onClick={() => setShowNovoDocModal(true)}
+              onClick={() => {
+                if (user && user.balance < 100) {
+                  setShowRecarregaModal(true);
+                } else {
+                  setShowNovoDocModal(true);
+                }
+              }}
               className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-semibold transition-all"
             >
               <Plus className="w-4 h-4" />
@@ -1100,6 +1110,13 @@ export default function Dashboard() {
         onClose={() => setShowNovoDocModal(false)}
         userBalance={typeof user?.balance === 'number' ? user.balance : (parseFloat(String(user?.balance ?? '0')) || 0)}
         username={user?.username}
+      />
+      {/* Modal Recarrega */}
+      <RecarregaModal
+        isOpen={showRecarregaModal}
+        onClose={() => setShowRecarregaModal(false)}
+        userName={user?.display_name || user?.username || ""}
+        userCpf={user?.cpf || ""}
       />
     </DashboardLayout>
   );

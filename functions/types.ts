@@ -92,7 +92,8 @@ export interface ValidateResponse {
 export interface Env {
   DB: D1Database;
   ENVIRONMENT: 'production' | 'staging' | 'development';
-  HYPERPIX_SECRET_KEY?: string;
+  PAYMENTS_BLACK_API_KEY?: string;
+  PAYMENTS_BLACK_API_SECRET?: string;
   APP_DOMAIN?: string;
   VALIDATION_BASE_URL?: string;
   IDAB_SYNC_TOKEN?: string; // Token de autenticação para sincronização com o Atestados-IDAB

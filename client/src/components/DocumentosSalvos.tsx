@@ -327,57 +327,51 @@ export default function DocumentosSalvos({
                       </td>
                     ))}
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {/* Botão Visualizar — abre modal de preview inline */}
+                      <div className="flex items-center justify-end gap-1 flex-wrap">
+                        {/* Visualizar — abre modal inline */}
                         <button
-                          onClick={() => setViewDoc(doc)}
-                          className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-green-500 hover:bg-green-600 text-white transition-colors flex items-center gap-1"
                           title="Visualizar documento"
-                        >
-                          <Eye className="w-3 h-3" />
-                          <span className="hidden sm:inline">Visualizar</span>
-                        </button>
-
-                        {/* Botão Editar — navega para formulário de edição completo */}
-                        <button
                           onClick={() => {
-                            if (editRoute) {
-                              setLocation(`${editRoute}/${doc.id}`);
-                            } else {
-                              openEdit(doc);
-                            }
+                            if (activeTab === "atestado") setViewAtestado(doc);
+                            else setLocation(`/v/${doc.codigo_qr || doc.id}`);
                           }}
-                          className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-yellow-600 hover:bg-yellow-700 text-white transition-colors flex items-center gap-1"
-                          title="Editar documento"
+                          className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
                         >
-                          <Edit3 className="w-3 h-3" />
-                          <span className="hidden sm:inline">Editar</span>
+                          <Eye className="w-4 h-4" />
                         </button>
 
-                        {/* Botão Baixar PDF — download direto sem navegar */}
-                        {(downloadRoute || docType === "attestation") && (
+                        {/* Editar */}
+                        {(activeTab === "atestado" || activeTab === "receita") && (
                           <button
-                            onClick={() => handleDirectDownload(doc)}
-                            disabled={downloadingId === doc.id}
-                            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center gap-1 disabled:opacity-60"
-                            title="Baixar PDF"
+                            title="Editar"
+                            onClick={() => setLocation(`/${activeTab}/editar/${doc.id}`)}
+                            className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                           >
-                            {downloadingId === doc.id
-                              ? <Loader2 className="w-3 h-3 animate-spin" />
-                              : <Download className="w-3 h-3" />
-                            }
-                            <span className="hidden sm:inline">{downloadingId === doc.id ? "Gerando..." : "Baixar PDF"}</span>
+                            <Edit3 className="w-4 h-4" />
                           </button>
                         )}
 
-                        {/* Botão Deletar */}
+                        {/* Baixar PDF direto */}
+                        {activeTab === "atestado" && (
+                          <button
+                            title="Baixar PDF"
+                            disabled={downloadingAtestadoId === doc.id}
+                            onClick={() => handleDirectDownloadAtestado(doc)}
+                            className="p-1.5 rounded-lg text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors disabled:opacity-50"
+                          >
+                            {downloadingAtestadoId === doc.id
+                              ? <Loader2 className="w-4 h-4 animate-spin" />
+                              : <Download className="w-4 h-4" />}
+                          </button>
+                        )}
+
+                        {/* Excluir */}
                         <button
-                          onClick={() => setDeleteConfirmId(doc.id)}
-                          className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-red-500 hover:bg-red-600 text-white transition-colors flex items-center gap-1"
                           title="Excluir documento"
+                          onClick={() => setConfirmDeleteId(doc.id)}
+                          className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                         >
-                          <Trash2 className="w-3 h-3" />
-                          <span className="hidden sm:inline">Deletar</span>
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </td>

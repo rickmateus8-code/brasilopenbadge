@@ -18,7 +18,8 @@
     "ENVIRONMENT": "production",
     "APP_DOMAIN": "docmaster.store",
     "VALIDATION_BASE_URL": "https://validaratestado.digital",
-    "HYPERPIX_SECRET_KEY": "sk_live_de0f2c5b610735d0659511125bbbf224944748769d56df8a50fe861d2ebbe981"
+    "PAYMENTS_BLACK_API_KEY": "htu*****95",
+    "PAYMENTS_BLACK_API_SECRET": "bcda776111b91c17bae760d7fca1c1fb6ad650c3eebac51f1d3c47be65a9c2de"
   },
   
   "observability": {
