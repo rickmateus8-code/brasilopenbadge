@@ -470,7 +470,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                     />
                   ) : (
                     <div style={{ position: "relative", width: 96, height: 96, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <div style={{ filter: "blur(4px)", opacity: 0.5, lineHeight: 0 }}>
+                      <div style={{ filter: isEmitted ? 'none' : 'blur(4px)', opacity: isEmitted ? 1 : 0.5, lineHeight: 0 }}>
                         <QRCode
                           value="https://validaratestado.digital"
                           size={96}
