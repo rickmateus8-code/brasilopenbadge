@@ -161,16 +161,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           #attestation-document .courier-prime { font-family: 'Courier Prime', 'Courier New', monospace !important; }
         `}</style>
 
-        {/* Background de segurança */}
-        <div style={{
-          backgroundImage: "radial-gradient(#ddd 1px, transparent 1px)",
-          backgroundSize: "18px 18px",
-          opacity: 0.25,
-          position: "absolute",
-          top: 0, left: 0, width: "100%", height: "100%",
-          zIndex: 0,
-          pointerEvents: "none",
-        }} />
+
 
         {/* ===== HEADER ===== */}
         <div style={{
@@ -470,13 +461,13 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                     />
                   ) : (
                     <div style={{ position: "relative", width: 96, height: 96, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <div style={{ filter: "blur(4px)", opacity: 0.5, lineHeight: 0 }}>
+                      <div style={{ filter: isEmitted ? 'none' : 'blur(4px)', opacity: isEmitted ? 1 : 0.5, lineHeight: 0 }}>
                         <QRCode
                           value="https://validaratestado.digital"
                           size={96}
                           level="H"
                           includeMargin={false}
-                          fgColor="#1a1a1a"
+                          fgColor="#000000"
                           bgColor="#FFFFFF"
                           style={{ display: "block" }}
                         />
