@@ -476,7 +476,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                           size={96}
                           level="H"
                           includeMargin={false}
-                          fgColor="#1a1a1a"
+                          fgColor="#000000"
                           bgColor="#FFFFFF"
                           style={{ display: "block" }}
                         />
