@@ -20,10 +20,10 @@ export default function AttestationViewerModal({
   const attData = buildAttestationData(doc);
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-start justify-center z-50 p-4 overflow-y-auto" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-4xl w-full mt-4 mb-4" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Visualizar Documento</h3>
+    <div className="fixed inset-0 bg-black/40 flex items-start justify-center z-50 p-4 overflow-y-auto" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full mt-4 mb-4" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <h3 className="text-lg font-bold text-gray-900">Visualizar Documento</h3>
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -41,13 +41,13 @@ export default function AttestationViewerModal({
             >
               <Edit3 className="w-4 h-4" /> Editar
             </button>
-            <button type="button" onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <button type="button" onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
               <X className="w-5 h-5 text-gray-500" />
             </button>
           </div>
         </div>
 
-        <div className="p-4 overflow-x-auto">
+        <div className="bg-white p-4 overflow-x-auto">
           <div style={{ transform: "scale(0.75)", transformOrigin: "top center", width: "794px", margin: "0 auto" }}>
             <AttestationDocument
               data={attData}
