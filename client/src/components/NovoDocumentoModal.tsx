@@ -9,6 +9,7 @@
  */
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { openRecarregaModal } from "@/components/RecarregaModal";
 import {
   X, FileText, Car, Anchor, FlaskConical, GraduationCap,
   Pill, AlertTriangle, Wallet, CreditCard, MessageCircle
@@ -110,7 +111,7 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
 
   const handleRecarregar = () => {
     onClose();
-    setLocation("/recargas");
+    openRecarregaModal();
   };
 
   // Montar link WhatsApp com mensagem pré-preenchida
@@ -336,7 +337,7 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
           flexWrap: "wrap", gap: 8,
         }}>
           <button
-            onClick={() => { onClose(); setLocation("/recargas"); }}
+            onClick={() => { onClose(); openRecarregaModal(); }}
             style={{
               display: "flex", alignItems: "center", gap: 6,
               background: "none", border: "1.5px solid #e5e7eb", borderRadius: 8,

@@ -2,6 +2,20 @@ import { useState, useEffect } from "react";
 import { X, Copy, Check, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+export const RECARREGA_MODAL_EVENT = "docmaster:open-recarrega-modal";
+export const RECARREGA_MODAL_PENDING_KEY = "docmaster:pending-recarrega-modal";
+
+export function openRecarregaModal() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(RECARREGA_MODAL_EVENT));
+}
+
+export function queueRecarregaModalOpen() {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(RECARREGA_MODAL_PENDING_KEY, "1");
+  openRecarregaModal();
+}
+
 interface RecarregaModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -73,11 +87,27 @@ export default function RecarregaModal({
     onClose();
   };
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        handleClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full">
+    <div
+      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm"
+      onClick={handleClose}
+    >
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full" onClick={(event) => event.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">

@@ -4,6 +4,7 @@ import { useAuth, type AuthUser } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePresenceTracker } from "@/hooks/usePresenceTracker";
 import NovoDocumentoModal from "@/components/NovoDocumentoModal";
+import RecarregaModal, { RECARREGA_MODAL_EVENT, RECARREGA_MODAL_PENDING_KEY } from "@/components/RecarregaModal";
 import {
   LayoutDashboard, FileText, CreditCard, Receipt, LogOut,
   ChevronDown, ChevronRight, Menu, X, Sun, Moon,
@@ -155,7 +156,17 @@ function SidebarItem({
   );
 }
 
-function UserDropdown({ user, logout, collapsed }: { user: AuthUser; logout: () => void; collapsed: boolean }) {
+function UserDropdown({
+  user,
+  logout,
+  collapsed,
+  onOpenRecarregaModal,
+}: {
+  user: AuthUser;
+  logout: () => void;
+  collapsed: boolean;
+  onOpenRecarregaModal: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [, setLocation] = useLocation();
   const ref = useRef<HTMLDivElement>(null);
@@ -229,7 +240,7 @@ function UserDropdown({ user, logout, collapsed }: { user: AuthUser; logout: () 
               Extrato
             </button>
             <button
-              onClick={() => { setLocation("/recargas"); setOpen(false); }}
+              onClick={() => { onOpenRecarregaModal(); setOpen(false); }}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
               <CreditCard className="w-4 h-4" />
@@ -264,12 +275,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, logout, isAdmin } = useAuth();
   const { theme, toggleTheme } = useTheme();
   usePresenceTracker();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showNovoDocModal, setShowNovoDocModal] = useState(false);
   const [showInsufficientBalance, setShowInsufficientBalance] = useState(false);
   const [showHistoricoModal, setShowHistoricoModal] = useState(false);
+  const [showRecarregaModal, setShowRecarregaModal] = useState(false);
 
   useEffect(() => {
     const handler = () => {
@@ -278,6 +290,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     window.addEventListener("resize", handler);
     return () => window.removeEventListener("resize", handler);
   }, []);
+
+  useEffect(() => {
+    const handleOpenRecarregaModal = () => {
+      setShowInsufficientBalance(false);
+      setShowRecarregaModal(true);
+    };
+
+    if (window.sessionStorage.getItem(RECARREGA_MODAL_PENDING_KEY) === "1") {
+      window.sessionStorage.removeItem(RECARREGA_MODAL_PENDING_KEY);
+      handleOpenRecarregaModal();
+    }
+
+    window.addEventListener(RECARREGA_MODAL_EVENT, handleOpenRecarregaModal);
+    return () => window.removeEventListener(RECARREGA_MODAL_EVENT, handleOpenRecarregaModal);
+  }, []);
+
+  useEffect(() => {
+    if (location !== "/recargas") return;
+    setShowInsufficientBalance(false);
+    setShowRecarregaModal(true);
+    setLocation("/dashboard");
+  }, [location, setLocation]);
 
   if (!user) {
     setLocation("/login");
@@ -294,6 +328,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const balanceFormatted = `R$ ${(safeBalance / 100).toFixed(2).replace('.', ',')}`;
   // Expor balance seguro para os componentes filhos
   const userBalanceSafe = safeBalance;
+  const userCpf = typeof (user as AuthUser & { cpf?: string | null }).cpf === "string"
+    ? (user as AuthUser & { cpf?: string | null }).cpf || ""
+    : "";
+
+  const handleOpenRecarregaModal = useCallback((closeMobile = false) => {
+    if (closeMobile) setMobileOpen(false);
+    setShowInsufficientBalance(false);
+    setShowRecarregaModal(true);
+  }, []);
 
   const SidebarContent = ({ mobile = false }: { mobile?: boolean }) => (
     <div
@@ -401,7 +444,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </p>
             </div>
             <button
-              onClick={() => setLocation("/recargas")}
+              onClick={() => handleOpenRecarregaModal(mobile)}
               className="w-7 h-7 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors shadow-sm"
               title="Adicionar saldo"
             >
@@ -410,7 +453,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         )}
         {/* User dropdown */}
-        <UserDropdown user={user} logout={logout} collapsed={!mobile && collapsed} />
+        <UserDropdown
+          user={user}
+          logout={logout}
+          collapsed={!mobile && collapsed}
+          onOpenRecarregaModal={() => handleOpenRecarregaModal(mobile)}
+        />
         {/* Theme toggle */}
         <div className={`flex gap-1 ${collapsed && !mobile ? "flex-col items-center" : ""}`}>
           <button
@@ -518,6 +566,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         onClose={() => setShowNovoDocModal(false)}
         userBalance={userBalanceSafe}
         username={user.username}
+      />
+
+      <RecarregaModal
+        isOpen={showRecarregaModal}
+        onClose={() => setShowRecarregaModal(false)}
+        userName={user.displayName || user.username}
+        userCpf={userCpf}
       />
 
       {/* Modal HISTÓRICO — seleção de tipo */}
@@ -690,7 +745,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
             <div style={{ display: "flex", gap: 12 }}>
               <button
-                onClick={() => { setShowInsufficientBalance(false); setLocation("/recargas"); }}
+                onClick={() => { setShowInsufficientBalance(false); handleOpenRecarregaModal(); }}
                 style={{
                   flex: 1, padding: "12px 0", borderRadius: 10, border: "none",
                   background: "#16a34a", color: "#fff", fontWeight: 700,
