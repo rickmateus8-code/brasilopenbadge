@@ -62,6 +62,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
       ['DELETE FROM user_presence_activity WHERE user_id = ?', userId],
       ['DELETE FROM user_presence WHERE user_id = ?', userId],
       ['DELETE FROM notifications WHERE user_id = ?', userId],
+      ['DELETE FROM admin_logs WHERE admin_id = ?', userId],
+      ['UPDATE admin_logs SET target_id = NULL WHERE target_id = ?', userId],
       ['DELETE FROM sessions WHERE user_id = ?', userId],
       ['DELETE FROM transactions WHERE user_id = ?', userId],
       ['DELETE FROM documentos WHERE user_id = ?', userId],

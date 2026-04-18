@@ -148,12 +148,16 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         SELECT
           r.referrer_id,
           u.username AS referrer_username,
-          COALESCE(SUM(re.earned_amount), 0) AS total_earned,
+          COALESCE(e.total_earned, 0) AS total_earned,
           COUNT(DISTINCT r.referred_id) AS total_referred,
-          MAX(re.created_at) AS last_earning_at
+          e.last_earning_at
         FROM referrals r
         JOIN users u ON u.id = r.referrer_id
-        LEFT JOIN referral_earnings re ON re.referrer_id = r.referrer_id
+        LEFT JOIN (
+          SELECT referrer_id, SUM(earned_amount) AS total_earned, MAX(created_at) AS last_earning_at
+          FROM referral_earnings
+          GROUP BY referrer_id
+        ) e ON e.referrer_id = r.referrer_id
         GROUP BY r.referrer_id, u.username
         ORDER BY total_earned DESC, total_referred DESC
         LIMIT 50

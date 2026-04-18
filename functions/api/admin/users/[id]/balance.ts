@@ -63,12 +63,15 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
       return new Response(JSON.stringify({ success: false, error: 'Usuário não encontrado' }), { status: 404, headers: corsHeaders });
     }
 
-    const nextBalance = Number(user.balance || 0) + delta;
-    if (nextBalance < 0) {
+    const oldBalance = Number(user.balance || 0);
+    if (oldBalance + delta < 0) {
       return new Response(JSON.stringify({ success: false, error: 'Saldo insuficiente para débito manual' }), { status: 400, headers: corsHeaders });
     }
 
-    await env.DB.prepare('UPDATE users SET balance = ?, updated_at = datetime("now") WHERE id = ?').bind(nextBalance, userId).run();
+    // Atomic balance update — avoids race conditions with concurrent operations
+    await env.DB.prepare('UPDATE users SET balance = MAX(0, balance + ?), updated_at = datetime("now") WHERE id = ?').bind(delta, userId).run();
+    const updated = await env.DB.prepare('SELECT balance FROM users WHERE id = ?').bind(userId).first<any>();
+    const nextBalance = Number(updated?.balance || 0);
     const type = delta > 0 ? 'credit' : 'debit';
     const description = delta > 0 ? 'Crédito manual pelo administrador' : 'Débito manual pelo administrador';
     await insertTransaction(env, userId, type, Math.abs(delta), description);
