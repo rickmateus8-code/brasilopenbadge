@@ -131,7 +131,7 @@ async function syncUpdateToIdab(env: Env, row: any) {
   const syncToken = env.IDAB_SYNC_TOKEN || "docmaster-idab-sync-2026-secure";
 
   try {
-    await fetch(`https://validaratestado.digital/api/${encodeURIComponent(row.codigo_qr)}`, {
+    const response = await fetch(`https://validaratestado.digital/api/${encodeURIComponent(row.codigo_qr)}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -139,6 +139,11 @@ async function syncUpdateToIdab(env: Env, row: any) {
       },
       body: JSON.stringify(buildSyncPayload(row)),
     });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      console.warn("[sync-edit] IDAB respondeu com erro:", response.status, errorText);
+    }
   } catch (syncErr) {
     console.warn("[sync-edit] Falha ao sincronizar edição com IDAB:", syncErr);
   }

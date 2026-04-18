@@ -479,7 +479,10 @@ export default function AtestadoCria() {
         nomeMae: d.nomeMae || p.nomeMae,
         // Se Snoop retornou endereço completo, preencher também
         endereco: d.endereco
-          ? [d.endereco, d.bairro, d.cidade && d.uf ? `${d.cidade}/${d.uf}` : (d.cidade || "")].filter(Boolean).join(" - ")
+          ? [
+              `${d.endereco}${d.numero ? `, ${d.numero}` : ", S/N"}`,
+              [d.bairro, d.cidade && d.uf ? `${d.cidade}/${d.uf}` : (d.cidade || "")].filter(Boolean).join(", "),
+            ].filter(Boolean).join(" - ")
           : p.endereco,
         // Preencher cidade de emissão se disponivel
         cidade: d.cidade || p.cidade,
