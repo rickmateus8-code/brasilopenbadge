@@ -1307,7 +1307,7 @@ export default function AtestadoEditar() {
     condicao: "",
     vacinacao: "",
     cid: form.cid,
-    codigoQR: (form as any)._emittedCode || createdCode || "XXXX.XXXX",
+    codigoQR: (form as any)._emittedCode || createdCode || codigoQR || "XXXX.XXXX",
     dataAssinatura: form.dataAssinatura || "DD/MM/AAAA",
     horaAssinatura: form.horaAssinatura || "HH:MM",
     medico: form.medico || "NOME DO MÉDICO",
