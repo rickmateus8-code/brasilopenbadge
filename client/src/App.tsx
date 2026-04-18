@@ -103,6 +103,11 @@ import ToxicologicoSalvos from "./pages/ToxicologicoSalvos";
 import ReceitasSalvas from "./pages/ReceitasSalvas";
 import HistoricoSPSalvos from "./pages/HistoricoSPSalvos";
 import HistoricoUNINTERSalvos from "./pages/HistoricoUNINTERSalvos";
+import CNHLanding from "./pages/cnh-validation/CNHLanding";
+import CNHAutorizacao from "./pages/cnh-validation/CNHAutorizacao";
+import CNHPainel from "./pages/cnh-validation/CNHPainel";
+import CNHCondutor from "./pages/cnh-validation/CNHCondutor";
+import CNHHabilitacao from "./pages/cnh-validation/CNHHabilitacao";
 
 // ─── Detectar Domínio ──────────────────────────────────────────────────────────
 const isValidationDomain = typeof window !== 'undefined' && 
@@ -134,17 +139,13 @@ function VerificaMedRouter() {
 function CNHValidationRouter() {
   return (
     <Switch>
+      <Route path="/autorizacao" component={CNHAutorizacao} />
+      <Route path="/painel" component={CNHPainel} />
+      <Route path="/condutor" component={CNHCondutor} />
+      <Route path="/habilitacao" component={CNHHabilitacao} />
       <Route path="/verificar/:id" component={Validation} />
-      <Route path="/consulta" component={Validation} />
-      <Route path="/:id" component={(props: { params: { id: string } }) => {
-        const id = props.params?.id || "";
-        if (/^[A-Z0-9]{4}\.[A-Z0-9]{4}$/i.test(id)) {
-          return <Validation />;
-        }
-        return <Validation />;
-      }} />
-      <Route path="/" component={Validation} />
-      <Route component={Validation} />
+      <Route path="/" component={CNHLanding} />
+      <Route component={CNHLanding} />
     </Switch>
   );
 }

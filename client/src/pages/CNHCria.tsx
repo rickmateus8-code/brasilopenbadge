@@ -86,6 +86,10 @@ export default function CNHCria() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isApplyingAI, setIsApplyingAI] = useState(false);
   const [documentPrice, setDocumentPrice] = useState(0);
+  const [fotoScale, setFotoScale] = useState(1.0);
+  const [fotoOffsetX, setFotoOffsetX] = useState(0);
+  const [fotoOffsetY, setFotoOffsetY] = useState(0);
+  const [assScale, setAssScale] = useState(1.0);
 
   const [data, setData] = useState<CNHDocumentProps>({
     nome: "", cpf: "", rg: "", orgaoEmissor: "", ufRG: "",
@@ -458,6 +462,50 @@ export default function CNHCria() {
       toast.success("Imagem JPEG exportada!");
     } catch {
       toast.error("Erro ao exportar imagem");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExportFrente = async () => {
+    if (!docRef.current) return;
+    setLoading(true);
+    try {
+      const blob = await docRef.current.exportCropBlob(0, 0, 2461, 1700);
+      if (!blob) throw new Error("Falha ao gerar frente");
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `CNH_FRENTE_${data.nome || "DOC"}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Frente exportada com sucesso!");
+    } catch {
+      toast.error("Erro ao exportar frente");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExportVerso = async () => {
+    if (!docRef.current) return;
+    setLoading(true);
+    try {
+      const blob = await docRef.current.exportCropBlob(0, 1700, 2461, 1796);
+      if (!blob) throw new Error("Falha ao gerar verso");
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `CNH_VERSO_${data.nome || "DOC"}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Verso exportado com sucesso!");
+    } catch {
+      toast.error("Erro ao exportar verso");
     } finally {
       setLoading(false);
     }
@@ -889,6 +937,12 @@ export default function CNHCria() {
               <button className="cnh-btn-download" onClick={handleExportJPEG} disabled={loading} style={{ background: "#6b7280" }}>
                 <Download size={14} /> Baixar JPEG
               </button>
+              <button className="cnh-btn-download" onClick={handleExportFrente} disabled={loading} style={{ background: "#0f766e" }}>
+                📷 Download FRENTE
+              </button>
+              <button className="cnh-btn-download" onClick={handleExportVerso} disabled={loading} style={{ background: "#1d4ed8" }}>
+                📷 Download VERSO
+              </button>
               <button className="cnh-btn-whatsapp" onClick={handleWhatsApp}>
                 <MessageCircle size={14} /> Enviar via WhatsApp
               </button>
@@ -1087,7 +1141,22 @@ export default function CNHCria() {
                 <span style={{ fontSize: 12, color: "#64748b" }}>Prévia Rosto</span>
               )}
             </div>
-            {/* Botão Aplicar Ajustes Visuais (Gemini Nano Banana) */}
+            {data.fotoUrl && (
+              <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
+                <label style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>Tamanho da Foto: {Math.round(fotoScale * 100)}%</label>
+                <input type="range" min="0.5" max="1.5" step="0.05" value={fotoScale}
+                  onChange={(e) => setFotoScale(parseFloat(e.target.value))}
+                  style={{ width: "100%", accentColor: "#2563eb" }} />
+                <label style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>Posição X: {fotoOffsetX}px</label>
+                <input type="range" min="-50" max="50" step="1" value={fotoOffsetX}
+                  onChange={(e) => setFotoOffsetX(parseInt(e.target.value))}
+                  style={{ width: "100%", accentColor: "#2563eb" }} />
+                <label style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>Posição Y: {fotoOffsetY}px</label>
+                <input type="range" min="-50" max="50" step="1" value={fotoOffsetY}
+                  onChange={(e) => setFotoOffsetY(parseInt(e.target.value))}
+                  style={{ width: "100%", accentColor: "#2563eb" }} />
+              </div>
+            )}
             {data.fotoUrl && (
               <button
                 onClick={handleApplyAI}
@@ -1179,6 +1248,14 @@ export default function CNHCria() {
                 <span style={{ fontSize: 12, color: "#64748b" }}>Prévia Assinatura</span>
               )}
             </div>
+            {data.assinaturaUrl && (
+              <div style={{ marginTop: 8 }}>
+                <label style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>Tamanho Assinatura: {Math.round(assScale * 100)}%</label>
+                <input type="range" min="0.5" max="2.0" step="0.05" value={assScale}
+                  onChange={(e) => setAssScale(parseFloat(e.target.value))}
+                  style={{ width: "100%", accentColor: "#22c55e" }} />
+              </div>
+            )}
           </div>
         </div>
 
@@ -1206,6 +1283,10 @@ export default function CNHCria() {
           <CNHDocument
             ref={docRef}
             {...data}
+            fotoScale={fotoScale}
+            fotoOffsetX={fotoOffsetX}
+            fotoOffsetY={fotoOffsetY}
+            assScale={assScale}
             codigoQR={saved ? codigoQR : "PREVIEW"}
             blurred={!saved}
           />

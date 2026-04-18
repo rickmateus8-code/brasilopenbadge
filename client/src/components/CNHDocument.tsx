@@ -41,6 +41,10 @@ export interface CNHDocumentProps {
   observacoes: string;
   fotoUrl: string;
   assinaturaUrl: string;
+  fotoScale?: number;
+  fotoOffsetX?: number;
+  fotoOffsetY?: number;
+  assScale?: number;
   codigoQR?: string;
   blurred?: boolean;
 }
@@ -338,12 +342,18 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       if (props.fotoUrl) {
         try {
           const fotoImg = await loadImage(props.fotoUrl);
-          const bx = 305, by = 550, bw = 247, bh = 300;
+          const scale = props.fotoScale ?? 1.0;
+          const offsetX = props.fotoOffsetX ?? 0;
+          const offsetY = props.fotoOffsetY ?? 0;
+          const baseBw = 247, baseBh = 300;
+          const bw = Math.round(baseBw * scale);
+          const bh = Math.round(baseBh * scale);
+          const bx = 305 + Math.round((baseBw - bw) / 2) + offsetX;
+          const by = 550 + Math.round((baseBh - bh) / 2) + offsetY;
           ctx.save();
           ctx.beginPath();
           ctx.rect(bx, by, bw, bh);
           ctx.clip();
-          // Centralizar e cobrir o box (cover)
           const imgRatio = fotoImg.width / fotoImg.height;
           const boxRatio = bw / bh;
           let drawW: number, drawH: number, drawX: number, drawY: number;
@@ -361,7 +371,7 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
           ctx.drawImage(fotoImg, drawX, drawY, drawW, drawH);
           ctx.restore();
         } catch (e) {
-          console.warn("Erro ao carregar foto:", e);
+          console.warn("Erro foto:", e);
         }
       }
 
@@ -369,13 +379,17 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       if (props.assinaturaUrl) {
         try {
           const assImg = await loadImage(props.assinaturaUrl);
-          const bx = 303, by = 870, bw = 250, bh = 60;
+          const scale = props.assScale ?? 1.0;
+          const baseBw = 250, baseBh = 60;
+          const bw = Math.round(baseBw * scale);
+          const bh = Math.round(baseBh * scale);
+          const bx = 303 + Math.round((baseBw - bw) / 2);
+          const by = 870 + Math.round((baseBh - bh) / 2);
           ctx.save();
           ctx.beginPath();
           ctx.rect(bx, by, bw, bh);
           ctx.clip();
 
-          // Fix: Garantir que PNG com transparência não fique preto
           const tempCanvas = document.createElement('canvas');
           tempCanvas.width = assImg.width;
           tempCanvas.height = assImg.height;
@@ -384,20 +398,17 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
           tctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
           tctx.drawImage(assImg, 0, 0);
 
-          const imgW = assImg.width;
-          const imgH = assImg.height;
-          const ratio = Math.min(bw / imgW, bh / imgH);
-          const drawW = imgW * ratio;
-          const drawH = imgH * ratio;
+          const ratio = Math.min(bw / assImg.width, bh / assImg.height);
+          const drawW = assImg.width * ratio;
+          const drawH = assImg.height * ratio;
           const drawX = bx + (bw - drawW) / 2;
           const drawY = by + (bh - drawH) / 2;
 
-          // Filtro idêntico ao elitedoc: contraste alto + escurecer + grayscale
           ctx.filter = "contrast(5) brightness(0.3) grayscale(1)";
           ctx.drawImage(tempCanvas, drawX, drawY, drawW, drawH);
           ctx.restore();
         } catch (e) {
-          console.warn("Erro ao carregar assinatura:", e);
+          console.warn("Erro assinatura:", e);
         }
       }
 
