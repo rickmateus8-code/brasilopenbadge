@@ -1,46 +1,67 @@
-# Instruções para Deploy no Cloudflare
+# Deploy DocMaster no Cloudflare
 
-Para hospedar este projeto no Cloudflare com o seu domínio `atestado-valide.digital`, siga os passos abaixo:
+## Deploy Automático (CI/CD)
 
-## 1. Preparação do Projeto
-O projeto foi estruturado para ser compatível com **Cloudflare Pages** (Frontend) e uma API separada ou integrada.
+O projeto possui deploy automático via **GitHub Actions**. A cada push na branch `main`, o workflow executa:
 
-### Build do Frontend:
-No diretório do projeto, execute:
+1. Instala dependências (`pnpm install`)
+2. Faz build do frontend (`pnpm build`)
+3. Faz upload direto para Cloudflare Pages via `wrangler pages deploy`
+4. Executa migrações D1 no banco remoto
+
+### Configuração Necessária (Secrets do GitHub)
+
+No repositório GitHub, vá em **Settings > Secrets and variables > Actions** e adicione:
+
+| Secret | Descrição | Como obter |
+|--------|-----------|------------|
+| `CLOUDFLARE_API_TOKEN` | Token da API Cloudflare | Cloudflare Dashboard > My Profile > API Tokens > Create Token > "Edit Cloudflare Workers" template |
+| `CLOUDFLARE_ACCOUNT_ID` | ID da conta Cloudflare | Cloudflare Dashboard > Workers & Pages > canto direito da página |
+
+### Permissões do API Token
+
+Ao criar o token, garanta as seguintes permissões:
+- **Account > Cloudflare Pages > Edit**
+- **Account > Cloudflare Workers Scripts > Edit**
+- **Account > D1 > Edit**
+
+### Deploy Manual
+
+Você também pode disparar o deploy manualmente:
+1. Vá em **Actions** no repositório GitHub
+2. Selecione o workflow "Deploy to Cloudflare Pages"
+3. Clique em **Run workflow**
+
+## Configuração de Domínio
+
+1. No painel Cloudflare, vá em **Workers & Pages > docmaster**
+2. Clique em **Custom domains**
+3. Adicione: `docmaster.store`
+4. O SSL/TLS é configurado automaticamente
+
+## Banco de Dados D1
+
+- **Nome:** `docmaster-db`
+- **ID:** `0cfb948c-fd13-4e09-8eaf-26df02e3e615`
+- As migrações são executadas automaticamente no deploy
+
+## Variáveis de Ambiente
+
+Definidas em `wrangler.jsonc`:
+- `ENVIRONMENT`: production
+- `APP_DOMAIN`: docmaster.store
+- `VALIDATION_BASE_URL`: https://validaratestado.digital
+
+## Troubleshooting
+
+### Erro: "Project not found"
+Certifique-se que o projeto `docmaster` existe no Cloudflare Pages. Se não existir, crie manualmente:
 ```bash
-pnpm build
+npx wrangler pages project create docmaster
 ```
-Isso gerará a pasta `dist`, que contém todos os arquivos estáticos necessários.
 
-## 2. Deploy no Cloudflare Pages (Recomendado)
-O Cloudflare Pages é a forma mais fácil de hospedar o frontend React:
+### Erro: "Authentication error"
+Verifique que o `CLOUDFLARE_API_TOKEN` tem as permissões corretas e não expirou.
 
-1.  Acesse o painel do Cloudflare e vá em **Workers & Pages**.
-2.  Clique em **Create application** > **Pages** > **Connect to Git** (ou faça upload direto da pasta `dist`).
-3.  **Configurações de Build:**
-    *   Framework preset: `Vite`
-    *   Build command: `pnpm build`
-    *   Build output directory: `dist`
-4.  Após o deploy, vá em **Custom domains** e adicione `atestado-valide.digital`.
-
-## 3. Configuração do Backend
-Como o projeto utiliza uma API Express em memória para esta versão:
-
-*   **Opção A (Simples):** Mantenha a lógica de dados no frontend (como está no arquivo `client/src/data/attestations.ts`) se não precisar de persistência real em banco de dados agora.
-*   **Opção B (Escalável):** Utilize **Cloudflare Workers** para o backend. O arquivo `server/api.ts` pode ser adaptado para rodar em um Worker e usar o **Cloudflare D1** (Banco de dados SQL) ou **KV** para armazenar os atestados.
-
-## 4. Configuração de Domínio no Cloudflare
-1.  No painel do Cloudflare, adicione o site `atestado-valide.digital`.
-2.  Aponte os NameServers do seu registro de domínio para os fornecidos pelo Cloudflare.
-3.  Em **SSL/TLS**, configure como **Full** ou **Full (Strict)**.
-
----
-
-### O que eu já fiz:
-*   ✅ Ajustei o layout para ser 100% responsivo (Mobile/Desktop).
-*   ✅ Centralizei os cabeçalhos conforme solicitado.
-*   ✅ Aumentei o tamanho do atestado em 25%.
-*   ✅ Implementei o suporte a logos dinâmicas via formulário.
-*   ✅ Configurei o frontend para apontar para o domínio final.
-
-**Aguardando suas instruções para prosseguir com a vinculação final do domínio!**
+### Erro: "D1 database not found"
+Verifique que o `database_id` no `wrangler.jsonc` está correto.
