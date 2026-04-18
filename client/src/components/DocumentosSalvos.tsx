@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
 import DashboardLayout from "@/components/DashboardLayout";
-import AttestationDocument from "@/components/AttestationDocument";
-import type { AttestationData } from "@/data/attestations";
-import { exportElementToPDF, generatePDFFilename } from "@/lib/pdfExport";
 import { toast } from "sonner";
 import {
-  Eye, FileText, Trash2, AlertTriangle, Edit3,
-  X, RefreshCw, Search, Save, Download, Loader2
+  FileText, Trash2, AlertTriangle,
+  X, RefreshCw, Search, Save
 } from "lucide-react";
+import AttestationActionButtons from "@/components/AttestationActionButtons";
+import AttestationViewerModal from "@/components/AttestationViewerModal";
+import { downloadAttestationPdf, fetchLatestAttestationRecord } from "@/lib/attestationActions";
 
 interface DocRecord {
   id: string;
@@ -41,50 +41,6 @@ interface DocumentosSalvosProps {
   editRoute?: string;
   /** Rota para baixar/visualizar o documento (ex: "/atestado/editar"). Se fornecida, renderiza botão Baixar PDF. */
   downloadRoute?: string;
-}
-
-// ─── Helper: montar AttestationData a partir de um DocRecord ─────────────────
-function buildAttestationData(doc: DocRecord): AttestationData {
-  const d = doc.data || {};
-  return {
-    id: doc.id,
-    paciente: d.paciente || d.nome_paciente || doc.nome || "",
-    cpf: d.cpf || d.cpf_paciente || doc.cpf || "",
-    cns: d.cns || "",
-    tipoDoc: d.tipo_doc || d.tipoDoc || "CPF",
-    sexo: d.sexo || "FEMALE",
-    nascimento: d.nascimento || "",
-    nomeMae: d.nome_mae || d.nomeMae || "",
-    endereco: d.endereco || "",
-    medico: d.medico || "",
-    crm: d.crm || "",
-    especialidade: d.especialidade || "",
-    cid: d.cid || "",
-    cidDisplay: d.cid_display || d.cidDisplay || d.cid || "",
-    cidNome: d.cid_nome || d.cidNome || "",
-    afastamento: d.afastamento || "3",
-    textoAtestado: d.texto_atestado || d.textoAtestado || "",
-    dataAssinatura: d.data_assinatura || d.dataAssinatura || d.data_emissao || "",
-    horaAssinatura: d.hora_assinatura || d.horaAssinatura || "",
-    dataEmissao: d.data_emissao || d.dataEmissao || "",
-    instituicao: d.instituicao || "",
-    unidade: d.unidade || "",
-    enderecoEmitente: d.endereco_emitente || d.enderecoEmitente || "",
-    cidade: d.cidade || "",
-    logoUrl: d.logo_url || d.logoUrl || "",
-    logoRight: d.logo_right || d.logoRight || "",
-    signatureColor: d.signature_color || d.signatureColor || "#0b109f",
-    signatureImage: d.signature_image || d.signatureImage || "",
-    modoCarimbo: d.modo_carimbo === 1 || d.modoCarimbo === true,
-    codigoQR: doc.codigo_qr || d.codigo_qr || d.codigoQR || "",
-    status: doc.status || "emitido",
-    logoLeftScale: d.logo_left_scale || d.logoLeftScale || 1,
-    logoRightScale: d.logo_right_scale || d.logoRightScale || 1,
-    logoLeftX: d.logo_left_x || d.logoLeftX || 0,
-    logoLeftY: d.logo_left_y || d.logoLeftY || 0,
-    logoRightX: d.logo_right_x || d.logoRightX || 0,
-    logoRightY: d.logo_right_y || d.logoRightY || 0,
-  } as AttestationData;
 }
 
 export default function DocumentosSalvos({
@@ -143,47 +99,31 @@ export default function DocumentosSalvos({
 
   useEffect(() => { loadDocs(); }, [loadDocs]);
 
+  const openView = async (doc: DocRecord) => {
+    if (docType !== "attestation") {
+      setLocation(`/v/${doc.codigo_qr || doc.id}`);
+      return;
+    }
+
+    const latestDoc = await fetchLatestAttestationRecord(doc);
+    setDocs((prev) => prev.map((item) => (item.id === latestDoc.id ? latestDoc : item)));
+    setViewDoc(latestDoc);
+  };
+
   // ── Download direto do PDF sem navegar ────────────────────────────────────────
   const handleDirectDownload = async (doc: DocRecord) => {
     if (docType !== "attestation") {
-      // Para outros tipos, navegar com ?download=1
       if (downloadRoute) setLocation(`${downloadRoute}/${doc.id}?download=1`);
       return;
     }
+
     setDownloadingId(doc.id);
     try {
-      // Montar dados e renderizar em div oculta
-      const attData = buildAttestationData(doc);
-      // Usar um container temporário para renderizar o documento
-      const container = document.createElement("div");
-      container.style.cssText = "position:fixed;left:-9999px;top:0;width:794px;background:white;";
-      document.body.appendChild(container);
-
-      // Importar dinamicamente o ReactDOM para renderizar
-      const { createRoot } = await import("react-dom/client");
-      const root = createRoot(container);
-      const { createElement } = await import("react");
-      const AttestationDocModule = await import("@/components/AttestationDocument");
-      const AttDoc = AttestationDocModule.default;
-
-      await new Promise<void>((resolve) => {
-        root.render(createElement(AttDoc, { data: attData, isEmitted: true }));
-        setTimeout(resolve, 1200); // Aguardar renderização
-      });
-
-      const nomePac = (attData.paciente || "PACIENTE").trim().toUpperCase()
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-        .replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
-      const filename = generatePDFFilename(nomePac, "atestado");
-
-      await exportElementToPDF(container, { filename, scale: 2, quality: 0.92 });
-
-      root.unmount();
-      document.body.removeChild(container);
+      const latestDoc = await downloadAttestationPdf(doc);
+      setDocs((prev) => prev.map((item) => (item.id === latestDoc.id ? latestDoc : item)));
       toast.success("PDF baixado com sucesso!");
     } catch (err) {
       console.error("Erro no download direto:", err);
-      // Fallback: navegar para a rota de edição com ?download=1
       if (downloadRoute) setLocation(`${downloadRoute}/${doc.id}?download=1`);
     } finally {
       setDownloadingId(null);
@@ -327,53 +267,13 @@ export default function DocumentosSalvos({
                       </td>
                     ))}
                     <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1 flex-wrap">
-                        {/* Visualizar — abre modal inline */}
-                        <button
-                          title="Visualizar documento"
-                          onClick={() => {
-                            if (activeTab === "atestado") setViewAtestado(doc);
-                            else setLocation(`/v/${doc.codigo_qr || doc.id}`);
-                          }}
-                          className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-
-                        {/* Editar */}
-                        {(activeTab === "atestado" || activeTab === "receita") && (
-                          <button
-                            title="Editar"
-                            onClick={() => setLocation(`/${activeTab}/editar/${doc.id}`)}
-                            className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                        )}
-
-                        {/* Baixar PDF direto */}
-                        {activeTab === "atestado" && (
-                          <button
-                            title="Baixar PDF"
-                            disabled={downloadingAtestadoId === doc.id}
-                            onClick={() => handleDirectDownloadAtestado(doc)}
-                            className="p-1.5 rounded-lg text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors disabled:opacity-50"
-                          >
-                            {downloadingAtestadoId === doc.id
-                              ? <Loader2 className="w-4 h-4 animate-spin" />
-                              : <Download className="w-4 h-4" />}
-                          </button>
-                        )}
-
-                        {/* Excluir */}
-                        <button
-                          title="Excluir documento"
-                          onClick={() => setConfirmDeleteId(doc.id)}
-                          className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                      <AttestationActionButtons
+                        onView={() => openView(doc)}
+                        onEdit={editRoute ? () => setLocation(`${editRoute}/${doc.id}`) : () => openEdit(doc)}
+                        onDownload={docType === "attestation" || downloadRoute ? () => handleDirectDownload(doc) : undefined}
+                        isDownloading={downloadingId === doc.id}
+                        onDelete={() => setDeleteConfirmId(doc.id)}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -383,68 +283,17 @@ export default function DocumentosSalvos({
         )}
 
         {/* ── MODAL VISUALIZADOR ── */}
-        {viewDoc && (
-          <div className="fixed inset-0 bg-black/70 flex items-start justify-center z-50 p-4 overflow-y-auto" onClick={() => setViewDoc(null)}>
-            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full mt-4 mb-4" onClick={e => e.stopPropagation()}>
-              {/* Header do modal */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                <h3 className="text-lg font-bold text-gray-900">Visualizar Documento</h3>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleDirectDownload(viewDoc)}
-                    disabled={downloadingId === viewDoc.id}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-colors disabled:opacity-60"
-                  >
-                    {downloadingId === viewDoc.id
-                      ? <Loader2 className="w-4 h-4 animate-spin" />
-                      : <Download className="w-4 h-4" />
-                    }
-                    {downloadingId === viewDoc.id ? "Gerando..." : "Baixar PDF"}
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (editRoute) setLocation(`${editRoute}/${viewDoc.id}`);
-                      setViewDoc(null);
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl transition-colors"
-                  >
-                    <Edit3 className="w-4 h-4" /> Editar
-                  </button>
-                  <button onClick={() => setViewDoc(null)} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
-                    <X className="w-5 h-5 text-gray-500" />
-                  </button>
-                </div>
-              </div>
-              {/* Preview do documento */}
-              <div className="p-4 overflow-x-auto" ref={viewRef}>
-                {docType === "attestation" ? (
-                  <div style={{ transform: "scale(0.75)", transformOrigin: "top center", width: "794px", margin: "0 auto" }}>
-                    {(() => { const ad = buildAttestationData(viewDoc); return (
-                    <AttestationDocument
-                      data={ad}
-                      logoLeft={ad.logoUrl as string}
-                      logoRight={ad.logoRight as string}
-                      signatureColor={ad.signatureColor as string}
-                      signatureImage={ad.signatureImage as string}
-                      logoLeftScale={(ad as any).logoLeftScale || 1}
-                      logoRightScale={(ad as any).logoRightScale || 1}
-                      logoLeftX={(ad as any).logoLeftX || 0}
-                      logoLeftY={(ad as any).logoLeftY || 0}
-                      logoRightX={(ad as any).logoRightX || 0}
-                      logoRightY={(ad as any).logoRightY || 0}
-                    />
-                  ); })()}
-                  </div>
-                ) : (
-                  <div className="p-8 text-center text-gray-500">
-                    <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                    <p>Visualização não disponível para este tipo de documento.</p>
-                    <p className="text-sm mt-2">Use o botão "Editar" para ver o preview completo.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+        {viewDoc && docType === "attestation" && (
+          <AttestationViewerModal
+            doc={viewDoc}
+            isDownloading={downloadingId === viewDoc.id}
+            onClose={() => setViewDoc(null)}
+            onDownload={() => handleDirectDownload(viewDoc)}
+            onEdit={() => {
+              if (editRoute) setLocation(`${editRoute}/${viewDoc.id}`);
+              setViewDoc(null);
+            }}
+          />
         )}
 
         {/* ── DELETE CONFIRM MODAL ── */}
