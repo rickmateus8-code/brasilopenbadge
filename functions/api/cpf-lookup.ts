@@ -91,6 +91,13 @@ function normalizeSnoopPayload(result: any) {
     payload.logradouro
   ).toUpperCase();
 
+  const numero = firstNonEmpty(
+    payload.numero,
+    address.number,
+    address.numero,
+    payload.number
+  ).toUpperCase();
+
   const bairro = firstNonEmpty(
     payload.bairro,
     address.neighborhood,
@@ -121,6 +128,7 @@ function normalizeSnoopPayload(result: any) {
     sexo: normalizeSexo(firstNonEmpty(payload.sexo, payload.gender)),
     nomeMae,
     endereco,
+    numero,
     bairro,
     cidade,
     uf,
