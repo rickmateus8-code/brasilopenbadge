@@ -501,6 +501,7 @@ export default function AtestadoEditar() {
         const cepNum = d.cep.replace(/\D/g, "");
         if (cepNum.length === 8) {
           setCepPaciente(`${cepNum.slice(0,5)}-${cepNum.slice(5)}`);
+          setCepUPA(`${cepNum.slice(0,5)}-${cepNum.slice(5)}`);
         }
       }
       const source = data.source === "snoop" ? "Snoop Intelligence" : "BrasilAPI";
