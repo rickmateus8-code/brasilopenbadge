@@ -41,6 +41,14 @@ export default function CNHCondutor() {
               <DataField label="Nome da mãe" value={record.nomeMae} />
               <DataField label="Nome do pai" value={record.nomePai} />
               <DataField label="Órgão emissor" value={[record.orgaoEmissor, record.ufRG].filter(Boolean).join("/")} />
+              {(record.assDigital2 || record.renach) && (
+                <div className="rounded-2xl border border-white/10 bg-white/5 px-4">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-700">
+                    <span className="text-gray-400 text-sm">RENACH</span>
+                    <span className="text-white font-mono">{record.assDigital2 || record.renach}</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
