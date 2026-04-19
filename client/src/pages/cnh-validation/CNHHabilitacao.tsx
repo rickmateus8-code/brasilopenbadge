@@ -51,6 +51,12 @@ export default function CNHHabilitacao() {
                 <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">Data de emissão</div>
                 <div className="text-sm font-medium text-white">{formatDate(record.dataEmissao)}</div>
               </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4">
+                <div className="flex justify-between items-center py-2 border-b border-gray-700">
+                  <span className="text-gray-400 text-sm">RENACH</span>
+                  <span className="text-white font-mono font-bold">{record.assDigital2 || record.renach || "—"}</span>
+                </div>
+              </div>
             </div>
 
             <div className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-[#101826]">
