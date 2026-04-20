@@ -418,21 +418,20 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 height: 111, 
                 boxSizing: "border-box", 
                 paddingLeft: 2,
-                paddingBottom: 4 // Aumentado para subir o texto e respeitar o limite inferior
+                paddingBottom: 4
               }}>
                 <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.42, marginBottom: 3 }}>
                   {dataFormatada || data.dataEmissao}
                 </div>
                 <div style={{ fontSize: 9.85 }}>Valide este documento acessando o endereço:</div>
                 <strong style={{ fontSize: 10.42, display: "block", marginBottom: 3 }}>https://validaratestado.digital</strong>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 3, flexWrap: "nowrap" }}>
-                  <span style={{ fontWeight: 700, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 10.42, whiteSpace: "nowrap", lineHeight: 1 }}>Código:</span>
-                  <span style={{ fontWeight: 700, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 10.42, whiteSpace: "nowrap", lineHeight: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                  <span style={{ fontWeight: 700, fontSize: 10.42, lineHeight: 1 }}>Código:</span>
+                  <span style={{ fontWeight: 700, fontSize: 10.42, lineHeight: 1 }}>
                     {isEmitted ? data.codigoQR : "****.****"}
                   </span>
                 </div>
               </div>
-
               {/* Moldura: 385×111px | QR centralizado à esquerda | texto à DIREITA */}
               <div style={{
                 border: "1px solid #000",
