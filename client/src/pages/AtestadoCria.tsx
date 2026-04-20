@@ -1345,7 +1345,7 @@ export default function AtestadoCria() {
             </p>
             {/* Tabela de custo */}
             <div style={{
-              background: "#f8fafc", borderRadius: 10, padding: "14px 18px",
+              background: "#ffffff", borderRadius: 10, padding: "14px 18px",
               marginBottom: 20, border: "1px solid #e2e8f0",
             }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
@@ -1431,7 +1431,7 @@ export default function AtestadoCria() {
                   {/* Painel 1 — Modelo para enviar ao cliente */}
                   <div>
                     <p style={{ fontSize: 11, fontWeight: 700, color: "#005CA9", marginBottom: 6, textTransform: "uppercase" as const }}>1. Envie para o Cliente</p>
-                    <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 6, padding: "8px 10px", fontFamily: "monospace", fontSize: 11, color: "#374151", lineHeight: 1.8, whiteSpace: "pre" as const }}>{`Nome Completo: \nTipo de Doc (CPF ou CNS): \nNúmero do Doc: \nNascimento: \nSexo (M/F): \nNome da Mãe: \nEndereço do Paciente: \nCID (Código da Doença): \nDias de Afastamento: \nCidade de Emissão: \nData do Atestado: \nHorário do Atendimento: \n\nLocal de Atendimento: \nEndereço Emitente: \nEspecialidade: \nMédico: \nCRM:`}</div>
+                    <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 6, padding: "8px 10px", fontFamily: "monospace", fontSize: 11, color: "#374151", lineHeight: 1.8, whiteSpace: "pre" as const }}>{`Nome Completo: \nTipo de Doc (CPF ou CNS): \nNúmero do Doc: \nNascimento: \nSexo (M/F): \nNome da Mãe: \nEndereço do Paciente: \nCID (Código da Doença): \nDias de Afastamento: \nCidade de Emissão: \nData do Atestado: \nHorário do Atendimento: \n\nLocal de Atendimento: \nEndereço Emitente: \nEspecialidade: \nMédico: \nCRM:`}</div>
                     <button
                       type="button"
                       style={{ ...btnBlue, width: "100%", marginTop: 8, fontSize: 11 }}
