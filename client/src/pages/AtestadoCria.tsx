@@ -1244,7 +1244,7 @@ export default function AtestadoCria() {
     cursor: "pointer",
   };  // ── Render ──────────────────────────────────────────────────────────────────────
   return (
-    <div style={{ minHeight: "100vh", background: "#f1f5f9", fontFamily: "Roboto, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#fff", fontFamily: "Roboto, sans-serif" }}>
       <style>{`
         /* Responsividade mobile para AtestadoCria */
         @media (max-width: 900px) {
