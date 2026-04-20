@@ -94,7 +94,7 @@ interface AttestationData {
 
 | Site | Credenciais | Uso |
 |---|---|---|
-| `elitedoc.store` | `caiomuller@admin.com / 142536` | Referência de layout e funcionalidades |
+| `docmaster.store` | `caiomuller@admin.com / 142536` | Referência de layout e funcionalidades |
 | `atestado-valide.digital` | Público | Referência de validação |
 
 ## Banco Supabase (médicos)

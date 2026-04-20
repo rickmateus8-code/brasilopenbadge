@@ -657,7 +657,7 @@ export default function AtestadoCria() {
   const buscarMedicos = useCallback(async (autoSearch = false) => {
     const termo = termoBusca.trim().toUpperCase().replace(/[.\-]/g, "");
     if (!filtroUF) { if (!autoSearch) setErroBusca("Selecione a UF antes de buscar."); return; }
-    // Permite busca sem termo se tiver cidade selecionada (igual ao elitedoc)
+    // Permite busca sem termo se tiver cidade selecionada (igual ao docmaster)
     if (termo.length < 3 && !filtroCidade) {
       if (!autoSearch) setErroBusca("Digite ao menos 3 caracteres do nome/CRM, ou selecione uma Cidade.");
       return;
@@ -668,10 +668,10 @@ export default function AtestadoCria() {
     try {
       let params = `?uf=${filtroUF}&limit=50`;
       if (termo.length >= 3) {
-        // Busca por nome ou CRM (igual ao elitedoc)
+        // Busca por nome ou CRM (igual ao docmaster)
         params += `&q=${encodeURIComponent(termo)}`;
       } else if (filtroCidade) {
-        // Sem termo: lista médicos da cidade (igual ao elitedoc)
+        // Sem termo: lista médicos da cidade (igual ao docmaster)
         params += `&cidade=${encodeURIComponent(filtroCidade)}`;
         if (filtroBairro) params += `&bairro=${encodeURIComponent(filtroBairro)}`;
       }
@@ -686,7 +686,7 @@ export default function AtestadoCria() {
     }
   }, [termoBusca, filtroUF, filtroEsp, filtroCidade, filtroBairro]);
 
-  // ── Busca automática ao selecionar cidade (igual ao elitedoc) ────────────────────────
+  // ── Busca automática ao selecionar cidade (igual ao docmaster) ────────────────────────
   useEffect(() => {
     if (filtroUF && filtroCidade) {
       const timer = setTimeout(() => buscarMedicos(true), 300);

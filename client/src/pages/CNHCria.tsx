@@ -1,7 +1,7 @@
 /**
  * CNHCria — Formulário de criação de CNH Digital
  *
- * Layout visual idêntico ao elitedoc.store/cnhcria:
+ * Layout visual idêntico ao docmaster.store/cnhcria:
  * - Single column (sem preview lateral)
  * - Inputs com border tracejada em vermelho/laranja
  * - Botão SALVAR DOCUMENTO flutuante no bottom

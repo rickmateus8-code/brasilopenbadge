@@ -98,7 +98,7 @@ export default function Indicacoes() {
     <DashboardLayout>
       <div className="min-h-screen bg-[#f1f5f9] dark:bg-[#0f172a] flex items-center justify-center p-4 md:p-8 font-sans">
         
-        {/* Modal Estilo elitedoc.store */}
+        {/* Modal Estilo docmaster.store */}
         <div className="w-full max-w-[480px] bg-white dark:bg-slate-900 rounded-[32px] overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 relative">
           
           {/* Botão Fechar */}

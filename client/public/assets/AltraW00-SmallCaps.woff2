@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ELITEDOC.STORE| Dashboard</title>
+    <title>docmaster.STORE| Dashboard</title>
     <meta name="robots" content="noindex, nofollow">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -675,7 +675,7 @@
     <div id="login-overlay">
         <div class="card" style="width: 350px; text-align: center; position: relative; overflow: hidden;">
 
-            <h2 style="margin-bottom: 20px; color: #333;">ELITEDOC<span style="color:var(--primary)">.STORE</span></h2>
+            <h2 style="margin-bottom: 20px; color: #333;">docmaster<span style="color:var(--primary)">.STORE</span></h2>
 
             <div id="area-login">
                 <form onsubmit="event.preventDefault(); loginReal();" id="login-form">
@@ -728,7 +728,7 @@
     <div class="sidebar">
         <div class="sidebar-header">
             <h2 style="font-size: 16px; font-weight: 700; letter-spacing: 1px;">
-                ELITEDOC<span style="color:var(--primary);">.STORE</span>
+                docmaster<span style="color:var(--primary);">.STORE</span>
             </h2>
         </div>
         <div class="user-info">
@@ -1923,7 +1923,7 @@
 
             const numeroSuporte = '5511962156855';
 
-            const msg = `Eu gostaria de criar o meu acesso ao painel ELITEDOC.STORE meu vulgo '${vulgo}'`;
+            const msg = `Eu gostaria de criar o meu acesso ao painel docmaster.STORE meu vulgo '${vulgo}'`;
 
             window.open(`https://wa.me/${numeroSuporte}?text=${encodeURIComponent(msg)}`, '_blank');
         }

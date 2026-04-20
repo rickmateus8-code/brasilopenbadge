@@ -76,7 +76,7 @@ As seguintes regras são **CRÍTICAS** para a integridade do DocMaster e **NÃO 
 
 Ao atuar neste projeto, priorize as seguintes melhorias:
 
-1. **Implementação Visual dos Novos Documentos:** Desenvolver os layouts visuais detalhados para CNH (`CNHCria.tsx`), CHA (`CHACria.tsx`) e Toxicológico (`ToxicologicoCria.tsx`), espelhando o padrão do elitedoc.store.
+1. **Implementação Visual dos Novos Documentos:** Desenvolver os layouts visuais detalhados para CNH (`CNHCria.tsx`), CHA (`CHACria.tsx`) e Toxicológico (`ToxicologicoCria.tsx`), espelhando o padrão do docmaster.store.
 2. **Integração de Assinatura Digital:** Adicionar funcionalidade para upload de assinaturas com fundo transparente.
 3. **Webhook de Pagamento:** Automatizar a recarga de saldo via API de pagamento (ex: Mercado Pago) na página `/recargas`.
 

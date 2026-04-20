@@ -100,41 +100,15 @@ interface DocRecord {
 }
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, refresh } = useAuth();
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState("atestado");
-  const [history, setHistory] = useState<DocRecord[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
-  const [stats, setStats] = useState<Record<string, number>>({});
-  const [showNovoDocModal, setShowNovoDocModal] = useState(false);
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-
-  // CNH-specific states (replicated from CNHSalvas)
-  const [cnhSearch, setCnhSearch] = useState("");
-  const [appModal, setAppModal] = useState<DocRecord | null>(null);
-  const [previewModal, setPreviewModal] = useState<DocRecord | null>(null);
-  const [fichaModal, setFichaModal] = useState<DocRecord | null>(null);
-  const [fichaData, setFichaData] = useState<Record<string, string>>({});
-  const [fichaSaving, setFichaSaving] = useState(false);
-  const [whatsappPhone, setWhatsappPhone] = useState("");
-  const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [directDownloadCnh, setDirectDownloadCnh] = useState<DocRecord | null>(null);
-  const cnhDocRef = useRef<CNHDocumentHandle>(null);
-  const directDownloadRef = useRef<CNHDocumentHandle>(null);
-
-  // Atestado/generic doc viewer state
-  const [viewAtestado, setViewAtestado] = useState<DocRecord | null>(null);
-  const [downloadingAtestadoId, setDownloadingAtestadoId] = useState<string | null>(null);
-
-  // Recarrega modal state
-  const [showRecarregaModal, setShowRecarregaModal] = useState(false);
-
+  // ... rest of states
+  
   useEffect(() => {
+    refresh();
     loadStats();
     loadNotifications();
-  }, []);
+  }, [refresh]);
 
   useEffect(() => {
     loadHistory(activeTab);

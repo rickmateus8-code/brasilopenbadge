@@ -3,7 +3,7 @@
  *
  * Usa o template de imagem (cnh_modelo.jpg) como background e desenha
  * todos os campos por cima via Canvas 2D, replicando fielmente
- * o layout do elitedoc.store com coordenadas pixel-perfect.
+ * o layout do docmaster.store com coordenadas pixel-perfect.
  *
  * Fontes: Ultra (AltraW00-SmallCaps.woff2) + OCR-B (ocrbstd.otf)
  * Exporta como imagem JPEG de alta qualidade.
@@ -187,7 +187,7 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
     await loadFonts();
 
     try {
-      // Carregar template original do elitedoc (modelo.jpg)
+      // Carregar template original do docmaster (modelo.jpg)
       const bg = await loadImage("/assets/cnh_modelo.jpg");
       cvs.width = bg.width;
       cvs.height = bg.height;
@@ -197,7 +197,7 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       ctx.fillStyle = "#000";
       ctx.textBaseline = "top";
 
-      // Função helper txt() — idêntica à do elitedoc
+      // Função helper txt() — idêntica à do docmaster
       // txt(texto, x, y, tamanho, bold, cor, maxWidth)
       const txt = (t: string, x: number, y: number, s: number, _b?: boolean | number, c?: string, mw?: number) => {
         if (!t) return;
@@ -223,7 +223,7 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
 
       const d = (v: string) => fmtDate(v);
 
-      // ===== CAMPOS PRINCIPAIS (posições idênticas ao elitedoc) =====
+      // ===== CAMPOS PRINCIPAIS (posições idênticas ao docmaster) =====
 
       // Nome Completo
       txt(props.nome, 314, 452, 22, 1, "#000", 520);

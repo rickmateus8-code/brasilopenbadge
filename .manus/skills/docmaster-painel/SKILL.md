@@ -54,7 +54,7 @@ const docScale = Math.min(scaleByWidth, scaleByHeight);
 
 ## 3. Funcionalidades do Formulário de Criação
 
-Ao replicar formulários do site de referência (`elitedoc.store`), siga estas regras:
+Ao replicar formulários do site de referência (`docmaster.store`), siga estas regras:
 
 1. **Busca de Médicos no Supabase:**
    - A API pública do CFM tem bloqueios de CORS e reCAPTCHA. A alternativa é usar um banco Supabase.

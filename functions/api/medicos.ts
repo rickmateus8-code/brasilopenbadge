@@ -1,5 +1,5 @@
 // /api/medicos — Busca de médicos via Supabase (backend seguro) com fallback para D1
-// Lógica replicada do elitedoc.store: uf_local para filtros geográficos, busca por nome/CRM
+// Lógica replicada do docmaster.store: uf_local para filtros geográficos, busca por nome/CRM
 
 interface Env {
   DB: D1Database;
@@ -71,7 +71,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         return new Response(JSON.stringify(r.results.map((x: any) => x.cidade)), { headers: corsHeaders });
       }
 
-      // Tentar RPC get_cidades primeiro (igual ao elitedoc)
+      // Tentar RPC get_cidades primeiro (igual ao docmaster)
       try {
         const data = await sbRpc("get_cidades", { uf_param: uf });
         const cidades = data.map((r: any) => r.nome_cidade || r.cidade).filter(Boolean).sort();
@@ -127,7 +127,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // ACTION: search — busca principal de médicos (igual ao elitedoc)
+    // ACTION: search — busca principal de médicos (igual ao docmaster)
     // Regra:
     //   - termo >= 3 chars → busca por nome OU CRM, filtra por uf_local se UF fornecida
     //   - sem termo mas UF + cidade → lista médicos da cidade (com filtros opcionais)
@@ -170,7 +170,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       if (isCRM) {
         sbPath += `&crm=ilike.*${encodeURIComponent(termo)}*`;
       } else {
-        // busca por nome OU CRM (igual ao elitedoc: or=nome_medico.ilike...,crm.ilike...)
+        // busca por nome OU CRM (igual ao docmaster: or=nome_medico.ilike...,crm.ilike...)
         sbPath += `&or=(nome_medico.ilike.*${encodeURIComponent(termo)}*,crm.ilike.*${encodeURIComponent(termo)}*)`;
       }
       if (uf) sbPath += `&uf_local=eq.${uf}`;
