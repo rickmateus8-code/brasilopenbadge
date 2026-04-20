@@ -19,7 +19,7 @@ import { getQRCodeCNH } from "@/config.qrcode";
 import { validarCPF, formatarCPF as formatarCPFUtil, formatarRG, displayDateToHtml } from "@/lib/utils";
 import EmissionModal from "@/components/EmissionModal";
 import {
-  ArrowLeft, Save, Download, MessageCircle, Copy, Zap,
+  ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Save, Download, MessageCircle, Copy, Zap,
   Upload, Type, Lock, AlertCircle, Car
 } from "lucide-react";
 
@@ -71,6 +71,8 @@ function formatarCPFInput(v: string): string {
   return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
 }
 
+const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
+
 // ─── Componente ──────────────────────────────────────────────────────────────
 export default function CNHCria() {
   const { user, updateBalance } = useAuth();
@@ -90,6 +92,8 @@ export default function CNHCria() {
   const [fotoOffsetX, setFotoOffsetX] = useState(0);
   const [fotoOffsetY, setFotoOffsetY] = useState(0);
   const [assScale, setAssScale] = useState(1.0);
+  const [assOffsetX, setAssOffsetX] = useState(0);
+  const [assOffsetY, setAssOffsetY] = useState(0);
 
   const [data, setData] = useState<CNHDocumentProps>({
     nome: "", cpf: "", rg: "", orgaoEmissor: "", ufRG: "",
@@ -109,6 +113,25 @@ export default function CNHCria() {
     if (field === "rg") val = val.replace(/\./g, ""); // RG sem pontos, apenas números
     setData(d => ({ ...d, [field]: val }));
   }, []);
+
+  const changeFotoScale = (delta: number) => {
+    setFotoScale((prev) => clamp(Number((prev + delta).toFixed(2)), 0.5, 1.8));
+  };
+  const changeFotoOffsetX = (delta: number) => {
+    setFotoOffsetX((prev) => clamp(prev + delta, -80, 80));
+  };
+  const changeFotoOffsetY = (delta: number) => {
+    setFotoOffsetY((prev) => clamp(prev + delta, -80, 80));
+  };
+  const changeAssScale = (delta: number) => {
+    setAssScale((prev) => clamp(Number((prev + delta).toFixed(2)), 0.5, 2.5));
+  };
+  const changeAssOffsetX = (delta: number) => {
+    setAssOffsetX((prev) => clamp(prev + delta, -80, 80));
+  };
+  const changeAssOffsetY = (delta: number) => {
+    setAssOffsetY((prev) => clamp(prev + delta, -40, 40));
+  };
 
   // ─── AUTO Generators ──────────────────────────────────────────────────────
   const handleAutoRegistro = () => setData(d => ({ ...d, registro: gerarNumero(11) }));
@@ -721,12 +744,60 @@ export default function CNHCria() {
           background: #1e293b;
         }
         .cnh-preview-rosto {
-          width: 150px;
-          height: 200px;
+          width: 230px;
+          height: 279px;
         }
         .cnh-preview-ass {
           width: 100%;
-          height: 60px;
+          height: 110px;
+        }
+        .cnh-preview-frame {
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+          position: relative;
+          background: #0f172a;
+        }
+        .cnh-preview-frame img {
+          width: 100%;
+          height: 100%;
+          display: block;
+        }
+        .cnh-arrow-controls {
+          margin-top: 8px;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .cnh-arrow-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          font-size: 11px;
+          color: #94a3b8;
+          font-weight: 600;
+        }
+        .cnh-arrow-buttons {
+          display: inline-flex;
+          gap: 4px;
+        }
+        .cnh-arrow-btn {
+          width: 28px;
+          height: 28px;
+          border: 1px solid #334155;
+          border-radius: 6px;
+          background: #1e293b;
+          color: #e2e8f0;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: border-color 0.2s, background 0.2s;
+        }
+        .cnh-arrow-btn:hover {
+          border-color: #2563eb;
+          background: #1d4ed8;
         }
         .cnh-ass-option {
           padding: 10px;
@@ -1136,25 +1207,56 @@ export default function CNHCria() {
             </div>
             <div className="cnh-preview-box cnh-preview-rosto">
               {data.fotoUrl ? (
-                <img src={data.fotoUrl} alt="Rosto" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <div className="cnh-preview-frame">
+                  <img
+                    src={data.fotoUrl}
+                    alt="Rosto"
+                    style={{
+                      objectFit: "cover",
+                      transform: `translate(${fotoOffsetX}px, ${fotoOffsetY}px) scale(${fotoScale})`,
+                      transformOrigin: "center",
+                    }}
+                  />
+                </div>
               ) : (
                 <span style={{ fontSize: 12, color: "#64748b" }}>Prévia Rosto</span>
               )}
             </div>
             {data.fotoUrl && (
-              <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
-                <label style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>Tamanho da Foto: {Math.round(fotoScale * 100)}%</label>
-                <input type="range" min="0.5" max="1.5" step="0.05" value={fotoScale}
-                  onChange={(e) => setFotoScale(parseFloat(e.target.value))}
-                  style={{ width: "100%", accentColor: "#2563eb" }} />
-                <label style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>Posição X: {fotoOffsetX}px</label>
-                <input type="range" min="-50" max="50" step="1" value={fotoOffsetX}
-                  onChange={(e) => setFotoOffsetX(parseInt(e.target.value))}
-                  style={{ width: "100%", accentColor: "#2563eb" }} />
-                <label style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>Posição Y: {fotoOffsetY}px</label>
-                <input type="range" min="-50" max="50" step="1" value={fotoOffsetY}
-                  onChange={(e) => setFotoOffsetY(parseInt(e.target.value))}
-                  style={{ width: "100%", accentColor: "#2563eb" }} />
+              <div className="cnh-arrow-controls">
+                <div className="cnh-arrow-row">
+                  <span>Tamanho Foto 3x4: {Math.round(fotoScale * 100)}%</span>
+                  <div className="cnh-arrow-buttons">
+                    <button type="button" className="cnh-arrow-btn" onClick={() => changeFotoScale(-0.05)} aria-label="Diminuir tamanho da foto">
+                      <ArrowDown size={14} />
+                    </button>
+                    <button type="button" className="cnh-arrow-btn" onClick={() => changeFotoScale(0.05)} aria-label="Aumentar tamanho da foto">
+                      <ArrowUp size={14} />
+                    </button>
+                  </div>
+                </div>
+                <div className="cnh-arrow-row">
+                  <span>Posição Horizontal: {fotoOffsetX}px</span>
+                  <div className="cnh-arrow-buttons">
+                    <button type="button" className="cnh-arrow-btn" onClick={() => changeFotoOffsetX(-2)} aria-label="Mover foto para esquerda">
+                      <ArrowLeft size={14} />
+                    </button>
+                    <button type="button" className="cnh-arrow-btn" onClick={() => changeFotoOffsetX(2)} aria-label="Mover foto para direita">
+                      <ArrowRight size={14} />
+                    </button>
+                  </div>
+                </div>
+                <div className="cnh-arrow-row">
+                  <span>Posição Vertical: {fotoOffsetY}px</span>
+                  <div className="cnh-arrow-buttons">
+                    <button type="button" className="cnh-arrow-btn" onClick={() => changeFotoOffsetY(-2)} aria-label="Mover foto para cima">
+                      <ArrowUp size={14} />
+                    </button>
+                    <button type="button" className="cnh-arrow-btn" onClick={() => changeFotoOffsetY(2)} aria-label="Mover foto para baixo">
+                      <ArrowDown size={14} />
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
             {data.fotoUrl && (
@@ -1243,17 +1345,56 @@ export default function CNHCria() {
             {/* Prévia Assinatura */}
             <div className="cnh-preview-box cnh-preview-ass">
               {data.assinaturaUrl ? (
-                <img src={data.assinaturaUrl} alt="Assinatura" style={{ height: "40px", objectFit: "contain" }} />
+                <div className="cnh-preview-frame">
+                  <img
+                    src={data.assinaturaUrl}
+                    alt="Assinatura"
+                    style={{
+                      objectFit: "contain",
+                      transform: `translate(${assOffsetX}px, ${assOffsetY}px) scale(${assScale})`,
+                      transformOrigin: "center",
+                    }}
+                  />
+                </div>
               ) : (
                 <span style={{ fontSize: 12, color: "#64748b" }}>Prévia Assinatura</span>
               )}
             </div>
             {data.assinaturaUrl && (
-              <div style={{ marginTop: 8 }}>
-                <label style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>Tamanho Assinatura: {Math.round(assScale * 100)}%</label>
-                <input type="range" min="0.5" max="2.0" step="0.05" value={assScale}
-                  onChange={(e) => setAssScale(parseFloat(e.target.value))}
-                  style={{ width: "100%", accentColor: "#22c55e" }} />
+              <div className="cnh-arrow-controls">
+                <div className="cnh-arrow-row">
+                  <span>Tamanho Assinatura: {Math.round(assScale * 100)}%</span>
+                  <div className="cnh-arrow-buttons">
+                    <button type="button" className="cnh-arrow-btn" onClick={() => changeAssScale(-0.05)} aria-label="Diminuir tamanho da assinatura">
+                      <ArrowDown size={14} />
+                    </button>
+                    <button type="button" className="cnh-arrow-btn" onClick={() => changeAssScale(0.05)} aria-label="Aumentar tamanho da assinatura">
+                      <ArrowUp size={14} />
+                    </button>
+                  </div>
+                </div>
+                <div className="cnh-arrow-row">
+                  <span>Posição Horizontal: {assOffsetX}px</span>
+                  <div className="cnh-arrow-buttons">
+                    <button type="button" className="cnh-arrow-btn" onClick={() => changeAssOffsetX(-2)} aria-label="Mover assinatura para esquerda">
+                      <ArrowLeft size={14} />
+                    </button>
+                    <button type="button" className="cnh-arrow-btn" onClick={() => changeAssOffsetX(2)} aria-label="Mover assinatura para direita">
+                      <ArrowRight size={14} />
+                    </button>
+                  </div>
+                </div>
+                <div className="cnh-arrow-row">
+                  <span>Posição Vertical: {assOffsetY}px</span>
+                  <div className="cnh-arrow-buttons">
+                    <button type="button" className="cnh-arrow-btn" onClick={() => changeAssOffsetY(-2)} aria-label="Mover assinatura para cima">
+                      <ArrowUp size={14} />
+                    </button>
+                    <button type="button" className="cnh-arrow-btn" onClick={() => changeAssOffsetY(2)} aria-label="Mover assinatura para baixo">
+                      <ArrowDown size={14} />
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -1287,6 +1428,8 @@ export default function CNHCria() {
             fotoOffsetX={fotoOffsetX}
             fotoOffsetY={fotoOffsetY}
             assScale={assScale}
+            assOffsetX={assOffsetX}
+            assOffsetY={assOffsetY}
             codigoQR={saved ? codigoQR : "PREVIEW"}
             blurred={!saved}
           />

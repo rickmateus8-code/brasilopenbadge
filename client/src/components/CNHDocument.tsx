@@ -45,6 +45,8 @@ export interface CNHDocumentProps {
   fotoOffsetX?: number;
   fotoOffsetY?: number;
   assScale?: number;
+  assOffsetX?: number;
+  assOffsetY?: number;
   codigoQR?: string;
   blurred?: boolean;
 }
@@ -380,11 +382,13 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
         try {
           const assImg = await loadImage(props.assinaturaUrl);
           const scale = props.assScale ?? 1.0;
+          const offsetX = props.assOffsetX ?? 0;
+          const offsetY = props.assOffsetY ?? 0;
           const baseBw = 250, baseBh = 60;
           const bw = Math.round(baseBw * scale);
           const bh = Math.round(baseBh * scale);
-          const bx = 303 + Math.round((baseBw - bw) / 2);
-          const by = 870 + Math.round((baseBh - bh) / 2);
+          const bx = 303 + Math.round((baseBw - bw) / 2) + offsetX;
+          const by = 870 + Math.round((baseBh - bh) / 2) + offsetY;
           ctx.save();
           ctx.beginPath();
           ctx.rect(bx, by, bw, bh);
