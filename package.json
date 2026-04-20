@@ -14,7 +14,8 @@
     "db:migrate:remote": "wrangler d1 execute docmaster-db --remote --file=./schema.sql",
     "db:query": "wrangler d1 execute docmaster-db --command",
     "db:query:remote": "wrangler d1 execute docmaster-db --remote --command",
-    "types": "wrangler types"
+    "types": "wrangler types",
+    "test": "vitest run"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
