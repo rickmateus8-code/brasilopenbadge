@@ -4,10 +4,10 @@
 
 O projeto possui deploy automático via **GitHub Actions**. A cada push na branch `main`, o workflow executa:
 
-1. Instala dependências (`pnpm install`)
-2. Faz build do frontend (`pnpm build`)
-3. Faz upload direto para Cloudflare Pages via `wrangler pages deploy`
-4. Executa migrações D1 no banco remoto
+1. Instala dependências (`npm ci`)
+2. Faz build do frontend (`npm run build`)
+3. Faz upload direto para Cloudflare Pages via `wrangler pages deploy --branch=main`
+4. Aplica migrações pendentes no D1 com `wrangler d1 migrations apply --remote`
 
 ### Configuração Necessária (Secrets do GitHub)
 
