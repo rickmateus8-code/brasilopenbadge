@@ -1,11 +1,14 @@
 import type { Env } from '../../types';
 
-const JSON_HEADERS = {
-  'Content-Type': 'application/json',
-  'Access-Control-Allow-Origin': 'https://docmaster.store',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Credentials': 'true',
+const getCorsHeaders = (request: Request) => {
+  const origin = request.headers.get('Origin') || 'https://docmaster.store';
+  return {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Credentials': 'true',
+  };
 };
 
 const SETTING_DEFAULTS: Record<string, string> = {
@@ -40,6 +43,18 @@ async function getAdminUser(request: Request, env: Env) {
 }
 
 async function ensureSettingsTable(env: Env) {
+  // Check if table exists and has the correct column
+  try {
+    const tableInfo = await env.DB.prepare("PRAGMA table_info(system_settings)").all<any>();
+    const hasKeyColumn = tableInfo.results?.some((col: any) => col.name === 'key');
+
+    if (tableInfo.results?.length > 0 && !hasKeyColumn) {
+      // Table exists but is corrupted (missing 'key' column)
+      // Renaming to backup and recreating is safest for settings
+      await env.DB.prepare(`ALTER TABLE system_settings RENAME TO system_settings_old_${Date.now()}`).run();
+    }
+  } catch (_) {}
+
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS system_settings (
       key TEXT PRIMARY KEY,
@@ -64,9 +79,10 @@ async function logAdminAction(env: Env, adminId: string, action: string, details
 }
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
+  const corsHeaders = getCorsHeaders(request);
   const admin = await getAdminUser(request, env);
   if (!admin) {
-    return new Response(JSON.stringify({ success: false, error: 'Acesso negado' }), { status: 403, headers: JSON_HEADERS });
+    return new Response(JSON.stringify({ success: false, error: 'Acesso negado' }), { status: 403, headers: corsHeaders });
   }
 
   try {
@@ -80,16 +96,18 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       settings[row.key] = row.key === 'maintenance_mode' ? row.value === 'true' : row.value;
     }
 
-    return new Response(JSON.stringify({ success: true, settings }), { headers: JSON_HEADERS });
+    return new Response(JSON.stringify({ success: true, settings }), { headers: corsHeaders });
   } catch (error: any) {
-    return new Response(JSON.stringify({ success: false, error: error?.message || 'Erro interno' }), { status: 500, headers: JSON_HEADERS });
+    console.error('[settings get error]', error);
+    return new Response(JSON.stringify({ success: false, error: error?.message || 'Erro interno ao carregar configurações' }), { status: 500, headers: corsHeaders });
   }
 };
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+  const corsHeaders = getCorsHeaders(request);
   const admin = await getAdminUser(request, env);
   if (!admin) {
-    return new Response(JSON.stringify({ success: false, error: 'Acesso negado' }), { status: 403, headers: JSON_HEADERS });
+    return new Response(JSON.stringify({ success: false, error: 'Acesso negado' }), { status: 403, headers: corsHeaders });
   }
 
   try {
@@ -107,9 +125,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     }
 
     await logAdminAction(env, admin.id, 'update_settings', saved);
-    return new Response(JSON.stringify({ success: true, settings: saved }), { headers: JSON_HEADERS });
+    return new Response(JSON.stringify({ success: true, settings: saved }), { headers: corsHeaders });
   } catch (error: any) {
-    return new Response(JSON.stringify({ success: false, error: error?.message || 'Erro interno' }), { status: 500, headers: JSON_HEADERS });
+    return new Response(JSON.stringify({ success: false, error: error?.message || 'Erro interno ao salvar configurações' }), { status: 500, headers: corsHeaders });
   }
 };
 

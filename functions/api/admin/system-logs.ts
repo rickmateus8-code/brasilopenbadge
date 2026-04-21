@@ -25,14 +25,19 @@ async function getAuthAdmin(request: Request, env: Env): Promise<any | null> {
   return user;
 }
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://docmaster.store',
-  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Content-Type': 'application/json',
+const getCorsHeaders = (request: Request) => {
+  const origin = request.headers.get('Origin') || 'https://docmaster.store';
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Credentials': 'true',
+  };
 };
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
+  const corsHeaders = getCorsHeaders(request);
   try {
     const admin = await getAuthAdmin(request, env);
     if (!admin) {
@@ -154,6 +159,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 
 // POST: Register a system log
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+  const corsHeaders = getCorsHeaders(request);
   try {
     const body = await request.json<any>();
     const { user_id, action, category, severity, details } = body;
@@ -194,6 +200,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
 // DELETE: Clear logs
 export const onRequestDelete: PagesFunction<Env> = async ({ request, env }) => {
+  const corsHeaders = getCorsHeaders(request);
   try {
     const admin = await getAuthAdmin(request, env);
     if (!admin) {
@@ -205,7 +212,7 @@ export const onRequestDelete: PagesFunction<Env> = async ({ request, env }) => {
     const results: string[] = [];
 
     if (clearType === 'all' || clearType === 'admin') {
-      await env.DB.exec('DELETE FROM admin_logs');
+      await env.DB.prepare('DELETE FROM admin_logs').run();
       results.push('Admin logs limpos');
     }
     if (clearType === 'all' || clearType === 'payment') {
@@ -213,10 +220,10 @@ export const onRequestDelete: PagesFunction<Env> = async ({ request, env }) => {
       results.push('Payment logs marcados como limpos');
     }
     if (clearType === 'all' || clearType === 'system') {
-      try { await env.DB.exec('DELETE FROM system_logs'); results.push('System logs limpos'); } catch (e) {}
+      try { await env.DB.prepare('DELETE FROM system_logs').run(); results.push('System logs limpos'); } catch (e) {}
     }
     if (clearType === 'all' || clearType === 'monitoring') {
-      try { await env.DB.exec('DELETE FROM user_presence'); results.push('Dados de monitoramento limpos'); } catch (e) {}
+      try { await env.DB.prepare('DELETE FROM user_presence').run(); results.push('Dados de monitoramento limpos'); } catch (e) {}
     }
 
     return new Response(JSON.stringify({ success: true, results }), { headers: corsHeaders });
@@ -225,6 +232,6 @@ export const onRequestDelete: PagesFunction<Env> = async ({ request, env }) => {
   }
 };
 
-export const onRequestOptions: PagesFunction = async () => {
-  return new Response(null, { headers: corsHeaders });
+export const onRequestOptions: PagesFunction = async ({ request }) => {
+  return new Response(null, { headers: getCorsHeaders(request) });
 };

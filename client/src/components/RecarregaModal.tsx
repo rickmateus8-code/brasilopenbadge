@@ -126,9 +126,9 @@ export default function RecarregaModal({
           {step === "amount" ? (
             <div className="space-y-4">
               {/* Info */}
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 flex gap-3">
-                <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-blue-700 dark:text-blue-300">
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 flex gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-amber-700 dark:text-amber-300">
                   Escolha o valor da recarga e escaneie o QR Code com seu app de banco.
                 </p>
               </div>
@@ -167,7 +167,7 @@ export default function RecarregaModal({
                       onClick={() => setAmount(val)}
                       className={`py-2 px-3 rounded-lg font-semibold text-sm transition-colors ${
                         amount === val
-                          ? "bg-red-500 text-white"
+                          ? "bg-amber-500 text-white"
                           : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
                       }`}
                     >
@@ -181,7 +181,7 @@ export default function RecarregaModal({
               <button
                 onClick={handleGeneratePix}
                 disabled={loading}
-                className="w-full py-3 bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 bg-amber-500 hover:bg-amber-600 disabled:bg-gray-400 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -211,7 +211,7 @@ export default function RecarregaModal({
               {/* Copy Button for QR Code */}
               <button
                 onClick={() => copyToClipboard(pixData?.qr_code || "")}
-                className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
               >
                 {copied ? (
                   <>

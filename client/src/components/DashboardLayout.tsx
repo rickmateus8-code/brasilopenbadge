@@ -588,36 +588,47 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         >
           <div
             style={{
-              background: "var(--modal-bg, #fff)", borderRadius: 20, padding: "32px 28px",
-              maxWidth: 420, width: "100%",
+              background: "#fff", borderRadius: 20, padding: "28px 28px 24px",
+              maxWidth: 520, width: "100%", maxHeight: "90vh", overflowY: "auto",
               boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
             }}
-            className="dark:bg-gray-900"
             onClick={e => e.stopPropagation()}
           >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{
-                  width: 36, height: 36, borderRadius: 10,
-                  background: "linear-gradient(135deg, #6366f1, #4f46e5)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  <GraduationCap style={{ width: 18, height: 18, color: "#fff" }} />
-                </div>
-                <div>
-                  <h2 style={{ fontSize: 18, fontWeight: 800, color: "inherit", margin: 0 }} className="text-gray-900 dark:text-white">Histórico</h2>
-                  <p style={{ fontSize: 12, margin: 0 }} className="text-gray-500 dark:text-gray-400">Selecione o tipo de histórico</p>
-                </div>
-              </div>
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+              <h2 style={{ fontSize: 22, fontWeight: 800, color: "#b45309", margin: 0 }}>
+                Histórico
+              </h2>
               <button
                 onClick={() => setShowHistoricoModal(false)}
-                className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                style={{
+                  width: 32, height: 32, borderRadius: "50%", border: "none",
+                  background: "#f3f4f6", cursor: "pointer", display: "flex",
+                  alignItems: "center", justifyContent: "center",
+                  color: "#374151", fontSize: 18, fontWeight: 700,
+                }}
               >
-                <X className="w-4 h-4" />
+                <X style={{ width: 18, height: 18 }} />
               </button>
             </div>
+            <p style={{ fontSize: 14, color: "#6b7280", marginBottom: 20 }}>
+              Selecione o tipo de histórico que deseja visualizar
+            </p>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            {/* Saldo do usuário (Visual apenas para manter consistência) */}
+            <div style={{
+              background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 10,
+              padding: "8px 14px", marginBottom: 20, display: "flex",
+              alignItems: "center", gap: 8,
+            }}>
+              <GraduationCap style={{ width: 15, height: 15, color: "#d97706" }} />
+              <span style={{ fontSize: 13, color: "#92400e", fontWeight: 600 }}>
+                Seu saldo: <strong>{balanceFormatted}</strong>
+              </span>
+            </div>
+
+            {/* Grade de opções */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
               {/* Histórico Escolar SP */}
               <button
                 onClick={() => {
@@ -626,22 +637,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   setLocation("/historico-sp");
                 }}
                 style={{
-                  border: "2px solid #e5e7eb", borderRadius: 14, padding: "20px 12px",
-                  background: "transparent", cursor: "pointer", textAlign: "center",
-                  transition: "all 0.15s",
+                  background: "#fff", border: "1.5px solid #e5e7eb",
+                  borderRadius: 14, padding: "20px 14px", cursor: "pointer",
+                  display: "flex", flexDirection: "column", alignItems: "center",
+                  gap: 10, transition: "all 0.18s", textAlign: "center",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
                 }}
-                className="hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 dark:border-gray-700 group"
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = "#4f46e5";
+                  e.currentTarget.style.boxShadow = "0 4px 16px rgba(79,70,229,0.12)";
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = "#e5e7eb";
+                  e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.05)";
+                  e.currentTarget.style.transform = "translateY(0)";
+                }}
               >
                 <div style={{
                   width: 48, height: 48, borderRadius: 12,
-                  background: "linear-gradient(135deg, #3b82f6, #1d4ed8)",
+                  background: "linear-gradient(135deg, #4f46e5, #3730a3)",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  margin: "0 auto 10px",
                 }}>
                   <GraduationCap style={{ width: 22, height: 22, color: "#fff" }} />
                 </div>
-                <p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 4px", color: "#111827" }} className="dark:text-white">Histórico Escolar</p>
-                <p style={{ fontSize: 11, margin: 0 }} className="text-gray-500 dark:text-gray-400">Estado de SP</p>
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 2px", color: "#1e1b4b" }}>Histórico Escolar</p>
+                  <p style={{ fontSize: 11, margin: 0, color: "#4338ca", fontWeight: 600 }}>Estado de SP</p>
+                </div>
               </button>
 
               {/* Histórico UNINTER */}
@@ -652,46 +675,65 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   setLocation("/historico-uninter");
                 }}
                 style={{
-                  border: "2px solid #e5e7eb", borderRadius: 14, padding: "20px 12px",
-                  background: "transparent", cursor: "pointer", textAlign: "center",
-                  transition: "all 0.15s",
+                  background: "#fff", border: "1.5px solid #e5e7eb",
+                  borderRadius: 14, padding: "20px 14px", cursor: "pointer",
+                  display: "flex", flexDirection: "column", alignItems: "center",
+                  gap: 10, transition: "all 0.18s", textAlign: "center",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
                 }}
-                className="hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 dark:border-gray-700 group"
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = "#f59e0b";
+                  e.currentTarget.style.boxShadow = "0 4px 16px rgba(245,158,11,0.12)";
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = "#e5e7eb";
+                  e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.05)";
+                  e.currentTarget.style.transform = "translateY(0)";
+                }}
               >
                 <div style={{
                   width: 48, height: 48, borderRadius: 12,
                   background: "linear-gradient(135deg, #f59e0b, #d97706)",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  margin: "0 auto 10px",
                 }}>
                   <GraduationCap style={{ width: 22, height: 22, color: "#fff" }} />
                 </div>
-                <p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 4px", color: "#111827" }} className="dark:text-white">Histórico UNINTER</p>
-                <p style={{ fontSize: 11, margin: 0 }} className="text-gray-500 dark:text-gray-400">Centro Universitário</p>
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 2px", color: "#451a03" }}>Histórico UNINTER</p>
+                  <p style={{ fontSize: 11, margin: 0, color: "#b45309", fontWeight: 600 }}>Centro Universitário</p>
+                </div>
               </button>
             </div>
 
-            {/* Links para salvos */}
-            <div style={{ marginTop: 16, display: "flex", gap: 8 }}>
+            {/* Links para salvos (Footer style) */}
+            <div style={{
+              marginTop: 20, paddingTop: 16, borderTop: "1px solid #f3f4f6",
+              display: "flex", gap: 10,
+            }}>
               <button
                 onClick={() => { setShowHistoricoModal(false); setLocation("/historico-sp-salvos"); }}
                 style={{
-                  flex: 1, padding: "8px 0", borderRadius: 8, border: "none",
-                  background: "#f3f4f6", fontSize: 12, cursor: "pointer",
+                  flex: 1, padding: "10px 0", borderRadius: 10, border: "1.5px solid #e5e7eb",
+                  background: "#f9fafb", fontSize: 12, fontWeight: 700, color: "#4b5563",
+                  cursor: "pointer", transition: "all 0.15s",
                 }}
-                className="text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "#4f46e5"; e.currentTarget.style.color = "#4f46e5"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.color = "#4b5563"; }}
               >
-                Históricos SP Salvos
+                SP Salvos
               </button>
               <button
                 onClick={() => { setShowHistoricoModal(false); setLocation("/historico-uninter-salvos"); }}
                 style={{
-                  flex: 1, padding: "8px 0", borderRadius: 8, border: "none",
-                  background: "#f3f4f6", fontSize: 12, cursor: "pointer",
+                  flex: 1, padding: "10px 0", borderRadius: 10, border: "1.5px solid #e5e7eb",
+                  background: "#f9fafb", fontSize: 12, fontWeight: 700, color: "#4b5563",
+                  cursor: "pointer", transition: "all 0.15s",
                 }}
-                className="text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "#f59e0b"; e.currentTarget.style.color = "#f59e0b"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.color = "#4b5563"; }}
               >
-                Históricos UNINTER Salvos
+                UNINTER Salvos
               </button>
             </div>
           </div>

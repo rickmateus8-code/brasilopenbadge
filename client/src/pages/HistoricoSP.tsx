@@ -3,20 +3,21 @@
  * Layout: SPDocumentPage (réplica visual do histórico oficial SP)
  * Fluxo: DocMaster (useAuth, fetch, EmissionModal, exportElementToPDF)
  */
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
 import {
   ArrowLeft, Download, ZoomIn, ZoomOut,
-  PanelLeftClose, PanelLeft
+  PanelLeftClose, PanelLeft, CheckCircle2, AlertCircle, FileText
 } from "lucide-react";
 import EmissionModal from "@/components/EmissionModal";
 import { useSPSubstitution } from "@/hooks/useSPSubstitution";
 import SPSubstitutionPanel from "@/components/SPSubstitutionPanel";
 import { SPPage1 } from "@/components/SPDocumentPage";
 import { SIG_GERENTE_B64, SIG_DIRETOR_B64 } from "@/lib/spAssets";
+import { usePDFExport, generatePDFFilename } from "@/lib/pdfExport";
 
 const A4_WIDTH_PX = 794;
 const A4_HEIGHT_PX = 1123;
@@ -32,98 +33,19 @@ function getInitialZoom(sidebarVisible = true) {
   return Math.max(0.42, Math.min(0.72, fitZoom));
 }
 
-function buildSPExportIframeCSS() {
-  return `
-    * { box-sizing: border-box; }
-    @page { size: A4 portrait; margin: 0; }
-    html, body {
-      margin: 0; padding: 0;
-      width: 210mm; height: 297mm;
-      background: #fff; color: #000;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-    img { display: block; max-width: 100%; height: auto; }
-    .sp-export-shell { width: 210mm; height: 297mm; overflow: hidden; background: #fff; position: relative; }
-    .doc-page-sp {
-      width: 210mm !important; height: 297mm !important;
-      min-height: 297mm !important; max-height: 297mm !important;
-      margin: 0 !important; box-shadow: none !important;
-    }
-    @media print {
-      html, body { overflow: hidden; }
-      .sp-export-shell { break-inside: avoid-page; page-break-inside: avoid; }
-    }
-  `;
-}
-
-async function imageUrlToBase64(url: string): Promise<string> {
-  if (!url) return "";
-  if (url.startsWith("data:")) return url;
-  try {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    return await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = () => reject(new Error("Falha ao converter imagem para base64."));
-      reader.readAsDataURL(blob);
-    });
-  } catch { return url; }
-}
-
-async function preloadPageImagesAsBase64(root: HTMLElement): Promise<Map<string, string>> {
-  const map = new Map<string, string>();
-  const imgs = Array.from(root.querySelectorAll("img"));
-  const uniqueSrc = Array.from(new Set(imgs.map((img) => img.getAttribute("src") || "").filter(Boolean)));
-  await Promise.all(uniqueSrc.map(async (src) => {
-    try {
-      const b64 = await imageUrlToBase64(src);
-      if (b64) map.set(src, b64);
-    } catch { /* mantém src original */ }
-  }));
-  return map;
-}
-
-function replaceImageUrls(html: string, urlMap: Map<string, string>) {
-  let result = html;
-  urlMap.forEach((b64, url) => { result = result.split(url).join(b64); });
-  return result;
-}
-
-async function waitForImagesInElement(element: HTMLElement) {
-  const images = element.querySelectorAll("img");
-  await Promise.all(Array.from(images).map((img) =>
-    new Promise<void>((resolve) => {
-      if (img.complete && img.naturalWidth > 0) { resolve(); return; }
-      const done = () => resolve();
-      img.addEventListener("load", done, { once: true });
-      img.addEventListener("error", done, { once: true });
-    })
-  ));
-}
-
-function normalizeFileSegment(value: string): string {
-  return (value || "DOCUMENTO")
-    .toUpperCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, "_")
-    .replace(/[^A-Z0-9_]/g, "");
-}
-
 export default function HistoricoSP() {
   const { user, updateBalance } = useAuth();
   const [, setLocation] = useLocation();
+  const previewRef = useRef<HTMLDivElement>(null);
+  const { exportPDF, exporting: isDownloading } = usePDFExport();
 
   const [zoom, setZoom] = useState(() => getInitialZoom(true));
-  const showHighlights = false; // Destaques sempre desligados
+  const showHighlights = false;
   const [isExporting, setIsExporting] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
 
   const {
     fields,
@@ -165,7 +87,6 @@ export default function HistoricoSP() {
     toast.success("Formulário redefinido para o estado vazio.");
   }, [resetToOriginal]);
 
-  // Validação e abertura do modal de confirmação
   const handleRequestEmit = useCallback(() => {
     if (!fieldMap.nome_aluno) { toast.error("Preencha o Nome do Aluno"); return; }
     if (!fieldMap.nome_escola) { toast.error("Preencha o Nome da Escola"); return; }
@@ -176,7 +97,6 @@ export default function HistoricoSP() {
     setShowConfirmModal(true);
   }, [fieldMap.nome_aluno, fieldMap.nome_escola, user?.balance]);
 
-  // Salvar no backend e cobrar saldo
   const handleSave = useCallback(async () => {
     setIsExporting(true);
     try {
@@ -211,107 +131,59 @@ export default function HistoricoSP() {
     finally { setIsExporting(false); }
   }, [fieldMap, updateBalance]);
 
-  // Exportar PDF via iframe isolado (método do RAR)
   const handleExportPDF = useCallback(async () => {
-    setIsDownloading(true);
-    let iframe: HTMLIFrameElement | null = null;
-    let releaseByAfterPrint = false;
-
+    if (!previewRef.current) return;
     try {
-      const exportSourcePage = document.getElementById("doc-page-sp-export") as HTMLElement | null;
-      if (!exportSourcePage) throw new Error("Layout base não encontrado para exportação.");
-
-      await waitForImagesInElement(exportSourcePage);
-      await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
-      const imageMap = await preloadPageImagesAsBase64(exportSourcePage);
-
-      iframe = document.createElement("iframe");
-      iframe.style.cssText = `position:fixed;left:-99999px;top:0;width:210mm;height:297mm;border:none;background:#fff;`;
-      document.body.appendChild(iframe);
-
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-      if (!iframeDoc) throw new Error("Falha ao preparar ambiente isolado para exportação.");
-
-      const captureNode = exportSourcePage.cloneNode(true) as HTMLElement;
-      captureNode.id = "doc-page-sp-capture";
-      const captureHtml = replaceImageUrls(captureNode.outerHTML, imageMap);
-
-      iframeDoc.open();
-      iframeDoc.write(`<!DOCTYPE html><html><head><meta charset="utf-8"/><style>${buildSPExportIframeCSS()}</style></head><body><div class="sp-export-shell">${captureHtml}</div></body></html>`);
-      iframeDoc.close();
-
-      const iframeCapturePage = iframeDoc.getElementById("doc-page-sp-capture") as HTMLElement | null;
-      if (!iframeCapturePage) throw new Error("Não foi possível montar a página para exportação.");
-
-      await waitForImagesInElement(iframeCapturePage);
-      await new Promise((resolve) => setTimeout(resolve, 150));
-
-      const fileBaseName = `HISTORICO_ESCOLAR_${normalizeFileSegment(fieldMap.nome_aluno || "DOCUMENTO")}`;
-      iframeDoc.title = fileBaseName;
-
-      const frameWindow = iframe.contentWindow;
-      if (!frameWindow) throw new Error("Não foi possível abrir o contexto de impressão.");
-
-      releaseByAfterPrint = true;
-      let cleanedUp = false;
-      let fallbackTimer = 0;
-      const cleanup = () => {
-        if (cleanedUp) return;
-        cleanedUp = true;
-        if (fallbackTimer) window.clearTimeout(fallbackTimer);
-        if (iframe && document.body.contains(iframe)) document.body.removeChild(iframe);
-        iframe = null;
-      };
-      frameWindow.onafterprint = cleanup;
-      fallbackTimer = window.setTimeout(cleanup, 120000);
-      frameWindow.focus();
-      frameWindow.print();
-      toast.success("Janela de impressão aberta. Use 'Salvar como PDF' no Chrome.");
+      await exportPDF(previewRef.current, {
+        filename: generatePDFFilename(fieldMap.nome_aluno || "DOCUMENTO", "historico-sp"),
+        docType: "historico-sp",
+      });
+      toast.success("PDF gerado com sucesso!");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Erro desconhecido";
-      toast.error("Erro ao preparar impressão PDF: " + message);
-    } finally {
-      if (!releaseByAfterPrint && iframe && document.body.contains(iframe)) document.body.removeChild(iframe);
-      setIsDownloading(false);
+      toast.error("Erro ao exportar PDF.");
     }
-  }, [fieldMap.nome_aluno]);
+  }, [exportPDF, fieldMap.nome_aluno]);
 
   return (
     <DashboardLayout>
-      <div className="h-[calc(100vh-64px)] flex flex-col overflow-hidden bg-[#0a0a0f]">
-        {/* Top Bar */}
-        <header className="h-12 border-b border-[#1a1a2a] bg-[#0d0d14] flex items-center px-4 gap-3 shrink-0">
+      <div className="h-[calc(100vh-64px)] flex flex-col overflow-hidden bg-white font-sans">
+        {/* Header no estilo AtestadoCria */}
+        <header className="h-14 bg-[#d97706] flex items-center px-6 gap-4 shrink-0 shadow-md z-10">
           <button
             onClick={() => setLocation("/dashboard")}
-            className="flex items-center gap-1 text-[#666688] hover:text-white text-sm px-2 py-1 rounded transition-colors"
+            className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all"
           >
-            <ArrowLeft size={15} className="mr-1" /> Voltar
+            <ArrowLeft size={14} /> VOLTAR
           </button>
-          <div className="h-6 w-px bg-[#2a2a3a]" />
-          <h1 className="text-sm font-semibold tracking-wide text-white">
-            Histórico Escolar SP — Visualizador Interativo
+          <div className="h-8 w-px bg-white/20" />
+          <h1 className="text-sm font-black tracking-tight text-white uppercase italic">
+            DocMaster <span className="font-light mx-1">|</span> Histórico Escolar SP
           </h1>
-          <div className="ml-auto flex items-center gap-2">
-            {modifiedCount > 0 && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-900/50 text-emerald-400 font-medium">
-                {modifiedCount} alterações
-              </span>
-            )}
+          
+          <div className="ml-auto flex items-center gap-3">
+             <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/10 border border-white/10">
+                <AlertCircle size={14} className="text-amber-200" />
+                <span className="text-[10px] font-bold text-white uppercase tracking-wider">Auto-deleção em 60 dias</span>
+             </div>
             <button
-              className="flex items-center gap-1 text-xs h-7 px-3 rounded bg-gradient-to-r from-[#2d8c4e] to-[#1a6b35] hover:from-[#35a05a] hover:to-[#1f7a3e] text-white font-semibold transition-all disabled:opacity-60"
+              className={`flex items-center gap-2 text-xs font-black h-9 px-5 rounded-xl transition-all shadow-lg active:scale-95 ${
+                saved 
+                ? "bg-emerald-500 text-white" 
+                : "bg-white text-amber-700 hover:bg-amber-50 shadow-amber-900/20"
+              }`}
               onClick={handleRequestEmit}
               disabled={isExporting || saved}
             >
-              <Download size={13} className="mr-1" />
-              {saved ? "✅ Emitido" : isExporting ? "Processando..." : "Emitir e Exportar PDF"}
+              <Download size={14} />
+              {saved ? "DOCUMENTO EMITIDO" : isExporting ? "PROCESSANDO..." : "EMITIR E EXPORTAR"}
             </button>
           </div>
         </header>
 
-        <div className="flex flex-1 overflow-hidden">
-          {sidebarOpen && (
-            <aside className="w-80 border-r border-[#1a1a2a] bg-[#0d0d14] shrink-0 flex flex-col overflow-hidden">
-              <SPSubstitutionPanel
+        <div className="flex flex-1 overflow-hidden bg-gray-50">
+          {/* Coluna de Formulário (Left) */}
+          <aside className={`transition-all duration-300 border-r border-gray-200 bg-white shadow-xl z-10 flex flex-col ${sidebarOpen ? "w-[400px]" : "w-0 overflow-hidden"}`}>
+             <SPSubstitutionPanel
                 fields={fields}
                 modifiedCount={modifiedCount}
                 importText={importText}
@@ -334,39 +206,48 @@ export default function HistoricoSP() {
                 hasCustomAssinaturaGerente={!!assinaturaGerenteUrl}
                 hasCustomAssinaturaDiretor={!!assinaturaDiretorUrl}
               />
-            </aside>
-          )}
+          </aside>
 
-          <main className="flex-1 flex flex-col overflow-hidden">
-            <div className="h-10 border-b border-[#1a1a2a] bg-[#0a0a0f]/50 flex items-center px-3 gap-2 shrink-0">
+          {/* Coluna de Preview (Right) */}
+          <main className="flex-1 flex flex-col overflow-hidden relative">
+            {/* Toolbar do Preview */}
+            <div className="h-12 border-b border-gray-200 bg-white flex items-center px-4 gap-4 shrink-0 shadow-sm relative z-0">
               <button
-                className="h-7 w-7 p-0 flex items-center justify-center text-[#666688] hover:text-white rounded transition-colors"
+                className="h-8 w-8 flex items-center justify-center text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
                 onClick={() => setSidebarOpen(!sidebarOpen)}
+                title={sidebarOpen ? "Recolher Editor" : "Expandir Editor"}
               >
-                {sidebarOpen ? <PanelLeftClose size={15} /> : <PanelLeft size={15} />}
+                {sidebarOpen ? <PanelLeftClose size={18} /> : <PanelLeft size={18} />}
               </button>
-              <div className="h-4 w-px bg-[#2a2a3a] mx-1" />
-              <span className="text-xs text-[#555566]">Histórico Escolar – Ensino Médio (SP)</span>
-              <div className="ml-auto flex items-center gap-1">
-                <button
-                  className="h-7 w-7 p-0 flex items-center justify-center text-[#666688] hover:text-white rounded transition-colors"
-                  onClick={() => setZoom(Math.max(0.4, zoom - 0.1))}
-                >
-                  <ZoomOut size={14} />
-                </button>
-                <span className="text-xs text-[#aaaacc] w-10 text-center">{Math.round(zoom * 100)}%</span>
-                <button
-                  className="h-7 w-7 p-0 flex items-center justify-center text-[#666688] hover:text-white rounded transition-colors"
-                  onClick={() => setZoom(Math.min(1.5, zoom + 0.1))}
-                >
-                  <ZoomIn size={14} />
-                </button>
+              <div className="h-6 w-px bg-gray-200" />
+              <div className="flex items-center gap-2">
+                 <FileText size={16} className="text-gray-400" />
+                 <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Visualização em Tempo Real</span>
+              </div>
+
+              <div className="ml-auto flex items-center gap-3">
+                <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                  <button
+                    className="h-7 w-7 flex items-center justify-center text-gray-500 hover:text-amber-600 hover:bg-white rounded-md transition-all"
+                    onClick={() => setZoom(Math.max(0.4, zoom - 0.1))}
+                  >
+                    <ZoomOut size={16} />
+                  </button>
+                  <span className="text-[10px] font-black text-gray-600 min-w-[36px] text-center">{Math.round(zoom * 100)}%</span>
+                  <button
+                    className="h-7 w-7 flex items-center justify-center text-gray-500 hover:text-amber-600 hover:bg-white rounded-md transition-all"
+                    onClick={() => setZoom(Math.min(1.5, zoom + 0.1))}
+                  >
+                    <ZoomIn size={16} />
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div className="flex-1 overflow-auto flex justify-center py-6" style={{ background: "#e8e8e8" }}>
-              <div style={{ transform: `scale(${zoom})`, transformOrigin: "top center" }}>
-                <div style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.15), 0 1px 4px rgba(0,0,0,0.1)", borderRadius: 2 }}>
+            {/* Documento Centralizado */}
+            <div className="flex-1 overflow-auto flex justify-center py-10 custom-scrollbar bg-[#e5e7eb]">
+              <div style={{ transform: `scale(${zoom})`, transformOrigin: "top center", transition: "transform 0.2s ease-out" }}>
+                <div className="bg-white shadow-[0_20px_50px_rgba(0,0,0,0.2)] rounded-sm overflow-hidden" ref={previewRef}>
                   <SPPage1
                     f={fieldMap}
                     highlightModified={showHighlights}
@@ -379,27 +260,15 @@ export default function HistoricoSP() {
                 </div>
               </div>
             </div>
+            
+            {/* Aviso Flutuante */}
+            {!saved && (
+               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-gray-900/80 backdrop-blur-md text-white px-4 py-2 rounded-full text-[10px] font-bold flex items-center gap-2 shadow-2xl z-20 border border-white/10">
+                  <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                  EDIÇÃO ATIVA: O DOCUMENTO SERÁ GERADO COM OS DADOS AO LADO
+               </div>
+            )}
           </main>
-        </div>
-
-        {/* Base real de exportação (fora do zoom) */}
-        <div
-          aria-hidden
-          style={{
-            position: "fixed", left: "-99999px", top: 0,
-            width: "210mm", height: "297mm",
-            opacity: 0, pointerEvents: "none", overflow: "hidden", background: "#fff",
-          }}
-        >
-          <SPPage1
-            f={fieldMap}
-            highlightModified={false}
-            grades={currentGrades}
-            brasaoUrl={brasaoUrl || undefined}
-            assinaturaGerenteUrl={assinaturaGerenteUrl || undefined}
-            assinaturaDiretorUrl={assinaturaDiretorUrl || undefined}
-            pageId="doc-page-sp-export"
-          />
         </div>
       </div>
 
