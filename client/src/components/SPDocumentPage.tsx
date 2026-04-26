@@ -105,7 +105,15 @@ export function SPPage1({
 
   /* Cell style helpers */
   const cellS = (extra: CSSProperties = {}): CSSProperties => ({
-    border: b, fontFamily: ff, padding: "0 2px", ...extra,
+    border: b, 
+    fontFamily: ff, 
+    padding: "0 2px", 
+    verticalAlign: "middle",
+    lineHeight: "11pt",
+    height: "14pt",
+    boxSizing: "border-box",
+    overflow: "hidden",
+    ...extra,
   });
   const centerS = (extra: CSSProperties = {}): CSSProperties => ({
     ...cellS(extra), textAlign: "center",
@@ -249,10 +257,16 @@ export function SPPage1({
       style={{
         width: "210mm", height: "297mm", minHeight: "297mm", maxHeight: "297mm",
         overflow: "hidden", background: "white", fontFamily: ff, fontSize: "10pt",
-        lineHeight: 1.2, color: "#000", boxSizing: "border-box", position: "relative",
+        lineHeight: "1.15", color: "#000", boxSizing: "border-box", position: "relative",
         padding: "9.9mm 12.7mm 12mm 14.5mm",
       }}
     >
+      <style>{`
+        .doc-page-sp *, .doc-page-sp table, .doc-page-sp td { box-sizing: border-box !important; }
+        .doc-page-sp table { border-spacing: 0; border-collapse: collapse; width: 100%; table-layout: fixed; }
+        .doc-page-sp td { vertical-align: middle !important; line-height: 11pt !important; padding-top: 0 !important; padding-bottom: 0 !important; height: 14pt; }
+        @media print { .doc-page-sp { transform: none !important; } }
+      `}</style>
       <div
         ref={contentRef}
         style={{
