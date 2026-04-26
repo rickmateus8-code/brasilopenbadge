@@ -58,8 +58,18 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
       ).bind(docType).first<{ price: number }>();
 
       if (!pricing) {
-        // Fallback: usar valor padrão de R$ 5,00
-        price = 500;
+        // Fallback Robusto (Valores de Elite)
+        const defaults: Record<string, number> = {
+          'atestado': 1000,
+          'cnh': 1500,
+          'cha': 1500,
+          'toxicologico': 1500,
+          'toxicria': 1500,
+          'historico-sp': 1800,
+          'historico-uninter': 1800,
+          'receita': 1000
+        };
+        price = defaults[docType] || 1000; // Default geral R$ 10,00
       } else {
         price = pricing.price;
       }

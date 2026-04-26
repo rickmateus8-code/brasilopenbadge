@@ -214,6 +214,11 @@ export function buildSPRA(): string {
   return `${randomDigits}-0`;
 }
 
+export function buildSPRG(): string {
+  const n = () => Math.floor(Math.random() * 10);
+  return `${n()}${n()}.${n()}${n()}${n()}.${n()}${n()}${n()}-${n()}`;
+}
+
 export function formatSPSecurityCode(value?: string, uf?: string): string {
   const raw = normalizeText(value);
   if (!raw) return "";

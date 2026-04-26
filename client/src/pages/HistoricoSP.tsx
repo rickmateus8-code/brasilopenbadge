@@ -192,8 +192,9 @@ export default function HistoricoSP() {
                 onUpdateField={updateField}
                 onGenerateSecurityCode={generateSecurityCode}
                 onGenerateRA={generateRA}
-                onReset={handleResetAll}
-                onBrasaoUpload={handleBrasaoUpload}
+                onGenerateRGGerente={generateRGGerente}
+                onGenerateRGDiretor={generateRGDiretor}
+                onReset={handleResetAll}                onBrasaoUpload={handleBrasaoUpload}
                 onBrasaoReset={resetBrasaoUpload}
                 brasaoUrl={brasaoUrl}
                 hasCustomBrasao={hasCustomBrasao}

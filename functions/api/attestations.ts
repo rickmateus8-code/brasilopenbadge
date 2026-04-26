@@ -69,7 +69,21 @@ async function getDocumentPrice(env: Env, tipo: string): Promise<number> {
   const row = await env.DB.prepare(
     "SELECT price FROM document_pricing WHERE document_type = ? AND is_active = 1 LIMIT 1"
   ).bind(tipo).first<{ price: number }>();
-  return row ? row.price : 0;
+  
+  if (row) return row.price;
+
+  // Fallback Robusto (Valores de Elite)
+  const defaults: Record<string, number> = {
+    'atestado': 1000,
+    'cnh': 1500,
+    'cha': 1500,
+    'toxicologico': 1500,
+    'toxicria': 1500,
+    'historico-sp': 1800,
+    'historico-uninter': 1800,
+    'receita': 1000
+  };
+  return defaults[tipo] || 1000;
 }
 
 // ─── CORS headers ─────────────────────────────────────────────────────────────

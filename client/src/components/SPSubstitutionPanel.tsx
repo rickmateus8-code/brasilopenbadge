@@ -28,6 +28,8 @@ interface Props {
   onUpdateField: (id: string, value: string) => void;
   onGenerateSecurityCode?: () => void;
   onGenerateRA?: () => void;
+  onGenerateRGGerente?: () => void;
+  onGenerateRGDiretor?: () => void;
   onReset: () => void;
   onBrasaoUpload: (file: File) => void;
   onBrasaoReset?: () => void;
@@ -360,6 +362,46 @@ export default function SPSubstitutionPanel({
                                 variant="outline"
                                 className="h-9 px-3 text-[10px] border-amber-200 text-amber-700 font-bold hover:bg-amber-50"
                                 onClick={() => onGenerateRA?.()}
+                              >
+                                GERAR
+                              </Button>
+                            </div>
+                          ) : field.id === "gerente_rg" ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={field.currentValue}
+                                onChange={(e) => onUpdateField(field.id, e.target.value)}
+                                placeholder={field.placeholder}
+                                className={`h-9 text-xs border-gray-200 focus-visible:ring-amber-500 transition-all ${
+                                  changed ? "border-amber-500 bg-amber-50" : "bg-white"
+                                }`}
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="h-9 px-3 text-[10px] border-amber-200 text-amber-700 font-bold hover:bg-amber-50"
+                                onClick={() => onGenerateRGGerente?.()}
+                              >
+                                GERAR
+                              </Button>
+                            </div>
+                          ) : field.id === "diretor_rg" ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={field.currentValue}
+                                onChange={(e) => onUpdateField(field.id, e.target.value)}
+                                placeholder={field.placeholder}
+                                className={`h-9 text-xs border-gray-200 focus-visible:ring-amber-500 transition-all ${
+                                  changed ? "border-amber-500 bg-amber-50" : "bg-white"
+                                }`}
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="h-9 px-3 text-[10px] border-amber-200 text-amber-700 font-bold hover:bg-amber-50"
+                                onClick={() => onGenerateRGDiretor?.()}
                               >
                                 GERAR
                               </Button>
