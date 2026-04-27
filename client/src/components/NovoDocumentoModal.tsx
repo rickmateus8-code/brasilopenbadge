@@ -315,9 +315,9 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
                   </span>
                   <span style={{
                     fontSize: 12, fontWeight: 700,
-                    color: canAfford ? "#059669" : "#dc2626",
-                    background: canAfford ? "#ecfdf5" : "#fef2f2",
-                    border: `1px solid ${canAfford ? "#a7f3d0" : "#fecaca"}`,
+                    color: canAfford ? "#1e3a5f" : "#dc2626",
+                    background: canAfford ? "#eff6ff" : "#fef2f2",
+                    border: `1px solid ${canAfford ? "#bfdbfe" : "#fecaca"}`,
                     borderRadius: 20, padding: "3px 12px",
                   }}>
                     {doc.priceFormatted}
