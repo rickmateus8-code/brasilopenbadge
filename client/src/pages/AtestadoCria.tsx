@@ -2158,9 +2158,9 @@ export default function AtestadoCria() {
               🔒 QR Code gerado somente após emissão
             </span>
           </div>
-          <div style={{ flex: 1, overflow: "auto", background: "#e5e7eb", borderRadius: 10, padding: 14, maxHeight: "calc(100vh - 120px)" }}>
+          <div style={{ flex: 1, overflow: "auto", background: "#ffffff", borderRadius: 10, padding: 14, maxHeight: "calc(100vh - 120px)" }}>
             {/* A4: 794px x 1123px @ 96dpi */}
-            <div style={{ width: 794, margin: "0 auto", boxShadow: "0 4px 16px rgba(0,0,0,0.12)" }}>
+            <div style={{ width: 794, margin: "0 auto", boxShadow: "0 4px 16px rgba(0,0,0,0.05)" }}>
               <AttestationDocument
                 ref={previewRef}
                 data={previewData}

@@ -141,8 +141,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           minHeight: `${DOC_HEIGHT_PX}px`,
           height: `${DOC_HEIGHT_PX}px`,
           background: "#ffffff !important",
-          backgroundColor: "#ffffff !important",
-          backgroundAttachment: "fixed",
+          backgroundColor: "#ffffff",
+          background: "#ffffff",
           paddingTop: `${PAD_H}px`,
           paddingBottom: `${PAD_H}px`,
           paddingLeft: `${PAD_V}px`,
@@ -162,7 +162,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%) rotate(-45deg)",
-            fontSize: 100, // Ajustado para ser ~35% maior que o padrão anterior, mantendo legibilidade
+            fontSize: 85, // Reduzido em 15% conforme solicitado
             fontWeight: 900,
             color: "rgba(220, 38, 38, 0.08)", // Vermelho sutil e transparente
             pointerEvents: "none",
