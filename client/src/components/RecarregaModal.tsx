@@ -140,16 +140,16 @@ export default function RecarregaModal({
         {/* Header */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/20 flex items-center justify-center text-[#dc2626]">
+            <div className="w-10 h-10 rounded-xl bg-green-50 dark:bg-green-950/20 flex items-center justify-center text-[#059669]">
               <Wallet className="w-6 h-6" />
             </div>
-            <h2 className="text-2xl font-black text-[#dc2626] tracking-tight m-0">
+            <h2 className="text-2xl font-black text-[#059669] tracking-tight m-0">
               Recarga PIX
             </h2>
           </div>
           <button
             onClick={handleClose}
-            className="w-9 h-9 rounded-full border-none bg-gray-100 dark:bg-white/5 cursor-pointer flex items-center justify-center text-gray-500 hover:text-red-600 transition-colors"
+            className="w-9 h-9 rounded-full border-none bg-gray-100 dark:bg-white/5 cursor-pointer flex items-center justify-center text-gray-500 hover:text-[#059669] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -171,7 +171,7 @@ export default function RecarregaModal({
                   onClick={() => setAmount(val)}
                   className={`group relative py-4 px-4 rounded-2xl font-bold text-sm transition-all border-2 flex flex-col items-center justify-center gap-1 ${
                     amount === val
-                      ? "bg-red-50 border-[#dc2626] text-[#dc2626] dark:bg-red-950/20"
+                      ? "bg-green-50 border-[#059669] text-[#059669] dark:bg-green-950/20"
                       : "bg-white border-gray-100 text-gray-600 hover:border-gray-200 dark:bg-white/5 dark:border-transparent dark:text-gray-400 dark:hover:bg-white/10"
                   }`}
                 >
@@ -192,7 +192,7 @@ export default function RecarregaModal({
                 Ou informe outro valor
               </label>
               <div className="relative group">
-                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 font-black group-focus-within:text-[#dc2626] transition-colors text-xl">
+                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 font-black group-focus-within:text-[#059669] transition-colors text-xl">
                   R$
                 </div>
                 <input
@@ -201,11 +201,11 @@ export default function RecarregaModal({
                   onChange={(e) => setAmount(Number(e.target.value))}
                   min="20"
                   placeholder="0,00"
-                  className="w-full pl-14 pr-6 py-5 bg-gray-50 dark:bg-white/5 border-2 border-transparent focus:border-[#dc2626] focus:bg-white dark:focus:bg-transparent rounded-2xl text-2xl font-black text-gray-900 dark:text-white outline-none transition-all placeholder:text-gray-300 dark:placeholder:text-gray-700"
+                  className="w-full pl-14 pr-6 py-5 bg-gray-50 dark:bg-white/5 border-2 border-transparent focus:border-[#059669] focus:bg-white dark:focus:bg-transparent rounded-2xl text-2xl font-black text-gray-900 dark:text-white outline-none transition-all placeholder:text-gray-300 dark:placeholder:text-gray-700"
                 />
               </div>
               <div className="flex items-center gap-2 mt-3 px-1">
-                <AlertCircle className="w-4 h-4 text-[#dc2626]" />
+                <AlertCircle className="w-4 h-4 text-[#059669]" />
                 <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
                   Mínimo de <span className="text-gray-900 dark:text-gray-200">R$ 20,00</span>
                 </span>
@@ -216,7 +216,7 @@ export default function RecarregaModal({
             <button
               onClick={handleGeneratePix}
               disabled={loading || !amount || amount < 20}
-              className="w-full py-5 bg-[#dc2626] hover:bg-[#b91c1c] disabled:bg-gray-200 dark:disabled:bg-white/5 disabled:text-gray-400 text-white font-black text-base rounded-2xl shadow-xl shadow-red-500/20 transition-all flex items-center justify-center gap-3 mt-4 active:scale-[0.98]"
+              className="w-full py-5 bg-[#059669] hover:bg-[#047857] disabled:bg-gray-200 dark:disabled:bg-white/5 disabled:text-gray-400 text-white font-black text-base rounded-2xl shadow-xl shadow-green-500/20 transition-all flex items-center justify-center gap-3 mt-4 active:scale-[0.98]"
             >
               {loading ? (
                 <>
@@ -235,7 +235,7 @@ export default function RecarregaModal({
             {/* Box do QR Code */}
             <div className="flex flex-col items-center gap-5">
               <div className="bg-white p-6 rounded-[32px] border-2 border-gray-100 dark:border-white/5 shadow-2xl relative overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-tr from-red-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 {pixData?.qr_code_base64 ? (
                   <img
                     src={`data:image/png;base64,${pixData.qr_code_base64}`}
@@ -244,7 +244,7 @@ export default function RecarregaModal({
                   />
                 ) : (
                   <div className="w-52 h-52 flex items-center justify-center bg-gray-50 rounded-2xl">
-                    <Loader2 className="w-10 h-10 animate-spin text-red-500" />
+                    <Loader2 className="w-10 h-10 animate-spin text-green-500" />
                   </div>
                 )}
               </div>
@@ -267,7 +267,7 @@ export default function RecarregaModal({
                 className={`w-full py-5 font-black rounded-2xl transition-all flex items-center justify-center gap-3 border-2 ${
                   copied
                     ? "bg-green-50 border-green-500 text-green-600 dark:bg-green-950/10"
-                    : "bg-white border-gray-200 text-gray-700 hover:border-[#dc2626] hover:text-[#dc2626] dark:bg-white/5 dark:border-white/10 dark:text-gray-300"
+                    : "bg-white border-gray-200 text-gray-700 hover:border-[#059669] hover:text-[#059669] dark:bg-white/5 dark:border-white/10 dark:text-gray-300"
                 }`}
               >
                 {copied ? (
@@ -304,12 +304,12 @@ export default function RecarregaModal({
             </div>
 
             {/* Alerta de confirmação */}
-            <div className="bg-red-50/50 dark:bg-red-950/10 rounded-2xl p-4 flex gap-4 items-start border border-red-100 dark:border-red-900/20">
+            <div className="bg-green-50/50 dark:bg-green-950/10 rounded-2xl p-4 flex gap-4 items-start border border-green-100 dark:border-green-900/20">
               <div className="w-10 h-10 rounded-full bg-white dark:bg-white/5 flex items-center justify-center shrink-0 shadow-sm">
-                <AlertCircle className="w-5 h-5 text-[#dc2626]" />
+                <AlertCircle className="w-5 h-5 text-[#059669]" />
               </div>
-              <p className="text-[13px] text-red-900/70 dark:text-red-300/60 leading-relaxed font-medium">
-                Seu saldo será atualizado <span className="text-[#dc2626] font-bold">automaticamente</span> após a confirmação do pagamento.
+              <p className="text-[13px] text-green-900/70 dark:text-green-300/60 leading-relaxed font-medium">
+                Seu saldo será atualizado <span className="text-[#059669] font-bold">automaticamente</span> após a confirmação do pagamento.
               </p>
             </div>
           </div>

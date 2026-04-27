@@ -473,6 +473,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
       status: "emitido",
     },
     balance: newBalance,
+    newBalance: newBalance,
   }, 201);
 }
 

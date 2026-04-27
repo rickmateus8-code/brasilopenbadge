@@ -162,6 +162,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
     return new Response(JSON.stringify({
       success: true,
       balance: updatedUser?.balance ?? 0,
+      newBalance: updatedUser?.balance ?? 0,
       data: {
         id: docId,
         codigoValidacao,

@@ -244,7 +244,7 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
       >
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: "#1e3a5f", margin: 0 }}>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: "#059669", margin: 0 }}>
             Novo Documento
           </h2>
           <button
@@ -265,12 +265,12 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
 
         {/* Saldo do usuário */}
         <div style={{
-          background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 10,
+          background: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: 10,
           padding: "8px 14px", marginBottom: 20, display: "flex",
           alignItems: "center", gap: 8,
         }}>
-          <Wallet style={{ width: 15, height: 15, color: "#1e3a5f" }} />
-          <span style={{ fontSize: 13, color: "#1e3a5f", fontWeight: 600 }}>
+          <Wallet style={{ width: 15, height: 15, color: "#059669" }} />
+          <span style={{ fontSize: 13, color: "#047857", fontWeight: 600 }}>
             Seu saldo: <strong>R$ {(userBalance / 100).toFixed(2)}</strong>
           </span>
         </div>
@@ -299,8 +299,8 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
                     boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
                   }}
                   onMouseEnter={e => {
-                    e.currentTarget.style.borderColor = "#1e3a5f";
-                    e.currentTarget.style.boxShadow = "0 4px 16px rgba(30,58,95,0.12)";
+                    e.currentTarget.style.borderColor = "#10b981";
+                    e.currentTarget.style.boxShadow = "0 4px 16px rgba(16,185,129,0.12)";
                     e.currentTarget.style.transform = "translateY(-2px)";
                   }}
                   onMouseLeave={e => {
@@ -309,15 +309,15 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
                     e.currentTarget.style.transform = "translateY(0)";
                   }}
                 >
-                  <Icon style={{ width: 28, height: 28, color: "#1e3a5f" }} />
+                  <Icon style={{ width: 28, height: 28, color: "#10b981" }} />
                   <span style={{ fontSize: 13, fontWeight: 700, color: "#111827", lineHeight: 1.3 }}>
                     {doc.label}
                   </span>
                   <span style={{
                     fontSize: 12, fontWeight: 700,
-                    color: canAfford ? "#1e3a5f" : "#dc2626",
-                    background: canAfford ? "#eff6ff" : "#fef2f2",
-                    border: `1px solid ${canAfford ? "#bfdbfe" : "#fecaca"}`,
+                    color: canAfford ? "#059669" : "#dc2626",
+                    background: canAfford ? "#ecfdf5" : "#fef2f2",
+                    border: `1px solid ${canAfford ? "#a7f3d0" : "#fecaca"}`,
                     borderRadius: 20, padding: "3px 12px",
                   }}>
                     {doc.priceFormatted}

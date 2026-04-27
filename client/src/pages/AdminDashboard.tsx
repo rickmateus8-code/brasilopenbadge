@@ -1207,7 +1207,7 @@ export default function AdminDashboard() {
 	                <option value="user">Usuários</option>
 	                <option value="admin">Admins</option>
 	              </select>
-	              <button onClick={() => loadUsers(showPasswords)} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="Atualizar">
+	              <button onClick={() => loadUsers(showPasswords)} style={{ display: "none" }} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="Atualizar">
 	                <RefreshCw className="w-4 h-4" />
 	              </button>
               <button
@@ -1803,7 +1803,7 @@ export default function AdminDashboard() {
                   </button>
                 ))}
               </div>
-              <button onClick={loadLogs} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors" title="Atualizar">
+              <button onClick={loadLogs} style={{ display: "none" }} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors" title="Atualizar">
                 <RefreshCw className="w-4 h-4" />
               </button>
               <button onClick={() => clearLogs("all")} className="flex items-center gap-1 px-3 py-2 rounded-xl bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-200 transition-colors text-xs font-semibold" title="Limpar todos os logs">

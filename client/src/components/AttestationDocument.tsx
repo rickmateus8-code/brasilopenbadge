@@ -142,7 +142,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           height: `${DOC_HEIGHT_PX}px`,
           background: "#ffffff !important",
           backgroundColor: "#ffffff !important",
-          backgroundAttachment: "fixed", // Prevenir qualquer vazamento de cor de fundo externa
+          backgroundAttachment: "fixed",
           paddingTop: `${PAD_H}px`,
           paddingBottom: `${PAD_H}px`,
           paddingLeft: `${PAD_V}px`,
@@ -162,15 +162,15 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%) rotate(-45deg)",
-            fontSize: 110,
+            fontSize: 100, // Ajustado para ser ~35% maior que o padrão anterior, mantendo legibilidade
             fontWeight: 900,
-            color: "rgba(0, 0, 0, 0.04)",
+            color: "rgba(220, 38, 38, 0.08)", // Vermelho sutil e transparente
             pointerEvents: "none",
             userSelect: "none",
             whiteSpace: "nowrap",
-            zIndex: 0, // Atrás do texto
+            zIndex: 0, // No background, não sobrepõe textos
           }}>
-            NÃO EMITIDO
+            INVALIDO - NÃO EMITIDO - PRÉVIA
           </div>
         )}
         <style>{`
@@ -362,7 +362,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         {/* ===== CORPO DO TEXTO ===== */}
         <div style={{
           flex: "1 1 auto",
-          fontSize: 13,
+          fontSize: 14.04, // Aumentado em 8% (13 * 1.08)
           lineHeight: 1.9,
           textAlign: "justify",
           position: "relative",
@@ -385,7 +385,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           {cidDisplay && (
             <div style={{
               fontWeight: 700,
-              fontSize: 11,
+              fontSize: 13, // Ajustado para 13px conforme solicitado
               marginTop: 28,
               color: "#000",
               textTransform: "uppercase",
@@ -423,7 +423,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               paddingLeft: 0,
               paddingRight: 0,
             }}>
-              {/* Esquerda: cidade/data + URL validação — AJUSTADO PARA NÃO ULTRAPASSAR LIMITE INFERIOR */}
+              {/* Esquerda: cidade/data + URL validação — AJUSTADO PARA ALINHAMENTO PERFEITO NA BASE */}
               <div style={{ 
                 color: "#000", 
                 lineHeight: 1.2, 
@@ -436,7 +436,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 height: 111, 
                 boxSizing: "border-box", 
                 paddingLeft: 2,
-                paddingBottom: 4 // Aumentado para subir o texto e respeitar o limite inferior
+                paddingBottom: 0 // Removido padding para alinhar com o fundo da moldura
               }}>
                 <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.42, marginBottom: 3 }}>
                   {dataFormatada || data.dataEmissao}
