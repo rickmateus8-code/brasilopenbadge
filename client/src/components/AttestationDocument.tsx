@@ -155,6 +155,24 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           overflow: "hidden",
         }}
       >
+        {/* Marca d'água para Preview — Não interfere no texto real nem na exportação final se o ID for real */}
+        {(data.id === "XXXX.XXXX" || (data as any).codigoQR === "XXXX.XXXX") && (
+          <div style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%) rotate(-45deg)",
+            fontSize: 110,
+            fontWeight: 900,
+            color: "rgba(0, 0, 0, 0.04)",
+            pointerEvents: "none",
+            userSelect: "none",
+            whiteSpace: "nowrap",
+            zIndex: 0, // Atrás do texto
+          }}>
+            NÃO EMITIDO
+          </div>
+        )}
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Herr+Von+Muellerhoff&family=Courier+Prime:wght@400;700&display=swap');
           #attestation-document * { box-sizing: border-box; }
