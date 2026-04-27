@@ -151,6 +151,22 @@ async function apiFetch(path: string) {
 }
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
+const ESTADOS_SIGLAS: Record<string, string> = {
+  "ACRE": "AC", "ALAGOAS": "AL", "AMAPA": "AP", "AMAZONAS": "AM", "BAHIA": "BA",
+  "CEARA": "CE", "DISTRITO FEDERAL": "DF", "ESPIRITO SANTO": "ES", "GOIAS": "GO",
+  "MARANHAO": "MA", "MATO GROSSO": "MT", "MATO GROSSO DO SUL": "MS", "MINAS GERAIS": "MG",
+  "PARA": "PA", "PARAIBA": "PB", "PARANA": "PR", "PERNAMBUCO": "PE", "PIAUI": "PI",
+  "RIO DE JANEIRO": "RJ", "RIO GRANDE DO NORTE": "RN", "RIO GRANDE DO SUL": "RS",
+  "RONDONIA": "RO", "RORAIMA": "RR", "SANTA CATARINA": "SC", "SAO PAULO": "SP",
+  "SERGIPE": "SE", "TOCANTINS": "TO"
+};
+
+function converterEstadoParaSigla(nomeEstado: string): string {
+  if (!nomeEstado) return "";
+  const nomeNorm = nomeEstado.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toUpperCase();
+  return ESTADOS_SIGLAS[nomeNorm] || nomeNorm;
+}
+
 const UFS = [
   "AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT",
   "PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO",
@@ -471,24 +487,25 @@ export default function AtestadoCria() {
       }
       const d = data.data;
       // Preencher dados do paciente
+      const siglaUF = converterEstadoParaSigla(d.uf || "");
       setForm(p => ({
         ...p,
         paciente: d.nome || p.paciente,
         nascimento: d.nascimento || p.nascimento,
         sexo: (d.sexo as "MALE" | "FEMALE") || p.sexo,
         nomeMae: d.nomeMae || p.nomeMae,
-        // Se Snoop retornou endereço completo, preencher também
+        // Formato final: {ENDEREÇO}, {NUMERO} - {BAIRRO}, {CIDADE}/{UF}
         endereco: d.endereco
           ? [
               `${d.endereco}${d.numero ? `, ${d.numero}` : ", S/N"}`,
-              [d.bairro, d.cidade && d.uf ? `${d.cidade}/${d.uf}` : (d.cidade || "")].filter(Boolean).join(", "),
-            ].filter(Boolean).join(" - ")
+              [d.bairro, d.cidade && siglaUF ? `${d.cidade}/${siglaUF}` : (d.cidade || "")].filter(Boolean).join(", "),
+            ].filter(Boolean).join(" - ").toUpperCase()
           : p.endereco,
         // Preencher cidade de emissão se disponivel
-        cidade: d.cidade || p.cidade,
+        cidade: d.cidade ? d.cidade.toUpperCase() : p.cidade,
       }));
       // Preencher UF se disponivel
-      if (d.uf) setCepUFPreenchida(d.uf);
+      if (siglaUF) setCepUFPreenchida(siglaUF);
       // Preencher CEP do paciente se disponivel
       if (d.cep) {
         const cepNum = d.cep.replace(/\D/g, "");
