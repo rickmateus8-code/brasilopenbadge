@@ -253,7 +253,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         {/* ===== TÍTULO ===== */}
         <div style={{
           fontWeight: 900,
-          fontSize: 21,
+          fontSize: 22.05, // Aumentado em 5% (21 * 1.05)
           textTransform: "uppercase",
           borderTop: "none",
           borderBottom: "none",
@@ -262,24 +262,17 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           width: "100%",
           textAlign: "center",
           marginTop: 12,
-          marginBottom: 8,
-          letterSpacing: 0.5,
+          marginBottom: 2, // Reduzido conforme solicitado
+          letterSpacing: 0, // Reduzido conforme solicitado
           position: "relative",
           zIndex: 2,
           color: "#000",
           flexShrink: 0,
         }}>
           {docType === 'laudo' ? (
-            <>
-              {prefeituraLabel && (
-                <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4, color: "#000" }}>
-                  {prefeituraLabel}
-                </div>
-              )}
-              <div style={{ fontSize: 21, fontWeight: 900 }}>LAUDO MÉDICO</div>
-            </>
+            <div style={{ fontSize: 22.05, fontWeight: 900 }}>LAUDO MÉDICO</div>
           ) : (
-            <div style={{ fontSize: 21, fontWeight: 900 }}>ATESTADO MÉDICO</div>
+            <div style={{ fontSize: 22.05, fontWeight: 900 }}>ATESTADO MÉDICO</div>
           )}
         </div>
 
@@ -362,7 +355,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         {/* ===== CORPO DO TEXTO ===== */}
         <div style={{
           flex: "1 1 auto",
-          fontSize: 14.04, // Aumentado em 8% (13 * 1.08)
+          fontSize: 14.74, // Aumentado em 5% (14.04 * 1.05)
           lineHeight: 1.9,
           textAlign: "justify",
           position: "relative",
@@ -385,7 +378,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           {cidDisplay && (
             <div style={{
               fontWeight: 700,
-              fontSize: 13, // Ajustado para 13px conforme solicitado
+              fontSize: 13.26, // Aumentado em 2% (13 * 1.02)
               marginTop: 28,
               color: "#000",
               textTransform: "uppercase",
@@ -436,7 +429,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 height: 111, 
                 boxSizing: "border-box", 
                 paddingLeft: 2,
-                paddingBottom: 0 // Removido padding para alinhar com o fundo da moldura
+                paddingBottom: 2, // Espaçamento de segurança para não ultrapassar a linha inferior
+                overflow: "hidden" // Garantir que o texto nunca vaze para baixo
               }}>
                 <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.42, marginBottom: 3 }}>
                   {dataFormatada || data.dataEmissao}
