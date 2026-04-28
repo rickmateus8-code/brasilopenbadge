@@ -688,35 +688,45 @@ export default function AtestadoEditar() {
   const [zoomScale, setZoomScale] = useState(0.65);
   const [zoomTranslateY, setZoomTranslateY] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
+  const [previewMode, setPreviewMode] = useState<"auto" | "full">("auto");
 
   // Calcula a escala "Fit" exata para o container atual
   const getFitScale = useCallback(() => {
     const container = document.getElementById("preview-container");
     if (!container) return 0.65;
-    const padding = 28; // 14px * 2
+    const padding = 20; 
     const availableWidth = container.offsetWidth - padding;
     const availableHeight = container.offsetHeight - padding;
     const scaleX = availableWidth / 794;
     const scaleY = availableHeight / 1123;
-    // O fit scale é o menor entre as proporções para garantir que cabe inteiro, limite máx 0.8 para não ficar gigante
-    return Math.min(scaleX, scaleY, 0.8);
+    // Sem limite de 0.8: em monitores grandes o A4 deve crescer até 1.0 (tamanho real)
+    return Math.min(scaleX, scaleY, 1.0);
   }, []);
 
   // Função para calcular o Zoom e Deslocamento para focar em uma seção
   const scrollToPreviewSection = (sectionId: string) => {
+    if (previewMode === "full") return; // Não movimenta se estiver em modo "Ver Inteiro"
+
     const container = document.getElementById("preview-container");
     const docElement = document.getElementById("attestation-document");
     const targetElement = document.getElementById(sectionId);
 
     if (container && docElement && targetElement) {
       const containerHeight = container.offsetHeight;
+      const containerWidth = container.offsetWidth;
       
       const relativeTop = targetElement.offsetTop;
       const elementHeight = targetElement.offsetHeight;
 
-      // Escala de Foco (Zoom In) - Dinâmica baseada no Fit Scale
+      // Escala de Foco (Zoom In)
+      // LIMITE RIGOROSO: A escala de foco NUNCA pode ultrapassar a largura do container
+      const padding = 20;
+      const maxScaleX = (containerWidth - padding) / 794;
+      
       const fitScale = getFitScale();
-      const focusScale = Math.min(fitScale * 1.5, 0.98); 
+      // Em telas pequenas, o focusScale é travado no maxScaleX (margens perfeitas)
+      // Em telas grandes, damos um leve zoom (25% a mais) mas travamos no 0.98 para estabilidade
+      const focusScale = Math.min(fitScale * 1.25, maxScaleX, 0.98); 
       
       const targetY = (containerHeight / 2) - (relativeTop * focusScale) - ((elementHeight * focusScale) / 2);
 
@@ -733,19 +743,25 @@ export default function AtestadoEditar() {
     setIsFocused(false);
   };
 
+  // Resetar zoom quando alternar para modo "Ver Inteiro"
+  useEffect(() => {
+    if (previewMode === "full") {
+      resetPreviewZoom();
+    }
+  }, [previewMode, getFitScale]);
+
   // Ajustar escala inicial e ao redimensionar
   useEffect(() => {
     const handleResize = () => {
-      if (!isFocused) setZoomScale(getFitScale());
+      if (!isFocused || previewMode === "full") setZoomScale(getFitScale());
     };
     window.addEventListener('resize', handleResize);
-    // Pequeno delay para garantir que o DOM renderizou
     const timer = setTimeout(handleResize, 100);
     return () => {
       window.removeEventListener('resize', handleResize);
       clearTimeout(timer);
     };
-  }, [getFitScale, isFocused]);
+  }, [getFitScale, isFocused, previewMode]);
 
   // ── Atualizar texto do atestado quando dias mudam ──────────────────────────
   useEffect(() => {
@@ -2538,20 +2554,39 @@ export default function AtestadoEditar() {
             marginBottom: 10, padding: "8px 12px", background: "#fff",
             borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
           }}>
-            <span style={{ fontWeight: 700, color: "#374151", fontSize: 14 }}>📄 Preview em Tempo Real</span>
-            <span style={{ fontSize: 11, color: "#6b7280", background: "#fef3c7", padding: "3px 8px", borderRadius: 5, fontWeight: 600 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontWeight: 700, color: "#374151", fontSize: 14 }}>📄 Preview</span>
+              <button 
+                type="button" 
+                onClick={() => setPreviewMode(m => m === "auto" ? "full" : "auto")}
+                style={{
+                  background: previewMode === "auto" ? "#eff6ff" : "#f3f4f6",
+                  border: previewMode === "auto" ? "1px solid #bfdbfe" : "1px solid #d1d5db",
+                  color: previewMode === "auto" ? "#1d4ed8" : "#4b5563",
+                  padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 800, cursor: "pointer",
+                  transition: "all 0.2s"
+                }}
+              >
+                {previewMode === "auto" ? "🔍 Foco Inteligente: ON" : "👁️ Visualizar Inteiro"}
+              </button>
+            </div>
+            <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 600 }}>
               🔒 Código: {codigoQR || "—"}
             </span>
           </div>
-          <div id="preview-container" style={{ flex: 1, overflow: "hidden", background: "#ffffff", borderRadius: 10, padding: 14, maxHeight: "calc(100vh - 120px)" }}>
+          <div id="preview-container" style={{ 
+            flex: 1, overflow: "hidden", background: "#ffffff", borderRadius: 10, 
+            padding: "0 14px", maxHeight: "calc(100vh - 120px)",
+            display: "flex", alignItems: "flex-start", justifyContent: "center"
+          }}>
             {/* A4: 794px x 1123px @ 96dpi */}
             <div style={{ 
               width: 794, 
-              margin: "0 auto", 
+              flexShrink: 0,
               boxShadow: "0 4px 16px rgba(0,0,0,0.05)",
               transform: `scale(${zoomScale}) translateY(${zoomTranslateY}px)`,
               transformOrigin: "top center",
-              transition: "transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1)",
+              transition: "transform 0.85s cubic-bezier(0.22, 1, 0.36, 1)",
             }}>
               <AttestationDocument
                 ref={previewRef}
