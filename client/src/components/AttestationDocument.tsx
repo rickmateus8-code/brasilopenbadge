@@ -140,9 +140,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           width: `${DOC_WIDTH_PX}px`,
           minHeight: `${DOC_HEIGHT_PX}px`,
           height: `${DOC_HEIGHT_PX}px`,
-          background: "#ffffff !important",
           backgroundColor: "#ffffff",
-          background: "#ffffff",
           paddingTop: `${PAD_H}px`,
           paddingBottom: `${PAD_H}px`,
           paddingLeft: `${PAD_V}px`,
@@ -162,7 +160,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%) rotate(-45deg)",
-            fontSize: 54, // Reduzido em 10% conforme solicitado (60 * 0.9)
+            fontSize: 48.6, // Reduzido em 10% (54 * 0.9)
             fontWeight: 900,
             color: "rgba(220, 38, 38, 0.08)", // Vermelho sutil e transparente
             pointerEvents: "none",
@@ -349,10 +347,10 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             zIndex: 2,
             flexShrink: 0,
             marginBottom: 20, 
-            fontWeight: 700,
+            color: "#000",
             textTransform: "uppercase"
           }}>
-            ENDEREÇO EMITENTE: {enderecoEmitente}
+            <span style={{ fontWeight: 700 }}>ENDEREÇO EMITENTE:</span> <span style={{ fontWeight: 400 }}>{enderecoEmitente}</span>
           </div>
         )}
 
@@ -366,7 +364,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           zIndex: 2,
           paddingTop: 48,
           paddingBottom: 8,
-          color: "#111",
+          color: "#000",
           fontWeight: 400,
         }}>
           {/* Parágrafo com recuo extra (+2 espaços) */}
@@ -577,7 +575,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             <div style={{ textAlign: "center", marginTop: 6 }}>
               <div style={{ fontWeight: 700, fontSize: 11, textTransform: "uppercase" }}>{data.medico}</div>
               <div style={{ fontSize: 10 }}>{data.crm}</div>
-              <div style={{ fontSize: 9, color: "#555" }}>{data.especialidade}</div>
+              <div style={{ fontSize: 9, color: "#000" }}>{data.especialidade}</div>
             </div>
           </div>
         )}

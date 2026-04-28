@@ -604,32 +604,48 @@ export default function AtestadoCria() {
     return Math.min(scaleX, scaleY, 1.0);
   }, []);
 
-  // Função para calcular o Zoom e Deslocamento para focar em uma seção
+  // Função para calcular o Zoom e Deslocamento dividindo o Layout em CIMA / BAIXO
   const scrollToPreviewSection = (sectionId: string) => {
-    if (previewMode === "full") return; // Não movimenta se estiver em modo "Ver Inteiro"
+    if (previewMode === "full") return;
 
     const container = document.getElementById("preview-container");
-    const docElement = document.getElementById("attestation-document");
-    const targetElement = document.getElementById(sectionId);
-
-    if (container && docElement && targetElement) {
+    if (container) {
       const containerHeight = container.offsetHeight;
       const containerWidth = container.offsetWidth;
       
-      const relativeTop = targetElement.offsetTop;
-      const elementHeight = targetElement.offsetHeight;
-
-      // Escala de Foco (Zoom In)
-      // LIMITE RIGOROSO: A escala de foco NUNCA pode ultrapassar a largura do container
       const padding = 20;
       const maxScaleX = (containerWidth - padding) / 794;
       
-      const fitScale = getFitScale();
-      // Em telas pequenas, o focusScale é travado no maxScaleX (margens perfeitas)
-      // Em telas grandes, damos um leve zoom (25% a mais) mas travamos no 0.98 para estabilidade
-      const focusScale = Math.min(fitScale * 1.25, maxScaleX, 0.98); 
+      // Zoom dinâmico: aproveita a largura máxima do container, limitado a 1.25 para telas extra-largas
+      const focusScale = Math.min(maxScaleX, 1.25); 
       
-      const targetY = (containerHeight / 2) - (relativeTop * focusScale) - ((elementHeight * focusScale) / 2);
+      // Flexbox offset: O container alinha ao centro. O transform-origin é top center.
+      // O topo físico do A4 sem scale fica em (containerHeight - 1123) / 2
+      const flexTopOffset = (containerHeight - 1123) / 2;
+
+      // Divisão em 2 partes: CIMA (Header, Paciente, Topo) e BAIXO (Corpo, Footer)
+      const isTopHalf = sectionId === "preview-header" || sectionId === "preview-patient" || sectionId === "preview-top";
+      
+      let targetY = 0;
+      if (isTopHalf) {
+        // CIMA: alinhar o topo do A4 escalado com o topo do container (com padding)
+        const currentScaledTop = flexTopOffset; 
+        const desiredTop = padding;
+        const screenTranslationNeeded = desiredTop - currentScaledTop;
+        targetY = screenTranslationNeeded / focusScale;
+      } else {
+        // BAIXO: alinhar a base do A4 escalado com a base do container (com padding)
+        const currentScaledBottom = flexTopOffset + (1123 * focusScale);
+        const desiredBottom = containerHeight - padding;
+        const screenTranslationNeeded = desiredBottom - currentScaledBottom;
+        
+        // Se a tela for alta o suficiente para caber o documento inteiro, não transladar para baixo
+        if (1123 * focusScale < containerHeight - (padding * 2)) {
+          targetY = 0;
+        } else {
+          targetY = screenTranslationNeeded / focusScale;
+        }
+      }
 
       setZoomScale(focusScale);
       setZoomTranslateY(targetY);
