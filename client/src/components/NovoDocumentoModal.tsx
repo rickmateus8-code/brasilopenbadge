@@ -41,6 +41,7 @@ const DOC_ICONS: Record<string, React.ElementType> = {
   "historico-sp": GraduationCap,
   "historico-uninter": GraduationCap,
   receita: Pill,
+  "petition-stj": Scale,
 };
 
 // Mapeamento de rotas por tipo de documento
@@ -53,6 +54,7 @@ const DOC_PATHS: Record<string, string> = {
   "historico-sp": "/historico-sp",
   "historico-uninter": "/historico-uninter",
   receita: "/receitacria",
+  "petition-stj": "/peticao-stj",
 };
 
 export default function NovoDocumentoModal({ open, onClose, userBalance, username }: NovoDocumentoModalProps) {

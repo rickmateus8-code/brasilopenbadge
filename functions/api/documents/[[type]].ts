@@ -50,31 +50,41 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
     const typeParam = Array.isArray(params.type) ? params.type.join('/') : (params.type || '');
     const docType = typeParam.toLowerCase();
 
-    // 2. Buscar preço DINÂMICO do banco D1 (vinculado ao Admin) — nunca hardcoded
+    // 2. Buscar preço DINÂMICO e RETENÇÃO do banco D1 (Prioridade: Usuário > Global)
     let price = 0;
-    if (user.role !== 'admin') {
-      const pricing = await env.DB.prepare(
-        'SELECT price FROM document_pricing WHERE document_type = ? AND is_active = 1 LIMIT 1'
-      ).bind(docType).first<{ price: number }>();
+    let retentionDays = 30; // Default: 30 dias para a maioria
 
-      if (!pricing) {
-        // Fallback Robusto (Valores de Elite)
+    if (user.role !== 'admin') {
+      const config = await env.DB.prepare(
+        `SELECT 
+          COALESCE(udo.price_override, dp.price) as final_price,
+          COALESCE(udo.retention_days, 30) as final_retention,
+          COALESCE(udo.is_visible, 1) as is_visible
+         FROM document_pricing dp
+         LEFT JOIN user_document_overrides udo ON dp.document_type = udo.document_type AND udo.user_id = ?
+         WHERE dp.document_type = ? AND dp.is_active = 1`
+      ).bind(user.id, docType).first<{ final_price: number; final_retention: number; is_visible: number }>();
+
+      if (!config || config.is_visible === 0) {
+        // Fallback robusto se não houver config específica
         const defaults: Record<string, number> = {
-          'atestado': 1000,
-          'cnh': 1500,
-          'cha': 1500,
-          'toxicologico': 1500,
-          'toxicria': 1500,
-          'historico-sp': 1800,
-          'historico-uninter': 1800,
-          'receita': 1000
+          'atestado': 1000, 'cnh': 1500, 'cha': 1500, 'toxicologico': 1500,
+          'toxicria': 1500, 'historico-sp': 1800, 'historico-uninter': 1800,
+          'peticao-stj': 2000, 'receita': 1000
         };
-        price = defaults[docType] || 1000; // Default geral R$ 10,00
+        price = defaults[docType] || 1000;
+        retentionDays = docType === 'peticao-stj' ? 3 : 30; // STJ default 3 dias
       } else {
-        price = pricing.price;
+        price = Math.round(config.final_price * 100); // Converter para centavos se estiver em REAIS
+        retentionDays = config.final_retention;
       }
 
-      // 3. Verificar saldo ANTES de qualquer operação (leitura fresca do banco)
+      // Se for STJ, garantir o máximo de 3 dias solicitado pelo usuário, a menos que o admin mude
+      if (docType === 'peticao-stj' && retentionDays > 3) {
+        retentionDays = 3;
+      }
+
+      // 3. Verificar saldo ANTES de qualquer operação
       const currentUser = await env.DB.prepare(
         'SELECT balance FROM users WHERE id = ? LIMIT 1'
       ).bind(user.id).first<{ balance: number }>();
@@ -83,10 +93,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
       if (currentBalance < price) {
         return new Response(JSON.stringify({
           success: false,
-          error: `Saldo insuficiente. Necessário: R$ ${(price / 100).toFixed(2)}. Disponível: R$ ${(currentBalance / 100).toFixed(2)}. Recarregue seu saldo para continuar.`,
+          error: `Saldo insuficiente. Necessário: R$ ${(price / 100).toFixed(2)}. Disponível: R$ ${(currentBalance / 100).toFixed(2)}.`,
           code: 'INSUFFICIENT_BALANCE',
-          required: price,
-          available: currentBalance,
         }), { status: 402, headers: CORS_HEADERS });
       }
     }
@@ -94,9 +102,15 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
     const body = await request.json() as any;
     const codigoValidacao = generateCode();
     const docId = codigoValidacao;
+    const expiresAt = new Date(Date.now() + retentionDays * 24 * 60 * 60 * 1000).toISOString();
 
-    // 4. Débito ATÔMICO (apenas para não-admin)
-    let newBalance = user.balance; // Default: saldo anterior (para admin)
+    // Limpeza "Lazy" de documentos expirados do usuário atual antes de emitir novo
+    await env.DB.prepare(
+      'DELETE FROM documents WHERE user_id = ? AND expires_at < datetime("now")'
+    ).bind(user.id).run();
+
+    // 4. Débito ATÔMICO
+    let newBalance = user.balance;
     if (user.role !== 'admin' && price > 0) {
       const updated = await env.DB.prepare(
         'UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ? RETURNING balance'

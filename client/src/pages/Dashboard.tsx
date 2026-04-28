@@ -25,6 +25,7 @@ const quickActions = [
   { icon: GraduationCap, label: "Histórico SP", desc: "Emitir histórico escolar SP", path: "/historico-sp", color: "green" },
   { icon: GraduationCap, label: "Histórico UNINTER", desc: "Emitir histórico UNINTER", path: "/historico-uninter", color: "indigo" },
   { icon: Pill, label: "Dr. Consulta", desc: "Emitir receituário médico", path: "/receitacria", color: "violet" },
+  { icon: Scale, label: "STJ Petição", desc: "Emitir petição jurídica STJ", path: "/peticao-stj", color: "indigo" },
 ];
 
 const colorMap: Record<string, { bg: string; text: string; iconBg: string; badge: string }> = {
@@ -45,6 +46,7 @@ const HISTORY_TABS = [
   { key: "historico-sp", label: "Histórico SP", icon: GraduationCap, color: "green" },
   { key: "historico-uninter", label: "UNINTER", icon: GraduationCap, color: "indigo" },
   { key: "receita", label: "Receitas", icon: Pill, color: "violet" },
+  { key: "peticao-stj", label: "Petição STJ", icon: Scale, color: "indigo" },
 ];
 
 const APP_LINKS = {

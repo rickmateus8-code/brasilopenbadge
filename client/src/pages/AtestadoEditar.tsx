@@ -709,6 +709,7 @@ export default function AtestadoEditar() {
   const [zoomTranslateY, setZoomTranslateY] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
   const [previewMode, setPreviewMode] = useState<"auto" | "full">("auto");
+  const [currentSection, setCurrentSection] = useState<"top" | "bottom">("top");
 
   // Calcula a escala "Fit" exata para o container atual
   const getFitScale = useCallback(() => {
@@ -719,57 +720,48 @@ export default function AtestadoEditar() {
     const availableHeight = container.offsetHeight - padding;
     const scaleX = availableWidth / 794;
     const scaleY = availableHeight / 1123;
-    // Sem limite de 0.8: em monitores grandes o A4 deve crescer até 1.0 (tamanho real)
     return Math.min(scaleX, scaleY, 1.0);
   }, []);
 
   // Função para calcular o Zoom e Deslocamento dividindo o Layout em CIMA / BAIXO
-  const scrollToPreviewSection = (sectionId: string) => {
+  const scrollToPreviewSection = useCallback((section: "top" | "bottom") => {
     if (previewMode === "full") return;
 
     const container = document.getElementById("preview-container");
     if (container) {
       const containerHeight = container.offsetHeight;
       const containerWidth = container.offsetWidth;
-      
       const padding = 20;
-      const maxScaleX = (containerWidth - padding) / 794;
       
-      // Zoom dinâmico: aproveita a largura máxima do container, limitado a 1.25 para telas extra-largas
-      const focusScale = Math.min(maxScaleX, 1.25); 
-      
-      // Flexbox offset: O container alinha ao centro. O transform-origin ist top center.
-      // O topo físico do A4 sem scale fica em (containerHeight - 1123) / 2
-      const flexTopOffset = (containerHeight - 1123) / 2;
-
-      // Divisão em 2 partes: CIMA (Header, Paciente, Topo) e BAIXO (Corpo, Footer)
-      const isTopHalf = sectionId === "preview-header" || sectionId === "preview-patient" || sectionId === "preview-top";
+      // Zoom focado: aproveita a largura mas mantém margem
+      const focusScale = Math.min((containerWidth - 40) / 794, 1.1);
       
       let targetY = 0;
-      if (isTopHalf) {
-        // CIMA: alinhar o topo do A4 escalado com o topo do container (com padding)
-        const currentScaledTop = flexTopOffset; 
-        const desiredTop = padding;
-        const screenTranslationNeeded = desiredTop - currentScaledTop;
-        targetY = screenTranslationNeeded / focusScale;
+      if (section === "top") {
+        // Alinha o topo do A4 com o topo do container + padding
+        targetY = padding / focusScale;
       } else {
-        // BAIXO: alinhar a base do A4 escalado com a base do container (com padding)
-        const currentScaledBottom = flexTopOffset + (1123 * focusScale);
-        const desiredBottom = containerHeight - padding;
-        const screenTranslationNeeded = desiredBottom - currentScaledBottom;
-        
-        // Se a tela for alta o suficiente para caber o documento inteiro, não transladar para baixo
-        if (1123 * focusScale < containerHeight - (padding * 2)) {
-          targetY = 0;
-        } else {
-          targetY = screenTranslationNeeded / focusScale;
-        }
+        // Alinha o fundo do A4 com o fundo do container - padding
+        // A altura real do documento escalado é 1123 * focusScale
+        targetY = (containerHeight - padding - (1123 * focusScale)) / focusScale;
       }
 
       setZoomScale(focusScale);
       setZoomTranslateY(targetY);
+      setCurrentSection(section);
       setIsFocused(true);
     }
+  }, [previewMode]);
+
+  const togglePreviewSection = () => {
+    const next = currentSection === "top" ? "bottom" : "top";
+    scrollToPreviewSection(next);
+  };
+
+  // Wrapper para compatibilidade com onFocus antigo que passava IDs
+  const handleFocusSection = (sectionId: string) => {
+    const isTop = sectionId === "preview-header" || sectionId === "preview-patient" || sectionId === "preview-top";
+    scrollToPreviewSection(isTop ? "top" : "bottom");
   };
 
   // Retornar ao estado original (Ver documento inteiro)
@@ -777,6 +769,7 @@ export default function AtestadoEditar() {
     setZoomScale(getFitScale());
     setZoomTranslateY(0);
     setIsFocused(false);
+    setCurrentSection("top");
   };
 
   // Resetar zoom quando alternar para modo "Ver Inteiro"
@@ -1879,7 +1872,7 @@ export default function AtestadoEditar() {
                 </div>)}
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 6 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 6 }}>
                 <div>
                   <label style={lbl}>UF *</label>
                   <SearchSelect
@@ -1887,6 +1880,7 @@ export default function AtestadoEditar() {
                     value={filtroUF}
                     options={UFS}
                     placeholder="UF..."
+                    onFocus={() => handleFocusSection("preview-header")}
                     onChange={(v) => { setFiltroUF(v); setFiltroCidade(""); setFiltroBairro(""); }}
                   />
                 </div>
@@ -1898,6 +1892,7 @@ export default function AtestadoEditar() {
                     options={cidades}
                     placeholder={filtroUF ? "Cidade..." : "Selecione UF primeiro..."}
                     disabled={!filtroUF}
+                    onFocus={() => handleFocusSection("preview-header")}
                     onChange={(v) => { setFiltroCidade(v); setFiltroBairro(""); }}
                   />
                 </div>
@@ -1909,18 +1904,19 @@ export default function AtestadoEditar() {
                     options={bairros}
                     placeholder={filtroCidade ? "Bairro..." : "Selecione cidade primeiro..."}
                     disabled={!filtroCidade}
+                    onFocus={() => handleFocusSection("preview-header")}
                     onChange={(v) => setFiltroBairro(v)}
                   />
                 </div>
                 <div>
                   <label style={lbl}>Especialidade</label>
-                  <select style={sel} value={filtroEsp} onChange={(e) => setFiltroEsp(e.target.value)}>
+                  <select style={sel} value={filtroEsp} onFocus={() => handleFocusSection("preview-header")} onChange={(e) => setFiltroEsp(e.target.value)}>
                     {ESPECIALIDADES.map((e) => <option key={e.value} value={e.value}>{e.label}</option>)}
                   </select>
                 </div>
                 <div style={{ gridColumn: "1 / -1" }}>
                   <label style={lbl}>Local (UPA, Clínica, Hospital...)</label>
-                  <select style={sel} value={filtroLocal} onChange={(e) => setFiltroLocal(e.target.value)}>
+                  <select style={sel} value={filtroLocal} onFocus={() => handleFocusSection("preview-header")} onChange={(e) => setFiltroLocal(e.target.value)}>
                     <option value="">Todos os locais...</option>
                     {locais.map((l) => <option key={l} value={l}>{l}</option>)}
                   </select>
@@ -1930,6 +1926,7 @@ export default function AtestadoEditar() {
                 style={{ ...inp, marginBottom: 8 }}
                 placeholder="DIGITE NOME OU CRM..."
                 value={termoBusca}
+                onFocus={() => handleFocusSection("preview-header")}
                 onChange={(e) => setTermoBusca(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), buscarMedicos())}
               />
@@ -2584,7 +2581,54 @@ export default function AtestadoEditar() {
         </div>
 
         {/* ═══ COLUNA DIREITA — PREVIEW ═══ */}
-        <div className="atestado-preview-col" style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+        <div className="atestado-preview-col" style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, position: "relative" }}>
+          
+          {/* Controles Flutuantes do Preview Inteligente */}
+          <div style={{ 
+            position: "absolute", right: 20, top: "50%", transform: "translateY(-50%)", 
+            display: "flex", flexDirection: "column", gap: 10, zIndex: 100 
+          }}>
+            <button
+              type="button"
+              onClick={() => scrollToPreviewSection("top")}
+              style={{
+                width: 44, height: 44, borderRadius: "50%", background: currentSection === "top" ? "#005CA9" : "#fff",
+                color: currentSection === "top" ? "#fff" : "#005CA9", border: "2px solid #005CA9",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)", cursor: "pointer", display: "flex",
+                alignItems: "center", justifyContent: "center", fontSize: 20, transition: "all 0.2s"
+              }}
+              title="Ver Parte Superior"
+            >
+              ▲
+            </button>
+            <button
+              type="button"
+              onClick={resetPreviewZoom}
+              style={{
+                width: 44, height: 44, borderRadius: "50%", background: !isFocused ? "#005CA9" : "#fff",
+                color: !isFocused ? "#fff" : "#005CA9", border: "2px solid #005CA9",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)", cursor: "pointer", display: "flex",
+                alignItems: "center", justifyContent: "center", fontSize: 18, transition: "all 0.2s"
+              }}
+              title="Ver Documento Inteiro"
+            >
+              🔍
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToPreviewSection("bottom")}
+              style={{
+                width: 44, height: 44, borderRadius: "50%", background: currentSection === "bottom" ? "#005CA9" : "#fff",
+                color: currentSection === "bottom" ? "#fff" : "#005CA9", border: "2px solid #005CA9",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)", cursor: "pointer", display: "flex",
+                alignItems: "center", justifyContent: "center", fontSize: 20, transition: "all 0.2s"
+              }}
+              title="Ver Parte Inferior"
+            >
+              ▼
+            </button>
+          </div>
+
           <div id="preview-container" style={{ 
             flex: 1, overflow: "hidden", background: "#ffffff", borderRadius: 10, 
             padding: "0", maxHeight: "calc(100vh - 84px)", // Altura maximizada

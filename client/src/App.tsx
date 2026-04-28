@@ -103,6 +103,8 @@ import ToxicologicoSalvos from "./pages/ToxicologicoSalvos";
 import ReceitasSalvas from "./pages/ReceitasSalvas";
 import HistoricoSPSalvos from "./pages/HistoricoSPSalvos";
 import HistoricoUNINTERSalvos from "./pages/HistoricoUNINTERSalvos";
+import PetitionSTJCria from "./pages/PetitionSTJCria";
+import PetitionSTJSalvos from "./pages/PetitionSTJSalvos";
 import CNHLanding from "./pages/cnh-validation/CNHLanding";
 import CNHAutorizacao from "./pages/cnh-validation/CNHAutorizacao";
 import CNHPainel from "./pages/cnh-validation/CNHPainel";
@@ -272,6 +274,13 @@ function DocMasterRouter() {
       </Route>
       <Route path="/historico-uninter-salvos">
         <ProtectedRoute component={HistoricoUNINTERSalvos} />
+      </Route>
+
+      <Route path="/peticao-stj">
+        <ProtectedRoute component={PetitionSTJCria} />
+      </Route>
+      <Route path="/peticao-stj-salvos">
+        <ProtectedRoute component={PetitionSTJSalvos} />
       </Route>
 
       {/* Financeiro */}

@@ -610,6 +610,7 @@ export default function AtestadoCria() {
   const [zoomTranslateY, setZoomTranslateY] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
   const [previewMode, setPreviewMode] = useState<"auto" | "full">("auto");
+  const [currentSection, setCurrentSection] = useState<"top" | "bottom">("top");
 
   // Calcula a escala "Fit" exata para o container atual
   const getFitScale = useCallback(() => {
@@ -620,57 +621,49 @@ export default function AtestadoCria() {
     const availableHeight = container.offsetHeight - padding;
     const scaleX = availableWidth / 794;
     const scaleY = availableHeight / 1123;
-    // Sem limite de 0.8: em monitores grandes o A4 deve crescer até 1.0 (tamanho real)
     return Math.min(scaleX, scaleY, 1.0);
   }, []);
 
   // Função para calcular o Zoom e Deslocamento dividindo o Layout em CIMA / BAIXO
-  const scrollToPreviewSection = (sectionId: string) => {
+  const scrollToPreviewSection = useCallback((section: "top" | "bottom") => {
     if (previewMode === "full") return;
 
     const container = document.getElementById("preview-container");
     if (container) {
       const containerHeight = container.offsetHeight;
       const containerWidth = container.offsetWidth;
+      const padding = 15; // Reduzido para ganhar espaço
       
-      const padding = 20;
-      const maxScaleX = (containerWidth - padding) / 794;
-      
-      // Zoom dinâmico: aproveita a largura máxima do container, limitado a 1.25 para telas extra-largas
-      const focusScale = Math.min(maxScaleX, 1.25); 
-      
-      // Flexbox offset: O container alinha ao centro. O transform-origin é top center.
-      // O topo físico do A4 sem scale fica em (containerHeight - 1123) / 2
-      const flexTopOffset = (containerHeight - 1123) / 2;
-
-      // Divisão em 2 partes: CIMA (Header, Paciente, Topo) e BAIXO (Corpo, Footer)
-      const isTopHalf = sectionId === "preview-header" || sectionId === "preview-patient" || sectionId === "preview-top";
+      // Zoom focado: aproveita a largura mas mantém margem lateral pequena
+      const focusScale = Math.min((containerWidth - 30) / 794, 1.05);
       
       let targetY = 0;
-      if (isTopHalf) {
-        // CIMA: alinhar o topo do A4 escalado com o topo do container (com padding)
-        const currentScaledTop = flexTopOffset; 
-        const desiredTop = padding;
-        const screenTranslationNeeded = desiredTop - currentScaledTop;
-        targetY = screenTranslationNeeded / focusScale;
+      if (section === "top") {
+        // Alinha o topo do A4 exatamente com o topo do container (com margem mínima)
+        // O transformOrigin é 'top center', então targetY é o deslocamento físico
+        targetY = padding; 
       } else {
-        // BAIXO: alinhar a base do A4 escalado com a base do container (com padding)
-        const currentScaledBottom = flexTopOffset + (1123 * focusScale);
-        const desiredBottom = containerHeight - padding;
-        const screenTranslationNeeded = desiredBottom - currentScaledBottom;
-        
-        // Se a tela for alta o suficiente para caber o documento inteiro, não transladar para baixo
-        if (1123 * focusScale < containerHeight - (padding * 2)) {
-          targetY = 0;
-        } else {
-          targetY = screenTranslationNeeded / focusScale;
-        }
+        // Alinha o fundo do A4 com o fundo do container
+        // O documento escalado tem 1123 * focusScale de altura
+        const scaledHeight = 1123 * focusScale;
+        targetY = containerHeight - scaledHeight - padding;
       }
 
       setZoomScale(focusScale);
       setZoomTranslateY(targetY);
+      setCurrentSection(section);
       setIsFocused(true);
     }
+  }, [previewMode]);
+
+  // Wrapper para compatibilidade e setas
+  const handleFocusSection = (sectionId: string) => {
+    const isTop = sectionId === "preview-header" || sectionId === "preview-patient" || sectionId === "preview-top";
+    scrollToPreviewSection(isTop ? "top" : "bottom");
+  };
+
+  const togglePreviewSection = () => {
+    scrollToPreviewSection(currentSection === "top" ? "bottom" : "top");
   };
 
   // Retornar ao estado original (Ver documento inteiro)
@@ -678,6 +671,7 @@ export default function AtestadoCria() {
     setZoomScale(getFitScale());
     setZoomTranslateY(0);
     setIsFocused(false);
+    setCurrentSection("top");
   };
 
   // Resetar zoom quando alternar para modo "Ver Inteiro"
@@ -1631,7 +1625,7 @@ export default function AtestadoCria() {
                     value={filtroUF}
                     options={UFS}
                     placeholder="UF..."
-                    onFocus={() => scrollToPreviewSection("preview-header")}
+                    onFocus={() => handleFocusSection("preview-header")}
                     onChange={(v) => { setFiltroUF(v); setFiltroCidade(""); setFiltroBairro(""); }}
                   />
                 </div>
@@ -1643,7 +1637,7 @@ export default function AtestadoCria() {
                     options={cidades}
                     placeholder={filtroUF ? "Cidade..." : "Selecione UF primeiro..."}
                     disabled={!filtroUF}
-                    onFocus={() => scrollToPreviewSection("preview-header")}
+                    onFocus={() => handleFocusSection("preview-header")}
                     onChange={(v) => { setFiltroCidade(v); setFiltroBairro(""); }}
                   />
                 </div>
@@ -1655,7 +1649,7 @@ export default function AtestadoCria() {
                     options={bairros}
                     placeholder={filtroCidade ? "Bairro..." : "Selecione cidade primeiro..."}
                     disabled={!filtroCidade}
-                    onFocus={() => scrollToPreviewSection("preview-header")}
+                    onFocus={() => handleFocusSection("preview-header")}
                     onChange={(v) => setFiltroBairro(v)}
                   />
                 </div>
@@ -1732,7 +1726,7 @@ export default function AtestadoCria() {
                       <input
                         style={inp}
                         value={form.unidade}
-                        onFocus={() => scrollToPreviewSection("preview-header")}
+                        onFocus={() => scrollToPreviewSection("top")}
                         onChange={(e) => setForm(p => ({ ...p, unidade: e.target.value }))}
                         placeholder="Ex: UBS CENTRO, UPA NORTE, HOSPITAL MUNICIPAL"
                       />
@@ -1742,7 +1736,7 @@ export default function AtestadoCria() {
                       <input
                         style={{ ...inp, background: form.enderecoEmitente ? "#fff" : "#f8fafc" }}
                         value={form.enderecoEmitente}
-                        onFocus={() => scrollToPreviewSection("preview-header")}
+                        onFocus={() => scrollToPreviewSection("top")}
                         onChange={(e) => setForm(p => ({ ...p, enderecoEmitente: e.target.value }))}
                         placeholder="Ex: RUA ANTÔNIO WALTER, 66 – CENTRO, VOTORANTIM/SP"
                       />
@@ -1753,7 +1747,7 @@ export default function AtestadoCria() {
                       <input
                         style={inp}
                         value={form.especialidade}
-                        onFocus={() => scrollToPreviewSection("preview-footer")}
+                        onFocus={() => scrollToPreviewSection("bottom")}
                         onChange={(e) => setForm(p => ({ ...p, especialidade: e.target.value }))}
                         placeholder="Ex: CLÍNICO GERAL, PEDIATRA"
                       />
@@ -1764,7 +1758,7 @@ export default function AtestadoCria() {
                       <input
                         style={inp}
                         value={form.medico}
-                        onFocus={() => scrollToPreviewSection("preview-footer")}
+                        onFocus={() => scrollToPreviewSection("bottom")}
                         onChange={(e) => setForm(p => ({ ...p, medico: e.target.value }))}
                         placeholder="DR. NOME SOBRENOME"
                       />
@@ -1774,7 +1768,7 @@ export default function AtestadoCria() {
                       <input
                         style={inp}
                         value={form.crm}
-                        onFocus={() => scrollToPreviewSection("preview-footer")}
+                        onFocus={() => scrollToPreviewSection("bottom")}
                         onChange={(e) => setForm(p => ({ ...p, crm: e.target.value }))}
                         placeholder="CRM/SP 00000"
                       />
@@ -1785,7 +1779,7 @@ export default function AtestadoCria() {
                       <select
                         style={sel}
                         value={signatureColor}
-                        onFocus={() => scrollToPreviewSection("preview-footer")}
+                        onFocus={() => scrollToPreviewSection("bottom")}
                         onChange={(e) => setSignatureColor(e.target.value)}
                       >
                         <option value="#0b109f">🔵 Azul Caneta (Padrão)</option>
@@ -1794,7 +1788,7 @@ export default function AtestadoCria() {
                     </div>
                     <div>
                       <label style={lbl}>USAR FOTO DA ASSINATURA (OPCIONAL)</label>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }} onClick={() => scrollToPreviewSection("preview-footer")}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }} onClick={() => scrollToPreviewSection("bottom")}>
                         {signatureImage ? (
                           <div style={{ position: "relative" }}>
                             <img src={signatureImage} alt="Assinatura" style={{ maxHeight: 65, maxWidth: 208, objectFit: "contain", border: "1px solid #e5e7eb", borderRadius: 6 }} />
@@ -1826,7 +1820,7 @@ export default function AtestadoCria() {
                     <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
                       <button
                         type="button"
-                        onClick={() => { setTipoDoc("CPF"); setForm(p => ({ ...p, docValue: "" })); setCpfStatus("idle"); setCpfMsg(""); scrollToPreviewSection("preview-patient"); }}
+                        onClick={() => { setTipoDoc("CPF"); setForm(p => ({ ...p, docValue: "" })); setCpfStatus("idle"); setCpfMsg(""); scrollToPreviewSection("top"); }}
                         style={{
                           flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
                           background: tipoDoc === "CPF" ? "#005CA9" : "#e2e8f0",
@@ -1838,7 +1832,7 @@ export default function AtestadoCria() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => { setTipoDoc("CNS"); setForm(p => ({ ...p, docValue: "" })); setCpfStatus("idle"); setCpfMsg(""); scrollToPreviewSection("preview-patient"); }}
+                        onClick={() => { setTipoDoc("CNS"); setForm(p => ({ ...p, docValue: "" })); setCpfStatus("idle"); setCpfMsg(""); scrollToPreviewSection("top"); }}
                         style={{
                           flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
                           background: tipoDoc === "CNS" ? "#005CA9" : "#e2e8f0",
@@ -1857,7 +1851,7 @@ export default function AtestadoCria() {
                           paddingRight: tipoDoc === "CPF" && cpfLoading ? 32 : undefined,
                         }}
                         value={form.docValue}
-                        onFocus={() => scrollToPreviewSection("preview-patient")}
+                        onFocus={() => scrollToPreviewSection("top")}
                         onChange={(e) => handleDocInput(e.target.value)}
                         placeholder={tipoDoc === "CPF" ? "000.000.000-00" : "000 0000 0000 0000"}
                         inputMode="numeric"
@@ -1871,7 +1865,7 @@ export default function AtestadoCria() {
                     {tipoDoc === "CPF" && !cpfLoading && validarCPF(form.docValue) && cpfStatus !== "ok" && (
                       <button
                         type="button"
-                        onClick={() => { buscarDadosCPF(form.docValue); scrollToPreviewSection("preview-patient"); }}
+                        onClick={() => { buscarDadosCPF(form.docValue); scrollToPreviewSection("top"); }}
                         style={{
                           marginTop: 6, width: "100%", padding: "8px 0",
                           borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
@@ -1891,7 +1885,7 @@ export default function AtestadoCria() {
                     <input
                       style={{ ...inp, background: cpfStatus === "ok" && form.paciente ? "#f0fdf4" : undefined }}
                       value={form.paciente}
-                      onFocus={() => scrollToPreviewSection("preview-patient")}
+                      onFocus={() => scrollToPreviewSection("top")}
                       onChange={(e) => setForm(p => ({ ...p, paciente: e.target.value }))}
                       placeholder="Nome Completo do Paciente"
                       required
@@ -1907,7 +1901,7 @@ export default function AtestadoCria() {
                       <select
                         style={{ ...sel, background: cpfStatus === "ok" ? "#f0fdf4" : undefined }}
                         value={form.sexo}
-                        onFocus={() => scrollToPreviewSection("preview-patient")}
+                        onFocus={() => scrollToPreviewSection("top")}
                         onChange={(e) => setForm(p => ({ ...p, sexo: e.target.value as "MALE" | "FEMALE" }))}
                       >
                         <option value="FEMALE">Feminino (F)</option>
@@ -1919,7 +1913,7 @@ export default function AtestadoCria() {
                       <input
                         style={{ ...inp, background: cpfStatus === "ok" && form.nascimento ? "#f0fdf4" : undefined }}
                         value={form.nascimento}
-                        onFocus={() => scrollToPreviewSection("preview-patient")}
+                        onFocus={() => scrollToPreviewSection("top")}
                         onChange={(e) => setForm(p => ({ ...p, nascimento: handleDateInput(e.target.value) }))}
                         placeholder="DD/MM/AAAA"
                         maxLength={10}
@@ -1934,7 +1928,7 @@ export default function AtestadoCria() {
                     <input
                       style={{ ...inp, background: cpfStatus === "ok" && form.nomeMae ? "#f0fdf4" : undefined }}
                       value={form.nomeMae}
-                      onFocus={() => scrollToPreviewSection("preview-patient")}
+                      onFocus={() => scrollToPreviewSection("top")}
                       onChange={(e) => setForm(p => ({ ...p, nomeMae: e.target.value }))}
                       placeholder="Nome da Mãe"
                       required
@@ -1947,7 +1941,7 @@ export default function AtestadoCria() {
                       <input
                         style={inp}
                         value={cepPaciente}
-                        onFocus={() => scrollToPreviewSection("preview-patient")}
+                        onFocus={() => scrollToPreviewSection("top")}
                         onChange={(e) => {
                           const v = e.target.value.replace(/\D/g, "").slice(0, 8);
                           const fmt = v.length > 5 ? `${v.slice(0,5)}-${v.slice(5)}` : v;
@@ -1960,14 +1954,14 @@ export default function AtestadoCria() {
                       <input
                         style={{ ...inp, width: 80 }}
                         value={cepNumero}
-                        onFocus={() => scrollToPreviewSection("preview-patient")}
+                        onFocus={() => scrollToPreviewSection("top")}
                         onChange={(e) => setCepNumero(e.target.value)}
                         placeholder="Nº"
                       />
                       <button
                         type="button"
                         style={{ ...btnBlue, padding: "6px 10px", fontSize: 11, whiteSpace: "nowrap" }}
-                        onClick={() => { buscarCEP(cepPaciente); scrollToPreviewSection("preview-patient"); }}
+                        onClick={() => { buscarCEP(cepPaciente); scrollToPreviewSection("top"); }}
                         disabled={cepLoading}
                       >
                         {cepLoading ? "🔄" : "🔍 CEP"}
@@ -1979,7 +1973,7 @@ export default function AtestadoCria() {
                     <input
                       style={inp}
                       value={form.endereco}
-                      onFocus={() => scrollToPreviewSection("preview-patient")}
+                      onFocus={() => scrollToPreviewSection("top")}
                       onChange={(e) => setForm(p => ({ ...p, endereco: e.target.value }))}
                       placeholder="Rua, Número, Bairro, Cidade/UF"
                       required
@@ -1999,7 +1993,7 @@ export default function AtestadoCria() {
                     <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
                       <button
                         type="button"
-                        onClick={() => { setDocumentType('atestado'); scrollToPreviewSection("preview-body"); }}
+                        onClick={() => { setDocumentType('atestado'); scrollToPreviewSection("bottom"); }}
                         style={{
                           flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
                           background: documentType === 'atestado' ? "#005CA9" : "#e2e8f0",
@@ -2011,7 +2005,7 @@ export default function AtestadoCria() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => { setDocumentType('laudo'); scrollToPreviewSection("preview-body"); }}
+                        onClick={() => { setDocumentType('laudo'); scrollToPreviewSection("bottom"); }}
                         style={{
                           flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
                           background: documentType === 'laudo' ? "#005CA9" : "#e2e8f0",
@@ -2030,7 +2024,7 @@ export default function AtestadoCria() {
                     <select
                       style={sel}
                       value={form.afastamento}
-                      onFocus={() => scrollToPreviewSection("preview-body")}
+                      onFocus={() => scrollToPreviewSection("bottom")}
                       onChange={(e) => setForm(p => ({ ...p, afastamento: e.target.value }))}
                     >
                       {Array.from({ length: 15 }, (_, i) => i + 1).map((n) => {
@@ -2050,7 +2044,7 @@ export default function AtestadoCria() {
                     <label style={lbl}>Texto do Atestado</label>
                     <textarea
                       value={form.textoAtestado}
-                      onFocus={() => scrollToPreviewSection("preview-body")}
+                      onFocus={() => scrollToPreviewSection("bottom")}
                       onChange={(e) => setForm(p => ({ ...p, textoAtestado: e.target.value }))}
                       rows={5}
                       style={{ ...inp, resize: "vertical", lineHeight: 1.6 }}
@@ -2061,7 +2055,7 @@ export default function AtestadoCria() {
                     <div>
                     <label style={lbl}>CID — Diagnóstico Rápido</label>
                     <select style={{ ...sel, marginBottom: 6 }} value=""
-                      onFocus={() => scrollToPreviewSection("preview-body")}
+                      onFocus={() => scrollToPreviewSection("bottom")}
                       onChange={(e) => {
                         if (!e.target.value) return;
                         const [code, ...rest] = e.target.value.split(" ");
@@ -2079,13 +2073,13 @@ export default function AtestadoCria() {
                       ))}
                     </select>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 6 }}>
-                      <input style={inp} value={form.cidDisplay} onFocus={() => scrollToPreviewSection("preview-body")} onChange={(e) => setForm(p => ({ ...p, cidDisplay: e.target.value }))} placeholder="Código (Ex: J11)" />
-                      <input style={inp} value={form.cidNome} onFocus={() => scrollToPreviewSection("preview-body")} onChange={(e) => setForm(p => ({ ...p, cidNome: e.target.value }))} placeholder="Nome do CID" />
+                      <input style={inp} value={form.cidDisplay} onFocus={() => scrollToPreviewSection("bottom")} onChange={(e) => setForm(p => ({ ...p, cidDisplay: e.target.value }))} placeholder="Código (Ex: J11)" />
+                      <input style={inp} value={form.cidNome} onFocus={() => scrollToPreviewSection("bottom")} onChange={(e) => setForm(p => ({ ...p, cidNome: e.target.value }))} placeholder="Nome do CID" />
                     </div>
                     </div>
 
                     {/* Modo Carimbo */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0" }} onClick={() => scrollToPreviewSection("preview-footer")}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0" }} onClick={() => scrollToPreviewSection("bottom")}>
                     <label style={{ ...lbl, margin: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
                       <input
                         type="checkbox"
@@ -2109,7 +2103,7 @@ export default function AtestadoCria() {
                       <input
                         style={{ ...inp, paddingRight: cepUFPreenchida ? 28 : undefined }}
                         value={form.cidade}
-                        onFocus={() => scrollToPreviewSection("preview-footer")}
+                        onFocus={() => scrollToPreviewSection("bottom")}
                         onChange={(e) => setForm(p => ({ ...p, cidade: e.target.value.toUpperCase() }))}
                         placeholder="Ex: SÃO PAULO"
                       />
@@ -2121,7 +2115,7 @@ export default function AtestadoCria() {
                       <input
                         style={{ ...inp, textTransform: "uppercase" }}
                         value={cepUFPreenchida}
-                        onFocus={() => scrollToPreviewSection("preview-footer")}
+                        onFocus={() => scrollToPreviewSection("bottom")}
                         onChange={(e) => setCepUFPreenchida(e.target.value.toUpperCase().slice(0, 2))}
                         placeholder="Ex: SP"
                         maxLength={2}
@@ -2131,7 +2125,7 @@ export default function AtestadoCria() {
                     <div style={{ gridColumn: "1 / -1" }}>
                     <label style={lbl}>Data de Emissão *</label>
                     <input style={inp} value={form.dataEmissao}
-                      onFocus={() => scrollToPreviewSection("preview-footer")}
+                      onFocus={() => scrollToPreviewSection("bottom")}
                       onChange={(e) => {
                         const v = handleDateInput(e.target.value);
                         setForm(p => ({ ...p, dataEmissao: v, dataAssinatura: v }));
@@ -2139,7 +2133,7 @@ export default function AtestadoCria() {
                     </div>
                     <div>
                     <label style={lbl}>Hora da Assinatura</label>
-                    <input style={inp} type="time" value={form.horaAssinatura} onFocus={() => scrollToPreviewSection("preview-footer")} onChange={(e) => setForm(p => ({ ...p, horaAssinatura: e.target.value }))} />
+                    <input style={inp} type="time" value={form.horaAssinatura} onFocus={() => scrollToPreviewSection("bottom")} onChange={(e) => setForm(p => ({ ...p, horaAssinatura: e.target.value }))} />
                     </div>
                     </div>
 
@@ -2151,7 +2145,7 @@ export default function AtestadoCria() {
                     <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
                     <button
                       type="button"
-                      onClick={() => { setLogoSide("left"); scrollToPreviewSection("preview-header"); }}
+                      onClick={() => { setLogoSide("left"); scrollToPreviewSection("top"); }}
                       style={{
                         flex: 1, padding: "8px 0", borderRadius: 7, fontWeight: 700, fontSize: 12, cursor: "pointer",
                         background: logoSide === "left" ? "#005CA9" : "#e2e8f0",
@@ -2163,7 +2157,7 @@ export default function AtestadoCria() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => { setLogoSide("right"); scrollToPreviewSection("preview-header"); }}
+                      onClick={() => { setLogoSide("right"); scrollToPreviewSection("top"); }}
                       style={{
                         flex: 1, padding: "8px 0", borderRadius: 7, fontWeight: 700, fontSize: 12, cursor: "pointer",
                         background: logoSide === "right" ? "#005CA9" : "#e2e8f0",
@@ -2180,7 +2174,7 @@ export default function AtestadoCria() {
                     width: "100%", height: 80, border: "2px dashed #d1d5db", borderRadius: 8,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     overflow: "hidden", background: "#f9fafb", marginBottom: 8,
-                    }} onClick={() => scrollToPreviewSection("preview-header")}>
+                    }} onClick={() => scrollToPreviewSection("top")}>
                     {(logoSide === "left" ? logoLeft : logoRight) ? (
                       <img
                         src={logoSide === "left" ? logoLeft : logoRight}
@@ -2199,7 +2193,7 @@ export default function AtestadoCria() {
                       📁 ENVIAR LOGO
                       <input
                         type="file" accept="image/*" style={{ display: "none" }}
-                        onChange={(e) => { handleLogoUpload(logoSide, e); scrollToPreviewSection("preview-header"); }}
+                        onChange={(e) => { handleLogoUpload(logoSide, e); scrollToPreviewSection("top"); }}
                       />
                     </label>
                     <button
@@ -2208,7 +2202,7 @@ export default function AtestadoCria() {
                       onClick={() => {
                         if (logoSide === "left") { setLogoLeft(""); if (logoLeftRef.current) logoLeftRef.current.value = ""; }
                         else { setLogoRight(""); if (logoRightRef.current) logoRightRef.current.value = ""; }
-                        scrollToPreviewSection("preview-header");
+                        scrollToPreviewSection("top");
                       }}
                     >
                       ✕ REMOVER
@@ -2226,7 +2220,7 @@ export default function AtestadoCria() {
                       return (
                         <div
                           key={logo.id}
-                          onClick={() => { logoSide === "left" ? setLogoLeft(logo.src) : setLogoRight(logo.src); scrollToPreviewSection("preview-header"); }}
+                          onClick={() => { logoSide === "left" ? setLogoLeft(logo.src) : setLogoRight(logo.src); scrollToPreviewSection("top"); }}
                           style={{
                             border: isSelected ? "2px solid #005CA9" : "1px solid #e5e7eb",
                             borderRadius: 6, padding: 4, cursor: "pointer", background: isSelected ? "#eff6ff" : "#fff",
@@ -2258,7 +2252,54 @@ export default function AtestadoCria() {
         </div>
 
         {/* ═══ COLUNA DIREITA — PREVIEW ═══ */}
-        <div className="atestado-preview-col" style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+        <div className="atestado-preview-col" style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, position: "relative" }}>
+          
+          {/* Controles Flutuantes do Preview Inteligente */}
+          <div style={{ 
+            position: "absolute", right: 20, top: "50%", transform: "translateY(-50%)", 
+            display: "flex", flexDirection: "column", gap: 10, zIndex: 100 
+          }}>
+            <button
+              type="button"
+              onClick={() => scrollToPreviewSection("top")}
+              style={{
+                width: 44, height: 44, borderRadius: "50%", background: currentSection === "top" ? "#005CA9" : "#fff",
+                color: currentSection === "top" ? "#fff" : "#005CA9", border: "2px solid #005CA9",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)", cursor: "pointer", display: "flex",
+                alignItems: "center", justifyContent: "center", fontSize: 20, transition: "all 0.2s"
+              }}
+              title="Ver Parte Superior"
+            >
+              ▲
+            </button>
+            <button
+              type="button"
+              onClick={resetPreviewZoom}
+              style={{
+                width: 44, height: 44, borderRadius: "50%", background: !isFocused ? "#005CA9" : "#fff",
+                color: !isFocused ? "#fff" : "#005CA9", border: "2px solid #005CA9",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)", cursor: "pointer", display: "flex",
+                alignItems: "center", justifyContent: "center", fontSize: 18, transition: "all 0.2s"
+              }}
+              title="Ver Documento Inteiro"
+            >
+              🔍
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToPreviewSection("bottom")}
+              style={{
+                width: 44, height: 44, borderRadius: "50%", background: currentSection === "bottom" ? "#005CA9" : "#fff",
+                color: currentSection === "bottom" ? "#fff" : "#005CA9", border: "2px solid #005CA9",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)", cursor: "pointer", display: "flex",
+                alignItems: "center", justifyContent: "center", fontSize: 20, transition: "all 0.2s"
+              }}
+              title="Ver Parte Inferior"
+            >
+              ▼
+            </button>
+          </div>
+
           <div id="preview-container" style={{ 
             flex: 1, overflow: "hidden", background: "#ffffff", borderRadius: 10, 
             padding: "0", maxHeight: "calc(100vh - 84px)", // Altura maximizada
