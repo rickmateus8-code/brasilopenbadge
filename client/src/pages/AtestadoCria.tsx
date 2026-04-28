@@ -2220,41 +2220,17 @@ export default function AtestadoCria() {
 
         {/* ═══ COLUNA DIREITA — PREVIEW ═══ */}
         <div className="atestado-preview-col" style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-          <div style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            marginBottom: 10, padding: "8px 12px", background: "#fff",
-            borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontWeight: 700, color: "#374151", fontSize: 14 }}>📄 Preview</span>
-              <button 
-                type="button" 
-                onClick={() => setPreviewMode(m => m === "auto" ? "full" : "auto")}
-                style={{
-                  background: previewMode === "auto" ? "#eff6ff" : "#f3f4f6",
-                  border: previewMode === "auto" ? "1px solid #bfdbfe" : "1px solid #d1d5db",
-                  color: previewMode === "auto" ? "#1d4ed8" : "#4b5563",
-                  padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 800, cursor: "pointer",
-                  transition: "all 0.2s"
-                }}
-              >
-                {previewMode === "auto" ? "🔍 Foco Inteligente: ON" : "👁️ Visualizar Inteiro"}
-              </button>
-            </div>
-            <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 600 }}>
-              🔒 QR Code após emissão
-            </span>
-          </div>
           <div id="preview-container" style={{ 
             flex: 1, overflow: "hidden", background: "#ffffff", borderRadius: 10, 
-            padding: "0 14px", maxHeight: "calc(100vh - 120px)",
-            display: "flex", alignItems: "flex-start", justifyContent: "center"
+            padding: "0", maxHeight: "calc(100vh - 84px)", // Altura maximizada
+            display: "flex", alignItems: "flex-start", justifyContent: "center",
+            position: "relative"
           }}>
             {/* A4: 794px x 1123px @ 96dpi */}
             <div style={{ 
               width: 794, 
               flexShrink: 0,
-              boxShadow: "0 4px 16px rgba(0,0,0,0.05)",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.08)", // Sombra mais elegante
               transform: `scale(${zoomScale}) translateY(${zoomTranslateY}px)`,
               transformOrigin: "top center",
               transition: "transform 0.85s cubic-bezier(0.22, 1, 0.36, 1)",
