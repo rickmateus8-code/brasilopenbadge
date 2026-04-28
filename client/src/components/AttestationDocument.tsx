@@ -382,7 +382,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           {cidDisplay && (
             <div style={{
               fontWeight: 700,
-              fontSize: 15.18, // Igualado ao corpo do texto
+              fontSize: 14.57, // Reduzido em 4% (15.18 * 0.96)
               marginTop: 28,
               color: "#000",
               textTransform: "uppercase",
