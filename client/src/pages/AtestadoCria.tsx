@@ -53,13 +53,21 @@ function SearchSelect({
     alignItems: "center",
     justifyContent: "space-between",
     minHeight: 32,
+    outline: open ? "2px solid #005CA9" : "none",
+    borderColor: open ? "#005CA9" : "#d1d5db",
+  };
+
+  const handleSelect = (val: string) => {
+    onChange(val);
+    setOpen(false);
+    setSearch("");
   };
 
   return (
     <div style={{ position: "relative" }} ref={ref} onFocus={onFocus}>
       <div
         style={triggerStyle}
-        onClick={() => { if (!disabled) { setOpen(o => !o); setSearch(""); if (onFocus) onFocus(); } }}
+        onClick={() => { if (!disabled) { setOpen(o => !o); setSearch(""); if (!open && onFocus) onFocus(); } }}
       >
         <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {value || placeholder || label + "..."}
@@ -95,12 +103,23 @@ function SearchSelect({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (filtered.length > 0) handleSelect(filtered[0]);
+                }
+                if (e.key === "Escape") {
+                  setOpen(false);
+                  setSearch("");
+                }
+              }}
             />
           </div>
           <div style={{ maxHeight: 220, overflowY: "auto" }}>
             <div
               style={{ padding: "6px 12px", fontSize: 13, color: "#9ca3af", cursor: "pointer" }}
-              onMouseDown={() => { onChange(""); setOpen(false); setSearch(""); }}
+              onMouseDown={(e) => { e.preventDefault(); handleSelect(""); }}
             >
               {placeholder || label + "..."}
             </div>
@@ -118,7 +137,7 @@ function SearchSelect({
                   fontWeight: o === value ? 700 : 400,
                   color: "#000",
                 }}
-                onMouseDown={() => { onChange(o); setOpen(false); setSearch(""); }}
+                onMouseDown={(e) => { e.preventDefault(); handleSelect(o); }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = o === value ? "#dbeafe" : "#f3f4f6")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = o === value ? "#dbeafe" : "transparent")}
               >
