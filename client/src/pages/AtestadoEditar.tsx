@@ -684,26 +684,55 @@ export default function AtestadoEditar() {
   const [documentPrice, setDocumentPrice] = useState<number>(0);
   const [priceLoading, setPriceLoading] = useState<boolean>(false);
 
-  // ── Lógica de Scroll Inteligente (Preview) ─────────────────────────────
+  // ── Lógica de Preview Inteligente com Zoom Dinâmico ─────────────────────────
+  const [zoomScale, setZoomScale] = useState(0.65); // Escala padrão "Fit"
+  const [zoomTranslateY, setZoomTranslateY] = useState(0);
+  const [isFocused, setIsFocused] = useState(false);
+
+  // Função para calcular o Zoom e Deslocamento para focar em uma seção
   const scrollToPreviewSection = (sectionId: string) => {
     const container = document.getElementById("preview-container");
-    const element = document.getElementById(sectionId);
-    if (container && element) {
-      const containerRect = container.getBoundingClientRect();
-      const elementRect = element.getBoundingClientRect();
+    const docElement = document.getElementById("attestation-document");
+    const targetElement = document.getElementById(sectionId);
+
+    if (container && docElement && targetElement) {
+      const containerHeight = container.offsetHeight;
+      const targetRect = targetElement.getBoundingClientRect();
+      const docRect = docElement.getBoundingClientRect();
       
-      // Se o elemento já está visível no container, não faz nada (evita pulos)
-      const isVisible = (
-        elementRect.top >= containerRect.top &&
-        elementRect.bottom <= containerRect.bottom
-      );
+      // Calculamos a posição relativa do elemento dentro do documento (escala 1:1)
+      const relativeTop = targetElement.offsetTop;
+      const elementHeight = targetElement.offsetHeight;
+
+      // Escala de Foco (Zoom In)
+      const focusScale = 0.95; 
       
-      if (!isVisible) {
-        const offset = elementRect.top - containerRect.top + container.scrollTop - 40;
-        container.scrollTo({ top: offset, behavior: "smooth" });
-      }
+      // Centralizamos o elemento no meio do container
+      const targetY = (containerHeight / 2) - (relativeTop * focusScale) - ((elementHeight * focusScale) / 2);
+
+      setZoomScale(focusScale);
+      setZoomTranslateY(targetY);
+      setIsFocused(true);
     }
   };
+
+  // Retornar ao estado original (Ver documento inteiro)
+  const resetPreviewZoom = () => {
+    setZoomScale(0.65); // Escala "Ver tudo"
+    setZoomTranslateY(0);
+    setIsFocused(false);
+  };
+
+  // Ajustar escala inicial baseada na largura da tela
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1200) setZoomScale(0.55);
+      else setZoomScale(0.65);
+    };
+    window.addEventListener('resize', handleResize);
+    handleResize();
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // ── Atualizar texto do atestado quando dias mudam ──────────────────────────
   useEffect(() => {
@@ -1635,7 +1664,14 @@ export default function AtestadoEditar() {
       <div className="atestado-layout" style={{ display: "flex", gap: 14, padding: 14, maxWidth: 2000, margin: "0 auto" }}>
 
         {/* ═══ COLUNA ESQUERDA — FORMULÁRIO ═══ */}
-        <div className="atestado-form-col" style={{ width: 612, flexShrink: 0, overflowY: "auto", maxHeight: "calc(100vh - 70px)" }}>
+        <div 
+          className="atestado-form-col" 
+          style={{ width: 612, flexShrink: 0, overflowY: "auto", maxHeight: "calc(100vh - 70px)" }}
+          onClick={(e) => {
+            // Se clicar na div de fundo (não nos inputs/botões), reseta o zoom
+            if (e.target === e.currentTarget) resetPreviewZoom();
+          }}
+        >
           <form onSubmit={(e) => { e.preventDefault(); void handleSave(); }}>
 
             {/* ── Importação Rápida ── */}
@@ -2474,9 +2510,16 @@ export default function AtestadoEditar() {
               🔒 Código: {codigoQR || "—"}
             </span>
           </div>
-          <div id="preview-container" style={{ flex: 1, overflow: "auto", background: "#ffffff", borderRadius: 10, padding: 14, maxHeight: "calc(100vh - 120px)" }}>
+          <div id="preview-container" style={{ flex: 1, overflow: "hidden", background: "#ffffff", borderRadius: 10, padding: 14, maxHeight: "calc(100vh - 120px)" }}>
             {/* A4: 794px x 1123px @ 96dpi */}
-            <div style={{ width: 794, margin: "0 auto", boxShadow: "0 4px 16px rgba(0,0,0,0.05)" }}>
+            <div style={{ 
+              width: 794, 
+              margin: "0 auto", 
+              boxShadow: "0 4px 16px rgba(0,0,0,0.05)",
+              transform: `scale(${zoomScale}) translateY(${zoomTranslateY}px)`,
+              transformOrigin: "top center",
+              transition: "transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1)",
+            }}>
               <AttestationDocument
                 ref={previewRef}
                 data={previewData}

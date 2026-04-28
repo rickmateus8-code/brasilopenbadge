@@ -162,7 +162,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%) rotate(-45deg)",
-            fontSize: 60, // Reduzido em 30% conforme solicitado
+            fontSize: 54, // Reduzido em 10% conforme solicitado (60 * 0.9)
             fontWeight: 900,
             color: "rgba(220, 38, 38, 0.08)", // Vermelho sutil e transparente
             pointerEvents: "none",
@@ -170,7 +170,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             whiteSpace: "nowrap",
             zIndex: 99, // Alterado para 99 para sobrepor todos os elementos (molduras, textos, logos)
           }}>
-            INVALIDO - NÃO EMITIDO - PRÉVIA
+            DOCUMENTO INVALIDO - NÃO EMITIDO - PRÉVIA
           </div>
         )}
         <style>{`
