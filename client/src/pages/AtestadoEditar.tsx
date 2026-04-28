@@ -1422,7 +1422,7 @@ export default function AtestadoEditar() {
     logoRight: logoRight,
     instituicao: form.instituicao || (form.cidade ? `PREFEITURA DE ${form.cidade.toUpperCase()}` : "INSTITUÇÃO"),
     unidade: form.unidade || "LOCAL DE ATENDIMENTO",
-    enderecoEmitente: form.enderecoEmitente || "ENDEREÇO DA CLÍNICA",
+    enderecoEmitente: form.enderecoEmitente || "",
     signatureColor,
     signatureImage,
     textoAtestado: form.textoAtestado,
