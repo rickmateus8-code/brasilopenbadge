@@ -1700,7 +1700,7 @@ export default function AtestadoEditar() {
       )}
 
       {/* Header */}
-      <div className="atestado-header" style={{ background: "#d97706", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div className="atestado-header" style={{ background: "#005CA9", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0, height: 60 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <button style={{ ...btnGray, padding: "5px 12px", fontSize: 11 }} onClick={() => navigate("/atestadosalvos")}>← VOLTAR</button>
           <h1 style={{ color: "#fff", fontSize: 16, fontWeight: 700, margin: 0 }}>DocMaster — EDITAR ATESTADO</h1>
@@ -1710,12 +1710,12 @@ export default function AtestadoEditar() {
         </span>
       </div>
 
-      <div className="atestado-layout" style={{ display: "flex", gap: 14, padding: 14, maxWidth: 2000, margin: "0 auto" }}>
+      <div className="atestado-layout" style={{ display: "flex", gap: 10, padding: "10px", width: "100%", margin: 0, justifyContent: "flex-start" }}>
 
         {/* ═══ COLUNA ESQUERDA — FORMULÁRIO ═══ */}
         <div 
           className="atestado-form-col" 
-          style={{ width: 612, flexShrink: 0, overflowY: "auto", maxHeight: "calc(100vh - 70px)" }}
+          style={{ width: "100%", maxWidth: 612, flexShrink: 0, overflowY: "auto", maxHeight: "calc(100vh - 84px)" }}
           onClick={(e) => {
             // Se clicar na div de fundo (não nos inputs/botões), reseta o zoom
             if (e.target === e.currentTarget) resetPreviewZoom();

@@ -1517,7 +1517,7 @@ export default function AtestadoCria() {
         </span>
       </div>
 
-      <div className="atestado-layout" style={{ display: "flex", gap: 14, padding: 14, maxWidth: 2000, margin: "0 auto" }}>
+      <div className="atestado-layout" style={{ display: "flex", gap: 10, padding: "10px", width: "100%", margin: 0, justifyContent: "flex-start" }}>
 
         {/* ═══ COLUNA ESQUERDA — FORMULÁRIO ═══ */}
         <div 
