@@ -339,7 +339,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         </div>
 
         {/* Endereço Emitente (Opcional) */}
-        {effectiveLogoLeft && (
+        {enderecoEmitente && (
           <div style={{
             fontSize: 10.5,
             lineHeight: 1.2,
