@@ -289,31 +289,52 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         {/* ===== DADOS DO PACIENTE ===== */}
         <div id="preview-patient" style={{
           border: "1px solid #000",
-          padding: "10px",
+          padding: "8px 12px", // Ajustado para centralização
           fontSize: 10.815, // Aumentado em 3% (10.5 * 1.03)
           marginBottom: 10,
-          lineHeight: 1.5,
+          lineHeight: 1.7,
           position: "relative",
           zIndex: 2,
           background: "#fff",
           flexShrink: 0,
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center", // Centralização vertical
+          justifyContent: "center", // Centralização vertical total
         }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, width: "100%" }}>
-            <div style={{ textAlign: "left" }}><span style={{ fontWeight: 700 }}>Paciente:</span> {data.paciente}</div>
-            <div style={{ textAlign: "right" }}><span style={{ fontWeight: 700 }}>Sexo:</span> {sexoLabel}</div>
+          {/* Linha 1: Paciente | Sexo | Nasc */}
+          <div style={{ display: "flex", gap: 12, marginBottom: 3, justifyContent: "center" }}>
+            <div style={{ flex: 3 }}>
+              <span style={{ fontWeight: 700, color: "#000" }}>Paciente: </span>
+              <span style={{ color: "#000", textTransform: "uppercase" }}>{data.paciente}</span>
+            </div>
+            <div>
+              <span style={{ fontWeight: 700, color: "#000" }}>Sexo: </span>
+              <span style={{ color: "#000" }}>{sexoLabel}</span>
+            </div>
+            <div>
+              <span style={{ fontWeight: 700, color: "#000" }}>Nasc.: </span>
+              <span style={{ color: "#000" }}>{data.nascimento}</span>
+            </div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, width: "100%" }}>
-            <div style={{ textAlign: "left" }}><span style={{ fontWeight: 700 }}>Nasc.:</span> {data.nascimento}</div>
-            <div style={{ textAlign: "right" }}><span style={{ fontWeight: 700 }}>{docLabel}</span> {docValue}</div>
+
+          {/* Linha 2: CPF/CNS | Nome da Mãe */}
+          <div style={{ display: "flex", gap: 12, marginBottom: 3, justifyContent: "center" }}>
+            <div style={{ flex: 1 }}>
+              <span style={{ fontWeight: 700, color: "#000" }}>{docLabel} </span>
+              <span style={{ color: "#000", textTransform: "uppercase" }}>{docValue}</span>
+            </div>
+            <div style={{ flex: 2 }}>
+              <span style={{ fontWeight: 700, color: "#000" }}>Nome da Mãe: </span>
+              <span style={{ color: "#000", textTransform: "uppercase" }}>{data.nomeMae}</span>
+            </div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 5, width: "100%" }}>
-            <div style={{ textAlign: "left" }}><span style={{ fontWeight: 700 }}>Nome da Mãe:</span> {data.nomeMae}</div>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 5, width: "100%" }}>
-            <div style={{ textAlign: "left" }}><span style={{ fontWeight: 700 }}>Endereço:</span> {data.endereco}</div>
+
+          {/* Linha 3: Endereço */}
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <div style={{ width: "100%" }}>
+              <span style={{ fontWeight: 700, color: "#000" }}>Endereço: </span>
+              <span style={{ color: "#000", textTransform: "uppercase" }}>{data.endereco}</span>
+            </div>
           </div>
         </div>
 
