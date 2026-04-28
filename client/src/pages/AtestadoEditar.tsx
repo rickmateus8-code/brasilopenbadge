@@ -1861,7 +1861,13 @@ export default function AtestadoEditar() {
                   {/* Campo oculto — valor gerenciado pelo useEffect de filtroCidade e selecionarMedico */}
                   <div>
                     <label style={lbl}>Local de Atendimento</label>
-                    <input style={inp} value={form.unidade} onFocus={() => scrollToPreviewSection("preview-header")} onChange={(e) => setForm(p => ({ ...p, unidade: e.target.value }))} placeholder="Ex: UBS CENTRO, UPA NORTE, HOSPITAL MUNICIPAL" />
+                    <input
+                      style={inp}
+                      value={form.unidade}
+                      onFocus={() => scrollToPreviewSection("preview-header")}
+                      onChange={(e) => setForm(p => ({ ...p, unidade: e.target.value }))}
+                      placeholder="Ex: UBS CENTRO, UPA NORTE, HOSPITAL MUNICIPAL"
+                    />
                     </div>
                     <div>
                     <label style={lbl}>Endereço Completo / Emitente</label>
@@ -1876,27 +1882,51 @@ export default function AtestadoEditar() {
                     </div>
                     <div>
                     <label style={lbl}>Especialidade</label>
-                    <input style={inp} value={form.especialidade} onFocus={() => scrollToPreviewSection("preview-footer")} onChange={(e) => setForm(p => ({ ...p, especialidade: e.target.value }))} placeholder="Ex: CLÍNICO GERAL, PEDIATRA" />
-                    </div>                  <p style={{ ...secTitle, fontSize: 10 }}>Dados do Médico</p>
-                  <div>
+                    <input
+                      style={inp}
+                      value={form.especialidade}
+                      onFocus={() => scrollToPreviewSection("preview-footer")}
+                      onChange={(e) => setForm(p => ({ ...p, especialidade: e.target.value }))}
+                      placeholder="Ex: CLÍNICO GERAL, PEDIATRA"
+                    />
+                    </div>
+                    <p style={{ ...secTitle, fontSize: 10 }}>Dados do Médico</p>
+                    <div>
                     <label style={lbl}>Nome Completo</label>
-                    <input style={inp} value={form.medico} onChange={(e) => setForm(p => ({ ...p, medico: e.target.value }))} placeholder="DR. NOME SOBRENOME" />
-                  </div>
-                  <div>
+                    <input
+                      style={inp}
+                      value={form.medico}
+                      onFocus={() => scrollToPreviewSection("preview-footer")}
+                      onChange={(e) => setForm(p => ({ ...p, medico: e.target.value }))}
+                      placeholder="DR. NOME SOBRENOME"
+                    />
+                    </div>
+                    <div>
                     <label style={lbl}>CRM (Ex: CRM/SP 12345)</label>
-                    <input style={inp} value={form.crm} onChange={(e) => setForm(p => ({ ...p, crm: e.target.value }))} placeholder="CRM/SP 00000" />
-                  </div>
-                  <p style={{ ...secTitle, fontSize: 10 }}>ASSINATURA & CARIMBO</p>
-                  <div>
+                    <input
+                      style={inp}
+                      value={form.crm}
+                      onFocus={() => scrollToPreviewSection("preview-footer")}
+                      onChange={(e) => setForm(p => ({ ...p, crm: e.target.value }))}
+                      placeholder="CRM/SP 00000"
+                    />
+                    </div>
+                    <p style={{ ...secTitle, fontSize: 10 }}>ASSINATURA & CARIMBO</p>
+                    <div>
                     <label style={lbl}>COR DA TINTA</label>
-                    <select style={sel} value={signatureColor} onChange={(e) => setSignatureColor(e.target.value)}>
+                    <select
+                      style={sel}
+                      value={signatureColor}
+                      onFocus={() => scrollToPreviewSection("preview-footer")}
+                      onChange={(e) => setSignatureColor(e.target.value)}
+                    >
                       <option value="#0b109f">🔵 Azul Caneta (Padrão)</option>
                       <option value="#000000">⚫ Preto (Xerox)</option>
                     </select>
-                  </div>
-                  <div>
+                    </div>
+                    <div>
                     <label style={lbl}>USAR FOTO DA ASSINATURA (OPCIONAL)</label>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }} onClick={() => scrollToPreviewSection("preview-footer")}>
                       {signatureImage ? (
                         <div style={{ position: "relative" }}>
                           <img src={signatureImage} alt="Assinatura" style={{ maxHeight: 65, maxWidth: 208, objectFit: "contain", border: "1px solid #e5e7eb", borderRadius: 6 }} />
@@ -1912,7 +1942,7 @@ export default function AtestadoEditar() {
                         </label>
                       )}
                     </div>
-                  </div>
+                    </div>
                 </div>
               </details>
             </div>

@@ -168,7 +168,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             pointerEvents: "none",
             userSelect: "none",
             whiteSpace: "nowrap",
-            zIndex: 0, // No background, não sobrepõe textos
+            zIndex: 99, // Alterado para 99 para sobrepor todos os elementos (molduras, textos, logos)
           }}>
             INVALIDO - NÃO EMITIDO - PRÉVIA
           </div>
