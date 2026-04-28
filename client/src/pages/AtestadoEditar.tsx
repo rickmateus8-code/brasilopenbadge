@@ -9,7 +9,7 @@ import { useSettings } from "@/hooks/useSettings";
 
 // ─── SearchSelect: select com campo de busca integrado no dropdown ────────────
 function SearchSelect({
-  label, value, options, placeholder, disabled, onChange
+  label, value, options, placeholder, disabled, onChange, onFocus
 }: {
   label: string;
   value: string;
@@ -17,6 +17,7 @@ function SearchSelect({
   placeholder?: string;
   disabled?: boolean;
   onChange: (v: string) => void;
+  onFocus?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -55,10 +56,10 @@ function SearchSelect({
   };
 
   return (
-    <div style={{ position: "relative" }} ref={ref}>
+    <div style={{ position: "relative" }} ref={ref} onFocus={onFocus}>
       <div
         style={triggerStyle}
-        onClick={() => { if (!disabled) { setOpen(o => !o); setSearch(""); } }}
+        onClick={() => { if (!disabled) { setOpen(o => !o); setSearch(""); if (onFocus) onFocus(); } }}
       >
         <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {value || placeholder || label + "..."}

@@ -9,7 +9,7 @@ import { useSettings } from "@/hooks/useSettings";
 
 // ─── SearchSelect: select com campo de busca integrado no dropdown ────────────
 function SearchSelect({
-  label, value, options, placeholder, disabled, onChange
+  label, value, options, placeholder, disabled, onChange, onFocus
 }: {
   label: string;
   value: string;
@@ -17,6 +17,7 @@ function SearchSelect({
   placeholder?: string;
   disabled?: boolean;
   onChange: (v: string) => void;
+  onFocus?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -55,10 +56,10 @@ function SearchSelect({
   };
 
   return (
-    <div style={{ position: "relative" }} ref={ref}>
+    <div style={{ position: "relative" }} ref={ref} onFocus={onFocus}>
       <div
         style={triggerStyle}
-        onClick={() => { if (!disabled) { setOpen(o => !o); setSearch(""); } }}
+        onClick={() => { if (!disabled) { setOpen(o => !o); setSearch(""); if (onFocus) onFocus(); } }}
       >
         <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {value || placeholder || label + "..."}
@@ -1611,6 +1612,7 @@ export default function AtestadoCria() {
                     value={filtroUF}
                     options={UFS}
                     placeholder="UF..."
+                    onFocus={() => scrollToPreviewSection("preview-header")}
                     onChange={(v) => { setFiltroUF(v); setFiltroCidade(""); setFiltroBairro(""); }}
                   />
                 </div>
@@ -1622,6 +1624,7 @@ export default function AtestadoCria() {
                     options={cidades}
                     placeholder={filtroUF ? "Cidade..." : "Selecione UF primeiro..."}
                     disabled={!filtroUF}
+                    onFocus={() => scrollToPreviewSection("preview-header")}
                     onChange={(v) => { setFiltroCidade(v); setFiltroBairro(""); }}
                   />
                 </div>
@@ -1633,6 +1636,7 @@ export default function AtestadoCria() {
                     options={bairros}
                     placeholder={filtroCidade ? "Bairro..." : "Selecione cidade primeiro..."}
                     disabled={!filtroCidade}
+                    onFocus={() => scrollToPreviewSection("preview-header")}
                     onChange={(v) => setFiltroBairro(v)}
                   />
                 </div>
@@ -1650,14 +1654,14 @@ export default function AtestadoCria() {
                   </select>
                 </div>
               </div>
-              <input
+                <input
                 style={{ ...inp, marginBottom: 8 }}
                 placeholder="DIGITE NOME OU CRM..."
                 value={termoBusca}
                 onChange={(e) => setTermoBusca(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), buscarMedicos())}
+                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), buscarMedicos(false))}
               />
-              <button type="button" style={{ ...btnBlue, width: "100%" }} onClick={buscarMedicos} disabled={buscando}>
+              <button type="button" style={{ ...btnBlue, width: "100%" }} onClick={() => buscarMedicos(false)} disabled={buscando}>
                 {buscando ? "🔄 Buscando..." : "🔍 BUSCAR NO BANCO DE DADOS"}
               </button>
               {erroBusca && (
