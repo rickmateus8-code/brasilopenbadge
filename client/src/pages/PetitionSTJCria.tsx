@@ -5,10 +5,10 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
 import {
   ArrowLeft, Download, ZoomIn, ZoomOut,
-  AlertCircle, FileText, Scale
+  AlertCircle, FileText, Scale, CheckCircle
 } from "lucide-react";
 import EmissionModal from "@/components/EmissionModal";
-import PetitionSTJDocument, { PetitionData } from "@/components/PetitionSTJDocument";
+import PetitionSTJDocument, { type PetitionData } from "@/components/PetitionSTJDocument";
 import { usePDFExport, generatePDFFilename } from "@/lib/pdfExport";
 
 const A4_WIDTH_PX = 794;
@@ -400,19 +400,26 @@ export default function PetitionSTJCria() {
       </div>
 
       <EmissionModal
-        isOpen={showConfirmModal}
-        isExporting={isExporting}
-        documentType="peticao-stj"
+        docLabel="Petição STJ"
+        docEmoji="⚖️"
         documentPrice={documentPrice}
+        userBalance={user?.balance || 0}
+        showConfirm={showConfirmModal}
+        showSuccess={showSuccessModal}
+        isEmitting={isExporting}
+        isDownloading={isDownloading}
         onConfirm={handleSave}
-        onClose={() => setShowConfirmModal(false)}
+        onCancel={() => setShowConfirmModal(false)}
+        onDownload={handleExportPDF}
+        onClose={() => setLocation("/peticao-stj-salvos")}
+        historyPath="/peticao-stj-salvos"
       />
 
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
            <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center">
               <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                 <CheckCircle2 size={40} />
+                 <CheckCircle size={40} />
               </div>
               <h2 className="text-2xl font-black text-gray-900 mb-2">SUCESSO!</h2>
               <p className="text-gray-500 mb-8 font-medium">Sua petição foi emitida e o saldo foi descontado.</p>
