@@ -182,7 +182,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
 
         {/* ===== HEADER ===== */}
-        <div style={{
+        <div id="preview-header" style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
@@ -214,17 +214,17 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           {/* Centro — Nome da Instituição / Unidade / Endereço */}
           <div style={{ flex: 1, padding: "0 12px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
             {instituicao && (
-              <div style={{ fontSize: 14, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", letterSpacing: 0.5, lineHeight: 1.3 }}>
+              <div style={{ fontSize: 14.7, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", letterSpacing: 0, lineHeight: 1.3 }}>
                 {instituicao}
               </div>
             )}
             {unidade && (
-              <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", lineHeight: 1.3 }}>
+              <div style={{ fontSize: 12.6, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", lineHeight: 1.3 }}>
                 {unidade}
               </div>
             )}
             {enderecoEmitente && (
-              <div style={{ fontSize: 10, fontWeight: 400, textTransform: "uppercase", color: "#000", lineHeight: 1.3 }}>
+              <div style={{ fontSize: 10.5, fontWeight: 400, textTransform: "uppercase", color: "#000", lineHeight: 1.3 }}>
                 {enderecoEmitente}
               </div>
             )}
@@ -253,7 +253,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         {/* ===== TÍTULO ===== */}
         <div style={{
           fontWeight: 900,
-          fontSize: 22.05, // Aumentado em 5% (21 * 1.05)
+          fontSize: 23.15, // Aumentado em 5% (22.05 * 1.05)
           textTransform: "uppercase",
           borderTop: "none",
           borderBottom: "none",
@@ -262,23 +262,23 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           width: "100%",
           textAlign: "center",
           marginTop: 12,
-          marginBottom: 2, // Reduzido conforme solicitado
-          letterSpacing: 0, // Reduzido conforme solicitado
+          marginBottom: 2, // Aproximado da linha inferior
+          letterSpacing: 0, // Removido espaçamento
           position: "relative",
           zIndex: 2,
           color: "#000",
           flexShrink: 0,
         }}>
           {docType === 'laudo' ? (
-            <div style={{ fontSize: 22.05, fontWeight: 900 }}>LAUDO MÉDICO</div>
+            <div style={{ fontSize: 23.15, fontWeight: 900 }}>LAUDO MÉDICO</div>
           ) : (
-            <div style={{ fontSize: 22.05, fontWeight: 900 }}>ATESTADO MÉDICO</div>
+            <div style={{ fontSize: 23.15, fontWeight: 900 }}>ATESTADO MÉDICO</div>
           )}
         </div>
 
         {/* Moldura Superior (Linha Preta) */}
         <div style={{
-          borderTop: "2px solid #000",
+          borderTop: "2.04px solid #000", // Grossura aumentada em 2% (2 * 1.02)
           width: "100%",
           marginBottom: 25,
           position: "relative",
@@ -287,65 +287,48 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         }} />
 
         {/* ===== DADOS DO PACIENTE ===== */}
-        <div style={{
-          border: "1px solid #000", // Moldura completa mantida
-          padding: "7px 10px",
-          fontSize: 10.5,
-          marginBottom: 4, // Espaçamento para o texto abaixo
-          lineHeight: 1.7,
+        <div id="preview-patient" style={{
+          border: "1px solid #000",
+          padding: "10px",
+          fontSize: 10.815, // Aumentado em 3% (10.5 * 1.03)
+          marginBottom: 10,
+          lineHeight: 1.5,
           position: "relative",
           zIndex: 2,
-          background: "rgba(255,255,255,0.9)",
+          background: "#fff",
           flexShrink: 0,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center", // Centralização vertical
         }}>
-          {/* Linha 1: Paciente | Sexo | Nasc */}
-          <div style={{ display: "flex", gap: 12, marginBottom: 3 }}>
-            <div style={{ flex: 3 }}>
-              <span style={{ fontWeight: 700, color: "#000" }}>Paciente: </span>
-              <span style={{ color: "#000", textTransform: "uppercase" }}>{data.paciente}</span>
-            </div>
-            <div>
-              <span style={{ fontWeight: 700, color: "#000" }}>Sexo: </span>
-              <span style={{ color: "#000" }}>{sexoLabel}</span>
-            </div>
-            <div>
-              <span style={{ fontWeight: 700, color: "#000" }}>Nasc.: </span>
-              <span style={{ color: "#000" }}>{data.nascimento}</span>
-            </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, width: "100%" }}>
+            <div style={{ textAlign: "left" }}><span style={{ fontWeight: 700 }}>Paciente:</span> {data.paciente}</div>
+            <div style={{ textAlign: "right" }}><span style={{ fontWeight: 700 }}>Sexo:</span> {sexoLabel}</div>
           </div>
-
-          {/* Linha 2: CPF/CNS | Nome da Mãe */}
-          <div style={{ display: "flex", gap: 12, marginBottom: 3 }}>
-            <div style={{ flex: 1 }}>
-              <span style={{ fontWeight: 700, color: "#000" }}>{docLabel} </span>
-              <span style={{ color: "#000", textTransform: "uppercase" }}>{docValue}</span>
-            </div>
-            <div style={{ flex: 2 }}>
-              <span style={{ fontWeight: 700, color: "#000" }}>Nome da Mãe: </span>
-              <span style={{ color: "#000", textTransform: "uppercase" }}>{data.nomeMae}</span>
-            </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, width: "100%" }}>
+            <div style={{ textAlign: "left" }}><span style={{ fontWeight: 700 }}>Nasc.:</span> {data.nascimento}</div>
+            <div style={{ textAlign: "right" }}><span style={{ fontWeight: 700 }}>{docLabel}</span> {docValue}</div>
           </div>
-
-          {/* Linha 3: Endereço */}
-          <div style={{ marginBottom: 4 }}>
-            <span style={{ fontWeight: 700, color: "#000" }}>Endereço: </span>
-            <span style={{ color: "#000", textTransform: "uppercase" }}>{data.endereco}</span>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 5, width: "100%" }}>
+            <div style={{ textAlign: "left" }}><span style={{ fontWeight: 700 }}>Nome da Mãe:</span> {data.nomeMae}</div>
           </div>
-
+          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 5, width: "100%" }}>
+            <div style={{ textAlign: "left" }}><span style={{ fontWeight: 700 }}>Endereço:</span> {data.endereco}</div>
+          </div>
         </div>
 
-        {/* ===== ENDEREÇO EMITENTE (Todo negrito, alinhado à esquerda da moldura) ===== */}
-        {enderecoEmitente && (
-          <div style={{ 
-            padding: "0", // Alinhado com a borda esquerda da moldura (0 padding)
+        {/* Endereço Emitente (Opcional) */}
+        {effectiveLogoLeft && (
+          <div style={{
             fontSize: 10.5,
-            color: "#000",
+            lineHeight: 1.2,
+            fontFamily: "Arial, Helvetica, sans-serif",
             textAlign: "left",
             position: "relative",
             zIndex: 2,
             flexShrink: 0,
             marginBottom: 20, 
-            fontWeight: 700, // Todo o bloco em negrito
+            fontWeight: 700,
             textTransform: "uppercase"
           }}>
             ENDEREÇO EMITENTE: {enderecoEmitente}
@@ -353,9 +336,9 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         )}
 
         {/* ===== CORPO DO TEXTO ===== */}
-        <div style={{
+        <div id="preview-body" style={{
           flex: "1 1 auto",
-          fontSize: 14.74, // Aumentado em 5% (14.04 * 1.05)
+          fontSize: 15.18, // Aumentado em 3% (14.74 * 1.03)
           lineHeight: 1.9,
           textAlign: "justify",
           position: "relative",
@@ -365,20 +348,20 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           color: "#111",
           fontWeight: 400,
         }}>
-          {/* Parágrafo com recuo */}
+          {/* Parágrafo com recuo extra (+2 espaços) */}
           <p style={{
             margin: 0,
-            textIndent: "3em",
+            textIndent: "4em", // Aumentado de 3em para 4em para refletir os 2 espaços extras
             lineHeight: 1.9,
             whiteSpace: "pre-wrap",
           }}>
-            {textoAtestado || "        Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico. Necessita de 04 (quatro) dias de afastamento de suas atividades laborais para repouso e tratamento de saúde."}
+            {"  "}{textoAtestado || "Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico. Necessita de 04 (quatro) dias de afastamento de suas atividades laborais para repouso e tratamento de saúde."}
           </p>
 
           {cidDisplay && (
             <div style={{
               fontWeight: 700,
-              fontSize: 13.26, // Aumentado em 2% (13 * 1.02)
+              fontSize: 15.18, // Igualado ao corpo do texto
               marginTop: 28,
               color: "#000",
               textTransform: "uppercase",
@@ -390,7 +373,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
         {/* ===== RODAPÉ DIGITAL ===== */}
         {!modoCarimbo && (
-          <div style={{
+          <div id="preview-footer" style={{
             marginTop: "auto",
             position: "relative",
             zIndex: 2,

@@ -583,7 +583,28 @@ export default function AtestadoCria() {
   // ── Modal de confirmação de preço ─────────────────────────────────────────
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [documentPrice, setDocumentPrice] = useState<number>(0);
-  const [priceLoading, setPriceLoading] = useState(false);
+  const [priceLoading, setPriceLoading] = useState<boolean>(false);
+
+  // ── Lógica de Scroll Inteligente (Preview) ─────────────────────────────
+  const scrollToPreviewSection = (sectionId: string) => {
+    const container = document.getElementById("preview-container");
+    const element = document.getElementById(sectionId);
+    if (container && element) {
+      const containerRect = container.getBoundingClientRect();
+      const elementRect = element.getBoundingClientRect();
+      
+      // Se o elemento já está visível no container, não faz nada (evita pulos)
+      const isVisible = (
+        elementRect.top >= containerRect.top &&
+        elementRect.bottom <= containerRect.bottom
+      );
+      
+      if (!isVisible) {
+        const offset = elementRect.top - containerRect.top + container.scrollTop - 40;
+        container.scrollTo({ top: offset, behavior: "smooth" });
+      }
+    }
+  };
 
   // ── Atualizar texto do atestado quando dias mudam ──────────────────────────
   useEffect(() => {
@@ -1584,553 +1605,519 @@ export default function AtestadoCria() {
                   {/* Campo oculto — valor gerenciado pelo useEffect de filtroCidade e selecionarMedico */}
                   <div>
                     <label style={lbl}>Local de Atendimento</label>
-                    <input style={inp} value={form.unidade} onChange={(e) => setForm(p => ({ ...p, unidade: e.target.value }))} placeholder="Ex: UBS CENTRO, UPA NORTE, HOSPITAL MUNICIPAL" />
-                  </div>
-                  <div>
-                    <label style={lbl}>Endereço Completo / Emitente</label>
-                    <input
-                      style={{ ...inp, background: form.enderecoEmitente ? "#fff" : "#f8fafc" }}
-                      value={form.enderecoEmitente}
-                      onChange={(e) => setForm(p => ({ ...p, enderecoEmitente: e.target.value }))}
-                      placeholder="Ex: RUA ANTÔNIO WALTER, 66 – CENTRO, VOTORANTIM/SP"
-                    />
-                    <span style={{ fontSize: 10, color: "#666", marginTop: 2, display: "block" }}>Preenchido automaticamente ao selecionar médico. Edite se necessário.</span>
-                  </div>
-                  <div>
-                    <label style={lbl}>Especialidade</label>
-                    <input style={inp} value={form.especialidade} onChange={(e) => setForm(p => ({ ...p, especialidade: e.target.value }))} placeholder="Ex: CLÍNICO GERAL, PEDIATRA" />
-                  </div>
-                  <p style={{ ...secTitle, fontSize: 10 }}>Dados do Médico</p>
-                  <div>
-                    <label style={lbl}>Nome Completo</label>
-                    <input style={inp} value={form.medico} onChange={(e) => setForm(p => ({ ...p, medico: e.target.value }))} placeholder="DR. NOME SOBRENOME" />
-                  </div>
-                  <div>
-                    <label style={lbl}>CRM (Ex: CRM/SP 12345)</label>
-                    <input style={inp} value={form.crm} onChange={(e) => setForm(p => ({ ...p, crm: e.target.value }))} placeholder="CRM/SP 00000" />
-                  </div>
-                  <p style={{ ...secTitle, fontSize: 10 }}>ASSINATURA & CARIMBO</p>
-                  <div>
-                    <label style={lbl}>COR DA TINTA</label>
-                    <select style={sel} value={signatureColor} onChange={(e) => setSignatureColor(e.target.value)}>
-                      <option value="#0b109f">🔵 Azul Caneta (Padrão)</option>
-                      <option value="#000000">⚫ Preto (Xerox)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={lbl}>USAR FOTO DA ASSINATURA (OPCIONAL)</label>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      {signatureImage ? (
-                        <div style={{ position: "relative" }}>
-                          <img src={signatureImage} alt="Assinatura" style={{ maxHeight: 65, maxWidth: 208, objectFit: "contain", border: "1px solid #e5e7eb", borderRadius: 6 }} />
-                          <button type="button" onClick={() => { setSignatureImage(""); if (signatureRef.current) signatureRef.current.value = ""; }}
-                            style={{ position: "absolute", top: -6, right: -6, background: "#ef4444", color: "#fff", border: "none", borderRadius: "50%", width: 18, height: 18, fontSize: 10, cursor: "pointer" }}>
-                            ✕
-                          </button>
-                        </div>
-                      ) : (
-                        <label style={{ ...btnBlue, padding: "6px 12px", cursor: "pointer", fontSize: 11 }}>
-                          📷 ENVIAR FOTO
-                          <input ref={signatureRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleSignatureUpload} />
-                        </label>
+                      <input
+                        style={inp}
+                        value={form.unidade}
+                        onFocus={() => scrollToPreviewSection("preview-header")}
+                        onChange={(e) => setForm(p => ({ ...p, unidade: e.target.value }))}
+                        placeholder="Ex: UBS CENTRO, UPA NORTE, HOSPITAL MUNICIPAL"
+                      />
+                    </div>
+                    <div>
+                      <label style={lbl}>Endereço Completo / Emitente</label>
+                      <input
+                        style={{ ...inp, background: form.enderecoEmitente ? "#fff" : "#f8fafc" }}
+                        value={form.enderecoEmitente}
+                        onFocus={() => scrollToPreviewSection("preview-header")}
+                        onChange={(e) => setForm(p => ({ ...p, enderecoEmitente: e.target.value }))}
+                        placeholder="Ex: RUA ANTÔNIO WALTER, 66 – CENTRO, VOTORANTIM/SP"
+                      />
+                      <span style={{ fontSize: 10, color: "#666", marginTop: 2, display: "block" }}>Preenchido automaticamente ao selecionar médico. Edite se necessário.</span>
+                    </div>
+                    <div>
+                      <label style={lbl}>Especialidade</label>
+                      <input
+                        style={inp}
+                        value={form.especialidade}
+                        onFocus={() => scrollToPreviewSection("preview-footer")}
+                        onChange={(e) => setForm(p => ({ ...p, especialidade: e.target.value }))}
+                        placeholder="Ex: CLÍNICO GERAL, PEDIATRA"
+                      />
+                    </div>
+                    <p style={{ ...secTitle, fontSize: 10 }}>Dados do Médico</p>
+                    <div>
+                      <label style={lbl}>Nome Completo</label>
+                      <input
+                        style={inp}
+                        value={form.medico}
+                        onFocus={() => scrollToPreviewSection("preview-footer")}
+                        onChange={(e) => setForm(p => ({ ...p, medico: e.target.value }))}
+                        placeholder="DR. NOME SOBRENOME"
+                      />
+                    </div>
+                    <div>
+                      <label style={lbl}>CRM (Ex: CRM/SP 12345)</label>
+                      <input
+                        style={inp}
+                        value={form.crm}
+                        onFocus={() => scrollToPreviewSection("preview-footer")}
+                        onChange={(e) => setForm(p => ({ ...p, crm: e.target.value }))}
+                        placeholder="CRM/SP 00000"
+                      />
+                    </div>
+                    <p style={{ ...secTitle, fontSize: 10 }}>ASSINATURA & CARIMBO</p>
+                    <div>
+                      <label style={lbl}>COR DA TINTA</label>
+                      <select
+                        style={sel}
+                        value={signatureColor}
+                        onFocus={() => scrollToPreviewSection("preview-footer")}
+                        onChange={(e) => setSignatureColor(e.target.value)}
+                      >
+                        <option value="#0b109f">🔵 Azul Caneta (Padrão)</option>
+                        <option value="#000000">⚫ Preto (Xerox)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={lbl}>USAR FOTO DA ASSINATURA (OPCIONAL)</label>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }} onClick={() => scrollToPreviewSection("preview-footer")}>
+                        {signatureImage ? (
+                          <div style={{ position: "relative" }}>
+                            <img src={signatureImage} alt="Assinatura" style={{ maxHeight: 65, maxWidth: 208, objectFit: "contain", border: "1px solid #e5e7eb", borderRadius: 6 }} />
+                            <button type="button" onClick={() => { setSignatureImage(""); if (signatureRef.current) signatureRef.current.value = ""; }}
+                              style={{ position: "absolute", top: -6, right: -6, background: "#ef4444", color: "#fff", border: "none", borderRadius: "50%", width: 18, height: 18, fontSize: 10, cursor: "pointer" }}>
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <label style={{ ...btnBlue, padding: "6px 12px", cursor: "pointer", fontSize: 11 }}>
+                            📷 ENVIAR FOTO
+                            <input ref={signatureRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleSignatureUpload} />
+                          </label>
+                        )}
+                      </div>
+                    </div>
+                    </div>
+                    </details>
+                    </div>
+
+                    {/* ── 2. Dados do Paciente ── */}
+                    <div style={card}>
+                    <p style={secTitle}>👤 2. Dados do Paciente</p>
+                    <div style={{ display: "grid", gap: 8 }}>
+
+                    {/* CPF ou CNS — PRIMEIRO para permitir preenchimento automático */}
+                    <div>
+                    <label style={lbl}>Tipo de Documento *</label>
+                    <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
+                      <button
+                        type="button"
+                        onClick={() => { setTipoDoc("CPF"); setForm(p => ({ ...p, docValue: "" })); setCpfStatus("idle"); setCpfMsg(""); scrollToPreviewSection("preview-patient"); }}
+                        style={{
+                          flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
+                          background: tipoDoc === "CPF" ? "#005CA9" : "#e2e8f0",
+                          color: tipoDoc === "CPF" ? "#fff" : "#374151",
+                          border: tipoDoc === "CPF" ? "2px solid #005CA9" : "2px solid #d1d5db",
+                        }}
+                      >
+                        CPF
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setTipoDoc("CNS"); setForm(p => ({ ...p, docValue: "" })); setCpfStatus("idle"); setCpfMsg(""); scrollToPreviewSection("preview-patient"); }}
+                        style={{
+                          flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
+                          background: tipoDoc === "CNS" ? "#005CA9" : "#e2e8f0",
+                          color: tipoDoc === "CNS" ? "#fff" : "#374151",
+                          border: tipoDoc === "CNS" ? "2px solid #005CA9" : "2px solid #d1d5db",
+                        }}
+                      >
+                        CNS — Cartão Nacional de Saúde
+                      </button>
+                    </div>
+                    <div style={{ position: "relative" }}>
+                      <input
+                        style={{
+                          ...inp,
+                          borderColor: cpfStatus === "error" ? "#dc2626" : cpfStatus === "ok" ? "#16a34a" : undefined,
+                          paddingRight: tipoDoc === "CPF" && cpfLoading ? 32 : undefined,
+                        }}
+                        value={form.docValue}
+                        onFocus={() => scrollToPreviewSection("preview-patient")}
+                        onChange={(e) => handleDocInput(e.target.value)}
+                        placeholder={tipoDoc === "CPF" ? "000.000.000-00" : "000 0000 0000 0000"}
+                        inputMode="numeric"
+                        required
+                      />
+                      {tipoDoc === "CPF" && cpfLoading && (
+                        <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: 14 }}>⏳</span>
                       )}
                     </div>
-                  </div>
-                </div>
-              </details>
-            </div>
+                    {/* Botão de preenchimento manual via CPF */}
+                    {tipoDoc === "CPF" && !cpfLoading && validarCPF(form.docValue) && cpfStatus !== "ok" && (
+                      <button
+                        type="button"
+                        onClick={() => { buscarDadosCPF(form.docValue); scrollToPreviewSection("preview-patient"); }}
+                        style={{
+                          marginTop: 6, width: "100%", padding: "8px 0",
+                          borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
+                          background: "#005CA9", color: "#fff",
+                          border: "2px solid #005CA9",
+                          display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                          transition: "background 0.2s",
+                        }}
+                      >
+                        🔍 Buscar dados via CPF
+                      </button>
+                    )}
+                    </div>
 
-            {/* ── 2. Dados do Paciente ── */}
-            <div style={card}>
-              <p style={secTitle}>👤 2. Dados do Paciente</p>
-              <div style={{ display: "grid", gap: 8 }}>
-
-                {/* CPF ou CNS — PRIMEIRO para permitir preenchimento automático */}
-                <div>
-                  <label style={lbl}>Tipo de Documento *</label>
-                  <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
-                    <button
-                      type="button"
-                      onClick={() => { setTipoDoc("CPF"); setForm(p => ({ ...p, docValue: "" })); setCpfStatus("idle"); setCpfMsg(""); }}
-                      style={{
-                        flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
-                        background: tipoDoc === "CPF" ? "#005CA9" : "#e2e8f0",
-                        color: tipoDoc === "CPF" ? "#fff" : "#374151",
-                        border: tipoDoc === "CPF" ? "2px solid #005CA9" : "2px solid #d1d5db",
-                      }}
-                    >
-                      CPF
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setTipoDoc("CNS"); setForm(p => ({ ...p, docValue: "" })); setCpfStatus("idle"); setCpfMsg(""); }}
-                      style={{
-                        flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
-                        background: tipoDoc === "CNS" ? "#005CA9" : "#e2e8f0",
-                        color: tipoDoc === "CNS" ? "#fff" : "#374151",
-                        border: tipoDoc === "CNS" ? "2px solid #005CA9" : "2px solid #d1d5db",
-                      }}
-                    >
-                      CNS — Cartão Nacional de Saúde
-                    </button>
-                  </div>
-                  <div style={{ position: "relative" }}>
+                    <div>
+                    <label style={lbl}>Nome Completo *</label>
                     <input
-                      style={{
-                        ...inp,
-                        borderColor: cpfStatus === "error" ? "#dc2626" : cpfStatus === "ok" ? "#16a34a" : undefined,
-                        paddingRight: tipoDoc === "CPF" && cpfLoading ? 32 : undefined,
-                      }}
-                      value={form.docValue}
-                      onChange={(e) => handleDocInput(e.target.value)}
-                      placeholder={tipoDoc === "CPF" ? "000.000.000-00" : "000 0000 0000 0000"}
-                      inputMode="numeric"
+                      style={{ ...inp, background: cpfStatus === "ok" && form.paciente ? "#f0fdf4" : undefined }}
+                      value={form.paciente}
+                      onFocus={() => scrollToPreviewSection("preview-patient")}
+                      onChange={(e) => setForm(p => ({ ...p, paciente: e.target.value }))}
+                      placeholder="Nome Completo do Paciente"
                       required
                     />
-                    {tipoDoc === "CPF" && cpfLoading && (
-                      <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: 14 }}>⏳</span>
-                    )}
-                  </div>
-                  {/* Botão de preenchimento manual via CPF */}
-                  {tipoDoc === "CPF" && !cpfLoading && validarCPF(form.docValue) && cpfStatus !== "ok" && (
-                    <button
-                      type="button"
-                      onClick={() => buscarDadosCPF(form.docValue)}
-                      style={{
-                        marginTop: 6, width: "100%", padding: "8px 0",
-                        borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
-                        background: "#005CA9", color: "#fff",
-                        border: "2px solid #005CA9",
-                        display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                        transition: "background 0.2s",
-                      }}
-                    >
-                      🔍 Buscar dados via CPF
-                    </button>
-                  )}
-                  {/* Feedback da API de CPF */}
-                  {tipoDoc === "CPF" && cpfMsg && (
-                    <div style={{
-                      marginTop: 4, padding: "5px 8px", borderRadius: 5, fontSize: 11, fontWeight: 600,
-                      background: cpfStatus === "ok" ? "#f0fdf4" : cpfStatus === "not_found" ? "#fffbeb" : "#fef2f2",
-                      color: cpfStatus === "ok" ? "#16a34a" : cpfStatus === "not_found" ? "#d97706" : "#dc2626",
-                      border: `1px solid ${cpfStatus === "ok" ? "#bbf7d0" : cpfStatus === "not_found" ? "#fde68a" : "#fecaca"}`,
-                    }}>
-                      {cpfMsg}
-                      {cpfStatus === "not_found" && " Preencha os dados manualmente."}
-                    </div>
-                  )}
-                  {tipoDoc === "CPF" && form.docValue.replace(/\D/g, "").length === 11 && !validarCPF(form.docValue) && (
-                    <div style={{ marginTop: 4, padding: "5px 8px", borderRadius: 5, fontSize: 11, fontWeight: 600, background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>
-                      ⚠️ CPF inválido. Verifique os dígitos.
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label style={lbl}>Nome Completo *</label>
-                  <input
-                    style={{ ...inp, background: cpfStatus === "ok" && form.paciente ? "#f0fdf4" : undefined }}
-                    value={form.paciente}
-                    onChange={(e) => setForm(p => ({ ...p, paciente: e.target.value }))}
-                    placeholder="Nome Completo do Paciente"
-                    required
-                  />
-                  {cpfStatus === "ok" && form.paciente && (
-                    <span style={{ fontSize: 10, color: "#16a34a", marginTop: 2, display: "block" }}>✅ Preenchido via CPF</span>
-                  )}
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                  <div>
-                    <label style={lbl}>Sexo</label>
-                    <select
-                      style={{ ...sel, background: cpfStatus === "ok" ? "#f0fdf4" : undefined }}
-                      value={form.sexo}
-                      onChange={(e) => setForm(p => ({ ...p, sexo: e.target.value as "MALE" | "FEMALE" }))}
-                    >
-                      <option value="FEMALE">Feminino (F)</option>
-                      <option value="MALE">Masculino (M)</option>
-                    </select>
-                    {cpfStatus === "ok" && (
+                    {cpfStatus === "ok" && form.paciente && (
                       <span style={{ fontSize: 10, color: "#16a34a", marginTop: 2, display: "block" }}>✅ Preenchido via CPF</span>
                     )}
-                  </div>
-                  <div>
-                    <label style={lbl}>Data de Nascimento *</label>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <div>
+                      <label style={lbl}>Sexo</label>
+                      <select
+                        style={{ ...sel, background: cpfStatus === "ok" ? "#f0fdf4" : undefined }}
+                        value={form.sexo}
+                        onFocus={() => scrollToPreviewSection("preview-patient")}
+                        onChange={(e) => setForm(p => ({ ...p, sexo: e.target.value as "MALE" | "FEMALE" }))}
+                      >
+                        <option value="FEMALE">Feminino (F)</option>
+                        <option value="MALE">Masculino (M)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={lbl}>Data de Nascimento *</label>
+                      <input
+                        style={{ ...inp, background: cpfStatus === "ok" && form.nascimento ? "#f0fdf4" : undefined }}
+                        value={form.nascimento}
+                        onFocus={() => scrollToPreviewSection("preview-patient")}
+                        onChange={(e) => setForm(p => ({ ...p, nascimento: handleDateInput(e.target.value) }))}
+                        placeholder="DD/MM/AAAA"
+                        maxLength={10}
+                        inputMode="numeric"
+                        required
+                      />
+                    </div>
+                    </div>
+
+                    <div>
+                    <label style={lbl}>Nome da Mãe *</label>
                     <input
-                      style={{ ...inp, background: cpfStatus === "ok" && form.nascimento ? "#f0fdf4" : undefined }}
-                      value={form.nascimento}
-                      onChange={(e) => setForm(p => ({ ...p, nascimento: handleDateInput(e.target.value) }))}
-                      placeholder="DD/MM/AAAA"
-                      maxLength={10}
-                      inputMode="numeric"
+                      style={{ ...inp, background: cpfStatus === "ok" && form.nomeMae ? "#f0fdf4" : undefined }}
+                      value={form.nomeMae}
+                      onFocus={() => scrollToPreviewSection("preview-patient")}
+                      onChange={(e) => setForm(p => ({ ...p, nomeMae: e.target.value }))}
+                      placeholder="Nome da Mãe"
                       required
                     />
-                    {cpfStatus === "ok" && form.nascimento && (
-                      <span style={{ fontSize: 10, color: "#16a34a", marginTop: 2, display: "block" }}>✅ Preenchido via CPF</span>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <label style={lbl}>Nome da Mãe *</label>
-                  <input
-                    style={{ ...inp, background: cpfStatus === "ok" && form.nomeMae ? "#f0fdf4" : undefined }}
-                    value={form.nomeMae}
-                    onChange={(e) => setForm(p => ({ ...p, nomeMae: e.target.value }))}
-                    placeholder="Nome da Mãe"
-                    required
-                  />
-                  {cpfStatus === "ok" && form.nomeMae && (
-                    <span style={{ fontSize: 10, color: "#16a34a", marginTop: 2, display: "block" }}>✅ Preenchido via CPF</span>
-                  )}
-                </div>
-                {/* CEP + Nº do paciente */}
-                <div>
-                  <label style={lbl}>CEP do Paciente</label>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: 6, alignItems: "center" }}>
+                    </div>
+                    {/* CEP + Nº do paciente */}
+                    <div>
+                    <label style={lbl}>CEP do Paciente</label>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: 6, alignItems: "center" }}>
+                      <input
+                        style={inp}
+                        value={cepPaciente}
+                        onFocus={() => scrollToPreviewSection("preview-patient")}
+                        onChange={(e) => {
+                          const v = e.target.value.replace(/\D/g, "").slice(0, 8);
+                          const fmt = v.length > 5 ? `${v.slice(0,5)}-${v.slice(5)}` : v;
+                          setCepPaciente(fmt);
+                          if (v.length === 8) buscarCEP(v);
+                        }}
+                        placeholder="00000-000"
+                        inputMode="numeric"
+                      />
+                      <input
+                        style={{ ...inp, width: 80 }}
+                        value={cepNumero}
+                        onFocus={() => scrollToPreviewSection("preview-patient")}
+                        onChange={(e) => setCepNumero(e.target.value)}
+                        placeholder="Nº"
+                      />
+                      <button
+                        type="button"
+                        style={{ ...btnBlue, padding: "6px 10px", fontSize: 11, whiteSpace: "nowrap" }}
+                        onClick={() => { buscarCEP(cepPaciente); scrollToPreviewSection("preview-patient"); }}
+                        disabled={cepLoading}
+                      >
+                        {cepLoading ? "🔄" : "🔍 CEP"}
+                      </button>
+                    </div>
+                    </div>
+                    <div>
+                    <label style={lbl}>Endereço do Paciente *</label>
                     <input
                       style={inp}
-                      value={cepPaciente}
+                      value={form.endereco}
+                      onFocus={() => scrollToPreviewSection("preview-patient")}
+                      onChange={(e) => setForm(p => ({ ...p, endereco: e.target.value }))}
+                      placeholder="Rua, Número, Bairro, Cidade/UF"
+                      required
+                    />
+                    </div>
+                    </div>
+                    </div>
+
+                    {/* ── 3. Dados Médicos ── */}
+                    <div style={card}>
+                    <p style={secTitle}>🩺 3. Dados Médicos</p>
+                    <div style={{ display: "grid", gap: 8 }}>
+
+                    {/* Tipo de Documento: Atestado ou Laudo */}
+                    <div>
+                    <label style={lbl}>Tipo de Documento *</label>
+                    <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
+                      <button
+                        type="button"
+                        onClick={() => { setDocumentType('atestado'); scrollToPreviewSection("preview-body"); }}
+                        style={{
+                          flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
+                          background: documentType === 'atestado' ? "#005CA9" : "#e2e8f0",
+                          color: documentType === 'atestado' ? "#fff" : "#374151",
+                          border: documentType === 'atestado' ? "2px solid #005CA9" : "2px solid #d1d5db",
+                        }}
+                      >
+                        ATESTADO MÉDICO
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setDocumentType('laudo'); scrollToPreviewSection("preview-body"); }}
+                        style={{
+                          flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
+                          background: documentType === 'laudo' ? "#005CA9" : "#e2e8f0",
+                          color: documentType === 'laudo' ? "#fff" : "#374151",
+                          border: documentType === 'laudo' ? "2px solid #005CA9" : "2px solid #d1d5db",
+                        }}
+                      >
+                        LAUDO MÉDICO
+                      </button>
+                    </div>
+                    </div>
+
+                    {/* Dias de Afastamento */}
+                    <div>
+                    <label style={lbl}>Dias de Afastamento (1-15)</label>
+                    <select
+                      style={sel}
+                      value={form.afastamento}
+                      onFocus={() => scrollToPreviewSection("preview-body")}
+                      onChange={(e) => setForm(p => ({ ...p, afastamento: e.target.value }))}
+                    >
+                      {Array.from({ length: 15 }, (_, i) => i + 1).map((n) => {
+                        const d = DIAS_EXTENSO[n];
+                        const unidade = n === 1 ? "dia" : "dias";
+                        return (
+                          <option key={n} value={String(n)}>
+                            {d.num} ({d.ext}) {unidade}
+                          </option>
+                        );
+                      })}
+                    </select>
+                    </div>
+
+                    {/* Texto do Atestado */}
+                    <div>
+                    <label style={lbl}>Texto do Atestado</label>
+                    <textarea
+                      value={form.textoAtestado}
+                      onFocus={() => scrollToPreviewSection("preview-body")}
+                      onChange={(e) => setForm(p => ({ ...p, textoAtestado: e.target.value }))}
+                      rows={5}
+                      style={{ ...inp, resize: "vertical", lineHeight: 1.6 }}
+                    />
+                    </div>
+
+                    {/* CID */}
+                    <div>
+                    <label style={lbl}>CID — Diagnóstico Rápido</label>
+                    <select style={{ ...sel, marginBottom: 6 }} value=""
+                      onFocus={() => scrollToPreviewSection("preview-body")}
                       onChange={(e) => {
-                        const v = e.target.value.replace(/\D/g, "").slice(0, 8);
-                        const fmt = v.length > 5 ? `${v.slice(0,5)}-${v.slice(5)}` : v;
-                        setCepPaciente(fmt);
-                        if (v.length === 8) buscarCEP(v);
-                      }}
-                      placeholder="00000-000"
-                      inputMode="numeric"
-                    />
-                    <input
-                      style={{ ...inp, width: 80 }}
-                      value={cepNumero}
-                      onChange={(e) => setCepNumero(e.target.value)}
-                      placeholder="Nº"
-                    />
+                        if (!e.target.value) return;
+                        const [code, ...rest] = e.target.value.split(" ");
+                        setForm(p => ({ ...p, cidDisplay: code, cidNome: rest.join(" "), cid: e.target.value }));
+                      }}>
+                      <option value="">Selecione um diagnóstico...</option>
+                      {CIDS_CATEGORIZADOS.map((g) => (
+                        <optgroup key={g.grupo} label={g.grupo}>
+                          {g.itens.map((c) => (
+                            <option key={c.code} value={`${c.code} ${c.desc.toUpperCase()}`}>
+                              {c.code} — {c.desc}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 6 }}>
+                      <input style={inp} value={form.cidDisplay} onFocus={() => scrollToPreviewSection("preview-body")} onChange={(e) => setForm(p => ({ ...p, cidDisplay: e.target.value }))} placeholder="Código (Ex: J11)" />
+                      <input style={inp} value={form.cidNome} onFocus={() => scrollToPreviewSection("preview-body")} onChange={(e) => setForm(p => ({ ...p, cidNome: e.target.value }))} placeholder="Nome do CID" />
+                    </div>
+                    </div>
+
+                    {/* Modo Carimbo */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0" }} onClick={() => scrollToPreviewSection("preview-footer")}>
+                    <label style={{ ...lbl, margin: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                      <input
+                        type="checkbox"
+                        checked={form.modoCarimbo}
+                        onChange={(e) => setForm(p => ({ ...p, modoCarimbo: e.target.checked }))}
+                        style={{ width: 16, height: 16 }}
+                      />
+                      Modo Carimbo (rodapé com assinatura cursiva)
+                    </label>
+                    </div>
+                    </div>
+                    </div>
+
+                    {/* ── 4. Data de Emissão ── */}
+                    <div style={card}>
+                    <p style={secTitle}>📅 4. Data de Emissão</p>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <div>
+                    <label style={lbl}>Cidade de Emissão</label>
+                    <div style={{ position: "relative" }}>
+                      <input
+                        style={{ ...inp, paddingRight: cepUFPreenchida ? 28 : undefined }}
+                        value={form.cidade}
+                        onFocus={() => scrollToPreviewSection("preview-footer")}
+                        onChange={(e) => setForm(p => ({ ...p, cidade: e.target.value.toUpperCase() }))}
+                        placeholder="Ex: SÃO PAULO"
+                      />
+                    </div>
+                    </div>
+                    <div>
+                    <label style={lbl}>UF</label>
+                    <div style={{ position: "relative" }}>
+                      <input
+                        style={{ ...inp, textTransform: "uppercase" }}
+                        value={cepUFPreenchida}
+                        onFocus={() => scrollToPreviewSection("preview-footer")}
+                        onChange={(e) => setCepUFPreenchida(e.target.value.toUpperCase().slice(0, 2))}
+                        placeholder="Ex: SP"
+                        maxLength={2}
+                      />
+                    </div>
+                    </div>
+                    <div style={{ gridColumn: "1 / -1" }}>
+                    <label style={lbl}>Data de Emissão *</label>
+                    <input style={inp} value={form.dataEmissao}
+                      onFocus={() => scrollToPreviewSection("preview-footer")}
+                      onChange={(e) => {
+                        const v = handleDateInput(e.target.value);
+                        setForm(p => ({ ...p, dataEmissao: v, dataAssinatura: v }));
+                      }} placeholder="DD/MM/AAAA" maxLength={10} inputMode="numeric" required />
+                    </div>
+                    <div>
+                    <label style={lbl}>Hora da Assinatura</label>
+                    <input style={inp} type="time" value={form.horaAssinatura} onFocus={() => scrollToPreviewSection("preview-footer")} onChange={(e) => setForm(p => ({ ...p, horaAssinatura: e.target.value }))} />
+                    </div>
+                    </div>
+
+                    {/* ── Logos ── */}
+                    <div style={{ marginTop: 16 }}>
+                    <p style={{ ...secTitle, marginBottom: 10 }}>🖼 Logos do Documento</p>
+
+                    {/* Seletor de lado */}
+                    <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
                     <button
                       type="button"
-                      style={{ ...btnBlue, padding: "6px 10px", fontSize: 11, whiteSpace: "nowrap" }}
-                      onClick={() => buscarCEP(cepPaciente)}
-                      disabled={cepLoading}
-                    >
-                      {cepLoading ? "🔄" : "🔍 CEP"}
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <label style={lbl}>Endereço do Paciente *</label>
-                  <input style={inp} value={form.endereco} onChange={(e) => setForm(p => ({ ...p, endereco: e.target.value }))} placeholder="Rua, Número, Bairro, Cidade/UF" required />
-                  <span style={{ fontSize: 10, color: "#666", marginTop: 2, display: "block" }}>Preenchido automaticamente ao digitar o CEP. Edite se necessário.</span>
-                </div>
-              </div>
-            </div>
-
-            {/* ── 3. Dados Médicos ── */}
-            <div style={card}>
-              <p style={secTitle}>🩺 3. Dados Médicos</p>
-              <div style={{ display: "grid", gap: 8 }}>
-
-                {/* Tipo de Documento: Atestado ou Laudo */}
-                <div>
-                  <label style={lbl}>Tipo de Documento *</label>
-                  <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
-                    <button
-                      type="button"
-                      onClick={() => setDocumentType('atestado')}
+                      onClick={() => { setLogoSide("left"); scrollToPreviewSection("preview-header"); }}
                       style={{
-                        flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
-                        background: documentType === 'atestado' ? "#005CA9" : "#e2e8f0",
-                        color: documentType === 'atestado' ? "#fff" : "#374151",
-                        border: documentType === 'atestado' ? "2px solid #005CA9" : "2px solid #d1d5db",
+                        flex: 1, padding: "8px 0", borderRadius: 7, fontWeight: 700, fontSize: 12, cursor: "pointer",
+                        background: logoSide === "left" ? "#005CA9" : "#e2e8f0",
+                        color: logoSide === "left" ? "#fff" : "#374151",
+                        border: "none",
                       }}
                     >
-                      ATESTADO MÉDICO
+                      ← LOGO ESQUERDA
                     </button>
                     <button
                       type="button"
-                      onClick={() => setDocumentType('laudo')}
+                      onClick={() => { setLogoSide("right"); scrollToPreviewSection("preview-header"); }}
                       style={{
-                        flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
-                        background: documentType === 'laudo' ? "#005CA9" : "#e2e8f0",
-                        color: documentType === 'laudo' ? "#fff" : "#374151",
-                        border: documentType === 'laudo' ? "2px solid #005CA9" : "2px solid #d1d5db",
+                        flex: 1, padding: "8px 0", borderRadius: 7, fontWeight: 700, fontSize: 12, cursor: "pointer",
+                        background: logoSide === "right" ? "#005CA9" : "#e2e8f0",
+                        color: logoSide === "right" ? "#fff" : "#374151",
+                        border: "none",
                       }}
                     >
-                      LAUDO MÉDICO
+                      LOGO DIREITA →
                     </button>
-                  </div>
-                </div>
+                    </div>
 
-                {/* Dias de Afastamento */}
-                <div>
-                  <label style={lbl}>Dias de Afastamento (1-15)</label>
-                  <select
-                    style={sel}
-                    value={form.afastamento}
-                    onChange={(e) => setForm(p => ({ ...p, afastamento: e.target.value }))}
-                  >
-                    {Array.from({ length: 15 }, (_, i) => i + 1).map((n) => {
-                      const d = DIAS_EXTENSO[n];
-                      const unidade = n === 1 ? "dia" : "dias";
+                    {/* Preview do lado selecionado */}
+                    <div style={{
+                    width: "100%", height: 80, border: "2px dashed #d1d5db", borderRadius: 8,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    overflow: "hidden", background: "#f9fafb", marginBottom: 8,
+                    }} onClick={() => scrollToPreviewSection("preview-header")}>
+                    {(logoSide === "left" ? logoLeft : logoRight) ? (
+                      <img
+                        src={logoSide === "left" ? logoLeft : logoRight}
+                        alt="Logo"
+                        style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+                      />
+                    ) : (
+                      <div style={{ textAlign: "center" }}>
+                        <p style={{ fontSize: 11, color: "#000", fontWeight: 700, margin: 0 }}>SEM LOGO</p>
+                      </div>
+                    )}
+                    </div>
+
+                    <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                    <label style={{ ...btnBlue, flex: 1, display: "block", textAlign: "center", padding: "7px 0", cursor: "pointer", fontSize: 11 }}>
+                      📁 ENVIAR LOGO
+                      <input
+                        type="file" accept="image/*" style={{ display: "none" }}
+                        onChange={(e) => { handleLogoUpload(logoSide, e); scrollToPreviewSection("preview-header"); }}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      style={{ ...btnGray, flex: 1, fontSize: 11, padding: "7px 0" }}
+                      onClick={() => {
+                        if (logoSide === "left") { setLogoLeft(""); if (logoLeftRef.current) logoLeftRef.current.value = ""; }
+                        else { setLogoRight(""); if (logoRightRef.current) logoRightRef.current.value = ""; }
+                        scrollToPreviewSection("preview-header");
+                      }}
+                    >
+                      ✕ REMOVER
+                    </button>
+                    </div>
+
+                    {/* Galeria de Logos Padrão */}
+                    <p style={{ fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6 }}>
+                    Logos Padrão — Clique para aplicar no lado selecionado ({logoSide === "left" ? "Esquerda" : "Direita"})
+                    </p>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+                    {LOGOS_PADRAO.map((logo) => {
+                      const currentLogo = logoSide === "left" ? logoLeft : logoRight;
+                      const isSelected = currentLogo === logo.src;
                       return (
-                        <option key={n} value={String(n)}>
-                          {d.num} ({d.ext}) {unidade}
-                        </option>
+                        <div
+                          key={logo.id}
+                          onClick={() => { logoSide === "left" ? setLogoLeft(logo.src) : setLogoRight(logo.src); scrollToPreviewSection("preview-header"); }}
+                          style={{
+                            border: isSelected ? "2px solid #005CA9" : "1px solid #e5e7eb",
+                            borderRadius: 6, padding: 4, cursor: "pointer", background: isSelected ? "#eff6ff" : "#fff",
+                            height: 44, display: "flex", alignItems: "center", justifyContent: "center",
+                            overflow: "hidden",
+                          }}
+                          title={logo.label}
+                        >
+                          <img src={logo.src} alt={logo.label} style={{ maxWidth: "100%", maxHeight: 36, objectFit: "contain" }} />
+                        </div>
                       );
                     })}
-                  </select>
-                </div>
-
-                {/* Texto do Atestado */}
-                <div>
-                  <label style={lbl}>Texto do Atestado</label>
-                  <textarea
-                    value={form.textoAtestado}
-                    onChange={(e) => setForm(p => ({ ...p, textoAtestado: e.target.value }))}
-                    rows={5}
-                    style={{ ...inp, resize: "vertical", lineHeight: 1.6 }}
-                  />
-                </div>
-
-                {/* CID */}
-                <div>
-                  <label style={lbl}>CID — Diagnóstico Rápido</label>
-                  <select style={{ ...sel, marginBottom: 6 }} value="" onChange={(e) => {
-                    if (!e.target.value) return;
-                    const [code, ...rest] = e.target.value.split(" ");
-                    setForm(p => ({ ...p, cidDisplay: code, cidNome: rest.join(" "), cid: e.target.value }));
-                  }}>
-                    <option value="">Selecione um diagnóstico...</option>
-                    {CIDS_CATEGORIZADOS.map((g) => (
-                      <optgroup key={g.grupo} label={g.grupo}>
-                        {g.itens.map((c) => (
-                          <option key={c.code} value={`${c.code} ${c.desc.toUpperCase()}`}>
-                            {c.code} — {c.desc}
-                          </option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </select>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 6 }}>
-                    <input style={inp} value={form.cidDisplay} onChange={(e) => setForm(p => ({ ...p, cidDisplay: e.target.value }))} placeholder="Código (Ex: J11)" />
-                    <input style={inp} value={form.cidNome} onChange={(e) => setForm(p => ({ ...p, cidNome: e.target.value }))} placeholder="Nome do CID" />
-                  </div>
-                </div>
-
-                {/* Modo Carimbo */}
-                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0" }}>
-                  <label style={{ ...lbl, margin: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-                    <input
-                      type="checkbox"
-                      checked={form.modoCarimbo}
-                      onChange={(e) => setForm(p => ({ ...p, modoCarimbo: e.target.checked }))}
-                      style={{ width: 16, height: 16 }}
-                    />
-                    Modo Carimbo (rodapé com assinatura cursiva)
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* ── 4. Data de Emissão ── */}
-            <div style={card}>
-              <p style={secTitle}>📅 4. Data de Emissão</p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                <div>
-                  <label style={lbl}>Cidade de Emissão</label>
-                  <div style={{ position: "relative" }}>
-                    <input
-                      style={{ ...inp, paddingRight: cepUFPreenchida ? 28 : undefined }}
-                      value={form.cidade}
-                      onChange={(e) => setForm(p => ({ ...p, cidade: e.target.value.toUpperCase() }))}
-                      placeholder="Ex: SÃO PAULO"
-                    />
-                    {cepUFPreenchida && (
-                      <span style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", fontSize: 10, color: "#16a34a", fontWeight: 700 }}>✓</span>
-                    )}
-                  </div>
-                  {cepUFPreenchida && (
-                    <span style={{ fontSize: 10, color: "#16a34a", marginTop: 2, display: "block" }}>✅ Preenchido via CEP</span>
-                  )}
-                </div>
-                <div>
-                  <label style={lbl}>UF</label>
-                  <div style={{ position: "relative" }}>
-                    <input
-                      style={{ ...inp, textTransform: "uppercase" }}
-                      value={cepUFPreenchida}
-                      onChange={(e) => setCepUFPreenchida(e.target.value.toUpperCase().slice(0, 2))}
-                      placeholder="Ex: SP"
-                      maxLength={2}
-                    />
-                  </div>
-                  {cepUFPreenchida && (
-                    <span style={{ fontSize: 10, color: "#16a34a", marginTop: 2, display: "block" }}>✅ Preenchido via CEP</span>
-                  )}
-                </div>
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <label style={lbl}>Data de Emissão *</label>
-                  <input style={inp} value={form.dataEmissao} onChange={(e) => {
-                    const v = handleDateInput(e.target.value);
-                    setForm(p => ({ ...p, dataEmissao: v, dataAssinatura: v }));
-                  }} placeholder="DD/MM/AAAA" maxLength={10} inputMode="numeric" required />
-                  <p style={{ fontSize: 10, color: "#000", marginTop: 3 }}>
-                    A data de assinatura reflete automaticamente a data de emissão.
-                  </p>
-                </div>
-                <div>
-                  <label style={lbl}>Hora da Assinatura</label>
-                  <input style={inp} type="time" value={form.horaAssinatura} onChange={(e) => setForm(p => ({ ...p, horaAssinatura: e.target.value }))} />
-                </div>
-              </div>
-
-              {/* ── Logos ── */}
-              <div style={{ marginTop: 16 }}>
-                <p style={{ ...secTitle, marginBottom: 10 }}>🖼 Logos do Documento</p>
-
-                {/* Seletor de lado */}
-                <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-                  <button
-                    type="button"
-                    onClick={() => setLogoSide("left")}
-                    style={{
-                      flex: 1, padding: "8px 0", borderRadius: 7, fontWeight: 700, fontSize: 12, cursor: "pointer",
-                      background: logoSide === "left" ? "#005CA9" : "#e2e8f0",
-                      color: logoSide === "left" ? "#fff" : "#374151",
-                      border: "none",
-                    }}
-                  >
-                    ← LOGO ESQUERDA
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLogoSide("right")}
-                    style={{
-                      flex: 1, padding: "8px 0", borderRadius: 7, fontWeight: 700, fontSize: 12, cursor: "pointer",
-                      background: logoSide === "right" ? "#005CA9" : "#e2e8f0",
-                      color: logoSide === "right" ? "#fff" : "#374151",
-                      border: "none",
-                    }}
-                  >
-                    LOGO DIREITA →
-                  </button>
-                </div>
-
-                {/* Preview do lado selecionado */}
-                <div style={{
-                  width: "100%", height: 80, border: "2px dashed #d1d5db", borderRadius: 8,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  overflow: "hidden", background: "#f9fafb", marginBottom: 8,
-                }}>
-                  {(logoSide === "left" ? logoLeft : logoRight) ? (
-                    <img
-                      src={logoSide === "left" ? logoLeft : logoRight}
-                      alt="Logo"
-                      style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
-                    />
-                  ) : (
-                    <div style={{ textAlign: "center" }}>
-                      <p style={{ fontSize: 11, color: "#000", fontWeight: 700, margin: 0 }}>SEM LOGO</p>
-                      <p style={{ fontSize: 10, color: "#555", margin: "2px 0 0" }}>Tamanho ideal: 300×100px (PNG/JPG)</p>
                     </div>
-                  )}
-                </div>
-
-                <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-                  <label style={{ ...btnBlue, flex: 1, display: "block", textAlign: "center", padding: "7px 0", cursor: "pointer", fontSize: 11 }}>
-                    📁 ENVIAR LOGO
-                    <input
-                      type="file" accept="image/*" style={{ display: "none" }}
-                      onChange={(e) => handleLogoUpload(logoSide, e)}
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    style={{ ...btnGray, flex: 1, fontSize: 11, padding: "7px 0" }}
-                    onClick={() => {
-                      if (logoSide === "left") { setLogoLeft(""); if (logoLeftRef.current) logoLeftRef.current.value = ""; }
-                      else { setLogoRight(""); if (logoRightRef.current) logoRightRef.current.value = ""; }
-                    }}
-                  >
-                    ✕ REMOVER
-                  </button>
-                </div>
-
-                {/* Controles de Tamanho e Posição */}
-                {(logoSide === "left" ? logoLeft : logoRight) && (
-                  <div style={{ background: "#f0f4ff", border: "1px solid #c7d2fe", borderRadius: 8, padding: "8px 10px", marginBottom: 12 }}>
-                    <p style={{ fontSize: 10, fontWeight: 700, color: "#3730a3", margin: "0 0 6px" }}>
-                      🔧 Ajustar Logo {logoSide === "left" ? "Esquerda" : "Direita"}
-                    </p>
-                    {/* Tamanho */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                      <span style={{ fontSize: 10, color: "#374151", width: 60 }}>Tamanho:</span>
-                      <button type="button" onClick={() => adjustScale(logoSide, -SCALE_STEP)}
-                        style={{ width: 26, height: 26, borderRadius: 5, border: "1px solid #6366f1", background: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 14, color: "#4f46e5" }}>−</button>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: "#1e1b4b", minWidth: 36, textAlign: "center" }}>
-                        {Math.round((logoSide === "left" ? logoLeftScale : logoRightScale) * 100)}%
-                      </span>
-                      <button type="button" onClick={() => adjustScale(logoSide, SCALE_STEP)}
-                        style={{ width: 26, height: 26, borderRadius: 5, border: "1px solid #6366f1", background: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 14, color: "#4f46e5" }}>+</button>
                     </div>
-                    {/* Posição Horizontal */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                      <span style={{ fontSize: 10, color: "#374151", width: 60 }}>Horiz.:</span>
-                      <button type="button" onClick={() => adjustX(logoSide, -POS_STEP)}
-                        style={{ width: 26, height: 26, borderRadius: 5, border: "1px solid #6366f1", background: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 14, color: "#4f46e5" }}>←</button>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: "#1e1b4b", minWidth: 36, textAlign: "center" }}>
-                        {logoSide === "left" ? logoLeftX : logoRightX}px
-                      </span>
-                      <button type="button" onClick={() => adjustX(logoSide, POS_STEP)}
-                        style={{ width: 26, height: 26, borderRadius: 5, border: "1px solid #6366f1", background: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 14, color: "#4f46e5" }}>→</button>
                     </div>
-                    {/* Posição Vertical */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                      <span style={{ fontSize: 10, color: "#374151", width: 60 }}>Vert.:</span>
-                      <button type="button" onClick={() => adjustY(logoSide, -POS_STEP)}
-                        style={{ width: 26, height: 26, borderRadius: 5, border: "1px solid #6366f1", background: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 14, color: "#4f46e5" }}>↑</button>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: "#1e1b4b", minWidth: 36, textAlign: "center" }}>
-                        {logoSide === "left" ? logoLeftY : logoRightY}px
-                      </span>
-                      <button type="button" onClick={() => adjustY(logoSide, POS_STEP)}
-                        style={{ width: 26, height: 26, borderRadius: 5, border: "1px solid #6366f1", background: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 14, color: "#4f46e5" }}>↓</button>
-                    </div>
-                    <button type="button" onClick={() => resetLogoTransform(logoSide)}
-                      style={{ fontSize: 10, color: "#6b7280", background: "none", border: "none", cursor: "pointer", textDecoration: "underline", padding: 0 }}>
-                      ↺ Resetar posição
-                    </button>
-                  </div>
-                )}
-
-                {/* Galeria de Logos Padrão */}
-                <p style={{ fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6 }}>
-                  Logos Padrão — Clique para aplicar no lado selecionado ({logoSide === "left" ? "Esquerda" : "Direita"})
-                </p>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
-                  {LOGOS_PADRAO.map((logo) => {
-                    const currentLogo = logoSide === "left" ? logoLeft : logoRight;
-                    const isSelected = currentLogo === logo.src;
-                    return (
-                      <div
-                        key={logo.id}
-                        onClick={() => logoSide === "left" ? setLogoLeft(logo.src) : setLogoRight(logo.src)}
-                        style={{
-                          border: isSelected ? "2px solid #005CA9" : "1px solid #e5e7eb",
-                          borderRadius: 6, padding: 4, cursor: "pointer", background: isSelected ? "#eff6ff" : "#fff",
-                          height: 44, display: "flex", alignItems: "center", justifyContent: "center",
-                          overflow: "hidden",
-                        }}
-                        title={logo.label}
-                      >
-                        <img src={logo.src} alt={logo.label} style={{ maxWidth: "100%", maxHeight: 36, objectFit: "contain" }} />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
             {/* Botões de Ação */}
             <div style={{ display: "flex", gap: 10, paddingBottom: 20 }}>
               <button type="button" style={{ ...btnGray, flex: 1 }} onClick={() => navigate("/dashboard")}>CANCELAR</button>
@@ -2158,7 +2145,7 @@ export default function AtestadoCria() {
               🔒 QR Code gerado somente após emissão
             </span>
           </div>
-          <div style={{ flex: 1, overflow: "auto", background: "#ffffff", borderRadius: 10, padding: 14, maxHeight: "calc(100vh - 120px)" }}>
+          <div id="preview-container" style={{ flex: 1, overflow: "auto", background: "#ffffff", borderRadius: 10, padding: 14, maxHeight: "calc(100vh - 120px)" }}>
             {/* A4: 794px x 1123px @ 96dpi */}
             <div style={{ width: 794, margin: "0 auto", boxShadow: "0 4px 16px rgba(0,0,0,0.05)" }}>
               <AttestationDocument
