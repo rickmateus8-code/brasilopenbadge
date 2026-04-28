@@ -586,9 +586,22 @@ export default function AtestadoCria() {
   const [priceLoading, setPriceLoading] = useState<boolean>(false);
 
   // ── Lógica de Preview Inteligente com Zoom Dinâmico ─────────────────────────
-  const [zoomScale, setZoomScale] = useState(0.65); // Escala padrão "Fit"
+  const [zoomScale, setZoomScale] = useState(0.65);
   const [zoomTranslateY, setZoomTranslateY] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
+
+  // Calcula a escala "Fit" exata para o container atual
+  const getFitScale = useCallback(() => {
+    const container = document.getElementById("preview-container");
+    if (!container) return 0.65;
+    const padding = 28; // 14px * 2
+    const availableWidth = container.offsetWidth - padding;
+    const availableHeight = container.offsetHeight - padding;
+    const scaleX = availableWidth / 794;
+    const scaleY = availableHeight / 1123;
+    // O fit scale é o menor entre as proporções para garantir que cabe inteiro, limite máx 0.8 para não ficar gigante
+    return Math.min(scaleX, scaleY, 0.8);
+  }, []);
 
   // Função para calcular o Zoom e Deslocamento para focar em uma seção
   const scrollToPreviewSection = (sectionId: string) => {
@@ -598,19 +611,14 @@ export default function AtestadoCria() {
 
     if (container && docElement && targetElement) {
       const containerHeight = container.offsetHeight;
-      const targetRect = targetElement.getBoundingClientRect();
-      const docRect = docElement.getBoundingClientRect();
       
-      // Calculamos a posição relativa do elemento dentro do documento (escala 1:1)
-      // Como o documento está sofrendo transformações, usamos offsets fixos do DOM
       const relativeTop = targetElement.offsetTop;
       const elementHeight = targetElement.offsetHeight;
 
-      // Escala de Foco (Zoom In)
-      const focusScale = 0.95; 
+      // Escala de Foco (Zoom In) - Dinâmica baseada no Fit Scale
+      const fitScale = getFitScale();
+      const focusScale = Math.min(fitScale * 1.5, 0.98); 
       
-      // Centralizamos o elemento no meio do container
-      // translateY = (Metade do Container) - (Posição do elemento no documento * escala)
       const targetY = (containerHeight / 2) - (relativeTop * focusScale) - ((elementHeight * focusScale) / 2);
 
       setZoomScale(focusScale);
@@ -621,21 +629,24 @@ export default function AtestadoCria() {
 
   // Retornar ao estado original (Ver documento inteiro)
   const resetPreviewZoom = () => {
-    setZoomScale(0.65); // Escala "Ver tudo"
+    setZoomScale(getFitScale());
     setZoomTranslateY(0);
     setIsFocused(false);
   };
 
-  // Ajustar escala inicial baseada na largura da tela (opcional, mantemos sutil)
+  // Ajustar escala inicial e ao redimensionar
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 1200) setZoomScale(0.55);
-      else setZoomScale(0.65);
+      if (!isFocused) setZoomScale(getFitScale());
     };
     window.addEventListener('resize', handleResize);
-    handleResize();
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    // Pequeno delay para garantir que o DOM renderizou
+    const timer = setTimeout(handleResize, 100);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(timer);
+    };
+  }, [getFitScale, isFocused]);
 
   // ── Atualizar texto do atestado quando dias mudam ──────────────────────────
   useEffect(() => {
@@ -1302,14 +1313,14 @@ export default function AtestadoCria() {
     cursor: "pointer",
   };  // ── Render ──────────────────────────────────────────────────────────────────────
   return (
-    <div style={{ minHeight: "100vh", background: "#fff", fontFamily: "Roboto, sans-serif" }}>
+    <div style={{ height: "100vh", overflow: "hidden", background: "#fff", fontFamily: "Roboto, sans-serif", display: "flex", flexDirection: "column" }}>
       <style>{`
         /* Responsividade mobile para AtestadoCria */
         @media (max-width: 900px) {
-          .atestado-layout { flex-direction: column !important; padding: 8px !important; }
+          .atestado-layout { flex-direction: column !important; padding: 8px !important; overflow-y: auto !important; height: auto !important; }
           .atestado-form-col { width: 100% !important; max-height: none !important; overflow-y: visible !important; }
           .atestado-preview-col { display: none !important; }
-          .atestado-header { flex-direction: column !important; gap: 6px !important; align-items: flex-start !important; }
+          .atestado-header { flex-direction: column !important; gap: 6px !important; align-items: flex-start !important; flex-shrink: 0 !important; }
           .atestado-header-title { font-size: 13px !important; }
           .atestado-import-grid { grid-template-columns: 1fr !important; }
           .atestado-grid-2 { grid-template-columns: 1fr !important; }
@@ -1318,6 +1329,26 @@ export default function AtestadoCria() {
           .atestado-card { padding: 10px 10px !important; }
           .atestado-btn-row { flex-direction: column !important; }
           .atestado-btn-row button { width: 100% !important; }
+        }
+
+        /* Modern Scrollbar para a coluna do formulário */
+        .atestado-form-col::-webkit-scrollbar {
+          width: 6px;
+        }
+        .atestado-form-col::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .atestado-form-col::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 10px;
+        }
+        .atestado-form-col::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+        /* Garantir que o layout ocupe o espaço restante */
+        .atestado-layout {
+          height: calc(100vh - 60px);
+          overflow: hidden;
         }
       `}</style>
 
