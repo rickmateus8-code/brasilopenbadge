@@ -185,25 +185,39 @@ export default function PetitionSTJCria() {
     scrollToPreviewSection(isTop ? "top" : "bottom");
   };
 
-  const resetPreviewZoom = () => {
-    setZoomScale(getFitScale());
-    setZoomTranslateY(0);
+  const resetPreviewZoom = useCallback(() => {
+    const scale = getFitScale();
+    const container = document.getElementById("preview-container");
+    let ty = 0;
+    if (container) {
+      const containerHeight = container.offsetHeight;
+      const scaledHeight = 1123 * scale;
+      // Centraliza verticalmente se o documento couber inteiro
+      if (containerHeight > scaledHeight) {
+        ty = (containerHeight - scaledHeight) / 2;
+      }
+    }
+    setZoomScale(scale);
+    setZoomTranslateY(ty);
     setIsFocused(false);
     setCurrentSection("top");
-  };
+  }, [getFitScale]);
 
   // Ajustar escala inicial e ao redimensionar
   useEffect(() => {
     const handleResize = () => {
-      if (!isFocused || previewMode === "full") setZoomScale(getFitScale());
+      if (!isFocused || previewMode === "full") {
+        resetPreviewZoom();
+      }
     };
     window.addEventListener('resize', handleResize);
+    // Timeout para garantir que o DOM renderezou
     const timer = setTimeout(handleResize, 100);
     return () => {
       window.removeEventListener('resize', handleResize);
       clearTimeout(timer);
     };
-  }, [getFitScale, isFocused, previewMode]);
+  }, [resetPreviewZoom, isFocused, previewMode]);
 
   const handleRequestEmit = useCallback(() => {
     if (!form.requerente) { toast.error("Preencha o Nome do Requerente"); return; }
@@ -536,7 +550,7 @@ export default function PetitionSTJCria() {
             </div>
           </aside>
 
-          <main className="flex-1 relative flex flex-col items-center justify-center p-8 overflow-hidden">
+          <main className="flex-1 relative flex flex-col overflow-hidden">
             <div className="absolute top-4 left-4 flex flex-col gap-2 z-20">
               <button 
                 onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -572,11 +586,13 @@ export default function PetitionSTJCria() {
 
             <div 
               id="preview-container"
-              className="w-full h-full flex items-center justify-center overflow-auto custom-scrollbar"
+              className="w-full h-full flex items-start justify-center overflow-hidden bg-white relative"
               style={{ perspective: "1000px" }}
             >
               <div
                 style={{
+                  width: 794,
+                  flexShrink: 0,
                   transform: `scale(${zoomScale}) translateY(${zoomTranslateY}px)`,
                   transformOrigin: "top center",
                   transition: "transform 0.85s cubic-bezier(0.22, 1, 0.36, 1)",
