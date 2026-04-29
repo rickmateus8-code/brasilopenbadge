@@ -1,10 +1,9 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import { useLocation } from "wouter";
 import { useEffect } from "react";
 
 function GlobalSupportWhatsappSync() {
@@ -229,6 +228,14 @@ function DocMasterRouter() {
       </Route>
       <Route path="/toxicologicosalvos">
         <ProtectedRoute component={ToxicologicoSalvos} />
+      </Route>
+
+      {/* Laudo Sodré */}
+      <Route path="/toxicria">
+        <ProtectedRoute component={ToxicriaCria} />
+      </Route>
+      <Route path="/toxicriasalvos">
+        <ProtectedRoute component={ToxicriaSalvos} />
       </Route>
 
       {/* Rotas legacy */}

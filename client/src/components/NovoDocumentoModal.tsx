@@ -72,7 +72,7 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
       .then(r => r.json())
       .then(data => {
         if (data.success && data.pricing) {
-          const list: DocOption[] = Object.entries(data).map(([key, val]: [string, any]) => ({
+          const list: DocOption[] = Object.entries(data.pricing).map(([key, val]: [string, any]) => ({
             key,
             label: val.display_name,
             icon: DOC_ICONS[key] || FileText,

@@ -25,4 +25,10 @@ Este arquivo contém mandatos inegociáveis para qualquer agente de IA ou desenv
 *   **MANDATO DE BUILD:** Proibido realizar `git push` sem executar `npm run build` localmente para validar o bundle (evitar erros de duplicidade de imports que causam tela branca).
 *   **INTEGRIDADE 1:1:** O layout gerado no DocMaster deve ser espelhado com perfeição no validador IDAB.
 
+## 5. Aprendizados Recentes e Regras de Manutenção
+*   **Integridade de Ícones:** Sempre verifique se os ícones (ex: `lucide-react`) utilizados no JSX foram devidamente importados. A ausência de import causa `ReferenceError` em tempo de execução, mesmo que o build do Vite não aponte erros estáticos.
+*   **Mapeamento de API:** Ao consumir endpoints de precificação ou configurações, respeite estritamente a estrutura do objeto retornado (ex: acessar `data.pricing` em vez de `data`). Erros de mapeamento quebram modais críticos e fluxos de emissão.
+*   **Preservação de Rotas e Menus:** Nunca remova rotas do `App.tsx` ou itens do `DashboardLayout.tsx` durante refatorações, a menos que seja uma solicitação explícita. A remoção acidental desativa funcionalidades e corrompe a navegação do usuário.
+*   **Validação Estrita:** Sempre execute `npx tsc -p tsconfig.json --noEmit` antes de finalizar uma tarefa para capturar erros de referência que o Vite possa ignorar.
+
 *Este documento é a alma do projeto. Respeite-o.*

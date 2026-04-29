@@ -50,8 +50,24 @@ const menuItems: MenuItem[] = [
       { label: "Petições Salvas", path: "/peticao-stj-salvos" },
     ],
   },
-
-
+  {
+    icon: FlaskConical, label: "Toxicológico",
+    children: [
+      { label: "Novo Toxicológico", path: "/toxicologicocria", isCreation: true },
+      { label: "Laudo Sodré", path: "/toxicria", isCreation: true },
+      { label: "Toxicológicos Salvos", path: "/toxicologicosalvos" },
+      { label: "Laudos Sodré Salvos", path: "/toxicriasalvos" },
+    ],
+  },
+  {
+    icon: GraduationCap, label: "Histórico Escolar",
+    children: [
+      { label: "Histórico SP", path: "/historico-sp", isCreation: true },
+      { label: "Histórico UNINTER", path: "/historico-uninter", isCreation: true },
+      { label: "Salvos (SP)", path: "/historico-sp-salvos" },
+      { label: "Salvos (UNINTER)", path: "/historico-uninter-salvos" },
+    ],
+  },
   {
     icon: Pill, label: "Receituário",
     children: [
