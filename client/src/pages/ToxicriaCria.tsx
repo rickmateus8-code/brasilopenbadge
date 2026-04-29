@@ -418,7 +418,7 @@ export default function ToxicriaCria() {
       setSaved(true);
       setShowConfirmModal(false);
       setShowSuccessModal(true);
-      if (updateBalance) updateBalance();
+      if (updateBalance && data.newBalance !== undefined) updateBalance(data.newBalance);
       toast.success("Laudo emitido com sucesso!");
     } catch (err: any) {
       toast.error(err.message || "Erro ao emitir laudo");

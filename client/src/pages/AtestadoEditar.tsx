@@ -1434,8 +1434,9 @@ export default function AtestadoEditar() {
     logoUrl: logoLeft,
     logoRight: logoRight,
     instituicao: form.instituicao || (form.cidade ? `PREFEITURA DE ${form.cidade.toUpperCase()}` : "INSTITUÇÃO"),
+    afastamento: form.afastamento,
     unidade: form.unidade || "LOCAL DE ATENDIMENTO",
-    enderecoEmitente: form.enderecoEmitente || "",
+    enderecoEmitente: form.enderecoEmitente || "ENDEREÇO COMPLETO",
     signatureColor,
     signatureImage,
     textoAtestado: form.textoAtestado,
@@ -1930,7 +1931,7 @@ export default function AtestadoEditar() {
                 onChange={(e) => setTermoBusca(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), buscarMedicos())}
               />
-              <button type="button" style={{ ...btnBlue, width: "100%" }} onClick={buscarMedicos} disabled={buscando}>
+              <button type="button" style={{ ...btnBlue, width: "100%" }} onClick={() => buscarMedicos()} disabled={buscando}>
                 {buscando ? "🔄 Buscando..." : "🔍 BUSCAR NO BANCO DE DADOS"}
               </button>
               {erroBusca && (
@@ -1982,7 +1983,7 @@ export default function AtestadoEditar() {
                     <input
                       style={inp}
                       value={form.unidade}
-                      onFocus={() => scrollToPreviewSection("preview-header")}
+                      onFocus={() => handleFocusSection("preview-header")}
                       onChange={(e) => setForm(p => ({ ...p, unidade: e.target.value }))}
                       placeholder="Ex: UBS CENTRO, UPA NORTE, HOSPITAL MUNICIPAL"
                     />
@@ -1992,7 +1993,7 @@ export default function AtestadoEditar() {
                     <input
                       style={{ ...inp, background: form.enderecoEmitente ? "#fff" : "#f8fafc" }}
                       value={form.enderecoEmitente}
-                      onFocus={() => scrollToPreviewSection("preview-header")}
+                      onFocus={() => handleFocusSection("preview-header")}
                       onChange={(e) => setForm(p => ({ ...p, enderecoEmitente: e.target.value }))}
                       placeholder="Ex: RUA ANTÔNIO WALTER, 66 – CENTRO, VOTORANTIM/SP"
                     />
@@ -2003,7 +2004,7 @@ export default function AtestadoEditar() {
                     <input
                       style={inp}
                       value={form.especialidade}
-                      onFocus={() => scrollToPreviewSection("preview-footer")}
+                      onFocus={() => handleFocusSection("preview-footer")}
                       onChange={(e) => setForm(p => ({ ...p, especialidade: e.target.value }))}
                       placeholder="Ex: CLÍNICO GERAL, PEDIATRA"
                     />
@@ -2014,7 +2015,7 @@ export default function AtestadoEditar() {
                     <input
                       style={inp}
                       value={form.medico}
-                      onFocus={() => scrollToPreviewSection("preview-footer")}
+                      onFocus={() => handleFocusSection("preview-footer")}
                       onChange={(e) => setForm(p => ({ ...p, medico: e.target.value }))}
                       placeholder="DR. NOME SOBRENOME"
                     />
@@ -2024,7 +2025,7 @@ export default function AtestadoEditar() {
                     <input
                       style={inp}
                       value={form.crm}
-                      onFocus={() => scrollToPreviewSection("preview-footer")}
+                      onFocus={() => handleFocusSection("preview-footer")}
                       onChange={(e) => setForm(p => ({ ...p, crm: e.target.value }))}
                       placeholder="CRM/SP 00000"
                     />
@@ -2035,7 +2036,7 @@ export default function AtestadoEditar() {
                     <select
                       style={sel}
                       value={signatureColor}
-                      onFocus={() => scrollToPreviewSection("preview-footer")}
+                      onFocus={() => handleFocusSection("preview-footer")}
                       onChange={(e) => setSignatureColor(e.target.value)}
                     >
                       <option value="#0b109f">🔵 Azul Caneta (Padrão)</option>
@@ -2044,7 +2045,7 @@ export default function AtestadoEditar() {
                     </div>
                     <div>
                     <label style={lbl}>USAR FOTO DA ASSINATURA (OPCIONAL)</label>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }} onClick={() => scrollToPreviewSection("preview-footer")}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }} onClick={() => handleFocusSection("footer")}>
                       {signatureImage ? (
                         <div style={{ position: "relative" }}>
                           <img src={signatureImage} alt="Assinatura" style={{ maxHeight: 65, maxWidth: 208, objectFit: "contain", border: "1px solid #e5e7eb", borderRadius: 6 }} />
@@ -2107,7 +2108,7 @@ export default function AtestadoEditar() {
                         paddingRight: tipoDoc === "CPF" && cpfLoading ? 32 : undefined,
                       }}
                       value={form.docValue}
-                      onFocus={() => scrollToPreviewSection("preview-patient")}
+                      onFocus={() => handleFocusSection("preview-patient")}
                       onChange={(e) => handleDocInput(e.target.value)}
                       placeholder={tipoDoc === "CPF" ? "000.000.000-00" : "000 0000 0000 0000"}
                       inputMode="numeric"
@@ -2158,7 +2159,7 @@ export default function AtestadoEditar() {
                   <input
                     style={{ ...inp, background: cpfStatus === "ok" && form.paciente ? "#f0fdf4" : undefined }}
                     value={form.paciente}
-                    onFocus={() => scrollToPreviewSection("preview-patient")}
+                    onFocus={() => handleFocusSection("preview-patient")}
                     onChange={(e) => setForm(p => ({ ...p, paciente: e.target.value }))}
                     placeholder="Nome Completo do Paciente"
                     required
@@ -2174,7 +2175,7 @@ export default function AtestadoEditar() {
                     <select
                       style={{ ...sel, background: cpfStatus === "ok" ? "#f0fdf4" : undefined }}
                       value={form.sexo}
-                      onFocus={() => scrollToPreviewSection("preview-patient")}
+                      onFocus={() => handleFocusSection("preview-patient")}
                       onChange={(e) => setForm(p => ({ ...p, sexo: e.target.value as "MALE" | "FEMALE" }))}
                     >
                       <option value="FEMALE">Feminino (F)</option>
@@ -2186,7 +2187,7 @@ export default function AtestadoEditar() {
                     <input
                       style={{ ...inp, background: cpfStatus === "ok" && form.nascimento ? "#f0fdf4" : undefined }}
                       value={form.nascimento}
-                      onFocus={() => scrollToPreviewSection("preview-patient")}
+                      onFocus={() => handleFocusSection("preview-patient")}
                       onChange={(e) => setForm(p => ({ ...p, nascimento: handleDateInput(e.target.value) }))}
                       placeholder="DD/MM/AAAA"
                       maxLength={10}
@@ -2201,7 +2202,7 @@ export default function AtestadoEditar() {
                   <input
                     style={{ ...inp, background: cpfStatus === "ok" && form.nomeMae ? "#f0fdf4" : undefined }}
                     value={form.nomeMae}
-                    onFocus={() => scrollToPreviewSection("preview-patient")}
+                    onFocus={() => handleFocusSection("preview-patient")}
                     onChange={(e) => setForm(p => ({ ...p, nomeMae: e.target.value }))}
                     placeholder="Nome da Mãe"
                     required
@@ -2214,7 +2215,7 @@ export default function AtestadoEditar() {
                     <input
                       style={inp}
                       value={cepPaciente}
-                      onFocus={() => scrollToPreviewSection("preview-patient")}
+                      onFocus={() => handleFocusSection("preview-patient")}
                       onChange={(e) => {
                         const v = e.target.value.replace(/\D/g, "").slice(0, 8);
                         const fmt = v.length > 5 ? `${v.slice(0,5)}-${v.slice(5)}` : v;
@@ -2227,14 +2228,14 @@ export default function AtestadoEditar() {
                     <input
                       style={{ ...inp, width: 80 }}
                       value={cepNumero}
-                      onFocus={() => scrollToPreviewSection("preview-patient")}
+                      onFocus={() => handleFocusSection("preview-patient")}
                       onChange={(e) => setCepNumero(e.target.value)}
                       placeholder="Nº"
                     />
                     <button
                       type="button"
                       style={{ ...btnBlue, padding: "6px 10px", fontSize: 11, whiteSpace: "nowrap" }}
-                      onClick={() => { buscarCEP(cepPaciente); scrollToPreviewSection("preview-patient"); }}
+                      onClick={() => { buscarCEP(cepPaciente); handleFocusSection("patient"); }}
                       disabled={cepLoading}
                     >
                       {cepLoading ? "🔄" : "🔍 CEP"}
@@ -2246,7 +2247,7 @@ export default function AtestadoEditar() {
                   <input
                     style={inp}
                     value={form.endereco}
-                    onFocus={() => scrollToPreviewSection("preview-patient")}
+                    onFocus={() => handleFocusSection("preview-patient")}
                     onChange={(e) => setForm(p => ({ ...p, endereco: e.target.value }))}
                     placeholder="Rua, Número, Bairro, Cidade/UF"
                     required
@@ -2266,7 +2267,7 @@ export default function AtestadoEditar() {
                   <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
                     <button
                       type="button"
-                      onClick={() => { setDocumentType('atestado'); scrollToPreviewSection("preview-body"); }}
+                      onClick={() => { setDocumentType('atestado'); handleFocusSection("body"); }}
                       style={{
                         flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
                         background: documentType === 'atestado' ? "#005CA9" : "#e2e8f0",
@@ -2278,7 +2279,7 @@ export default function AtestadoEditar() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => { setDocumentType('laudo'); scrollToPreviewSection("preview-body"); }}
+                      onClick={() => { setDocumentType('laudo'); handleFocusSection("body"); }}
                       style={{
                         flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
                         background: documentType === 'laudo' ? "#005CA9" : "#e2e8f0",
@@ -2297,7 +2298,7 @@ export default function AtestadoEditar() {
                   <select
                     style={sel}
                     value={form.afastamento}
-                    onFocus={() => scrollToPreviewSection("preview-body")}
+                    onFocus={() => handleFocusSection("preview-body")}
                     onChange={(e) => setForm(p => ({ ...p, afastamento: e.target.value }))}
                   >
                     {Array.from({ length: 15 }, (_, i) => i + 1).map((n) => {
@@ -2317,7 +2318,7 @@ export default function AtestadoEditar() {
                   <label style={lbl}>Texto do Atestado</label>
                   <textarea
                     value={form.textoAtestado}
-                    onFocus={() => scrollToPreviewSection("preview-body")}
+                    onFocus={() => handleFocusSection("preview-body")}
                     onChange={(e) => setForm(p => ({ ...p, textoAtestado: e.target.value }))}
                     rows={5}
                     style={{ ...inp, resize: "vertical", lineHeight: 1.6 }}
@@ -2328,7 +2329,7 @@ export default function AtestadoEditar() {
                 <div>
                   <label style={lbl}>CID — Diagnóstico Rápido</label>
                   <select style={{ ...sel, marginBottom: 6 }} value=""
-                    onFocus={() => scrollToPreviewSection("preview-body")}
+                    onFocus={() => handleFocusSection("preview-body")}
                     onChange={(e) => {
                       if (!e.target.value) return;
                       const [code, ...rest] = e.target.value.split(" ");
@@ -2346,13 +2347,13 @@ export default function AtestadoEditar() {
                     ))}
                   </select>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 6 }}>
-                    <input style={inp} value={form.cidDisplay} onFocus={() => scrollToPreviewSection("preview-body")} onChange={(e) => setForm(p => ({ ...p, cidDisplay: e.target.value }))} placeholder="Código (Ex: J11)" />
-                    <input style={inp} value={form.cidNome} onFocus={() => scrollToPreviewSection("preview-body")} onChange={(e) => setForm(p => ({ ...p, cidNome: e.target.value }))} placeholder="Nome do CID" />
+                    <input style={inp} value={form.cidDisplay} onFocus={() => handleFocusSection("preview-body")} onChange={(e) => setForm(p => ({ ...p, cidDisplay: e.target.value }))} placeholder="Código (Ex: J11)" />
+                    <input style={inp} value={form.cidNome} onFocus={() => handleFocusSection("preview-body")} onChange={(e) => setForm(p => ({ ...p, cidNome: e.target.value }))} placeholder="Nome do CID" />
                   </div>
                 </div>
 
                 {/* Modo Carimbo */}
-                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0" }} onClick={() => scrollToPreviewSection("preview-footer")}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0" }} onClick={() => handleFocusSection("footer")}>
                   <label style={{ ...lbl, margin: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
                     <input
                       type="checkbox"
@@ -2393,7 +2394,7 @@ export default function AtestadoEditar() {
                     <input
                       style={{ ...inp, textTransform: "uppercase" }}
                       value={cepUFPreenchida}
-                      onFocus={() => scrollToPreviewSection("preview-footer")}
+                      onFocus={() => handleFocusSection("preview-footer")}
                       onChange={(e) => setCepUFPreenchida(e.target.value.toUpperCase().slice(0, 2))}
                       placeholder="Ex: SP"
                       maxLength={2}
@@ -2427,7 +2428,7 @@ export default function AtestadoEditar() {
                 <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
                   <button
                     type="button"
-                    onClick={() => { setLogoSide("left"); scrollToPreviewSection("preview-header"); }}
+                    onClick={() => { setLogoSide("left"); handleFocusSection("header"); }}
                     style={{
                       flex: 1, padding: "8px 0", borderRadius: 7, fontWeight: 700, fontSize: 12, cursor: "pointer",
                       background: logoSide === "left" ? "#005CA9" : "#e2e8f0",
@@ -2439,7 +2440,7 @@ export default function AtestadoEditar() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => { setLogoSide("right"); scrollToPreviewSection("preview-header"); }}
+                    onClick={() => { setLogoSide("right"); handleFocusSection("header"); }}
                     style={{
                       flex: 1, padding: "8px 0", borderRadius: 7, fontWeight: 700, fontSize: 12, cursor: "pointer",
                       background: logoSide === "right" ? "#005CA9" : "#e2e8f0",

@@ -863,50 +863,6 @@ export default function AtestadoCria() {
     finally { setCepLoading(false); }
   };
 
-  // ── Buscar UPA mais próxima pelo CEP (via API CNES DataSUS) ────────────────────
-  const buscarUPAProxima = async () => {
-    const cepLimpo = cepUPA.replace(/\D/g, "");
-    if (cepLimpo.length !== 8) { setCepUPAErro("CEP inválido. Digite 8 dígitos."); return; }
-    setCepUPALoading(true);
-    setCepUPAErro("");
-    setUpaResultados([]);
-    setShowUpaResultados(false);
-    try {
-      const res = await fetch(`/api/upa-proxima?cep=${cepLimpo}`);
-      const data = await res.json() as any;
-      if (!res.ok || data.error) { setCepUPAErro(data.error || "Erro ao buscar UPAs."); return; }
-      if (!data.upas || data.upas.length === 0) {
-        setCepUPAErro(`Nenhuma UPA/unidade encontrada em ${data.cidade}/${data.uf}. Selecione manualmente.`);
-        return;
-      }
-      setUpaResultados(data.upas);
-      setShowUpaResultados(true);
-      setCepUPAErro("");
-    } catch { setCepUPAErro("Erro ao buscar. Verifique a conexão."); }
-    finally { setCepUPALoading(false); }
-  };
-
-  // ── Selecionar UPA dos resultados CNES ──────────────────────────────────────────────────
-  const selecionarUPA = (upa: typeof upaResultados[0]) => {
-    // Formatar endereço no padrão {rua}, {Nº} - {bairro}, {cidade}/{uf}
-    const endFormatado = [
-      `${upa.rua}, ${upa.numero}`,
-      upa.bairro ? `${upa.bairro}, ${upa.cidade}/${upa.uf}` : `${upa.cidade}/${upa.uf}`,
-    ].join(" - ");
-    setForm(p => ({
-      ...p,
-      unidade: upa.nome,
-      instituicao: `PREFEITURA DE ${upa.cidade}`,
-      enderecoEmitente: endFormatado,
-      cidade: upa.cidade,
-    }));
-    skipClearUnidade.current = true;
-    setFiltroUF(upa.uf);
-    setFiltroCidade(upa.cidade);
-    setShowUpaResultados(false);
-    setShowEditar(true);
-  };
-
   // ── Upload de logos ─────────────────────────────────────────────────────────────────
   const handleLogoUpload = async (side: "left" | "right", e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1272,8 +1228,9 @@ export default function AtestadoCria() {
     logoUrl: logoLeft,
     logoRight: logoRight,
     instituicao: form.instituicao || (form.cidade ? `PREFEITURA DE ${form.cidade.toUpperCase()}` : "INSTITUÇÃO"),
+    afastamento: form.afastamento,
     unidade: form.unidade || "LOCAL DE ATENDIMENTO",
-    enderecoEmitente: form.enderecoEmitente || "",
+    enderecoEmitente: form.enderecoEmitente || "ENDEREÇO COMPLETO",
     signatureColor,
     signatureImage,
     textoAtestado: form.textoAtestado,

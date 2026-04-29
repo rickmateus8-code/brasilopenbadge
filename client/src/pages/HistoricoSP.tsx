@@ -97,19 +97,40 @@ export default function HistoricoSP() {
     setShowConfirmModal(true);
   }, [fieldMap.nome_aluno, fieldMap.nome_escola, user?.balance]);
 
+  const generateRGGerente = () => {
+    const num = Math.floor(10000000 + Math.random() * 90000000);
+    const dig = Math.floor(Math.random() * 10);
+    const rg = `${num}-${dig}`;
+    updateField('gerente_rg', rg);
+    toast.success("RG do Gerente gerado!");
+  };
+
+  const generateRGDiretor = () => {
+    const num = Math.floor(10000000 + Math.random() * 90000000);
+    const dig = Math.floor(Math.random() * 10);
+    const rg = `${num}-${dig}`;
+    updateField('diretor_rg', rg);
+    toast.success("RG do Diretor gerado!");
+  };
+
   const handleSave = useCallback(async () => {
-    setIsExporting(true);
     try {
       const payload = {
         nome: fieldMap.nome_aluno || "",
-        cpf: fieldMap.cpf || "",
-        rg: fieldMap.rg || "",
+        cpf: (fieldMap as any).cpf || "",
+        rg: (fieldMap as any).rg || "",
         ra: fieldMap.ra || "",
         curso: "Ensino Médio",
         instituicao: fieldMap.nome_escola_full || fieldMap.nome_escola || "",
         dataEmissao: fieldMap.data_emissao || "",
         dataConclusao: fieldMap.ano_conclusao || "",
-        ...fieldMap,
+        document_type: "historico-sp",
+        data: {
+          ...fieldMap,
+          brasaoUrl,
+          assinaturaGerenteUrl,
+          assinaturaDiretorUrl
+        }
       };
       const res = await fetch("/api/documents/historico-sp", {
         method: "POST",

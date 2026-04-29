@@ -196,14 +196,14 @@ export default function Validation() {
       } else if (pdfBlobUrl) {
         const a = document.createElement("a");
         a.href = pdfBlobUrl;
-        a.download = generatePDFFilename(nome, docType, "VALIDADO");
+        a.download = generatePDFFilename(nome, docType as any, "VALIDADO");
         a.click();
       } else {
         // Fallback: gerar PDF direto
         const ref = docType === "receita" ? prescricaoRef.current : attestationRef.current;
         if (ref) {
           await exportElementToPDF(ref, {
-            filename: generatePDFFilename(nome, docType, "VALIDADO"),
+            filename: generatePDFFilename(nome, docType as any, "VALIDADO"),
           });
         }
       }
@@ -389,14 +389,10 @@ export default function Validation() {
         return (
           <div style={style}>
             <PrescricaoDocument
-              ref={prescricaoRef}
               data={{
                 ...validDoc,
                 tipo_receituario: validDoc.tipo_receituario || "simples",
               }}
-              logoLeft={validDoc.logoUrl}
-              signatureColor={validDoc.signatureColor}
-              signatureImage={validDoc.signatureImage}
             />
           </div>
         );
@@ -405,11 +401,11 @@ export default function Validation() {
           <div style={hidden ? { position: "fixed", left: -9999, top: 0, visibility: "hidden" } : { display: "flex", justifyContent: "center", padding: 12 }}>
             <CNHDocument
               ref={cnhRef}
-              data={validDoc}
               fotoUrl={validDoc.fotoUrl || validDoc.foto}
               assinaturaUrl={validDoc.assinaturaUrl || validDoc.assinatura}
               qrCodeUrl={`https://carteira-digital-transito-vio.digital/verificar/${validDoc.codigoQR || ""}`}
               blurQR={false}
+              {...validDoc}
             />
           </div>
         );

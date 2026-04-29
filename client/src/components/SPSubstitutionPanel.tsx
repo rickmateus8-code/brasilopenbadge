@@ -16,6 +16,12 @@ import {
   Copy,
   X,
   CircleHelp,
+  ChevronDown,
+  ChevronRight,
+  History,
+  Save,
+  Trash2,
+  CheckCircle2,
 } from "lucide-react";
 import { SP_IMPORT_TEMPLATE, type SPSubstitutionField } from "@/lib/historicoSPData";
 
@@ -127,6 +133,8 @@ export default function SPSubstitutionPanel({
   onUpdateField,
   onGenerateSecurityCode,
   onGenerateRA,
+  onGenerateRGGerente,
+  onGenerateRGDiretor,
   onReset,
   onBrasaoUpload,
   onBrasaoReset,

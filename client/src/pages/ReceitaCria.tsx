@@ -230,6 +230,7 @@ export default function ReceitaCria() {
     if (!user) { alert("Faça login para emitir."); return; }
     setIsLoading(true);
     try {
+      const prescricaoValida = prescricao.filter(p => p.medicamento.trim());
       const payload = {
         tipo_receituario: tipoReceituario,
         paciente: form.paciente.toUpperCase(), cpf: form.cpf || null,

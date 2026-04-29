@@ -5,7 +5,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
 import {
   ArrowLeft, Download, ZoomIn, ZoomOut,
-  AlertCircle, FileText, Scale, CheckCircle
+  AlertCircle, FileText, CheckCircle
 } from "lucide-react";
 import EmissionModal from "@/components/EmissionModal";
 import PetitionSTJDocument, { type PetitionData } from "@/components/PetitionSTJDocument";
@@ -238,7 +238,7 @@ export default function PetitionSTJCria() {
           <aside className={`transition-all duration-300 border-r border-gray-200 bg-white shadow-xl z-10 flex flex-col ${sidebarOpen ? "w-[400px]" : "w-0 overflow-hidden"}`}>
             <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
               <div style={card}>
-                <p style={secTitle}><Scale size={16} /> ⚖️ 1. Cabeçalho e Processo</p>
+                <p style={secTitle}><FileText size={16} /> ⚖️ 1. Cabeçalho e Processo</p>
                 <label style={lbl}>Endereçamento</label>
                 <textarea 
                   style={{ ...inp, height: 80, resize: "none" }}

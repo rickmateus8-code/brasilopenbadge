@@ -22,13 +22,9 @@ export interface AttestationData {
   horaAssinatura: string;
   medico: string;
   crm: string;
-  especialidade?: string;
-  dataEmissao?: string;
-  instituicao?: string;
-  unidade?: string;
-  enderecoEmitente?: string;
-  textoAtestado?: string;
-  afastamento?: string;
+  especialidade: string;
+  dataEmissao: string;
+  afastamento: string;
   cidade?: string;
   logoUrl?: string;
   logoRight?: string;

@@ -12,7 +12,7 @@ import { useLocation } from "wouter";
 import { openRecarregaModal } from "@/components/RecarregaModal";
 import {
   X, FileText, Car, Anchor, FlaskConical, GraduationCap,
-  Pill, AlertTriangle, Wallet, CreditCard, MessageCircle, FileText
+  Pill, AlertTriangle, Wallet, CreditCard, MessageCircle
 } from "lucide-react";
 
 interface DocOption {
@@ -42,10 +42,10 @@ const DOC_ICONS: Record<string, React.ElementType> = {
   "historico-uninter": GraduationCap,
   receita: Pill,
   "petition-stj": FileText,
-};
+  };
 
-// Mapeamento de rotas por tipo de documento
-const DOC_PATHS: Record<string, string> = {
+  // Mapeamento de rotas por tipo de documento
+  const DOC_PATHS: Record<string, string> = {
   atestado: "/atestadocria",
   cnh: "/cnhcria",
   cha: "/chacria",
@@ -54,7 +54,9 @@ const DOC_PATHS: Record<string, string> = {
   "historico-sp": "/historico-sp",
   "historico-uninter": "/historico-uninter",
   receita: "/receitacria",
-  "petition-stj": "/peticao-stj",
+  "petition-stj": "/petition-stj",
+  };
+  "petition-stj": "/petition-stj",
 };
 
 export default function NovoDocumentoModal({ open, onClose, userBalance, username }: NovoDocumentoModalProps) {
