@@ -41,7 +41,7 @@ const DOC_ICONS: Record<string, React.ElementType> = {
   "historico-sp": GraduationCap,
   "historico-uninter": GraduationCap,
   receita: Pill,
-  "petition-stj": FileText,
+  "peticao-stj": FileText,
 };
 
 // Mapeamento de rotas por tipo de documento
