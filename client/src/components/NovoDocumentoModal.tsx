@@ -72,7 +72,7 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
       .then(r => r.json())
       .then(data => {
         if (data.success && data.pricing) {
-          const list: DocOption[] = Object.entries(data.pricing).map(([key, val]: [string, any]) => ({
+          const list: DocOption[] = Object.entries(data).map(([key, val]: [string, any]) => ({
             key,
             label: val.display_name,
             icon: DOC_ICONS[key] || FileText,
@@ -80,14 +80,38 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
             price: val.price,
             priceFormatted: val.price_formatted,
           }));
-          // Ordenar por nome
-          list.sort((a, b) => a.label.localeCompare(b.label));
-          setDocs(list);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [open]);
+
+          // FALLBACK DE SEGURANÇA: Se a API retornar lista vazia, usar os defaults do sistema
+          if (list.length === 0) {
+            const fallbackList: DocOption[] = [
+              { key: "atestado", label: "Novo Atestado", icon: DOC_ICONS["atestado"], path: DOC_PATHS["atestado"], price: 1000, priceFormatted: "R$ 10,00" },
+              { key: "cnh", label: "Nova CNH Digital", icon: DOC_ICONS["cnh"], path: DOC_PATHS["cnh"], price: 1500, priceFormatted: "R$ 15,00" },
+              { key: "peticao-stj", label: "Petição Jurídica STJ", icon: DOC_ICONS["petition-stj"], path: DOC_PATHS["petition-stj"], price: 2000, priceFormatted: "R$ 20,00" },
+              { key: "receita", label: "Dr. Consulta", icon: DOC_ICONS["receita"], path: DOC_PATHS["receita"], price: 1000, priceFormatted: "R$ 10,00" },
+            ];
+            setDocs(fallbackList);
+          } else {
+            // Ordenar por nome
+            list.sort((a, b) => a.label.localeCompare(b.label));
+            setDocs(list);
+          }
+          } else {
+           // Se a API falhar mas retornar sucesso false
+           setDocs(getFallbackDocs());
+          }
+          })
+          .catch(() => {
+          setDocs(getFallbackDocs());
+          })
+          .finally(() => setLoading(false));
+          }, [open]);
+
+          // Função auxiliar para fallback
+          const getFallbackDocs = (): DocOption[] => [
+          { key: "atestado", label: "Novo Atestado", icon: DOC_ICONS["atestado"], path: DOC_PATHS["atestado"], price: 1000, priceFormatted: "R$ 10,00" },
+          { key: "cnh", label: "Nova CNH Digital", icon: DOC_ICONS["cnh"], path: DOC_PATHS["cnh"], price: 1500, priceFormatted: "R$ 15,00" },
+          { key: "petition-stj", label: "Petição Jurídica STJ", icon: DOC_ICONS["petition-stj"], path: DOC_PATHS["petition-stj"], price: 2000, priceFormatted: "R$ 20,00" },
+          ];
 
   // Buscar WhatsApp de suporte
   useEffect(() => {
