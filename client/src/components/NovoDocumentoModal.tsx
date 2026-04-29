@@ -83,13 +83,7 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
 
           // FALLBACK DE SEGURANÇA: Se a API retornar lista vazia, usar os defaults do sistema
           if (list.length === 0) {
-            const fallbackList: DocOption[] = [
-              { key: "atestado", label: "Novo Atestado", icon: DOC_ICONS["atestado"], path: DOC_PATHS["atestado"], price: 1000, priceFormatted: "R$ 10,00" },
-              { key: "cnh", label: "Nova CNH Digital", icon: DOC_ICONS["cnh"], path: DOC_PATHS["cnh"], price: 1500, priceFormatted: "R$ 15,00" },
-              { key: "peticao-stj", label: "Petição Jurídica STJ", icon: DOC_ICONS["peticao-stj"], path: DOC_PATHS["peticao-stj"], price: 2000, priceFormatted: "R$ 20,00" },
-              { key: "receita", label: "Dr. Consulta", icon: DOC_ICONS["receita"], path: DOC_PATHS["receita"], price: 1000, priceFormatted: "R$ 10,00" },
-            ];
-            setDocs(fallbackList);
+            setDocs(getFallbackDocs());
           } else {
             // Ordenar por nome
             list.sort((a, b) => a.label.localeCompare(b.label));
@@ -106,12 +100,18 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
           .finally(() => setLoading(false));
           }, [open]);
 
-          // Função auxiliar para fallback
+          // Função auxiliar para fallback robusto (Valores de Elite)
           const getFallbackDocs = (): DocOption[] => [
-          { key: "atestado", label: "Novo Atestado", icon: DOC_ICONS["atestado"], path: DOC_PATHS["atestado"], price: 1000, priceFormatted: "R$ 10,00" },
-          { key: "cnh", label: "Nova CNH Digital", icon: DOC_ICONS["cnh"], path: DOC_PATHS["cnh"], price: 1500, priceFormatted: "R$ 15,00" },
-          { key: "peticao-stj", label: "Petição Jurídica STJ", icon: DOC_ICONS["peticao-stj"], path: DOC_PATHS["peticao-stj"], price: 2000, priceFormatted: "R$ 20,00" },
-          ];
+            { key: "atestado", label: "Atestado Médico", icon: DOC_ICONS["atestado"], path: DOC_PATHS["atestado"], price: 1000, priceFormatted: "R$ 10,00" },
+            { key: "cnh", label: "CNH Digital", icon: DOC_ICONS["cnh"], path: DOC_PATHS["cnh"], price: 1500, priceFormatted: "R$ 15,00" },
+            { key: "cha", label: "CHA Náutica", icon: DOC_ICONS["cha"], path: DOC_PATHS["cha"], price: 1500, priceFormatted: "R$ 15,00" },
+            { key: "toxicologico", label: "Exame Toxicológico", icon: DOC_ICONS["toxicologico"], path: DOC_PATHS["toxicologico"], price: 1500, priceFormatted: "R$ 15,00" },
+            { key: "toxicria", label: "Laudo Toxicológico Sodré", icon: DOC_ICONS["toxicria"], path: DOC_PATHS["toxicria"], price: 1500, priceFormatted: "R$ 15,00" },
+            { key: "historico-sp", label: "Histórico Escolar SP", icon: DOC_ICONS["historico-sp"], path: DOC_PATHS["historico-sp"], price: 1800, priceFormatted: "R$ 18,00" },
+            { key: "historico-uninter", label: "Histórico UNINTER", icon: DOC_ICONS["historico-uninter"], path: DOC_PATHS["historico-uninter"], price: 1800, priceFormatted: "R$ 18,00" },
+            { key: "receita", label: "Dr. Consulta", icon: DOC_ICONS["receita"], path: DOC_PATHS["receita"], price: 1000, priceFormatted: "R$ 10,00" },
+            { key: "peticao-stj", label: "STJ Petição", icon: DOC_ICONS["peticao-stj"], path: DOC_PATHS["peticao-stj"], price: 2000, priceFormatted: "R$ 20,00" },
+          ].sort((a, b) => a.label.localeCompare(b.label));
 
   // Buscar WhatsApp de suporte
   useEffect(() => {

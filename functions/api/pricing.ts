@@ -52,8 +52,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         COALESCE(udo.is_visible, 1) as is_visible
        FROM document_pricing dp
        LEFT JOIN user_document_overrides udo ON dp.document_type = udo.document_type AND udo.user_id = ?
-       WHERE dp.is_active = 1 AND is_visible = 1
-       ORDER BY dp.document_type`
+       WHERE dp.is_active = 1 AND COALESCE(udo.is_visible, 1) = 1
+       ORDER BY dp.display_name`
     ).bind(user.id).all<{ document_type: string; display_name: string; price: number }>();
 
     // Montar mapa de preços
