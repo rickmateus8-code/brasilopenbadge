@@ -484,25 +484,24 @@ export default function ToxicriaCria() {
   };
 
   return (
-    <DashboardLayout>
-      <div style={{ minHeight: "100vh", background: isDark ? "#0f172a" : "#f1f5f9", fontFamily: "Roboto, sans-serif", color: isDark ? "#e2e8f0" : "#1e293b" }}>
-        {/* Header */}
-        <div style={{ background: "#1a3a6b", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <button style={{ ...btnGray, padding: "5px 12px", fontSize: 11 }} onClick={() => navigate("/dashboard")}>
-              <ArrowLeft size={12} style={{ display: "inline", marginRight: 4 }} />VOLTAR
-            </button>
-            <FlaskConical size={18} color="#fff" />
-            <h1 style={{ color: "#fff", fontSize: 16, fontWeight: 700, margin: 0 }}>DocMaster — EMITIR LAUDO TOXICOLÓGICO SODRÉ</h1>
-          </div>
-          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.9)", background: "rgba(0,0,0,0.15)", padding: "4px 12px", borderRadius: 6, fontWeight: 600 }}>
-            🔒 Dados excluídos automaticamente após 60 dias
-          </span>
+    <div style={{ height: "100vh", width: "100%", overflow: "hidden", background: isDark ? "#0f172a" : "#f1f5f9", fontFamily: "Roboto, sans-serif", color: isDark ? "#e2e8f0" : "#1e293b", display: "flex", flexDirection: "column" }}>
+      {/* Header */}
+      <div style={{ background: "#1a3a6b", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button style={{ ...btnGray, padding: "5px 12px", fontSize: 11 }} onClick={() => navigate("/dashboard")}>
+            <ArrowLeft size={12} style={{ display: "inline", marginRight: 4 }} />VOLTAR
+          </button>
+          <FlaskConical size={18} color="#fff" />
+          <h1 style={{ color: "#fff", fontSize: 16, fontWeight: 700, margin: 0 }}>DocMaster — EMITIR LAUDO TOXICOLÓGICO SODRÉ</h1>
         </div>
+        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.9)", background: "rgba(0,0,0,0.15)", padding: "4px 12px", borderRadius: 6, fontWeight: 600 }}>
+          🔒 Dados excluídos automaticamente após 60 dias
+        </span>
+      </div>
 
-        <div style={{ display: "flex", gap: 14, padding: 14, maxWidth: 2000, margin: "0 auto" }}>
-          {/* ═══ COLUNA ESQUERDA — FORMULÁRIO ═══ */}
-          <div style={{ width: 340, flexShrink: 0 }}>
+      <div style={{ flex: 1, display: "flex", gap: 14, padding: 14, maxWidth: 2000, margin: "0 auto", overflow: "hidden" }}>
+        {/* ═══ COLUNA ESQUERDA — FORMULÁRIO ═══ */}
+        <div style={{ width: 340, flexShrink: 0, overflowY: "auto", height: "100%" }}>
 
             {/* Dados do Paciente */}
             <div style={card}>
@@ -651,6 +650,6 @@ export default function ToxicriaCria() {
         }}
         historyPath="/dashboard"
       />
-    </DashboardLayout>
+    </div>
   );
 }

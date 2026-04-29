@@ -1,7 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
-import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
 import {
   ArrowLeft, Download, ZoomIn, ZoomOut,
@@ -204,9 +203,8 @@ export default function PetitionSTJCria() {
   };
 
   return (
-    <DashboardLayout>
-      <div className="h-[calc(100vh-64px)] flex flex-col overflow-hidden bg-white font-sans">
-        <header className="h-14 bg-[#1e1b4b] flex items-center px-6 gap-4 shrink-0 shadow-md z-10">
+    <div className="h-screen w-full flex flex-col overflow-hidden bg-white font-sans">
+      <header className="h-14 bg-[#1e1b4b] flex items-center px-6 gap-4 shrink-0 shadow-md z-10">
           <button
             onClick={() => setLocation("/dashboard")}
             className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all"
@@ -397,7 +395,6 @@ export default function PetitionSTJCria() {
             </div>
           </main>
         </div>
-      </div>
 
       <EmissionModal
         docLabel="Petição STJ"
@@ -441,7 +438,7 @@ export default function PetitionSTJCria() {
            </div>
         </div>
       )}
-    </DashboardLayout>
+    </div>
   );
 }
 
