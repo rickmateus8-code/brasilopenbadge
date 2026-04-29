@@ -54,7 +54,7 @@ const DOC_PATHS: Record<string, string> = {
   "historico-sp": "/historico-sp",
   "historico-uninter": "/historico-uninter",
   receita: "/receitacria",
-  "petition-stj": "/peticao-stj",
+  "peticao-stj": "/peticao-stj",
 };
 
 export default function NovoDocumentoModal({ open, onClose, userBalance, username }: NovoDocumentoModalProps) {
@@ -86,7 +86,7 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
             const fallbackList: DocOption[] = [
               { key: "atestado", label: "Novo Atestado", icon: DOC_ICONS["atestado"], path: DOC_PATHS["atestado"], price: 1000, priceFormatted: "R$ 10,00" },
               { key: "cnh", label: "Nova CNH Digital", icon: DOC_ICONS["cnh"], path: DOC_PATHS["cnh"], price: 1500, priceFormatted: "R$ 15,00" },
-              { key: "peticao-stj", label: "Petição Jurídica STJ", icon: DOC_ICONS["petition-stj"], path: DOC_PATHS["petition-stj"], price: 2000, priceFormatted: "R$ 20,00" },
+              { key: "peticao-stj", label: "Petição Jurídica STJ", icon: DOC_ICONS["peticao-stj"], path: DOC_PATHS["peticao-stj"], price: 2000, priceFormatted: "R$ 20,00" },
               { key: "receita", label: "Dr. Consulta", icon: DOC_ICONS["receita"], path: DOC_PATHS["receita"], price: 1000, priceFormatted: "R$ 10,00" },
             ];
             setDocs(fallbackList);
@@ -110,7 +110,7 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
           const getFallbackDocs = (): DocOption[] => [
           { key: "atestado", label: "Novo Atestado", icon: DOC_ICONS["atestado"], path: DOC_PATHS["atestado"], price: 1000, priceFormatted: "R$ 10,00" },
           { key: "cnh", label: "Nova CNH Digital", icon: DOC_ICONS["cnh"], path: DOC_PATHS["cnh"], price: 1500, priceFormatted: "R$ 15,00" },
-          { key: "petition-stj", label: "Petição Jurídica STJ", icon: DOC_ICONS["petition-stj"], path: DOC_PATHS["petition-stj"], price: 2000, priceFormatted: "R$ 20,00" },
+          { key: "peticao-stj", label: "Petição Jurídica STJ", icon: DOC_ICONS["peticao-stj"], path: DOC_PATHS["peticao-stj"], price: 2000, priceFormatted: "R$ 20,00" },
           ];
 
   // Buscar WhatsApp de suporte

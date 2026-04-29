@@ -8,9 +8,9 @@ import { toast } from "sonner";
 import CNHDocument, { CNHDocumentHandle, CNHDocumentProps } from "@/components/CNHDocument";
 import {
   FileText, Car, Anchor, FlaskConical, GraduationCap,
-  Wallet, TrendingUp, BarChart3, ChevronRight, Plus,
+  Wallet, TrendingUp, BarChart, ChevronRight, Plus,
   Clock, CheckCircle, Bell, Download, Trash2, Pill, Pencil, QrCode,
-  Copy, X, Send, RefreshCw, Search, Save, Smartphone, AlertTriangle, Gift, Users, Loader2, Edit3
+  Copy, X, Send, RefreshCw, Search, Save, Smartphone, AlertTriangle, Gift, Users, Loader2
 } from "lucide-react";
 import AttestationActionButtons from "@/components/AttestationActionButtons";
 import AttestationViewerModal from "@/components/AttestationViewerModal";

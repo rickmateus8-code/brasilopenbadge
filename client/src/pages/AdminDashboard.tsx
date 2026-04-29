@@ -9,7 +9,7 @@ import {
   RefreshCw, DollarSign, Trash2, ToggleLeft, ToggleRight,
   Bell, AlertTriangle, CheckCircle, Info, FileText,
   Activity, Database, Search, Eye, EyeOff, X, Save,
-  Download, Edit3, Wifi, WifiOff, Monitor, Globe,
+  Download, Pencil, Wifi, WifiOff, Monitor, Globe,
   CreditCard, AlertCircle, Filter, Gift, Percent, Wallet,
   Link, Copy, Calendar, Trash, Lock, UserPlus
 } from "lucide-react";
@@ -2030,7 +2030,7 @@ export default function AdminDashboard() {
 	                              className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
 	                              title="Editar"
 	                            >
-	                              <Edit3 className="w-3.5 h-3.5" />
+	                              <Pencil className="w-3.5 h-3.5" />
 	                            </button>
 	                            <button
 	                              onClick={() => deleteEmission(e.id, e.table_source || "documents", false)}
@@ -2395,7 +2395,7 @@ export default function AdminDashboard() {
                             className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                             title="Editar %"
                           >
-                            <Edit3 className="w-3.5 h-3.5" />
+                            <Pencil className="w-3.5 h-3.5" />
                           </button>
                         </td>
                       </tr>

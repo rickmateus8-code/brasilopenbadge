@@ -1,4 +1,4 @@
-import { Download, Edit3, Eye, Loader2, Trash2 } from "lucide-react";
+import { Download, Pencil, Eye, Loader2, Trash2 } from "lucide-react";
 
 interface AttestationActionButtonsProps {
   onView: () => void;
@@ -35,7 +35,7 @@ export default function AttestationActionButtons({
           onClick={onEdit}
           className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
         >
-          <Edit3 className="w-4 h-4" />
+          <Pencil className="w-4 h-4" />
         </button>
       )}
 

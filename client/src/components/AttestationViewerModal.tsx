@@ -1,4 +1,4 @@
-import { Download, Edit3, Loader2, X } from "lucide-react";
+import { Download, Pencil, Loader2, X } from "lucide-react";
 import AttestationDocument from "@/components/AttestationDocument";
 import { buildAttestationData, type AttestationDocRecord } from "@/lib/attestationActions";
 
@@ -39,7 +39,7 @@ export default function AttestationViewerModal({
               onClick={onEdit}
               className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl transition-colors"
             >
-              <Edit3 className="w-4 h-4" /> Editar
+              <Pencil className="w-4 h-4" /> Editar
             </button>
             <button type="button" onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
               <X className="w-5 h-5 text-gray-500" />
