@@ -12,7 +12,7 @@ import { useLocation } from "wouter";
 import { openRecarregaModal } from "@/components/RecarregaModal";
 import {
   X, FileText, Car, Anchor, FlaskConical, GraduationCap,
-  Pill, AlertTriangle, Wallet, CreditCard, MessageCircle, FileText
+  Pill, AlertTriangle, Wallet, CreditCard, MessageCircle
 } from "lucide-react";
 
 interface DocOption {

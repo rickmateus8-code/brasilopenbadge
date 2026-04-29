@@ -9,7 +9,7 @@ import {
   LayoutDashboard, FileText, CreditCard, Receipt, LogOut,
   ChevronDown, ChevronRight, Menu, X, Sun, Moon,
   Shield, GraduationCap, Car, Anchor, FlaskConical,
-  User, Wallet, Settings, HelpCircle, Plus, Bell, Pill, Gift, FilePlus, Scale
+  User, Wallet, Settings, HelpCircle, Plus, Bell, Pill, Gift, FilePlus
 } from "lucide-react";
 
 interface MenuItem {
@@ -44,7 +44,7 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
-    icon: Scale, label: "Petição STJ",
+    icon: FileText, label: "Petição STJ",
     children: [
       { label: "Nova Petição", path: "/peticao-stj", isCreation: true },
       { label: "Petições Salvas", path: "/peticao-stj-salvos" },
