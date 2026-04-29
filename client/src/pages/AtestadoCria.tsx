@@ -1981,7 +1981,7 @@ export default function AtestadoCria() {
                     <select
                       style={sel}
                       value={form.afastamento}
-                      onFocus={() => scrollToPreviewSection("bottom")}
+                      onFocus={() => handleFocusSection("preview-top")}
                       onChange={(e) => setForm(p => ({ ...p, afastamento: e.target.value }))}
                     >
                       {Array.from({ length: 15 }, (_, i) => i + 1).map((n) => {
