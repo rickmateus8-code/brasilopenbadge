@@ -31,7 +31,7 @@ async function getAuthUser(request: Request, env: Env): Promise<any | null> {
   ).bind(token).first<any>();
   if (!session) return null;
   return env.DB.prepare(
-    'SELECT id, username, email, phone, display_name, role, balance FROM users WHERE id = ? AND is_active = 1'
+    'SELECT id, username, email, display_name, role, balance FROM users WHERE id = ? AND is_active = 1'
   ).bind(session.user_id).first<any>();
 }
 
