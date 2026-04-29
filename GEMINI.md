@@ -10,6 +10,7 @@ Este arquivo contém mandatos inegociáveis para qualquer agente de IA ou desenv
 ## 2. Identidade Visual (Estado de Ouro)
 *   **Layout A4:** Fundo Branco Absoluto (#ffffff), sem bordas cinzas ou sombras pesadas no PDF.
 *   **Preview Inteligente:** O sistema de Zoom Dinâmico e Navegação por Foco deve ser preservado. Não use scrollbars brutas. O enquadramento é fixo ao topo (`transformOrigin: top center`) e utiliza navegação vertical por seções (`TOP` e `BOTTOM`) com botões ▲, ▼ e 🔍.
+*   **Mandato de Tela Cheia:** Todos os formulários de criação de novos documentos (ex: Petição STJ, Atestado, Laudo) devem obrigatoriamente abrir em tela cheia (`h-screen w-full`), ocultando o `DashboardLayout` (sidebar/submenu) e barras inferiores para maximizar o espaço de edição e preview.
 *   **Cores:** Modais de Novo Documento e Recarga devem ser VERDES (#059669). Headers de emissão devem ser AZUL DOCMASTER (#005CA9).
 *   **Marca d'água:** Texto 'DOCUMENTO INVALIDO - NÃO EMITIDO - PRÉVIA' (54px, vermelho transparente, zIndex 99).
 

@@ -628,7 +628,6 @@ export default function ToxicriaCria() {
             </div>
           </div>
         </div>
-      </div>
 
       {/* Modal de Confirmação + Sucesso */}
       <EmissionModal

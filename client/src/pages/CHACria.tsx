@@ -380,8 +380,8 @@ export default function CHACria() {
   };
 
   return (
-    <DashboardLayout>
-      <div className="p-4 max-w-[1400px] mx-auto">
+    <div className="h-screen w-full flex flex-col overflow-hidden bg-white font-sans">
+      <div className="flex-1 overflow-y-auto p-4 max-w-[1400px] mx-auto w-full custom-scrollbar">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <button onClick={() => setLocation("/dashboard")} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 transition-colors">
@@ -583,6 +583,6 @@ export default function CHACria() {
         onClose={() => setShowSuccessModal(false)}
         historyPath="/chasalvas"
       />
-    </DashboardLayout>
+    </div>
   );
 }

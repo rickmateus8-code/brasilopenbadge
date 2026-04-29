@@ -551,7 +551,7 @@ export default function CNHCria() {
 
   // ─── RENDER ────────────────────────────────────────────────────────────────
   return (
-    <DashboardLayout>
+    <div className="h-screen w-full flex flex-col overflow-hidden bg-[#0f172a] font-sans">
       {/* CSS tema escuro DocMaster */}
       <style>{`
         .cnh-form {
@@ -562,7 +562,8 @@ export default function CNHCria() {
           padding-bottom: 120px;
           width: 100%;
           max-width: 100%;
-          min-height: 100vh;
+          flex: 1;
+          overflow-y: auto;
           box-sizing: border-box;
         }
         .cnh-header-top {
@@ -1474,6 +1475,6 @@ export default function CNHCria() {
 
       {/* Animação de spin */}
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </DashboardLayout>
+    </div>
   );
 }
