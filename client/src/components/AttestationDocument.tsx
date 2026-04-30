@@ -216,7 +216,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 {instituicao}
               </div>
             )}
-            {unidade && unidade !== instituicao && (
+            {unidade && (
               <div style={{ fontSize: 12.6, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", lineHeight: 1.3 }}>
                 {unidade}
               </div>
@@ -260,7 +260,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           width: "100%",
           textAlign: "center",
           marginTop: 12,
-          marginBottom: 6, // Ajustado para não ficar muito próximo da linha inferior na exportação
+          marginBottom: 4, // Ajustado conforme feedback (era 6, original era 2)
           lineHeight: 1, // Unificar altura da linha entre Preview e PDF
           letterSpacing: 0, // Removido espaçamento
           position: "relative",
@@ -381,7 +381,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           {cidDisplay && (
             <div style={{
               fontWeight: 700,
-              fontSize: 14.57, // Reduzido em 4% (15.18 * 0.96)
+              fontSize: 14.13, // Reduzido em 3% (14.57 * 0.97)
               marginTop: 28,
               color: "#000",
               textTransform: "uppercase",
@@ -427,12 +427,12 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 flexShrink: 0, 
                 display: "flex", 
                 flexDirection: "column", 
-                justifyContent: "flex-end", 
+                justifyContent: "center", // Alterado de flex-end para center para alinhamento geométrico
                 marginRight: "auto", 
                 height: 111, 
                 boxSizing: "border-box", 
                 paddingLeft: 2,
-                paddingBottom: 2, // Espaçamento de segurança para não ultrapassar a linha inferior
+                paddingBottom: 0, // Removido espaçamento forçado
                 overflow: "hidden" // Garantir que o texto nunca vaze para baixo
               }}>
                 <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.42, marginBottom: 3 }}>
