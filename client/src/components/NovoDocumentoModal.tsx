@@ -110,7 +110,7 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
             { key: "historico-sp", label: "Histórico Escolar SP", icon: DOC_ICONS["historico-sp"], path: DOC_PATHS["historico-sp"], price: 1800, priceFormatted: "R$ 18,00" },
             { key: "historico-uninter", label: "Histórico UNINTER", icon: DOC_ICONS["historico-uninter"], path: DOC_PATHS["historico-uninter"], price: 1800, priceFormatted: "R$ 18,00" },
             { key: "receita", label: "Dr. Consulta", icon: DOC_ICONS["receita"], path: DOC_PATHS["receita"], price: 1000, priceFormatted: "R$ 10,00" },
-            { key: "peticao-stj", label: "STJ Petição", icon: DOC_ICONS["peticao-stj"], path: DOC_PATHS["peticao-stj"], price: 2000, priceFormatted: "R$ 20,00" },
+            { key: "peticaocria", label: "Petição Judicial", icon: DOC_ICONS["peticaocria"], path: DOC_PATHS["peticaocria"], price: 2000, priceFormatted: "R$ 20,00" },
           ].sort((a, b) => a.label.localeCompare(b.label));
 
   // Buscar WhatsApp de suporte
