@@ -6,11 +6,11 @@
 import { useState, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
-import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
 import {
   ArrowLeft, Download, ZoomIn, ZoomOut,
-  PanelLeftClose, PanelLeft, CheckCircle2, AlertCircle, FileText
+  PanelLeftClose, PanelLeft, CheckCircle2, AlertCircle, FileText,
+  Move, RotateCcw
 } from "lucide-react";
 import EmissionModal from "@/components/EmissionModal";
 import { useSPSubstitution } from "@/hooks/useSPSubstitution";
@@ -46,6 +46,11 @@ export default function HistoricoSP() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  // Estados para ajuste fino do Logo
+  const [logoScale, setLogoScale] = useState(1);
+  const [logoX, setLogoX] = useState(0);
+  const [logoY, setLogoY] = useState(0);
 
   const {
     fields,
@@ -129,7 +134,10 @@ export default function HistoricoSP() {
           ...fieldMap,
           brasaoUrl,
           assinaturaGerenteUrl,
-          assinaturaDiretorUrl
+          assinaturaDiretorUrl,
+          logoScale,
+          logoX,
+          logoY
         }
       };
       const res = await fetch("/api/documents/historico-sp", {
@@ -150,7 +158,7 @@ export default function HistoricoSP() {
       }
     } catch { toast.error("Erro de conexão"); setShowConfirmModal(false); }
     finally { setIsExporting(false); }
-  }, [fieldMap, updateBalance]);
+  }, [fieldMap, updateBalance, logoScale, logoX, logoY, brasaoUrl, assinaturaGerenteUrl, assinaturaDiretorUrl]);
 
   const handleExportPDF = useCallback(async () => {
     if (!previewRef.current) return;
@@ -166,8 +174,7 @@ export default function HistoricoSP() {
   }, [exportPDF, fieldMap.nome_aluno]);
 
   return (
-    <DashboardLayout>
-      <div className="h-[calc(100vh-64px)] flex flex-col overflow-hidden bg-white font-sans">
+    <div className="flex flex-col h-screen w-full overflow-hidden bg-slate-50 font-sans">
         {/* Header no estilo AtestadoCria */}
         <header className="h-14 bg-[#d97706] flex items-center px-6 gap-4 shrink-0 shadow-md z-10">
           <button
@@ -201,7 +208,7 @@ export default function HistoricoSP() {
           </div>
         </header>
 
-        <div className="flex flex-1 overflow-hidden bg-gray-50">
+        <div className="flex flex-1 overflow-hidden">
           {/* Coluna de Formulário (Left) */}
           <aside className={`transition-all duration-300 border-r border-gray-200 bg-white shadow-xl z-10 flex flex-col ${sidebarOpen ? "w-[400px]" : "w-0 overflow-hidden"}`}>
              <SPSubstitutionPanel
@@ -215,7 +222,8 @@ export default function HistoricoSP() {
                 onGenerateRA={generateRA}
                 onGenerateRGGerente={generateRGGerente}
                 onGenerateRGDiretor={generateRGDiretor}
-                onReset={handleResetAll}                onBrasaoUpload={handleBrasaoUpload}
+                onReset={handleResetAll}
+                onBrasaoUpload={handleBrasaoUpload}
                 onBrasaoReset={resetBrasaoUpload}
                 brasaoUrl={brasaoUrl}
                 hasCustomBrasao={hasCustomBrasao}
@@ -267,7 +275,35 @@ export default function HistoricoSP() {
             </div>
 
             {/* Documento Centralizado */}
-            <div className="flex-1 overflow-auto flex justify-center py-10 custom-scrollbar bg-[#e5e7eb]">
+            <div className="flex-1 overflow-auto flex justify-center py-10 custom-scrollbar bg-[#e5e7eb] relative">
+              {/* Controles de Logo Flutuantes */}
+              <div className="absolute top-16 left-6 z-50 flex flex-col gap-2 bg-white p-2 rounded-lg shadow-xl border border-gray-200 animate-in fade-in slide-in-from-left-4 duration-300">
+                <div className="flex items-center gap-2 px-1 mb-1 border-b border-gray-100 pb-1">
+                  <Move size={12} className="text-amber-600" />
+                  <span className="text-[9px] font-black text-gray-500 uppercase tracking-tighter">Ajuste de Logo</span>
+                </div>
+                
+                <div className="flex items-center gap-1 bg-gray-50 rounded p-1">
+                  <button onClick={() => setLogoScale(v => Math.max(0.1, v - 0.1))} className="h-6 w-6 flex items-center justify-center hover:bg-white hover:text-amber-600 rounded transition-colors text-gray-500 shadow-sm border border-gray-200" title="Diminuir Logo">-</button>
+                  <span className="text-[10px] font-black w-10 text-center text-gray-600">{Math.round(logoScale * 100)}%</span>
+                  <button onClick={() => setLogoScale(v => Math.min(3, v + 0.1))} className="h-6 w-6 flex items-center justify-center hover:bg-white hover:text-amber-600 rounded transition-colors text-gray-500 shadow-sm border border-gray-200" title="Aumentar Logo">+</button>
+                </div>
+
+                <div className="grid grid-cols-3 gap-1">
+                  <div/>
+                  <button onClick={() => setLogoY(v => v - 2)} className="h-7 w-7 flex items-center justify-center hover:bg-amber-50 hover:text-amber-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Subir">▲</button>
+                  <div/>
+                  <button onClick={() => setLogoX(v => v - 2)} className="h-7 w-7 flex items-center justify-center hover:bg-amber-50 hover:text-amber-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Esquerda">◀</button>
+                  <button onClick={() => { setLogoScale(1); setLogoX(0); setLogoY(0); }} className="h-7 w-7 flex items-center justify-center hover:bg-red-50 hover:text-red-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Resetar">
+                    <RotateCcw size={12} />
+                  </button>
+                  <button onClick={() => setLogoX(v => v + 2)} className="h-7 w-7 flex items-center justify-center hover:bg-amber-50 hover:text-amber-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Direita">▶</button>
+                  <div/>
+                  <button onClick={() => setLogoY(v => v + 2)} className="h-7 w-7 flex items-center justify-center hover:bg-amber-50 hover:text-amber-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Descer">▼</button>
+                  <div/>
+                </div>
+              </div>
+
               <div style={{ transform: `scale(${zoom})`, transformOrigin: "top center", transition: "transform 0.2s ease-out" }}>
                 <div className="bg-white shadow-[0_20px_50px_rgba(0,0,0,0.2)] rounded-sm overflow-hidden" ref={previewRef}>
                   <SPPage1
@@ -277,6 +313,9 @@ export default function HistoricoSP() {
                     brasaoUrl={brasaoUrl || undefined}
                     assinaturaGerenteUrl={assinaturaGerenteUrl || undefined}
                     assinaturaDiretorUrl={assinaturaDiretorUrl || undefined}
+                    logoScale={logoScale}
+                    logoX={logoX}
+                    logoY={logoY}
                     pageId="doc-page-sp-preview"
                   />
                 </div>
@@ -292,7 +331,6 @@ export default function HistoricoSP() {
             )}
           </main>
         </div>
-      </div>
 
       {/* Modal de Confirmação + Sucesso */}
       <EmissionModal
@@ -310,6 +348,6 @@ export default function HistoricoSP() {
         onClose={() => setShowSuccessModal(false)}
         historyPath="/historico-sp-salvos"
       />
-    </DashboardLayout>
+    </div>
   );
 }

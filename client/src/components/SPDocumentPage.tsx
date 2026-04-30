@@ -30,6 +30,9 @@ interface Props {
   assinaturaDiretorUrl?: string;
   pageId?: string;
   disableAutoFit?: boolean;
+  logoScale?: number;
+  logoX?: number;
+  logoY?: number;
 }
 
 /* Highlight helper */
@@ -51,6 +54,9 @@ export function SPPage1({
   assinaturaDiretorUrl,
   pageId = "doc-page-sp-1",
   disableAutoFit = false,
+  logoScale = 1,
+  logoX = 0,
+  logoY = 0,
 }: Props) {
   const hl = highlightModified;
   const b = "0.7px solid #000";
@@ -280,11 +286,23 @@ export function SPPage1({
         <colgroup><col style={{ width: "20.8%" }} /><col style={{ width: "79.2%" }} /></colgroup>
         <tbody>
           <tr>
-          <td rowSpan={7} style={{ borderRight: b, padding: "4px", verticalAlign: "middle", textAlign: "center" }}>
+          <td rowSpan={7} style={{ borderRight: b, padding: "4px", verticalAlign: "middle", textAlign: "center", overflow: "visible" }}>
               {/* Brasão aumentado em 10%: 118px → 130px */}
-              <img src={logoSrc} alt="" style={{ width: "130px", height: "auto", display: "block", margin: "0 auto" }} crossOrigin="anonymous" />
+              <img 
+                src={logoSrc} 
+                alt="" 
+                style={{ 
+                  width: "130px", 
+                  height: "auto", 
+                  display: "block", 
+                  margin: "0 auto",
+                  transform: `scale(${logoScale}) translate(${logoX}px, ${logoY}px)`,
+                  transformOrigin: "center"
+                }} 
+                crossOrigin="anonymous" 
+              />
             </td>
-            <td style={{ borderBottom: b, padding: "1px 8px", fontSize: "18.66px", fontWeight: "bold", lineHeight: "21.33px" }}>
+            <td style={{ borderBottom: b, padding: "8px 8px 1px 8px", fontSize: "18.66px", fontWeight: "bold", lineHeight: "21.33px" }}>
               <V val={governmentHeader} orig="GOVERNO DO ESTADO DE SÃO PAULO" hl={hl} />
             </td>
           </tr>

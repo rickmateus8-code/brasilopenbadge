@@ -288,7 +288,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         {/* ===== DADOS DO PACIENTE ===== */}
         <div id="preview-patient" style={{
           border: "1px solid #000",
-          padding: "8px 12px", // Ajustado para centralização
+          padding: "5px 12px 11px 12px", // Compensar o peso visual para centralização vertical perfeita
           fontSize: 10.815, // Aumentado em 3% (10.5 * 1.03)
           marginBottom: 10,
           lineHeight: 1.7,
