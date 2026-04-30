@@ -155,18 +155,16 @@ function CNHValidationRouter() {
 function ValidationRouter() {
   return (
     <Switch>
-      <Route path="/verificar/atestado/:id" component={Validation} />
-      <Route path="/verificar/:id" component={Validation} />
-      <Route path="/:id" component={(props: { params: { id: string } }) => {
-        const id = props.params?.id || "";
-        if (/^[A-Z0-9]{4}\.[A-Z0-9]{4}$/i.test(id)) {
-          return <Validation />;
-        }
-        return <NotFound />;
-      }} />
-      <Route path="/" component={Validation} />
       <Route path="/validar" component={Validation} />
       <Route path="/v/:id" component={Validation} />
+      <Route path="/verificar/atestado/:id" component={Validation} />
+      <Route path="/verificar/:id" component={Validation} />
+      <Route path="/" component={Validation} />
+      
+      {/* Captura códigos diretos XXXX.XXXX ou qualquer outra rota não mapeada */}
+      <Route path="/:id" component={Validation} />
+      
+      {/* Fallback universal para o domínio de validação: Sempre mostrar Validation */}
       <Route component={Validation} />
     </Switch>
   );
