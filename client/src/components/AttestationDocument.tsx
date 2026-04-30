@@ -155,7 +155,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
       >
         {/* Marca d'água para Preview — Não interfere no texto real nem na exportação final se o ID for real */}
         {(data.id === "XXXX.XXXX" || (data as any).codigoQR === "XXXX.XXXX") && (
-          <div style={{
+          <div data-html2canvas-ignore="true" style={{
             position: "absolute",
             top: "50%",
             left: "50%",
@@ -216,7 +216,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 {instituicao}
               </div>
             )}
-            {unidade && (
+            {unidade && unidade !== instituicao && (
               <div style={{ fontSize: 12.6, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", lineHeight: 1.3 }}>
                 {unidade}
               </div>
@@ -260,7 +260,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           width: "100%",
           textAlign: "center",
           marginTop: 12,
-          marginBottom: 2, // Aproximado da linha inferior
+          marginBottom: 6, // Ajustado para não ficar muito próximo da linha inferior na exportação
+          lineHeight: 1, // Unificar altura da linha entre Preview e PDF
           letterSpacing: 0, // Removido espaçamento
           position: "relative",
           zIndex: 2,
