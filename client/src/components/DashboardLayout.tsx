@@ -46,8 +46,8 @@ const menuItems: MenuItem[] = [
   {
     icon: FileText, label: "Petição STJ",
     children: [
-      { label: "Nova Petição", path: "/peticao-stj", isCreation: true },
-      { label: "Petições Salvas", path: "/peticao-stj-salvos" },
+      { label: "Nova Petição", path: "/peticaocria", isCreation: true },
+      { label: "Petições Salvas", path: "/peticaocria-salvos" },
     ],
   },
   {

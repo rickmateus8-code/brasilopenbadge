@@ -15,9 +15,9 @@ export default function PetitionSTJSalvos() {
   const { validityDays } = useSettings();
   return (
     <DocumentosSalvos
-      title="Petições STJ Salvas"
-      apiEndpoint="/api/documents/peticao-stj"
-      docType="peticao-stj"
+      title="Petições Jurídicas Salvas"
+      apiEndpoint="/api/documents/peticaocria"
+      docType="peticaocria"
       validityDays={validityDays}
       fields={FIELDS}
       nameField="requerente"

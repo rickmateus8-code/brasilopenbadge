@@ -2,15 +2,13 @@ import { forwardRef } from "react";
 
 interface PetitionData {
   id: string;
-  enderecamento: string;
   processo: string;
-  requerente: string;
-  requerido: string;
-  corpo: string;
-  cidade: string;
-  data: string;
+  credor: string;
+  cpf_cnpj: string;
   advogado: string;
-  oab: string;
+  contra: string;
+  valor: string;
+  data: string;
   logoUrl?: string;
   logoRight?: string;
   signatureImage?: string;
@@ -30,8 +28,18 @@ interface PetitionSTJDocumentProps {
 const DOC_WIDTH_PX = 794;
 const DOC_HEIGHT_PX = 1123;
 
-const PetitionSTJDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
+const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
   ({ data }, ref) => {
+    // Estilo base para os textos (fidelidade forense)
+    const textStyle: React.CSSProperties = {
+      position: "absolute",
+      fontFamily: "'Times New Roman', Times, serif",
+      color: "#000",
+      fontSize: "12pt",
+      whiteSpace: "nowrap",
+      zIndex: 10
+    };
+
     return (
       <div
         ref={ref}
@@ -41,156 +49,84 @@ const PetitionSTJDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>
           height: DOC_HEIGHT_PX,
           backgroundColor: "#ffffff",
           position: "relative",
-          fontFamily: "'Times New Roman', Times, serif",
-          color: "#000",
           overflow: "hidden",
           boxSizing: "border-box",
           padding: "0"
         }}
       >
-        {/* Layer de Fundo (Asset Original) */}
-        <img 
-          src="/assets/peticao_bg.png" 
-          alt="Layout Base" 
-          style={{ 
-            position: "absolute", 
-            top: 0, 
-            left: 0, 
-            width: "100%", 
-            height: "100%", 
-            zIndex: 1,
-            pointerEvents: "none"
-          }} 
-        />
-
-        {/* Layer de Dados Dinâmicos */}
-        <div style={{ position: "absolute", inset: 0, zIndex: 2, padding: "80px 85px" }}>
-          
-          {/* Logos */}
-          <div style={{ position: "absolute", top: 40, left: 85, zIndex: 3 }}>
-            {data.logoUrl && (
-              <img 
-                src={data.logoUrl} 
-                alt="Logo Esquerda" 
-                style={{ 
-                  height: 60,
-                  transform: `scale(${data.logoLeftScale || 1}) translate(${data.logoLeftX || 0}px, ${data.logoLeftY || 0}px)`,
-                  transformOrigin: "center",
-                  objectFit: "contain"
-                }} 
-              />
-            )}
-          </div>
-          <div style={{ position: "absolute", top: 40, right: 85, zIndex: 3 }}>
-            {data.logoRight && (
-              <img 
-                src={data.logoRight} 
-                alt="Logo Direita" 
-                style={{ 
-                  height: 60,
-                  transform: `scale(${data.logoRightScale || 1}) translate(${data.logoRightX || 0}px, ${data.logoRightY || 0}px)`,
-                  transformOrigin: "center",
-                  objectFit: "contain"
-                }} 
-              />
-            )}
-          </div>
-
-          {/* Endereçamento */}
-          <div id="preview-header" style={{ 
-            marginTop: 40, 
-            fontSize: 12, 
-            fontWeight: 700, 
-            textAlign: "left", 
-            textTransform: "uppercase",
-            lineHeight: 1.5,
-            width: "100%",
-            maxWidth: 550,
-            color: "#1a1a1a"
-          }}>
-            {data.enderecamento || "EXCELENTÍSSIMO SENHOR MINISTRO PRESIDENTE DO SUPERIOR TRIBUNAL DE JUSTIÇA"}
-          </div>
-
-          {/* Processo */}
-          <div style={{ 
-            marginTop: 60, 
-            fontSize: 12, 
-            fontWeight: 700,
-            textAlign: "left",
-            color: "#1a1a1a"
-          }}>
-            Processo nº: {data.processo || "____________________"}
-          </div>
-
-          {/* Qualificação */}
-          <div id="preview-patient" style={{ 
-            marginTop: 60, 
-            fontSize: 12, 
-            textAlign: "justify", 
-            lineHeight: 1.6,
-            color: "#1a1a1a",
-            textIndent: "2cm"
-          }}>
-            <span style={{ fontWeight: 700 }}>{data.requerente || "NOME DO REQUERENTE"}</span>, já qualificado nos autos do processo em epígrafe, que move em face de <span style={{ fontWeight: 700 }}>{data.requerido || "NOME DO REQUERIDO"}</span>, vem, respeitosamente, à presença de Vossa Excelência, por intermédio de seu advogado, expor e requerer o que segue:
-          </div>
-
-          {/* Corpo da Petição */}
-          <div id="preview-body" style={{ 
-            marginTop: 25, 
-            fontSize: 12, 
-            textAlign: "justify", 
-            lineHeight: 1.8, 
-            whiteSpace: "pre-wrap",
-            minHeight: 400,
-            color: "#1a1a1a",
-            textIndent: "2cm"
-          }}>
-            {data.corpo || "Digite aqui o conteúdo da sua petição..."}
-          </div>
-
-          {/* Fecho e Data */}
-          <div id="preview-footer" style={{ 
-            marginTop: 40, 
-            textAlign: "right", 
-            fontSize: 12,
-            color: "#1a1a1a"
-          }}>
-            {data.cidade || "Cidade"}, {data.data || "Data"}
-          </div>
-
-          {/* Assinatura */}
-          <div id="preview-signature" style={{ marginTop: 60, textAlign: "center" }}>
-            <div style={{ position: "relative", display: "inline-block", textAlign: "center" }}>
-              {data.signatureImage && (
-                <img 
-                  src={data.signatureImage} 
-                  alt="Assinatura" 
-                  style={{ 
-                    height: 80, 
-                    position: "absolute", 
-                    bottom: 30, 
-                    left: "50%", 
-                    transform: "translateX(-50%)",
-                    zIndex: 3,
-                    pointerEvents: "none"
-                  }} 
-                />
-              )}
-              <div style={{ borderTop: "1px solid #000", width: 350, margin: "0 auto", paddingTop: 5 }}>
-                <div style={{ fontWeight: 700, fontSize: 13, textTransform: "uppercase", color: "#1a1a1a" }}>
-                  {data.advogado || "Nome do Advogado"}
-                </div>
-                <div style={{ fontSize: 12, color: "#1a1a1a" }}>
-                  OAB/{data.oab || "00.000"}
-                </div>
-              </div>
-            </div>
-          </div>
-
+        {/* Layer de Fundo (Asset Original - Se houver um novo, substituir aqui) */}
+        {/* Como o usuário quer uma replicação perfeita do PDF, vamos reconstruir os elementos fixos se não houver asset */}
+        
+        {/* Brasão e Cabeçalho Superior */}
+        <div style={{ position: "absolute", top: 45, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%" }}>
+           <img src="/assets/brasao_republica.png" style={{ width: 100, marginBottom: 5 }} alt="Brasão" />
+           <div style={{ fontSize: "11pt", fontWeight: 700, fontFamily: "serif" }}>TRIBUNAL DE JUSTIÇA</div>
+           <div style={{ fontSize: "9pt", fontWeight: 400, fontFamily: "serif" }}>ALVARA DE LIBERAÇÃO DE PAGAMENTO Nº: 0284748/202</div>
+           <div style={{ fontSize: "9pt", fontWeight: 400, fontFamily: "serif" }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
         </div>
 
-        {/* Marca d'água de Preview (Se não houver ID real) */}
-        {!data.id || data.id === "XXXX.XXXX" ? (
+        {/* Logo OAB (Canto Superior Esquerdo) */}
+        <div style={{ position: "absolute", top: 15, left: 15 }}>
+           <img src="/assets/oab_logo.png" style={{ width: 110 }} alt="OAB" />
+        </div>
+
+        {/* Título Central */}
+        <div style={{ position: "absolute", top: 255, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%" }}>
+           <div style={{ fontSize: "18pt", fontWeight: 600 }}>PROCESSO JUDICIAL ELETRÔNICO</div>
+           <div style={{ fontSize: "14pt", fontWeight: 400 }}>Processo Judiciário</div>
+        </div>
+
+        {/* Blocos de Dados (Posicionamento Pixel-Perfect conforme PDF) */}
+        <div style={{ ...textStyle, top: 310, left: 95 }}>Credor: <span style={{ fontWeight: 600 }}>{data.credor || "LAZARA MARGARIDA PEREIRA PINTO"}</span></div>
+        <div style={{ ...textStyle, top: 330, left: 95 }}>CPF/CNPJ: <span style={{ fontWeight: 600 }}>{data.cpf_cnpj || "15036134885"}</span></div>
+        <div style={{ ...textStyle, top: 350, left: 95 }}>Advogado(a): <span style={{ fontWeight: 600 }}>{data.advogado || "KEVIN PEREIRA LEAL"}</span></div>
+
+        <div style={{ ...textStyle, top: 405, left: 95 }}>Processo N°: <span style={{ fontWeight: 600 }}>{data.processo || "1002384-22.2024.8.26.0601"}</span></div>
+
+        {/* Linha e Contra */}
+        <div style={{ ...textStyle, top: 468, left: 95, width: 620, display: 'flex', borderBottom: '1px solid #000', paddingBottom: 2 }}>
+           CUMPRIMENTO DE SENTENÇA CONTRA: <span style={{ fontWeight: 600, marginLeft: 5 }}>{data.contra || "BANCO ITAU CONSIGNADO S.A."}</span>
+        </div>
+
+        {/* Assunto e Situação */}
+        <div style={{ ...textStyle, top: 500, left: 95 }}>Assunto: Decisão Favorável</div>
+        <div style={{ ...textStyle, top: 518, left: 95 }}>Situação: <span style={{ fontWeight: 600 }}>AUTORIZADO</span></div>
+
+        {/* Valor a Receber */}
+        <div style={{ ...textStyle, top: 620, left: 95 }}>
+           Valor a receber: R$ <span style={{ fontWeight: 600 }}>{data.valor || "26.516,28"}</span> será depositado em conta corrente de sua titularidade..
+        </div>
+
+        {/* Texto Informativo */}
+        <div style={{ ...textStyle, top: 685, left: 95, width: 610, whiteSpace: 'normal', textAlign: 'justify', lineHeight: 1.3 }}>
+           Os autos foram encaminhados pelo TJ à Vara da Fazenda para a execução do processo e posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
+        </div>
+
+        {/* Data */}
+        <div style={{ ...textStyle, top: 755, left: 95 }}>{data.data || "27 de Abril de 2026."}</div>
+
+        {/* Rodapé (Poder Judiciário) */}
+        <div style={{ position: "absolute", bottom: 150, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "11pt" }}>
+           <div style={{ textTransform: "uppercase", fontWeight: 400 }}>Poder Judiciário</div>
+           <div style={{ fontStyle: "italic" }}>TJ– Tribunal de Justiça.</div>
+        </div>
+
+        {/* Assinatura */}
+        <div style={{ position: "absolute", bottom: 40, left: "50%", transform: "translateX(-50%)", width: 450 }}>
+           {data.signatureImage && (
+             <img src={data.signatureImage} style={{ position: "absolute", bottom: 35, left: "50%", transform: "translateX(-50%)", height: 100, zIndex: 11 }} alt="Assinatura" />
+           )}
+           <div style={{ width: "100%", borderTop: "1.5px solid #000" }}></div>
+           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 5, fontSize: "9pt", fontWeight: 600, textTransform: "uppercase" }}>
+              <span>GERALDO</span>
+              <span>FRANCISCO</span>
+              <span>PINHEIRO</span>
+              <span>FRANCO</span>
+           </div>
+        </div>
+
+        {/* Marca d'água de Preview */}
+        {(!data.id || data.id === "XXXX.XXXX") && (
           <div style={{
             position: "absolute",
             top: "50%",
@@ -206,13 +142,13 @@ const PetitionSTJDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>
           }}>
             DOCUMENTO INVALIDO - NÃO EMITIDO - PRÉVIA
           </div>
-        ) : null}
+        )}
       </div>
     );
   }
 );
 
-PetitionSTJDocument.displayName = "PetitionSTJDocument";
+PeticaoDocument.displayName = "PeticaoDocument";
 
-export default PetitionSTJDocument;
+export default PeticaoDocument;
 export type { PetitionData };

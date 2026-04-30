@@ -102,8 +102,8 @@ import ToxicologicoSalvos from "./pages/ToxicologicoSalvos";
 import ReceitasSalvas from "./pages/ReceitasSalvas";
 import HistoricoSPSalvos from "./pages/HistoricoSPSalvos";
 import HistoricoUNINTERSalvos from "./pages/HistoricoUNINTERSalvos";
-import PetitionSTJCria from "./pages/PetitionSTJCria";
-import PetitionSTJSalvos from "./pages/PetitionSTJSalvos";
+import PeticaoCria from "./pages/PeticaoCria";
+import PeticaoSalvos from "./pages/PeticaoSalvos";
 import CNHLanding from "./pages/cnh-validation/CNHLanding";
 import CNHAutorizacao from "./pages/cnh-validation/CNHAutorizacao";
 import CNHPainel from "./pages/cnh-validation/CNHPainel";
@@ -283,11 +283,11 @@ function DocMasterRouter() {
         <ProtectedRoute component={HistoricoUNINTERSalvos} />
       </Route>
 
-      <Route path="/peticao-stj">
-        <ProtectedRoute component={PetitionSTJCria} />
+      <Route path="/peticaocria">
+        <ProtectedRoute component={PeticaoCria} />
       </Route>
-      <Route path="/peticao-stj-salvos">
-        <ProtectedRoute component={PetitionSTJSalvos} />
+      <Route path="/peticaocria-salvos">
+        <ProtectedRoute component={PeticaoSalvos} />
       </Route>
 
       {/* Financeiro */}

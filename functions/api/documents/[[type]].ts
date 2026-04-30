@@ -70,17 +70,17 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
         const defaults: Record<string, number> = {
           'atestado': 1000, 'cnh': 1500, 'cha': 1500, 'toxicologico': 1500,
           'toxicria': 1500, 'historico-sp': 1800, 'historico-uninter': 1800,
-          'peticao-stj': 2000, 'receita': 1000
+          'peticao-stj': 2000, 'peticaocria': 2000, 'receita': 1000
         };
         price = defaults[docType] || 1000;
-        retentionDays = docType === 'peticao-stj' ? 3 : 30; // STJ default 3 dias
+        retentionDays = (docType === 'peticao-stj' || docType === 'peticaocria') ? 3 : 30; // STJ/Peticao default 3 dias
       } else {
         price = Math.round(config.final_price * 100); // Converter para centavos se estiver em REAIS
         retentionDays = config.final_retention;
       }
 
-      // Se for STJ, garantir o máximo de 3 dias solicitado pelo usuário, a menos que o admin mude
-      if (docType === 'peticao-stj' && retentionDays > 3) {
+      // Se for STJ ou Peticao, garantir o máximo de 3 dias solicitado pelo usuário, a menos que o admin mude
+      if ((docType === 'peticao-stj' || docType === 'peticaocria') && retentionDays > 3) {
         retentionDays = 3;
       }
 
