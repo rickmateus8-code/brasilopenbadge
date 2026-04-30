@@ -2166,6 +2166,36 @@ export default function AtestadoCria() {
                     </button>
                     </div>
 
+                    {/* Ajuste de Posição e Escala (Restaurado) */}
+                    <div style={{ marginTop: 12, borderTop: "1px solid #e5e7eb", paddingTop: 12, marginBottom: 12 }}>
+                      <p style={{ fontSize: 11, fontWeight: 700, color: "#005CA9", marginBottom: 8, display: "flex", alignItems: "center", gap: 4 }}>
+                        🎮 AJUSTE DE POSIÇÃO ({logoSide === "left" ? "ESQUERDA" : "DIREITA"})
+                      </p>
+                      
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {/* Controles de Escala */}
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button type="button" onClick={() => adjustScale(logoSide, SCALE_STEP)} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>🔍+ ZOOM</button>
+                          <button type="button" onClick={() => adjustScale(logoSide, -SCALE_STEP)} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>🔍- ZOOM</button>
+                        </div>
+
+                        {/* Controles de Posição (Setas) */}
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, width: "100%", maxWidth: 180, margin: "0 auto" }}>
+                          <div />
+                          <button type="button" onClick={() => adjustY(logoSide, -POS_STEP)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▲</button>
+                          <div />
+                          
+                          <button type="button" onClick={() => adjustX(logoSide, -POS_STEP)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>◀</button>
+                          <button type="button" onClick={() => resetLogoTransform(logoSide)} style={{ ...btnGray, padding: "6px 0", fontSize: 9, display: "flex", alignItems: "center", justifyContent: "center" }}>RESET</button>
+                          <button type="button" onClick={() => adjustX(logoSide, POS_STEP)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▶</button>
+                          
+                          <div />
+                          <button type="button" onClick={() => adjustY(logoSide, POS_STEP)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▼</button>
+                          <div />
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Galeria de Logos Padrão */}
                     <p style={{ fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6 }}>
                     Logos Padrão — Clique para aplicar no lado selecionado ({logoSide === "left" ? "Esquerda" : "Direita"})
