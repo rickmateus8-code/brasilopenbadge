@@ -419,7 +419,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               paddingLeft: 0,
               paddingRight: 0,
             }}>
-              {/* Esquerda: cidade/data + URL validação — AJUSTADO PARA ALINHAMENTO PERFEITO NA BASE */}
+              {/* Esquerda: cidade/data + URL validação — AJUSTADO PARA ALINHAMENTO NA BASE DA MOLDURA */}
               <div style={{ 
                 color: "#000", 
                 lineHeight: 1.2, 
@@ -427,12 +427,12 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 flexShrink: 0, 
                 display: "flex", 
                 flexDirection: "column", 
-                justifyContent: "center", // Alterado de flex-end para center para alinhamento geométrico
+                justifyContent: "flex-end", // Alinhado ao limite inferior (base da moldura)
                 marginRight: "auto", 
                 height: 111, 
                 boxSizing: "border-box", 
                 paddingLeft: 2,
-                paddingBottom: 0, // Removido espaçamento forçado
+                paddingBottom: 0, // Alinhamento exato no limite inferior
                 overflow: "hidden" // Garantir que o texto nunca vaze para baixo
               }}>
                 <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.42, marginBottom: 3 }}>
