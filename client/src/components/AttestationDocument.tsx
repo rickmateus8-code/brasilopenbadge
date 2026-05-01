@@ -65,9 +65,11 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const isEmitted = data.codigoQR && data.codigoQR !== "XXXX.XXXX";
     // QR Code aponta para validaratestado.digital/validar?codigo=XXXX&data=YYYY-MM-DD
     // A data no banco está em DD/MM/YYYY — converte para YYYY-MM-DD para o parâmetro da URL
-    const dataEmissaoForQR = data.dataEmissao
+    // PRIORIDADE: Data da Emissão (Assinatura) conforme solicitado pelo usuário
+    const rawDateToUse = data.dataAssinatura || data.dataEmissao || "";
+    const dataEmissaoForQR = rawDateToUse
       ? (() => {
-          const d = String(data.dataEmissao).trim();
+          const d = String(rawDateToUse).trim();
           // Formato DD/MM/YYYY → YYYY-MM-DD
           const parts = d.split("/");
           if (parts.length === 3 && parts[2].length === 4) {
@@ -86,15 +88,18 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
     const instituicao = (data as any).instituicao || "";
     const unidade = (data as any).unidade || "";
-    const enderecoEmitente = (data as any).enderecoEmitente || "";
-    const corAssinatura = signatureColor || (data as any).signatureColor || "#0b109f";
-    const fotoAssinatura = signatureImage || (data as any).signatureImage || "";
-    const textoAtestado = (data as any).textoAtestado || "";
-    const cidDisplay = (data as any).cidDisplay || data.cid || "";
-    const cidNome = (data as any).cidNome || "";
+    const enderecoEmitente = (data as any).enderecoEmitente || (data as any).endereco_emitente || "";
+    const corAssinatura = signatureColor || (data as any).signatureColor || (data as any).signature_color || "#0b109f";
+    const fotoAssinatura = signatureImage || (data as any).signatureImage || (data as any).signature_image || "";
+    const textoAtestado = (data as any).textoAtestado || (data as any).texto_atestado || "";
+    const cidDisplay = (data as any).cidDisplay || (data as any).cid_display || data.cid || "";
+    const cidNome = (data as any).cidNome || (data as any).cid_nome || "";
     const cidade = (data as any).cidade || "";
-    const modoCarimbo = (data as any).modoCarimbo || false;
+    const modoCarimbo = (data as any).modoCarimbo || (data as any).modo_carimbo || false;
     const docType = (documentType || (data as any).documentType || (data as any).document_type || 'atestado').toLowerCase();
+    
+    const dataAssinatura = data.dataAssinatura || (data as any).data_assinatura || "";
+    const horaAssinatura = data.horaAssinatura || (data as any).hora_assinatura || "";
     const prefeituraLabel = cidade ? `PREFEITURA DE ${cidade.toUpperCase()}` : "";
 
     // Tipo de documento do paciente
@@ -140,9 +145,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           width: `${DOC_WIDTH_PX}px`,
           minHeight: `${DOC_HEIGHT_PX}px`,
           height: `${DOC_HEIGHT_PX}px`,
-          background: "#ffffff !important",
-          backgroundColor: "#ffffff !important",
-          backgroundAttachment: "fixed", // Prevenir qualquer vazamento de cor de fundo externa
+          backgroundColor: "#ffffff",
           paddingTop: `${PAD_H}px`,
           paddingBottom: `${PAD_H}px`,
           paddingLeft: `${PAD_V}px`,
@@ -155,6 +158,24 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           overflow: "hidden",
         }}
       >
+        {/* Marca d'água para Preview — Não interfere no texto real nem na exportação final se o ID for real */}
+        {(data.id === "XXXX.XXXX" || (data as any).codigoQR === "XXXX.XXXX") && (
+          <div data-html2canvas-ignore="true" style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%) rotate(-45deg)",
+            fontSize: 48.6, // Reduzido em 10% (54 * 0.9)
+            fontWeight: 900,
+            color: "rgba(220, 38, 38, 0.08)", // Vermelho sutil e transparente
+            pointerEvents: "none",
+            userSelect: "none",
+            whiteSpace: "nowrap",
+            zIndex: 99, // Alterado para 99 para sobrepor todos os elementos (molduras, textos, logos)
+          }}>
+            DOCUMENTO INVALIDO - NÃO EMITIDO - PRÉVIA
+          </div>
+        )}
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Herr+Von+Muellerhoff&family=Courier+Prime:wght@400;700&display=swap');
           #attestation-document * { box-sizing: border-box; }
@@ -163,12 +184,12 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
 
 
-        {/* ===== HEADER ===== */}
-        <div style={{
+        {/* ===== HEADER (LOGOS APENAS) ===== */}
+        <div id="preview-header" style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: 8,
+          marginBottom: 0,
           height: 80,
           position: "relative",
           zIndex: 2,
@@ -196,17 +217,17 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           {/* Centro — Nome da Instituição / Unidade / Endereço */}
           <div style={{ flex: 1, padding: "0 12px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
             {instituicao && (
-              <div style={{ fontSize: 14, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", letterSpacing: 0.5, lineHeight: 1.3 }}>
+              <div style={{ fontSize: 14.7, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", letterSpacing: 0, lineHeight: 1.3 }}>
                 {instituicao}
               </div>
             )}
-            {unidade && (
-              <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", lineHeight: 1.3 }}>
+            {unidade && unidade !== instituicao && (
+              <div style={{ fontSize: 12.6, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", lineHeight: 1.3 }}>
                 {unidade}
               </div>
             )}
             {enderecoEmitente && (
-              <div style={{ fontSize: 10, fontWeight: 400, textTransform: "uppercase", color: "#000", lineHeight: 1.3 }}>
+              <div style={{ fontSize: 10.5, fontWeight: 400, textTransform: "uppercase", color: "#000", lineHeight: 1.3 }}>
                 {enderecoEmitente}
               </div>
             )}
@@ -235,7 +256,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         {/* ===== TÍTULO ===== */}
         <div style={{
           fontWeight: 900,
-          fontSize: 21,
+          fontSize: 23.15, 
           textTransform: "uppercase",
           borderTop: "none",
           borderBottom: "none",
@@ -243,52 +264,50 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           padding: "0",
           width: "100%",
           textAlign: "center",
-          marginTop: 12,
-          marginBottom: 8,
-          letterSpacing: 0.5,
+          marginTop: 15, // Aumentado de 12 para 15 (+3) conforme solicitado
+          marginBottom: 11, // Aumentado de 8 para 11 (+3) conforme solicitado
+          lineHeight: 1, 
+          letterSpacing: 0, 
           position: "relative",
           zIndex: 2,
           color: "#000",
           flexShrink: 0,
         }}>
           {docType === 'laudo' ? (
-            <>
-              {prefeituraLabel && (
-                <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4, color: "#000" }}>
-                  {prefeituraLabel}
-                </div>
-              )}
-              <div style={{ fontSize: 21, fontWeight: 900 }}>LAUDO MÉDICO</div>
-            </>
+            <div style={{ fontSize: 23.15, fontWeight: 900 }}>LAUDO MÉDICO</div>
           ) : (
-            <div style={{ fontSize: 21, fontWeight: 900 }}>ATESTADO MÉDICO</div>
+            <div style={{ fontSize: 23.15, fontWeight: 900 }}>ATESTADO MÉDICO</div>
           )}
         </div>
 
         {/* Moldura Superior (Linha Preta) */}
         <div style={{
-          borderTop: "2px solid #000",
+          borderTop: "2.04px solid #000", 
           width: "100%",
-          marginBottom: 25,
+          marginBottom: 20, // Aumentado de 17 para 20 (+3) conforme solicitado
           position: "relative",
           zIndex: 2,
           flexShrink: 0,
         }} />
 
         {/* ===== DADOS DO PACIENTE ===== */}
-        <div style={{
-          border: "1px solid #000", // Moldura completa mantida
-          padding: "7px 10px",
-          fontSize: 10.5,
-          marginBottom: 4, // Espaçamento para o texto abaixo
-          lineHeight: 1.7,
+        <div id="preview-patient" style={{
+          border: "1px solid #000",
+          padding: "10px 12px", // Aumentado para 10px 12px para centralização vertical perfeita
+          fontSize: 10.815, // Aumentado em 3% (10.5 * 1.03)
+          marginBottom: 10,
+          lineHeight: 1.3, // Reduzido para 1.3 conforme plano
+          gap: 4, // Adicionado gap: 4 conforme plano
           position: "relative",
           zIndex: 2,
-          background: "rgba(255,255,255,0.9)",
+          background: "#fff",
           flexShrink: 0,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center", 
         }}>
           {/* Linha 1: Paciente | Sexo | Nasc */}
-          <div style={{ display: "flex", gap: 12, marginBottom: 3 }}>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
             <div style={{ flex: 3 }}>
               <span style={{ fontWeight: 700, color: "#000" }}>Paciente: </span>
               <span style={{ color: "#000", textTransform: "uppercase" }}>{data.paciente}</span>
@@ -304,7 +323,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </div>
 
           {/* Linha 2: CPF/CNS | Nome da Mãe */}
-          <div style={{ display: "flex", gap: 12, marginBottom: 3 }}>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
             <div style={{ flex: 1 }}>
               <span style={{ fontWeight: 700, color: "#000" }}>{docLabel} </span>
               <span style={{ color: "#000", textTransform: "uppercase" }}>{docValue}</span>
@@ -316,58 +335,59 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </div>
 
           {/* Linha 3: Endereço */}
-          <div style={{ marginBottom: 4 }}>
-            <span style={{ fontWeight: 700, color: "#000" }}>Endereço: </span>
-            <span style={{ color: "#000", textTransform: "uppercase" }}>{data.endereco}</span>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <div style={{ width: "100%" }}>
+              <span style={{ fontWeight: 700, color: "#000" }}>Endereço: </span>
+              <span style={{ color: "#000", textTransform: "uppercase" }}>{data.endereco}</span>
+            </div>
           </div>
-
         </div>
 
-        {/* ===== ENDEREÇO EMITENTE (Todo negrito, alinhado à esquerda da moldura) ===== */}
+        {/* Endereço Emitente (Opcional) */}
         {enderecoEmitente && (
-          <div style={{ 
-            padding: "0", // Alinhado com a borda esquerda da moldura (0 padding)
+          <div style={{
             fontSize: 10.5,
-            color: "#000",
+            lineHeight: 1.2,
+            fontFamily: "Arial, Helvetica, sans-serif",
             textAlign: "left",
             position: "relative",
             zIndex: 2,
             flexShrink: 0,
             marginBottom: 20, 
-            fontWeight: 700, // Todo o bloco em negrito
+            color: "#000",
             textTransform: "uppercase"
           }}>
-            ENDEREÇO EMITENTE: {enderecoEmitente}
+            <span style={{ fontWeight: 700 }}>ENDEREÇO EMITENTE:</span> <span style={{ fontWeight: 400 }}>{enderecoEmitente}</span>
           </div>
         )}
 
         {/* ===== CORPO DO TEXTO ===== */}
-        <div style={{
+        <div id="preview-body" style={{
           flex: "1 1 auto",
-          fontSize: 13,
+          fontSize: 15.18, // Aumentado em 3% (14.74 * 1.03)
           lineHeight: 1.9,
           textAlign: "justify",
           position: "relative",
           zIndex: 2,
           paddingTop: 48,
           paddingBottom: 8,
-          color: "#111",
+          color: "#000",
           fontWeight: 400,
         }}>
-          {/* Parágrafo com recuo */}
+          {/* Parágrafo com recuo extra (+2 espaços) */}
           <p style={{
             margin: 0,
-            textIndent: "3em",
+            textIndent: "4em", // Aumentado de 3em para 4em para refletir os 2 espaços extras
             lineHeight: 1.9,
             whiteSpace: "pre-wrap",
           }}>
-            {textoAtestado || "        Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico. Necessita de 04 (quatro) dias de afastamento de suas atividades laborais para repouso e tratamento de saúde."}
+            {"  "}{textoAtestado || "Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico. Necessita de 04 (quatro) dias de afastamento de suas atividades laborais para repouso e tratamento de saúde."}
           </p>
 
           {cidDisplay && (
             <div style={{
               fontWeight: 700,
-              fontSize: 11,
+              fontSize: 13.7, // Reduzido de 14.13 para 13.7 conforme plano
               marginTop: 28,
               color: "#000",
               textTransform: "uppercase",
@@ -379,7 +399,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
         {/* ===== RODAPÉ DIGITAL ===== */}
         {!modoCarimbo && (
-          <div style={{
+          <div id="preview-footer" style={{
             marginTop: "auto",
             position: "relative",
             zIndex: 2,
@@ -405,7 +425,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               paddingLeft: 0,
               paddingRight: 0,
             }}>
-              {/* Esquerda: cidade/data + URL validação — AJUSTADO PARA NÃO ULTRAPASSAR LIMITE INFERIOR */}
+              {/* Esquerda: cidade/data + URL validação — AJUSTADO PARA ALINHAMENTO NA BASE DA MOLDURA */}
               <div style={{ 
                 color: "#000", 
                 lineHeight: 1.2, 
@@ -413,25 +433,28 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 flexShrink: 0, 
                 display: "flex", 
                 flexDirection: "column", 
-                justifyContent: "flex-end", 
+                justifyContent: "flex-end", // Alinhado ao limite inferior (base da moldura)
                 marginRight: "auto", 
                 height: 111, 
                 boxSizing: "border-box", 
                 paddingLeft: 2,
-                paddingBottom: 4
+                paddingBottom: 12, // Aumentado significativamente para proteger a descendente do 'g' e evitar corte
+                overflow: "hidden", // Garantir que o texto nunca vaze para baixo
+                gap: 3, // Ajustado para gap: 3 conforme solicitado para harmonia vertical
               }}>
-                <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.42, marginBottom: 3 }}>
+                <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.21, marginBottom: 0 }}>
                   {dataFormatada || data.dataEmissao}
                 </div>
-                <div style={{ fontSize: 9.85 }}>Valide este documento acessando o endereço:</div>
-                <strong style={{ fontSize: 10.42, display: "block", marginBottom: 3 }}>https://validaratestado.digital</strong>
-                <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                  <span style={{ fontWeight: 700, fontSize: 10.42, lineHeight: 1 }}>Código:</span>
-                  <span style={{ fontWeight: 700, fontSize: 10.42, lineHeight: 1 }}>
+                <div style={{ fontSize: 9.65 }}>Valide este documento acessando o endereço:</div>
+                <strong style={{ fontSize: 10.21, display: "block", marginBottom: 0 }}>https://validaratestado.digital</strong>
+                <div style={{ display: "flex", alignItems: "center", gap: 0, flexWrap: "nowrap" }}>
+                  <span style={{ fontWeight: 400, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 9.65, whiteSpace: "nowrap", lineHeight: 1 }}>Código: </span>
+                  <strong style={{ fontSize: 10.21, fontWeight: 700, whiteSpace: "nowrap", lineHeight: 1, marginLeft: 2 }}>
                     {isEmitted ? data.codigoQR : "****.****"}
-                  </span>
+                  </strong>
                 </div>
               </div>
+
               {/* Moldura: 385×111px | QR centralizado à esquerda | texto à DIREITA */}
               <div style={{
                 border: "1px solid #000",
@@ -560,7 +583,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             <div style={{ textAlign: "center", marginTop: 6 }}>
               <div style={{ fontWeight: 700, fontSize: 11, textTransform: "uppercase" }}>{data.medico}</div>
               <div style={{ fontSize: 10 }}>{data.crm}</div>
-              <div style={{ fontSize: 9, color: "#555" }}>{data.especialidade}</div>
+              <div style={{ fontSize: 9, color: "#000" }}>{data.especialidade}</div>
             </div>
           </div>
         )}
