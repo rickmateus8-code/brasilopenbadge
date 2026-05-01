@@ -49,8 +49,11 @@ export default function Validation() {
   // ── Efeito para remover Favicon em domínios de validação ──────────────────
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const isValidation = window.location.hostname !== "docmaster.store" && 
-                         window.location.hostname !== "localhost";
+    const hostname = window.location.hostname;
+    // Consideramos como 'Validação' apenas se NÃO contiver 'docmaster' ou 'localhost'
+    const isValidation = !hostname.includes("docmaster") && 
+                         hostname !== "localhost" &&
+                         hostname !== "127.0.0.1";
     
     if (isValidation) {
       // 1. Remover todos os links de ícone existentes
