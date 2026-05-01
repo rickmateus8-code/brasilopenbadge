@@ -36,7 +36,11 @@ interface DocumentosSalvosProps {
   fields: FieldDef[];
   nameField?: string;
   cpfField?: string;
-  extraColumns?: { key: string; label: string; render?: (doc: DocRecord) => string }[];
+  idLabel?: string;
+  dateLabel?: string;
+  idField?: keyof DocRecord | string;
+  dateField?: string;
+  extraColumns?: { key: string; label: string; render?: (doc: DocRecord) => React.ReactNode }[];
   /** Rota para editar o documento (ex: "/atestado/editar"). Se fornecida, o botão Editar navega para lá com /{id}. */
   editRoute?: string;
   /** Rota para baixar/visualizar o documento (ex: "/atestado/editar"). Se fornecida, renderiza botão Baixar PDF. */
@@ -51,6 +55,10 @@ export default function DocumentosSalvos({
   fields,
   nameField = "nome",
   cpfField = "cpf",
+  idLabel = "ID",
+  dateLabel = "Data",
+  idField = "id",
+  dateField = "created_at",
   extraColumns = [],
   editRoute,
   downloadRoute,
@@ -244,10 +252,10 @@ export default function DocumentosSalvos({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">ID</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">{idLabel}</th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Paciente</th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider hidden sm:table-cell">CPF</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider hidden sm:table-cell">Data</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider hidden sm:table-cell">{dateLabel}</th>
                   {extraColumns.map(col => (
                     <th key={col.key} className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider hidden md:table-cell">{col.label}</th>
                   ))}
@@ -255,28 +263,41 @@ export default function DocumentosSalvos({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-                {filtered.map(doc => (
-                  <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                    <td className="px-4 py-3 font-mono text-gray-600 dark:text-gray-400 text-xs">{String(doc.id).slice(0, 12)}</td>
-                    <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-200 uppercase">{doc.nome}</td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden sm:table-cell">{doc.cpf}</td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden sm:table-cell">{formatDate(doc.created_at)}</td>
-                    {extraColumns.map(col => (
-                      <td key={col.key} className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden md:table-cell">
-                        {col.render ? col.render(doc) : (doc.data?.[col.key] || "—")}
+                {filtered.map(doc => {
+                  const idValue = idField === "id" ? doc.id : (doc.data?.[idField as string] || doc[idField as keyof DocRecord] || doc.id);
+                  const dateValue = doc.data?.[dateField] || doc[dateField as keyof DocRecord] || doc.created_at;
+
+                  return (
+                    <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                      <td className="px-4 py-3 font-mono text-gray-600 dark:text-gray-400 text-xs">
+                        {idField === "codigo_qr" ? (
+                          <span className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-1 rounded-md font-bold border border-blue-100 dark:border-blue-800">
+                            {String(idValue)}
+                          </span>
+                        ) : (
+                          String(idValue).slice(0, 12)
+                        )}
                       </td>
-                    ))}
-                    <td className="px-4 py-3">
-                      <AttestationActionButtons
-                        onView={() => openView(doc)}
-                        onEdit={editRoute ? () => setLocation(`${editRoute}/${doc.id}`) : () => openEdit(doc)}
-                        onDownload={docType === "attestation" || downloadRoute ? () => handleDirectDownload(doc) : undefined}
-                        isDownloading={downloadingId === doc.id}
-                        onDelete={() => setDeleteConfirmId(doc.id)}
-                      />
-                    </td>
-                  </tr>
-                ))}
+                      <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-200 uppercase">{doc.nome}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden sm:table-cell">{doc.cpf}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden sm:table-cell">{formatDate(dateValue)}</td>
+                      {extraColumns.map(col => (
+                        <td key={col.key} className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden md:table-cell">
+                          {col.render ? col.render(doc) : (doc.data?.[col.key] || "—")}
+                        </td>
+                      ))}
+                      <td className="px-4 py-3">
+                        <AttestationActionButtons
+                          onView={() => openView(doc)}
+                          onEdit={editRoute ? () => setLocation(`${editRoute}/${doc.id}`) : () => openEdit(doc)}
+                          onDownload={docType === "attestation" || downloadRoute ? () => handleDirectDownload(doc) : undefined}
+                          isDownloading={downloadingId === doc.id}
+                          onDelete={() => setDeleteConfirmId(doc.id)}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

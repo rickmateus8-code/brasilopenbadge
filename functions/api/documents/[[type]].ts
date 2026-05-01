@@ -162,11 +162,36 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
     const nomeValue = body.nome || body.nomeCompleto || '';
     const categoriaValue = body.categoria || '';
 
-    // Save     // Save document with status='emitido' for validation
+    // Save document with status='emitido' for validation
     // Include cpf, senha, nome, categoria as separate columns for cnh-do-brasil auth lookup
     await env.DB.prepare(
       'INSERT INTO documents (id, user_id, type, data, codigo_qr, status, cpf, senha, nome, categoria, codigo_validacao, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"))'
     ).bind(docId, user.id, docType, jsonData, codigoValidacao, 'emitido', cpfValue, senhaValue, nomeValue, categoriaValue, codigoValidacao).run();
+
+    // 6. Sincronizar com IDAB (validaratestado.digital)
+    {
+      const syncPayload = {
+        id: docId,
+        type: docType,
+        data: jsonData,
+        codigo_validacao: codigoValidacao,
+        status: 'emitido',
+      };
+
+      const syncToken = env.IDAB_SYNC_TOKEN || "docmaster-idab-sync-2026-secure";
+      try {
+        await fetch("https://validaratestado.digital/api/documents", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${syncToken}`,
+          },
+          body: JSON.stringify(syncPayload),
+        });
+      } catch (syncErr) {
+        console.warn("[sync-document] Falha ao sincronizar com IDAB:", syncErr);
+      }
+    }
 
     // Buscar saldo atualizado após débito para atualização em tempo real no frontend
     const updatedUser = await env.DB.prepare(

@@ -41,6 +41,29 @@ export default function AtestadosSalvos() {
       fields={FIELDS}
       nameField="nome_paciente"
       cpfField="cpf"
+      idLabel="Código Emissão"
+      idField="codigo_qr"
+      dateLabel="Data Emissão"
+      dateField="data_emissao"
+      extraColumns={[
+        {
+          key: "created_at",
+          label: "Criação (Painel)",
+          render: (doc) => {
+            const date = new Date(doc.created_at);
+            return (
+              <div className="flex flex-col">
+                <span className="font-semibold text-gray-900 dark:text-white">
+                  {date.toLocaleDateString("pt-BR")}
+                </span>
+                <span className="text-[10px] text-gray-400">
+                  {date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                </span>
+              </div>
+            );
+          }
+        }
+      ]}
       editRoute="/atestado/editar"
       downloadRoute="/atestado/editar"
     />
