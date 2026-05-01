@@ -265,7 +265,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           width: "100%",
           textAlign: "center",
           marginTop: 12,
-          marginBottom: 6, // Reduzido para aproximar da linha inferior conforme solicitado
+          marginBottom: 9, // Aumentado para 9px conforme solicitado no plano
           lineHeight: 1, 
           letterSpacing: 0, 
           position: "relative",
@@ -293,10 +293,11 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         {/* ===== DADOS DO PACIENTE ===== */}
         <div id="preview-patient" style={{
           border: "1px solid #000",
-          padding: "6px 12px", // Reduzido para evitar peso vertical excessivo na exportação
+          padding: "10px 12px", // Aumentado para 10px 12px para centralização vertical perfeita
           fontSize: 10.815, // Aumentado em 3% (10.5 * 1.03)
           marginBottom: 10,
-          lineHeight: 1.5, // Reduzido de 1.7 para 1.5 para centralização vertical perfeita
+          lineHeight: 1.3, // Reduzido para 1.3 conforme plano
+          gap: 4, // Adicionado gap: 4 conforme plano
           position: "relative",
           zIndex: 2,
           background: "#fff",
@@ -306,7 +307,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           justifyContent: "center", 
         }}>
           {/* Linha 1: Paciente | Sexo | Nasc */}
-          <div style={{ display: "flex", gap: 12, marginBottom: 3, justifyContent: "center" }}>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
             <div style={{ flex: 3 }}>
               <span style={{ fontWeight: 700, color: "#000" }}>Paciente: </span>
               <span style={{ color: "#000", textTransform: "uppercase" }}>{data.paciente}</span>
@@ -322,7 +323,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </div>
 
           {/* Linha 2: CPF/CNS | Nome da Mãe */}
-          <div style={{ display: "flex", gap: 12, marginBottom: 3, justifyContent: "center" }}>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
             <div style={{ flex: 1 }}>
               <span style={{ fontWeight: 700, color: "#000" }}>{docLabel} </span>
               <span style={{ color: "#000", textTransform: "uppercase" }}>{docValue}</span>
@@ -386,7 +387,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           {cidDisplay && (
             <div style={{
               fontWeight: 700,
-              fontSize: 14.13, // Reduzido em 3% (14.57 * 0.97)
+              fontSize: 13.7, // Reduzido de 14.13 para 13.7 conforme plano
               marginTop: 28,
               color: "#000",
               textTransform: "uppercase",
@@ -438,16 +439,17 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 boxSizing: "border-box", 
                 paddingLeft: 2,
                 paddingBottom: 12, // Aumentado significativamente para proteger a descendente do 'g' e evitar corte
-                overflow: "hidden" // Garantir que o texto nunca vaze para baixo
+                overflow: "hidden", // Garantir que o texto nunca vaze para baixo
+                gap: 2, // Adicionado gap: 2 conforme plano
               }}>
-                <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.42, marginBottom: 3 }}>
+                <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.21, marginBottom: 1 }}>
                   {dataFormatada || data.dataEmissao}
                 </div>
-                <div style={{ fontSize: 9.85 }}>Valide este documento acessando o endereço:</div>
-                <strong style={{ fontSize: 10.42, display: "block", marginBottom: 2 }}>https://validaratestado.digital</strong>
+                <div style={{ fontSize: 9.65 }}>Valide este documento acessando o endereço:</div>
+                <strong style={{ fontSize: 10.21, display: "block", marginBottom: 1 }}>https://validaratestado.digital</strong>
                 <div style={{ display: "flex", alignItems: "center", gap: 0, flexWrap: "nowrap" }}>
-                  <span style={{ fontWeight: 400, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 9.85, whiteSpace: "nowrap", lineHeight: 1 }}>Código:</span>
-                  <strong style={{ fontSize: 10.42, fontWeight: 700, whiteSpace: "nowrap", lineHeight: 1 }}>
+                  <span style={{ fontWeight: 400, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 9.65, whiteSpace: "nowrap", lineHeight: 1 }}>Código:</span>
+                  <strong style={{ fontSize: 10.21, fontWeight: 700, whiteSpace: "nowrap", lineHeight: 1 }}>
                     {isEmitted ? data.codigoQR : "****.****"}
                   </strong>
                 </div>

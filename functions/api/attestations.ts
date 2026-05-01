@@ -584,7 +584,7 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
         logo_left_y = COALESCE(?, logo_left_y),
         logo_right_x = COALESCE(?, logo_right_x),
         logo_right_y = COALESCE(?, logo_right_y),
-        cidade = ?, updated_at = ?
+        cidade = ?, document_type = ?, updated_at = ?
       WHERE id = ?
     `).bind(
       body.paciente?.toUpperCase() || null,
