@@ -482,29 +482,6 @@ export default function Validation() {
       borderTop: "1px solid #e5e7eb",
       flexShrink: 0,
     } as React.CSSProperties,
-    floatingControls: {
-      position: "absolute" as const,
-      right: 20,
-      top: "50%",
-      transform: "translateY(-50%)",
-      display: "flex",
-      flexDirection: "column" as const,
-      gap: 12,
-      zIndex: 110,
-    } as React.CSSProperties,
-    controlBtn: {
-      width: 48,
-      height: 48,
-      borderRadius: "50%",
-      border: "2px solid #005CA9",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: 20,
-      cursor: "pointer",
-      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-      transition: "all 0.2s cubic-bezier(0.22, 1, 0.36, 1)",
-    } as React.CSSProperties,
   };
 
   // ── Renderizar documento por tipo ─────────────────────────────────────────
@@ -676,25 +653,6 @@ export default function Validation() {
 
           {/* Body com Smart Preview */}
           <div style={S.modalBody}>
-            {/* Controles Flutuantes */}
-            <div style={S.floatingControls}>
-              <button
-                style={{ ...S.controlBtn, background: currentSection === "top" ? "#005CA9" : "#fff", color: currentSection === "top" ? "#fff" : "#005CA9" }}
-                onClick={() => scrollToPreviewSection("top")}
-                title="Ver Parte Superior"
-              >▲</button>
-              <button
-                style={{ ...S.controlBtn, background: !isFocused ? "#005CA9" : "#fff", color: !isFocused ? "#fff" : "#005CA9" }}
-                onClick={resetPreviewZoom}
-                title="Ver Documento Inteiro"
-              >🔍</button>
-              <button
-                style={{ ...S.controlBtn, background: currentSection === "bottom" ? "#005CA9" : "#fff", color: currentSection === "bottom" ? "#fff" : "#005CA9" }}
-                onClick={() => scrollToPreviewSection("bottom")}
-                title="Ver Parte Inferior"
-              >▼</button>
-            </div>
-
             {docType === "cnh" && pdfBlobUrl ? (
               <div style={{ display: "flex", justifyContent: "center", padding: 12 }}>
                 <img

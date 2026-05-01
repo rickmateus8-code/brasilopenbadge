@@ -438,9 +438,9 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 height: 111, 
                 boxSizing: "border-box", 
                 paddingLeft: 2,
-                paddingBottom: 12, // Aumentado significativamente para proteger a descendente do 'g' e evitar corte
-                overflow: "hidden", // Garantir que o texto nunca vaze para baixo
-                gap: 3, // Ajustado para gap: 3 conforme solicitado para harmonia vertical
+                paddingBottom: 2, // Reduzido de 12 para 2 para ficar no limite da linha inferior
+                overflow: "hidden", 
+                gap: 3, 
               }}>
                 <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.21, marginBottom: 0 }}>
                   {dataFormatada || data.dataEmissao}
