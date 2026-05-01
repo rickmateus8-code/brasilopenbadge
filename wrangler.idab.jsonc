@@ -1,6 +1,6 @@
 {
   "$schema": "https://developers.cloudflare.com/workers/schemas/wrangler.json",
-  "name": "docmaster",
+  "name": "atestados-idab",
   "compatibility_date": "2026-03-19",
   "compatibility_flags": ["nodejs_compat"],
   
@@ -9,14 +9,14 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "docmaster-db",
-      "database_id": "0cfb948c-fd13-4e09-8eaf-26df02e3e615"
+      "database_name": "atestados-idab",
+      "database_id": "532fb211-af97-44e9-b679-5c061d0cba02"
     }
   ],
   
   "vars": {
     "ENVIRONMENT": "production",
-    "APP_DOMAIN": "docmaster.store",
+    "APP_DOMAIN": "validaratestado.digital",
     "VALIDATION_BASE_URL": "https://validaratestado.digital",
     "IDAB_SYNC_TOKEN": "docmaster-idab-sync-2026-secure",
     "PAYMENTS_BLACK_DOCS_URL": "https://paymentsblack.com/documentacao",
