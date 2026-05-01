@@ -65,9 +65,11 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const isEmitted = data.codigoQR && data.codigoQR !== "XXXX.XXXX";
     // QR Code aponta para validaratestado.digital/validar?codigo=XXXX&data=YYYY-MM-DD
     // A data no banco está em DD/MM/YYYY — converte para YYYY-MM-DD para o parâmetro da URL
-    const dataEmissaoForQR = data.dataEmissao
+    // PRIORIDADE: Data da Emissão (Assinatura) conforme solicitado pelo usuário
+    const rawDateToUse = data.dataAssinatura || data.dataEmissao || "";
+    const dataEmissaoForQR = rawDateToUse
       ? (() => {
-          const d = String(data.dataEmissao).trim();
+          const d = String(rawDateToUse).trim();
           // Formato DD/MM/YYYY → YYYY-MM-DD
           const parts = d.split("/");
           if (parts.length === 3 && parts[2].length === 4) {
@@ -263,7 +265,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           width: "100%",
           textAlign: "center",
           marginTop: 12,
-          marginBottom: 14, // Ajustado para 14 conforme solicitação urgente para exportação
+          marginBottom: 6, // Reduzido para aproximar da linha inferior conforme solicitado
           lineHeight: 1, 
           letterSpacing: 0, 
           position: "relative",
@@ -282,7 +284,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         <div style={{
           borderTop: "2.04px solid #000", 
           width: "100%",
-          marginBottom: 14, // Ajustado para 14 conforme solicitação urgente para exportação
+          marginBottom: 6, // Reduzido para diminuir o espaço excessivo no preview/exportação
           position: "relative",
           zIndex: 2,
           flexShrink: 0,
@@ -291,10 +293,10 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         {/* ===== DADOS DO PACIENTE ===== */}
         <div id="preview-patient" style={{
           border: "1px solid #000",
-          padding: "8px 12px 8px 12px", // Centralização vertical balanceada
+          padding: "6px 12px", // Reduzido para evitar peso vertical excessivo na exportação
           fontSize: 10.815, // Aumentado em 3% (10.5 * 1.03)
           marginBottom: 10,
-          lineHeight: 1.7,
+          lineHeight: 1.5, // Reduzido de 1.7 para 1.5 para centralização vertical perfeita
           position: "relative",
           zIndex: 2,
           background: "#fff",
@@ -443,9 +445,9 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 </div>
                 <div style={{ fontSize: 9.85 }}>Valide este documento acessando o endereço:</div>
                 <strong style={{ fontSize: 10.42, display: "block", marginBottom: 2 }}>https://validaratestado.digital</strong>
-                <div style={{ display: "flex", alignItems: "center", gap: 3, flexWrap: "nowrap" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 0, flexWrap: "nowrap" }}>
                   <span style={{ fontWeight: 400, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 9.85, whiteSpace: "nowrap", lineHeight: 1 }}>Código:</span>
-                  <strong style={{ fontSize: 10.42, fontWeight: 700, whiteSpace: "nowrap", lineHeight: 1, marginLeft: "2px" }}>
+                  <strong style={{ fontSize: 10.42, fontWeight: 700, whiteSpace: "nowrap", lineHeight: 1 }}>
                     {isEmitted ? data.codigoQR : "****.****"}
                   </strong>
                 </div>
