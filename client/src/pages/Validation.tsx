@@ -50,10 +50,15 @@ export default function Validation() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const hostname = window.location.hostname;
-    // Consideramos como 'Validação' apenas se NÃO contiver 'docmaster' ou 'localhost'
-    const isValidation = !hostname.includes("docmaster") && 
-                         hostname !== "localhost" &&
-                         hostname !== "127.0.0.1";
+    const pathname = window.location.pathname;
+
+    // JAMAIS executar essa lógica se estivermos no Dashboard ou qualquer rota interna do DocMaster
+    if (pathname.includes("/dashboard") || pathname.includes("/configuracoes") || hostname.includes("localhost")) {
+      return;
+    }
+
+    // Consideramos como 'Validação' apenas se NÃO contiver 'docmaster'
+    const isValidation = !hostname.includes("docmaster");
     
     if (isValidation) {
       // 1. Remover todos os links de ícone existentes
