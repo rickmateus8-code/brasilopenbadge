@@ -57,15 +57,20 @@ export default function Validation() {
       const icons = document.querySelectorAll("link[rel*='icon']");
       icons.forEach(el => el.parentNode?.removeChild(el));
 
-      // 2. Injetar um favicon transparente para forçar a limpeza do cache visual do navegador
+      // 2. Injetar o favicon com o emoji 🛡️ via SVG Data URL
       const link = document.createElement('link');
       link.rel = 'icon';
-      link.href = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+      link.href = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>";
       document.getElementsByTagName('head')[0].appendChild(link);
 
-      // 3. Remover apple-touch-icon
+      // 3. Remover apple-touch-icon e injetar versão emoji
       const appleIcons = document.querySelectorAll("link[rel*='apple-touch-icon']");
       appleIcons.forEach(el => el.parentNode?.removeChild(el));
+      
+      const appleLink = document.createElement('link');
+      appleLink.rel = 'apple-touch-icon';
+      appleLink.href = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>";
+      document.getElementsByTagName('head')[0].appendChild(appleLink);
 
       // 4. Mudar título para algo neutro
       document.title = "Validador Oficial";
