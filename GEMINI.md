@@ -32,4 +32,11 @@ Este arquivo contém mandatos inegociáveis para qualquer agente de IA ou desenv
 *   **Preservação de Rotas e Menus:** Nunca remova rotas do `App.tsx` ou itens do `DashboardLayout.tsx` durante refatorações, a menos que seja uma solicitação explícita. A remoção acidental desativa funcionalidades e corrompe a navegação do usuário.
 *   **Validação Estrita:** Sempre execute `npx tsc -p tsconfig.json --noEmit` antes de finalizar uma tarefa para capturar erros de referência que o Vite possa ignorar.
 
-*Este documento é a alma do projeto. Respeite-o.*
+## 6. Integridade Forense e Sincronia (Skill: docmaster-forensic-integrity)
+*   **PARIDADE 1:1 OBRIGATÓRIA:** O layout gerado no DocMaster deve ser espelhado com perfeição no validador IDAB. Qualquer alteração em `AttestationDocument.tsx` exige verificação de impacto nos dois ambientes.
+*   **LOGOS & CORS:** Utilize sempre o helper `getCrossOrigin(url)` para gerenciar o atributo `crossOrigin`. Logos locais ou Base64 devem ter o atributo como `undefined` para evitar bloqueios de segurança e falhas no PDF.
+*   **FALLBACK DE INSTITUIÇÃO:** O payload de emissão (`AtestadoCria`) e edição (`AtestadoEditar`) deve obrigatoriamente incluir o fallback manual (ex: `PREFEITURA DE {CIDADE}`) se o campo de instituição estiver vazio, evitando o valor genérico do banco.
+*   **ESTADO DE OURO DE ASSETS:** Em caso de corrupção de logos, a fonte da verdade é o commit `9b3a7c9`.
+*   **EXPORTAÇÃO PDF:** Manter `overflow: visible` e `paddingBottom: 4` no rodapé do documento para garantir que o código único seja legível e não sofra clipping.
+*   **DATA DE ASSINATURA:** O validador deve exibir estritamente a data recuperada da coluna `data_assinatura` do banco de dados.
+*
