@@ -201,7 +201,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               <img
                 src={effectiveLogoLeft}
                 alt="Logo"
-                crossOrigin="anonymous"
+                crossOrigin={effectiveLogoLeft.startsWith("data:") ? undefined : "anonymous"}
                 style={{
                   maxHeight: "100%",
                   maxWidth: 154,
@@ -239,7 +239,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               <img
                 src={effectiveLogoRight}
                 alt="Logo Direita"
-                crossOrigin="anonymous"
+                crossOrigin={effectiveLogoRight.startsWith("data:") ? undefined : "anonymous"}
                 style={{
                   maxHeight: "100%",
                   maxWidth: 154,
@@ -438,8 +438,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 height: 111, 
                 boxSizing: "border-box", 
                 paddingLeft: 2,
-                paddingBottom: 2, // Reduzido de 12 para 2 para ficar no limite da linha inferior
-                overflow: "hidden", 
+                paddingBottom: 4, // Modificado de 2 para 4 para não cortar letras como 'g'
+                overflow: "visible", // Permitir que descendentes fiquem perfeitamente legíveis
                 gap: 3, 
               }}>
                 <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.21, marginBottom: 0 }}>
@@ -548,7 +548,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 <img
                   src={fotoAssinatura}
                   alt="Assinatura"
-                  crossOrigin="anonymous"
+                  crossOrigin={fotoAssinatura.startsWith("data:") ? undefined : "anonymous"}
                   style={{ maxWidth: 240, maxHeight: 75, objectFit: "contain", position: "absolute", zIndex: 3 }}
                 />
               ) : (
