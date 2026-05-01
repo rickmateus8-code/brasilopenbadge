@@ -1017,9 +1017,22 @@ export default function AdminDashboard() {
   };
 
   // ── Helpers ────────────────────────────────────────────────────────────────
-  const formatDate = (d: string) => {
+  const formatDateTime = (d: string) => {
     if (!d) return "—";
-    try { return new Date(d).toLocaleString("pt-BR"); } catch { return d; }
+    try {
+      const date = new Date(d);
+      return (
+        <div className="flex flex-col">
+          <span className="font-semibold text-gray-800 dark:text-gray-200">{date.toLocaleDateString("pt-BR")}</span>
+          <span className="text-[10px] text-gray-400">{date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+        </div>
+      );
+    } catch { return d; }
+  };
+
+  const formatDateShort = (d: string) => {
+    if (!d) return "—";
+    try { return new Date(d).toLocaleDateString("pt-BR"); } catch { return d; }
   };
 
   const timeAgo = (d: string) => {
@@ -1326,7 +1339,13 @@ export default function AdminDashboard() {
                             </p>
 	                          )}
 	                          <p className="text-xs text-gray-400 dark:text-gray-500">ID: {u.id}</p>
-	                          <p className="text-xs text-gray-400 dark:text-gray-500">Cadastro: {formatDate(u.created_at)}</p>
+	                          <div className="mt-1 flex flex-col">
+                              <span className="text-[10px] text-gray-400 uppercase font-semibold">Cadastro:</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">{new Date(u.created_at).toLocaleDateString("pt-BR")}</span>
+                                <span className="text-[10px] text-gray-400 italic">{new Date(u.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+                              </div>
+                            </div>
 	                        </div>
 	                      </div>
 	                      <div className="flex flex-col items-end gap-2">

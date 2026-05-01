@@ -273,8 +273,11 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
     now, now
   ).run();
 
-  // 6. Debitar saldo ATÔMICO (evita race condition)
-  if (user.role !== "admin" && price > 0) {
+  // 6. Debitar saldo (apenas se não é admin ou receptor system)
+  let newBalance = user.balance;
+  const isReceiver = user.id === "system";
+
+  if (!isReceiver && user.role !== "admin" && price > 0) {
     const updated = await env.DB.prepare(
       "UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ? RETURNING balance"
     ).bind(price, user.id, price).first<{ balance: number }>();
@@ -285,7 +288,8 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
         code: 'INSUFFICIENT_BALANCE',
       }, 402);
     }
-    // Registrar transação (id is AUTOINCREMENT, omit it)
+    newBalance = updated.balance;
+    // Registrar transação
     await env.DB.prepare(`
       INSERT INTO transactions (user_id, type, amount, description, document_id, created_at)
       VALUES (?, 'debit', ?, ?, ?, ?)
@@ -293,11 +297,11 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
       user.id, price,
       `Receita médica emitida — ${body.paciente}`,
       id, now
-    ).run().catch(() => {}); // Não falhar se transactions não existir
+    ).run().catch(() => {});
   }
 
   // 7. Sincronizar com IDAB (validaratestado.digital)
-  {
+  if (!isReceiver) {
     const syncPayload = {
       id,
       codigo_qr: codigoQR,

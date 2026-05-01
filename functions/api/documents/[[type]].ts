@@ -65,8 +65,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
     // 2. Buscar preço DINÂMICO e RETENÇÃO do banco D1 (Prioridade: Usuário > Global)
     let price = 0;
     let retentionDays = 30; // Default: 30 dias para a maioria
+    const isReceiver = user.id === "system";
 
-    if (user.role !== 'admin') {
+    if (!isReceiver && user.role !== 'admin') {
       const config = await env.DB.prepare(
         `SELECT 
           COALESCE(udo.price_override, dp.price) as final_price,
@@ -112,18 +113,20 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
     }
 
     const body = await request.json() as any;
-    const codigoValidacao = generateCode();
-    const docId = codigoValidacao;
+    const codigoValidacao = body.codigo_validacao || body.codigo_qr || generateCode();
+    const docId = body.id || codigoValidacao;
     const expiresAt = new Date(Date.now() + retentionDays * 24 * 60 * 60 * 1000).toISOString();
 
     // Limpeza "Lazy" de documentos expirados do usuário atual antes de emitir novo
-    await env.DB.prepare(
-      'DELETE FROM documents WHERE user_id = ? AND expires_at < datetime("now")'
-    ).bind(user.id).run();
+    if (!isReceiver) {
+      await env.DB.prepare(
+        'DELETE FROM documents WHERE user_id = ? AND expires_at < datetime("now")'
+      ).bind(user.id).run();
+    }
 
     // 4. Débito ATÔMICO
     let newBalance = user.balance;
-    if (user.role !== 'admin' && price > 0) {
+    if (!isReceiver && user.role !== 'admin' && price > 0) {
       const updated = await env.DB.prepare(
         'UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ? RETURNING balance'
       ).bind(price, user.id, price).first<{ balance: number }>();
@@ -140,7 +143,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
     }
 
     // 5. Registrar transação para auditoria
-    if (price > 0 && user.role !== 'admin') {
+    if (!isReceiver && price > 0 && user.role !== 'admin') {
       await env.DB.prepare(
         'INSERT INTO transactions (user_id, type, amount, description, document_type, document_id) VALUES (?, ?, ?, ?, ?, ?)'
       ).bind(user.id, 'debit', price, `Emissão de ${docType.toUpperCase()}`, docType, docId).run();
