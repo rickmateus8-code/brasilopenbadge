@@ -300,50 +300,6 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
     ).run().catch(() => {});
   }
 
-  // 7. Sincronizar com IDAB (validaratestado.digital)
-  if (!isReceiver) {
-    const syncPayload = {
-      id,
-      codigo_qr: codigoQR,
-      tipo_receituario: body.tipo_receituario || "simples",
-      paciente: body.paciente,
-      cpf: body.cpf || null,
-      identidade: body.identidade || null,
-      endereco: body.endereco || null,
-      telefone: body.telefone || null,
-      cidade: body.cidade || null,
-      medico: body.medico,
-      crm: body.crm,
-      especialidade: body.especialidade || null,
-      instituicao: body.instituicao || null,
-      endereco_emitente: body.endereco_emitente || null,
-      cnpj_emitente: body.cnpj_emitente || null,
-      telefone_emitente: body.telefone_emitente || null,
-      site_emitente: body.site_emitente || null,
-      prescricao: JSON.stringify(prescricao),
-      data_emissao: body.data_emissao || null,
-      hora_emissao: body.hora_emissao || null,
-      logo_url: body.logo_url || null,
-      signature_color: body.signature_color || "#0b109f",
-      signature_image: body.signature_image || null,
-      status: "emitido",
-    };
-
-    const syncToken = env.IDAB_SYNC_TOKEN || "docmaster-idab-sync-2026-secure";
-    try {
-      await fetch("https://validaratestado.digital/api/receitas", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${syncToken}`,
-        },
-        body: JSON.stringify(syncPayload),
-      });
-    } catch (syncErr) {
-      console.warn("[sync-receita] Falha ao sincronizar com IDAB:", syncErr);
-    }
-  }
-
   return jsonResponse({
     success: true,
     data: {

@@ -84,9 +84,9 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const effectiveLogoLeft = logoLeft || logoUrl || (data as any).logoUrl || "";
     const effectiveLogoRight = logoRight || (data as any).logoRight || "";
 
-    const instituicao = (data as any).instituicao || "";
-    const unidade = (data as any).unidade || "";
-    const enderecoEmitente = (data as any).enderecoEmitente || "";
+    const instituicao = (data as any).instituicao || (data as any).instituicao || "";
+    const unidade = (data as any).unidade || (data as any).unidade || "";
+    const enderecoEmitente = (data as any).enderecoEmitente || (data as any).endereco_emitente || "";
     const corAssinatura = signatureColor || (data as any).signatureColor || "#0b109f";
     const fotoAssinatura = signatureImage || (data as any).signatureImage || "";
     const textoAtestado = (data as any).textoAtestado || "";
