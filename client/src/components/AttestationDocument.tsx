@@ -212,8 +212,24 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             )}
           </div>
 
-          {/* Espaço Central (Vazio, informações movidas para baixo do título) */}
-          <div style={{ flex: 1 }} />
+          {/* Espaço Central (Informações da Instituição) */}
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2 }}>
+            {instituicao && (
+              <div style={{ fontSize: 14.7, fontWeight: 700, textTransform: "uppercase", color: "#000", letterSpacing: 0.5, lineHeight: 1.2, textAlign: "center" }}>
+                {instituicao}
+              </div>
+            )}
+            {unidade && (
+              <div style={{ fontSize: 12.6, fontWeight: 700, textTransform: "uppercase", color: "#000", lineHeight: 1.2, textAlign: "center" }}>
+                {unidade}
+              </div>
+            )}
+            {enderecoEmitente && (
+              <div style={{ fontSize: 10.5, fontWeight: 400, textTransform: "uppercase", color: "#000", lineHeight: 1.2, textAlign: "center" }}>
+                {enderecoEmitente}
+              </div>
+            )}
+          </div>
 
           {/* Logo Direita */}
           <div style={{ width: 154, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, overflow: "visible" }}>
@@ -235,37 +251,6 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </div>
         </div>
 
-        {/* ===== INFORMAÇÕES DA INSTITUIÇÃO (ACIMA DO TÍTULO) ===== */}
-        <div id="preview-institution-info" style={{
-          textAlign: "center",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          marginTop: 12,
-          marginBottom: 10,
-          position: "relative",
-          zIndex: 2,
-          flexShrink: 0,
-          gap: 2
-        }}>
-          {instituicao && (
-            <div style={{ fontSize: 14.7, fontWeight: 700, textTransform: "uppercase", color: "#000", letterSpacing: 0.5, lineHeight: 1.2 }}>
-              {instituicao}
-            </div>
-          )}
-          {unidade && (
-            <div style={{ fontSize: 12.6, fontWeight: 700, textTransform: "uppercase", color: "#000", lineHeight: 1.2 }}>
-              {unidade}
-            </div>
-          )}
-          {enderecoEmitente && (
-            <div style={{ fontSize: 10.5, fontWeight: 400, textTransform: "uppercase", color: "#000", lineHeight: 1.2 }}>
-              {enderecoEmitente}
-            </div>
-          )}
-        </div>
-
         {/* ===== TÍTULO ===== */}
         <div style={{
           fontWeight: 900,
@@ -277,7 +262,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           padding: "0",
           width: "100%",
           textAlign: "center",
-          marginTop: 0,
+          marginTop: 15,
           marginBottom: 15, // Espaçamento para não colar na linha inferior
           lineHeight: 1, 
           letterSpacing: 0, 
