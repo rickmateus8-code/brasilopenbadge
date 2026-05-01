@@ -2096,12 +2096,24 @@ export default function AtestadoCria() {
                     </div>
                     <div style={{ gridColumn: "1 / -1" }}>
                     <label style={lbl}>Data de Emissão *</label>
-                    <input style={inp} value={form.dataEmissao}
+                    <input
+                      style={inp}
+                      type="date"
+                      value={(() => {
+                        if (!form.dataEmissao || form.dataEmissao.length < 10) return "";
+                        const [dd, mm, yyyy] = form.dataEmissao.split("/");
+                        return `${yyyy}-${mm}-${dd}`;
+                      })()}
                       onFocus={() => scrollToPreviewSection("bottom")}
                       onChange={(e) => {
-                        const v = handleDateInput(e.target.value);
-                        setForm(p => ({ ...p, dataEmissao: v, dataAssinatura: v }));
-                      }} placeholder="DD/MM/AAAA" maxLength={10} inputMode="numeric" required />
+                        const val = e.target.value; // YYYY-MM-DD
+                        if (!val) return;
+                        const [yyyy, mm, dd] = val.split("-");
+                        const formatted = `${dd}/${mm}/${yyyy}`;
+                        setForm(p => ({ ...p, dataEmissao: formatted, dataAssinatura: formatted }));
+                      }}
+                      required
+                    />
                     </div>
                     <div>
                     <label style={lbl}>Hora da Assinatura</label>

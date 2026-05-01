@@ -2421,10 +2421,23 @@ export default function AtestadoEditar() {
                 </div>
                 <div style={{ gridColumn: "1 / -1" }}>
                   <label style={lbl}>Data de Emissão *</label>
-                  <input style={inp} value={form.dataEmissao} onChange={(e) => {
-                    const v = handleDateInput(e.target.value);
-                    setForm(p => ({ ...p, dataEmissao: v, dataAssinatura: v }));
-                  }} placeholder="DD/MM/AAAA" maxLength={10} inputMode="numeric" required />
+                  <input
+                    style={inp}
+                    type="date"
+                    value={(() => {
+                      if (!form.dataEmissao || form.dataEmissao.length < 10) return "";
+                      const [dd, mm, yyyy] = form.dataEmissao.split("/");
+                      return `${yyyy}-${mm}-${dd}`;
+                    })()}
+                    onChange={(e) => {
+                      const val = e.target.value; // YYYY-MM-DD
+                      if (!val) return;
+                      const [yyyy, mm, dd] = val.split("-");
+                      const formatted = `${dd}/${mm}/${yyyy}`;
+                      setForm(p => ({ ...p, dataEmissao: formatted, dataAssinatura: formatted }));
+                    }}
+                    required
+                  />
                   <p style={{ fontSize: 10, color: "#000", marginTop: 3 }}>
                     A data de assinatura reflete automaticamente a data de emissão.
                   </p>

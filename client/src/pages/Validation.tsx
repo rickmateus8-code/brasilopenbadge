@@ -597,26 +597,41 @@ export default function Validation() {
           <input
             style={S.input}
             value={codigo}
-            onChange={(e) => setCodigo(e.target.value.toUpperCase())}
-            placeholder="XXXX.XXXX"
-            onKeyDown={(e) => e.key === "Enter" && handleValidate()}
-          />
-
-          <label style={S.label}>Data de Emissão (DD/MM/AAAA)</label>
-          <input
-            type="text"
-            style={S.inputDate}
-            value={dataEmissao}
             onChange={(e) => {
               let val = e.target.value.replace(/\D/g, "");
               if (val.length > 8) val = val.slice(0, 8);
-              if (val.length >= 2) val = val.slice(0, 2) + "/" + val.slice(2);
-              if (val.length >= 5) val = val.slice(0, 5) + "/" + val.slice(5);
-              setDataEmissao(val);
+              if (val.length >= 4) {
+                val = val.slice(0, 4) + "." + val.slice(4);
+              }
+              setCodigo(val);
             }}
-            placeholder="DD/MM/AAAA"
-            maxLength={10}
+            placeholder="0000.0000"
+            maxLength={9}
             inputMode="numeric"
+            onKeyDown={(e) => e.key === "Enter" && handleValidate()}
+            required
+          />
+
+          <label style={S.label}>Data de Emissão *</label>
+          <input
+            type="date"
+            style={S.inputDate}
+            value={(() => {
+              if (!dataEmissao) return "";
+              if (dataEmissao.includes("-")) return dataEmissao; // Já é YYYY-MM-DD
+              const [dd, mm, yyyy] = dataEmissao.split("/");
+              if (dd && mm && yyyy) return `${yyyy}-${mm}-${dd}`;
+              return "";
+            })()}
+            onChange={(e) => {
+              const val = e.target.value; // YYYY-MM-DD
+              if (!val) {
+                setDataEmissao("");
+                return;
+              }
+              const [yyyy, mm, dd] = val.split("-");
+              setDataEmissao(`${dd}/${mm}/${yyyy}`);
+            }}
             onKeyDown={(e) => e.key === "Enter" && handleValidate()}
             required
           />

@@ -38,7 +38,7 @@ async function getAuthUser(env: Env, token: string | null): Promise<any | null> 
 // ─── Gerador de código QR único ───────────────────────────────────────────────
 
 function generateCode(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const chars = "0123456789";
   let code = "";
   const arr = new Uint8Array(8);
   crypto.getRandomValues(arr);
