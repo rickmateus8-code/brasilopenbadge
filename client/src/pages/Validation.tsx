@@ -638,14 +638,14 @@ export default function Validation() {
         <div style={S.modal}>
           {/* Header Verde Premium */}
           <div style={S.modalHeader}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
               <div style={{ width: 24, height: 24, background: "#22c55e", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: "#fff", fontWeight: 900 }}>✓</div>
-              <span style={{ color: "#fff", fontWeight: 800, fontSize: 14, letterSpacing: 0.5, textTransform: "uppercase" }}>
+              <span style={{ color: "#fff", fontWeight: 800, fontSize: 14, letterSpacing: 0.5, textTransform: "uppercase", whiteSpace: "nowrap" }}>
                 VÁLIDO E AUTÊNTICO
               </span>
             </div>
-            <div style={{ textAlign: "right", color: "#fff" }}>
-              <span style={{ fontWeight: 800, fontSize: 14, textTransform: "uppercase" }}>
+            <div style={{ textAlign: "right", color: "#fff", flex: 1, minWidth: 0, marginLeft: 20 }}>
+              <span style={{ fontWeight: 800, fontSize: 14, textTransform: "uppercase", whiteSpace: "nowrap" }}>
                 {validDoc.paciente || validDoc.nome || "—"}
               </span>
             </div>
