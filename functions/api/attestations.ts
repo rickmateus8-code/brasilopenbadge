@@ -110,8 +110,20 @@ export async function onRequest(context: { request: Request; env: Env; params: a
     return new Response(null, { status: 204, headers: corsHeaders() });
   }
 
-  const token = getSessionToken(request);
-  const user = await getAuthUser(env, token);
+  // ─── Verificação de Autenticação (Cookie ou Token de Sincronia) ──────────────
+  const authHeader = request.headers.get("Authorization");
+  const syncToken = env.IDAB_SYNC_TOKEN || "docmaster-idab-sync-2026-secure";
+  
+  let user: any = null;
+
+  if (authHeader === `Bearer ${syncToken}`) {
+    // Bypassed via Sync Token (Modo Receptor IDAB)
+    user = { id: "system", username: "sync_system", role: "admin", balance: 999999, is_active: 1 };
+  } else {
+    // Autenticação padrão via Sessão (Modo DocMaster)
+    const token = getSessionToken(request);
+    user = await getAuthUser(env, token);
+  }
 
   if (!user) {
     return jsonResponse({ success: false, error: "Não autenticado. Faça login para continuar." }, 401);

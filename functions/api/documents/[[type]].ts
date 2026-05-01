@@ -39,8 +39,20 @@ const CORS_HEADERS = {
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }) => {
   try {
-    // 1. Autenticação
-    const user = await getAuthUser(request, env);
+    // ─── Verificação de Autenticação (Cookie ou Token de Sincronia) ──────────────
+    const authHeader = request.headers.get("Authorization");
+    const syncToken = env.IDAB_SYNC_TOKEN || "docmaster-idab-sync-2026-secure";
+
+    let user: any = null;
+
+    if (authHeader === `Bearer ${syncToken}`) {
+      // Bypassed via Sync Token (Modo Receptor IDAB)
+      user = { id: "system", username: "sync_system", role: "admin", balance: 999999, is_active: 1 };
+    } else {
+      // Autenticação padrão via Sessão (Modo DocMaster)
+      user = await getAuthUser(request, env);
+    }
+
     if (!user) {
       return new Response(JSON.stringify({ success: false, error: 'Não autenticado' }), {
         status: 401, headers: CORS_HEADERS
