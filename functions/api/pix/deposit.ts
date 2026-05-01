@@ -31,7 +31,7 @@ async function getAuthUser(request: Request, env: Env): Promise<any | null> {
   ).bind(token).first<any>();
   if (!session) return null;
   return env.DB.prepare(
-    'SELECT id, username, email, phone, display_name, role, balance FROM users WHERE id = ? AND is_active = 1'
+    'SELECT id, username, email, display_name, role, balance FROM users WHERE id = ? AND is_active = 1'
   ).bind(session.user_id).first<any>();
 }
 
@@ -71,7 +71,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const amountCents = Math.round(amount * 100);
     const apiKey = (env as any).PAYMENTS_BLACK_API_KEY || FALLBACK_API_KEY;
     const apiSecret = (env as any).PAYMENTS_BLACK_API_SECRET || FALLBACK_API_SECRET;
-    const cpf = sanitizeCpf(body.user_cpf);
+    const cpf = body.user_cpf ? sanitizeCpf(body.user_cpf) : '';
 
     const customer: any = {
       name: body.user_name || user.display_name || user.username || 'CLIENTE DOCMASTER',
@@ -82,7 +82,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       customer.phone = String(user.phone).replace(/\D/g, '');
     }
 
-    if (cpf.length === 11) {
+    if (cpf && cpf.length === 11) {
       customer.document = {
         number: cpf,
         type: 'cpf',
@@ -130,7 +130,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       });
       return toJson({
         success: false,
-        error: pixData?.message || pixData?.error || 'Erro ao gerar cobrança PIX.',
+        error: pixData?.message || pixData?.error || `Erro API (${pixResponse.status}): Falha ao gerar cobrança.`,
       }, 500);
     }
 
@@ -140,11 +140,12 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const qrBase64 = paymentData.qrcode || '';
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
 
+    const insertId = crypto.randomUUID();
     await env.DB.prepare(`
       INSERT INTO transactions (id, user_id, type, amount, description, status, external_id, created_at)
       VALUES (?, ?, 'credit', ?, ?, 'pending', ?, datetime('now'))
     `).bind(
-      crypto.randomUUID(),
+      insertId,
       user.id,
       amountCents,
       `Recarga PIX R$ ${amount.toFixed(2).replace('.', ',')}`,
@@ -163,6 +164,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     });
   } catch (err: any) {
     console.error('PIX deposit error:', err);
-    return toJson({ success: false, error: 'Erro interno ao processar PIX' }, 500);
+    return toJson({ 
+      success: false, 
+      error: `Erro interno: ${err.message || 'Falha ao processar requisição PIX'}` 
+    }, 500);
   }
 };

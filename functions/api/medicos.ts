@@ -30,15 +30,16 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const uf      = url.searchParams.get("uf")?.toUpperCase();
     const cidade  = url.searchParams.get("cidade");
     const bairro  = url.searchParams.get("bairro");
+    const local   = url.searchParams.get("local") || url.searchParams.get("local_trabalho");
     const esp     = url.searchParams.get("esp");
     const rawQ    = (url.searchParams.get("q") || url.searchParams.get("termo") || "").trim();
     const termo   = rawQ.toUpperCase().replace(/[.\-]/g, "");
     const limit   = Math.min(parseInt(url.searchParams.get("limit") || "50"), 100);
 
-    // ─── Sempre usar Supabase como fonte principal (dados completos do Brasil) ──
+    // ——— Sempre usar Supabase como fonte principal (dados completos do Brasil) ———
     const useD1 = false;
 
-    // ─── Helper: fetch Supabase REST ────────────────────────────────────────
+    // ——— Helper: fetch Supabase REST ————————————————————————————————————————
     async function sbGet(path: string): Promise<any[]> {
       const r = await fetch(`${SB_URL}/rest/v1/${path}`, {
         headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, "Content-Type": "application/json" },
@@ -47,7 +48,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       return r.json();
     }
 
-    // ─── Helper: RPC Supabase ───────────────────────────────────────────────
+    // ——— Helper: RPC Supabase ————————————————————————————————————————————————
     async function sbRpc(fn: string, body: object): Promise<any[]> {
       const r = await fetch(`${SB_URL}/rest/v1/rpc/${fn}`, {
         method: "POST",
@@ -58,9 +59,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       return r.json();
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────────────────────────────────────
     // ACTION: cidades — lista cidades de uma UF (uf_local)
-    // ═══════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────────────────────────────────────
     if (action === "cidades") {
       if (!uf) return new Response(JSON.stringify([]), { headers: corsHeaders });
 
@@ -84,9 +85,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       return new Response(JSON.stringify(cidades), { headers: corsHeaders });
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────────────────────────────────────
     // ACTION: bairros — lista bairros de uma UF + cidade
-    // ═══════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────────────────────────────────────
     if (action === "bairros") {
       if (!uf || !cidade) return new Response(JSON.stringify([]), { headers: corsHeaders });
 
@@ -108,9 +109,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       return new Response(JSON.stringify(bairros), { headers: corsHeaders });
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────────────────────────────────────
     // ACTION: locais — lista locais de trabalho de uma UF + cidade
-    // ═══════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────────────────────────────────────
     if (action === "locais") {
       if (!uf || !cidade) return new Response(JSON.stringify([]), { headers: corsHeaders });
 
@@ -126,13 +127,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       return new Response(JSON.stringify(locais), { headers: corsHeaders });
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────────────────────────────────────
     // ACTION: search — busca principal de médicos (igual ao docmaster)
     // Regra:
     //   - termo >= 3 chars → busca por nome OU CRM, filtra por uf_local se UF fornecida
     //   - sem termo mas UF + cidade → lista médicos da cidade (com filtros opcionais)
     //   - sem nada → retorna vazio
-    // ═══════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────────────────────────────────────
     if (!termo && !uf) return new Response(JSON.stringify([]), { headers: corsHeaders });
     if (!termo && uf && !cidade) return new Response(JSON.stringify([]), { headers: corsHeaders });
 
@@ -151,6 +152,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       } else if (uf && cidade) {
         sql += `uf_local = ? AND cidade = ?`; binds.push(uf, cidade);
         if (bairro) { sql += ` AND bairro = ?`; binds.push(bairro); }
+        if (local) { sql += ` AND local_trabalho LIKE ?`; binds.push(`%${local}%`); }
       } else {
         return new Response(JSON.stringify([]), { headers: corsHeaders });
       }
@@ -162,7 +164,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       return new Response(JSON.stringify(r.results), { headers: corsHeaders });
     }
 
-    // ─── Supabase ───────────────────────────────────────────────────────────
+    // ——— Supabase ————————————————————————————————————————————————————————————
     let sbPath = `medicos_brasil?select=${FIELDS}&limit=${limit}`;
 
     if (termo.length >= 3) {
@@ -177,6 +179,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     } else if (uf && cidade) {
       sbPath += `&uf_local=eq.${uf}&cidade=eq.${encodeURIComponent(cidade)}`;
       if (bairro) sbPath += `&bairro=eq.${encodeURIComponent(bairro)}`;
+      if (local) sbPath += `&local_trabalho=ilike.*${encodeURIComponent(local)}*`;
     } else {
       return new Response(JSON.stringify([]), { headers: corsHeaders });
     }

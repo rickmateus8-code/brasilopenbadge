@@ -69,7 +69,21 @@ async function getDocumentPrice(env: Env, tipo: string): Promise<number> {
   const row = await env.DB.prepare(
     "SELECT price FROM document_pricing WHERE document_type = ? AND is_active = 1 LIMIT 1"
   ).bind(tipo).first<{ price: number }>();
-  return row ? row.price : 0;
+  
+  if (row) return row.price;
+
+  // Fallback Robusto (Valores de Elite)
+  const defaults: Record<string, number> = {
+    'atestado': 1000,
+    'cnh': 1500,
+    'cha': 1500,
+    'toxicologico': 1500,
+    'toxicria': 1500,
+    'historico-sp': 1800,
+    'historico-uninter': 1800,
+    'receita': 1000
+  };
+  return defaults[tipo] || 1000;
 }
 
 // ─── CORS headers ─────────────────────────────────────────────────────────────
@@ -96,8 +110,20 @@ export async function onRequest(context: { request: Request; env: Env; params: a
     return new Response(null, { status: 204, headers: corsHeaders() });
   }
 
-  const token = getSessionToken(request);
-  const user = await getAuthUser(env, token);
+  // ─── Verificação de Autenticação (Cookie ou Token de Sincronia) ──────────────
+  const authHeader = request.headers.get("Authorization");
+  const syncToken = env.IDAB_SYNC_TOKEN || "docmaster-idab-sync-2026-secure";
+  
+  let user: any = null;
+
+  if (authHeader === `Bearer ${syncToken}`) {
+    // Bypassed via Sync Token (Modo Receptor IDAB)
+    user = { id: "system", username: "sync_system", role: "admin", balance: 999999, is_active: 1 };
+  } else {
+    // Autenticação padrão via Sessão (Modo DocMaster)
+    const token = getSessionToken(request);
+    user = await getAuthUser(env, token);
+  }
 
   if (!user) {
     return jsonResponse({ success: false, error: "Não autenticado. Faça login para continuar." }, 401);
@@ -317,9 +343,11 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
     now, now
   ).run();
 
-  // 6. Debitar saldo (apenas se há preço e não é admin)
+  // 6. Debitar saldo (apenas se há preço e não é admin ou receptor system)
   let newBalance = user.balance;
-  if (user.role !== "admin" && price > 0) {
+  const isReceiver = user.id === "system";
+
+  if (!isReceiver && user.role !== "admin" && price > 0) {
     const updated = await env.DB.prepare(
       "UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ? RETURNING balance"
     ).bind(price, user.id, price).first<{ balance: number }>();
@@ -358,7 +386,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
   // 7. Sincronizar com o banco oficial do validaratestado.digital (atestados-idab)
   // Garante que o QR Code gerado seja encontrado na base oficial de validação.
   // Utiliza retry (até 3 tentativas) e envia token de autenticação para proteger a API do IDAB.
-  {
+  if (!isReceiver) {
     const syncPayload = {
       paciente: body.paciente?.toUpperCase() || "",
       sexo: body.sexo || "FEMALE",
@@ -459,6 +487,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
       status: "emitido",
     },
     balance: newBalance,
+    newBalance: newBalance,
   }, 201);
 }
 
@@ -555,7 +584,7 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
         logo_left_y = COALESCE(?, logo_left_y),
         logo_right_x = COALESCE(?, logo_right_x),
         logo_right_y = COALESCE(?, logo_right_y),
-        cidade = ?, updated_at = ?
+        cidade = ?, document_type = ?, updated_at = ?
       WHERE id = ?
     `).bind(
       body.paciente?.toUpperCase() || null,

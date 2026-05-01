@@ -1,10 +1,9 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import { useLocation } from "wouter";
 import { useEffect } from "react";
 
 function GlobalSupportWhatsappSync() {
@@ -103,6 +102,8 @@ import ToxicologicoSalvos from "./pages/ToxicologicoSalvos";
 import ReceitasSalvas from "./pages/ReceitasSalvas";
 import HistoricoSPSalvos from "./pages/HistoricoSPSalvos";
 import HistoricoUNINTERSalvos from "./pages/HistoricoUNINTERSalvos";
+import PeticaoCria from "./pages/PeticaoCria";
+import PeticaoSalvos from "./pages/PeticaoSalvos";
 import CNHLanding from "./pages/cnh-validation/CNHLanding";
 import CNHAutorizacao from "./pages/cnh-validation/CNHAutorizacao";
 import CNHPainel from "./pages/cnh-validation/CNHPainel";
@@ -130,6 +131,11 @@ function VerificaMedRouter() {
       <Route path="/verificar-receita/:id" component={ValidationReceita} />
       <Route path="/verificar/:id" component={ValidationReceita} />
       <Route path="/" component={ValidationReceita} />
+      
+      {/* Captura códigos diretos RX-XXXX-XXXX ou qualquer outra rota */}
+      <Route path="/:id" component={ValidationReceita} />
+      
+      {/* Fallback universal para o domínio de receitas */}
       <Route component={ValidationReceita} />
     </Switch>
   );
@@ -145,6 +151,11 @@ function CNHValidationRouter() {
       <Route path="/habilitacao" component={CNHHabilitacao} />
       <Route path="/verificar/:id" component={Validation} />
       <Route path="/" component={CNHLanding} />
+      
+      {/* Captura códigos diretos ou rotas não mapeadas */}
+      <Route path="/:id" component={CNHLanding} />
+      
+      {/* Fallback universal para o domínio de CNH */}
       <Route component={CNHLanding} />
     </Switch>
   );
@@ -154,18 +165,16 @@ function CNHValidationRouter() {
 function ValidationRouter() {
   return (
     <Switch>
-      <Route path="/verificar/atestado/:id" component={Validation} />
-      <Route path="/verificar/:id" component={Validation} />
-      <Route path="/:id" component={(props: { params: { id: string } }) => {
-        const id = props.params?.id || "";
-        if (/^[A-Z0-9]{4}\.[A-Z0-9]{4}$/i.test(id)) {
-          return <Validation />;
-        }
-        return <NotFound />;
-      }} />
-      <Route path="/" component={Validation} />
       <Route path="/validar" component={Validation} />
       <Route path="/v/:id" component={Validation} />
+      <Route path="/verificar/atestado/:id" component={Validation} />
+      <Route path="/verificar/:id" component={Validation} />
+      <Route path="/" component={Validation} />
+      
+      {/* Captura códigos diretos XXXX.XXXX ou qualquer outra rota não mapeada */}
+      <Route path="/:id" component={Validation} />
+      
+      {/* Fallback universal para o domínio de validação: Sempre mostrar Validation */}
       <Route component={Validation} />
     </Switch>
   );
@@ -229,6 +238,14 @@ function DocMasterRouter() {
         <ProtectedRoute component={ToxicologicoSalvos} />
       </Route>
 
+      {/* Laudo Sodré */}
+      <Route path="/toxicria">
+        <ProtectedRoute component={ToxicriaCria} />
+      </Route>
+      <Route path="/toxicriasalvos">
+        <ProtectedRoute component={ToxicriaSalvos} />
+      </Route>
+
       {/* Rotas legacy */}
       <Route path="/atestadocria">
         <ProtectedRoute component={AtestadoCria} />
@@ -272,6 +289,13 @@ function DocMasterRouter() {
       </Route>
       <Route path="/historico-uninter-salvos">
         <ProtectedRoute component={HistoricoUNINTERSalvos} />
+      </Route>
+
+      <Route path="/peticaocria">
+        <ProtectedRoute component={PeticaoCria} />
+      </Route>
+      <Route path="/peticaocria-salvos">
+        <ProtectedRoute component={PeticaoSalvos} />
       </Route>
 
       {/* Financeiro */}

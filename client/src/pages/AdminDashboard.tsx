@@ -9,7 +9,7 @@ import {
   RefreshCw, DollarSign, Trash2, ToggleLeft, ToggleRight,
   Bell, AlertTriangle, CheckCircle, Info, FileText,
   Activity, Database, Search, Eye, EyeOff, X, Save,
-  Download, Edit3, Wifi, WifiOff, Monitor, Globe,
+  Download, Pencil, Wifi, WifiOff, Monitor, Globe,
   CreditCard, AlertCircle, Filter, Gift, Percent, Wallet,
   Link, Copy, Calendar, Trash, Lock, UserPlus
 } from "lucide-react";
@@ -1017,9 +1017,22 @@ export default function AdminDashboard() {
   };
 
   // ── Helpers ────────────────────────────────────────────────────────────────
-  const formatDate = (d: string) => {
+  const formatDateTime = (d: string) => {
     if (!d) return "—";
-    try { return new Date(d).toLocaleString("pt-BR"); } catch { return d; }
+    try {
+      const date = new Date(d);
+      return (
+        <div className="flex flex-col">
+          <span className="font-semibold text-gray-800 dark:text-gray-200">{date.toLocaleDateString("pt-BR")}</span>
+          <span className="text-[10px] text-gray-400">{date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+        </div>
+      );
+    } catch { return d; }
+  };
+
+  const formatDateShort = (d: string) => {
+    if (!d) return "—";
+    try { return new Date(d).toLocaleDateString("pt-BR"); } catch { return d; }
   };
 
   const timeAgo = (d: string) => {
@@ -1207,7 +1220,7 @@ export default function AdminDashboard() {
 	                <option value="user">Usuários</option>
 	                <option value="admin">Admins</option>
 	              </select>
-	              <button onClick={() => loadUsers(showPasswords)} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="Atualizar">
+	              <button onClick={() => loadUsers(showPasswords)} style={{ display: "none" }} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="Atualizar">
 	                <RefreshCw className="w-4 h-4" />
 	              </button>
               <button
@@ -1326,7 +1339,13 @@ export default function AdminDashboard() {
                             </p>
 	                          )}
 	                          <p className="text-xs text-gray-400 dark:text-gray-500">ID: {u.id}</p>
-	                          <p className="text-xs text-gray-400 dark:text-gray-500">Cadastro: {formatDate(u.created_at)}</p>
+	                          <div className="mt-1 flex flex-col">
+                              <span className="text-[10px] text-gray-400 uppercase font-semibold">Cadastro:</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">{new Date(u.created_at).toLocaleDateString("pt-BR")}</span>
+                                <span className="text-[10px] text-gray-400 italic">{new Date(u.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+                              </div>
+                            </div>
 	                        </div>
 	                      </div>
 	                      <div className="flex flex-col items-end gap-2">
@@ -1803,7 +1822,7 @@ export default function AdminDashboard() {
                   </button>
                 ))}
               </div>
-              <button onClick={loadLogs} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors" title="Atualizar">
+              <button onClick={loadLogs} style={{ display: "none" }} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors" title="Atualizar">
                 <RefreshCw className="w-4 h-4" />
               </button>
               <button onClick={() => clearLogs("all")} className="flex items-center gap-1 px-3 py-2 rounded-xl bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-200 transition-colors text-xs font-semibold" title="Limpar todos os logs">
@@ -1984,75 +2003,93 @@ export default function AdminDashboard() {
 	                <table className="w-full text-xs">
 	                  <thead>
 	                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID</th>
-	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Data</th>
+	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID Interno</th>
+	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Data Emissão</th>
+	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Criação (Painel)</th>
 	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Usuário</th>
-	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nome</th>
+	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nome/Paciente</th>
 	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Tipo</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Código QR</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ações</th>
-                    </tr>
-                  </thead>
+	                <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Código Emissão</th>
+	                <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+	                <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ações</th>
+	                </tr>
+	                </thead>
 	                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-	                    {filteredEmissions.map(e => (
-	                      <tr key={`${e.table_source}-${e.id}`} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-	                        <td className="px-4 py-2.5 font-mono text-gray-500 dark:text-gray-400">{e.id}</td>
-	                        <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400 whitespace-nowrap">{formatDate(e.created_at)}</td>
-                        <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{e.username || e.user_id || "—"}</td>
-                        <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">{e.nome || e.paciente || "—"}</td>
-                        <td className="px-4 py-2.5 hidden md:table-cell">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400">
-                            {DOC_TYPE_LABELS[e.type] || e.type}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2.5 text-gray-400 dark:text-gray-500 font-mono hidden md:table-cell">{e.codigo_qr || "—"}</td>
-                        <td className="px-4 py-2.5">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                            e.status === "emitido"
-                              ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400"
-                              : "bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400"
-                          }`}>
-                            {e.status}
-                          </span>
-                        </td>
-	                        <td className="px-4 py-2.5">
-	                          <div className="flex items-center gap-1">
-	                            <button
-	                              onClick={() => openEmissionPreview(e)}
-	                              className="p-1.5 rounded-lg text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
-	                              title="Visualizar"
-	                            >
-	                              <Eye className="w-3.5 h-3.5" />
-	                            </button>
-	                            <button
-	                              onClick={() => editEmission(e)}
-	                              className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-	                              title="Editar"
-	                            >
-	                              <Edit3 className="w-3.5 h-3.5" />
-	                            </button>
-	                            <button
-	                              onClick={() => deleteEmission(e.id, e.table_source || "documents", false)}
-                              className="p-1.5 rounded-lg text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
-                              title="Cancelar"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => deleteEmission(e.id, e.table_source || "documents", true)}
-                              className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                              title="Excluir permanentemente"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+	                    {filteredEmissions.map(e => {
+	                const createDate = new Date(e.created_at);
+	                const docDateValue = e.data_emissao || e.dataEmissao || e.data || "";
+	                return (
+	                <tr key={`${e.table_source}-${e.id}`} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+	                <td className="px-4 py-2.5 font-mono text-gray-400 text-[10px]">{e.id.slice(0, 8)}...</td>
+	                <td className="px-4 py-2.5 text-gray-600 dark:text-gray-400 font-semibold">{docDateValue || "—"}</td>
+	                <td className="px-4 py-2.5 whitespace-nowrap">
+	                <div className="flex flex-col">
+	                <span className="font-semibold text-gray-800 dark:text-gray-200">{createDate.toLocaleDateString("pt-BR")}</span>
+	                <span className="text-[10px] text-gray-400">{createDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+	                </div>
+	                </td>
+	                <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{e.username || e.user_id || "—"}</td>
+	                <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300 uppercase">{e.nome || e.paciente || "—"}</td>
+	                <td className="px-4 py-2.5 hidden md:table-cell">
+	                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400">
+	                {DOC_TYPE_LABELS[e.type] || e.type}
+	                </span>
+	                </td>
+	                <td className="px-4 py-2.5 hidden md:table-cell">
+	                {e.codigo_qr ? (
+	                <span className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-1 rounded-md font-bold border border-blue-100 dark:border-blue-800 font-mono text-[11px]">
+	                {e.codigo_qr}
+	                </span>
+	                ) : (
+	                <span className="text-gray-400 italic">sem código</span>
+	                )}
+	                </td>
+	                <td className="px-4 py-2.5">
+	                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+	                e.status === "emitido"
+	                ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400"
+	                : "bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400"
+	                }`}>
+	                {e.status}
+	                </span>
+	                </td>
+	                <td className="px-4 py-2.5">
+	                <div className="flex items-center gap-1">
+	                <button
+	                onClick={() => openEmissionPreview(e)}
+	                className="p-1.5 rounded-lg text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+	                title="Visualizar"
+	                >
+	                <Eye className="w-3.5 h-3.5" />
+	                </button>
+	                <button
+	                onClick={() => editEmission(e)}
+	                className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+	                title="Editar"
+	                >
+	                <Pencil className="w-3.5 h-3.5" />
+	                </button>
+	                <button
+	                onClick={() => deleteEmission(e.id, e.table_source || "documents", false)}
+	                className="p-1.5 rounded-lg text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+	                title="Cancelar"
+	                >
+	                <X className="w-3.5 h-3.5" />
+	                </button>
+	                <button
+	                onClick={() => deleteEmission(e.id, e.table_source || "documents", true)}
+	                className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+	                title="Excluir permanentemente"
+	                >
+	                <Trash2 className="w-3.5 h-3.5" />
+	                </button>
+	                </div>
+	                </td>
+	                </tr>
+	                );
+	                })}
+	                  </tbody>
+	                </table>              </div>
             )}
           </div>
         )}
@@ -2395,7 +2432,7 @@ export default function AdminDashboard() {
                             className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                             title="Editar %"
                           >
-                            <Edit3 className="w-3.5 h-3.5" />
+                            <Pencil className="w-3.5 h-3.5" />
                           </button>
                         </td>
                       </tr>

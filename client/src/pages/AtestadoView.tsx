@@ -35,7 +35,7 @@ export default function AtestadoView() {
     setIsDownloading(true);
     try {
       await exportElementToPDF(documentRef.current, {
-        filename: generatePDFFilename(attestation.paciente, "EMITIDO"),
+        filename: generatePDFFilename(attestation.paciente, "atestado"),
       });
     } finally {
       setIsDownloading(false);

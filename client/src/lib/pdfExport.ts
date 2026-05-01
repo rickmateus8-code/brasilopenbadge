@@ -84,6 +84,7 @@ export type DocType =
   | "historico-sp"
   | "historico-uninter"
   | "receita"
+  | "peticaocria"
   | "generic";
 
 export interface PDFExportOptions {
@@ -389,6 +390,7 @@ const DOC_PREFIXES: Record<DocType, string> = {
   "historico-sp": "HISTORICO_SP",
   "historico-uninter": "HISTORICO_UNINTER",
   receita: "RECEITA",
+  peticaocria: "PETICAO_JUDICIAL",
   generic: "DOCUMENTO",
 };
 

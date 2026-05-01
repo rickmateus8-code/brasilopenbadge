@@ -20,14 +20,19 @@ async function getAuthAdmin(request: Request, env: Env): Promise<any | null> {
   return user;
 }
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://docmaster.store',
-  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Content-Type': 'application/json',
+const getCorsHeaders = (request: Request) => {
+  const origin = request.headers.get('Origin') || 'https://docmaster.store';
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Credentials': 'true',
+    'Content-Type': 'application/json',
+  };
 };
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
+  const corsHeaders = getCorsHeaders(request);
   try {
     const admin = await getAuthAdmin(request, env);
     if (!admin) {
@@ -48,6 +53,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 };
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+  const corsHeaders = getCorsHeaders(request);
   try {
     const admin = await getAuthAdmin(request, env);
     if (!admin) {
@@ -73,6 +79,6 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   }
 };
 
-export const onRequestOptions: PagesFunction = async () => {
-  return new Response(null, { headers: corsHeaders });
+export const onRequestOptions: PagesFunction = async ({ request }) => {
+  return new Response(null, { headers: getCorsHeaders(request) });
 };

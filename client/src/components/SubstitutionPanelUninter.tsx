@@ -77,176 +77,181 @@ export default function SubstitutionPanel({
         document.execCommand("copy");
         document.body.removeChild(textarea);
       }
-      toast.success("Modelo de importação UNINTER copiado.");
+      toast.success("Modelo de importação copiado.");
     } catch {
-      toast.error("Não foi possível copiar o modelo de importação.");
+      toast.error("Erro ao copiar modelo.");
     }
   };
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-[#1a1a2a] bg-[#0d0d14]">
-        <div className="flex items-center gap-2 mb-2">
-          <UserRoundPen size={18} className="text-[#c8aa32]" />
-          <h2 className="font-semibold text-sm tracking-wide uppercase text-white">
-            Substituição de Dados
-          </h2>
+    <div className="flex flex-col h-full bg-white">
+      {/* Header do Painel */}
+      <div className="p-4 border-b border-gray-100 space-y-3 bg-gray-50/50">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+             <div className="w-1.5 h-4 bg-amber-500 rounded-full" />
+             Edição de Conteúdo
+          </h3>
+          <Button size="sm" variant="ghost" className="text-[10px] h-7 text-gray-400 hover:text-red-500 hover:bg-red-50 px-2" onClick={onReset}>
+            <RotateCcw size={12} className="mr-1" /> Resetar Tudo
+          </Button>
         </div>
         {modifiedCount > 0 && (
-          <div className="text-xs text-amber-400 font-medium bg-amber-900/30 px-2 py-1 rounded">
-            {modifiedCount} campo(s) modificado(s)
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-amber-50 border border-amber-100 w-fit">
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+            <span className="text-[11px] font-bold text-amber-700">{modifiedCount} campos modificados</span>
           </div>
         )}
       </div>
 
-      {/* Histórico disponível */}
-      <div className="px-4 py-3 border-b border-[#1a1a2a] bg-[#0a0a12]">
-        <p className="text-xs font-medium text-[#666688] mb-2 uppercase tracking-wider">Históricos Disponíveis</p>
-        <div className="flex flex-col gap-2">
-          {HISTORICO_BUTTONS.map((pb) => (
-            <Button
-              key={pb.key}
-              size="sm"
-              variant={activeHistorico === pb.key ? "default" : "outline"}
-              className={`w-full text-xs justify-start ${
-                activeHistorico === pb.key
-                  ? "bg-gradient-to-r from-[#c8aa32] to-[#a08828] text-[#0a0a0f] font-semibold hover:from-[#d4b83a] hover:to-[#b09830]"
-                  : "text-[#aaaacc] border-[#2a2a3a] hover:bg-[#1a1a2a] hover:text-white"
-              }`}
-              onClick={() => onApplyHistorico(pb.key)}
-            >
-              <ArrowRightLeft size={12} className="mr-2 shrink-0" />
-              {pb.label}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      {/* Importação e modelo */}
-      <div className="px-4 py-3 border-b border-[#1a1a2a] bg-[#0d0d14] space-y-2">
-        <h4 className="text-[10px] text-[#666688] uppercase tracking-wider flex items-center gap-1">
-          <FileText size={11} /> Importação e Modelo
-        </h4>
-        <div>
-          <div className="flex items-center justify-between gap-2 mb-1">
-            <label className="text-[10px] text-[#666688] uppercase tracking-wider">Modelo para enviar</label>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="h-6 px-2 text-[10px] border-[#2a2a3a] text-[#aaaacc] hover:bg-[#1a1a2a]"
-              onClick={handleCopyTemplate}
-            >
-              <Copy size={11} className="mr-1" />
-              Copiar
-            </Button>
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+        {/* Escolha do Curso */}
+        <div className="p-4 border-b border-gray-100 bg-white">
+          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-3">Selecione o Modelo Base</p>
+          <div className="space-y-2">
+            {HISTORICO_BUTTONS.map((pb) => {
+              const isActive = activeHistorico === pb.key;
+              return (
+                <button
+                  key={pb.key}
+                  onClick={() => onApplyHistorico(pb.key)}
+                  className={`w-full text-left px-3 py-2.5 rounded-xl border text-[11px] font-bold transition-all flex items-center gap-2 ${
+                    isActive
+                      ? "border-amber-500 bg-amber-50 text-amber-700 shadow-sm"
+                      : "border-gray-100 bg-white text-gray-600 hover:border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  <div className={`p-1 rounded-md ${isActive ? "bg-amber-500 text-white" : "bg-gray-100 text-gray-400"}`}>
+                    <ArrowRightLeft size={12} />
+                  </div>
+                  <span className="flex-1 truncate">{pb.label}</span>
+                </button>
+              );
+            })}
           </div>
-          <Textarea
-            value={UNINTER_IMPORT_TEMPLATE}
-            readOnly
-            className="h-24 overflow-y-auto text-[10px] leading-4 bg-[#0a0a0f] border-[#2a2a3a] text-[#b9b9d0] resize-none"
-          />
         </div>
-        <div>
-          <label className="text-[10px] text-[#666688] uppercase tracking-wider block mb-1">Importar dados</label>
-          <Textarea
-            value={importText}
-            onChange={(e) => onUpdateImportText(e.target.value)}
-            placeholder="Cole aqui o texto preenchido para distribuir automaticamente os dados do aluno e componentes curriculares."
-            className="min-h-24 text-[11px] bg-[#0a0a0f] border-[#2a2a3a] text-white resize-none"
-          />
-          <div className="flex justify-end mt-2">
+
+        {/* Importação Rápida */}
+        <div className="p-4 border-b border-gray-100 space-y-4 bg-white">
+          <h4 className="text-[11px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+            <FileText size={13} className="text-amber-600" /> Importação Rápida
+          </h4>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-bold text-gray-400 uppercase">1. Modelo para Cliente</label>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="h-6 px-2 text-[10px] text-amber-600 hover:bg-amber-50 font-bold"
+                onClick={handleCopyTemplate}
+              >
+                <Copy size={11} className="mr-1" />
+                Copiar Modelo
+              </Button>
+            </div>
+            <div className="p-2.5 rounded-lg border border-gray-100 bg-gray-50 text-[10px] leading-relaxed text-gray-600 font-mono h-24 overflow-y-auto whitespace-pre select-all">
+              {UNINTER_IMPORT_TEMPLATE}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-gray-400 uppercase block">2. Colar Resposta</label>
+            <Textarea
+              value={importText}
+              onChange={(e) => onUpdateImportText(e.target.value)}
+              placeholder="Cole os dados preenchidos aqui para preencher automaticamente aluno e notas..."
+              className="min-h-24 text-[11px] bg-white border-gray-200 text-gray-800 resize-none focus-visible:ring-amber-500"
+            />
             <Button
               type="button"
-              size="sm"
-              className="h-7 text-[10px] bg-gradient-to-r from-[#2d8c4e] to-[#1a6b35] hover:from-[#35a05a] hover:to-[#1f7a3e] text-white"
+              className="w-full h-9 text-xs bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-md shadow-amber-200"
               onClick={onApplyImportText}
             >
-              Importar dados
+              ⚡ PROCESSAR E PREENCHER
             </Button>
           </div>
         </div>
-      </div>
 
-      {/* Fields */}
-      <div className="flex-1 overflow-y-auto">
-        {grouped.map((group) => (
-          <div key={group.category}>
-            <button
-              className="w-full flex items-center gap-2 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-[#666688] hover:bg-[#1a1a2a]/50 transition-colors border-b border-[#1a1a2a]"
-              onClick={() => toggleCategory(group.category)}
-            >
-              {expandedCategories[group.category] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-              {group.label}
-              <span className="ml-auto text-[10px] font-normal">
-                {group.items.filter((i) => i.currentValue !== i.originalValue).length}/{group.items.length}
-              </span>
-            </button>
-            {expandedCategories[group.category] && (
-              <div className="px-4 py-2 space-y-3">
-                {group.items.map((field) => {
-                  const isModified = field.currentValue !== field.originalValue;
-                  const showGerarMatricula = field.id === "matricula";
-                  return (
-                    <div key={field.id} className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-medium text-[#ccccdd]">{field.label}</label>
-                        {isModified && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-400 font-medium">
-                            modificado
-                          </span>
-                        )}
-                      </div>
-                      {isModified && (
-                        <div className="text-[10px] text-[#555566] line-through">
-                          {field.originalValue}
+        {/* Categorias */}
+        <div className="p-3 space-y-2 pb-10">
+          {grouped.map((group) => {
+            const isExpanded = expandedCategories[group.category];
+            const modifiedCount = group.items.filter((i) => i.currentValue !== i.originalValue).length;
+
+            return (
+              <div key={group.category} className={`rounded-xl border transition-all ${isExpanded ? "border-amber-200 bg-amber-50/20 shadow-sm" : "border-gray-100 bg-white"}`}>
+                <button
+                  type="button"
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${isExpanded ? "bg-amber-50/50" : "hover:bg-gray-50"}`}
+                  onClick={() => toggleCategory(group.category)}
+                >
+                  <div className={`p-1.5 rounded-lg ${isExpanded ? "bg-amber-500 text-white" : "bg-gray-100 text-gray-400"}`}>
+                    <UserRoundPen size={14} className="shrink-0" />
+                  </div>
+                  <span className={`text-xs font-bold flex-1 ${isExpanded ? "text-amber-900" : "text-gray-700"}`}>{group.label}</span>
+                  <div className="flex items-center gap-2">
+                     {modifiedCount > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-600">{modifiedCount} mod.</span>}
+                     {isExpanded ? <ChevronDown size={14} className="text-amber-500" /> : <ChevronRight size={14} className="text-gray-300" />}
+                  </div>
+                </button>
+                {isExpanded && (
+                  <div className="px-4 pb-4 pt-1 space-y-4">
+                    {group.items.map((field) => {
+                      const isModified = field.currentValue !== field.originalValue;
+                      const isMatricula = field.id === "matricula";
+                      return (
+                        <div key={field.id} className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase">{field.label}</label>
+                            <span className="text-[9px] text-gray-400 font-mono">Págs: {field.pages.join(", ")}</span>
+                          </div>
+
+                          {isMatricula ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={field.currentValue}
+                                onChange={(e) => onUpdateField(field.id, e.target.value)}
+                                className={`h-9 text-xs border-gray-200 focus-visible:ring-amber-500 transition-all ${
+                                  isModified ? "border-amber-500 bg-amber-50" : "bg-white"
+                                }`}
+                                placeholder="Formato: 1022071"
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="h-9 px-3 text-[10px] border-amber-200 text-amber-700 font-bold hover:bg-amber-50"
+                                onClick={onGenerateMatricula}
+                              >
+                                <WandSparkles size={11} className="mr-1" />
+                                Gerar
+                              </Button>
+                            </div>
+                          ) : (
+                            <Input
+                              value={field.currentValue}
+                              onChange={(e) => onUpdateField(field.id, e.target.value)}
+                              className={`h-9 text-xs border-gray-200 focus-visible:ring-amber-500 transition-all ${
+                                isModified ? "border-amber-500 bg-amber-50" : "bg-white"
+                              }`}
+                            />
+                          )}
+                          {isModified && (
+                            <div className="text-[9px] text-gray-400 italic flex items-center gap-1">
+                              Original: <span className="line-through">{field.originalValue || "(vazio)"}</span>
+                            </div>
+                          )}
                         </div>
-                      )}
-                      {showGerarMatricula ? (
-                        <div className="flex items-center gap-2">
-                          <Input
-                            value={field.currentValue}
-                            onChange={(e) => onUpdateField(field.id, e.target.value)}
-                            className={`h-7 text-xs font-mono bg-[#0a0a12] border-[#2a2a3a] text-[#ccccdd] flex-1 ${isModified ? "border-amber-600 bg-amber-900/10" : ""}`}
-                            placeholder="Formato: 1022071"
-                          />
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="h-7 px-2 text-[10px] border-[#2a2a3a] text-white hover:bg-[#1a1a2a]"
-                            onClick={onGenerateMatricula}
-                          >
-                            <WandSparkles size={11} className="mr-1" />
-                            Gerar
-                          </Button>
-                        </div>
-                      ) : (
-                        <Input
-                          value={field.currentValue}
-                          onChange={(e) => onUpdateField(field.id, e.target.value)}
-                          className={`h-7 text-xs font-mono bg-[#0a0a12] border-[#2a2a3a] text-[#ccccdd] ${isModified ? "border-amber-600 bg-amber-900/10" : ""}`}
-                        />
-                      )}
-                      <div className="text-[10px] text-[#444455]">
-                        Páginas: {field.pages.join(", ")}
-                      </div>
-                    </div>
-                  );
-                })}
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Footer */}
-      <div className="px-4 py-3 border-t border-[#1a1a2a] bg-[#0d0d14]">
-        <Button size="sm" variant="outline" className="w-full text-xs text-[#aaaacc] border-[#2a2a3a]" onClick={onReset}>
-          <RotateCcw size={12} className="mr-1" />
-          Restaurar Original
-        </Button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

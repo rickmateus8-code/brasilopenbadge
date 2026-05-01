@@ -9,7 +9,6 @@
  */
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useAuth } from "@/contexts/AuthContext";
 import { openRecarregaModal } from "@/components/RecarregaModal";
 import {
   X, FileText, Car, Anchor, FlaskConical, GraduationCap,
@@ -42,6 +41,7 @@ const DOC_ICONS: Record<string, React.ElementType> = {
   "historico-sp": GraduationCap,
   "historico-uninter": GraduationCap,
   receita: Pill,
+  peticaocria: FileText,
 };
 
 // Mapeamento de rotas por tipo de documento
@@ -54,23 +54,19 @@ const DOC_PATHS: Record<string, string> = {
   "historico-sp": "/historico-sp",
   "historico-uninter": "/historico-uninter",
   receita: "/receitacria",
+  peticaocria: "/peticaocria",
 };
 
 export default function NovoDocumentoModal({ open, onClose, userBalance, username }: NovoDocumentoModalProps) {
   const [, setLocation] = useLocation();
-  const { refresh } = useAuth();
   const [docs, setDocs] = useState<DocOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [insufficientDoc, setInsufficientDoc] = useState<DocOption | null>(null);
   const [supportWhatsapp, setSupportWhatsapp] = useState("");
 
-  // Buscar preços do backend e atualizar saldo ao abrir
+  // Buscar preços do backend
   useEffect(() => {
     if (!open) return;
-    
-    // Sincroniza o saldo do usuário com o servidor ao abrir o modal
-    refresh();
-
     setLoading(true);
     fetch("/api/pricing", { credentials: "include" })
       .then(r => r.json())
@@ -81,17 +77,41 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
             label: val.display_name,
             icon: DOC_ICONS[key] || FileText,
             path: DOC_PATHS[key] || "/dashboard",
-            price: Number(val.price) || 0,
+            price: val.price,
             priceFormatted: val.price_formatted,
           }));
-          // Ordenar por nome
-          list.sort((a, b) => a.label.localeCompare(b.label));
-          setDocs(list);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [open, refresh]);
+
+          // FALLBACK DE SEGURANÇA: Se a API retornar lista vazia, usar os defaults do sistema
+          if (list.length === 0) {
+            setDocs(getFallbackDocs());
+          } else {
+            // Ordenar por nome
+            list.sort((a, b) => a.label.localeCompare(b.label));
+            setDocs(list);
+          }
+          } else {
+           // Se a API falhar mas retornar sucesso false
+           setDocs(getFallbackDocs());
+          }
+          })
+          .catch(() => {
+          setDocs(getFallbackDocs());
+          })
+          .finally(() => setLoading(false));
+          }, [open]);
+
+          // Função auxiliar para fallback robusto (Valores de Elite)
+          const getFallbackDocs = (): DocOption[] => [
+            { key: "atestado", label: "Atestado Médico", icon: DOC_ICONS["atestado"], path: DOC_PATHS["atestado"], price: 1000, priceFormatted: "R$ 10,00" },
+            { key: "cnh", label: "CNH Digital", icon: DOC_ICONS["cnh"], path: DOC_PATHS["cnh"], price: 1500, priceFormatted: "R$ 15,00" },
+            { key: "cha", label: "CHA Náutica", icon: DOC_ICONS["cha"], path: DOC_PATHS["cha"], price: 1500, priceFormatted: "R$ 15,00" },
+            { key: "toxicologico", label: "Exame Toxicológico", icon: DOC_ICONS["toxicologico"], path: DOC_PATHS["toxicologico"], price: 1500, priceFormatted: "R$ 15,00" },
+            { key: "toxicria", label: "Laudo Toxicológico Sodré", icon: DOC_ICONS["toxicria"], path: DOC_PATHS["toxicria"], price: 1500, priceFormatted: "R$ 15,00" },
+            { key: "historico-sp", label: "Histórico Escolar SP", icon: DOC_ICONS["historico-sp"], path: DOC_PATHS["historico-sp"], price: 1800, priceFormatted: "R$ 18,00" },
+            { key: "historico-uninter", label: "Histórico UNINTER", icon: DOC_ICONS["historico-uninter"], path: DOC_PATHS["historico-uninter"], price: 1800, priceFormatted: "R$ 18,00" },
+            { key: "receita", label: "Dr. Consulta", icon: DOC_ICONS["receita"], path: DOC_PATHS["receita"], price: 1000, priceFormatted: "R$ 10,00" },
+            { key: "peticaocria", label: "Petição Judicial", icon: DOC_ICONS["peticaocria"], path: DOC_PATHS["peticaocria"], price: 2000, priceFormatted: "R$ 20,00" },
+          ].sort((a, b) => a.label.localeCompare(b.label));
 
   // Buscar WhatsApp de suporte
   useEffect(() => {
@@ -107,7 +127,6 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
   if (!open) return null;
 
   const handleSelectDoc = (doc: DocOption) => {
-    // Normalização defensiva do saldo (sempre em centavos no DocMaster)
     const currentBalance = Number(userBalance) || 0;
     const docPrice = Number(doc.price) || 0;
 
@@ -177,7 +196,7 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
           }}>
             <Wallet style={{ width: 16, height: 16, color: "#dc2626" }} />
             <span style={{ fontSize: 13, color: "#dc2626", fontWeight: 700 }}>
-              Saldo atual: R$ {((Number(userBalance) || 0) / 100).toFixed(2).replace(".", ",")}
+              Saldo atual: R$ {(userBalance / 100).toFixed(2)}
             </span>
           </div>
 
@@ -211,15 +230,16 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
               <a
                 href={whatsappLink}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 style={{
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  gap: 8, padding: "12px 0", borderRadius: 10, border: "1px solid #d1d5db",
-                  background: "#fff", color: "#374151", fontWeight: 600,
-                  fontSize: 13, textDecoration: "none",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  padding: "11px 0", borderRadius: 10,
+                  background: "#f0fdf4", border: "1.5px solid #bbf7d0",
+                  color: "#15803d", fontWeight: 700, fontSize: 13,
+                  textDecoration: "none",
                 }}
               >
-                <MessageCircle style={{ width: 16, height: 16, color: "#16a34a" }} />
+                <MessageCircle style={{ width: 15, height: 15 }} />
                 Solicitar via WhatsApp
               </a>
             )}
@@ -229,140 +249,161 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
     );
   }
 
+  // Modal principal — Lista de documentos
   return (
     <div
       style={{
-        position: "fixed", inset: 0, zIndex: 999,
-        background: "rgba(0,0,0,0.45)", backdropFilter: "blur(3px)",
+        position: "fixed", inset: 0, zIndex: 9998,
+        background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)",
         display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "20px",
+        padding: "16px",
       }}
       onClick={onClose}
     >
       <div
         style={{
-          background: "#fff", borderRadius: 24, padding: "32px",
-          maxWidth: 720, width: "100%", maxHeight: "90vh", overflow: "hidden",
-          display: "flex", flexDirection: "column",
-          boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
+          background: "#fff", borderRadius: 20, padding: "28px 28px 24px",
+          maxWidth: 520, width: "100%", maxHeight: "90vh", overflowY: "auto",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
         }}
         onClick={e => e.stopPropagation()}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "between", marginBottom: 24 }}>
-          <div>
-            <h2 style={{ fontSize: 24, fontWeight: 800, color: "#111827", letterSpacing: "-0.02em" }}>
-              Novo Documento
-            </h2>
-            <p style={{ fontSize: 14, color: "#6b7280", marginTop: 2 }}>
-              Selecione o documento que deseja emitir
-            </p>
-          </div>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: "#059669", margin: 0 }}>
+            Novo Documento
+          </h2>
           <button
             onClick={onClose}
             style={{
-              marginLeft: "auto", padding: 8, borderRadius: 12, border: "none",
-              background: "#f3f4f6", color: "#9ca3af", cursor: "pointer",
+              width: 32, height: 32, borderRadius: "50%", border: "none",
+              background: "#f3f4f6", cursor: "pointer", display: "flex",
+              alignItems: "center", justifyContent: "center",
+              color: "#374151", fontSize: 18, fontWeight: 700,
             }}
           >
-            <X style={{ width: 20, height: 20 }} />
+            <X style={{ width: 18, height: 18 }} />
           </button>
         </div>
+        <p style={{ fontSize: 14, color: "#6b7280", marginBottom: 20 }}>
+          O que você deseja emitir hoje?
+        </p>
 
-        <div style={{ overflowY: "auto", paddingRight: 4 }}>
-          {loading ? (
-            <div style={{ padding: "60px 0", textAlign: "center" }}>
-              <div style={{
-                width: 32, height: 32, border: "3px solid #ef4444",
-                borderTopColor: "transparent", borderRadius: "50%",
-                animation: "spin 0.8s linear infinite", margin: "0 auto",
-              }} />
-              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-            </div>
-          ) : (
-            <div style={{
-              display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-              gap: 12, paddingBottom: 10,
-            }}>
-              {docs.map(doc => {
-                const Icon = doc.icon;
-                const canPay = (Number(userBalance) || 0) >= (Number(doc.price) || 0);
-
-                return (
-                  <button
-                    key={doc.key}
-                    onClick={() => handleSelectDoc(doc)}
-                    style={{
-                      display: "flex", flexDirection: "column", alignItems: "flex-start",
-                      padding: "20px", borderRadius: 16, border: "1.5px solid #f3f4f6",
-                      background: "#fff", textAlign: "left", cursor: "pointer",
-                      transition: "all 0.2s ease",
-                    }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.borderColor = "#fecaca";
-                      e.currentTarget.style.transform = "translateY(-2px)";
-                      e.currentTarget.style.boxShadow = "0 10px 20px -5px rgba(0,0,0,0.1)";
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.borderColor = "#f3f4f6";
-                      e.currentTarget.style.transform = "none";
-                      e.currentTarget.style.boxShadow = "none";
-                    }}
-                  >
-                    <div style={{
-                      width: 44, height: 44, borderRadius: 12,
-                      background: "#fef2f2", display: "flex",
-                      alignItems: "center", justifyContent: "center",
-                      marginBottom: 16,
-                    }}>
-                      <Icon style={{ width: 22, height: 22, color: "#dc2626" }} />
-                    </div>
-                    <p style={{ fontSize: 14, fontWeight: 700, color: "#1f2937", marginBottom: 4 }}>
-                      {doc.label}
-                    </p>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "between", width: "100%" }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: canPay ? "#16a34a" : "#dc2626" }}>
-                        {doc.priceFormatted}
-                      </span>
-                      {!canPay && (
-                        <span style={{ fontSize: 10, fontWeight: 800, color: "#dc2626", background: "#fef2f2", padding: "2px 6px", borderRadius: 4, marginLeft: "auto" }}>
-                          SALDO INSUFICIENTE
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+        {/* Saldo do usuário */}
+        <div style={{
+          background: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: 10,
+          padding: "8px 14px", marginBottom: 20, display: "flex",
+          alignItems: "center", gap: 8,
+        }}>
+          <Wallet style={{ width: 15, height: 15, color: "#059669" }} />
+          <span style={{ fontSize: 13, color: "#047857", fontWeight: 600 }}>
+            Seu saldo: <strong>R$ {(userBalance / 100).toFixed(2)}</strong>
+          </span>
         </div>
 
-        <div style={{ marginTop: 24, paddingTop: 24, borderTop: "1px solid #f3f4f6", display: "flex", alignItems: "center", justifyContent: "between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{
-              width: 40, height: 40, borderRadius: "50%",
-              background: "#fef2f2", display: "flex",
-              alignItems: "center", justifyContent: "center",
-            }}>
-              <Wallet style={{ width: 20, height: 20, color: "#dc2626" }} />
-            </div>
-            <div>
-              <p style={{ fontSize: 11, color: "#6b7280", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.025em" }}>Seu Saldo</p>
-              <p style={{ fontSize: 16, fontWeight: 800, color: "#111827" }}>
-                R$ {((Number(userBalance) || 0) / 100).toFixed(2).replace(".", ",")}
-              </p>
-            </div>
+        {/* Grade de documentos */}
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af" }}>
+            Carregando documentos...
           </div>
+        ) : (
+          <div style={{
+            display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14,
+          }}>
+            {docs.map(doc => {
+              const Icon = doc.icon;
+              const canAfford = userBalance >= doc.price;
+              return (
+                <button
+                  key={doc.key}
+                  onClick={() => handleSelectDoc(doc)}
+                  style={{
+                    background: "#fff", border: "1.5px solid #e5e7eb",
+                    borderRadius: 14, padding: "18px 14px", cursor: "pointer",
+                    display: "flex", flexDirection: "column", alignItems: "center",
+                    gap: 10, transition: "all 0.18s", textAlign: "center",
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = "#10b981";
+                    e.currentTarget.style.boxShadow = "0 4px 16px rgba(16,185,129,0.12)";
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = "#e5e7eb";
+                    e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.05)";
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }}
+                >
+                  <Icon style={{ width: 28, height: 28, color: "#10b981" }} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#111827", lineHeight: 1.3 }}>
+                    {doc.label}
+                  </span>
+                  <span style={{
+                    fontSize: 12, fontWeight: 700,
+                    color: canAfford ? "#059669" : "#dc2626",
+                    background: canAfford ? "#ecfdf5" : "#fef2f2",
+                    border: `1px solid ${canAfford ? "#a7f3d0" : "#fecaca"}`,
+                    borderRadius: 20, padding: "3px 12px",
+                  }}>
+                    {doc.priceFormatted}
+                  </span>
+                  {!canAfford && (
+                    <span style={{ fontSize: 10, color: "#ef4444", fontWeight: 600 }}>
+                      Saldo insuficiente
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Rodapé */}
+        <div style={{
+          marginTop: 20, paddingTop: 16, borderTop: "1px solid #f3f4f6",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          flexWrap: "wrap", gap: 8,
+        }}>
           <button
-            onClick={handleRecarregar}
+            onClick={() => { onClose(); openRecarregaModal(); }}
             style={{
-              padding: "10px 20px", borderRadius: 12, border: "none",
-              background: "#dc2626", color: "#fff", fontWeight: 700,
-              fontSize: 13, cursor: "pointer", display: "flex",
-              alignItems: "center", gap: 8,
+              display: "flex", alignItems: "center", gap: 6,
+              background: "none", border: "1.5px solid #e5e7eb", borderRadius: 8,
+              padding: "8px 14px", cursor: "pointer", fontSize: 12,
+              color: "#6b7280", fontWeight: 600, transition: "all 0.15s",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "#16a34a"; e.currentTarget.style.color = "#16a34a"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.color = "#6b7280"; }}
+          >
+            <CreditCard style={{ width: 14, height: 14 }} />
+            Recarregar Saldo
+          </button>
+
+          {/* Link WhatsApp no rodapé */}
+          {whatsappLink && (
+            <a
+              href={`https://wa.me/${supportWhatsapp.replace(/\D/g, "")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                fontSize: 12, color: "#16a34a", fontWeight: 600, textDecoration: "none",
+              }}
+            >
+              <MessageCircle style={{ width: 13, height: 13 }} />
+              Suporte
+            </a>
+          )}
+
+          <button
+            onClick={onClose}
+            style={{
+              background: "none", border: "none", cursor: "pointer",
+              fontSize: 13, color: "#9ca3af", fontWeight: 500,
             }}
           >
-            <CreditCard style={{ width: 16, height: 16 }} />
-            Recarregar
+            Fechar
           </button>
         </div>
       </div>

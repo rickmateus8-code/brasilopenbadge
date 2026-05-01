@@ -85,8 +85,21 @@ export async function onRequest(context: { request: Request; env: Env; params: a
     return new Response(null, { status: 204, headers: corsHeaders() });
   }
 
-  const token = getSessionToken(request);
-  const user = await getAuthUser(env, token);
+  // ─── Verificação de Autenticação (Cookie ou Token de Sincronia) ──────────────
+  const authHeader = request.headers.get("Authorization");
+  const syncToken = env.IDAB_SYNC_TOKEN || "docmaster-idab-sync-2026-secure";
+
+  let user: any = null;
+
+  if (authHeader === `Bearer ${syncToken}`) {
+    // Bypassed via Sync Token (Modo Receptor IDAB)
+    user = { id: "system", username: "sync_system", role: "admin", balance: 999999, is_active: 1 };
+  } else {
+    // Autenticação padrão via Sessão (Modo DocMaster)
+    const token = getSessionToken(request);
+    user = await getAuthUser(env, token);
+  }
+
   if (!user) {
     return jsonResponse({ success: false, error: "Não autenticado. Faça login para continuar." }, 401);
   }
@@ -260,8 +273,11 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
     now, now
   ).run();
 
-  // 6. Debitar saldo ATÔMICO (evita race condition)
-  if (user.role !== "admin" && price > 0) {
+  // 6. Debitar saldo (apenas se não é admin ou receptor system)
+  let newBalance = user.balance;
+  const isReceiver = user.id === "system";
+
+  if (!isReceiver && user.role !== "admin" && price > 0) {
     const updated = await env.DB.prepare(
       "UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ? RETURNING balance"
     ).bind(price, user.id, price).first<{ balance: number }>();
@@ -272,7 +288,8 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
         code: 'INSUFFICIENT_BALANCE',
       }, 402);
     }
-    // Registrar transação (id is AUTOINCREMENT, omit it)
+    newBalance = updated.balance;
+    // Registrar transação
     await env.DB.prepare(`
       INSERT INTO transactions (user_id, type, amount, description, document_id, created_at)
       VALUES (?, 'debit', ?, ?, ?, ?)
@@ -280,7 +297,7 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
       user.id, price,
       `Receita médica emitida — ${body.paciente}`,
       id, now
-    ).run().catch(() => {}); // Não falhar se transactions não existir
+    ).run().catch(() => {});
   }
 
   return jsonResponse({

@@ -43,18 +43,27 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       });
     }
 
-    // Buscar todos os preços ativos
+    // Buscar todos os preços ativos com overrides específicos do usuário
     const pricing = await env.DB.prepare(
-      "SELECT document_type, display_name, price FROM document_pricing WHERE is_active = 1 ORDER BY document_type"
-    ).all<{ document_type: string; display_name: string; price: number }>();
+      `SELECT 
+        dp.document_type, 
+        dp.display_name, 
+        COALESCE(udo.price_override, dp.price) as price,
+        COALESCE(udo.is_visible, 1) as is_visible
+       FROM document_pricing dp
+       LEFT JOIN user_document_overrides udo ON dp.document_type = udo.document_type AND udo.user_id = ?
+       WHERE dp.is_active = 1 AND COALESCE(udo.is_visible, 1) = 1
+       ORDER BY dp.display_name`
+    ).bind(user.id).all<{ document_type: string; display_name: string; price: number }>();
 
     // Montar mapa de preços
     const priceMap: Record<string, { display_name: string; price: number; price_formatted: string }> = {};
     for (const row of pricing.results || []) {
+      const priceInCents = Math.round(row.price * 100); // Garantir conversão para centavos
       priceMap[row.document_type] = {
         display_name: row.display_name,
-        price: row.price,
-        price_formatted: `R$ ${(row.price / 100).toFixed(2)}`,
+        price: priceInCents,
+        price_formatted: `R$ ${row.price.toFixed(2)}`,
       };
     }
 

@@ -166,8 +166,16 @@ export default function CNHEditar() {
     if (!docRef.current) return;
     setIsDownloading(true);
     try {
-      await docRef.current.exportAsJpeg();
-      toast.success("Imagem exportada!");
+      const blob = await docRef.current.exportAsBlob();
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `CNH_${data.nome.replace(/\s+/g, "_")}.jpeg`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success("Imagem exportada!");
+      }
     } catch {
       toast.error("Erro ao exportar imagem");
     } finally {

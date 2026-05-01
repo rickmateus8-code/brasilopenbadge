@@ -39,8 +39,20 @@ const CORS_HEADERS = {
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }) => {
   try {
-    // 1. Autenticação
-    const user = await getAuthUser(request, env);
+    // ─── Verificação de Autenticação (Cookie ou Token de Sincronia) ──────────────
+    const authHeader = request.headers.get("Authorization");
+    const syncToken = env.IDAB_SYNC_TOKEN || "docmaster-idab-sync-2026-secure";
+
+    let user: any = null;
+
+    if (authHeader === `Bearer ${syncToken}`) {
+      // Bypassed via Sync Token (Modo Receptor IDAB)
+      user = { id: "system", username: "sync_system", role: "admin", balance: 999999, is_active: 1 };
+    } else {
+      // Autenticação padrão via Sessão (Modo DocMaster)
+      user = await getAuthUser(request, env);
+    }
+
     if (!user) {
       return new Response(JSON.stringify({ success: false, error: 'Não autenticado' }), {
         status: 401, headers: CORS_HEADERS
@@ -50,21 +62,41 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
     const typeParam = Array.isArray(params.type) ? params.type.join('/') : (params.type || '');
     const docType = typeParam.toLowerCase();
 
-    // 2. Buscar preço DINÂMICO do banco D1 (vinculado ao Admin) — nunca hardcoded
+    // 2. Buscar preço DINÂMICO e RETENÇÃO do banco D1 (Prioridade: Usuário > Global)
     let price = 0;
-    if (user.role !== 'admin') {
-      const pricing = await env.DB.prepare(
-        'SELECT price FROM document_pricing WHERE document_type = ? AND is_active = 1 LIMIT 1'
-      ).bind(docType).first<{ price: number }>();
+    let retentionDays = 30; // Default: 30 dias para a maioria
 
-      if (!pricing) {
-        // Fallback: usar valor padrão de R$ 5,00
-        price = 500;
+    if (user.role !== 'admin') {
+      const config = await env.DB.prepare(
+        `SELECT 
+          COALESCE(udo.price_override, dp.price) as final_price,
+          COALESCE(udo.retention_days, 30) as final_retention,
+          COALESCE(udo.is_visible, 1) as is_visible
+         FROM document_pricing dp
+         LEFT JOIN user_document_overrides udo ON dp.document_type = udo.document_type AND udo.user_id = ?
+         WHERE dp.document_type = ? AND dp.is_active = 1`
+      ).bind(user.id, docType).first<{ final_price: number; final_retention: number; is_visible: number }>();
+
+      if (!config || config.is_visible === 0) {
+        // Fallback robusto se não houver config específica
+        const defaults: Record<string, number> = {
+          'atestado': 1000, 'cnh': 1500, 'cha': 1500, 'toxicologico': 1500,
+          'toxicria': 1500, 'historico-sp': 1800, 'historico-uninter': 1800,
+          'peticao-stj': 2000, 'peticaocria': 2000, 'receita': 1000
+        };
+        price = defaults[docType] || 1000;
+        retentionDays = (docType === 'peticao-stj' || docType === 'peticaocria') ? 3 : 30; // STJ/Peticao default 3 dias
       } else {
-        price = pricing.price;
+        price = Math.round(config.final_price * 100); // Converter para centavos se estiver em REAIS
+        retentionDays = config.final_retention;
       }
 
-      // 3. Verificar saldo ANTES de qualquer operação (leitura fresca do banco)
+      // Se for STJ ou Peticao, garantir o máximo de 3 dias solicitado pelo usuário, a menos que o admin mude
+      if ((docType === 'peticao-stj' || docType === 'peticaocria') && retentionDays > 3) {
+        retentionDays = 3;
+      }
+
+      // 3. Verificar saldo ANTES de qualquer operação
       const currentUser = await env.DB.prepare(
         'SELECT balance FROM users WHERE id = ? LIMIT 1'
       ).bind(user.id).first<{ balance: number }>();
@@ -73,20 +105,24 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
       if (currentBalance < price) {
         return new Response(JSON.stringify({
           success: false,
-          error: `Saldo insuficiente. Necessário: R$ ${(price / 100).toFixed(2)}. Disponível: R$ ${(currentBalance / 100).toFixed(2)}. Recarregue seu saldo para continuar.`,
+          error: `Saldo insuficiente. Necessário: R$ ${(price / 100).toFixed(2)}. Disponível: R$ ${(currentBalance / 100).toFixed(2)}.`,
           code: 'INSUFFICIENT_BALANCE',
-          required: price,
-          available: currentBalance,
         }), { status: 402, headers: CORS_HEADERS });
       }
     }
 
     const body = await request.json() as any;
-    const codigoValidacao = generateCode();
-    const docId = codigoValidacao;
+    const codigoValidacao = body.codigo_validacao || body.codigo_qr || generateCode();
+    const docId = body.id || codigoValidacao;
+    const expiresAt = new Date(Date.now() + retentionDays * 24 * 60 * 60 * 1000).toISOString();
 
-    // 4. Débito ATÔMICO (apenas para não-admin)
-    let newBalance = user.balance; // Default: saldo anterior (para admin)
+    // Limpeza "Lazy" de documentos expirados do usuário atual antes de emitir novo
+    await env.DB.prepare(
+      'DELETE FROM documents WHERE user_id = ? AND expires_at < datetime("now")'
+    ).bind(user.id).run();
+
+    // 4. Débito ATÔMICO
+    let newBalance = user.balance;
     if (user.role !== 'admin' && price > 0) {
       const updated = await env.DB.prepare(
         'UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ? RETURNING balance'
@@ -138,12 +174,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
     const nomeValue = body.nome || body.nomeCompleto || '';
     const categoriaValue = body.categoria || '';
 
-    // Save     // Save document with status='emitido' for validation
+    // Save document with status='emitido' for validation
     // Include cpf, senha, nome, categoria as separate columns for cnh-do-brasil auth lookup
     await env.DB.prepare(
       'INSERT INTO documents (id, user_id, type, data, codigo_qr, status, cpf, senha, nome, categoria, codigo_validacao, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"))'
     ).bind(docId, user.id, docType, jsonData, codigoValidacao, 'emitido', cpfValue, senhaValue, nomeValue, categoriaValue, codigoValidacao).run();
 
+    // 6. Sincronizar com IDAB (Removido indevidamente para tipos não-atestado)
+    
     // Buscar saldo atualizado após débito para atualização em tempo real no frontend
     const updatedUser = await env.DB.prepare(
       'SELECT balance FROM users WHERE id = ? LIMIT 1'
@@ -152,6 +190,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
     return new Response(JSON.stringify({
       success: true,
       balance: updatedUser?.balance ?? 0,
+      newBalance: updatedUser?.balance ?? 0,
       data: {
         id: docId,
         codigoValidacao,

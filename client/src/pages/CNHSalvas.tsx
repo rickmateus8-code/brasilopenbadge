@@ -115,7 +115,13 @@ Um abraço da equipe DocMaster! 😊🚗💨`;
 
   const formatDate = (d: string) => {
     if (!d) return "—";
-    try { return new Date(d).toLocaleDateString("pt-BR"); } catch { return d; }
+    // Se já estiver formatado como DD/MM/YYYY, retorna direto
+    if (typeof d === "string" && d.includes("/")) return d;
+    try { 
+      const date = new Date(d);
+      if (isNaN(date.getTime())) return d;
+      return date.toLocaleDateString("pt-BR"); 
+    } catch { return d; }
   };
 
   // Build CNHDocumentProps from a record
@@ -326,23 +332,39 @@ Um abraço da equipe DocMaster! 😊🚗💨`;
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">ID</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Código Emissão</th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Nome</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">CPF</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Senha</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Categoria</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell text-xs">CPF</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Data Emissão</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Criação (Painel)</th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-                {filtered.map(cnh => (
-                  <tr key={cnh.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                    <td className="px-4 py-3 font-mono text-gray-600 dark:text-gray-400">{cnh.seq_id}</td>
-                    <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-200 uppercase">{cnh.nome}</td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{cnh.cpf}</td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400 font-mono">{cnh.senha}</td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400 font-semibold">{cnh.categoria}</td>
-                    <td className="px-4 py-3">
+                {filtered.map(cnh => {
+                  const date = new Date(cnh.created_at);
+                  const dataEmissao = cnh.data?.dataEmissao || "—";
+                  return (
+                    <tr key={cnh.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                      <td className="px-4 py-3 font-mono text-gray-600 dark:text-gray-400">
+                        <span className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-1 rounded-md font-bold border border-blue-100 dark:border-blue-800 text-xs">
+                          {cnh.id}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-200 uppercase">{cnh.nome}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden sm:table-cell">{cnh.cpf}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400 font-semibold">{dataEmissao}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-gray-900 dark:text-white">
+                            {date.toLocaleDateString("pt-BR")}
+                          </span>
+                          <span className="text-[10px] text-gray-400">
+                            {date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
                       <div className="flex items-center gap-2 flex-wrap">
                         <button
                           onClick={() => window.location.href = `/cnh/editar/${cnh.id}`}
@@ -377,7 +399,8 @@ Um abraço da equipe DocMaster! 😊🚗💨`;
                       </div>
                     </td>
                   </tr>
-                ))}
+                );
+              })}
               </tbody>
             </table>
           </div>

@@ -1,81 +1,31 @@
-# Regras Internas de Documentos — DocMaster
+# DocMaster - Diretrizes de Preservação e Aprendizados
 
-## 1. Estrutura de Slugs por Tipo de Documento
+**CRÍTICO:** Este documento contém regras fundamentais baseadas em incidentes anteriores. Nenhum agente deve alterar estas premissas sem autorização explícita do usuário.
 
-Cada tipo de documento DEVE ter uma slug dedicada no formato `/xxx`:
+## 1. Preservação de Assets (Logos)
+- **Regra:** Nunca adicione caminhos de logos ao código (`LOGOS_PADRAO`) que não existam fisicamente em `client/public/logos/`.
+- **Incidente:** A adição de referências a arquivos inexistentes (`amilone.png`, `bradesco.png`, etc.) causou a exibição de ícones quebrados e distorções no layout de emissão.
+- **Logos Atuais Confirmados:** `logo1.png`, `logo2.png`, `logo3.jpg`, `drconsulta.png`, `amil.png`, `hapvida.png`, `notredame.png`, `sulamerica.png`, `unimed.png`.
 
-| Documento         | Slug Principal     | Componente                  |
-|-------------------|--------------------|-----------------------------|
-| Atestado Médico   | `/atestado`        | `AtestadoCria.tsx`          |
-| CNH Digital       | `/cnh`             | `CNHCria.tsx`               |
-| CHA Náutica       | `/cha`             | `CHACria.tsx`               |
-| Toxicológico      | `/toxicologico`    | `ToxicologicoCria.tsx`      |
-| Histórico SP      | `/historico-sp`    | `HistoricoSP.tsx`           |
-| Histórico UNINTER | `/historico-uninter` | `HistoricoUNINTER.tsx`    |
+## 2. Layout e Estética (/atestadocria)
+- **Background:** O background dos painéis laterais de preview e do "Modelo para enviar ao cliente" deve ser **BRANCO (#ffffff)** e nunca cinza (#f8fafc).
+- **Consistência:** O usuário preza por um visual limpo e profissional. Alterações para tons acinzentados no preview são consideradas regressões.
 
-## 2. Modelo Universal de Emissão
+## 3. Segurança e Regras de Negócio
+- **Trava de Saldo:** A validação de saldo no frontend (`NovoDocumentoModal.tsx`) deve sempre usar a lógica robusta de conversão para `Number` para evitar bypass:
+  ```typescript
+  const currentBalance = Number(userBalance) || 0;
+  const docPrice = Number(doc.price) || 0;
+  if (currentBalance < docPrice) { ... }
+  ```
+- **Deploy:** O `package.json` deve manter a definição de `engines` para Node >= 20.0.0 para evitar falhas silenciosas de build no Cloudflare Pages.
 
-Cada documento DEVE seguir o fluxo:
+## 4. Protocolo de Backup e Deploy
+- **Regra:** Antes de qualquer alteração em arquivos `.tsx` ou `.ts`, um backup `.bak` deve ser criado no mesmo diretório.
+- **Deploy:** O deploy via Wrangler deve ser precedido por uma verificação de integridade do build (`npm run build`) e, se possível, um commit de backup.
 
-```
-Formulário → Preview em Tempo Real → Emissão → Resultado (Exportação/Download)
-```
+## 5. Ordem de Restauração em Caso de Falha
+- O commit de referência estável para o core do sistema após o incidente de 20/04/2026 é o `5cd948c` (ou estados subsequentes que respeitem estas regras).
 
-### Etapas:
-1. **Formulário**: Campos de entrada de dados do documento
-2. **Preview**: Visualização em tempo real do documento (lado direito da tela)
-3. **Emissão**: Botão "CONFIRMAR / EMITIR" — único ponto de emissão
-4. **Resultado**: Modal de sucesso com código QR e opção de download
-
-## 3. Regras OBRIGATÓRIAS para Botões de Download/Exportar
-
-> ⚠️ **JAMAIS** exibir botões do tipo "EXPORTAR", "BAIXAR", "DOWNLOAD" na slug do formulário ANTES que o botão "CONFIRMAR / EMITIR" seja pressionado.
-
-- Botões de download SOMENTE aparecem após emissão confirmada
-- O modal de sucesso pós-emissão PODE ter botão de download
-- Páginas de visualização (`/historico/atestados/:id`) PODEM ter botão de download
-- A página de validação pública (`/v/:id`) PODE ter botão de download
-
-## 4. Regras de Privacidade e Retenção de Dados
-
-- **CPF**: Apagado do banco de dados imediatamente após emissão (não é armazenado)
-- **CNS**: Apagado do banco de dados imediatamente após emissão
-- **Retenção**: Documentos são automaticamente excluídos após **60 dias** da emissão
-- **Aviso**: O usuário DEVE ser informado sobre a exclusão automática no ato de gerar
-
-## 5. Preview do QR Code (Pré-Emissão)
-
-- O QR Code exibido no preview ANTES da emissão deve ser um modelo **borrado/desfocado**
-- Deve ter um filtro visual (`blur`) para indicar que é apenas um placeholder
-- O QR Code real é gerado EXCLUSIVAMENTE no servidor após emissão confirmada
-- Posicionamento do QR Code borrado deve ser idêntico ao do QR Code real
-
-## 6. Layout Universal de Formulários
-
-Todos os formulários de criação de documentos DEVEM:
-- Usar o `DashboardLayout` como base
-- Suportar modo escuro/claro (via `ThemeContext`)
-- Ter a cor primária amarela (`#f59e0b` / `amber-500`)
-- Ter a coluna do formulário com largura mínima de 720px
-- Ter o preview em tamanho A4 (794px × 1123px)
-- Ter o header com cor amarela
-
-## 7. Adicionando Novos Documentos
-
-Para adicionar um novo tipo de documento:
-
-1. Criar o componente de formulário em `client/src/pages/NomeDocCria.tsx`
-2. Criar o componente de visualização em `client/src/pages/NomeDocView.tsx`
-3. Adicionar a rota em `client/src/App.tsx` com slug `/nome-doc`
-4. Adicionar o item no menu em `client/src/components/DashboardLayout.tsx`
-5. Criar o endpoint de API em `functions/api/nome-doc.ts`
-6. Adicionar o preço em `document_pricing` no banco D1
-7. Seguir TODAS as regras acima
-
-## 8. Segurança Anti-Burla
-
-- QR Code gerado EXCLUSIVAMENTE no servidor
-- Código único verificado no banco antes de inserir
-- Saldo verificado ANTES de qualquer inserção
-- Débito e inserção em operações sequenciais com verificação de integridade
-- CPF/CNS apagados após emissão
+---
+*Assinado: Gemini CLI - 20 de Abril de 2026*

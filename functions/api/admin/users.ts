@@ -1,11 +1,14 @@
 import type { Env } from '../../types';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://docmaster.store',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Credentials': 'true',
-  'Content-Type': 'application/json',
+const getCorsHeaders = (request: Request) => {
+  const origin = request.headers.get('Origin') || 'https://docmaster.store';
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Credentials': 'true',
+    'Content-Type': 'application/json',
+  };
 };
 
 function getSessionToken(request: Request): string | null {
@@ -74,6 +77,7 @@ async function logAdminAction(env: Env, adminId: string, action: string, targetI
 }
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
+  const corsHeaders = getCorsHeaders(request);
   const admin = await getAdminUser(request, env);
   if (!admin) {
     return new Response(JSON.stringify({ success: false, error: 'Acesso negado' }), { status: 403, headers: corsHeaders });
@@ -118,6 +122,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 };
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+  const corsHeaders = getCorsHeaders(request);
   const admin = await getAdminUser(request, env);
   if (!admin) {
     return new Response(JSON.stringify({ success: false, error: 'Acesso negado' }), { status: 403, headers: corsHeaders });
@@ -157,6 +162,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 };
 
 export const onRequestPut: PagesFunction<Env> = async ({ request, env }) => {
+  const corsHeaders = getCorsHeaders(request);
   const admin = await getAdminUser(request, env);
   if (!admin) {
     return new Response(JSON.stringify({ success: false, error: 'Acesso negado' }), { status: 403, headers: corsHeaders });
@@ -240,6 +246,7 @@ export const onRequestPut: PagesFunction<Env> = async ({ request, env }) => {
 };
 
 export const onRequestDelete: PagesFunction<Env> = async ({ request, env }) => {
+  const corsHeaders = getCorsHeaders(request);
   const admin = await getAdminUser(request, env);
   if (!admin) {
     return new Response(JSON.stringify({ success: false, error: 'Acesso negado' }), { status: 403, headers: corsHeaders });
@@ -270,6 +277,6 @@ export const onRequestDelete: PagesFunction<Env> = async ({ request, env }) => {
   }
 };
 
-export const onRequestOptions: PagesFunction = async () => {
-  return new Response(null, { headers: corsHeaders });
+export const onRequestOptions: PagesFunction = async ({ request }) => {
+  return new Response(null, { headers: getCorsHeaders(request) });
 };

@@ -156,7 +156,7 @@ export default function ReceitaEditar() {
     if (params.get("download") === "1" && previewRef.current) {
       const timer = setTimeout(async () => {
         try {
-          const filename = generatePDFFilename(form.paciente || "RECEITA", "DOWNLOAD");
+          const filename = generatePDFFilename(form.paciente || "RECEITA", "receita");
           await exportElementToPDF(previewRef.current!, { filename, scale: 2, quality: 0.92, multiPage: true });
         } catch (err) {
           console.error("Auto-download falhou:", err);
@@ -222,7 +222,7 @@ export default function ReceitaEditar() {
   const handleDownloadPdf = async () => {
     if (!previewRef.current) return;
     try {
-      const filename = generatePDFFilename(form.paciente || "RECEITA", "EDITADO");
+      const filename = generatePDFFilename(form.paciente || "RECEITA", "receita");
       await exportElementToPDF(previewRef.current, { filename, scale: 2, quality: 0.92, multiPage: true });
     } catch (err) {
       alert(`Erro ao gerar PDF: ${err instanceof Error ? err.message : "Erro desconhecido"}`);
@@ -346,7 +346,7 @@ export default function ReceitaEditar() {
 
           {/* CPF Bloqueado */}
           <div style={card}>
-            <div style={secTitle}>CPF {form.cpf || "do Paciente"}</div>
+            <div style={secTitle}>CPF {cpfOriginal || "do Paciente"}</div>
             <div style={{
               background: "#f3f4f6", border: "1px solid #d1d5db", borderRadius: 6,
               padding: "8px 12px", fontSize: 14, fontWeight: 700, color: "#6b7280",

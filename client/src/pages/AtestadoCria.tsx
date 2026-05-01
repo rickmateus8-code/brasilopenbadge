@@ -9,7 +9,7 @@ import { useSettings } from "@/hooks/useSettings";
 
 // ─── SearchSelect: select com campo de busca integrado no dropdown ────────────
 function SearchSelect({
-  label, value, options, placeholder, disabled, onChange
+  label, value, options, placeholder, disabled, onChange, onFocus
 }: {
   label: string;
   value: string;
@@ -17,6 +17,7 @@ function SearchSelect({
   placeholder?: string;
   disabled?: boolean;
   onChange: (v: string) => void;
+  onFocus?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -52,13 +53,21 @@ function SearchSelect({
     alignItems: "center",
     justifyContent: "space-between",
     minHeight: 32,
+    outline: open ? "2px solid #005CA9" : "none",
+    borderColor: open ? "#005CA9" : "#d1d5db",
+  };
+
+  const handleSelect = (val: string) => {
+    onChange(val);
+    setOpen(false);
+    setSearch("");
   };
 
   return (
-    <div style={{ position: "relative" }} ref={ref}>
+    <div style={{ position: "relative" }} ref={ref} onFocus={onFocus}>
       <div
         style={triggerStyle}
-        onClick={() => { if (!disabled) { setOpen(o => !o); setSearch(""); } }}
+        onClick={() => { if (!disabled) { setOpen(o => !o); setSearch(""); if (!open && onFocus) onFocus(); } }}
       >
         <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {value || placeholder || label + "..."}
@@ -94,12 +103,23 @@ function SearchSelect({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (filtered.length > 0) handleSelect(filtered[0]);
+                }
+                if (e.key === "Escape") {
+                  setOpen(false);
+                  setSearch("");
+                }
+              }}
             />
           </div>
           <div style={{ maxHeight: 220, overflowY: "auto" }}>
             <div
               style={{ padding: "6px 12px", fontSize: 13, color: "#9ca3af", cursor: "pointer" }}
-              onMouseDown={() => { onChange(""); setOpen(false); setSearch(""); }}
+              onMouseDown={(e) => { e.preventDefault(); handleSelect(""); }}
             >
               {placeholder || label + "..."}
             </div>
@@ -117,7 +137,7 @@ function SearchSelect({
                   fontWeight: o === value ? 700 : 400,
                   color: "#000",
                 }}
-                onMouseDown={() => { onChange(o); setOpen(false); setSearch(""); }}
+                onMouseDown={(e) => { e.preventDefault(); handleSelect(o); }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = o === value ? "#dbeafe" : "#f3f4f6")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = o === value ? "#dbeafe" : "transparent")}
               >
@@ -151,6 +171,22 @@ async function apiFetch(path: string) {
 }
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
+const ESTADOS_SIGLAS: Record<string, string> = {
+  "ACRE": "AC", "ALAGOAS": "AL", "AMAPA": "AP", "AMAZONAS": "AM", "BAHIA": "BA",
+  "CEARA": "CE", "DISTRITO FEDERAL": "DF", "ESPIRITO SANTO": "ES", "GOIAS": "GO",
+  "MARANHAO": "MA", "MATO GROSSO": "MT", "MATO GROSSO DO SUL": "MS", "MINAS GERAIS": "MG",
+  "PARA": "PA", "PARAIBA": "PB", "PARANA": "PR", "PERNAMBUCO": "PE", "PIAUI": "PI",
+  "RIO DE JANEIRO": "RJ", "RIO GRANDE DO NORTE": "RN", "RIO GRANDE DO SUL": "RS",
+  "RONDONIA": "RO", "RORAIMA": "RR", "SANTA CATARINA": "SC", "SAO PAULO": "SP",
+  "SERGIPE": "SE", "TOCANTINS": "TO"
+};
+
+function converterEstadoParaSigla(nomeEstado: string): string {
+  if (!nomeEstado) return "";
+  const nomeNorm = nomeEstado.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toUpperCase();
+  return ESTADOS_SIGLAS[nomeNorm] || nomeNorm;
+}
+
 const UFS = [
   "AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT",
   "PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO",
@@ -471,30 +507,30 @@ export default function AtestadoCria() {
       }
       const d = data.data;
       // Preencher dados do paciente
+      const siglaUF = converterEstadoParaSigla(d.uf || "");
       setForm(p => ({
         ...p,
         paciente: d.nome || p.paciente,
         nascimento: d.nascimento || p.nascimento,
         sexo: (d.sexo as "MALE" | "FEMALE") || p.sexo,
         nomeMae: d.nomeMae || p.nomeMae,
-        // Se Snoop retornou endereço completo, preencher também
+        // Formato final: {ENDEREÇO}, {NUMERO} - {BAIRRO}, {CIDADE}/{UF}
         endereco: d.endereco
           ? [
               `${d.endereco}${d.numero ? `, ${d.numero}` : ", S/N"}`,
-              [d.bairro, d.cidade && d.uf ? `${d.cidade}/${d.uf}` : (d.cidade || "")].filter(Boolean).join(", "),
-            ].filter(Boolean).join(" - ")
+              [d.bairro, d.cidade && siglaUF ? `${d.cidade}/${siglaUF}` : (d.cidade || "")].filter(Boolean).join(", "),
+            ].filter(Boolean).join(" - ").toUpperCase()
           : p.endereco,
         // Preencher cidade de emissão se disponivel
-        cidade: d.cidade || p.cidade,
+        cidade: d.cidade ? d.cidade.toUpperCase() : p.cidade,
       }));
       // Preencher UF se disponivel
-      if (d.uf) setCepUFPreenchida(d.uf);
+      if (siglaUF) setCepUFPreenchida(siglaUF);
       // Preencher CEP do paciente se disponivel
       if (d.cep) {
         const cepNum = d.cep.replace(/\D/g, "");
         if (cepNum.length === 8) {
           setCepPaciente(`${cepNum.slice(0,5)}-${cepNum.slice(5)}`);
-          setCepUPA(`${cepNum.slice(0,5)}-${cepNum.slice(5)}`);
         }
       }
       const source = data.source === "snoop" ? "Snoop Intelligence" : "BrasilAPI";
@@ -561,23 +597,102 @@ export default function AtestadoCria() {
   const [cepLoading, setCepLoading] = useState(false);
   const [cepUFPreenchida, setCepUFPreenchida] = useState(""); // UF preenchida via CEP
 
-  // ── CEP para UPA próxima ─────────────────────────────────────────────────────
-  const [cepUPA, setCepUPA] = useState("");
-  const [cepUPALoading, setCepUPALoading] = useState(false);
-  const [cepUPAErro, setCepUPAErro] = useState("");
-  const [upaResultados, setUpaResultados] = useState<Array<{
-    nome: string; tipo: string; endereco: string; rua: string;
-    numero: string; bairro: string; cidade: string; uf: string; cep: string; cnes: number;
-  }>>([]);
-  const [showUpaResultados, setShowUpaResultados] = useState(false);
-  const [upaExpandido, setUpaExpandido] = useState(true);
   const [searchUF, setSearchUF] = useState("");
   const [searchCidade, setSearchCidade] = useState("");
   const [searchBairro, setSearchBairro] = useState("");
   // ── Modal de confirmação de preço ─────────────────────────────────────────
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [documentPrice, setDocumentPrice] = useState<number>(0);
-  const [priceLoading, setPriceLoading] = useState(false);
+  const [priceLoading, setPriceLoading] = useState<boolean>(false);
+
+  // ── Lógica de Preview Inteligente com Zoom Dinâmico ─────────────────────────
+  const [zoomScale, setZoomScale] = useState(0.65);
+  const [zoomTranslateY, setZoomTranslateY] = useState(0);
+  const [isFocused, setIsFocused] = useState(false);
+  const [previewMode, setPreviewMode] = useState<"auto" | "full">("auto");
+  const [currentSection, setCurrentSection] = useState<"top" | "bottom">("top");
+
+  // Calcula a escala "Fit" exata para o container atual
+  const getFitScale = useCallback(() => {
+    const container = document.getElementById("preview-container");
+    if (!container) return 0.65;
+    const padding = 20; 
+    const availableWidth = container.offsetWidth - padding;
+    const availableHeight = container.offsetHeight - padding;
+    const scaleX = availableWidth / 794;
+    const scaleY = availableHeight / 1123;
+    return Math.min(scaleX, scaleY, 1.0);
+  }, []);
+
+  // Função para calcular o Zoom e Deslocamento dividindo o Layout em CIMA / BAIXO
+  const scrollToPreviewSection = useCallback((section: "top" | "bottom") => {
+    if (previewMode === "full") return;
+
+    const container = document.getElementById("preview-container");
+    if (container) {
+      const containerHeight = container.offsetHeight;
+      const containerWidth = container.offsetWidth;
+      const padding = 15; // Reduzido para ganhar espaço
+      
+      // Zoom focado: aproveita a largura mas mantém margem lateral pequena
+      const focusScale = Math.min((containerWidth - 30) / 794, 1.05);
+      
+      let targetY = 0;
+      if (section === "top") {
+        // Alinha o topo do A4 exatamente com o topo do container (com margem mínima)
+        // O transformOrigin é 'top center', então targetY é o deslocamento físico
+        targetY = padding; 
+      } else {
+        // Alinha o fundo do A4 com o fundo do container
+        // O documento escalado tem 1123 * focusScale de altura
+        const scaledHeight = 1123 * focusScale;
+        targetY = containerHeight - scaledHeight - padding;
+      }
+
+      setZoomScale(focusScale);
+      setZoomTranslateY(targetY);
+      setCurrentSection(section);
+      setIsFocused(true);
+    }
+  }, [previewMode]);
+
+  // Wrapper para compatibilidade e setas
+  const handleFocusSection = (sectionId: string) => {
+    const isTop = sectionId === "preview-header" || sectionId === "preview-patient" || sectionId === "preview-top";
+    scrollToPreviewSection(isTop ? "top" : "bottom");
+  };
+
+  const togglePreviewSection = () => {
+    scrollToPreviewSection(currentSection === "top" ? "bottom" : "top");
+  };
+
+  // Retornar ao estado original (Ver documento inteiro)
+  const resetPreviewZoom = () => {
+    setZoomScale(getFitScale());
+    setZoomTranslateY(0);
+    setIsFocused(false);
+    setCurrentSection("top");
+  };
+
+  // Resetar zoom quando alternar para modo "Ver Inteiro"
+  useEffect(() => {
+    if (previewMode === "full") {
+      resetPreviewZoom();
+    }
+  }, [previewMode, getFitScale]);
+
+  // Ajustar escala inicial e ao redimensionar
+  useEffect(() => {
+    const handleResize = () => {
+      if (!isFocused || previewMode === "full") setZoomScale(getFitScale());
+    };
+    window.addEventListener('resize', handleResize);
+    const timer = setTimeout(handleResize, 100);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(timer);
+    };
+  }, [getFitScale, isFocused, previewMode]);
 
   // ── Atualizar texto do atestado quando dias mudam ──────────────────────────
   useEffect(() => {
@@ -657,7 +772,7 @@ export default function AtestadoCria() {
   const buscarMedicos = useCallback(async (autoSearch = false) => {
     const termo = termoBusca.trim().toUpperCase().replace(/[.\-]/g, "");
     if (!filtroUF) { if (!autoSearch) setErroBusca("Selecione a UF antes de buscar."); return; }
-    // Permite busca sem termo se tiver cidade selecionada (igual ao docmaster)
+    // Permite busca sem termo se tiver cidade selecionada (igual ao elitedoc)
     if (termo.length < 3 && !filtroCidade) {
       if (!autoSearch) setErroBusca("Digite ao menos 3 caracteres do nome/CRM, ou selecione uma Cidade.");
       return;
@@ -668,10 +783,10 @@ export default function AtestadoCria() {
     try {
       let params = `?uf=${filtroUF}&limit=50`;
       if (termo.length >= 3) {
-        // Busca por nome ou CRM (igual ao docmaster)
+        // Busca por nome ou CRM (igual ao elitedoc)
         params += `&q=${encodeURIComponent(termo)}`;
       } else if (filtroCidade) {
-        // Sem termo: lista médicos da cidade (igual ao docmaster)
+        // Sem termo: lista médicos da cidade (igual ao elitedoc)
         params += `&cidade=${encodeURIComponent(filtroCidade)}`;
         if (filtroBairro) params += `&bairro=${encodeURIComponent(filtroBairro)}`;
       }
@@ -686,7 +801,7 @@ export default function AtestadoCria() {
     }
   }, [termoBusca, filtroUF, filtroEsp, filtroCidade, filtroBairro]);
 
-  // ── Busca automática ao selecionar cidade (igual ao docmaster) ────────────────────────
+  // ── Busca automática ao selecionar cidade (igual ao elitedoc) ────────────────────────
   useEffect(() => {
     if (filtroUF && filtroCidade) {
       const timer = setTimeout(() => buscarMedicos(true), 300);
@@ -746,50 +861,6 @@ export default function AtestadoCria() {
       }));
     } catch { /* ignora erro silencioso */ }
     finally { setCepLoading(false); }
-  };
-
-  // ── Buscar UPA mais próxima pelo CEP (via API CNES DataSUS) ────────────────────
-  const buscarUPAProxima = async () => {
-    const cepLimpo = cepUPA.replace(/\D/g, "");
-    if (cepLimpo.length !== 8) { setCepUPAErro("CEP inválido. Digite 8 dígitos."); return; }
-    setCepUPALoading(true);
-    setCepUPAErro("");
-    setUpaResultados([]);
-    setShowUpaResultados(false);
-    try {
-      const res = await fetch(`/api/upa-proxima?cep=${cepLimpo}`);
-      const data = await res.json() as any;
-      if (!res.ok || data.error) { setCepUPAErro(data.error || "Erro ao buscar UPAs."); return; }
-      if (!data.upas || data.upas.length === 0) {
-        setCepUPAErro(`Nenhuma UPA/unidade encontrada em ${data.cidade}/${data.uf}. Selecione manualmente.`);
-        return;
-      }
-      setUpaResultados(data.upas);
-      setShowUpaResultados(true);
-      setCepUPAErro("");
-    } catch { setCepUPAErro("Erro ao buscar. Verifique a conexão."); }
-    finally { setCepUPALoading(false); }
-  };
-
-  // ── Selecionar UPA dos resultados CNES ──────────────────────────────────────────────────
-  const selecionarUPA = (upa: typeof upaResultados[0]) => {
-    // Formatar endereço no padrão {rua}, {Nº} - {bairro}, {cidade}/{uf}
-    const endFormatado = [
-      `${upa.rua}, ${upa.numero}`,
-      upa.bairro ? `${upa.bairro}, ${upa.cidade}/${upa.uf}` : `${upa.cidade}/${upa.uf}`,
-    ].join(" - ");
-    setForm(p => ({
-      ...p,
-      unidade: upa.nome,
-      instituicao: `PREFEITURA DE ${upa.cidade}`,
-      enderecoEmitente: endFormatado,
-      cidade: upa.cidade,
-    }));
-    skipClearUnidade.current = true;
-    setFiltroUF(upa.uf);
-    setFiltroCidade(upa.cidade);
-    setShowUpaResultados(false);
-    setShowEditar(true);
   };
 
   // ── Upload de logos ─────────────────────────────────────────────────────────────────
@@ -1157,8 +1228,9 @@ export default function AtestadoCria() {
     logoUrl: logoLeft,
     logoRight: logoRight,
     instituicao: form.instituicao || (form.cidade ? `PREFEITURA DE ${form.cidade.toUpperCase()}` : "INSTITUÇÃO"),
+    afastamento: form.afastamento,
     unidade: form.unidade || "LOCAL DE ATENDIMENTO",
-    enderecoEmitente: form.enderecoEmitente || "ENDEREÇO DA CLÍNICA",
+    enderecoEmitente: form.enderecoEmitente || "ENDEREÇO COMPLETO",
     signatureColor,
     signatureImage,
     textoAtestado: form.textoAtestado,
@@ -1244,14 +1316,14 @@ export default function AtestadoCria() {
     cursor: "pointer",
   };  // ── Render ──────────────────────────────────────────────────────────────────────
   return (
-    <div style={{ minHeight: "100vh", background: "#ffffff", backgroundColor: "#ffffff", fontFamily: "Roboto, sans-serif" }}>
+    <div style={{ height: "100vh", overflow: "hidden", background: "#fff", fontFamily: "Roboto, sans-serif", display: "flex", flexDirection: "column" }}>
       <style>{`
         /* Responsividade mobile para AtestadoCria */
         @media (max-width: 900px) {
-          .atestado-layout { flex-direction: column !important; padding: 8px !important; }
+          .atestado-layout { flex-direction: column !important; padding: 8px !important; overflow-y: auto !important; height: auto !important; }
           .atestado-form-col { width: 100% !important; max-height: none !important; overflow-y: visible !important; }
           .atestado-preview-col { display: none !important; }
-          .atestado-header { flex-direction: column !important; gap: 6px !important; align-items: flex-start !important; }
+          .atestado-header { flex-direction: column !important; gap: 6px !important; align-items: flex-start !important; flex-shrink: 0 !important; }
           .atestado-header-title { font-size: 13px !important; }
           .atestado-import-grid { grid-template-columns: 1fr !important; }
           .atestado-grid-2 { grid-template-columns: 1fr !important; }
@@ -1260,6 +1332,26 @@ export default function AtestadoCria() {
           .atestado-card { padding: 10px 10px !important; }
           .atestado-btn-row { flex-direction: column !important; }
           .atestado-btn-row button { width: 100% !important; }
+        }
+
+        /* Modern Scrollbar para a coluna do formulário */
+        .atestado-form-col::-webkit-scrollbar {
+          width: 6px;
+        }
+        .atestado-form-col::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .atestado-form-col::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 10px;
+        }
+        .atestado-form-col::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+        /* Garantir que o layout ocupe o espaço restante */
+        .atestado-layout {
+          height: calc(100vh - 60px);
+          overflow: hidden;
         }
       `}</style>
 
@@ -1402,7 +1494,7 @@ export default function AtestadoCria() {
       )}
 
       {/* Header */}
-      <div className="atestado-header" style={{ background: "#d97706", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div className="atestado-header" style={{ background: "#005CA9", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <button style={{ ...btnGray, padding: "5px 12px", fontSize: 11 }} onClick={() => navigate("/dashboard")}>← VOLTAR</button>
           <h1 style={{ color: "#fff", fontSize: 16, fontWeight: 700, margin: 0 }}>DocMaster — EMITIR ATESTADO</h1>
@@ -1412,10 +1504,17 @@ export default function AtestadoCria() {
         </span>
       </div>
 
-      <div className="atestado-layout" style={{ display: "flex", gap: 14, padding: 14, maxWidth: 2000, margin: "0 auto" }}>
+      <div className="atestado-layout" style={{ display: "flex", gap: 10, padding: "10px", width: "100%", margin: 0, justifyContent: "flex-start" }}>
 
         {/* ═══ COLUNA ESQUERDA — FORMULÁRIO ═══ */}
-        <div className="atestado-form-col" style={{ width: 612, flexShrink: 0, overflowY: "auto", maxHeight: "calc(100vh - 70px)" }}>
+        <div 
+          className="atestado-form-col" 
+          style={{ width: 612, flexShrink: 0, overflowY: "auto", maxHeight: "calc(100vh - 70px)" }}
+          onClick={(e) => {
+            // Se clicar na div de fundo (não nos inputs/botões), reseta o zoom
+            if (e.target === e.currentTarget) resetPreviewZoom();
+          }}
+        >
           <form onSubmit={handleShowConfirm}>
 
             {/* ── Importação Rápida ── */}
@@ -1475,69 +1574,6 @@ export default function AtestadoCria() {
             <div style={card}>
               <p style={secTitle}>🔍 1. Buscar Médico</p>
 
-              {/* UPA mais próxima pelo CEP */}
-              <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "10px 12px", marginBottom: 10 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} onClick={() => setUpaExpandido(p => !p)}>
-                  <label style={{ ...lbl, color: "#1d4ed8", fontWeight: 700, cursor: "pointer", marginBottom: 0 }}>🏥 Buscar UPA/Unidade mais próxima pelo CEP</label>
-                  <span style={{ fontSize: 14, color: "#1d4ed8", userSelect: "none" }}>{upaExpandido ? "▲" : "▼"}</span>
-                </div>
-                {upaExpandido && (<div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 6, alignItems: "center", marginTop: 4 }}>
-                    <input
-                      style={inp}
-                      value={cepUPA}
-                      onChange={(e) => {
-                        const v = e.target.value.replace(/\D/g, "").slice(0, 8);
-                        const fmt = v.length > 5 ? `${v.slice(0,5)}-${v.slice(5)}` : v;
-                        setCepUPA(fmt);
-                      }}
-                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), buscarUPAProxima())}
-                      placeholder="Digite o CEP do paciente..."
-                      inputMode="numeric"
-                    />
-                    <button
-                      type="button"
-                      style={{ ...btnBlue, padding: "6px 12px", fontSize: 11, background: "#1d4ed8", whiteSpace: "nowrap" }}
-                      onClick={buscarUPAProxima}
-                      disabled={cepUPALoading}
-                    >
-                      {cepUPALoading ? "🔄 Buscando..." : "🏥 BUSCAR UPA"}
-                    </button>
-                  </div>
-                {cepUPAErro && (
-                  <p style={{ fontSize: 11, color: "#dc2626", marginTop: 6 }}>{cepUPAErro}</p>
-                )}
-                <span style={{ fontSize: 10, color: "#3b82f6", marginTop: 4, display: "block" }}>Busca UPAs, Prontos Socorros e Hospitais reais do DataSUS na cidade do CEP informado.</span>
-
-                {/* Lista de UPAs do CNES */}
-                {showUpaResultados && upaResultados.length > 0 && (
-                  <div style={{ marginTop: 8, maxHeight: 220, overflowY: "auto", border: "1px solid #bfdbfe", borderRadius: 8 }}>
-                    {upaResultados.map((upa, i) => (
-                      <div
-                        key={upa.cnes || i}
-                        onClick={() => selecionarUPA(upa)}
-                        style={{
-                          padding: "8px 12px",
-                          borderBottom: "1px solid #dbeafe",
-                          cursor: "pointer",
-                          fontSize: 12,
-                          background: i % 2 === 0 ? "#eff6ff" : "#dbeafe",
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = "#bfdbfe")}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = i % 2 === 0 ? "#eff6ff" : "#dbeafe")}
-                      >
-                        <strong style={{ color: "#1d4ed8", fontSize: 12 }}>{upa.nome}</strong>
-                        <span style={{ color: "#3b82f6", fontSize: 10, marginLeft: 8, background: "#dbeafe", padding: "1px 6px", borderRadius: 4 }}>{upa.tipo}</span>
-                        <br />
-                        <span style={{ color: "#374151", fontSize: 11 }}>{upa.endereco}</span>
-                        {upa.cep && <span style={{ color: "#6b7280", fontSize: 10, marginLeft: 8 }}>CEP: {upa.cep}</span>}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                </div>)}
-              </div>
-
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 6 }}>
                 <div>
                   <label style={lbl}>UF *</label>
@@ -1546,6 +1582,7 @@ export default function AtestadoCria() {
                     value={filtroUF}
                     options={UFS}
                     placeholder="UF..."
+                    onFocus={() => handleFocusSection("preview-header")}
                     onChange={(v) => { setFiltroUF(v); setFiltroCidade(""); setFiltroBairro(""); }}
                   />
                 </div>
@@ -1557,6 +1594,7 @@ export default function AtestadoCria() {
                     options={cidades}
                     placeholder={filtroUF ? "Cidade..." : "Selecione UF primeiro..."}
                     disabled={!filtroUF}
+                    onFocus={() => handleFocusSection("preview-header")}
                     onChange={(v) => { setFiltroCidade(v); setFiltroBairro(""); }}
                   />
                 </div>
@@ -1568,6 +1606,7 @@ export default function AtestadoCria() {
                     options={bairros}
                     placeholder={filtroCidade ? "Bairro..." : "Selecione cidade primeiro..."}
                     disabled={!filtroCidade}
+                    onFocus={() => handleFocusSection("preview-header")}
                     onChange={(v) => setFiltroBairro(v)}
                   />
                 </div>
@@ -1585,14 +1624,14 @@ export default function AtestadoCria() {
                   </select>
                 </div>
               </div>
-              <input
+                <input
                 style={{ ...inp, marginBottom: 8 }}
                 placeholder="DIGITE NOME OU CRM..."
                 value={termoBusca}
                 onChange={(e) => setTermoBusca(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), buscarMedicos())}
+                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), buscarMedicos(false))}
               />
-              <button type="button" style={{ ...btnBlue, width: "100%" }} onClick={buscarMedicos} disabled={buscando}>
+              <button type="button" style={{ ...btnBlue, width: "100%" }} onClick={() => buscarMedicos(false)} disabled={buscando}>
                 {buscando ? "🔄 Buscando..." : "🔍 BUSCAR NO BANCO DE DADOS"}
               </button>
               {erroBusca && (
@@ -1641,553 +1680,549 @@ export default function AtestadoCria() {
                   {/* Campo oculto — valor gerenciado pelo useEffect de filtroCidade e selecionarMedico */}
                   <div>
                     <label style={lbl}>Local de Atendimento</label>
-                    <input style={inp} value={form.unidade} onChange={(e) => setForm(p => ({ ...p, unidade: e.target.value }))} placeholder="Ex: UBS CENTRO, UPA NORTE, HOSPITAL MUNICIPAL" />
-                  </div>
-                  <div>
-                    <label style={lbl}>Endereço Completo / Emitente</label>
-                    <input
-                      style={{ ...inp, background: form.enderecoEmitente ? "#fff" : "#f8fafc" }}
-                      value={form.enderecoEmitente}
-                      onChange={(e) => setForm(p => ({ ...p, enderecoEmitente: e.target.value }))}
-                      placeholder="Ex: RUA ANTÔNIO WALTER, 66 – CENTRO, VOTORANTIM/SP"
-                    />
-                    <span style={{ fontSize: 10, color: "#666", marginTop: 2, display: "block" }}>Preenchido automaticamente ao selecionar médico. Edite se necessário.</span>
-                  </div>
-                  <div>
-                    <label style={lbl}>Especialidade</label>
-                    <input style={inp} value={form.especialidade} onChange={(e) => setForm(p => ({ ...p, especialidade: e.target.value }))} placeholder="Ex: CLÍNICO GERAL, PEDIATRA" />
-                  </div>
-                  <p style={{ ...secTitle, fontSize: 10 }}>Dados do Médico</p>
-                  <div>
-                    <label style={lbl}>Nome Completo</label>
-                    <input style={inp} value={form.medico} onChange={(e) => setForm(p => ({ ...p, medico: e.target.value }))} placeholder="DR. NOME SOBRENOME" />
-                  </div>
-                  <div>
-                    <label style={lbl}>CRM (Ex: CRM/SP 12345)</label>
-                    <input style={inp} value={form.crm} onChange={(e) => setForm(p => ({ ...p, crm: e.target.value }))} placeholder="CRM/SP 00000" />
-                  </div>
-                  <p style={{ ...secTitle, fontSize: 10 }}>ASSINATURA & CARIMBO</p>
-                  <div>
-                    <label style={lbl}>COR DA TINTA</label>
-                    <select style={sel} value={signatureColor} onChange={(e) => setSignatureColor(e.target.value)}>
-                      <option value="#0b109f">🔵 Azul Caneta (Padrão)</option>
-                      <option value="#000000">⚫ Preto (Xerox)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={lbl}>USAR FOTO DA ASSINATURA (OPCIONAL)</label>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      {signatureImage ? (
-                        <div style={{ position: "relative" }}>
-                          <img src={signatureImage} alt="Assinatura" style={{ maxHeight: 65, maxWidth: 208, objectFit: "contain", border: "1px solid #e5e7eb", borderRadius: 6 }} />
-                          <button type="button" onClick={() => { setSignatureImage(""); if (signatureRef.current) signatureRef.current.value = ""; }}
-                            style={{ position: "absolute", top: -6, right: -6, background: "#ef4444", color: "#fff", border: "none", borderRadius: "50%", width: 18, height: 18, fontSize: 10, cursor: "pointer" }}>
-                            ✕
-                          </button>
-                        </div>
-                      ) : (
-                        <label style={{ ...btnBlue, padding: "6px 12px", cursor: "pointer", fontSize: 11 }}>
-                          📷 ENVIAR FOTO
-                          <input ref={signatureRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleSignatureUpload} />
-                        </label>
+                      <input
+                        style={inp}
+                        value={form.unidade}
+                        onFocus={() => scrollToPreviewSection("top")}
+                        onChange={(e) => setForm(p => ({ ...p, unidade: e.target.value }))}
+                        placeholder="Ex: UBS CENTRO, UPA NORTE, HOSPITAL MUNICIPAL"
+                      />
+                    </div>
+                    <div>
+                      <label style={lbl}>Endereço Completo / Emitente</label>
+                      <input
+                        style={{ ...inp, background: form.enderecoEmitente ? "#fff" : "#f8fafc" }}
+                        value={form.enderecoEmitente}
+                        onFocus={() => scrollToPreviewSection("top")}
+                        onChange={(e) => setForm(p => ({ ...p, enderecoEmitente: e.target.value }))}
+                        placeholder="Ex: RUA ANTÔNIO WALTER, 66 – CENTRO, VOTORANTIM/SP"
+                      />
+                      <span style={{ fontSize: 10, color: "#666", marginTop: 2, display: "block" }}>Preenchido automaticamente ao selecionar médico. Edite se necessário.</span>
+                    </div>
+                    <div>
+                      <label style={lbl}>Especialidade</label>
+                      <input
+                        style={inp}
+                        value={form.especialidade}
+                        onFocus={() => scrollToPreviewSection("bottom")}
+                        onChange={(e) => setForm(p => ({ ...p, especialidade: e.target.value }))}
+                        placeholder="Ex: CLÍNICO GERAL, PEDIATRA"
+                      />
+                    </div>
+                    <p style={{ ...secTitle, fontSize: 10 }}>Dados do Médico</p>
+                    <div>
+                      <label style={lbl}>Nome Completo</label>
+                      <input
+                        style={inp}
+                        value={form.medico}
+                        onFocus={() => scrollToPreviewSection("bottom")}
+                        onChange={(e) => setForm(p => ({ ...p, medico: e.target.value }))}
+                        placeholder="DR. NOME SOBRENOME"
+                      />
+                    </div>
+                    <div>
+                      <label style={lbl}>CRM (Ex: CRM/SP 12345)</label>
+                      <input
+                        style={inp}
+                        value={form.crm}
+                        onFocus={() => scrollToPreviewSection("bottom")}
+                        onChange={(e) => setForm(p => ({ ...p, crm: e.target.value }))}
+                        placeholder="CRM/SP 00000"
+                      />
+                    </div>
+                    <p style={{ ...secTitle, fontSize: 10 }}>ASSINATURA & CARIMBO</p>
+                    <div>
+                      <label style={lbl}>COR DA TINTA</label>
+                      <select
+                        style={sel}
+                        value={signatureColor}
+                        onFocus={() => scrollToPreviewSection("bottom")}
+                        onChange={(e) => setSignatureColor(e.target.value)}
+                      >
+                        <option value="#0b109f">🔵 Azul Caneta (Padrão)</option>
+                        <option value="#000000">⚫ Preto (Xerox)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={lbl}>USAR FOTO DA ASSINATURA (OPCIONAL)</label>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }} onClick={() => scrollToPreviewSection("bottom")}>
+                        {signatureImage ? (
+                          <div style={{ position: "relative" }}>
+                            <img src={signatureImage} alt="Assinatura" style={{ maxHeight: 65, maxWidth: 208, objectFit: "contain", border: "1px solid #e5e7eb", borderRadius: 6 }} />
+                            <button type="button" onClick={() => { setSignatureImage(""); if (signatureRef.current) signatureRef.current.value = ""; }}
+                              style={{ position: "absolute", top: -6, right: -6, background: "#ef4444", color: "#fff", border: "none", borderRadius: "50%", width: 18, height: 18, fontSize: 10, cursor: "pointer" }}>
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <label style={{ ...btnBlue, padding: "6px 12px", cursor: "pointer", fontSize: 11 }}>
+                            📷 ENVIAR FOTO
+                            <input ref={signatureRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleSignatureUpload} />
+                          </label>
+                        )}
+                      </div>
+                    </div>
+                    </div>
+                    </details>
+                    </div>
+
+                    {/* ── 2. Dados do Paciente ── */}
+                    <div style={card}>
+                    <p style={secTitle}>👤 2. Dados do Paciente</p>
+                    <div style={{ display: "grid", gap: 8 }}>
+
+                    {/* CPF ou CNS — PRIMEIRO para permitir preenchimento automático */}
+                    <div>
+                    <label style={lbl}>Tipo de Documento *</label>
+                    <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
+                      <button
+                        type="button"
+                        onClick={() => { setTipoDoc("CPF"); setForm(p => ({ ...p, docValue: "" })); setCpfStatus("idle"); setCpfMsg(""); scrollToPreviewSection("top"); }}
+                        style={{
+                          flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
+                          background: tipoDoc === "CPF" ? "#005CA9" : "#e2e8f0",
+                          color: tipoDoc === "CPF" ? "#fff" : "#374151",
+                          border: tipoDoc === "CPF" ? "2px solid #005CA9" : "2px solid #d1d5db",
+                        }}
+                      >
+                        CPF
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setTipoDoc("CNS"); setForm(p => ({ ...p, docValue: "" })); setCpfStatus("idle"); setCpfMsg(""); scrollToPreviewSection("top"); }}
+                        style={{
+                          flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
+                          background: tipoDoc === "CNS" ? "#005CA9" : "#e2e8f0",
+                          color: tipoDoc === "CNS" ? "#fff" : "#374151",
+                          border: tipoDoc === "CNS" ? "2px solid #005CA9" : "2px solid #d1d5db",
+                        }}
+                      >
+                        CNS — Cartão Nacional de Saúde
+                      </button>
+                    </div>
+                    <div style={{ position: "relative" }}>
+                      <input
+                        style={{
+                          ...inp,
+                          borderColor: cpfStatus === "error" ? "#dc2626" : cpfStatus === "ok" ? "#16a34a" : undefined,
+                          paddingRight: tipoDoc === "CPF" && cpfLoading ? 32 : undefined,
+                        }}
+                        value={form.docValue}
+                        onFocus={() => scrollToPreviewSection("top")}
+                        onChange={(e) => handleDocInput(e.target.value)}
+                        placeholder={tipoDoc === "CPF" ? "000.000.000-00" : "000 0000 0000 0000"}
+                        inputMode="numeric"
+                        required
+                      />
+                      {tipoDoc === "CPF" && cpfLoading && (
+                        <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: 14 }}>⏳</span>
                       )}
                     </div>
-                  </div>
-                </div>
-              </details>
-            </div>
+                    {/* Botão de preenchimento manual via CPF */}
+                    {tipoDoc === "CPF" && !cpfLoading && validarCPF(form.docValue) && cpfStatus !== "ok" && (
+                      <button
+                        type="button"
+                        onClick={() => { buscarDadosCPF(form.docValue); scrollToPreviewSection("top"); }}
+                        style={{
+                          marginTop: 6, width: "100%", padding: "8px 0",
+                          borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
+                          background: "#005CA9", color: "#fff",
+                          border: "2px solid #005CA9",
+                          display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                          transition: "background 0.2s",
+                        }}
+                      >
+                        🔍 Buscar dados via CPF
+                      </button>
+                    )}
+                    </div>
 
-            {/* ── 2. Dados do Paciente ── */}
-            <div style={card}>
-              <p style={secTitle}>👤 2. Dados do Paciente</p>
-              <div style={{ display: "grid", gap: 8 }}>
-
-                {/* CPF ou CNS — PRIMEIRO para permitir preenchimento automático */}
-                <div>
-                  <label style={lbl}>Tipo de Documento *</label>
-                  <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
-                    <button
-                      type="button"
-                      onClick={() => { setTipoDoc("CPF"); setForm(p => ({ ...p, docValue: "" })); setCpfStatus("idle"); setCpfMsg(""); }}
-                      style={{
-                        flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
-                        background: tipoDoc === "CPF" ? "#005CA9" : "#e2e8f0",
-                        color: tipoDoc === "CPF" ? "#fff" : "#374151",
-                        border: tipoDoc === "CPF" ? "2px solid #005CA9" : "2px solid #d1d5db",
-                      }}
-                    >
-                      CPF
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setTipoDoc("CNS"); setForm(p => ({ ...p, docValue: "" })); setCpfStatus("idle"); setCpfMsg(""); }}
-                      style={{
-                        flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
-                        background: tipoDoc === "CNS" ? "#005CA9" : "#e2e8f0",
-                        color: tipoDoc === "CNS" ? "#fff" : "#374151",
-                        border: tipoDoc === "CNS" ? "2px solid #005CA9" : "2px solid #d1d5db",
-                      }}
-                    >
-                      CNS — Cartão Nacional de Saúde
-                    </button>
-                  </div>
-                  <div style={{ position: "relative" }}>
+                    <div>
+                    <label style={lbl}>Nome Completo *</label>
                     <input
-                      style={{
-                        ...inp,
-                        borderColor: cpfStatus === "error" ? "#dc2626" : cpfStatus === "ok" ? "#16a34a" : undefined,
-                        paddingRight: tipoDoc === "CPF" && cpfLoading ? 32 : undefined,
-                      }}
-                      value={form.docValue}
-                      onChange={(e) => handleDocInput(e.target.value)}
-                      placeholder={tipoDoc === "CPF" ? "000.000.000-00" : "000 0000 0000 0000"}
-                      inputMode="numeric"
+                      style={{ ...inp, background: cpfStatus === "ok" && form.paciente ? "#f0fdf4" : undefined }}
+                      value={form.paciente}
+                      onFocus={() => scrollToPreviewSection("top")}
+                      onChange={(e) => setForm(p => ({ ...p, paciente: e.target.value }))}
+                      placeholder="Nome Completo do Paciente"
                       required
                     />
-                    {tipoDoc === "CPF" && cpfLoading && (
-                      <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: 14 }}>⏳</span>
-                    )}
-                  </div>
-                  {/* Botão de preenchimento manual via CPF */}
-                  {tipoDoc === "CPF" && !cpfLoading && validarCPF(form.docValue) && cpfStatus !== "ok" && (
-                    <button
-                      type="button"
-                      onClick={() => buscarDadosCPF(form.docValue)}
-                      style={{
-                        marginTop: 6, width: "100%", padding: "8px 0",
-                        borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
-                        background: "#005CA9", color: "#fff",
-                        border: "2px solid #005CA9",
-                        display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                        transition: "background 0.2s",
-                      }}
-                    >
-                      🔍 Buscar dados via CPF
-                    </button>
-                  )}
-                  {/* Feedback da API de CPF */}
-                  {tipoDoc === "CPF" && cpfMsg && (
-                    <div style={{
-                      marginTop: 4, padding: "5px 8px", borderRadius: 5, fontSize: 11, fontWeight: 600,
-                      background: cpfStatus === "ok" ? "#f0fdf4" : cpfStatus === "not_found" ? "#fffbeb" : "#fef2f2",
-                      color: cpfStatus === "ok" ? "#16a34a" : cpfStatus === "not_found" ? "#d97706" : "#dc2626",
-                      border: `1px solid ${cpfStatus === "ok" ? "#bbf7d0" : cpfStatus === "not_found" ? "#fde68a" : "#fecaca"}`,
-                    }}>
-                      {cpfMsg}
-                      {cpfStatus === "not_found" && " Preencha os dados manualmente."}
-                    </div>
-                  )}
-                  {tipoDoc === "CPF" && form.docValue.replace(/\D/g, "").length === 11 && !validarCPF(form.docValue) && (
-                    <div style={{ marginTop: 4, padding: "5px 8px", borderRadius: 5, fontSize: 11, fontWeight: 600, background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>
-                      ⚠️ CPF inválido. Verifique os dígitos.
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label style={lbl}>Nome Completo *</label>
-                  <input
-                    style={{ ...inp, background: cpfStatus === "ok" && form.paciente ? "#f0fdf4" : undefined }}
-                    value={form.paciente}
-                    onChange={(e) => setForm(p => ({ ...p, paciente: e.target.value }))}
-                    placeholder="Nome Completo do Paciente"
-                    required
-                  />
-                  {cpfStatus === "ok" && form.paciente && (
-                    <span style={{ fontSize: 10, color: "#16a34a", marginTop: 2, display: "block" }}>✅ Preenchido via CPF</span>
-                  )}
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                  <div>
-                    <label style={lbl}>Sexo</label>
-                    <select
-                      style={{ ...sel, background: cpfStatus === "ok" ? "#f0fdf4" : undefined }}
-                      value={form.sexo}
-                      onChange={(e) => setForm(p => ({ ...p, sexo: e.target.value as "MALE" | "FEMALE" }))}
-                    >
-                      <option value="FEMALE">Feminino (F)</option>
-                      <option value="MALE">Masculino (M)</option>
-                    </select>
-                    {cpfStatus === "ok" && (
+                    {cpfStatus === "ok" && form.paciente && (
                       <span style={{ fontSize: 10, color: "#16a34a", marginTop: 2, display: "block" }}>✅ Preenchido via CPF</span>
                     )}
-                  </div>
-                  <div>
-                    <label style={lbl}>Data de Nascimento *</label>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <div>
+                      <label style={lbl}>Sexo</label>
+                      <select
+                        style={{ ...sel, background: cpfStatus === "ok" ? "#f0fdf4" : undefined }}
+                        value={form.sexo}
+                        onFocus={() => scrollToPreviewSection("top")}
+                        onChange={(e) => setForm(p => ({ ...p, sexo: e.target.value as "MALE" | "FEMALE" }))}
+                      >
+                        <option value="FEMALE">Feminino (F)</option>
+                        <option value="MALE">Masculino (M)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={lbl}>Data de Nascimento *</label>
+                      <input
+                        style={{ ...inp, background: cpfStatus === "ok" && form.nascimento ? "#f0fdf4" : undefined }}
+                        value={form.nascimento}
+                        onFocus={() => scrollToPreviewSection("top")}
+                        onChange={(e) => setForm(p => ({ ...p, nascimento: handleDateInput(e.target.value) }))}
+                        placeholder="DD/MM/AAAA"
+                        maxLength={10}
+                        inputMode="numeric"
+                        required
+                      />
+                    </div>
+                    </div>
+
+                    <div>
+                    <label style={lbl}>Nome da Mãe *</label>
                     <input
-                      style={{ ...inp, background: cpfStatus === "ok" && form.nascimento ? "#f0fdf4" : undefined }}
-                      value={form.nascimento}
-                      onChange={(e) => setForm(p => ({ ...p, nascimento: handleDateInput(e.target.value) }))}
-                      placeholder="DD/MM/AAAA"
-                      maxLength={10}
-                      inputMode="numeric"
+                      style={{ ...inp, background: cpfStatus === "ok" && form.nomeMae ? "#f0fdf4" : undefined }}
+                      value={form.nomeMae}
+                      onFocus={() => scrollToPreviewSection("top")}
+                      onChange={(e) => setForm(p => ({ ...p, nomeMae: e.target.value }))}
+                      placeholder="Nome da Mãe"
                       required
                     />
-                    {cpfStatus === "ok" && form.nascimento && (
-                      <span style={{ fontSize: 10, color: "#16a34a", marginTop: 2, display: "block" }}>✅ Preenchido via CPF</span>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <label style={lbl}>Nome da Mãe *</label>
-                  <input
-                    style={{ ...inp, background: cpfStatus === "ok" && form.nomeMae ? "#f0fdf4" : undefined }}
-                    value={form.nomeMae}
-                    onChange={(e) => setForm(p => ({ ...p, nomeMae: e.target.value }))}
-                    placeholder="Nome da Mãe"
-                    required
-                  />
-                  {cpfStatus === "ok" && form.nomeMae && (
-                    <span style={{ fontSize: 10, color: "#16a34a", marginTop: 2, display: "block" }}>✅ Preenchido via CPF</span>
-                  )}
-                </div>
-                {/* CEP + Nº do paciente */}
-                <div>
-                  <label style={lbl}>CEP do Paciente</label>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: 6, alignItems: "center" }}>
+                    </div>
+                    {/* CEP + Nº do paciente */}
+                    <div>
+                    <label style={lbl}>CEP do Paciente</label>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: 6, alignItems: "center" }}>
+                      <input
+                        style={inp}
+                        value={cepPaciente}
+                        onFocus={() => scrollToPreviewSection("top")}
+                        onChange={(e) => {
+                          const v = e.target.value.replace(/\D/g, "").slice(0, 8);
+                          const fmt = v.length > 5 ? `${v.slice(0,5)}-${v.slice(5)}` : v;
+                          setCepPaciente(fmt);
+                          if (v.length === 8) buscarCEP(v);
+                        }}
+                        placeholder="00000-000"
+                        inputMode="numeric"
+                      />
+                      <input
+                        style={{ ...inp, width: 80 }}
+                        value={cepNumero}
+                        onFocus={() => scrollToPreviewSection("top")}
+                        onChange={(e) => setCepNumero(e.target.value)}
+                        placeholder="Nº"
+                      />
+                      <button
+                        type="button"
+                        style={{ ...btnBlue, padding: "6px 10px", fontSize: 11, whiteSpace: "nowrap" }}
+                        onClick={() => { buscarCEP(cepPaciente); scrollToPreviewSection("top"); }}
+                        disabled={cepLoading}
+                      >
+                        {cepLoading ? "🔄" : "🔍 CEP"}
+                      </button>
+                    </div>
+                    </div>
+                    <div>
+                    <label style={lbl}>Endereço do Paciente *</label>
                     <input
                       style={inp}
-                      value={cepPaciente}
+                      value={form.endereco}
+                      onFocus={() => scrollToPreviewSection("top")}
+                      onChange={(e) => setForm(p => ({ ...p, endereco: e.target.value }))}
+                      placeholder="Rua, Número, Bairro, Cidade/UF"
+                      required
+                    />
+                    </div>
+                    </div>
+                    </div>
+
+                    {/* ── 3. Dados Médicos ── */}
+                    <div style={card}>
+                    <p style={secTitle}>🩺 3. Dados Médicos</p>
+                    <div style={{ display: "grid", gap: 8 }}>
+
+                    {/* Tipo de Documento: Atestado ou Laudo */}
+                    <div>
+                    <label style={lbl}>Tipo de Documento *</label>
+                    <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
+                      <button
+                        type="button"
+                        onClick={() => { setDocumentType('atestado'); scrollToPreviewSection("bottom"); }}
+                        style={{
+                          flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
+                          background: documentType === 'atestado' ? "#005CA9" : "#e2e8f0",
+                          color: documentType === 'atestado' ? "#fff" : "#374151",
+                          border: documentType === 'atestado' ? "2px solid #005CA9" : "2px solid #d1d5db",
+                        }}
+                      >
+                        ATESTADO MÉDICO
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setDocumentType('laudo'); scrollToPreviewSection("bottom"); }}
+                        style={{
+                          flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
+                          background: documentType === 'laudo' ? "#005CA9" : "#e2e8f0",
+                          color: documentType === 'laudo' ? "#fff" : "#374151",
+                          border: documentType === 'laudo' ? "2px solid #005CA9" : "2px solid #d1d5db",
+                        }}
+                      >
+                        LAUDO MÉDICO
+                      </button>
+                    </div>
+                    </div>
+
+                    {/* Dias de Afastamento */}
+                    <div>
+                    <label style={lbl}>Dias de Afastamento (1-15)</label>
+                    <select
+                      style={sel}
+                      value={form.afastamento}
+                      onFocus={() => handleFocusSection("preview-top")}
+                      onChange={(e) => setForm(p => ({ ...p, afastamento: e.target.value }))}
+                    >
+                      {Array.from({ length: 15 }, (_, i) => i + 1).map((n) => {
+                        const d = DIAS_EXTENSO[n];
+                        const unidade = n === 1 ? "dia" : "dias";
+                        return (
+                          <option key={n} value={String(n)}>
+                            {d.num} ({d.ext}) {unidade}
+                          </option>
+                        );
+                      })}
+                    </select>
+                    </div>
+
+                    {/* Texto do Atestado */}
+                    <div>
+                    <label style={lbl}>Texto do Atestado</label>
+                    <textarea
+                      value={form.textoAtestado}
+                      onFocus={() => scrollToPreviewSection("bottom")}
+                      onChange={(e) => setForm(p => ({ ...p, textoAtestado: e.target.value }))}
+                      rows={5}
+                      style={{ ...inp, resize: "vertical", lineHeight: 1.6 }}
+                    />
+                    </div>
+
+                    {/* CID */}
+                    <div>
+                    <label style={lbl}>CID — Diagnóstico Rápido</label>
+                    <select style={{ ...sel, marginBottom: 6 }} value=""
+                      onFocus={() => scrollToPreviewSection("bottom")}
                       onChange={(e) => {
-                        const v = e.target.value.replace(/\D/g, "").slice(0, 8);
-                        const fmt = v.length > 5 ? `${v.slice(0,5)}-${v.slice(5)}` : v;
-                        setCepPaciente(fmt);
-                        if (v.length === 8) buscarCEP(v);
-                      }}
-                      placeholder="00000-000"
-                      inputMode="numeric"
-                    />
-                    <input
-                      style={{ ...inp, width: 80 }}
-                      value={cepNumero}
-                      onChange={(e) => setCepNumero(e.target.value)}
-                      placeholder="Nº"
-                    />
+                        if (!e.target.value) return;
+                        const [code, ...rest] = e.target.value.split(" ");
+                        setForm(p => ({ ...p, cidDisplay: code, cidNome: rest.join(" "), cid: e.target.value }));
+                      }}>
+                      <option value="">Selecione um diagnóstico...</option>
+                      {CIDS_CATEGORIZADOS.map((g) => (
+                        <optgroup key={g.grupo} label={g.grupo}>
+                          {g.itens.map((c) => (
+                            <option key={c.code} value={`${c.code} ${c.desc.toUpperCase()}`}>
+                              {c.code} — {c.desc}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 6 }}>
+                      <input style={inp} value={form.cidDisplay} onFocus={() => scrollToPreviewSection("bottom")} onChange={(e) => setForm(p => ({ ...p, cidDisplay: e.target.value }))} placeholder="Código (Ex: J11)" />
+                      <input style={inp} value={form.cidNome} onFocus={() => scrollToPreviewSection("bottom")} onChange={(e) => setForm(p => ({ ...p, cidNome: e.target.value }))} placeholder="Nome do CID" />
+                    </div>
+                    </div>
+
+                    {/* Modo Carimbo */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0" }} onClick={() => scrollToPreviewSection("bottom")}>
+                    <label style={{ ...lbl, margin: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                      <input
+                        type="checkbox"
+                        checked={form.modoCarimbo}
+                        onChange={(e) => setForm(p => ({ ...p, modoCarimbo: e.target.checked }))}
+                        style={{ width: 16, height: 16 }}
+                      />
+                      Modo Carimbo (rodapé com assinatura cursiva)
+                    </label>
+                    </div>
+                    </div>
+                    </div>
+
+                    {/* ── 4. Data de Emissão ── */}
+                    <div style={card}>
+                    <p style={secTitle}>📅 4. Data de Emissão</p>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <div>
+                    <label style={lbl}>Cidade de Emissão</label>
+                    <div style={{ position: "relative" }}>
+                      <input
+                        style={{ ...inp, paddingRight: cepUFPreenchida ? 28 : undefined }}
+                        value={form.cidade}
+                        onFocus={() => scrollToPreviewSection("bottom")}
+                        onChange={(e) => setForm(p => ({ ...p, cidade: e.target.value.toUpperCase() }))}
+                        placeholder="Ex: SÃO PAULO"
+                      />
+                    </div>
+                    </div>
+                    <div>
+                    <label style={lbl}>UF</label>
+                    <div style={{ position: "relative" }}>
+                      <input
+                        style={{ ...inp, textTransform: "uppercase" }}
+                        value={cepUFPreenchida}
+                        onFocus={() => scrollToPreviewSection("bottom")}
+                        onChange={(e) => setCepUFPreenchida(e.target.value.toUpperCase().slice(0, 2))}
+                        placeholder="Ex: SP"
+                        maxLength={2}
+                      />
+                    </div>
+                    </div>
+                    <div style={{ gridColumn: "1 / -1" }}>
+                    <label style={lbl}>Data de Emissão *</label>
+                    <input style={inp} value={form.dataEmissao}
+                      onFocus={() => scrollToPreviewSection("bottom")}
+                      onChange={(e) => {
+                        const v = handleDateInput(e.target.value);
+                        setForm(p => ({ ...p, dataEmissao: v, dataAssinatura: v }));
+                      }} placeholder="DD/MM/AAAA" maxLength={10} inputMode="numeric" required />
+                    </div>
+                    <div>
+                    <label style={lbl}>Hora da Assinatura</label>
+                    <input style={inp} type="time" value={form.horaAssinatura} onFocus={() => scrollToPreviewSection("bottom")} onChange={(e) => setForm(p => ({ ...p, horaAssinatura: e.target.value }))} />
+                    </div>
+                    </div>
+
+                    {/* ── Logos ── */}
+                    <div style={{ marginTop: 16 }}>
+                    <p style={{ ...secTitle, marginBottom: 10 }}>🖼 Logos do Documento</p>
+
+                    {/* Seletor de lado */}
+                    <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
                     <button
                       type="button"
-                      style={{ ...btnBlue, padding: "6px 10px", fontSize: 11, whiteSpace: "nowrap" }}
-                      onClick={() => buscarCEP(cepPaciente)}
-                      disabled={cepLoading}
-                    >
-                      {cepLoading ? "🔄" : "🔍 CEP"}
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <label style={lbl}>Endereço do Paciente *</label>
-                  <input style={inp} value={form.endereco} onChange={(e) => setForm(p => ({ ...p, endereco: e.target.value }))} placeholder="Rua, Número, Bairro, Cidade/UF" required />
-                  <span style={{ fontSize: 10, color: "#666", marginTop: 2, display: "block" }}>Preenchido automaticamente ao digitar o CEP. Edite se necessário.</span>
-                </div>
-              </div>
-            </div>
-
-            {/* ── 3. Dados Médicos ── */}
-            <div style={card}>
-              <p style={secTitle}>🩺 3. Dados Médicos</p>
-              <div style={{ display: "grid", gap: 8 }}>
-
-                {/* Tipo de Documento: Atestado ou Laudo */}
-                <div>
-                  <label style={lbl}>Tipo de Documento *</label>
-                  <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
-                    <button
-                      type="button"
-                      onClick={() => setDocumentType('atestado')}
+                      onClick={() => { setLogoSide("left"); scrollToPreviewSection("top"); }}
                       style={{
-                        flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
-                        background: documentType === 'atestado' ? "#005CA9" : "#e2e8f0",
-                        color: documentType === 'atestado' ? "#fff" : "#374151",
-                        border: documentType === 'atestado' ? "2px solid #005CA9" : "2px solid #d1d5db",
+                        flex: 1, padding: "8px 0", borderRadius: 7, fontWeight: 700, fontSize: 12, cursor: "pointer",
+                        background: logoSide === "left" ? "#005CA9" : "#e2e8f0",
+                        color: logoSide === "left" ? "#fff" : "#374151",
+                        border: "none",
                       }}
                     >
-                      ATESTADO MÉDICO
+                      ← LOGO ESQUERDA
                     </button>
                     <button
                       type="button"
-                      onClick={() => setDocumentType('laudo')}
+                      onClick={() => { setLogoSide("right"); scrollToPreviewSection("top"); }}
                       style={{
-                        flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
-                        background: documentType === 'laudo' ? "#005CA9" : "#e2e8f0",
-                        color: documentType === 'laudo' ? "#fff" : "#374151",
-                        border: documentType === 'laudo' ? "2px solid #005CA9" : "2px solid #d1d5db",
+                        flex: 1, padding: "8px 0", borderRadius: 7, fontWeight: 700, fontSize: 12, cursor: "pointer",
+                        background: logoSide === "right" ? "#005CA9" : "#e2e8f0",
+                        color: logoSide === "right" ? "#fff" : "#374151",
+                        border: "none",
                       }}
                     >
-                      LAUDO MÉDICO
+                      LOGO DIREITA →
                     </button>
-                  </div>
-                </div>
+                    </div>
 
-                {/* Dias de Afastamento */}
-                <div>
-                  <label style={lbl}>Dias de Afastamento (1-15)</label>
-                  <select
-                    style={sel}
-                    value={form.afastamento}
-                    onChange={(e) => setForm(p => ({ ...p, afastamento: e.target.value }))}
-                  >
-                    {Array.from({ length: 15 }, (_, i) => i + 1).map((n) => {
-                      const d = DIAS_EXTENSO[n];
-                      const unidade = n === 1 ? "dia" : "dias";
+                    {/* Preview do lado selecionado */}
+                    <div style={{
+                    width: "100%", height: 80, border: "2px dashed #d1d5db", borderRadius: 8,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    overflow: "hidden", background: "#f9fafb", marginBottom: 8,
+                    }} onClick={() => scrollToPreviewSection("top")}>
+                    {(logoSide === "left" ? logoLeft : logoRight) ? (
+                      <img
+                        src={logoSide === "left" ? logoLeft : logoRight}
+                        alt="Logo"
+                        style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+                      />
+                    ) : (
+                      <div style={{ textAlign: "center" }}>
+                        <p style={{ fontSize: 11, color: "#000", fontWeight: 700, margin: 0 }}>SEM LOGO</p>
+                      </div>
+                    )}
+                    </div>
+
+                    <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                    <label style={{ ...btnBlue, flex: 1, display: "block", textAlign: "center", padding: "7px 0", cursor: "pointer", fontSize: 11 }}>
+                      📁 ENVIAR LOGO
+                      <input
+                        type="file" accept="image/*" style={{ display: "none" }}
+                        onChange={(e) => { handleLogoUpload(logoSide, e); scrollToPreviewSection("top"); }}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      style={{ ...btnGray, flex: 1, fontSize: 11, padding: "7px 0" }}
+                      onClick={() => {
+                        if (logoSide === "left") { setLogoLeft(""); if (logoLeftRef.current) logoLeftRef.current.value = ""; }
+                        else { setLogoRight(""); if (logoRightRef.current) logoRightRef.current.value = ""; }
+                        scrollToPreviewSection("top");
+                      }}
+                    >
+                      ✕ REMOVER
+                    </button>
+                    </div>
+
+                    {/* Ajuste de Posição e Escala (Restaurado) */}
+                    <div style={{ marginTop: 12, borderTop: "1px solid #e5e7eb", paddingTop: 12, marginBottom: 12 }}>
+                      <p style={{ fontSize: 11, fontWeight: 700, color: "#005CA9", marginBottom: 8, display: "flex", alignItems: "center", gap: 4 }}>
+                        🎮 AJUSTE DE POSIÇÃO ({logoSide === "left" ? "ESQUERDA" : "DIREITA"})
+                      </p>
+                      
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {/* Controles de Escala */}
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button type="button" onClick={() => adjustScale(logoSide, SCALE_STEP)} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>🔍+ ZOOM</button>
+                          <button type="button" onClick={() => adjustScale(logoSide, -SCALE_STEP)} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>🔍- ZOOM</button>
+                        </div>
+
+                        {/* Controles de Posição (Setas) */}
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, width: "100%", maxWidth: 180, margin: "0 auto" }}>
+                          <div />
+                          <button type="button" onClick={() => adjustY(logoSide, -POS_STEP)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▲</button>
+                          <div />
+                          
+                          <button type="button" onClick={() => adjustX(logoSide, -POS_STEP)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>◀</button>
+                          <button type="button" onClick={() => resetLogoTransform(logoSide)} style={{ ...btnGray, padding: "6px 0", fontSize: 9, display: "flex", alignItems: "center", justifyContent: "center" }}>RESET</button>
+                          <button type="button" onClick={() => adjustX(logoSide, POS_STEP)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▶</button>
+                          
+                          <div />
+                          <button type="button" onClick={() => adjustY(logoSide, POS_STEP)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▼</button>
+                          <div />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Galeria de Logos Padrão */}
+                    <p style={{ fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6 }}>
+                    Logos Padrão — Clique para aplicar no lado selecionado ({logoSide === "left" ? "Esquerda" : "Direita"})
+                    </p>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+                    {LOGOS_PADRAO.map((logo) => {
+                      const currentLogo = logoSide === "left" ? logoLeft : logoRight;
+                      const isSelected = currentLogo === logo.src;
                       return (
-                        <option key={n} value={String(n)}>
-                          {d.num} ({d.ext}) {unidade}
-                        </option>
+                        <div
+                          key={logo.id}
+                          onClick={() => { logoSide === "left" ? setLogoLeft(logo.src) : setLogoRight(logo.src); scrollToPreviewSection("top"); }}
+                          style={{
+                            border: isSelected ? "2px solid #005CA9" : "1px solid #e5e7eb",
+                            borderRadius: 6, padding: 4, cursor: "pointer", background: isSelected ? "#eff6ff" : "#fff",
+                            height: 44, display: "flex", alignItems: "center", justifyContent: "center",
+                            overflow: "hidden",
+                          }}
+                          title={logo.label}
+                        >
+                          <img src={logo.src} alt={logo.label} style={{ maxWidth: "100%", maxHeight: 36, objectFit: "contain" }} />
+                        </div>
                       );
                     })}
-                  </select>
-                </div>
-
-                {/* Texto do Atestado */}
-                <div>
-                  <label style={lbl}>Texto do Atestado</label>
-                  <textarea
-                    value={form.textoAtestado}
-                    onChange={(e) => setForm(p => ({ ...p, textoAtestado: e.target.value }))}
-                    rows={5}
-                    style={{ ...inp, resize: "vertical", lineHeight: 1.6 }}
-                  />
-                </div>
-
-                {/* CID */}
-                <div>
-                  <label style={lbl}>CID — Diagnóstico Rápido</label>
-                  <select style={{ ...sel, marginBottom: 6 }} value="" onChange={(e) => {
-                    if (!e.target.value) return;
-                    const [code, ...rest] = e.target.value.split(" ");
-                    setForm(p => ({ ...p, cidDisplay: code, cidNome: rest.join(" "), cid: e.target.value }));
-                  }}>
-                    <option value="">Selecione um diagnóstico...</option>
-                    {CIDS_CATEGORIZADOS.map((g) => (
-                      <optgroup key={g.grupo} label={g.grupo}>
-                        {g.itens.map((c) => (
-                          <option key={c.code} value={`${c.code} ${c.desc.toUpperCase()}`}>
-                            {c.code} — {c.desc}
-                          </option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </select>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 6 }}>
-                    <input style={inp} value={form.cidDisplay} onChange={(e) => setForm(p => ({ ...p, cidDisplay: e.target.value }))} placeholder="Código (Ex: J11)" />
-                    <input style={inp} value={form.cidNome} onChange={(e) => setForm(p => ({ ...p, cidNome: e.target.value }))} placeholder="Nome do CID" />
-                  </div>
-                </div>
-
-                {/* Modo Carimbo */}
-                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0" }}>
-                  <label style={{ ...lbl, margin: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-                    <input
-                      type="checkbox"
-                      checked={form.modoCarimbo}
-                      onChange={(e) => setForm(p => ({ ...p, modoCarimbo: e.target.checked }))}
-                      style={{ width: 16, height: 16 }}
-                    />
-                    Modo Carimbo (rodapé com assinatura cursiva)
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* ── 4. Data de Emissão ── */}
-            <div style={card}>
-              <p style={secTitle}>📅 4. Data de Emissão</p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                <div>
-                  <label style={lbl}>Cidade de Emissão</label>
-                  <div style={{ position: "relative" }}>
-                    <input
-                      style={{ ...inp, paddingRight: cepUFPreenchida ? 28 : undefined }}
-                      value={form.cidade}
-                      onChange={(e) => setForm(p => ({ ...p, cidade: e.target.value.toUpperCase() }))}
-                      placeholder="Ex: SÃO PAULO"
-                    />
-                    {cepUFPreenchida && (
-                      <span style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", fontSize: 10, color: "#16a34a", fontWeight: 700 }}>✓</span>
-                    )}
-                  </div>
-                  {cepUFPreenchida && (
-                    <span style={{ fontSize: 10, color: "#16a34a", marginTop: 2, display: "block" }}>✅ Preenchido via CEP</span>
-                  )}
-                </div>
-                <div>
-                  <label style={lbl}>UF</label>
-                  <div style={{ position: "relative" }}>
-                    <input
-                      style={{ ...inp, textTransform: "uppercase" }}
-                      value={cepUFPreenchida}
-                      onChange={(e) => setCepUFPreenchida(e.target.value.toUpperCase().slice(0, 2))}
-                      placeholder="Ex: SP"
-                      maxLength={2}
-                    />
-                  </div>
-                  {cepUFPreenchida && (
-                    <span style={{ fontSize: 10, color: "#16a34a", marginTop: 2, display: "block" }}>✅ Preenchido via CEP</span>
-                  )}
-                </div>
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <label style={lbl}>Data de Emissão *</label>
-                  <input style={inp} value={form.dataEmissao} onChange={(e) => {
-                    const v = handleDateInput(e.target.value);
-                    setForm(p => ({ ...p, dataEmissao: v, dataAssinatura: v }));
-                  }} placeholder="DD/MM/AAAA" maxLength={10} inputMode="numeric" required />
-                  <p style={{ fontSize: 10, color: "#000", marginTop: 3 }}>
-                    A data de assinatura reflete automaticamente a data de emissão.
-                  </p>
-                </div>
-                <div>
-                  <label style={lbl}>Hora da Assinatura</label>
-                  <input style={inp} type="time" value={form.horaAssinatura} onChange={(e) => setForm(p => ({ ...p, horaAssinatura: e.target.value }))} />
-                </div>
-              </div>
-
-              {/* ── Logos ── */}
-              <div style={{ marginTop: 16 }}>
-                <p style={{ ...secTitle, marginBottom: 10 }}>🖼 Logos do Documento</p>
-
-                {/* Seletor de lado */}
-                <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-                  <button
-                    type="button"
-                    onClick={() => setLogoSide("left")}
-                    style={{
-                      flex: 1, padding: "8px 0", borderRadius: 7, fontWeight: 700, fontSize: 12, cursor: "pointer",
-                      background: logoSide === "left" ? "#005CA9" : "#e2e8f0",
-                      color: logoSide === "left" ? "#fff" : "#374151",
-                      border: "none",
-                    }}
-                  >
-                    ← LOGO ESQUERDA
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLogoSide("right")}
-                    style={{
-                      flex: 1, padding: "8px 0", borderRadius: 7, fontWeight: 700, fontSize: 12, cursor: "pointer",
-                      background: logoSide === "right" ? "#005CA9" : "#e2e8f0",
-                      color: logoSide === "right" ? "#fff" : "#374151",
-                      border: "none",
-                    }}
-                  >
-                    LOGO DIREITA →
-                  </button>
-                </div>
-
-                {/* Preview do lado selecionado */}
-                <div style={{
-                  width: "100%", height: 80, border: "2px dashed #d1d5db", borderRadius: 8,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  overflow: "hidden", background: "#f9fafb", marginBottom: 8,
-                }}>
-                  {(logoSide === "left" ? logoLeft : logoRight) ? (
-                    <img
-                      src={logoSide === "left" ? logoLeft : logoRight}
-                      alt="Logo"
-                      style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
-                    />
-                  ) : (
-                    <div style={{ textAlign: "center" }}>
-                      <p style={{ fontSize: 11, color: "#000", fontWeight: 700, margin: 0 }}>SEM LOGO</p>
-                      <p style={{ fontSize: 10, color: "#555", margin: "2px 0 0" }}>Tamanho ideal: 300×100px (PNG/JPG)</p>
                     </div>
-                  )}
-                </div>
-
-                <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-                  <label style={{ ...btnBlue, flex: 1, display: "block", textAlign: "center", padding: "7px 0", cursor: "pointer", fontSize: 11 }}>
-                    📁 ENVIAR LOGO
-                    <input
-                      type="file" accept="image/*" style={{ display: "none" }}
-                      onChange={(e) => handleLogoUpload(logoSide, e)}
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    style={{ ...btnGray, flex: 1, fontSize: 11, padding: "7px 0" }}
-                    onClick={() => {
-                      if (logoSide === "left") { setLogoLeft(""); if (logoLeftRef.current) logoLeftRef.current.value = ""; }
-                      else { setLogoRight(""); if (logoRightRef.current) logoRightRef.current.value = ""; }
-                    }}
-                  >
-                    ✕ REMOVER
-                  </button>
-                </div>
-
-                {/* Controles de Tamanho e Posição */}
-                {(logoSide === "left" ? logoLeft : logoRight) && (
-                  <div style={{ background: "#f0f4ff", border: "1px solid #c7d2fe", borderRadius: 8, padding: "8px 10px", marginBottom: 12 }}>
-                    <p style={{ fontSize: 10, fontWeight: 700, color: "#3730a3", margin: "0 0 6px" }}>
-                      🔧 Ajustar Logo {logoSide === "left" ? "Esquerda" : "Direita"}
-                    </p>
-                    {/* Tamanho */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                      <span style={{ fontSize: 10, color: "#374151", width: 60 }}>Tamanho:</span>
-                      <button type="button" onClick={() => adjustScale(logoSide, -SCALE_STEP)}
-                        style={{ width: 26, height: 26, borderRadius: 5, border: "1px solid #6366f1", background: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 14, color: "#4f46e5" }}>−</button>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: "#1e1b4b", minWidth: 36, textAlign: "center" }}>
-                        {Math.round((logoSide === "left" ? logoLeftScale : logoRightScale) * 100)}%
-                      </span>
-                      <button type="button" onClick={() => adjustScale(logoSide, SCALE_STEP)}
-                        style={{ width: 26, height: 26, borderRadius: 5, border: "1px solid #6366f1", background: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 14, color: "#4f46e5" }}>+</button>
                     </div>
-                    {/* Posição Horizontal */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                      <span style={{ fontSize: 10, color: "#374151", width: 60 }}>Horiz.:</span>
-                      <button type="button" onClick={() => adjustX(logoSide, -POS_STEP)}
-                        style={{ width: 26, height: 26, borderRadius: 5, border: "1px solid #6366f1", background: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 14, color: "#4f46e5" }}>←</button>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: "#1e1b4b", minWidth: 36, textAlign: "center" }}>
-                        {logoSide === "left" ? logoLeftX : logoRightX}px
-                      </span>
-                      <button type="button" onClick={() => adjustX(logoSide, POS_STEP)}
-                        style={{ width: 26, height: 26, borderRadius: 5, border: "1px solid #6366f1", background: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 14, color: "#4f46e5" }}>→</button>
                     </div>
-                    {/* Posição Vertical */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                      <span style={{ fontSize: 10, color: "#374151", width: 60 }}>Vert.:</span>
-                      <button type="button" onClick={() => adjustY(logoSide, -POS_STEP)}
-                        style={{ width: 26, height: 26, borderRadius: 5, border: "1px solid #6366f1", background: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 14, color: "#4f46e5" }}>↑</button>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: "#1e1b4b", minWidth: 36, textAlign: "center" }}>
-                        {logoSide === "left" ? logoLeftY : logoRightY}px
-                      </span>
-                      <button type="button" onClick={() => adjustY(logoSide, POS_STEP)}
-                        style={{ width: 26, height: 26, borderRadius: 5, border: "1px solid #6366f1", background: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 14, color: "#4f46e5" }}>↓</button>
-                    </div>
-                    <button type="button" onClick={() => resetLogoTransform(logoSide)}
-                      style={{ fontSize: 10, color: "#6b7280", background: "none", border: "none", cursor: "pointer", textDecoration: "underline", padding: 0 }}>
-                      ↺ Resetar posição
-                    </button>
-                  </div>
-                )}
-
-                {/* Galeria de Logos Padrão */}
-                <p style={{ fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6 }}>
-                  Logos Padrão — Clique para aplicar no lado selecionado ({logoSide === "left" ? "Esquerda" : "Direita"})
-                </p>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
-                  {LOGOS_PADRAO.map((logo) => {
-                    const currentLogo = logoSide === "left" ? logoLeft : logoRight;
-                    const isSelected = currentLogo === logo.src;
-                    return (
-                      <div
-                        key={logo.id}
-                        onClick={() => logoSide === "left" ? setLogoLeft(logo.src) : setLogoRight(logo.src)}
-                        style={{
-                          border: isSelected ? "2px solid #005CA9" : "1px solid #e5e7eb",
-                          borderRadius: 6, padding: 4, cursor: "pointer", background: isSelected ? "#eff6ff" : "#fff",
-                          height: 44, display: "flex", alignItems: "center", justifyContent: "center",
-                          overflow: "hidden",
-                        }}
-                        title={logo.label}
-                      >
-                        <img src={logo.src} alt={logo.label} style={{ maxWidth: "100%", maxHeight: 36, objectFit: "contain" }} />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
             {/* Botões de Ação */}
             <div style={{ display: "flex", gap: 10, paddingBottom: 20 }}>
               <button type="button" style={{ ...btnGray, flex: 1 }} onClick={() => navigate("/dashboard")}>CANCELAR</button>
@@ -2204,20 +2239,69 @@ export default function AtestadoCria() {
         </div>
 
         {/* ═══ COLUNA DIREITA — PREVIEW ═══ */}
-        <div className="atestado-preview-col" style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-          <div style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            marginBottom: 10, padding: "8px 12px", background: "#fff",
-            borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+        <div className="atestado-preview-col" style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, position: "relative" }}>
+          
+          {/* Controles Flutuantes do Preview Inteligente */}
+          <div style={{ 
+            position: "absolute", right: 20, top: "50%", transform: "translateY(-50%)", 
+            display: "flex", flexDirection: "column", gap: 10, zIndex: 100 
           }}>
-            <span style={{ fontWeight: 700, color: "#374151", fontSize: 14 }}>📄 Preview em Tempo Real</span>
-            <span style={{ fontSize: 11, color: "#6b7280", background: "#fef3c7", padding: "3px 8px", borderRadius: 5, fontWeight: 600 }}>
-              🔒 QR Code gerado somente após emissão
-            </span>
+            <button
+              type="button"
+              onClick={() => scrollToPreviewSection("top")}
+              style={{
+                width: 44, height: 44, borderRadius: "50%", background: currentSection === "top" ? "#005CA9" : "#fff",
+                color: currentSection === "top" ? "#fff" : "#005CA9", border: "2px solid #005CA9",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)", cursor: "pointer", display: "flex",
+                alignItems: "center", justifyContent: "center", fontSize: 20, transition: "all 0.2s"
+              }}
+              title="Ver Parte Superior"
+            >
+              ▲
+            </button>
+            <button
+              type="button"
+              onClick={resetPreviewZoom}
+              style={{
+                width: 44, height: 44, borderRadius: "50%", background: !isFocused ? "#005CA9" : "#fff",
+                color: !isFocused ? "#fff" : "#005CA9", border: "2px solid #005CA9",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)", cursor: "pointer", display: "flex",
+                alignItems: "center", justifyContent: "center", fontSize: 18, transition: "all 0.2s"
+              }}
+              title="Ver Documento Inteiro"
+            >
+              🔍
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToPreviewSection("bottom")}
+              style={{
+                width: 44, height: 44, borderRadius: "50%", background: currentSection === "bottom" ? "#005CA9" : "#fff",
+                color: currentSection === "bottom" ? "#fff" : "#005CA9", border: "2px solid #005CA9",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)", cursor: "pointer", display: "flex",
+                alignItems: "center", justifyContent: "center", fontSize: 20, transition: "all 0.2s"
+              }}
+              title="Ver Parte Inferior"
+            >
+              ▼
+            </button>
           </div>
-          <div style={{ flex: 1, overflow: "auto", background: "#ffffff", borderRadius: 10, padding: 14, maxHeight: "calc(100vh - 120px)" }}>
+
+          <div id="preview-container" style={{ 
+            flex: 1, overflow: "hidden", background: "#ffffff", borderRadius: 10, 
+            padding: "0", maxHeight: "calc(100vh - 84px)", // Altura maximizada
+            display: "flex", alignItems: "flex-start", justifyContent: "center",
+            position: "relative"
+          }}>
             {/* A4: 794px x 1123px @ 96dpi */}
-            <div style={{ width: 794, margin: "0 auto", boxShadow: "0 4px 16px rgba(0,0,0,0.12)" }}>
+            <div style={{ 
+              width: 794, 
+              flexShrink: 0,
+              boxShadow: "0 10px 30px rgba(0,0,0,0.08)", // Sombra mais elegante
+              transform: `scale(${zoomScale}) translateY(${zoomTranslateY}px)`,
+              transformOrigin: "top center",
+              transition: "transform 0.85s cubic-bezier(0.22, 1, 0.36, 1)",
+            }}>
               <AttestationDocument
                 ref={previewRef}
                 data={previewData}

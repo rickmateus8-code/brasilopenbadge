@@ -10,7 +10,7 @@ import {
   FileText, Car, Anchor, FlaskConical, GraduationCap,
   Wallet, TrendingUp, BarChart3, ChevronRight, Plus,
   Clock, CheckCircle, Bell, Download, Trash2, Pill, Pencil, QrCode,
-  Copy, X, Send, RefreshCw, Search, Save, Smartphone, AlertTriangle, Gift, Users, Loader2, Edit3
+  Copy, X, Send, RefreshCw, Search, Save, Smartphone, AlertTriangle, Gift, Users, Loader2
 } from "lucide-react";
 import AttestationActionButtons from "@/components/AttestationActionButtons";
 import AttestationViewerModal from "@/components/AttestationViewerModal";
@@ -25,6 +25,7 @@ const quickActions = [
   { icon: GraduationCap, label: "Histórico SP", desc: "Emitir histórico escolar SP", path: "/historico-sp", color: "green" },
   { icon: GraduationCap, label: "Histórico UNINTER", desc: "Emitir histórico UNINTER", path: "/historico-uninter", color: "indigo" },
   { icon: Pill, label: "Dr. Consulta", desc: "Emitir receituário médico", path: "/receitacria", color: "violet" },
+  { icon: FileText, label: "STJ Petição", desc: "Emitir petição jurídica STJ", path: "/peticaocria", color: "indigo" },
 ];
 
 const colorMap: Record<string, { bg: string; text: string; iconBg: string; badge: string }> = {
@@ -45,6 +46,7 @@ const HISTORY_TABS = [
   { key: "historico-sp", label: "Histórico SP", icon: GraduationCap, color: "green" },
   { key: "historico-uninter", label: "UNINTER", icon: GraduationCap, color: "indigo" },
   { key: "receita", label: "Receitas", icon: Pill, color: "violet" },
+  { key: "peticaocria", label: "Petição STJ", icon: FileText, color: "indigo" },
 ];
 
 const APP_LINKS = {
@@ -613,9 +615,10 @@ export default function Dashboard() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-                        <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nome</th>
-                        <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">Código QR</th>
-                        <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Criado Em</th>
+                        <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Paciente/Nome</th>
+                        <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">Código Emissão</th>
+                        <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Data Emissão</th>
+                        <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Criação (Painel)</th>
                         <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                         <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ações</th>
                       </tr>
@@ -623,7 +626,8 @@ export default function Dashboard() {
                     <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                       {history.map(doc => {
                         const codigoQR = doc.codigo_qr || doc.codigo_validacao || "";
-                        const dataEmissao = doc.data_emissao || doc.created_at;
+                        const dataEmissao = doc.data_emissao || doc.dataEmissao || doc.data?.dataEmissao || doc.created_at;
+                        const creationDate = new Date(doc.created_at);
                         return (
                           <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                             <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">
@@ -632,19 +636,30 @@ export default function Dashboard() {
                             <td className="px-4 py-3 text-xs font-mono text-gray-500 dark:text-gray-400 hidden sm:table-cell">
                               <div className="flex items-center gap-1.5">
                                 {codigoQR ? (
-                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400" title="QR Code ativo">
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-bold border border-blue-100 dark:border-blue-800" title="Código Ativo">
                                     <QrCode className="w-3 h-3" />
+                                    {codigoQR}
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-400" title="Sem QR Code">
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-400" title="Sem Código">
                                     <QrCode className="w-3 h-3 opacity-40" />
+                                    {doc.id?.slice(0, 8) || "—"}
                                   </span>
                                 )}
-                                <span>{codigoQR || doc.id?.slice(0, 8) || "—"}</span>
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
+                            <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400 font-semibold">
                               {formatDate(dataEmissao)}
+                            </td>
+                            <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 hidden md:table-cell">
+                              <div className="flex flex-col">
+                                <span className="font-semibold text-gray-900 dark:text-white">
+                                  {creationDate.toLocaleDateString("pt-BR")}
+                                </span>
+                                <span className="text-[10px] text-gray-400">
+                                  {creationDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                                </span>
+                              </div>
                             </td>
                             <td className="px-4 py-3">
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400">
@@ -958,8 +973,8 @@ export default function Dashboard() {
       <RecarregaModal
         isOpen={showRecarregaModal}
         onClose={() => setShowRecarregaModal(false)}
-        userName={user?.display_name || user?.username || ""}
-        userCpf={user?.cpf || ""}
+        userName={user?.displayName || user?.username || ""}
+        userCpf=""
       />
     </DashboardLayout>
   );

@@ -9,6 +9,7 @@ import {
   buildSPCertificateSchoolName,
   buildSPFullSchoolName,
   buildSPRA,
+  buildSPRG,
   buildSPSecurityCode,
   formatSPDate,
   formatSPRA,
@@ -170,6 +171,14 @@ export function useSPSubstitution() {
     setFields((prev) => applyFieldUpdates(prev, { ra: buildSPRA() || SP_RA_MODEL }));
   }, []);
 
+  const generateRGGerente = useCallback(() => {
+    setFields((prev) => applyFieldUpdates(prev, { gerente_rg: buildSPRG() }));
+  }, []);
+
+  const generateRGDiretor = useCallback(() => {
+    setFields((prev) => applyFieldUpdates(prev, { diretor_rg: buildSPRG() }));
+  }, []);
+
   const applyImportText = useCallback(() => {
     if (!importText.trim()) return;
 
@@ -231,6 +240,8 @@ export function useSPSubstitution() {
     applyImportText,
     generateSecurityCode,
     generateRA,
+    generateRGGerente,
+    generateRGDiretor,
     resetToOriginal,
     loadFromFieldMap,
     handleBrasaoUpload,

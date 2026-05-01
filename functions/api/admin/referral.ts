@@ -1,11 +1,14 @@
 import type { Env } from '../../types';
 
-const JSON_HEADERS = {
-  'Content-Type': 'application/json',
-  'Access-Control-Allow-Origin': 'https://docmaster.store',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Credentials': 'true',
+const getCorsHeaders = (request: Request) => {
+  const origin = request.headers.get('Origin') || 'https://docmaster.store';
+  return {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Credentials': 'true',
+  };
 };
 
 function getSessionToken(request: Request): string | null {
@@ -30,6 +33,16 @@ async function getAdminSession(request: Request, env: Env) {
 }
 
 async function ensureReferralTables(env: Env) {
+  // Check for schema mismatch in referral_settings
+  try {
+    const tableInfo = await env.DB.prepare("PRAGMA table_info(referral_settings)").all<any>();
+    const hasKeyColumn = tableInfo.results?.some((col: any) => col.name === 'key');
+
+    if (tableInfo.results?.length > 0 && !hasKeyColumn) {
+      await env.DB.prepare(`ALTER TABLE referral_settings RENAME TO referral_settings_old_${Date.now()}`).run();
+    }
+  } catch (_) {}
+
   const statements = [
     `CREATE TABLE IF NOT EXISTS referral_codes (
       id TEXT PRIMARY KEY,

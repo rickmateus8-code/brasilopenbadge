@@ -431,17 +431,6 @@ export default function Validation() {
       cursor: "pointer",
       width: "100%",
     } as React.CSSProperties,
-    btnBlue: {
-      background: "#005CA9",
-      color: "#fff",
-      border: "none",
-      padding: "12px 20px",
-      borderRadius: 8,
-      fontSize: 15,
-      fontWeight: 800,
-      cursor: "pointer",
-      letterSpacing: 0.5,
-    } as React.CSSProperties,
     modal: {
       position: "fixed" as const,
       inset: 0,
