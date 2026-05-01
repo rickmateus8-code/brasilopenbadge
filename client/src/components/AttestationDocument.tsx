@@ -263,7 +263,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           width: "100%",
           textAlign: "center",
           marginTop: 15,
-          marginBottom: 15, // Espaçamento para não colar na linha inferior
+          marginBottom: 14, // Ajustado para 14 conforme solicitado
           lineHeight: 1, 
           letterSpacing: 0, 
           position: "relative",
@@ -278,7 +278,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         <div style={{
           borderTop: "2.04px solid #000", 
           width: "100%",
-          marginBottom: 15, 
+          marginBottom: 14, // Ajustado para 14 conforme solicitado
           position: "relative",
           zIndex: 2,
           flexShrink: 0,
