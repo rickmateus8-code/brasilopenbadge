@@ -131,6 +131,11 @@ function VerificaMedRouter() {
       <Route path="/verificar-receita/:id" component={ValidationReceita} />
       <Route path="/verificar/:id" component={ValidationReceita} />
       <Route path="/" component={ValidationReceita} />
+      
+      {/* Captura códigos diretos RX-XXXX-XXXX ou qualquer outra rota */}
+      <Route path="/:id" component={ValidationReceita} />
+      
+      {/* Fallback universal para o domínio de receitas */}
       <Route component={ValidationReceita} />
     </Switch>
   );
@@ -146,6 +151,11 @@ function CNHValidationRouter() {
       <Route path="/habilitacao" component={CNHHabilitacao} />
       <Route path="/verificar/:id" component={Validation} />
       <Route path="/" component={CNHLanding} />
+      
+      {/* Captura códigos diretos ou rotas não mapeadas */}
+      <Route path="/:id" component={CNHLanding} />
+      
+      {/* Fallback universal para o domínio de CNH */}
       <Route component={CNHLanding} />
     </Switch>
   );

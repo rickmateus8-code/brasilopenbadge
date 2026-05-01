@@ -22,7 +22,7 @@ export default function PetitionSTJSalvos() {
       fields={FIELDS}
       nameField="requerente"
       cpfField="processo" // Usando processo como campo de identificação secundário
-      idLabel="ID Emissão"
+      idLabel="Código Emissão"
       idField="id"
       dateLabel="Data Emissão"
       dateField="data"
