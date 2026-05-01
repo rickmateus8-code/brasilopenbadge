@@ -265,7 +265,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           width: "100%",
           textAlign: "center",
           marginTop: 12,
-          marginBottom: 9, // Aumentado para 9px conforme solicitado no plano
+          marginBottom: 8, // Reduzido de 9 para 8 conforme solicitado
           lineHeight: 1, 
           letterSpacing: 0, 
           position: "relative",
@@ -284,7 +284,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         <div style={{
           borderTop: "2.04px solid #000", 
           width: "100%",
-          marginBottom: 12, // Aumentado para 12 para criar o respiro solicitado entre a linha e o paciente
+          marginBottom: 17, // Aumentado de 12 para 17 (+5) conforme solicitado
           position: "relative",
           zIndex: 2,
           flexShrink: 0,
