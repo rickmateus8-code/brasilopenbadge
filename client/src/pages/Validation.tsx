@@ -407,8 +407,8 @@ export default function Validation() {
       boxSizing: "border-box" as const,
       marginBottom: 16,
       transition: "border-color 0.2s",
-      background: "#000",
-      color: "#fff",
+      background: "#fff",
+      color: "#000",
     } as React.CSSProperties,
     inputDate: {
       width: "100%",
@@ -420,8 +420,8 @@ export default function Validation() {
       textAlign: "center" as const,
       boxSizing: "border-box" as const,
       marginBottom: 20,
-      background: "#000",
-      color: "#fff",
+      background: "#fff",
+      color: "#000",
     } as React.CSSProperties,
     btnGreen: {
       background: "#16a34a",
