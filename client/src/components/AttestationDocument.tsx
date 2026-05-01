@@ -235,37 +235,15 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </div>
         </div>
 
-        {/* ===== TÍTULO ===== */}
-        <div style={{
-          fontWeight: 900,
-          fontSize: 23.15, 
-          textTransform: "uppercase",
-          borderTop: "none",
-          borderBottom: "none",
-          display: "block",
-          padding: "0",
-          width: "100%",
-          textAlign: "center",
-          marginTop: 12,
-          marginBottom: 15, // Ajustado conforme solicitado
-          lineHeight: 1, 
-          letterSpacing: 0, 
-          position: "relative",
-          zIndex: 2,
-          color: "#000",
-          flexShrink: 0,
-        }}>
-          {docType === 'laudo' ? "LAUDO MÉDICO" : "ATESTADO MÉDICO"}
-        </div>
-
-        {/* ===== INFORMAÇÕES DA INSTITUIÇÃO (ENTRE TÍTULO E LINHA) ===== */}
+        {/* ===== INFORMAÇÕES DA INSTITUIÇÃO (ACIMA DO TÍTULO) ===== */}
         <div id="preview-institution-info" style={{
           textAlign: "center",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          marginBottom: 10, // Espaçamento antes da linha preta
+          marginTop: 12,
+          marginBottom: 10,
           position: "relative",
           zIndex: 2,
           flexShrink: 0,
@@ -288,11 +266,34 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           )}
         </div>
 
+        {/* ===== TÍTULO ===== */}
+        <div style={{
+          fontWeight: 900,
+          fontSize: 23.15, 
+          textTransform: "uppercase",
+          borderTop: "none",
+          borderBottom: "none",
+          display: "block",
+          padding: "0",
+          width: "100%",
+          textAlign: "center",
+          marginTop: 0,
+          marginBottom: 15, // Espaçamento para não colar na linha inferior
+          lineHeight: 1, 
+          letterSpacing: 0, 
+          position: "relative",
+          zIndex: 2,
+          color: "#000",
+          flexShrink: 0,
+        }}>
+          {docType === 'laudo' ? "LAUDO MÉDICO" : "ATESTADO MÉDICO"}
+        </div>
+
         {/* Moldura Superior (Linha Preta) */}
         <div style={{
           borderTop: "2.04px solid #000", 
           width: "100%",
-          marginBottom: 15, // Ajustado para 15 conforme solicitado
+          marginBottom: 15, 
           position: "relative",
           zIndex: 2,
           flexShrink: 0,
@@ -301,7 +302,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         {/* ===== DADOS DO PACIENTE ===== */}
         <div id="preview-patient" style={{
           border: "1px solid #000",
-          padding: "5px 12px 11px 12px", // Compensar o peso visual para centralização vertical perfeita
+          padding: "8px 12px 8px 12px", // Centralização vertical balanceada
           fontSize: 10.815, // Aumentado em 3% (10.5 * 1.03)
           marginBottom: 10,
           lineHeight: 1.7,
@@ -311,7 +312,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           flexShrink: 0,
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center", // Centralização vertical total
+          justifyContent: "center", 
         }}>
           {/* Linha 1: Paciente | Sexo | Nasc */}
           <div style={{ display: "flex", gap: 12, marginBottom: 3, justifyContent: "center" }}>
