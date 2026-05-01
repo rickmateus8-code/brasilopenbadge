@@ -284,7 +284,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         <div style={{
           borderTop: "2.04px solid #000", 
           width: "100%",
-          marginBottom: 6, // Reduzido para diminuir o espaço excessivo no preview/exportação
+          marginBottom: 12, // Aumentado para 12 para criar o respiro solicitado entre a linha e o paciente
           position: "relative",
           zIndex: 2,
           flexShrink: 0,
