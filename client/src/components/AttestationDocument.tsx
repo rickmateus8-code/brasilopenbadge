@@ -212,20 +212,20 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             )}
           </div>
 
-          {/* Espaço Central (Informações da Instituição) */}
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2 }}>
+          {/* Centro — Nome da Instituição / Unidade / Endereço */}
+          <div style={{ flex: 1, padding: "0 12px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
             {instituicao && (
-              <div style={{ fontSize: 14.7, fontWeight: 700, textTransform: "uppercase", color: "#000", letterSpacing: 0.5, lineHeight: 1.2, textAlign: "center" }}>
+              <div style={{ fontSize: 14.7, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", letterSpacing: 0, lineHeight: 1.3 }}>
                 {instituicao}
               </div>
             )}
-            {unidade && (
-              <div style={{ fontSize: 12.6, fontWeight: 700, textTransform: "uppercase", color: "#000", lineHeight: 1.2, textAlign: "center" }}>
+            {unidade && unidade !== instituicao && (
+              <div style={{ fontSize: 12.6, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", lineHeight: 1.3 }}>
                 {unidade}
               </div>
             )}
             {enderecoEmitente && (
-              <div style={{ fontSize: 10.5, fontWeight: 400, textTransform: "uppercase", color: "#000", lineHeight: 1.2, textAlign: "center" }}>
+              <div style={{ fontSize: 10.5, fontWeight: 400, textTransform: "uppercase", color: "#000", lineHeight: 1.3 }}>
                 {enderecoEmitente}
               </div>
             )}
@@ -262,8 +262,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           padding: "0",
           width: "100%",
           textAlign: "center",
-          marginTop: 15,
-          marginBottom: 14, // Ajustado para 14 conforme solicitado
+          marginTop: 12,
+          marginBottom: 14, // Ajustado para 14 conforme solicitação urgente para exportação
           lineHeight: 1, 
           letterSpacing: 0, 
           position: "relative",
@@ -271,14 +271,18 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           color: "#000",
           flexShrink: 0,
         }}>
-          {docType === 'laudo' ? "LAUDO MÉDICO" : "ATESTADO MÉDICO"}
+          {docType === 'laudo' ? (
+            <div style={{ fontSize: 23.15, fontWeight: 900 }}>LAUDO MÉDICO</div>
+          ) : (
+            <div style={{ fontSize: 23.15, fontWeight: 900 }}>ATESTADO MÉDICO</div>
+          )}
         </div>
 
         {/* Moldura Superior (Linha Preta) */}
         <div style={{
           borderTop: "2.04px solid #000", 
           width: "100%",
-          marginBottom: 14, // Ajustado para 14 conforme solicitado
+          marginBottom: 14, // Ajustado para 14 conforme solicitação urgente para exportação
           position: "relative",
           zIndex: 2,
           flexShrink: 0,
