@@ -1984,75 +1984,90 @@ export default function AdminDashboard() {
 	                <table className="w-full text-xs">
 	                  <thead>
 	                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID</th>
-	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Data</th>
+	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID Interno</th>
+	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Criação (Painel)</th>
 	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Usuário</th>
-	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nome</th>
+	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nome/Paciente</th>
 	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Tipo</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Código QR</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ações</th>
-                    </tr>
-                  </thead>
+	                <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Código Emissão</th>
+	                <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+	                <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ações</th>
+	                </tr>
+	                </thead>
 	                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-	                    {filteredEmissions.map(e => (
-	                      <tr key={`${e.table_source}-${e.id}`} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-	                        <td className="px-4 py-2.5 font-mono text-gray-500 dark:text-gray-400">{e.id}</td>
-	                        <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400 whitespace-nowrap">{formatDate(e.created_at)}</td>
-                        <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{e.username || e.user_id || "—"}</td>
-                        <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">{e.nome || e.paciente || "—"}</td>
-                        <td className="px-4 py-2.5 hidden md:table-cell">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400">
-                            {DOC_TYPE_LABELS[e.type] || e.type}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2.5 text-gray-400 dark:text-gray-500 font-mono hidden md:table-cell">{e.codigo_qr || "—"}</td>
-                        <td className="px-4 py-2.5">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                            e.status === "emitido"
-                              ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400"
-                              : "bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400"
-                          }`}>
-                            {e.status}
-                          </span>
-                        </td>
-	                        <td className="px-4 py-2.5">
-	                          <div className="flex items-center gap-1">
-	                            <button
-	                              onClick={() => openEmissionPreview(e)}
-	                              className="p-1.5 rounded-lg text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
-	                              title="Visualizar"
-	                            >
-	                              <Eye className="w-3.5 h-3.5" />
-	                            </button>
-	                            <button
-	                              onClick={() => editEmission(e)}
-	                              className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-	                              title="Editar"
-	                            >
-	                              <Pencil className="w-3.5 h-3.5" />
-	                            </button>
-	                            <button
-	                              onClick={() => deleteEmission(e.id, e.table_source || "documents", false)}
-                              className="p-1.5 rounded-lg text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
-                              title="Cancelar"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => deleteEmission(e.id, e.table_source || "documents", true)}
-                              className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                              title="Excluir permanentemente"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+	                    {filteredEmissions.map(e => {
+	                const createDate = new Date(e.created_at);
+	                return (
+	                <tr key={`${e.table_source}-${e.id}`} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+	                <td className="px-4 py-2.5 font-mono text-gray-400 text-[10px]">{e.id.slice(0, 8)}...</td>
+	                <td className="px-4 py-2.5 whitespace-nowrap">
+	                <div className="flex flex-col">
+	                <span className="font-semibold text-gray-800 dark:text-gray-200">{createDate.toLocaleDateString("pt-BR")}</span>
+	                <span className="text-[10px] text-gray-400">{createDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+	                </div>
+	                </td>
+	                <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{e.username || e.user_id || "—"}</td>
+	                <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300 uppercase">{e.nome || e.paciente || "—"}</td>
+	                <td className="px-4 py-2.5 hidden md:table-cell">
+	                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400">
+	                {DOC_TYPE_LABELS[e.type] || e.type}
+	                </span>
+	                </td>
+	                <td className="px-4 py-2.5 hidden md:table-cell">
+	                {e.codigo_qr ? (
+	                <span className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-1 rounded-md font-bold border border-blue-100 dark:border-blue-800 font-mono text-[11px]">
+	                {e.codigo_qr}
+	                </span>
+	                ) : (
+	                <span className="text-gray-400 italic">sem código</span>
+	                )}
+	                </td>
+	                <td className="px-4 py-2.5">
+	                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+	                e.status === "emitido"
+	                ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400"
+	                : "bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400"
+	                }`}>
+	                {e.status}
+	                </span>
+	                </td>
+	                <td className="px-4 py-2.5">
+	                <div className="flex items-center gap-1">
+	                <button
+	                onClick={() => openEmissionPreview(e)}
+	                className="p-1.5 rounded-lg text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+	                title="Visualizar"
+	                >
+	                <Eye className="w-3.5 h-3.5" />
+	                </button>
+	                <button
+	                onClick={() => editEmission(e)}
+	                className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+	                title="Editar"
+	                >
+	                <Pencil className="w-3.5 h-3.5" />
+	                </button>
+	                <button
+	                onClick={() => deleteEmission(e.id, e.table_source || "documents", false)}
+	                className="p-1.5 rounded-lg text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+	                title="Cancelar"
+	                >
+	                <X className="w-3.5 h-3.5" />
+	                </button>
+	                <button
+	                onClick={() => deleteEmission(e.id, e.table_source || "documents", true)}
+	                className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+	                title="Excluir permanentemente"
+	                >
+	                <Trash2 className="w-3.5 h-3.5" />
+	                </button>
+	                </div>
+	                </td>
+	                </tr>
+	                );
+	                })}
+	                  </tbody>
+	                </table>              </div>
             )}
           </div>
         )}
