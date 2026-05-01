@@ -115,7 +115,13 @@ Um abraço da equipe DocMaster! 😊🚗💨`;
 
   const formatDate = (d: string) => {
     if (!d) return "—";
-    try { return new Date(d).toLocaleDateString("pt-BR"); } catch { return d; }
+    // Se já estiver formatado como DD/MM/YYYY, retorna direto
+    if (typeof d === "string" && d.includes("/")) return d;
+    try { 
+      const date = new Date(d);
+      if (isNaN(date.getTime())) return d;
+      return date.toLocaleDateString("pt-BR"); 
+    } catch { return d; }
   };
 
   // Build CNHDocumentProps from a record

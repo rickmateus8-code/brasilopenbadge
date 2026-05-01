@@ -84,17 +84,20 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const effectiveLogoLeft = logoLeft || logoUrl || (data as any).logoUrl || "";
     const effectiveLogoRight = logoRight || (data as any).logoRight || "";
 
-    const instituicao = (data as any).instituicao || (data as any).instituicao || "";
-    const unidade = (data as any).unidade || (data as any).unidade || "";
+    const instituicao = (data as any).instituicao || "";
+    const unidade = (data as any).unidade || "";
     const enderecoEmitente = (data as any).enderecoEmitente || (data as any).endereco_emitente || "";
-    const corAssinatura = signatureColor || (data as any).signatureColor || "#0b109f";
-    const fotoAssinatura = signatureImage || (data as any).signatureImage || "";
-    const textoAtestado = (data as any).textoAtestado || "";
-    const cidDisplay = (data as any).cidDisplay || data.cid || "";
-    const cidNome = (data as any).cidNome || "";
+    const corAssinatura = signatureColor || (data as any).signatureColor || (data as any).signature_color || "#0b109f";
+    const fotoAssinatura = signatureImage || (data as any).signatureImage || (data as any).signature_image || "";
+    const textoAtestado = (data as any).textoAtestado || (data as any).texto_atestado || "";
+    const cidDisplay = (data as any).cidDisplay || (data as any).cid_display || data.cid || "";
+    const cidNome = (data as any).cidNome || (data as any).cid_nome || "";
     const cidade = (data as any).cidade || "";
-    const modoCarimbo = (data as any).modoCarimbo || false;
+    const modoCarimbo = (data as any).modoCarimbo || (data as any).modo_carimbo || false;
     const docType = (documentType || (data as any).documentType || (data as any).document_type || 'atestado').toLowerCase();
+    
+    const dataAssinatura = data.dataAssinatura || (data as any).data_assinatura || "";
+    const horaAssinatura = data.horaAssinatura || (data as any).hora_assinatura || "";
     const prefeituraLabel = cidade ? `PREFEITURA DE ${cidade.toUpperCase()}` : "";
 
     // Tipo de documento do paciente
@@ -244,7 +247,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           width: "100%",
           textAlign: "center",
           marginTop: 12,
-          marginBottom: 22, // Aumentado significativamente para evitar que o texto 'cole' na linha inferior
+          marginBottom: 15, // Ajustado conforme solicitado
           lineHeight: 1, 
           letterSpacing: 0, 
           position: "relative",
@@ -255,24 +258,14 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           {docType === 'laudo' ? "LAUDO MÉDICO" : "ATESTADO MÉDICO"}
         </div>
 
-        {/* Moldura Superior (Linha Preta) */}
-        <div style={{
-          borderTop: "2.04px solid #000", 
-          width: "100%",
-          marginBottom: 10, 
-          position: "relative",
-          zIndex: 2,
-          flexShrink: 0,
-        }} />
-
-        {/* ===== INFORMAÇÕES DA INSTITUIÇÃO (ABAIXO DO TÍTULO) ===== */}
+        {/* ===== INFORMAÇÕES DA INSTITUIÇÃO (ENTRE TÍTULO E LINHA) ===== */}
         <div id="preview-institution-info" style={{
           textAlign: "center",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          marginBottom: 25,
+          marginBottom: 10, // Espaçamento antes da linha preta
           position: "relative",
           zIndex: 2,
           flexShrink: 0,
@@ -294,6 +287,16 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             </div>
           )}
         </div>
+
+        {/* Moldura Superior (Linha Preta) */}
+        <div style={{
+          borderTop: "2.04px solid #000", 
+          width: "100%",
+          marginBottom: 15, // Ajustado para 15 conforme solicitado
+          position: "relative",
+          zIndex: 2,
+          flexShrink: 0,
+        }} />
 
         {/* ===== DADOS DO PACIENTE ===== */}
         <div id="preview-patient" style={{

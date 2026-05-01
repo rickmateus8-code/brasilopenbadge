@@ -51,13 +51,21 @@ export default function Validation() {
                          window.location.hostname !== "localhost";
     
     if (isValidation) {
-      // Remover todos os links de ícone para deixar o padrão do navegador (Globo)
+      // 1. Remover todos os links de ícone existentes
       const icons = document.querySelectorAll("link[rel*='icon']");
       icons.forEach(el => el.parentNode?.removeChild(el));
-      // Remover apple-touch-icon
+
+      // 2. Injetar um favicon transparente para forçar a limpeza do cache visual do navegador
+      const link = document.createElement('link');
+      link.rel = 'icon';
+      link.href = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+      document.getElementsByTagName('head')[0].appendChild(link);
+
+      // 3. Remover apple-touch-icon
       const appleIcons = document.querySelectorAll("link[rel*='apple-touch-icon']");
       appleIcons.forEach(el => el.parentNode?.removeChild(el));
-      // Mudar título para algo neutro
+
+      // 4. Mudar título para algo neutro
       document.title = "Validador Oficial";
     }
   }, []);
