@@ -83,8 +83,19 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
       ? getQRCodeValue(data.codigoQR, dataEmissaoForQR)
       : "https://validaratestado.digital";
 
-    const effectiveLogoLeft = logoLeft || logoUrl || (data as any).logoUrl || "";
-    const effectiveLogoRight = logoRight || (data as any).logoRight || "";
+    const getCrossOrigin = (url: string) => {
+      if (!url || url.startsWith("data:") || url.startsWith("/")) return undefined;
+      try {
+        const urlObj = new URL(url);
+        if (urlObj.hostname === window.location.hostname) return undefined;
+      } catch {
+        return undefined;
+      }
+      return "anonymous";
+    };
+
+    const effectiveLogoLeft = logoLeft || logoUrl || (data as any).logoUrl || (data as any).logo_url || "";
+    const effectiveLogoRight = logoRight || (data as any).logoRight || (data as any).logo_right || "";
 
     const instituicao = (data as any).instituicao || "";
     const unidade = (data as any).unidade || "";
@@ -201,7 +212,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               <img
                 src={effectiveLogoLeft}
                 alt="Logo"
-                crossOrigin={effectiveLogoLeft.startsWith("data:") ? undefined : "anonymous"}
+                crossOrigin={getCrossOrigin(effectiveLogoLeft)}
                 style={{
                   maxHeight: "100%",
                   maxWidth: 154,
@@ -239,7 +250,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               <img
                 src={effectiveLogoRight}
                 alt="Logo Direita"
-                crossOrigin={effectiveLogoRight.startsWith("data:") ? undefined : "anonymous"}
+                crossOrigin={getCrossOrigin(effectiveLogoRight)}
                 style={{
                   maxHeight: "100%",
                   maxWidth: 154,
@@ -548,7 +559,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 <img
                   src={fotoAssinatura}
                   alt="Assinatura"
-                  crossOrigin={fotoAssinatura.startsWith("data:") ? undefined : "anonymous"}
+                  crossOrigin={getCrossOrigin(fotoAssinatura)}
                   style={{ maxWidth: 240, maxHeight: 75, objectFit: "contain", position: "absolute", zIndex: 3 }}
                 />
               ) : (

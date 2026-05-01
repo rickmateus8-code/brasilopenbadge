@@ -1145,7 +1145,7 @@ export default function AtestadoCria() {
         dataEmissao: form.dataEmissao,
         logoUrl: logoLeft || "",
         logoRight: logoRight || "",
-        instituicao: form.instituicao,
+        instituicao: form.instituicao || (form.cidade ? `PREFEITURA DE ${form.cidade.toUpperCase()}` : "CLÍNICA / HOSPITAL"),
         unidade: form.unidade,
         enderecoEmitente: form.enderecoEmitente,
         textoAtestado: form.textoAtestado,
