@@ -328,7 +328,8 @@ Um abraço da equipe DocMaster! 😊🚗💨`;
                 <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Código Emissão</th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Nome</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">CPF</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell text-xs">CPF</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Data Emissão</th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Criação (Painel)</th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Ações</th>
                 </tr>
@@ -336,6 +337,7 @@ Um abraço da equipe DocMaster! 😊🚗💨`;
               <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                 {filtered.map(cnh => {
                   const date = new Date(cnh.created_at);
+                  const dataEmissao = cnh.data?.dataEmissao || "—";
                   return (
                     <tr key={cnh.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                       <td className="px-4 py-3 font-mono text-gray-600 dark:text-gray-400">
@@ -344,7 +346,8 @@ Um abraço da equipe DocMaster! 😊🚗💨`;
                         </span>
                       </td>
                       <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-200 uppercase">{cnh.nome}</td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{cnh.cpf}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden sm:table-cell">{cnh.cpf}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400 font-semibold">{dataEmissao}</td>
                       <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
                         <div className="flex flex-col">
                           <span className="font-semibold text-gray-900 dark:text-white">
