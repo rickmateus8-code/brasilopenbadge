@@ -96,7 +96,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const cidNome = (data as any).cidNome || (data as any).cid_nome || "";
     const cidade = (data as any).cidade || "";
     const modoCarimbo = (data as any).modoCarimbo || (data as any).modo_carimbo || false;
-    const docType = (documentType || (data as any).documentType || (data as any).document_type || 'atestado').toLowerCase();
+    const docType = (documentType || (data as any).documentType || (data as any).document_type || (data as any).tipo || 'atestado').toLowerCase();
     
     const dataAssinatura = data.dataAssinatura || (data as any).data_assinatura || "";
     const horaAssinatura = data.horaAssinatura || (data as any).hora_assinatura || "";
@@ -284,7 +284,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         <div style={{
           borderTop: "2.04px solid #000", 
           width: "100%",
-          marginBottom: 20, // Aumentado de 17 para 20 (+3) conforme solicitado
+          marginBottom: 23, // Aumentado de 20 para 23 (+3) conforme solicitado
           position: "relative",
           zIndex: 2,
           flexShrink: 0,
