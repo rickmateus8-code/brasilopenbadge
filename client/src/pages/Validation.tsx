@@ -693,6 +693,7 @@ export default function Validation() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            flexWrap: "wrap",
             padding: "10px 16px",
             gap: 10
           }}>
@@ -702,17 +703,16 @@ export default function Validation() {
                 VÁLIDO
               </span>
             </div>
-            <div style={{ flex: 1, minWidth: 0, textAlign: "right" }}>
+            <div style={{ flex: 1, minWidth: 150, textAlign: "right" }}>
               <span style={{ 
                 color: "#fff",
                 fontWeight: 800, 
                 fontSize: "clamp(12px, 3.5vw, 15px)", 
                 textTransform: "uppercase", 
-                whiteSpace: "nowrap",
+                lineHeight: "1.3",
+                wordBreak: "break-word",
                 display: "inline-block",
                 maxWidth: "100%",
-                overflow: "hidden",
-                textOverflow: "ellipsis"
               }}>
                 {validDoc.paciente || validDoc.nome || "—"}
               </span>
