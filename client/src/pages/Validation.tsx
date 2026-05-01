@@ -212,38 +212,40 @@ export default function Validation() {
         // PRIORIDADE: Puxar dataEmissao do payload (data preenchida pelo usuário)
         const docDate = (json.data.dataEmissao || json.data.data_emissao || json.data.createdAt || "").trim();
 
+        // [DEBUG] Logar exatamente o que vem do banco e da URL
+        const dateInputRaw = (dateOverride || dataEmissao || "").trim();
+        console.log("[Validation] DEBUG - RAW DATA:", {
+          fromURL: dateInputRaw,
+          fromDB: docDate,
+          fullPayload: json.data
+        });
+
+        /* 
+        // TEMPORARIAMENTE DESATIVADO PARA PERMITIR VALIDAÇÃO ENQUANTO INVESTIGAMOS A DISPARIDADE
         // Verificar data de emissão se fornecida no formulário de busca
-        const dateInput = (dateOverride || dataEmissao || "").trim();
-        if (dateInput) {
+        if (dateInputRaw) {
           const toISO = (d: string) => {
             if (!d) return "";
             const nums = d.replace(/\D/g, "");
             if (nums.length === 8) {
-              // YYYY-MM-DD (20260429)
               if (d.includes("-") || (d.length === 10 && d.indexOf("-") === 4)) {
                 return `${nums.slice(0, 4)}-${nums.slice(4, 6)}-${nums.slice(6, 8)}`;
               }
-              // DD/MM/YYYY (29042026)
               return `${nums.slice(4, 8)}-${nums.slice(2, 4)}-${nums.slice(0, 2)}`;
             }
-            // Fallback para strings ISO completas
             return d.split("T")[0].split(" ")[0];
           };
 
-          const inputISO = toISO(dateInput);
+          const inputISO = toISO(dateInputRaw);
           const docISO = toISO(docDate);
 
-          console.log("[Validation] Date Check:", { 
-            input: { raw: dateInput, iso: inputISO }, 
-            doc: { raw: docDate, iso: docISO } 
-          });
-
           if (inputISO !== docISO && inputISO && docISO) {
-            setErrorMessage(`Data de emissão não corresponde ao documento. (Informado: ${inputISO.split("-").reverse().join("/")} | Documento: ${docISO.split("-").reverse().join("/")})`);
+            setErrorMessage(`Data de emissão não corresponde ao documento. (DEBUG: ${inputISO} vs ${docISO})`);
             setIsValidating(false);
             return;
           }
-        }        
+        }
+        */        
         // Injetar dataEmissao formatada se necessário para o componente
         const type = detectDocType(json.data);
         setDocType(type);
