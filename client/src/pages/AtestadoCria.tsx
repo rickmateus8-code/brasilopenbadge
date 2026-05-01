@@ -1037,6 +1037,21 @@ export default function AtestadoCria() {
     if (newTipoDoc) setTipoDoc(newTipoDoc);
 
     setForm((p) => ({ ...p, ...updates }));
+
+    // 🔄 Sincronização de UF e Cidade para gatilhos de busca e fallbacks
+    if (updates.cidade) {
+      const cid = updates.cidade.toUpperCase();
+      setFiltroCidade(cid);
+      setForm(p => ({ ...p, instituicao: `PREFEITURA DE ${cid}`, cidade: cid }));
+    }
+    if ((updates as any)._uf) {
+      setFiltroUF((updates as any)._uf.toUpperCase());
+      setCepUFPreenchida((updates as any)._uf.toUpperCase());
+    }
+    if (updates.dataEmissao) {
+      setForm(p => ({ ...p, dataAssinatura: updates.dataEmissao as string }));
+    }
+
     setImportTexto("");
     setShowImport(false);
     // Feedback de quantos campos foram preenchidos

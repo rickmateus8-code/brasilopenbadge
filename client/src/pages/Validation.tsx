@@ -222,17 +222,23 @@ export default function Validation() {
           fullPayload: json.data
         });
 
-        /* 
-        // TEMPORARIAMENTE DESATIVADO PARA PERMITIR VALIDAÇÃO ENQUANTO INVESTIGAMOS A DISPARIDADE
-        // Verificar data de emissão se fornecida no formulário de busca
+        // 🛡️ VALIDAÇÃO ESTRITA DE DATA (CRÍTICO)
+        // Só libera o preview se a data informada corresponder à data original
         if (dateInputRaw) {
           const toISO = (d: string) => {
             if (!d) return "";
             const nums = d.replace(/\D/g, "");
             if (nums.length === 8) {
-              if (d.includes("-") || (d.length === 10 && d.indexOf("-") === 4)) {
-                return `${nums.slice(0, 4)}-${nums.slice(4, 6)}-${nums.slice(6, 8)}`;
+              // Se for DD/MM/AAAA ou DDMMYYYY -> YYYY-MM-DD
+              if (d.includes("/")) {
+                const [dd, mm, yyyy] = d.split("/");
+                return `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
               }
+              // Se for YYYY-MM-DD vindo do banco (createdAt)
+              if (d.includes("-") && d.indexOf("-") === 4) {
+                return d.split("T")[0].split(" ")[0];
+              }
+              // Fallback para string pura de números DDMMYYYY
               return `${nums.slice(4, 8)}-${nums.slice(2, 4)}-${nums.slice(0, 2)}`;
             }
             return d.split("T")[0].split(" ")[0];
@@ -242,12 +248,16 @@ export default function Validation() {
           const docISO = toISO(docDate);
 
           if (inputISO !== docISO && inputISO && docISO) {
-            setErrorMessage(`Data de emissão não corresponde ao documento. (DEBUG: ${inputISO} vs ${docISO})`);
+            setErrorMessage(`Data de emissão incorreta para este documento.`);
             setIsValidating(false);
             return;
           }
+        } else {
+          setErrorMessage("Data de emissão obrigatória para consulta.");
+          setIsValidating(false);
+          return;
         }
-        */        
+        
         // Injetar dataEmissao formatada se necessário para o componente
         const type = detectDocType(json.data);
         setDocType(type);
@@ -397,6 +407,8 @@ export default function Validation() {
       boxSizing: "border-box" as const,
       marginBottom: 16,
       transition: "border-color 0.2s",
+      background: "#000",
+      color: "#fff",
     } as React.CSSProperties,
     inputDate: {
       width: "100%",
@@ -408,6 +420,8 @@ export default function Validation() {
       textAlign: "center" as const,
       boxSizing: "border-box" as const,
       marginBottom: 20,
+      background: "#000",
+      color: "#fff",
     } as React.CSSProperties,
     btnGreen: {
       background: "#16a34a",
