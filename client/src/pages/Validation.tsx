@@ -26,17 +26,19 @@ import CNHDocument from "@/components/CNHDocument";
 import { useParams } from "wouter";
 import { exportElementToPDF, exportElementToPDFBlob, generatePDFFilename } from "@/lib/pdfExport";
 
-type DocType = "atestado" | "receita" | "cnh" | "unknown";
+type DocType = "atestado" | "receita" | "cnh" | "laudo" | "unknown";
 
 function detectDocType(data: any): DocType {
-  if (data.tipo === "receita") return "receita";
-  if (data.tipo === "cnh") return "cnh";
-  if (data.tipo === "atestado") return "atestado";
-  // Fallback: se tem campo 'textoAtestado' ou 'afastamento', é atestado
+  const typeStr = (data.tipo || data.type || data.document_type || "").toLowerCase();
+  if (typeStr === "receita") return "receita";
+  if (typeStr === "cnh") return "cnh";
+  if (typeStr === "laudo") return "laudo";
+  if (typeStr === "atestado") return "atestado";
+  
+  // Fallback por campos
+  if (data.document_type === "laudo") return "laudo";
   if (data.textoAtestado || data.afastamento) return "atestado";
-  // Se tem campo 'prescricao', é receita
   if (data.prescricao) return "receita";
-  // Se tem campo 'categoria' ou 'registro', é CNH
   if (data.categoria || data.registro) return "cnh";
   return "unknown";
 }
@@ -325,6 +327,7 @@ export default function Validation() {
   const getDocTitle = () => {
     switch (docType) {
       case "atestado": return "Atestado Médico";
+      case "laudo": return "Laudo Médico";
       case "receita": return "Receita Médica";
       case "cnh": return "Carteira Nacional de Habilitação";
       default: return "Documento";
@@ -422,14 +425,26 @@ export default function Validation() {
     } as React.CSSProperties,
     btnGray: {
       background: "#f3f4f6",
-      color: "#4b5563",
+      color: "#374151",
       border: "1px solid #e5e7eb",
       padding: "12px 20px",
-      borderRadius: 8,
+      borderRadius: 6,
       fontSize: 14,
       fontWeight: 700,
       cursor: "pointer",
       width: "100%",
+      letterSpacing: 0.5,
+    } as React.CSSProperties,
+    btnBlue: {
+      background: "#005CA9",
+      color: "#fff",
+      border: "none",
+      padding: "12px 20px",
+      borderRadius: 6,
+      fontSize: 14,
+      fontWeight: 700,
+      cursor: "pointer",
+      letterSpacing: 0.5,
     } as React.CSSProperties,
     modal: {
       position: "fixed" as const,
@@ -501,11 +516,13 @@ export default function Validation() {
 
     switch (docType) {
       case "atestado":
+      case "laudo":
         return (
           <div style={style}>
             <AttestationDocument
               ref={attestationRef}
               data={validDoc}
+              documentType={docType === "laudo" ? "laudo" : "atestado"}
               logoLeft={validDoc.logoUrl || validDoc.logo_url}
               logoRight={validDoc.logoRight || validDoc.logo_right}
               signatureColor={validDoc.signatureColor || validDoc.signature_color}
