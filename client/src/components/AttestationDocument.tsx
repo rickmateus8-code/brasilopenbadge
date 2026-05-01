@@ -179,12 +179,12 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
 
 
-        {/* ===== HEADER ===== */}
+        {/* ===== HEADER (LOGOS APENAS) ===== */}
         <div id="preview-header" style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: 8,
+          marginBottom: 0,
           height: 80,
           position: "relative",
           zIndex: 2,
@@ -209,24 +209,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             )}
           </div>
 
-          {/* Centro — Nome da Instituição / Unidade / Endereço */}
-          <div style={{ flex: 1, padding: "0 12px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-            {instituicao && (
-              <div style={{ fontSize: 14.7, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", letterSpacing: 0, lineHeight: 1.3 }}>
-                {instituicao}
-              </div>
-            )}
-            {unidade && (
-              <div style={{ fontSize: 12.6, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", lineHeight: 1.3 }}>
-                {unidade}
-              </div>
-            )}
-            {enderecoEmitente && (
-              <div style={{ fontSize: 10.5, fontWeight: 400, textTransform: "uppercase", color: "#000", lineHeight: 1.3 }}>
-                {enderecoEmitente}
-              </div>
-            )}
-          </div>
+          {/* Espaço Central (Vazio, informações movidas para baixo do título) */}
+          <div style={{ flex: 1 }} />
 
           {/* Logo Direita */}
           <div style={{ width: 154, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, overflow: "visible" }}>
@@ -251,7 +235,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         {/* ===== TÍTULO ===== */}
         <div style={{
           fontWeight: 900,
-          fontSize: 23.15, // Aumentado em 5% (22.05 * 1.05)
+          fontSize: 23.15, 
           textTransform: "uppercase",
           borderTop: "none",
           borderBottom: "none",
@@ -260,30 +244,56 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           width: "100%",
           textAlign: "center",
           marginTop: 12,
-          marginBottom: 4, // Ajustado conforme feedback (era 6, original era 2)
-          lineHeight: 1, // Unificar altura da linha entre Preview e PDF
-          letterSpacing: 0, // Removido espaçamento
+          marginBottom: 22, // Aumentado significativamente para evitar que o texto 'cole' na linha inferior
+          lineHeight: 1, 
+          letterSpacing: 0, 
           position: "relative",
           zIndex: 2,
           color: "#000",
           flexShrink: 0,
         }}>
-          {docType === 'laudo' ? (
-            <div style={{ fontSize: 23.15, fontWeight: 900 }}>LAUDO MÉDICO</div>
-          ) : (
-            <div style={{ fontSize: 23.15, fontWeight: 900 }}>ATESTADO MÉDICO</div>
-          )}
+          {docType === 'laudo' ? "LAUDO MÉDICO" : "ATESTADO MÉDICO"}
         </div>
 
         {/* Moldura Superior (Linha Preta) */}
         <div style={{
-          borderTop: "2.04px solid #000", // Grossura aumentada em 2% (2 * 1.02)
+          borderTop: "2.04px solid #000", 
           width: "100%",
-          marginBottom: 25,
+          marginBottom: 10, 
           position: "relative",
           zIndex: 2,
           flexShrink: 0,
         }} />
+
+        {/* ===== INFORMAÇÕES DA INSTITUIÇÃO (ABAIXO DO TÍTULO) ===== */}
+        <div id="preview-institution-info" style={{
+          textAlign: "center",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: 25,
+          position: "relative",
+          zIndex: 2,
+          flexShrink: 0,
+          gap: 2
+        }}>
+          {instituicao && (
+            <div style={{ fontSize: 14.7, fontWeight: 700, textTransform: "uppercase", color: "#000", letterSpacing: 0.5, lineHeight: 1.2 }}>
+              {instituicao}
+            </div>
+          )}
+          {unidade && (
+            <div style={{ fontSize: 12.6, fontWeight: 700, textTransform: "uppercase", color: "#000", lineHeight: 1.2 }}>
+              {unidade}
+            </div>
+          )}
+          {enderecoEmitente && (
+            <div style={{ fontSize: 10.5, fontWeight: 400, textTransform: "uppercase", color: "#000", lineHeight: 1.2 }}>
+              {enderecoEmitente}
+            </div>
+          )}
+        </div>
 
         {/* ===== DADOS DO PACIENTE ===== */}
         <div id="preview-patient" style={{
@@ -432,7 +442,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 height: 111, 
                 boxSizing: "border-box", 
                 paddingLeft: 2,
-                paddingBottom: 0, // Alinhamento exato no limite inferior
+                paddingBottom: 6, // Elevado levemente para evitar corte na exportação
                 overflow: "hidden" // Garantir que o texto nunca vaze para baixo
               }}>
                 <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.42, marginBottom: 3 }}>

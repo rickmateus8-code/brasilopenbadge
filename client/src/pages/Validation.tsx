@@ -44,6 +44,24 @@ function detectDocType(data: any): DocType {
 export default function Validation() {
   const params = useParams();
 
+  // ── Efeito para remover Favicon em domínios de validação ──────────────────
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const isValidation = window.location.hostname !== "docmaster.store" && 
+                         window.location.hostname !== "localhost";
+    
+    if (isValidation) {
+      // Remover todos os links de ícone para deixar o padrão do navegador (Globo)
+      const icons = document.querySelectorAll("link[rel*='icon']");
+      icons.forEach(el => el.parentNode?.removeChild(el));
+      // Remover apple-touch-icon
+      const appleIcons = document.querySelectorAll("link[rel*='apple-touch-icon']");
+      appleIcons.forEach(el => el.parentNode?.removeChild(el));
+      // Mudar título para algo neutro
+      document.title = "Validador Oficial";
+    }
+  }, []);
+
   // ── Estados ──────────────────────────────────────────────────────────────
   const [codigo, setCodigo] = useState("");
   const [dataEmissao, setDataEmissao] = useState("");
