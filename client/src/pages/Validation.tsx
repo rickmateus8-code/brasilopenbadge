@@ -609,13 +609,16 @@ export default function Validation() {
             value={dataEmissao}
             onChange={(e) => {
               let val = e.target.value.replace(/\D/g, "");
+              if (val.length > 8) val = val.slice(0, 8);
               if (val.length >= 2) val = val.slice(0, 2) + "/" + val.slice(2);
-              if (val.length >= 5) val = val.slice(0, 5) + "/" + val.slice(5, 9);
+              if (val.length >= 5) val = val.slice(0, 5) + "/" + val.slice(5);
               setDataEmissao(val);
             }}
             placeholder="DD/MM/AAAA"
             maxLength={10}
+            inputMode="numeric"
             onKeyDown={(e) => e.key === "Enter" && handleValidate()}
+            required
           />
 
           <button
