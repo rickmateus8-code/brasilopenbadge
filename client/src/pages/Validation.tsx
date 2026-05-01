@@ -210,20 +210,25 @@ export default function Validation() {
       
       if (json.valid && json.data) {
         // PRIORIDADE: Puxar dataEmissao do payload (data preenchida pelo usuário)
-        const docDate = json.data.dataEmissao || json.data.data_emissao || json.data.createdAt || "";
-        
+        const docDate = (json.data.dataEmissao || json.data.data_emissao || json.data.createdAt || "").trim();
+
         // Verificar data de emissão se fornecida no formulário de busca
-        const dateInput = dateOverride || dataEmissao;
+        const dateInput = (dateOverride || dataEmissao || "").trim();
         if (dateInput) {
           let dateFormatted = dateInput;
           if (dateInput.includes("-")) {
             const [y, m, d] = dateInput.split("-");
             dateFormatted = `${d}/${m}/${y}`;
           }
-          
+
           const docDateNorm = docDate.includes("/") ? docDate : (() => {
-            const [dy, dm, dd] = docDate.split("T")[0].split("-");
-            return `${dd}/${dm}/${dy}`;
+            // Extrair apenas a parte da data YYYY-MM-DD (funciona com T ou espaço)
+            const match = docDate.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (match) {
+              const [_, dy, dm, dd] = match;
+              return `${dd}/${dm}/${dy}`;
+            }
+            return docDate;
           })();
 
           if (docDateNorm !== dateFormatted) {
@@ -231,8 +236,7 @@ export default function Validation() {
             setIsValidating(false);
             return;
           }
-        }
-        
+        }        
         // Injetar dataEmissao formatada se necessário para o componente
         const type = detectDocType(json.data);
         setDocType(type);
