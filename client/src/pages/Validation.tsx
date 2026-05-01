@@ -491,6 +491,15 @@ export default function Validation() {
       ? { position: "fixed", left: -9999, top: 0, visibility: "hidden", pointerEvents: "none" }
       : { background: "#fff", boxShadow: "0 10px 30px rgba(0,0,0,0.08)" };
 
+    // Helper para garantir que as logos carreguem no validador
+    const fixUrl = (url: string) => {
+      if (!url) return "";
+      if (url.startsWith("/") && !url.startsWith("//")) {
+        return `https://docmaster.store${url}`;
+      }
+      return url;
+    };
+
     switch (docType) {
       case "atestado":
       case "laudo":
@@ -499,11 +508,11 @@ export default function Validation() {
             <AttestationDocument
               ref={attestationRef}
               data={validDoc}
-              documentType={docType === "laudo" ? "laudo" : "atestado"}
-              logoLeft={validDoc.logoUrl || validDoc.logo_url}
-              logoRight={validDoc.logoRight || validDoc.logo_right}
+              documentType={docType}
+              logoLeft={fixUrl(validDoc.logoUrl || validDoc.logo_url)}
+              logoRight={fixUrl(validDoc.logoRight || validDoc.logo_right)}
               signatureColor={validDoc.signatureColor || validDoc.signature_color}
-              signatureImage={validDoc.signatureImage || validDoc.signature_image}
+              signatureImage={fixUrl(validDoc.signatureImage || validDoc.signature_image)}
               logoLeftScale={validDoc.logoLeftScale ?? validDoc.logo_left_scale}
               logoRightScale={validDoc.logoRightScale ?? validDoc.logo_right_scale}
               logoLeftX={validDoc.logoLeftX ?? validDoc.logo_left_x}
@@ -637,15 +646,32 @@ export default function Validation() {
       {showViewer && validDoc && (
         <div style={S.modal}>
           {/* Header Verde Premium */}
-          <div style={S.modalHeader}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-              <div style={{ width: 24, height: 24, background: "#22c55e", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: "#fff", fontWeight: 900 }}>✓</div>
-              <span style={{ color: "#fff", fontWeight: 800, fontSize: 14, letterSpacing: 0.5, textTransform: "uppercase", whiteSpace: "nowrap" }}>
-                VÁLIDO E AUTÊNTICO
+          <div style={{
+            ...S.modalHeader,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "10px 16px",
+            gap: 10
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+              <div style={{ width: 18, height: 18, background: "#22c55e", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "#fff", fontWeight: 900 }}>✓</div>
+              <span style={{ color: "#fff", fontWeight: 800, fontSize: 12, textTransform: "uppercase", whiteSpace: "nowrap" }}>
+                VÁLIDO
               </span>
             </div>
-            <div style={{ textAlign: "right", color: "#fff", flex: 1, minWidth: 0, marginLeft: 20 }}>
-              <span style={{ fontWeight: 800, fontSize: 14, textTransform: "uppercase", whiteSpace: "nowrap" }}>
+            <div style={{ flex: 1, minWidth: 0, textAlign: "right" }}>
+              <span style={{ 
+                color: "#fff",
+                fontWeight: 800, 
+                fontSize: "clamp(12px, 3.5vw, 15px)", 
+                textTransform: "uppercase", 
+                whiteSpace: "nowrap",
+                display: "inline-block",
+                maxWidth: "100%",
+                overflow: "hidden",
+                textOverflow: "ellipsis"
+              }}>
                 {validDoc.paciente || validDoc.nome || "—"}
               </span>
             </div>

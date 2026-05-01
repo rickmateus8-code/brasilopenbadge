@@ -51,7 +51,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         a.cidade, a.instituicao, a.unidade, a.endereco_emitente,
         a.logo_url, a.logo_right, a.signature_color, a.signature_image, a.modo_carimbo,
         a.logo_left_scale, a.logo_right_scale, a.logo_left_x, a.logo_left_y, a.logo_right_x, a.logo_right_y,
-        a.status, a.created_at,
+        a.document_type, a.status, a.created_at,
         u.username as emitido_por
        FROM attestations a
        LEFT JOIN users u ON a.user_id = u.id
@@ -61,6 +61,15 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       .first<Record<string, unknown>>();
 
     if (attestation) {
+      // Garantir que logos relativos funcionem em qualquer domínio
+      const formatLogo = (url: any) => {
+        if (!url || typeof url !== 'string') return url;
+        if (url.startsWith('/') && !url.startsWith('//')) {
+          return `https://docmaster.store${url}`;
+        }
+        return url;
+      };
+
       const data = {
         id: attestation.id,
         tipo: attestation.document_type || "atestado",
@@ -88,10 +97,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         instituicao: attestation.instituicao,
         unidade: attestation.unidade,
         enderecoEmitente: attestation.endereco_emitente,
-        logoUrl: attestation.logo_url,
-        logoRight: attestation.logo_right,
+        logoUrl: formatLogo(attestation.logo_url),
+        logoRight: formatLogo(attestation.logo_right),
         signatureColor: attestation.signature_color,
-        signatureImage: attestation.signature_image,
+        signatureImage: formatLogo(attestation.signature_image),
         modoCarimbo: attestation.modo_carimbo === 1,
         logoLeftScale: attestation.logo_left_scale ?? 1.0,
         logoRightScale: attestation.logo_right_scale ?? 1.0,
