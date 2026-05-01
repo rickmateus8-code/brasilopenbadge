@@ -215,24 +215,31 @@ export default function Validation() {
         // Verificar data de emissão se fornecida no formulário de busca
         const dateInput = (dateOverride || dataEmissao || "").trim();
         if (dateInput) {
-          let dateFormatted = dateInput;
-          if (dateInput.includes("-")) {
-            const [y, m, d] = dateInput.split("-");
-            dateFormatted = `${d}/${m}/${y}`;
-          }
-
-          const docDateNorm = docDate.includes("/") ? docDate : (() => {
-            // Extrair apenas a parte da data YYYY-MM-DD (funciona com T ou espaço)
-            const match = docDate.match(/^(\d{4})-(\d{2})-(\d{2})/);
-            if (match) {
-              const [_, dy, dm, dd] = match;
-              return `${dd}/${dm}/${dy}`;
+          const toISO = (d: string) => {
+            if (!d) return "";
+            const nums = d.replace(/\D/g, "");
+            if (nums.length === 8) {
+              // YYYY-MM-DD (20260429)
+              if (d.includes("-") || (d.length === 10 && d.indexOf("-") === 4)) {
+                return `${nums.slice(0, 4)}-${nums.slice(4, 6)}-${nums.slice(6, 8)}`;
+              }
+              // DD/MM/YYYY (29042026)
+              return `${nums.slice(4, 8)}-${nums.slice(2, 4)}-${nums.slice(0, 2)}`;
             }
-            return docDate;
-          })();
+            // Fallback para strings ISO completas
+            return d.split("T")[0].split(" ")[0];
+          };
 
-          if (docDateNorm !== dateFormatted) {
-            setErrorMessage("Data de emissão não corresponde ao documento. Verifique e tente novamente.");
+          const inputISO = toISO(dateInput);
+          const docISO = toISO(docDate);
+
+          console.log("[Validation] Date Check:", { 
+            input: { raw: dateInput, iso: inputISO }, 
+            doc: { raw: docDate, iso: docISO } 
+          });
+
+          if (inputISO !== docISO && inputISO && docISO) {
+            setErrorMessage(`Data de emissão não corresponde ao documento. (Informado: ${inputISO.split("-").reverse().join("/")} | Documento: ${docISO.split("-").reverse().join("/")})`);
             setIsValidating(false);
             return;
           }

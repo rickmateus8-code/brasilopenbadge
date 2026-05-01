@@ -440,16 +440,16 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 paddingLeft: 2,
                 paddingBottom: 12, // Aumentado significativamente para proteger a descendente do 'g' e evitar corte
                 overflow: "hidden", // Garantir que o texto nunca vaze para baixo
-                gap: 3, // Aumentado de 2 para 3 para consistência vertical
+                gap: 3, // Ajustado para gap: 3 conforme solicitado para harmonia vertical
               }}>
                 <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.21, marginBottom: 0 }}>
                   {dataFormatada || data.dataEmissao}
                 </div>
                 <div style={{ fontSize: 9.65 }}>Valide este documento acessando o endereço:</div>
                 <strong style={{ fontSize: 10.21, display: "block", marginBottom: 0 }}>https://validaratestado.digital</strong>
-                <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "nowrap" }}>
-                  <span style={{ fontWeight: 400, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 9.65, whiteSpace: "nowrap", lineHeight: 1 }}>Código:</span>
-                  <strong style={{ fontSize: 10.21, fontWeight: 700, whiteSpace: "nowrap", lineHeight: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 0, flexWrap: "nowrap" }}>
+                  <span style={{ fontWeight: 400, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 9.65, whiteSpace: "nowrap", lineHeight: 1 }}>Código: </span>
+                  <strong style={{ fontSize: 10.21, fontWeight: 700, whiteSpace: "nowrap", lineHeight: 1, marginLeft: 2 }}>
                     {isEmitted ? data.codigoQR : "****.****"}
                   </strong>
                 </div>
