@@ -1985,6 +1985,7 @@ export default function AdminDashboard() {
 	                  <thead>
 	                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
 	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID Interno</th>
+	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Data Emissão</th>
 	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Criação (Painel)</th>
 	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Usuário</th>
 	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nome/Paciente</th>
@@ -1997,9 +1998,11 @@ export default function AdminDashboard() {
 	                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
 	                    {filteredEmissions.map(e => {
 	                const createDate = new Date(e.created_at);
+	                const docDateValue = e.data_emissao || e.dataEmissao || e.data || "";
 	                return (
 	                <tr key={`${e.table_source}-${e.id}`} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
 	                <td className="px-4 py-2.5 font-mono text-gray-400 text-[10px]">{e.id.slice(0, 8)}...</td>
+	                <td className="px-4 py-2.5 text-gray-600 dark:text-gray-400 font-semibold">{docDateValue || "—"}</td>
 	                <td className="px-4 py-2.5 whitespace-nowrap">
 	                <div className="flex flex-col">
 	                <span className="font-semibold text-gray-800 dark:text-gray-200">{createDate.toLocaleDateString("pt-BR")}</span>
