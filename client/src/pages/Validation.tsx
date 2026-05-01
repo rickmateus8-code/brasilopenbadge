@@ -359,7 +359,7 @@ export default function Validation() {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      gap: 10,
+      gap: 8,
       boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
     } as React.CSSProperties,
     headerText: {
@@ -584,8 +584,8 @@ export default function Validation() {
     <div style={S.page}>
       {/* ── Header azul ── */}
       <div style={S.header}>
-        <span style={{ fontSize: 20 }}>🛡️</span>
-        <span style={S.headerText}>Validador Oficial DocMaster</span>
+        <span style={{ fontSize: 24, lineHeight: "1", display: "flex", alignItems: "center" }}>🛡️</span>
+        <span style={S.headerText}>Validador Oficial</span>
       </div>
 
       {/* ── Card central ── */}
@@ -598,16 +598,26 @@ export default function Validation() {
             style={S.input}
             value={codigo}
             onChange={(e) => {
-              let val = e.target.value.replace(/\D/g, "");
-              if (val.length > 8) val = val.slice(0, 8);
-              if (val.length >= 4) {
-                val = val.slice(0, 4) + "." + val.slice(4);
+              let inputVal = e.target.value.toUpperCase();
+              const isDeleting = inputVal.length < codigo.length;
+              let rawAlphaNum = inputVal.replace(/[^A-Z0-9]/g, "");
+
+              if (rawAlphaNum.length > 8) rawAlphaNum = rawAlphaNum.slice(0, 8);
+
+              let formattedVal = rawAlphaNum;
+
+              if (rawAlphaNum.length > 4) {
+                formattedVal = rawAlphaNum.slice(0, 4) + "." + rawAlphaNum.slice(4);
+              } else if (rawAlphaNum.length === 4 && !isDeleting) {
+                formattedVal = rawAlphaNum + ".";
+              } else if (rawAlphaNum.length === 4 && isDeleting && codigo.endsWith(".")) {
+                formattedVal = rawAlphaNum;
               }
-              setCodigo(val);
+
+              setCodigo(formattedVal);
             }}
-            placeholder="0000.0000"
+            placeholder="XXXX.XXXX"
             maxLength={9}
-            inputMode="numeric"
             onKeyDown={(e) => e.key === "Enter" && handleValidate()}
             required
           />
