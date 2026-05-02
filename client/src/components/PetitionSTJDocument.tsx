@@ -79,7 +79,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
-          width: "420pt",
+          width: "441pt", // Aumentado em 5% (420pt -> 441pt)
           zIndex: 1,
           pointerEvents: "none"
         }}>
