@@ -35,7 +35,7 @@ const EXPORT_SCALE = 2; // Ajustado para a nova base de 794px
 // Constantes de conversão ABNT (Baseadas na grade 794x1123)
 const MARGIN_TOP = 113.4;    // 3.0 cm
 const MARGIN_LEFT = 113.4;   // 3.0 cm
-const MARGIN_LEFT_BODY = 105.5; // Deslocado 2mm para a esquerda conforme solicitado
+const MARGIN_LEFT_BODY = 97.5; // Deslocado 1% para a esquerda conforme solicitado (105.5 -> 97.5)
 const MARGIN_RIGHT = 83.6;   // Aumentado em 1% (~8px) (75.6 -> 83.6)
 const MARGIN_BOTTOM = 75.6;  // 2.0 cm
 
@@ -82,7 +82,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           position: "absolute",
           top: "50%",
           left: "50%",
-          transform: "translate(-50%, -20%)", 
+          transform: "translate(-50%, -35%)", // Subido aprox 5 linhas (era -20%, agora -35%)
           width: "500pt", 
           zIndex: 1,
           pointerEvents: "none"
