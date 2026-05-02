@@ -6,14 +6,16 @@
 import type { Env } from '../../types';
 
 // Known document types — when [id] matches one of these, POST creates a new document
-const DOCUMENT_TYPES = ['cnh', 'cha', 'toxicologico', 'historico-sp', 'historico-uninter'];
+const DOCUMENT_TYPES = ['cnh', 'cha', 'toxicologico', 'historico-sp', 'historico-uninter', 'peticaocria', 'peticao-stj'];
 
 const DOCUMENT_PRICES: Record<string, number> = {
-  'cnh': 500,
-  'cha': 500,
-  'toxicologico': 500,
-  'historico-sp': 500,
-  'historico-uninter': 500,
+  'cnh': 1500,
+  'cha': 1500,
+  'toxicologico': 1500,
+  'historico-sp': 1800,
+  'historico-uninter': 1800,
+  'peticaocria': 2000,
+  'peticao-stj': 2000,
 };
 
 function getSessionToken(request: Request): string | null {
