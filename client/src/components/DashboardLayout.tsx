@@ -53,9 +53,7 @@ const menuItems: MenuItem[] = [
   {
     icon: FlaskConical, label: "Toxicológico",
     children: [
-      { label: "Novo Toxicológico", path: "/toxicologicocria", isCreation: true },
       { label: "Laudo Sodré", path: "/toxicria", isCreation: true },
-      { label: "Toxicológicos Salvos", path: "/toxicologicosalvos" },
       { label: "Laudos Sodré Salvos", path: "/toxicriasalvos" },
     ],
   },

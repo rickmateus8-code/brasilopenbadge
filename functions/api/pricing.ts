@@ -14,15 +14,14 @@ function getSessionToken(request: Request): string | null {
 
 async function getAuthUser(env: Env, token: string | null): Promise<any | null> {
   if (!token) return null;
-  const now = new Date().toISOString();
-  const session = await env.DB.prepare(
-    "SELECT user_id FROM sessions WHERE token = ? AND expires_at > ? LIMIT 1"
-  ).bind(token, now).first<{ user_id: string }>();
-  if (!session) return null;
-  const user = await env.DB.prepare(
-    "SELECT id, username, role, balance, is_active FROM users WHERE id = ? AND is_active = 1 LIMIT 1"
-  ).bind(session.user_id).first<any>();
-  return user || null;
+  // Otimização de segurança: Busca em um único JOIN e garante que o usuário esteja ATIVO
+  return env.DB.prepare(`
+    SELECT u.id, u.username, u.role, u.balance
+    FROM sessions s
+    JOIN users u ON s.user_id = u.id
+    WHERE s.token = ? AND s.expires_at > datetime('now') AND u.is_active = 1
+    LIMIT 1
+  `).bind(token).first<any>();
 }
 
 const corsHeaders = {

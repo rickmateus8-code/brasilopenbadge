@@ -75,7 +75,6 @@ import AtestadoView from "./pages/AtestadoView";
 import Validation from "./pages/Validation";
 import CNHCria from "./pages/CNHCria";
 import CHACria from "./pages/CHACria";
-import ToxicologicoCria from "./pages/ToxicologicoCria";
 import ToxicriaCria from "./pages/ToxicriaCria";
 import ToxicriaSalvos from "./pages/ToxicriaSalvos";
 import HistoricoSP from "./pages/HistoricoSP";
@@ -86,7 +85,6 @@ import AtestadoEditar from "./pages/AtestadoEditar";
 import ReceitaEditar from "./pages/ReceitaEditar";
 import CNHEditar from "./pages/CNHEditar";
 import CHAEditar from "./pages/CHAEditar";
-import ToxicologicoEditar from "./pages/ToxicologicoEditar";
 import ValidationReceita from "./pages/ValidationReceita";
 import Extrato from "./pages/Extrato";
 import Recargas from "./pages/Recargas";
@@ -98,7 +96,6 @@ import NotFound from "./pages/NotFound";
 import CNHSalvas from "./pages/CNHSalvas";
 import AtestadosSalvos from "./pages/AtestadosSalvos";
 import CHASalvas from "./pages/CHASalvas";
-import ToxicologicoSalvos from "./pages/ToxicologicoSalvos";
 import ReceitasSalvas from "./pages/ReceitasSalvas";
 import HistoricoSPSalvos from "./pages/HistoricoSPSalvos";
 import HistoricoUNINTERSalvos from "./pages/HistoricoUNINTERSalvos";
@@ -225,17 +222,6 @@ function DocMasterRouter() {
       </Route>
       <Route path="/chasalvas">
         <ProtectedRoute component={CHASalvas} />
-      </Route>
-
-      {/* Toxicológico */}
-      <Route path="/toxicologico">
-        <ProtectedRoute component={ToxicologicoCria} />
-      </Route>
-      <Route path="/toxicologico/editar/:id">
-        {(params) => <ProtectedRoute component={ToxicologicoEditar} params={params} />}
-      </Route>
-      <Route path="/toxicologicosalvos">
-        <ProtectedRoute component={ToxicologicoSalvos} />
       </Route>
 
       {/* Laudo Sodré */}
