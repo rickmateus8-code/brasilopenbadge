@@ -145,28 +145,28 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={valueStyle}>{data.advogado?.toUpperCase() || ""}</span>
         </div>
 
-        <div style={{ ...textStyle, top: MARGIN_TOP + 269.2, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 293.2, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Processo N°:</span>
           <span style={valueStyle}>{data.processo || ""}</span>
         </div>
 
-        <div style={{ ...textStyle, top: MARGIN_TOP + 367.2, left: MARGIN_LEFT_BODY, borderBottom: "1px solid #000", paddingBottom: 2, display: "inline-block", paddingRight: 130 }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 391.2, left: MARGIN_LEFT_BODY, borderBottom: "1px solid #000", paddingBottom: 2, display: "inline-block", paddingRight: 130 }}>
           <span style={labelStyle}>CUMPRIMENTO DE SENTENÇA CONTRA:</span>
           <span style={valueStyle}>{data.contra?.toUpperCase() || ""}</span>
         </div>
 
         {/* Bloco de Decisão */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 412.2, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 436.2, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Assunto:</span>
           <span style={valueStyle}>Decisão Favorável</span>
         </div>
-        <div style={{ ...textStyle, top: MARGIN_TOP + 437.2, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 461.2, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Situação:</span>
           <span style={{ ...valueStyle, color: "#000" }}>AUTORIZADO</span>
         </div>
 
         {/* Código de Barras Dinâmico (AJUSTADO: -10% LARGURA / +5% ALTURA / 2 LINHAS RESPIRO) */}
-        <div style={{ position: "absolute", top: MARGIN_TOP + 485.2, left: MARGIN_LEFT_BODY - 8.1, zIndex: 11 }}>
+        <div style={{ position: "absolute", top: MARGIN_TOP + 509.2, left: MARGIN_LEFT_BODY - 8.1, zIndex: 11 }}>
            <Barcode 
              value={alvara_final}
              width={1.4}
@@ -177,19 +177,19 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            />
         </div>
 
-        {/* Valor de Repasse (Garantindo 2 linhas de respiro inferior do barcode: 485.2 + 40.2 + 48 = 573.4) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 573.4, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", fontSize: "13.1pt" }}>
+        {/* Valor de Repasse (Garantindo 2 linhas de respiro inferior do barcode: 509.2 + 40.2 + 48 = 597.4) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 597.4, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", fontSize: "13.1pt" }}>
           Valor a receber: <span style={valueStyle}>R$ {data.valor || ""}</span> será depositado em conta corrente de sua titularidade..
         </div>
 
         {/* Texto Legal / Informativo (Deslocado proporcionalmente) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 635.4, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", textAlign: "justify", lineHeight: "1.5", fontSize: "12.8pt", fontFamily: "Arial, sans-serif" }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 659.4, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", textAlign: "justify", lineHeight: "1.5", fontSize: "12.8pt", fontFamily: "Arial, sans-serif" }}>
           Os autos foram encaminhados pelo TJ à Vara da Fazenda para a execução do processo e <br/>
           posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
         </div>
 
         {/* Data Formatada (Deslocada proporcionalmente) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 715.4, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "14.0pt" }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 739.4, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "14.0pt" }}>
           {formatLongDate(data.data)}
         </div>
 
