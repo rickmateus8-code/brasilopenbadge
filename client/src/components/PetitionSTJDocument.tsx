@@ -37,10 +37,10 @@ const MARGIN_BOTTOM = 75.6;  // 2.0 cm
 
 const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
   ({ data }, ref) => {
-    // Estilo base para os textos (fidelidade forense - LIBERATION SANS / HELVETICA)
+    // Estilo base para os textos (CORPO DO TEXTO E DADOS - ARIAL)
     const textStyle: React.CSSProperties = {
       position: "absolute",
-      fontFamily: "'Liberation Sans', Helvetica",
+      fontFamily: "Arial, sans-serif",
       color: "#000",
       fontSize: "12.5pt",
       whiteSpace: "nowrap",
@@ -50,12 +50,12 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
     const labelStyle: React.CSSProperties = {
       fontWeight: 400,
       marginRight: 5,
-      fontFamily: "'Liberation Sans', Helvetica"
+      fontFamily: "Arial, sans-serif"
     };
 
     const valueStyle: React.CSSProperties = {
       fontWeight: 400,
-      fontFamily: "'Liberation Sans', Helvetica"
+      fontFamily: "Arial, sans-serif"
     };
 
     return (
@@ -66,7 +66,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           width: DOC_WIDTH_PX,
           height: DOC_HEIGHT_PX,
           backgroundColor: "#ffffff",
-          fontFamily: "'Liberation Sans', Helvetica",
+          fontFamily: "Arial, sans-serif",
           position: "relative",
           overflow: "hidden",
           boxSizing: "border-box",
@@ -86,15 +86,15 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <img src="/assets/peticao/background_logo.png" style={{ width: "100%" }} alt="Watermark" />
         </div>
 
-        {/* ─── Cabeçalho Superior Centralizado (Dentro da Margem ABNT) ─── */}
-        <div style={{ position: "absolute", top: MARGIN_TOP - 70, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11, fontFamily: "'Liberation Sans', Helvetica" }}>
+        {/* ─── Cabeçalho Superior Centralizado (Dentro da Margem ABNT - ABAIXADO 2%) ─── */}
+        <div style={{ position: "absolute", top: MARGIN_TOP - 48, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11, fontFamily: "'Liberation Sans', Helvetica" }}>
            {/* Brasão da República (ALINHADO E CENTRALIZADO) */}
-           <img src="/assets/peticao/brasao_republica.png" style={{ width: "85pt", marginBottom: "8pt", display: "inline-block" }} alt="Brasão" />
+           <img src="/assets/peticao/brasao_republica.png" style={{ width: "85pt", marginBottom: "4pt", display: "inline-block" }} alt="Brasão" />
            
-           {/* Informações Institucionais (Abaixo do Brasão) */}
-           <div style={{ color: "#000", fontSize: "12pt", fontWeight: 700, letterSpacing: "0.5px" }}>TRIBUNAL DE JUSTIÇA</div>
-           <div style={{ color: "#000", fontSize: "10pt", fontWeight: 400, marginTop: 2 }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: 0284748/2026</div>
-           <div style={{ color: "#000", fontSize: "10pt", fontWeight: 400 }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
+           {/* Informações Institucionais (Abaixo do Brasão - PROXIMIDADE VERTICAL) */}
+           <div style={{ color: "#000", fontSize: "12pt", fontWeight: 400, letterSpacing: "0.5px" }}>TRIBUNAL DE JUSTIÇA</div>
+           <div style={{ color: "#000", fontSize: "10pt", fontWeight: 400, marginTop: -2 }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: 0284748/2026</div>
+           <div style={{ color: "#000", fontSize: "10pt", fontWeight: 400, marginTop: -2 }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
         </div>
 
         {/* Logo OAB (BEM NA BORDA - Canto Superior Esquerdo) */}
@@ -107,13 +107,13 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <img src="/assets/peticao/cod_de_barras.png" style={{ width: "130pt", height: "30pt" }} alt="Barcode" />
         </div>
 
-        {/* Título do Documento (DIMINUÍDO MAIS 3% = 17pt) */}
+        {/* Título do Documento (FONTE LIBERATION SANS / DIMINUÍDO MAIS 5% = 16.2pt) */}
         <div style={{ position: "absolute", top: MARGIN_TOP + 180, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10, fontFamily: "'Liberation Sans', Helvetica" }}>
-           <div style={{ fontSize: "17pt", fontWeight: 700, color: "#000" }}>PROCESSO JUDICIAL ELETRÔNICO</div>
+           <div style={{ fontSize: "16.2pt", fontWeight: 700, color: "#000" }}>PROCESSO JUDICIAL ELETRÔNICO</div>
            <div style={{ fontSize: "12pt", fontWeight: 400, marginTop: -6, color: "#000" }}>Processo Judiciário</div>
         </div>
 
-        {/* ─── Corpo da Petição (Grid ABNT: Esquerda DESLOCADA 5%) ─── */}
+        {/* ─── Corpo da Petição (Grid ABNT: Esquerda DESLOCADA 5% - FONTE ARIAL) ─── */}
         <div style={{ ...textStyle, top: MARGIN_TOP + 260, left: MARGIN_LEFT_BODY, fontSize: "12.5pt" }}>
           <span style={labelStyle}>Credor:</span>
           <span style={valueStyle}>{data.credor?.toUpperCase() || "LAZARA MARGARIDA PEREIRA PINTO"}</span>
@@ -159,15 +159,15 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           Valor a receber: <span style={valueStyle}>R$ {data.valor || "26.516,28"}</span> será depositado em conta corrente de sua titularidade..
         </div>
 
-        {/* Texto Legal / Informativo (EQUALIZADO PARA 12.5pt) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 630, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "normal", textAlign: "justify", lineHeight: "1.5", fontSize: "12.5pt", fontFamily: "'Liberation Sans', Helvetica" }}>
+        {/* Texto Legal / Informativo (SINCRONIZADO 12.5pt - ARIAL) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 630, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "normal", textAlign: "justify", lineHeight: "1.5", fontSize: "12.5pt", fontFamily: "Arial, sans-serif" }}>
           Os autos foram encaminhados pelo TJ à Vara da Fazenda para a execução do processo e <br/>
           posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
         </div>
 
         {/* ─── Rodapé e Assinatura ─── */}
-        {/* PODER JUDICIÁRIO (MAIS PRÓXIMO DA ASSINATURA) */}
-        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 80, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "11pt", fontFamily: "'Liberation Sans', Helvetica" }}>
+        {/* PODER JUDICIÁRIO (ARIAL) */}
+        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 80, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "11pt", fontFamily: "Arial, sans-serif" }}>
            <div style={{ textTransform: "uppercase", fontWeight: 400, letterSpacing: "1px", color: "#374151" }}>PODER JUDICIÁRIO</div>
            <div style={{ fontStyle: "italic", color: "#374151" }}>TJ – Tribunal de Justiça.</div>
         </div>
