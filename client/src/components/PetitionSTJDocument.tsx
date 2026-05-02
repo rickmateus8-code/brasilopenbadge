@@ -91,7 +91,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           position: "absolute",
           top: "50%",
           left: "50%",
-          transform: "translate(-50%, -35%)", // Subido aprox 5 linhas (era -20%, agora -35%)
+          transform: "translate(-50%, -40%)", // Subido mais 2 linhas (era -35%, agora -40%)
           width: "500pt", 
           zIndex: 1,
           pointerEvents: "none"
@@ -110,15 +110,15 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <div style={{ color: "#000", fontSize: "8.4pt", fontWeight: 400, marginTop: -3 }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
         </div>
 
-        {/* Logo OAB (LIMITE ABSOLUTO - Canto Superior Esquerdo) */}
-        <div style={{ position: "absolute", top: "4pt", left: "4pt", zIndex: 11 }}>
-           <img src="/assets/peticao/oab_logo.png" style={{ width: "79.3pt" }} alt="OAB" />
+        {/* Logo OAB (LIMITE ABSOLUTO - Canto Superior Esquerdo - SUBIDO 1 LINHA E +5%) */}
+        <div style={{ position: "absolute", top: "-5pt", left: "4pt", zIndex: 11 }}>
+           <img src="/assets/peticao/oab_logo.png" style={{ width: "83.3pt" }} alt="OAB" />
         </div>
 
         {/* Título do Documento (FONTE LIBERATION SANS / DIMINUÍDO MAIS 5% = 16.2pt) */}
         <div style={{ position: "absolute", top: MARGIN_TOP + 180, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10, fontFamily: "'Liberation Sans', Helvetica" }}>
            <div style={{ fontSize: "16.2pt", fontWeight: 700, color: "#000" }}>PROCESSO JUDICIAL ELETRÔNICO</div>
-           <div style={{ fontSize: "12pt", fontWeight: 400, marginTop: -6, color: "#000" }}>Processo Judiciário</div>
+           <div style={{ fontSize: "12.5pt", fontWeight: 400, marginTop: -6, color: "#000" }}>Processo Judiciário</div>
         </div>
 
         {/* ─── Corpo da Petição (Grid ABNT - SUBIDO 1MM ≈ 3.8px) ─── */}
