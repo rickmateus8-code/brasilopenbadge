@@ -162,7 +162,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
 
         {/* ─── Rodapé e Assinatura ─── */}
         {/* PODER JUDICIÁRIO (ARIAL - PRÓXIMO DA ASSINATURA) */}
-        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 25, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "11pt", fontFamily: "Arial, sans-serif" }}>
+        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 105, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "11pt", fontFamily: "Arial, sans-serif" }}>
            <div style={{ textTransform: "uppercase", fontWeight: 400, letterSpacing: "1px", color: "#374151" }}>PODER JUDICIÁRIO</div>
            <div style={{ fontStyle: "italic", color: "#374151" }}>TJ – Tribunal de Justiça.</div>
         </div>
