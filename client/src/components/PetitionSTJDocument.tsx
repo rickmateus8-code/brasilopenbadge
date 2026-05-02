@@ -25,8 +25,8 @@ interface PetitionSTJDocumentProps {
   data: PetitionData;
 }
 
-const DOC_WIDTH_PX = 794;  // Visualização CSS (A4 96 DPI)
-const DOC_HEIGHT_PX = 1123; // Visualização CSS (A4 96 DPI)
+const DOC_WIDTH_PX = 596;  // Nova base dimensional solicitada
+const DOC_HEIGHT_PX = 842; // Nova base dimensional solicitada
 
 // Constantes de conversão ABNT (1cm ≈ 37.8px em 96 DPI)
 const MARGIN_TOP = 113.4;    // 3.0 cm
