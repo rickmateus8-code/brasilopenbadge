@@ -117,9 +117,9 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400, marginTop: -3 }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
         </div>
 
-        {/* Logo OAB (ABAIXADO PARA DENTRO DA MARGEM) */}
-        <div style={{ position: "absolute", top: "20px", left: "4pt", zIndex: 11 }}>
-           <img src="/assets/peticao/oab_logo.png" style={{ width: "99.1pt" }} alt="OAB" />
+        {/* Logo OAB (TOPO ABSOLUTO E +2% TAMANHO) */}
+        <div style={{ position: "absolute", top: "0", left: "4pt", zIndex: 11 }}>
+           <img src="/assets/peticao/oab_logo.png" style={{ width: "101.1pt" }} alt="OAB" />
         </div>
 
         {/* Título do Documento (SUBIDO +2 LINHAS ≈ -48px) */}
@@ -129,18 +129,18 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         </div>
 
         {/* ─── Corpo da Petição ─── */}
-        {/* Dados Superiores (SUBIDO +2 LINHAS ≈ -48px) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 169.2, left: MARGIN_LEFT_BODY }}>
+        {/* Dados Superiores (SUBIDO +1% EXTRA ≈ -11px) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 158.2, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Credor:</span>
           <span style={valueStyle}>{data.credor?.toUpperCase() || ""}</span>
         </div>
         
-        <div style={{ ...textStyle, top: MARGIN_TOP + 198, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 187, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>CPF/CNPJ:</span>
           <span style={valueStyle}>{data.cpf_cnpj || ""}</span>
         </div>
 
-        <div style={{ ...textStyle, top: MARGIN_TOP + 219.2, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 208.2, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Advogado(a):</span>
           <span style={valueStyle}>{data.advogado?.toUpperCase() || ""}</span>
         </div>
