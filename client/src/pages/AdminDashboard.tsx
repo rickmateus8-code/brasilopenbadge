@@ -40,6 +40,7 @@ interface UserRow {
   profile_photo?: string;
   cashback_percentage?: number | null;
   referral_percentage?: number | null;
+  free_documents?: string[];
 }
 
 interface PricingRow {
@@ -2736,6 +2737,51 @@ export default function AdminDashboard() {
 	                  <p className="text-lg font-bold text-purple-600 dark:text-purple-400">{userDetails?.summary?.total_transactions || 0}</p>
 	                </div>
 	              </div>
+	              <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 mt-6 flex items-center gap-2">
+                  <Gift className="w-3.5 h-3.5" />
+                  Documentos Gratuitos (Permissão Especial)
+                </h4>
+                <div className="bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800 rounded-xl p-4 mb-5">
+                  <p className="text-[10px] text-indigo-600 dark:text-indigo-400 mb-3 font-medium uppercase">Selecione os documentos que este usuário pode emitir SEM CUSTO:</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {Object.entries(DOC_TYPE_LABELS).map(([slug, label]) => {
+                      const isFree = (selectedUser.free_documents || []).includes(slug);
+                      return (
+                        <label key={slug} className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-indigo-50 transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={isFree}
+                            onChange={async (e) => {
+                              const checked = e.target.checked;
+                              const currentFree = selectedUser.free_documents || [];
+                              const newFree = checked 
+                                ? [...currentFree, slug]
+                                : currentFree.filter(s => s !== slug);
+                              
+                              try {
+                                const res = await fetch("/api/admin/users", {
+                                  method: "PUT",
+                                  headers: { "Content-Type": "application/json" },
+                                  credentials: "include",
+                                  body: JSON.stringify({ user_id: selectedUser.id, free_documents: newFree }),
+                                });
+                                const data = await res.json();
+                                if (data.success) {
+                                  toast.success(`${label} agora é ${checked ? 'GRÁTIS' : 'PAGO'} para ${selectedUser.username}`);
+                                  setSelectedUser({ ...selectedUser, free_documents: newFree });
+                                  loadUsers();
+                                }
+                              } catch { toast.error("Erro ao atualizar permissão"); }
+                            }}
+                            className="w-3.5 h-3.5 rounded text-indigo-600 focus:ring-indigo-500"
+                          />
+                          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
 	              <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Histórico de Emissões</h4>
 	              {userHistory.length === 0 ? (
 	                <p className="text-sm text-gray-400 text-center py-6">Nenhuma emissão registrada</p>

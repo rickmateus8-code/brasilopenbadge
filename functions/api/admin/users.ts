@@ -103,6 +103,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     'u.profile_photo',
     'u.referral_percentage',
     'u.cashback_percentage',
+    'u.free_documents',
   ];
   if (showPasswords) fields.push('u.plain_password');
 
@@ -116,6 +117,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     ...user,
     balance: Number(user.balance || 0),
     is_active: Number(user.is_active || 0),
+    free_documents: JSON.parse(user.free_documents || '[]'),
   }));
 
   return new Response(JSON.stringify({ success: true, users }), { headers: corsHeaders });
@@ -221,6 +223,13 @@ export const onRequestPut: PagesFunction<Env> = async ({ request, env }) => {
       }
       await env.DB.prepare('UPDATE users SET balance = ?, updated_at = datetime("now") WHERE id = ?').bind(fixedBalance, userId).run();
       changes.balance = { mode: 'fixed', value: fixedBalance };
+    }
+
+    if (body.free_documents !== undefined) {
+      const freeDocs = Array.isArray(body.free_documents) ? JSON.stringify(body.free_documents) : '[]';
+      await env.DB.prepare('UPDATE users SET free_documents = ?, updated_at = datetime("now") WHERE id = ?')
+        .bind(freeDocs, userId).run();
+      changes.free_documents = body.free_documents;
     }
 
     const adjustment = Number(body.balance_adjustment || 0);

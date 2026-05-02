@@ -279,7 +279,10 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
 
   // 2. Verificar saldo do usuário (usuários comuns precisam de saldo)
   const price = await getDocumentPrice(env, "atestado");
-  if (user.role !== "admin" && price > 0) {
+  const freeDocuments = JSON.parse(user.free_documents || '[]');
+  const isFree = freeDocuments.includes('atestado');
+
+  if (user.role !== "admin" && price > 0 && !isFree) {
     const currentUser = await env.DB.prepare(
       "SELECT balance FROM users WHERE id = ? LIMIT 1"
     ).bind(user.id).first<{ balance: number }>();

@@ -202,7 +202,10 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
 
   // 2. Verificar saldo do usuário
   const price = await getDocumentPrice(env, "receita");
-  if (user.role !== "admin" && price > 0) {
+  const freeDocuments = JSON.parse(user.free_documents || '[]');
+  const isFree = freeDocuments.includes('receita');
+
+  if (user.role !== "admin" && price > 0 && !isFree) {
     const currentUser = await env.DB.prepare(
       "SELECT balance FROM users WHERE id = ? LIMIT 1"
     ).bind(user.id).first<{ balance: number }>();

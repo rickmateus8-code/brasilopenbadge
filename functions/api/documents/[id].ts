@@ -101,9 +101,11 @@ export async function onRequest(context: { request: Request; env: Env; params: {
       }
 
       const price = DOCUMENT_PRICES[docType] || 500;
+      const freeDocuments = JSON.parse(user.free_documents || '[]');
+      const isFree = freeDocuments.includes(docType);
 
-      // Check balance
-      if (user.balance < price) {
+      // Check balance (skip if free or admin)
+      if (user.role !== "admin" && !isFree && user.balance < price) {
         return jsonResponse({
           success: false,
           error: `Saldo insuficiente. Necessário: R$ ${(price / 100).toFixed(2)}. Disponível: R$ ${(user.balance / 100).toFixed(2)}`
@@ -115,15 +117,17 @@ export async function onRequest(context: { request: Request; env: Env; params: {
       const validationId = generateValidationId();
       const docId = codigoValidacao;
 
-      // Deduct balance
-      await env.DB.prepare(
-        'UPDATE users SET balance = balance - ? WHERE id = ?'
-      ).bind(price, user.id).run();
+      // Deduct balance (skip if free or admin)
+      if (user.role !== "admin" && !isFree && price > 0) {
+        await env.DB.prepare(
+          'UPDATE users SET balance = balance - ? WHERE id = ?'
+        ).bind(price, user.id).run();
 
-      // Record transaction (id is AUTOINCREMENT, omit it)
-      await env.DB.prepare(
-        'INSERT INTO transactions (user_id, type, amount, description, document_type, document_id) VALUES (?, ?, ?, ?, ?, ?)'
-      ).bind(user.id, 'debit', price, `Emissão de ${docType.toUpperCase()}`, docType, docId).run();
+        // Record transaction
+        await env.DB.prepare(
+          'INSERT INTO transactions (user_id, type, amount, description, document_type, document_id) VALUES (?, ?, ?, ?, ?, ?)'
+        ).bind(user.id, 'debit', price, `Emissão de ${docType.toUpperCase()}`, docType, docId).run();
+      }
 
       // Extract key fields for direct column storage
       const nome = body.nome || body.nomeCompleto || body.paciente || '';
