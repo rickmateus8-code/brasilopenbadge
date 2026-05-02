@@ -159,17 +159,17 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           Valor a receber: <span style={valueStyle}>R$ {data.valor || "26.516,28"}</span> será depositado em conta corrente de sua titularidade..
         </div>
 
-        {/* Texto Legal / Informativo */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 630, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "normal", textAlign: "justify", lineHeight: "1.5", fontSize: "11pt", fontFamily: "'Liberation Sans', Helvetica" }}>
+        {/* Texto Legal / Informativo (EQUALIZADO PARA 12.5pt) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 630, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "normal", textAlign: "justify", lineHeight: "1.5", fontSize: "12.5pt", fontFamily: "'Liberation Sans', Helvetica" }}>
           Os autos foram encaminhados pelo TJ à Vara da Fazenda para a execução do processo e <br/>
           posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
         </div>
 
         {/* ─── Rodapé e Assinatura ─── */}
-        {/* PODER JUDICIÁRIO (ACIMA DA ASSINATURA) */}
+        {/* PODER JUDICIÁRIO (ACIMA DA ASSINATURA - COR PRETO ACINZENTADO) */}
         <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 110, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "11pt", fontFamily: "'Liberation Sans', Helvetica" }}>
-           <div style={{ textTransform: "uppercase", fontWeight: 700, letterSpacing: "1px", color: "#000" }}>PODER JUDICIÁRIO</div>
-           <div style={{ fontStyle: "italic", color: "#000" }}>TJ – Tribunal de Justiça.</div>
+           <div style={{ textTransform: "uppercase", fontWeight: 400, letterSpacing: "1px", color: "#374151" }}>PODER JUDICIÁRIO</div>
+           <div style={{ fontStyle: "italic", color: "#374151" }}>TJ – Tribunal de Justiça.</div>
         </div>
 
         {/* Assinatura Judicial (ABAIXADA MAIS 2 LINHAS) */}
