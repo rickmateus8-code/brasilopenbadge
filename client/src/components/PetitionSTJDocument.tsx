@@ -102,7 +102,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         {/* Título do Documento */}
         <div style={{ position: "absolute", top: 240, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10 }}>
            <div style={{ fontSize: "18pt", fontWeight: 700, color: "#000" }}>PROCESSO JUDICIAL ELETRÔNICO</div>
-           <div style={{ fontSize: "14pt", fontWeight: 400, marginTop: 4, color: "#000" }}>Poder Judiciário do Estado</div>
+           <div style={{ fontSize: "12pt", fontWeight: 400, marginTop: -2, color: "#000" }}>Poder Judiciário do Estado</div>
         </div>
 
         {/* ─── Corpo da Petição (Grid Pixel-Perfect) ─── */}
@@ -183,12 +183,6 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
              }} 
              alt="Assinatura Judicial" 
            />
-           
-           {/* Linha da Assinatura */}
-           <div style={{ width: "100%", borderTop: "1.2px solid #000", marginBottom: 8 }}></div>
-           
-           {/* Nome da Autoridade */}
-           <div style={{ fontSize: "8pt", color: "#6b7280", marginTop: 2 }}>PRESIDENTE DO TRIBUNAL DE JUSTIÇA</div>
         </div>
 
         {/* Marca d'água de Preview */}
