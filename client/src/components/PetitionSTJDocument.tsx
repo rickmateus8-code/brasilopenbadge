@@ -25,18 +25,16 @@ interface PetitionSTJDocumentProps {
   data: PetitionData;
 }
 
-const DOC_WIDTH_PX = 818;  // Aumentado +1% para a esquerda (810 -> 818)
+const DOC_WIDTH_PX = 818;  
 const DOC_HEIGHT_PX = 1123; 
 
-// Configuração Técnica: A4 - 300 DPI
 const DPI_TARGET = 300;
-const EXPORT_SCALE = 1.94; // Reajustado para a nova largura de 818px
+const EXPORT_SCALE = 1.94; 
 
-// Constantes de conversão ABNT (Baseadas na grade 818x1123)
 const MARGIN_TOP = 113.4;    
-const MARGIN_LEFT = 121.4;   // Aumentado +8px (113.4 -> 121.4) para recuo à esquerda
-const MARGIN_LEFT_BODY = 89.3; // Deslocado mais 1% para a ESQUERDA conforme solicitado (97.5 -> 89.3)
-const MARGIN_RIGHT = 91.6;   // Aumentado em mais 1% (~8px) (83.6 -> 91.6)
+const MARGIN_LEFT = 121.4;   
+const MARGIN_LEFT_BODY = 89.3; 
+const MARGIN_RIGHT = 91.6;   
 const MARGIN_BOTTOM = 75.6;  
 
 const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
@@ -101,8 +99,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
 
         {/* ─── Cabeçalho Superior Centralizado (Dentro da Margem ABNT - ABAIXADO 2% - COR CINZA 2%) ─── */}
         <div style={{ position: "absolute", top: MARGIN_TOP - 48, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11, fontFamily: "'Liberation Sans', Helvetica" }}>
-           {/* Brasão da República (ALINHADO E CENTRALIZADO + EXTRA 4%) */}
-           <img src="/assets/peticao/brasao_republica.png" style={{ width: "91.9pt", marginBottom: "4pt", display: "inline-block" }} alt="Brasão" />
+           {/* Brasão da República (ALINHADO E CENTRALIZADO + EXTRA 6%) */}
+           <img src="/assets/peticao/brasao_republica.png" style={{ width: "97.4pt", marginBottom: "4pt", display: "inline-block" }} alt="Brasão" />
            
            {/* Informações Institucionais (COR CINZA 2% - #222222) */}
            <div style={{ color: "#222222", fontSize: "10.1pt", fontWeight: 400, letterSpacing: "0.5px" }}>TRIBUNAL DE JUSTIÇA</div>
@@ -110,9 +108,9 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400, marginTop: -3 }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
         </div>
 
-        {/* Logo OAB (LIMITE ABSOLUTO - Canto Superior Esquerdo - SUBIDO 1% E +6% TAMANHO) */}
+        {/* Logo OAB (LIMITE ABSOLUTO - Canto Superior Esquerdo - SUBIDO 1% E +8% TAMANHO) */}
         <div style={{ position: "absolute", top: "-13pt", left: "4pt", zIndex: 11 }}>
-           <img src="/assets/peticao/oab_logo.png" style={{ width: "88.3pt" }} alt="OAB" />
+           <img src="/assets/peticao/oab_logo.png" style={{ width: "99.1pt" }} alt="OAB" />
         </div>
 
         {/* Título do Documento (FONTE LIBERATION SANS / DIMINUÍDO MAIS 5% = 16.2pt) */}
@@ -162,9 +160,9 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={{ ...valueStyle, color: "#000" }}>AUTORIZADO</span>
         </div>
 
-        {/* Código de Barras (ALINHADO À MARGEM ESQUERDA - MOVIDO 2% ESQUERDA E +8% TAMANHO) */}
+        {/* Código de Barras (ALINHADO À MARGEM ESQUERDA - MOVIDO 2% ESQUERDA E +10% TAMANHO) */}
         <div style={{ position: "absolute", top: MARGIN_TOP + 491.2, left: MARGIN_LEFT - 32, zIndex: 11 }}>
-           <img src="/assets/peticao/cod_de_barras.png" style={{ width: "146pt", height: "33.7pt" }} alt="Barcode" />
+           <img src="/assets/peticao/cod_de_barras.png" style={{ width: "157.7pt", height: "36pt" }} alt="Barcode" />
         </div>
 
         {/* Valor de Repasse (SEM QUEBRA DE LINHA - SINCRONIZADO 12.5pt - Aumentado +2% sobre 12.3pt) */}
@@ -172,14 +170,14 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           Valor a receber: <span style={valueStyle}>R$ {data.valor || ""}</span> será depositado em conta corrente de sua titularidade..
         </div>
 
-        {/* Texto Legal / Informativo (ARIAL - SINCRONIZADO 12.7pt - Aumentado +3% sobre 12.4pt) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 638.2, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", textAlign: "justify", lineHeight: "1.5", fontSize: "12.7pt", fontFamily: "Arial, sans-serif" }}>
+        {/* Texto Legal / Informativo (ARIAL - SINCRONIZADO 12.7pt - SUBIDO 1 LINHA) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 616.2, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", textAlign: "justify", lineHeight: "1.5", fontSize: "12.7pt", fontFamily: "Arial, sans-serif" }}>
           Os autos foram encaminhados pelo TJ à Vara da Fazenda para a execução do processo e <br/>
           posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
         </div>
 
-        {/* Data Formatada por Extenso (Abaixo do Informativo - SINCRONIZADO 12.8pt - Aumentado +4% sobre 12.3pt) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 718.2, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "12.8pt" }}>
+        {/* Data Formatada por Extenso (Abaixo do Informativo - SINCRONIZADO 12.7pt - SUBIDO 2 LINHAS) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 718.2, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "12.7pt" }}>
           {formatLongDate(data.data)}
         </div>
 
