@@ -21,14 +21,19 @@ Esta skill define o fluxo de trabalho para converter um documento PDF estático 
 1. **Análise Espacial**:
    - Identifique os blocos fixos (logos, brasões, linhas divisórias).
    - Mapeie os campos variáveis (nomes, processos, datas, valores).
-   - Remova elementos indesejados como códigos de barras ou placeholders de sistema antigo.
+   - Use o sistema de coordenadas em **pontos (pt)** para paridade com PDFs originais (1pt = 1.333px).
 
 2. **Implementação do Componente**:
    - Crie um componente `forwardRef` para permitir a exportação via `html2canvas`/`jspdf`.
-   - Use uma camada de fundo (`img` ou `svg`) ou reconstrua a estrutura com CSS sólido.
-   - Implemente a marca d'água de prévia com `zIndex: 99` e opacidade reduzida (`0.15`).
+   - Use uma camada de fundo (`img` ou `svg`) com ativos pré-processados (opacidade já aplicada se for marca d'água).
+   - Implemente a marca d'água de prévia com `zIndex: 99` e bordas espessas para invalidar visualmente.
 
-3. **Integração de Dados**:
+3. **Engenharia de Exportação Avançada (Estratégia Elite)**:
+   - Para documentos que exigem sobreposição perfeita de logos em PDFs base, utilize a biblioteca `pdf-lib`.
+   - Configuração recomendada: `{ mode: "overlay", preserveOriginal: true }`.
+   - Utilize ferramentas como `qpdf` ou `Ghostscript` (em ambientes compatíveis) para otimização de camadas e compressão forense.
+
+4. **Integração de Dados**:
    - Mapeie as chaves do objeto `data` (ex: `credor`, `valor`) diretamente nos placeholders do layout.
    - Implemente formatação automática de data (ex: "29 de Abril de 2026") com suporte a override manual.
 

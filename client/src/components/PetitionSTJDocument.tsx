@@ -69,31 +69,34 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
-          width: 550,
-          opacity: 0.04,
+          width: "420pt",
           zIndex: 1,
           pointerEvents: "none"
         }}>
-          <img src="/assets/peticao/BACKGROUND%20LOGO.png" style={{ width: "100%" }} alt="Watermark" />
+          <img src="/assets/peticao/background_logo.png" style={{ width: "100%" }} alt="Watermark" />
         </div>
 
         {/* ─── Cabeçalho Superior ─── */}
-        {/* Logo OAB (Esquerda) */}
-        <div style={{ position: "absolute", top: 25, left: 45, zIndex: 11 }}>
-           <img src="/assets/peticao/OAB%20Logo.png" style={{ width: 140 }} alt="OAB" />
+        {/* Brasão da República (Logo Principal) */}
+        <div style={{ position: "absolute", top: "40pt", left: "40pt", zIndex: 11 }}>
+           <img src="/assets/peticao/brasao_republica.png" style={{ width: "100pt" }} alt="Brasão" />
         </div>
 
-        {/* Brasão da República (Centro) */}
-        <div style={{ position: "absolute", top: 35, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11 }}>
-           <img src="/assets/peticao/Logo%20republica%20do%20brasil.png" style={{ width: 85, marginBottom: 8 }} alt="Brasão" />
+        {/* Informações Institucionais (Centro) */}
+        <div style={{ position: "absolute", top: "40pt", left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11 }}>
            <div style={{ fontSize: "12pt", fontWeight: 700, fontFamily: "'Times New Roman', serif", letterSpacing: "1px" }}>TRIBUNAL DE JUSTIÇA</div>
            <div style={{ fontSize: "10pt", fontWeight: 400, fontFamily: "'Times New Roman', serif", marginTop: 2 }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: 0284748/2026</div>
            <div style={{ fontSize: "10pt", fontWeight: 400, fontFamily: "'Times New Roman', serif" }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
         </div>
 
-        {/* Código de Barras (Direita) */}
-        <div style={{ position: "absolute", top: 25, right: 45, zIndex: 11 }}>
-           <img src="/assets/peticao/Cod%20de%20barras.png" style={{ width: 140, height: 45 }} alt="Barcode" />
+        {/* Logo OAB (Logo Secundário / Selo) */}
+        <div style={{ position: "absolute", top: "40pt", left: "450pt", zIndex: 11 }}>
+           <img src="/assets/peticao/oab_logo.png" style={{ width: "80pt" }} alt="OAB" />
+        </div>
+
+        {/* Código de Barras */}
+        <div style={{ position: "absolute", top: "100pt", right: "40pt", zIndex: 11 }}>
+           <img src="/assets/peticao/cod_de_barras.png" style={{ width: "140pt", height: "35pt" }} alt="Barcode" />
         </div>
 
         {/* Título do Documento */}
@@ -120,7 +123,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
 
         {/* Linha Divisória Superior */}
         <div style={{ position: "absolute", top: 395, left: 80, width: 634 }}>
-          <img src="/assets/peticao/Linha.png" style={{ width: "100%", height: 1.5 }} alt="Separator" />
+          <img src="/assets/peticao/linha.png" style={{ width: "100%", height: 1.5 }} alt="Separator" />
         </div>
 
         <div style={{ ...textStyle, top: 415, left: 80 }}>
@@ -168,7 +171,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         <div style={{ position: "absolute", bottom: 60, left: "50%", transform: "translateX(-50%)", width: 480, textAlign: "center" }}>
            {/* Imagem de Assinatura (Fundo) */}
            <img 
-             src={data.signatureImage || "/assets/peticao/Assinatura%20Juiz.png"} 
+             src={data.signatureImage || "/assets/peticao/assinatura_juiz.png"} 
              style={{ 
                position: "absolute", 
                bottom: 25, 
@@ -185,12 +188,6 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <div style={{ width: "100%", borderTop: "1.2px solid #000", marginBottom: 8 }}></div>
            
            {/* Nome da Autoridade */}
-           <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", fontWeight: 700, textTransform: "uppercase", padding: "0 10px", color: "#1f2937" }}>
-              <span>GERALDO</span>
-              <span>FRANCISCO</span>
-              <span>PINHEIRO</span>
-              <span>FRANCO</span>
-           </div>
            <div style={{ fontSize: "8pt", color: "#6b7280", marginTop: 2 }}>PRESIDENTE DO TRIBUNAL DE JUSTIÇA</div>
         </div>
 

@@ -23,10 +23,11 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import AttestationDocument from "@/components/AttestationDocument";
 import PrescricaoDocument from "@/components/PrescricaoDocument";
 import CNHDocument from "@/components/CNHDocument";
+import PetitionSTJDocument from "@/components/PetitionSTJDocument";
 import { useParams } from "wouter";
 import { exportElementToPDF, exportElementToPDFBlob, generatePDFFilename } from "@/lib/pdfExport";
 
-type DocType = "atestado" | "receita" | "cnh" | "laudo" | "unknown";
+type DocType = "atestado" | "receita" | "cnh" | "laudo" | "peticao" | "unknown";
 
 function detectDocType(data: any): DocType {
   const typeStr = (data.tipo || data.type || data.document_type || "").toLowerCase();
@@ -34,12 +35,14 @@ function detectDocType(data: any): DocType {
   if (typeStr === "cnh") return "cnh";
   if (typeStr === "laudo") return "laudo";
   if (typeStr === "atestado") return "atestado";
+  if (typeStr === "peticaocria" || typeStr === "peticao-stj") return "peticao";
   
   // Fallback por campos
   if (data.document_type === "laudo") return "laudo";
   if (data.textoAtestado || data.afastamento) return "atestado";
   if (data.prescricao) return "receita";
   if (data.categoria || data.registro) return "cnh";
+  if (data.credor || data.processo) return "peticao";
   return "unknown";
 }
 
@@ -98,6 +101,7 @@ export default function Validation() {
   // Refs para os documentos (usado para gerar PDF)
   const attestationRef = useRef<HTMLDivElement>(null);
   const prescricaoRef = useRef<HTMLDivElement>(null);
+  const peticaoRef = useRef<HTMLDivElement>(null);
   const cnhRef = useRef<any>(null);
 
   // ── Smart Preview Logic ──────────────────────────────────────────────────
@@ -187,6 +191,9 @@ export default function Validation() {
           setPdfBlobUrl(url);
         } else if (docType === "receita" && prescricaoRef.current) {
           const url = await exportElementToPDFBlob(prescricaoRef.current, { scale: 2 });
+          setPdfBlobUrl(url);
+        } else if (docType === "peticao" && peticaoRef.current) {
+          const url = await exportElementToPDFBlob(peticaoRef.current, { scale: 2 });
           setPdfBlobUrl(url);
         }
       } catch (err) {
@@ -345,6 +352,7 @@ export default function Validation() {
       case "laudo": return "Laudo Médico";
       case "receita": return "Receita Médica";
       case "cnh": return "Carteira Nacional de Habilitação";
+      case "peticao": return "Petição Judicial";
       default: return "Documento";
     }
   };
@@ -563,6 +571,15 @@ export default function Validation() {
               qrCodeUrl={`https://carteira-digital-transito-vio.digital/verificar/${validDoc.codigoQR || ""}`}
               blurQR={false}
               {...validDoc}
+            />
+          </div>
+        );
+      case "peticao":
+        return (
+          <div style={style}>
+            <PetitionSTJDocument
+              ref={peticaoRef}
+              data={validDoc}
             />
           </div>
         );

@@ -2,13 +2,13 @@ import DocumentosSalvos from "@/components/DocumentosSalvos";
 import { useSettings } from "@/hooks/useSettings";
 
 const FIELDS = [
-  { key: "requerente", label: "Nome do Requerente" },
+  { key: "credor", label: "Nome do Credor" },
+  { key: "cpf_cnpj", label: "CPF/CNPJ" },
   { key: "processo", label: "Número do Processo" },
   { key: "advogado", label: "Advogado" },
-  { key: "oab", label: "OAB" },
-  { key: "cidade", label: "Comarca" },
-  { key: "data", label: "Data" },
-  { key: "corpo", label: "Conteúdo", type: "textarea" as const },
+  { key: "contra", label: "Execução Contra" },
+  { key: "valor", label: "Valor (R$)" },
+  { key: "data", label: "Data do Documento" },
 ];
 
 export default function PetitionSTJSalvos() {
@@ -20,8 +20,8 @@ export default function PetitionSTJSalvos() {
       docType="peticaocria"
       validityDays={validityDays}
       fields={FIELDS}
-      nameField="requerente"
-      cpfField="processo" // Usando processo como campo de identificação secundário
+      nameField="credor"
+      cpfField="cpf_cnpj"
       idLabel="Código Emissão"
       idField="id"
       dateLabel="Data Emissão"
