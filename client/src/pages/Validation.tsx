@@ -556,11 +556,13 @@ export default function Validation() {
 
   return (
     <div style={S.page}>
-      {/* ── Header azul ── */}
-      <div style={S.header}>
+    {/* ── Header azul ── */}
+    <div style={S.header}>
+      {window.location.hostname.includes("validaratestado.digital") && (
         <span style={{ fontSize: 24, lineHeight: "1", display: "flex", alignItems: "center" }}>🛡️</span>
-        <span style={S.headerText}>Validador Oficial</span>
-      </div>
+      )}
+      <span style={S.headerText}>Validador Oficial</span>
+    </div>
 
       {/* ── Card central ── */}
       <div style={{ padding: "0 16px" }}>

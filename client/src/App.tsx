@@ -65,12 +65,12 @@ function BrandingSync() {
     } else if (isCNH) {
       injectEmoji("🚗", "CDT - Carteira Digital de Trânsito");
     } else {
-      // DOMÍNIO DOCMASTER (EMISSOR)
-      restoreOriginal();
-      // Não forçamos título aqui pois cada página tem o seu, mas garantimos que não seja "Validador Oficial"
+      // DOMÍNIO DOCMASTER (EMISSOR) - Restaurar se estiver com título de validador
       if (document.title === "Validador Oficial") {
         document.title = "DocMaster";
       }
+      // Se não estiver em domínio de validação, não fazemos nada com o favicon
+      // O index.html cuidará de carregar o original.
     }
   }, [location]); // Re-executa na mudança de rota para garantir integridade
 
