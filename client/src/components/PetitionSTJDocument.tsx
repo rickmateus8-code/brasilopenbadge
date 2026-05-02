@@ -160,9 +160,23 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
         </div>
 
+        {/* Data Formatada por Extenso (Abaixo do Informativo) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 710, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif" }}>
+          {data.data ? (
+            (() => {
+              const d = new Date(data.data);
+              const day = String(d.getDate()).padStart(2, '0');
+              const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+              const month = months[d.getMonth()];
+              const year = d.getFullYear() < 2026 ? 2026 : d.getFullYear();
+              return `${day} de ${month} de ${year}`;
+            })()
+          ) : "02 de Maio de 2026"}
+        </div>
+
         {/* ─── Rodapé e Assinatura ─── */}
-        {/* PODER JUDICIÁRIO (ARIAL - PRÓXIMO DA ASSINATURA) */}
-        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 105, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "11pt", fontFamily: "Arial, sans-serif" }}>
+        {/* PODER JUDICIÁRIO (ARIAL - PRÓXIMO DA ASSINATURA - REBAIXADO 3 LINHAS) */}
+        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 55, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "11pt", fontFamily: "Arial, sans-serif" }}>
            <div style={{ textTransform: "uppercase", fontWeight: 400, letterSpacing: "1px", color: "#374151" }}>PODER JUDICIÁRIO</div>
            <div style={{ fontStyle: "italic", color: "#374151" }}>TJ – Tribunal de Justiça.</div>
         </div>

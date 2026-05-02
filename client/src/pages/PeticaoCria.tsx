@@ -5,20 +5,20 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Download, ZoomIn, ZoomOut,
   AlertCircle, FileText, CheckCircle, Search, Save, X, PanelLeftClose, PanelLeft,
-  ChevronUp, ChevronDown
+  ChevronUp, ChevronDown, Calendar as CalendarIcon
 } from "lucide-react";
 import EmissionModal from "@/components/EmissionModal";
 import PeticaoDocument, { type PetitionData } from "@/components/PetitionSTJDocument";
 import { usePDFExport, generatePDFFilename } from "@/lib/pdfExport";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 const A4_WIDTH_PX = 794;
 const A4_HEIGHT_PX = 1123;
-
-function getUploadSizeInBytes(value?: string) {
-  if (!value) return 0;
-  const base64 = value.includes(",") ? value.split(",")[1] || "" : value;
-  return Math.ceil((base64.length * 3) / 4);
-}
 
 export default function PeticaoCria() {
   const { user, updateBalance } = useAuth();
@@ -33,7 +33,6 @@ export default function PeticaoCria() {
   const [currentSection, setCurrentSection] = useState<"top" | "bottom">("top");
 
   const [signatureImage, setSignatureImage] = useState<string>("");
-  const signatureRef = useRef<HTMLInputElement>(null);
 
   const [isExporting, setIsExporting] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -50,7 +49,7 @@ export default function PeticaoCria() {
     advogado: "",
     contra: "",
     valor: "",
-    data: new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+    data: new Date(2026, 4, 2).toISOString() // Padrão 02 de maio de 2026
   });
 
   const getFitScale = useCallback(() => {
