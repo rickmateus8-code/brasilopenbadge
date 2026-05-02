@@ -31,7 +31,7 @@ const DOC_HEIGHT_PX = 1123; // Visualização CSS (A4 96 DPI)
 // Constantes de conversão ABNT (1cm ≈ 37.8px em 96 DPI)
 const MARGIN_TOP = 113.4;    // 3.0 cm
 const MARGIN_LEFT = 113.4;   // 3.0 cm
-const MARGIN_LEFT_BODY = 89.3; // Deslocado +2% para a direita conforme solicitado (Total ~90px)
+const MARGIN_LEFT_BODY = 113.1; // Deslocado +3% para a direita conforme solicitado (Total ~113px)
 const MARGIN_RIGHT = 75.6;   // 2.0 cm
 const MARGIN_BOTTOM = 75.6;  // 2.0 cm
 
@@ -73,13 +73,13 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           padding: "0"
         }}
       >
-        {/* ─── Layer de Fundo: Marca d'Água (Centrada) ─── */}
+        {/* ─── Layer de Fundo: Marca d'Água (Centrada e Rebaixada) ─── */}
         <div style={{
           position: "absolute",
           top: "50%",
           left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: "463pt", // Aumentado em mais 5% (441pt -> 463pt)
+          transform: "translate(-50%, -20%)", // Rebaixado aprox 3 linhas (~40px em escala visual)
+          width: "500pt", // Aumentado em mais 8% (463pt -> 500pt)
           zIndex: 1,
           pointerEvents: "none"
         }}>
