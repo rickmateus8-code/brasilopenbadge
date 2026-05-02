@@ -26,13 +26,15 @@ function getSessionToken(request: Request): string | null {
 async function getAuthUser(request: Request, env: Env): Promise<any | null> {
   const token = getSessionToken(request);
   if (!token) return null;
-  const session = await env.DB.prepare(
-    'SELECT * FROM sessions WHERE token = ? AND expires_at > datetime("now")'
-  ).bind(token).first<any>();
-  if (!session) return null;
-  return env.DB.prepare(
-    'SELECT id, username, email, display_name, role, balance FROM users WHERE id = ? AND is_active = 1'
-  ).bind(session.user_id).first<any>();
+  
+  // Otimização: Busca sessão e usuário em um único JOIN para reduzir latência de DB
+  return env.DB.prepare(`
+    SELECT u.id, u.username, u.email, u.display_name, u.role, u.balance, u.phone, u.cpf
+    FROM sessions s
+    JOIN users u ON s.user_id = u.id
+    WHERE s.token = ? AND s.expires_at > datetime('now') AND u.is_active = 1
+    LIMIT 1
+  `).bind(token).first<any>();
 }
 
 function toJson(body: any, status = 200) {
@@ -51,7 +53,7 @@ export const onRequestOptions: PagesFunction = async () => {
   return new Response(null, { headers: CORS });
 };
 
-export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+export const onRequestPost: PagesFunction<Env> = async ({ request, env, waitUntil }) => {
   try {
     const user = await getAuthUser(request, env);
     if (!user) {
@@ -86,6 +88,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const externalTransactionId = crypto.randomUUID().replace(/-/g, '');
     const postbackUrl = 'https://docmaster.store/api/pix/webhook';
 
+    // Disparar requisição ao Gateway (maior gargalo de tempo)
     const pixResponse = await fetch(`${BLACKPAY_API}/api/v1/pix/create`, {
       method: 'POST',
       headers: {
@@ -100,7 +103,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         items: [
           {
             title: 'Recarga de saldo DocMaster',
-            unitPrice: amount, // A API espera o valor unitário igual ao amount do body principal
+            unitPrice: amount, 
             quantity: 1,
           },
         ],
@@ -134,19 +137,23 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const qrBase64 = paymentData.qrcode || '';
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
 
+    // OTIMIZAÇÃO CRÍTICA: Não espera o DB registrar a transação pendente para responder ao usuário.
+    // O QR Code é exibido imediatamente, e o log no banco ocorre em "background".
     const insertId = crypto.randomUUID();
-    await env.DB.prepare(`
-      INSERT INTO transactions (id, user_id, type, amount, description, status, external_id, created_at)
-      VALUES (?, ?, 'credit', ?, ?, 'pending', ?, datetime('now'))
-    `).bind(
-      insertId,
-      user.id,
-      amountCents,
-      `Recarga PIX R$ ${amount.toFixed(2).replace('.', ',')}`,
-      transactionId,
-    ).run().catch((dbErr: any) => {
-      console.warn('Não foi possível registrar a transação pendente de PIX:', dbErr);
-    });
+    waitUntil(
+      env.DB.prepare(`
+        INSERT INTO transactions (id, user_id, type, amount, description, status, external_id, created_at)
+        VALUES (?, ?, 'credit', ?, ?, 'pending', ?, datetime('now'))
+      `).bind(
+        insertId,
+        user.id,
+        amountCents,
+        `Recarga PIX R$ ${amount.toFixed(2).replace('.', ',')}`,
+        transactionId,
+      ).run().catch((dbErr: any) => {
+        console.warn('Não foi possível registrar a transação pendente de PIX no background:', dbErr);
+      })
+    );
 
     return toJson({
       success: true,
