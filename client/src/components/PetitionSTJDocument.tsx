@@ -41,12 +41,12 @@ const MARGIN_BOTTOM = 75.6;
 
 const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
   ({ data }, ref) => {
-    // Estilo base para os textos (CORPO UNIFICADO - SINCRONIZADO 12.7pt)
+    // Estilo base para os textos (CORPO UNIFICADO - SINCRONIZADO 13.3pt - Aumentado +5% sobre 12.7pt)
     const textStyle: React.CSSProperties = {
       position: "absolute",
       fontFamily: "Arial, sans-serif",
       color: "#000",
-      fontSize: "12.7pt", 
+      fontSize: "13.3pt", 
       whiteSpace: "nowrap",
       zIndex: 10
     };
@@ -175,23 +175,23 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            />
         </div>
 
-        {/* Valor de Repasse */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 556.2, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", fontSize: "12.5pt" }}>
+        {/* Valor de Repasse (Aumentado +5% sobre 12.5pt = 13.1pt) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 556.2, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", fontSize: "13.1pt" }}>
           Valor a receber: <span style={valueStyle}>R$ {data.valor || ""}</span> será depositado em conta corrente de sua titularidade..
         </div>
 
-        {/* Texto Legal / Informativo (Subido 1 linha) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 616.2, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", textAlign: "justify", lineHeight: "1.5", fontSize: "12.7pt", fontFamily: "Arial, sans-serif" }}>
+        {/* Texto Legal / Informativo (Aumentado +1% sobre 12.7pt = 12.8pt) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 616.2, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", textAlign: "justify", lineHeight: "1.5", fontSize: "12.8pt", fontFamily: "Arial, sans-serif" }}>
           Os autos foram encaminhados pelo TJ à Vara da Fazenda para a execução do processo e <br/>
           posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
         </div>
 
-        {/* Data Formatada */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 718.2, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "12.8pt" }}>
+        {/* Data Formatada (Sincronizada 13.3pt) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 718.2, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "13.3pt" }}>
           {formatLongDate(data.data)}
         </div>
 
-        {/* ─── Rodapé (Baixado 1% e -1% Tamanho) ─── */}
+        {/* ─── Rodapé ─── */}
         <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 59, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "10.9pt", fontFamily: "Arial, sans-serif" }}>
            <div style={{ textTransform: "uppercase", fontWeight: 400, letterSpacing: "1px", color: "#374151", marginBottom: 2 }}>PODER JUDICIÁRIO</div>
            <div style={{ fontStyle: "italic", color: "#374151", fontSize: "11.5pt", marginLeft: "4.2px" }}>TJ – Tribunal de Justiça.</div>
@@ -199,6 +199,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
 
         {/* Assinatura Judicial */}
         <div style={{ position: "absolute", bottom: MARGIN_BOTTOM - 55, left: "50%", transform: "translateX(-50%)", width: "100%", textAlign: "center" }}>
+           {/* Imagem de Assinatura (Fundo) */}
            <img 
              src={data.signatureImage || "/assets/peticao/assinatura_juiz.png"} 
              style={{ 

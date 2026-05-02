@@ -327,42 +327,20 @@ export default function PeticaoCria() {
                 />
 
                 <label style={lbl}>Data do Documento</label>
-                <div className="flex gap-2 mb-4">
-                  <input 
-                    style={{ ...inp, marginBottom: 0, flex: 1 }} 
-                    value={form.data} 
-                    onChange={(e) => setForm(p => ({ ...p, data: formatDateMask(e.target.value) }))} 
-                    placeholder="DD/MM/AAAA" 
-                  />
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={"outline"}
-                        className="h-10 border-gray-300 px-3 text-black"
-                      >
-                        <CalendarIcon className="h-4 w-4 text-black" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="end">
-                      <Calendar
-                        mode="single"
-                        selected={form.data.includes('/') && form.data.length === 10 ? (()=>{
-                          const [d,m,y] = form.data.split('/').map(Number);
-                          return new Date(y, m-1, d);
-                        })() : undefined}
-                        onSelect={(date) => {
-                          if (date) {
-                            const d = String(date.getDate()).padStart(2, '0');
-                            const m = String(date.getMonth() + 1).padStart(2, '0');
-                            const y = date.getFullYear() < 2026 ? 2026 : date.getFullYear();
-                            setForm(p => ({ ...p, data: `${d}/${m}/${y}` }));
-                          }
-                        }}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
+                <input 
+                  type="date"
+                  style={{ ...inp, marginBottom: 16 }} 
+                  value={form.data.includes('/') ? (()=>{
+                    const [d,m,y] = form.data.split('/');
+                    return `${y}-${m}-${d}`;
+                  })() : ""} 
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val) return;
+                    const [y, m, d] = val.split('-');
+                    setForm(p => ({ ...p, data: `${d}/${m}/${y}` }));
+                  }} 
+                />
               </div>
             </div>
           </aside>
