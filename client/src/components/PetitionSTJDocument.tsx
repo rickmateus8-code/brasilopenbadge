@@ -79,7 +79,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
-          width: "441pt", 
+          width: "463pt", // Aumentado em mais 5% (441pt -> 463pt)
           zIndex: 1,
           pointerEvents: "none"
         }}>
@@ -91,10 +91,10 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            {/* Brasão da República (ALINHADO E CENTRALIZADO) */}
            <img src="/assets/peticao/brasao_republica.png" style={{ width: "85pt", marginBottom: "4pt", display: "inline-block" }} alt="Brasão" />
            
-           {/* Informações Institucionais (Abaixo do Brasão - COMPACTAÇÃO RADICAL E REDUÇÃO 6%) */}
-           <div style={{ color: "#000", fontSize: "11.3pt", fontWeight: 400, letterSpacing: "0.5px" }}>TRIBUNAL DE JUSTIÇA</div>
-           <div style={{ color: "#000", fontSize: "9.4pt", fontWeight: 400, marginTop: -3 }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: 0284748/2026</div>
-           <div style={{ color: "#000", fontSize: "9.4pt", fontWeight: 400, marginTop: -3 }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
+           {/* Informações Institucionais (Abaixo do Brasão - COMPACTAÇÃO RADICAL E REDUÇÃO EXTRA 5%) */}
+           <div style={{ color: "#000", fontSize: "10.7pt", fontWeight: 400, letterSpacing: "0.5px" }}>TRIBUNAL DE JUSTIÇA</div>
+           <div style={{ color: "#000", fontSize: "8.9pt", fontWeight: 400, marginTop: -3 }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: 0284748/2026</div>
+           <div style={{ color: "#000", fontSize: "8.9pt", fontWeight: 400, marginTop: -3 }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
         </div>
 
         {/* Logo OAB (BEM NA BORDA - Canto Superior Esquerdo + 3% EXTRA = 79.3pt) */}
@@ -139,7 +139,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={valueStyle}>{data.processo || "1002384-22.2024.8.26.0601"}</span>
         </div>
 
-        <div style={{ ...textStyle, top: MARGIN_TOP + 410, left: MARGIN_LEFT_BODY, fontSize: "10.6pt" }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 410, left: MARGIN_LEFT_BODY, fontSize: "12.1pt" }}>
           <span style={labelStyle}>CUMPRIMENTO DE SENTENÇA CONTRA:</span>
           <span style={valueStyle}>{data.contra?.toUpperCase() || "BANCO ITAU CONSIGNADO S.A."}</span>
         </div>
