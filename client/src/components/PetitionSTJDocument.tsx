@@ -78,8 +78,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
 
         {/* ─── Cabeçalho Superior Centralizado ─── */}
         <div style={{ position: "absolute", top: "30pt", left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11 }}>
-           {/* Brasão da República */}
-           <img src="/assets/peticao/brasao_republica.png" style={{ width: "85pt", marginBottom: "5pt" }} alt="Brasão" />
+           {/* Brasão da República (ALINHADO E CENTRALIZADO) */}
+           <img src="/assets/peticao/brasao_republica.png" style={{ width: "85pt", marginBottom: "8pt", display: "inline-block" }} alt="Brasão" />
            
            {/* Informações Institucionais (Abaixo do Brasão) */}
            <div style={{ color: "#000", fontSize: "12pt", fontWeight: 700, fontFamily: "'Times New Roman', serif", letterSpacing: "0.5px" }}>TRIBUNAL DE JUSTIÇA</div>
@@ -87,7 +87,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <div style={{ color: "#000", fontSize: "10pt", fontWeight: 400, fontFamily: "'Times New Roman', serif" }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
         </div>
 
-        {/* Logo OAB (SUPERIOR ESQUERDO + 4%) */}
+        {/* Logo OAB (Canto Superior Esquerdo + 4%) */}
         <div style={{ position: "absolute", top: "40pt", left: "40pt", zIndex: 11 }}>
            <img src="/assets/peticao/oab_logo.png" style={{ width: "73pt" }} alt="OAB" />
         </div>
@@ -97,71 +97,73 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <img src="/assets/peticao/cod_de_barras.png" style={{ width: "130pt", height: "30pt" }} alt="Barcode" />
         </div>
 
-        {/* Título do Documento */}
-        <div style={{ position: "absolute", top: 220, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10 }}>
+        {/* Título do Documento (ESPAÇAMENTO DE 3 LINHAS APÓS CABEÇALHO) */}
+        <div style={{ position: "absolute", top: 255, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10 }}>
            <div style={{ fontSize: "18pt", fontWeight: 700, color: "#000" }}>PROCESSO JUDICIAL ELETRÔNICO</div>
            <div style={{ fontSize: "12pt", fontWeight: 400, marginTop: -6, color: "#000" }}>Poder Judiciário do Estado</div>
         </div>
 
         {/* ─── Corpo da Petição (Grid Pixel-Perfect) ─── */}
-        <div style={{ ...textStyle, top: 315, left: 80 }}>
+        <div style={{ ...textStyle, top: 330, left: 80 }}>
           <span style={labelStyle}>Credor:</span>
           <span style={valueStyle}>{data.credor?.toUpperCase() || "LAZARA MARGARIDA PEREIRA PINTO"}</span>
         </div>
         
-        <div style={{ ...textStyle, top: 340, left: 80 }}>
+        <div style={{ ...textStyle, top: 355, left: 80 }}>
           <span style={labelStyle}>CPF/CNPJ:</span>
           <span style={valueStyle}>{data.cpf_cnpj || "15036134885"}</span>
         </div>
 
-        <div style={{ ...textStyle, top: 365, left: 80 }}>
+        <div style={{ ...textStyle, top: 380, left: 80 }}>
           <span style={labelStyle}>Advogado(a):</span>
           <span style={valueStyle}>{data.advogado?.toUpperCase() || "KEVIN PEREIRA LEAL"}</span>
         </div>
 
         {/* Linha Divisória Superior */}
-        <div style={{ position: "absolute", top: 395, left: 80, width: 634 }}>
+        <div style={{ position: "absolute", top: 410, left: 80, width: 634 }}>
           <img src="/assets/peticao/linha.png" style={{ width: "100%", height: 1.5 }} alt="Separator" />
         </div>
 
-        <div style={{ ...textStyle, top: 415, left: 80 }}>
+        <div style={{ ...textStyle, top: 430, left: 80 }}>
           <span style={labelStyle}>Processo N°:</span>
           <span style={valueStyle}>{data.processo || "1002384-22.2024.8.26.0601"}</span>
         </div>
 
-        <div style={{ ...textStyle, top: 465, left: 80, fontSize: "11pt" }}>
+        <div style={{ ...textStyle, top: 480, left: 80, fontSize: "11pt" }}>
           <span style={labelStyle}>CUMPRIMENTO DE SENTENÇA CONTRA:</span>
           <span style={valueStyle}>{data.contra?.toUpperCase() || "BANCO ITAU CONSIGNADO S.A."}</span>
         </div>
 
         {/* Bloco de Decisão */}
-        <div style={{ ...textStyle, top: 510, left: 80 }}>
+        <div style={{ ...textStyle, top: 525, left: 80 }}>
           <span style={labelStyle}>Assunto:</span>
           <span style={valueStyle}>DECISÃO FAVORÁVEL - EXPEDIÇÃO DE ALVARÁ</span>
         </div>
-        <div style={{ ...textStyle, top: 535, left: 80 }}>
+        <div style={{ ...textStyle, top: 550, left: 80 }}>
           <span style={labelStyle}>SITUAÇÃO:</span>
           <span style={{ ...valueStyle, color: "#000" }}>AUTORIZADO</span>
         </div>
 
-        {/* Valor de Repasse */}
-        <div style={{ ...textStyle, top: 620, left: 80, fontSize: "14pt", width: 634, whiteSpace: "normal", textAlign: "justify" }}>
+        {/* Valor de Repasse (SEM QUEBRA DE LINHA) */}
+        <div style={{ ...textStyle, top: 630, left: 80, fontSize: "14pt", width: 634, whiteSpace: "nowrap" }}>
           Valor a receber: <span style={valueStyle}>R$ {data.valor || "26.516,28"}</span> será depositado em conta corrente de sua titularidade..
         </div>
 
-        {/* Texto Legal / Informativo */}
-        <div style={{ ...textStyle, top: 710, left: 80, width: 634, whiteSpace: "normal", textAlign: "justify", lineHeight: "1.5", fontSize: "11pt" }}>
-          Os autos foram encaminhados pelo TJ à Vara da Fazenda para a execução do processo e posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
+        {/* Texto Legal / Informativo (2 LINHAS DE ESPAÇAMENTO + QUEBRA MANUAL) */}
+        <div style={{ ...textStyle, top: 700, left: 80, width: 634, whiteSpace: "normal", textAlign: "justify", lineHeight: "1.5", fontSize: "11pt" }}>
+          Os autos foram encaminhados pelo TJ à Vara da Fazenda para a execução do processo e <br/>
+          posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
         </div>
 
         {/* ─── Rodapé e Assinatura ─── */}
+        {/* PODER JUDICIÁRIO (ACIMA DA ASSINATURA) */}
         <div style={{ position: "absolute", bottom: 180, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "11pt" }}>
-           <div style={{ textTransform: "uppercase", fontWeight: 700, letterSpacing: "1px" }}>Conselho Nacional de Justiça</div>
-           <div style={{ fontStyle: "italic", color: "#4b5563" }}>TJ – Tribunal de Justiça Eletrônico.</div>
+           <div style={{ textTransform: "uppercase", fontWeight: 700, letterSpacing: "1px" }}>PODER JUDICIÁRIO</div>
+           <div style={{ fontStyle: "italic", color: "#4b5563" }}>TJ – Tribunal de Justiça.</div>
         </div>
 
-        {/* Assinatura Judicial (CENTRALIZADA NO RODAPÉ) */}
-        <div style={{ position: "absolute", bottom: 40, left: "50%", transform: "translateX(-50%)", width: "100%", textAlign: "center" }}>
+        {/* Assinatura Judicial (DESCIDA PARA O RODAPÉ - 2 LINHAS) */}
+        <div style={{ position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)", width: "100%", textAlign: "center" }}>
            {/* Imagem de Assinatura (Fundo) */}
            <img 
              src={data.signatureImage || "/assets/peticao/assinatura_juiz.png"} 
