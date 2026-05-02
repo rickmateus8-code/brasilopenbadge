@@ -76,33 +76,31 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <img src="/assets/peticao/background_logo.png" style={{ width: "100%" }} alt="Watermark" />
         </div>
 
-        {/* ─── Cabeçalho Superior ─── */}
-        {/* Brasão da República (Logo Principal) */}
-        <div style={{ position: "absolute", top: "40pt", left: "40pt", zIndex: 11 }}>
-           <img src="/assets/peticao/brasao_republica.png" style={{ width: "100pt" }} alt="Brasão" />
+        {/* ─── Cabeçalho Superior Centralizado ─── */}
+        <div style={{ position: "absolute", top: "30pt", left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11 }}>
+           {/* Brasão da República */}
+           <img src="/assets/peticao/brasao_republica.png" style={{ width: "85pt", marginBottom: "5pt" }} alt="Brasão" />
+           
+           {/* Informações Institucionais (Abaixo do Brasão) */}
+           <div style={{ color: "#000", fontSize: "12pt", fontWeight: 700, fontFamily: "'Times New Roman', serif", letterSpacing: "0.5px" }}>TRIBUNAL DE JUSTIÇA</div>
+           <div style={{ color: "#000", fontSize: "10pt", fontWeight: 400, fontFamily: "'Times New Roman', serif", marginTop: 2 }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: 0284748/2026</div>
+           <div style={{ color: "#000", fontSize: "10pt", fontWeight: 400, fontFamily: "'Times New Roman', serif" }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
         </div>
 
-        {/* Informações Institucionais (Centro) */}
-        <div style={{ position: "absolute", top: "40pt", left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11 }}>
-           <div style={{ fontSize: "12pt", fontWeight: 700, fontFamily: "'Times New Roman', serif", letterSpacing: "1px" }}>TRIBUNAL DE JUSTIÇA</div>
-           <div style={{ fontSize: "10pt", fontWeight: 400, fontFamily: "'Times New Roman', serif", marginTop: 2 }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: 0284748/2026</div>
-           <div style={{ fontSize: "10pt", fontWeight: 400, fontFamily: "'Times New Roman', serif" }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
-        </div>
-
-        {/* Logo OAB (Logo Secundário / Selo) */}
-        <div style={{ position: "absolute", top: "40pt", left: "450pt", zIndex: 11 }}>
-           <img src="/assets/peticao/oab_logo.png" style={{ width: "80pt" }} alt="OAB" />
+        {/* Logo OAB (Mantido na direita para balanço ou conforme layout base) */}
+        <div style={{ position: "absolute", top: "35pt", right: "45pt", zIndex: 11 }}>
+           <img src="/assets/peticao/oab_logo.png" style={{ width: "70pt" }} alt="OAB" />
         </div>
 
         {/* Código de Barras */}
-        <div style={{ position: "absolute", top: "100pt", right: "40pt", zIndex: 11 }}>
-           <img src="/assets/peticao/cod_de_barras.png" style={{ width: "140pt", height: "35pt" }} alt="Barcode" />
+        <div style={{ position: "absolute", top: "115pt", right: "45pt", zIndex: 11 }}>
+           <img src="/assets/peticao/cod_de_barras.png" style={{ width: "130pt", height: "30pt" }} alt="Barcode" />
         </div>
 
         {/* Título do Documento */}
-        <div style={{ position: "absolute", top: 240, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10 }}>
+        <div style={{ position: "absolute", top: 220, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10 }}>
            <div style={{ fontSize: "18pt", fontWeight: 700, color: "#000" }}>PROCESSO JUDICIAL ELETRÔNICO</div>
-           <div style={{ fontSize: "12pt", fontWeight: 400, marginTop: -2, color: "#000" }}>Poder Judiciário do Estado</div>
+           <div style={{ fontSize: "12pt", fontWeight: 400, marginTop: -6, color: "#000" }}>Poder Judiciário do Estado</div>
         </div>
 
         {/* ─── Corpo da Petição (Grid Pixel-Perfect) ─── */}
