@@ -28,13 +28,13 @@ interface PetitionSTJDocumentProps {
 }
 
 const DOC_WIDTH_PX = 826;  // Expandido +1% (818 -> 826)
-const DOC_HEIGHT_PX = 1145; // Aumentado em 1% o tamanho SUPERIOR (1134 -> 1145)
+const DOC_HEIGHT_PX = 1180; // Aumentado em mais 3% (1145 -> 1180)
 
 const DPI_TARGET = 300;
 const EXPORT_SCALE = 1.92; // Reajustado para a nova largura de 826px
 
-// Constantes de conversão ABNT expandidas em 1% para zona de respiro
-const MARGIN_TOP = 135.4;    // Aumentado +1% (124.4 -> 135.4)
+// Constantes de conversão ABNT expandidas para zona de respiro técnica
+const MARGIN_TOP = 170.0;    // Aumentado +3% (135.4 -> 170.0)
 const MARGIN_LEFT = 129.4;   
 const MARGIN_LEFT_BODY = 97.3; 
 const MARGIN_RIGHT = 99.6;   
@@ -42,6 +42,7 @@ const MARGIN_BOTTOM = 86.6;
 
 const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
   ({ data }, ref) => {
+    // Estilo base para os textos (CORPO UNIFICADO - SINCRONIZADO 13.3pt - Aumentado +5% sobre 12.7pt)
     const textStyle: React.CSSProperties = {
       position: "absolute",
       fontFamily: "Arial, sans-serif",
@@ -112,7 +113,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <img src="/assets/peticao/brasao_republica.png" style={{ width: "99.3pt", marginBottom: "4pt", display: "inline-block" }} alt="Brasão" />
            
            <div style={{ color: "#222222", fontSize: "10.1pt", fontWeight: 400, letterSpacing: "0.5px" }}>TRIBUNAL DE JUSTIÇA</div>
-           <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400, marginTop: 5 }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: {alvara_final}</div>
+           <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400, marginTop: -3 }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: {alvara_final}</div>
            <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400, marginTop: -3 }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
         </div>
 
@@ -142,11 +143,6 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         <div style={{ ...textStyle, top: MARGIN_TOP + 267.2, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Advogado(a):</span>
           <span style={valueStyle}>{data.advogado?.toUpperCase() || ""}</span>
-        </div>
-
-        {/* Linha Divisória Superior (Ajustada) */}
-        <div style={{ position: "absolute", top: MARGIN_TOP + 297.2, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT }}>
-          <img src="/assets/peticao/linha.png" style={{ width: "100%", height: 1.5 }} alt="Separator" />
         </div>
 
         <div style={{ ...textStyle, top: MARGIN_TOP + 317.2, left: MARGIN_LEFT_BODY }}>
