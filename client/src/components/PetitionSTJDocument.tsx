@@ -149,14 +149,14 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <img src="/assets/peticao/linha.png" style={{ width: "100%", height: 1.5 }} alt="Separator" />
         </div>
 
-        {/* Bloco de Decisão */}
+        {/* Bloco de Decisão (Unificado) */}
         <div style={{ ...textStyle, top: MARGIN_TOP + 455, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Assunto:</span>
-          <span style={valueStyle}>DECISÃO FAVORÁVEL - EXPEDIÇÃO DE ALVARÁ</span>
+          <span style={valueStyle}>Decisão Favorável</span>
         </div>
         <div style={{ ...textStyle, top: MARGIN_TOP + 480, left: MARGIN_LEFT_BODY }}>
-          <span style={labelStyle}>SITUAÇÃO:</span>
-          <span style={{ ...valueStyle, color: "#000" }}>AUTORIZADO</span>
+          <span style={labelStyle}>Assunto:</span>
+          <span style={valueStyle}>Decisão Favorável</span>
         </div>
 
         {/* Valor de Repasse (SEM QUEBRA DE LINHA - SINCRONIZADO 12.1pt) */}

@@ -4,7 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
   ArrowLeft, Download, ZoomIn, ZoomOut,
-  AlertCircle, FileText, CheckCircle, Search, Save, X, PanelLeftClose, PanelLeft
+  AlertCircle, FileText, CheckCircle, Search, Save, X, PanelLeftClose, PanelLeft,
+  ChevronUp, ChevronDown
 } from "lucide-react";
 import EmissionModal from "@/components/EmissionModal";
 import PeticaoDocument, { type PetitionData } from "@/components/PetitionSTJDocument";
