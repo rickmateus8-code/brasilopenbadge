@@ -87,7 +87,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
         price = defaults[docType] || 1000;
         retentionDays = (docType === 'peticao-stj' || docType === 'peticaocria') ? 3 : 30; // STJ/Peticao default 3 dias
       } else {
-        price = Math.round(config.final_price * 100); // Converter para centavos se estiver em REAIS
+        // O banco já armazena em CENTAVOS (INTEGER)
+        price = Math.round(config.final_price); 
         retentionDays = config.final_retention;
       }
 
@@ -141,9 +142,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
 
     // 5. Registrar transação para auditoria
     if (price > 0 && user.role !== 'admin') {
+      const transactionId = crypto.randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase();
       await env.DB.prepare(
-        'INSERT INTO transactions (user_id, type, amount, description, document_type, document_id) VALUES (?, ?, ?, ?, ?, ?)'
-      ).bind(user.id, 'debit', price, `Emissão de ${docType.toUpperCase()}`, docType, docId).run();
+        'INSERT INTO transactions (id, user_id, type, amount, description, document_type, document_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime("now"))'
+      ).bind(transactionId, user.id, 'debit', price, `Emissão de ${docType.toUpperCase()}`, docType, docId).run();
     }
 
     // Compress base64 images to stay within D1 1MB column limit
@@ -176,21 +178,29 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
 
     // Save document with status='emitido' for validation
     // Include cpf, senha, nome, categoria as separate columns for cnh-do-brasil auth lookup
-    await env.DB.prepare(
-      'INSERT INTO documents (id, user_id, type, data, codigo_qr, status, cpf, senha, nome, categoria, codigo_validacao, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"))'
-    ).bind(docId, user.id, docType, jsonData, codigoValidacao, 'emitido', cpfValue, senhaValue, nomeValue, categoriaValue, codigoValidacao).run();
-
-    // 6. Sincronizar com IDAB (Removido indevidamente para tipos não-atestado)
-    
-    // Buscar saldo atualizado após débito para atualização em tempo real no frontend
-    const updatedUser = await env.DB.prepare(
-      'SELECT balance FROM users WHERE id = ? LIMIT 1'
-    ).bind(user.id).first<{ balance: number }>();
+    try {
+      await env.DB.prepare(
+        'INSERT INTO documents (id, user_id, type, data, codigo_qr, status, cpf, senha, nome, categoria, codigo_validacao, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"))'
+      ).bind(docId, user.id, docType, jsonData, codigoValidacao, 'emitido', cpfValue, senhaValue, nomeValue, categoriaValue, codigoValidacao).run();
+    } catch (docErr: any) {
+      // Se falhar a inserção do documento APÓS cobrar, precisamos estornar o saldo
+      if (user.role !== 'admin' && price > 0) {
+        await env.DB.prepare(
+          'UPDATE users SET balance = balance + ? WHERE id = ?'
+        ).bind(price, user.id).run();
+        // Log do estorno
+        const refundId = crypto.randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase();
+        await env.DB.prepare(
+          'INSERT INTO transactions (id, user_id, type, amount, description, document_type, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime("now"))'
+        ).bind(refundId, user.id, 'credit', price, `Estorno: Falha na emissão de ${docType.toUpperCase()}`, docType).run();
+      }
+      throw docErr;
+    }
 
     return new Response(JSON.stringify({
       success: true,
-      balance: updatedUser?.balance ?? 0,
-      newBalance: updatedUser?.balance ?? 0,
+      balance: newBalance,
+      newBalance: newBalance,
       data: {
         id: docId,
         codigoValidacao,

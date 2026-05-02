@@ -59,11 +59,12 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     // Montar mapa de preços
     const priceMap: Record<string, { display_name: string; price: number; price_formatted: string }> = {};
     for (const row of pricing.results || []) {
-      const priceInCents = Math.round(row.price * 100); // Garantir conversão para centavos
+      // O banco já armazena em CENTAVOS (INTEGER)
+      const priceInCents = Math.round(row.price); 
       priceMap[row.document_type] = {
         display_name: row.display_name,
         price: priceInCents,
-        price_formatted: `R$ ${row.price.toFixed(2)}`,
+        price_formatted: `R$ ${(priceInCents / 100).toFixed(2).replace('.', ',')}`,
       };
     }
 

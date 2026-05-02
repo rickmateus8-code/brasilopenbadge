@@ -382,23 +382,24 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
     }
     newBalance = updated.balance;
 
-    // Registrar transação no extrato
+    // Registrar transação no extrato para auditoria
     const transactionId = crypto.randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase();
     try {
       await env.DB.prepare(`
-        INSERT INTO transactions (id, user_id, type, amount, description, document_id, created_at)
-        VALUES (?, ?, 'debit', ?, ?, ?, ?)
+        INSERT INTO transactions (id, user_id, type, amount, description, document_type, document_id, created_at)
+        VALUES (?, ?, 'debit', ?, ?, ?, ?, ?)
       `).bind(
         transactionId,
         user.id,
+        'debit',
         price,
         `Emissão de Atestado — ${body.paciente?.toUpperCase() || "PACIENTE"}`,
+        'atestado',
         id,
         now
       ).run();
     } catch (transErr) {
       console.error("[transactions] Erro ao registrar transação:", transErr);
-      // Não interrompe a emissão se apenas o log da transação falhar
     }
   }
 

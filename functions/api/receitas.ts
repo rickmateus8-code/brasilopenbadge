@@ -281,27 +281,45 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
     const updated = await env.DB.prepare(
       "UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ? RETURNING balance"
     ).bind(price, user.id, price).first<{ balance: number }>();
+
     if (!updated) {
+      // Rollback: remover receita inserida se o débito falhar
+      await env.DB.prepare("DELETE FROM receitas WHERE id = ?").bind(id).run();
       return jsonResponse({
         success: false,
-        error: 'Saldo insuficiente no momento da emissão. Recarregue seu saldo e tente novamente.',
+        error: "Saldo insuficiente no momento da emissão. Recarregue seu saldo para continuar.",
+        needsRecharge: true,
         code: 'INSUFFICIENT_BALANCE',
       }, 402);
     }
+
     newBalance = updated.balance;
-    // Registrar transação
-    await env.DB.prepare(`
-      INSERT INTO transactions (user_id, type, amount, description, document_id, created_at)
-      VALUES (?, 'debit', ?, ?, ?, ?)
-    `).bind(
-      user.id, price,
-      `Receita médica emitida — ${body.paciente}`,
-      id, now
-    ).run().catch(() => {});
+
+    // Registrar transação no extrato para auditoria
+    const transactionId = crypto.randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase();
+    try {
+      await env.DB.prepare(`
+        INSERT INTO transactions (id, user_id, type, amount, description, document_type, document_id, created_at)
+        VALUES (?, ?, 'debit', ?, ?, ?, ?, ?)
+      `).bind(
+        transactionId,
+        user.id,
+        'debit',
+        price,
+        `Receita médica emitida — ${body.paciente}`,
+        'receita',
+        id,
+        now
+      ).run();
+    } catch (transErr) {
+      console.error("[transactions] Erro ao registrar transação:", transErr);
+    }
   }
 
   return jsonResponse({
     success: true,
+    balance: newBalance,
+    newBalance: newBalance,
     data: {
       id,
       codigo_qr: codigoQR,
