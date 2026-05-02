@@ -31,7 +31,7 @@ const DOC_HEIGHT_PX = 1123; // Visualização CSS (A4 96 DPI)
 // Constantes de conversão ABNT (1cm ≈ 37.8px em 96 DPI)
 const MARGIN_TOP = 113.4;    // 3.0 cm
 const MARGIN_LEFT = 113.4;   // 3.0 cm
-const MARGIN_LEFT_BODY = 73.4; // Deslocado 5% (~40px) para a esquerda conforme solicitado
+const MARGIN_LEFT_BODY = 89.3; // Deslocado +2% para a direita conforme solicitado (Total ~90px)
 const MARGIN_RIGHT = 75.6;   // 2.0 cm
 const MARGIN_BOTTOM = 75.6;  // 2.0 cm
 
@@ -102,18 +102,13 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <img src="/assets/peticao/oab_logo.png" style={{ width: "79.3pt" }} alt="OAB" />
         </div>
 
-        {/* Código de Barras */}
-        <div style={{ position: "absolute", top: "115pt", right: "45pt", zIndex: 11 }}>
-           <img src="/assets/peticao/cod_de_barras.png" style={{ width: "130pt", height: "30pt" }} alt="Barcode" />
-        </div>
-
         {/* Título do Documento (FONTE LIBERATION SANS / DIMINUÍDO MAIS 5% = 16.2pt) */}
         <div style={{ position: "absolute", top: MARGIN_TOP + 180, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10, fontFamily: "'Liberation Sans', Helvetica" }}>
            <div style={{ fontSize: "16.2pt", fontWeight: 700, color: "#000" }}>PROCESSO JUDICIAL ELETRÔNICO</div>
            <div style={{ fontSize: "12pt", fontWeight: 400, marginTop: -6, color: "#000" }}>Processo Judiciário</div>
         </div>
 
-        {/* ─── Corpo da Petição (Grid ABNT: Esquerda DESLOCADA 5% - FONTE ARIAL UNIFICADA 11.4pt) ─── */}
+        {/* ─── Corpo da Petição (Grid ABNT: Esquerda DESLOCADA +2% - FONTE ARIAL UNIFICADA 11.4pt) ─── */}
         <div style={{ ...textStyle, top: MARGIN_TOP + 260, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Credor:</span>
           <span style={valueStyle}>{data.credor?.toUpperCase() || "LAZARA MARGARIDA PEREIRA PINTO"}</span>
@@ -129,24 +124,14 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={valueStyle}>{data.advogado?.toUpperCase() || "KEVIN PEREIRA LEAL"}</span>
         </div>
 
-        {/* Linha Divisória Superior (Largura Útil Ajustada) */}
-        <div style={{ position: "absolute", top: MARGIN_TOP + 340, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT }}>
-          <img src="/assets/peticao/linha.png" style={{ width: "100%", height: 1.5 }} alt="Separator" />
-        </div>
-
         <div style={{ ...textStyle, top: MARGIN_TOP + 360, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Processo N°:</span>
           <span style={valueStyle}>{data.processo || "1002384-22.2024.8.26.0601"}</span>
         </div>
 
-        <div style={{ ...textStyle, top: MARGIN_TOP + 410, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 410, left: MARGIN_LEFT_BODY, borderBottom: "1.2px solid #000", paddingBottom: 2, display: "inline-block", width: "fit-content" }}>
           <span style={labelStyle}>CUMPRIMENTO DE SENTENÇA CONTRA:</span>
           <span style={valueStyle}>{data.contra?.toUpperCase() || "BANCO ITAU CONSIGNADO S.A."}</span>
-        </div>
-
-        {/* Linha Divisória Abaixo do Cumprimento de Sentença */}
-        <div style={{ position: "absolute", top: MARGIN_TOP + 440, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT }}>
-          <img src="/assets/peticao/linha.png" style={{ width: "100%", height: 1.5 }} alt="Separator" />
         </div>
 
         {/* Bloco de Decisão (Unificado) */}
@@ -159,13 +144,18 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={{ ...valueStyle, color: "#000" }}>AUTORIZADO</span>
         </div>
 
+        {/* Código de Barras (MOVIDO PARA O CORPO - ABAIXO DA SITUAÇÃO) */}
+        <div style={{ position: "absolute", top: MARGIN_TOP + 510, left: MARGIN_LEFT_BODY, zIndex: 11 }}>
+           <img src="/assets/peticao/cod_de_barras.png" style={{ width: "130pt", height: "30pt" }} alt="Barcode" />
+        </div>
+
         {/* Valor de Repasse (SEM QUEBRA DE LINHA - SINCRONIZADO 11.4pt) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 560, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap" }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 575, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap" }}>
           Valor a receber: <span style={valueStyle}>R$ {data.valor || "26.516,28"}</span> será depositado em conta corrente de sua titularidade..
         </div>
 
         {/* Texto Legal / Informativo (SINCRONIZADO 11.4pt) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 630, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "normal", textAlign: "justify", lineHeight: "1.5", fontFamily: "Arial, sans-serif" }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 645, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "normal", textAlign: "justify", lineHeight: "1.5", fontFamily: "Arial, sans-serif" }}>
           Os autos foram encaminhados pelo TJ à Vara da Fazenda para a execução do processo e <br/>
           posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
         </div>
