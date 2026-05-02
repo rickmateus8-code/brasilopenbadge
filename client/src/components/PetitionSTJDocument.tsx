@@ -172,31 +172,31 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           Valor a receber: <span style={valueStyle}>R$ {data.valor || ""}</span> será depositado em conta corrente de sua titularidade..
         </div>
 
-        {/* Texto Legal / Informativo (ARIAL - Aumentado +5% ≈ 12.3pt) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 626.2, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", textAlign: "justify", lineHeight: "1.5", fontSize: "12.3pt", fontFamily: "Arial, sans-serif" }}>
+        {/* Texto Legal / Informativo (ARIAL - Aumentado +5% ≈ 12.3pt - ABAIXADO 1 LINHA) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 638.2, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", textAlign: "justify", lineHeight: "1.5", fontSize: "12.3pt", fontFamily: "Arial, sans-serif" }}>
           Os autos foram encaminhados pelo TJ à Vara da Fazenda para a execução do processo e <br/>
           posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
         </div>
 
-        {/* Data Formatada por Extenso (Abaixo do Informativo - DESCIDO 1 LINHA EXTRA) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 766.2, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "12.2pt" }}>
+        {/* Data Formatada por Extenso (Abaixo do Informativo - SUBIDO 2 LINHAS) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 742.2, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "12.2pt" }}>
           {formatLongDate(data.data)}
         </div>
 
         {/* ─── Rodapé e Assinatura ─── */}
-        {/* PODER JUDICIÁRIO (ARIAL - PRÓXIMO DA ASSINATURA - SUBIDO 1MM GERAL) */}
-        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 58.8, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "11pt", fontFamily: "Arial, sans-serif" }}>
+        {/* PODER JUDICIÁRIO (ARIAL - PRÓXIMO DA ASSINATURA - SUBIDO 1% ≈ 11px) */}
+        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 70, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "11pt", fontFamily: "Arial, sans-serif" }}>
            <div style={{ textTransform: "uppercase", fontWeight: 400, letterSpacing: "1px", color: "#374151", marginBottom: 2 }}>PODER JUDICIÁRIO</div>
            <div style={{ fontStyle: "italic", color: "#374151", fontSize: "11.6pt", marginLeft: "-3.8px" }}>TJ – Tribunal de Justiça.</div>
         </div>
 
-        {/* Assinatura Judicial (Respeitando MARGIN_BOTTOM) */}
+        {/* Assinatura Judicial (Respeitando MARGIN_BOTTOM - TAMANHO +1%) */}
         <div style={{ position: "absolute", bottom: MARGIN_BOTTOM - 55, left: "50%", transform: "translateX(-50%)", width: "100%", textAlign: "center" }}>
            {/* Imagem de Assinatura (Fundo) */}
            <img 
              src={data.signatureImage || "/assets/peticao/assinatura_juiz.png"} 
              style={{ 
-               height: 110, 
+               height: 111, 
                zIndex: 12, 
                pointerEvents: "none",
                margin: "0 auto",
