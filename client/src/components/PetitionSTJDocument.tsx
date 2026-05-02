@@ -25,14 +25,14 @@ interface PetitionSTJDocumentProps {
   data: PetitionData;
 }
 
-const DOC_WIDTH_PX = 794;  // Restaurado para base original de visualização
-const DOC_HEIGHT_PX = 1123; // Restaurado para base original de visualização
+const DOC_WIDTH_PX = 810;  // Aumentado em 2% (794 -> 810) para acomodar linhas longas
+const DOC_HEIGHT_PX = 1123; // Mantida altura original
 
 // Configuração Técnica: A4 - 300 DPI
 const DPI_TARGET = 300;
-const EXPORT_SCALE = 2; // Ajustado para a nova base de 794px
+const EXPORT_SCALE = 1.96; // Ajustado para a nova base de 810px para manter escala A4 final
 
-// Constantes de conversão ABNT (Baseadas na grade 794x1123)
+// Constantes de conversão ABNT (Baseadas na grade 810x1123)
 const MARGIN_TOP = 113.4;    // 3.0 cm
 const MARGIN_LEFT = 113.4;   // 3.0 cm
 const MARGIN_LEFT_BODY = 97.5; // Deslocado 1% para a esquerda conforme solicitado (105.5 -> 97.5)
