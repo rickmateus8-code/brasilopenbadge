@@ -154,10 +154,6 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={labelStyle}>Assunto:</span>
           <span style={valueStyle}>Decisão Favorável</span>
         </div>
-        <div style={{ ...textStyle, top: MARGIN_TOP + 480, left: MARGIN_LEFT_BODY }}>
-          <span style={labelStyle}>Assunto:</span>
-          <span style={valueStyle}>Decisão Favorável</span>
-        </div>
 
         {/* Valor de Repasse (SEM QUEBRA DE LINHA - SINCRONIZADO 12.1pt) */}
         <div style={{ ...textStyle, top: MARGIN_TOP + 560, left: MARGIN_LEFT_BODY, fontSize: "12.1pt", width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap" }}>

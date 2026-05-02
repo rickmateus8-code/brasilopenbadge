@@ -65,25 +65,28 @@ export default function PeticaoCria() {
   }, []);
 
   const scrollToPreviewSection = useCallback((section: "top" | "bottom") => {
-    if (previewMode === "full") return;
     const container = document.getElementById("preview-container");
     if (container) {
       const containerHeight = container.offsetHeight;
-      const containerWidth = container.offsetWidth;
       const padding = 15;
-      const focusScale = Math.min((containerWidth - 30) / 794, 1.05);
+      
+      // Preservar o zoomScale atual ou usar o mínimo focado
+      const currentScale = Math.max(zoomScale, 0.95);
+      
       let targetY = 0;
-      if (section === "top") targetY = padding; 
-      else {
-        const scaledHeight = 1123 * focusScale;
+      if (section === "top") {
+        targetY = padding; 
+      } else {
+        const scaledHeight = 1123 * currentScale;
         targetY = containerHeight - scaledHeight - padding;
       }
-      setZoomScale(focusScale);
+      
+      setZoomScale(currentScale);
       setZoomTranslateY(targetY);
       setCurrentSection(section);
       setIsFocused(true);
     }
-  }, [previewMode]);
+  }, [zoomScale]);
 
   const resetPreviewZoom = useCallback(() => {
     const scale = getFitScale();
@@ -286,43 +289,37 @@ export default function PeticaoCria() {
           <main className="flex-1 relative flex flex-col overflow-hidden">
             <div className="absolute top-4 left-4 flex flex-col gap-2 z-20">
               <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2.5 bg-white shadow-xl rounded-xl text-gray-700 hover:bg-gray-50 transition-all border border-gray-100">{sidebarOpen ? <PanelLeftClose size={20} /> : <PanelLeft size={20} />}</button>
+              
+              {/* Zoom Controls */}
               <button onClick={() => setZoomScale(s => Math.min(s + 0.1, 2))} className="p-2.5 bg-white shadow-xl rounded-xl text-gray-700 hover:bg-gray-50 transition-all border border-gray-100"><ZoomIn size={20} /></button>
               <button onClick={() => setZoomScale(s => Math.max(s - 0.1, 0.3))} className="p-2.5 bg-white shadow-xl rounded-xl text-gray-700 hover:bg-gray-50 transition-all border border-gray-100"><ZoomOut size={20} /></button>
-              <button onClick={resetPreviewZoom} className="p-2.5 bg-white shadow-xl rounded-xl text-[10px] font-black text-gray-700 hover:bg-gray-50 transition-all border border-gray-100 uppercase tracking-tighter">RESET</button>
+              
+              {/* Navigation Controls (Moved from bottom-right to top-left sidebar) */}
+              <div className="h-px bg-gray-200 my-1 mx-2" />
+              <button 
+                onClick={() => scrollToPreviewSection("top")} 
+                className={`p-2.5 shadow-xl rounded-xl transition-all border ${currentSection === "top" && isFocused ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-700 border-gray-100 hover:bg-gray-50"}`}
+                title="Ver Topo"
+              >
+                <ChevronUp size={20} />
+              </button>
+              <button 
+                onClick={() => scrollToPreviewSection("bottom")} 
+                className={`p-2.5 shadow-xl rounded-xl transition-all border ${currentSection === "bottom" && isFocused ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-700 border-gray-100 hover:bg-gray-50"}`}
+                title="Ver Assinatura"
+              >
+                <ChevronDown size={20} />
+              </button>
+              <button 
+                onClick={resetPreviewZoom} 
+                className={`p-2.5 shadow-xl rounded-xl transition-all border ${!isFocused ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-700 border-gray-100 hover:bg-gray-50"}`}
+                title="Ajustar à Tela"
+              >
+                <Search size={20} />
+              </button>
             </div>
 
             <div id="preview-container" className="w-full h-full flex items-start justify-center overflow-hidden bg-white relative" style={{ perspective: "1000px" }}>
-              {/* Controls Overlay */}
-              <div className="absolute bottom-8 right-8 z-30 flex flex-col gap-3">
-                <button
-                  onClick={() => scrollToPreviewSection("top")}
-                  className={`w-12 h-12 rounded-full flex items-center justify-center shadow-2xl transition-all border-2 ${
-                    currentSection === "top" && isFocused ? "bg-indigo-600 text-white border-indigo-600 scale-110" : "bg-white/90 text-gray-700 border-gray-100 hover:bg-white"
-                  }`}
-                  title="Ver Topo"
-                >
-                  <ChevronUp size={24} strokeWidth={3} />
-                </button>
-                <button
-                  onClick={() => scrollToPreviewSection("bottom")}
-                  className={`w-12 h-12 rounded-full flex items-center justify-center shadow-2xl transition-all border-2 ${
-                    currentSection === "bottom" && isFocused ? "bg-indigo-600 text-white border-indigo-600 scale-110" : "bg-white/90 text-gray-700 border-gray-100 hover:bg-white"
-                  }`}
-                  title="Ver Assinatura"
-                >
-                  <ChevronDown size={24} strokeWidth={3} />
-                </button>
-                <button
-                  onClick={resetPreviewZoom}
-                  className={`w-12 h-12 rounded-full flex items-center justify-center shadow-2xl transition-all border-2 ${
-                    !isFocused ? "bg-indigo-600 text-white border-indigo-600 scale-110" : "bg-white/90 text-gray-700 border-gray-100 hover:bg-white"
-                  }`}
-                  title="Ajustar à Tela"
-                >
-                  <Search size={22} strokeWidth={3} />
-                </button>
-              </div>
-
               <div style={{ width: 794, flexShrink: 0, transform: `scale(${zoomScale}) translateY(${zoomTranslateY}px)`, transformOrigin: "top center", transition: "transform 0.85s cubic-bezier(0.22, 1, 0.36, 1)", boxShadow: "0 20px 50px rgba(0,0,0,0.15)" }}>
                 <PeticaoDocument ref={previewRef} data={form} signatureImage={signatureImage} />
               </div>
