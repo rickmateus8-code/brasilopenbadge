@@ -163,12 +163,12 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={{ ...valueStyle, color: "#000" }}>AUTORIZADO</span>
         </div>
 
-        {/* Código de Barras Dinâmico (Sincronizado com Alvará) */}
-        <div style={{ position: "absolute", top: MARGIN_TOP + 495.2, left: MARGIN_LEFT_BODY, zIndex: 11 }}>
+        {/* Código de Barras Dinâmico (Sincronizado com Alvará - AJUSTADO +2% LARGURA / +5% ALTURA / -1% POSIÇÃO) */}
+        <div style={{ position: "absolute", top: MARGIN_TOP + 495.2, left: MARGIN_LEFT_BODY - 8.1, zIndex: 11 }}>
            <Barcode 
              value={alvara_final}
-             width={1.6}
-             height={35}
+             width={1.63}
+             height={36.8}
              displayValue={false}
              margin={0}
              background="transparent"
