@@ -163,60 +163,69 @@ export default function RecarregaModal({
 
         {step === "amount" ? (
           <div className="space-y-6">
-            {/* Grid de Valores Predefinidos */}
-            <div className="grid grid-cols-2 gap-3">
-              {[20, 50, 100, 150].map((val) => (
-                <button
-                  key={val}
-                  onClick={() => setAmount(val)}
-                  className={`group relative py-4 px-4 rounded-2xl font-bold text-sm transition-all border-2 flex flex-col items-center justify-center gap-1 ${
-                    amount === val
-                      ? "bg-green-50 border-[#059669] text-[#059669] dark:bg-green-950/20"
-                      : "bg-white border-gray-100 text-gray-600 hover:border-gray-200 dark:bg-white/5 dark:border-transparent dark:text-gray-400 dark:hover:bg-white/10"
-                  }`}
-                >
-                  <span className="opacity-60 text-[10px] uppercase tracking-widest font-black">VALOR</span>
-                  <span className="text-lg">R$ {val},00</span>
-                  {amount === val && (
-                    <div className="absolute top-2 right-2">
-                      <Check className="w-3.5 h-3.5" />
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-
-            {/* Input Manual Estilo Clean */}
-            <div className="pt-2">
-              <label className="block text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] mb-2.5 px-1">
-                Ou informe outro valor
+            {/* Seletor de Valor com Botões + e - */}
+            <div className="flex flex-col items-center gap-4">
+              <label className="block text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] px-1">
+                Escolha o valor da recarga
               </label>
-              <div className="relative group">
-                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 font-black group-focus-within:text-[#059669] transition-colors text-xl">
-                  R$
+              
+              <div className="flex items-center justify-between w-full bg-gray-50 dark:bg-white/5 rounded-3xl p-2 border-2 border-gray-100 dark:border-white/5">
+                <button
+                  onClick={() => setAmount(prev => Math.max(20, prev - 20))}
+                  disabled={amount <= 20}
+                  className="w-14 h-14 rounded-2xl bg-white dark:bg-white/5 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-[#059669] hover:bg-green-50 dark:hover:bg-green-950/20 transition-all border-none cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shadow-sm"
+                >
+                  <span className="text-3xl font-light">−</span>
+                </button>
+
+                <div className="flex flex-col items-center">
+                  <div className="text-3xl font-black text-gray-900 dark:text-white flex items-baseline gap-1">
+                    <span className="text-lg opacity-40 font-bold">R$</span>
+                    {amount},00
+                  </div>
                 </div>
-                <input
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(Number(e.target.value))}
-                  min="20"
-                  placeholder="0,00"
-                  className="w-full pl-14 pr-6 py-5 bg-gray-50 dark:bg-white/5 border-2 border-transparent focus:border-[#059669] focus:bg-white dark:focus:bg-transparent rounded-2xl text-2xl font-black text-gray-900 dark:text-white outline-none transition-all placeholder:text-gray-300 dark:placeholder:text-gray-700"
-                />
+
+                <button
+                  onClick={() => setAmount(prev => Math.min(150, prev + 20))}
+                  disabled={amount >= 150}
+                  className="w-14 h-14 rounded-2xl bg-white dark:bg-white/5 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-[#059669] hover:bg-green-50 dark:hover:bg-green-950/20 transition-all border-none cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shadow-sm"
+                >
+                  <span className="text-3xl font-light">+</span>
+                </button>
               </div>
-              <div className="flex items-center gap-2 mt-3 px-1">
-                <AlertCircle className="w-4 h-4 text-[#059669]" />
-                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                  Mínimo de <span className="text-gray-900 dark:text-gray-200">R$ 20,00</span>
-                </span>
+
+              {/* Grid de Valores Predefinidos (Opcional, mas mantido para facilidade) */}
+              <div className="grid grid-cols-4 gap-2 w-full">
+                {[20, 50, 100, 150].map((val) => (
+                  <button
+                    key={val}
+                    onClick={() => setAmount(val)}
+                    className={`py-2 rounded-xl font-bold text-[11px] transition-all border ${
+                      amount === val
+                        ? "bg-green-600 border-green-600 text-white shadow-lg shadow-green-600/20"
+                        : "bg-white border-gray-200 text-gray-500 hover:border-gray-300 dark:bg-white/5 dark:border-white/10"
+                    }`}
+                  >
+                    R$ {val}
+                  </button>
+                ))}
               </div>
+
+              {amount >= 150 && (
+                <div className="bg-amber-50 dark:bg-amber-950/10 border border-amber-100 dark:border-amber-900/20 rounded-2xl p-3 flex gap-3 items-center w-full">
+                  <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
+                  <p className="text-[11px] text-amber-800 dark:text-amber-400 font-medium leading-tight">
+                    Para valores superiores a R$ 150,00, por favor entre em contato com nosso <a href="https://wa.me/5511999999999" target="_blank" className="font-bold underline decoration-amber-500/30">Suporte VIP</a>.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Botão Principal */}
             <button
               onClick={handleGeneratePix}
               disabled={loading || !amount || amount < 20}
-              className="w-full py-5 bg-[#059669] hover:bg-[#047857] disabled:bg-gray-200 dark:disabled:bg-white/5 disabled:text-gray-400 text-white font-black text-base rounded-2xl shadow-xl shadow-green-500/20 transition-all flex items-center justify-center gap-3 mt-4 active:scale-[0.98]"
+              className="w-full py-5 bg-[#059669] hover:bg-[#047857] disabled:bg-gray-200 dark:disabled:bg-white/5 disabled:text-gray-400 text-white font-black text-base rounded-2xl shadow-xl shadow-green-500/20 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
             >
               {loading ? (
                 <>

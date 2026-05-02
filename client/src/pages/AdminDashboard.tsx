@@ -263,13 +263,13 @@ export default function AdminDashboard() {
     site_name: "DocMaster",
     support_whatsapp: "",
     max_documents_per_day: "100",
-    auto_delete_days: "60",
+    auto_delete_days: "15",
     maintenance_mode: false,
-    auto_delete_atestado: "60",
-    auto_delete_receita: "60",
+    auto_delete_atestado: "15",
+    auto_delete_receita: "15",
     auto_delete_cnh: "365",
-    auto_delete_cha: "60",
-    auto_delete_toxicologico: "60",
+    auto_delete_cha: "15",
+    auto_delete_toxicologico: "15",
     auto_delete_historico: "90",
   });
   const [settingsSaving, setSettingsSaving] = useState(false);
@@ -286,6 +286,10 @@ export default function AdminDashboard() {
   const [linking, setLinking] = useState(false);
 
   const [loading, setLoading] = useState(false);
+
+  // Financial (Gateway)
+  const [gatewayFinancial, setGatewayFinancial] = useState<{ saldo_disponivel?: number; limite_diario?: number } | null>(null);
+  const [loadingFinancial, setLoadingFinancial] = useState(false);
 
   // Confirmation modal
   const [confirmModal, setConfirmModal] = useState<{
@@ -353,6 +357,18 @@ export default function AdminDashboard() {
         setEditingIsActive(eia);
       }
     } catch { toast.error("Erro ao carregar preços"); }
+  }, []);
+
+  const loadFinancial = useCallback(async () => {
+    try {
+      setLoadingFinancial(true);
+      const res = await fetch("/api/admin/financial", { credentials: "include" });
+      const data = await res.json();
+      if (data.success) {
+        setGatewayFinancial(data.data);
+      }
+    } catch { /* silently fail */ }
+    finally { setLoadingFinancial(false); }
   }, []);
 
   const loadNotices = useCallback(async () => {
@@ -546,14 +562,19 @@ export default function AdminDashboard() {
       loadSettings();
       loadCleanupPreview();
     }
-  }, [tab, logCategory, logDateFrom, logDateTo, emissionsTypeFilter, referralTab, showPasswords, loadCleanupPreview, loadSettings]);
+    loadFinancial();
+  }, [tab, logCategory, logDateFrom, logDateTo, emissionsTypeFilter, referralTab, showPasswords, loadCleanupPreview, loadSettings, loadFinancial]);
 
   // Load presence count on mount and periodically
   useEffect(() => {
     loadPresence();
-    const interval = setInterval(loadPresence, 10000);
+    loadFinancial();
+    const interval = setInterval(() => {
+      loadPresence();
+      loadFinancial();
+    }, 30000); // 30s
     return () => clearInterval(interval);
-  }, [loadPresence]);
+  }, [loadPresence, loadFinancial]);
 
   useEffect(() => {
     if (tab !== "users") return;
@@ -1161,6 +1182,15 @@ export default function AdminDashboard() {
                 R$ {(totalBalance / 100).toFixed(2).replace(".", ",")}
               </p>
             </div>
+            {gatewayFinancial && (
+              <div className="bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-800 rounded-xl px-4 py-2 text-center">
+                <p className="text-xs text-gray-500 dark:text-gray-400">Saldo Gateway</p>
+                <p className="text-lg font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1.5 justify-center">
+                  <CreditCard className="w-3.5 h-3.5" />
+                  R$ {Number(gatewayFinancial.saldo_disponivel || 0).toFixed(2).replace(".", ",")}
+                </p>
+              </div>
+            )}
             <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-2 text-center">
               <p className="text-xs text-gray-500 dark:text-gray-400">Usuários Online</p>
               <p className="text-lg font-bold text-blue-600 dark:text-blue-400 flex items-center justify-center gap-1.5">
