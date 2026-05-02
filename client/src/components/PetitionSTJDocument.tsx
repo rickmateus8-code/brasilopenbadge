@@ -101,8 +101,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
 
         {/* Título do Documento */}
         <div style={{ position: "absolute", top: 240, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10 }}>
-           <div style={{ fontSize: "18pt", fontWeight: 700, textDecoration: "underline" }}>PROCESSO JUDICIAL ELETRÔNICO</div>
-           <div style={{ fontSize: "14pt", fontWeight: 400, marginTop: 4 }}>Poder Judiciário do Estado</div>
+           <div style={{ fontSize: "18pt", fontWeight: 700, color: "#000" }}>PROCESSO JUDICIAL ELETRÔNICO</div>
+           <div style={{ fontSize: "14pt", fontWeight: 400, marginTop: 4, color: "#000" }}>Poder Judiciário do Estado</div>
         </div>
 
         {/* ─── Corpo da Petição (Grid Pixel-Perfect) ─── */}
@@ -148,7 +148,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
 
         {/* Valor de Repasse */}
         <div style={{ ...textStyle, top: 620, left: 80, fontSize: "14pt", width: 634, whiteSpace: "normal", textAlign: "justify" }}>
-          O valor total de repasse <span style={valueStyle}>R$ {data.valor || "26.516,28"}</span> será creditado integralmente na conta bancária informada pelo patrono da causa, conforme trânsito em julgado.
+          Valor a receber: <span style={valueStyle}>R$ {data.valor || "26.516,28"}</span> será depositado em conta corrente de sua titularidade..
         </div>
 
         {/* Texto Legal / Informativo */}
