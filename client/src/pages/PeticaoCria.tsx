@@ -32,14 +32,27 @@ export default function PeticaoCria() {
   const [previewMode, setPreviewMode] = useState<"fit" | "full">("fit");
   const [currentSection, setCurrentSection] = useState<"top" | "bottom">("top");
 
-  const [signatureImage, setSignatureImage] = useState<string>("");
-
   const [isExporting, setIsExporting] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [saved, setSaved] = useState(false);
   const [documentPrice, setDocumentPrice] = useState<number>(2000); // R$ 20,00
+
+  const formatCurrency = (val: string) => {
+    // Remove tudo que não é dígito
+    let digits = val.replace(/\D/g, "");
+    if (!digits) return "";
+    
+    // Converte para valor numérico
+    const amount = (parseInt(digits) / 100).toFixed(2);
+    const [int, dec] = amount.split(".");
+    
+    // Formata o inteiro com pontos de milhar
+    const formattedInt = int.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    
+    return `R$ ${formattedInt},${dec}`;
+  };
 
   const [form, setForm] = useState<PetitionData>({
     id: "XXXX.XXXX",
@@ -69,20 +82,17 @@ export default function PeticaoCria() {
       const containerHeight = container.offsetHeight;
       const padding = 15;
       
-      // Preservar o zoomScale atual ou usar o mínimo focado (compensando a escala na translação)
+      // Preservar o zoomScale atual ou usar o mínimo focado
       const s = Math.max(zoomScale, 0.95);
       
       let targetY = 0;
       if (section === "top") {
-        // Alinha o topo do documento (escalado) ao topo do container + padding
         targetY = padding / s; 
       } else {
         const scaledHeight = 1123 * s;
         if (scaledHeight > containerHeight) {
-          // Se o documento é maior que a tela, alinha a base do doc (escalado) à base do container - padding
           targetY = (containerHeight - padding) / s - 1123;
         } else {
-          // Se o documento cabe na tela, mantém no topo com padding
           targetY = padding / s;
         }
       }
@@ -101,7 +111,6 @@ export default function PeticaoCria() {
     if (container) {
       const containerHeight = container.offsetHeight;
       const docHeight = 1123;
-      // Centraliza verticalmente compensando a escala
       ty = (containerHeight / scale - docHeight) / 2;
     }
     setZoomScale(scale);
@@ -131,7 +140,7 @@ export default function PeticaoCria() {
   const handleSave = useCallback(async () => {
     setIsExporting(true);
     try {
-      const payload = { ...form, signatureImage };
+      const payload = { ...form };
       const res = await fetch("/api/documents/peticaocria", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -151,7 +160,7 @@ export default function PeticaoCria() {
       }
     } catch { toast.error("Erro de conexão"); setShowConfirmModal(false); }
     finally { setIsExporting(false); }
-  }, [form, updateBalance, signatureImage]);
+  }, [form, updateBalance]);
 
   const handleExportPDF = useCallback(async () => {
     if (!previewRef.current) return;
@@ -240,57 +249,60 @@ export default function PeticaoCria() {
                 
                 <label style={lbl}>Credor</label>
                 <input style={inp} value={form.credor} onChange={(e) => setForm(p => ({ ...p, credor: e.target.value }))} placeholder="Ex: LAZARA MARGARIDA..." />
-                <p style={subfonte}>Ex: LAZARA MARGARIDA PEREIRA PINTO</p>
-
+                
                 <label style={lbl}>CPF/CNPJ do Credor</label>
                 <input style={inp} value={form.cpf_cnpj} onChange={(e) => setForm(p => ({ ...p, cpf_cnpj: e.target.value }))} placeholder="Ex: 000.000.000-00" />
-                <p style={subfonte}>Ex: 15036134885</p>
 
                 <label style={lbl}>Advogado(a)</label>
                 <input style={inp} value={form.advogado} onChange={(e) => setForm(p => ({ ...p, advogado: e.target.value }))} placeholder="Ex: KEVIN PEREIRA..." />
-                <p style={subfonte}>Ex: KEVIN PEREIRA LEAL</p>
 
                 <label style={lbl}>Número do Processo</label>
                 <input style={inp} value={form.processo} onChange={(e) => setForm(p => ({ ...p, processo: e.target.value }))} placeholder="Ex: 1002384-..." />
-                <p style={subfonte}>Ex: 1002384-22.2024.8.26.0601</p>
 
                 <label style={lbl}>Execução Contra</label>
                 <input style={inp} value={form.contra} onChange={(e) => setForm(p => ({ ...p, contra: e.target.value }))} placeholder="Ex: BANCO ITAU..." />
-                <p style={subfonte}>Ex: BANCO ITAU CONSIGNADO S.A.</p>
 
                 <label style={lbl}>Valor a Receber (R$)</label>
-                <input style={inp} value={form.valor} onChange={(e) => setForm(p => ({ ...p, valor: e.target.value }))} placeholder="Ex: 26.516,28" />
-                <p style={subfonte}>Ex: 26.516,28</p>
+                <input 
+                  style={inp} 
+                  value={form.valor} 
+                  onChange={(e) => setForm(p => ({ ...p, valor: formatCurrency(e.target.value) }))} 
+                  placeholder="Ex: 26.516,28" 
+                />
 
                 <label style={lbl}>Data do Documento</label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full justify-start text-left font-normal mb-4 h-10 border-gray-300",
-                        !form.data && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {form.data ? format(new Date(form.data), "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={form.data ? new Date(form.data) : undefined}
-                      onSelect={(date) => {
-                        if (date) {
-                          const finalDate = new Date(date);
-                          if (finalDate.getFullYear() < 2026) finalDate.setFullYear(2026);
-                          setForm(p => ({ ...p, data: finalDate.toISOString() }));
-                        }
-                      }}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <div className="flex gap-2 mb-4">
+                  <input 
+                    style={{ ...inp, marginBottom: 0, flex: 1 }} 
+                    value={form.data.includes('T') ? format(new Date(form.data), "PPP", { locale: ptBR }) : form.data} 
+                    onChange={(e) => setForm(p => ({ ...p, data: e.target.value }))} 
+                    placeholder="Ex: 02 de Maio de 2026" 
+                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className="h-10 border-gray-300 px-3 text-black"
+                      >
+                        <CalendarIcon className="h-4 w-4 text-black" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar
+                        mode="single"
+                        selected={form.data.includes('T') ? new Date(form.data) : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            const finalDate = new Date(date);
+                            if (finalDate.getFullYear() < 2026) finalDate.setFullYear(2026);
+                            setForm(p => ({ ...p, data: finalDate.toISOString() }));
+                          }
+                        }}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
             </div>
           </aside>
@@ -330,7 +342,7 @@ export default function PeticaoCria() {
 
             <div id="preview-container" className="w-full h-full flex items-start justify-center overflow-hidden bg-white relative" style={{ perspective: "1000px" }}>
               <div style={{ width: 794, flexShrink: 0, transform: `scale(${zoomScale}) translateY(${zoomTranslateY}px)`, transformOrigin: "top center", transition: "transform 0.85s cubic-bezier(0.22, 1, 0.36, 1)", boxShadow: "0 20px 50px rgba(0,0,0,0.15)" }}>
-                <PeticaoDocument ref={previewRef} data={form} signatureImage={signatureImage} />
+                <PeticaoDocument ref={previewRef} data={form} />
               </div>
             </div>
           </main>

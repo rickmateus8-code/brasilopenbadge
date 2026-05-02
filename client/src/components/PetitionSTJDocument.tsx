@@ -144,8 +144,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={{ ...valueStyle, color: "#000" }}>AUTORIZADO</span>
         </div>
 
-        {/* Código de Barras (MOVIDO PARA O CORPO - ABAIXO DA SITUAÇÃO) */}
-        <div style={{ position: "absolute", top: MARGIN_TOP + 510, left: MARGIN_LEFT_BODY, zIndex: 11 }}>
+        {/* Código de Barras (ALINHADO À MARGEM ESQUERDA) */}
+        <div style={{ position: "absolute", top: MARGIN_TOP + 510, left: MARGIN_LEFT, zIndex: 11 }}>
            <img src="/assets/peticao/cod_de_barras.png" style={{ width: "130pt", height: "30pt" }} alt="Barcode" />
         </div>
 
@@ -160,8 +160,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
         </div>
 
-        {/* Data Formatada por Extenso (Abaixo do Informativo) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 710, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif" }}>
+        {/* Data Formatada por Extenso (Abaixo do Informativo - 3 LINHAS ABAIXO) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 745, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif" }}>
           {data.data ? (
             (() => {
               const d = new Date(data.data);
@@ -178,7 +178,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         {/* PODER JUDICIÁRIO (ARIAL - PRÓXIMO DA ASSINATURA - REBAIXADO 3 LINHAS) */}
         <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 55, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "11pt", fontFamily: "Arial, sans-serif" }}>
            <div style={{ textTransform: "uppercase", fontWeight: 400, letterSpacing: "1px", color: "#374151" }}>PODER JUDICIÁRIO</div>
-           <div style={{ fontStyle: "italic", color: "#374151" }}>TJ – Tribunal de Justiça.</div>
+           <div style={{ fontStyle: "italic", color: "#374151", fontSize: "11.4pt" }}>TJ – Tribunal de Justiça.</div>
         </div>
 
         {/* Assinatura Judicial (Respeitando MARGIN_BOTTOM) */}
