@@ -25,10 +25,15 @@ interface PetitionSTJDocumentProps {
   data: PetitionData;
 }
 
-const DOC_WIDTH_PX = 596;  // Nova base dimensional solicitada
-const DOC_HEIGHT_PX = 842; // Nova base dimensional solicitada
+const DOC_WIDTH_PX = 596;  // Base Dimensional (Equivalente a A4 em Points para ajuste pixel a pixel)
+const DOC_HEIGHT_PX = 842; // Base Dimensional (Equivalente a A4 em Points para ajuste pixel a pixel)
 
-// Constantes de conversão ABNT (1cm ≈ 37.8px em 96 DPI)
+// Configuração Técnica: A4 - 300 DPI (Mantendo os pixels atuais de layout)
+// Resolução de saída projetada: ~2480 x 3508 pixels via escala de exportação (scale: 4.16)
+const DPI_TARGET = 300;
+const EXPORT_SCALE = 4.16; 
+
+// Constantes de conversão ABNT (Baseadas na grade 596x842)
 const MARGIN_TOP = 113.4;    // 3.0 cm
 const MARGIN_LEFT = 113.4;   // 3.0 cm
 const MARGIN_LEFT_BODY = 105.5; // Deslocado 2mm para a esquerda conforme solicitado
