@@ -28,17 +28,17 @@ interface PetitionSTJDocumentProps {
 }
 
 const DOC_WIDTH_PX = 826;  // Expandido +1% (818 -> 826)
-const DOC_HEIGHT_PX = 1134; // Expandido +1% (1123 -> 1134)
+const DOC_HEIGHT_PX = 1145; // Aumentado em 1% o tamanho SUPERIOR (1134 -> 1145)
 
 const DPI_TARGET = 300;
 const EXPORT_SCALE = 1.92; // Reajustado para a nova largura de 826px
 
 // Constantes de conversão ABNT expandidas em 1% para zona de respiro
-const MARGIN_TOP = 124.4;    // 113.4 + 11
-const MARGIN_LEFT = 129.4;   // 121.4 + 8
-const MARGIN_LEFT_BODY = 97.3; // Deslocamento centralizado na nova grade
-const MARGIN_RIGHT = 99.6;   // 91.6 + 8
-const MARGIN_BOTTOM = 86.6;  // 75.6 + 11
+const MARGIN_TOP = 135.4;    // Aumentado +1% (124.4 -> 135.4)
+const MARGIN_LEFT = 129.4;   
+const MARGIN_LEFT_BODY = 97.3; 
+const MARGIN_RIGHT = 99.6;   
+const MARGIN_BOTTOM = 86.6;  
 
 const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
   ({ data }, ref) => {
@@ -169,31 +169,31 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={{ ...valueStyle, color: "#000" }}>AUTORIZADO</span>
         </div>
 
-        {/* Código de Barras Dinâmico */}
+        {/* Código de Barras Dinâmico (AJUSTADO: -5% LARGURA / +4% GROSSURA / 1 LINHA ESPAÇAMENTO) */}
         <div style={{ position: "absolute", top: MARGIN_TOP + 461.2, left: MARGIN_LEFT_BODY - 8.1, zIndex: 11 }}>
            <Barcode 
              value={alvara_final}
-             width={1.63}
-             height={36.8}
+             width={1.55}
+             height={38.3}
              displayValue={false}
              margin={0}
              background="transparent"
            />
         </div>
 
-        {/* Valor de Repasse */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 522.0, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", fontSize: "13.1pt" }}>
+        {/* Valor de Repasse (Garantindo 1 linha de respiro inferior do barcode: 461.2 + 38.3 + 24 = 523.5) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 523.5, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", fontSize: "13.1pt" }}>
           Valor a receber: <span style={valueStyle}>R$ {data.valor || ""}</span> será depositado em conta corrente de sua titularidade..
         </div>
 
-        {/* Texto Legal / Informativo (SUBIDO +1% ≈ -11px) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 584.0, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", textAlign: "justify", lineHeight: "1.5", fontSize: "12.8pt", fontFamily: "Arial, sans-serif" }}>
+        {/* Texto Legal / Informativo (Deslocado proporcionalmente) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 585.5, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", textAlign: "justify", lineHeight: "1.5", fontSize: "12.8pt", fontFamily: "Arial, sans-serif" }}>
           Os autos foram encaminhados pelo TJ à Vara da Fazenda para a execução do processo e <br/>
           posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
         </div>
 
-        {/* Data Formatada (SUBIDO +2% ≈ -22px) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 664.0, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "14.0pt" }}>
+        {/* Data Formatada (Deslocada proporcionalmente) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 665.5, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "14.0pt" }}>
           {formatLongDate(data.data)}
         </div>
 
