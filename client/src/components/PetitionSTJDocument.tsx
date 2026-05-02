@@ -31,13 +31,13 @@ const DOC_HEIGHT_PX = 1123; // Visualização CSS (A4 96 DPI)
 // Constantes de conversão ABNT (1cm ≈ 37.8px em 96 DPI)
 const MARGIN_TOP = 113.4;    // 3.0 cm
 const MARGIN_LEFT = 113.4;   // 3.0 cm
-const MARGIN_LEFT_BODY = 113.1; // Deslocado +3% para a direita conforme solicitado (Total ~113px)
+const MARGIN_LEFT_BODY = 105.5; // Deslocado 2mm para a esquerda conforme solicitado
 const MARGIN_RIGHT = 83.6;   // Aumentado em 1% (~8px) (75.6 -> 83.6)
 const MARGIN_BOTTOM = 75.6;  // 2.0 cm
 
 const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
   ({ data }, ref) => {
-    // Estilo base para os textos (CORPO UNIFICADO - SINCRONIZADO E REDUZIDO 1% + 5% = 11.4pt + 3% = 11.7pt)
+    // Estilo base para os textos (CORPO UNIFICADO - SINCRONIZADO 11.7pt)
     const textStyle: React.CSSProperties = {
       position: "absolute",
       fontFamily: "Arial, sans-serif",
@@ -46,6 +46,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
       whiteSpace: "nowrap",
       zIndex: 10
     };
+
 
     const labelStyle: React.CSSProperties = {
       fontWeight: 400,
@@ -180,10 +181,10 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         </div>
 
         {/* ─── Rodapé e Assinatura ─── */}
-        {/* PODER JUDICIÁRIO (ARIAL - PRÓXIMO DA ASSINATURA - REBAIXADO 3 LINHAS) */}
-        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 55, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "11pt", fontFamily: "Arial, sans-serif" }}>
-           <div style={{ textTransform: "uppercase", fontWeight: 400, letterSpacing: "1px", color: "#374151" }}>PODER JUDICIÁRIO</div>
-           <div style={{ fontStyle: "italic", color: "#374151", fontSize: "11.4pt" }}>TJ – Tribunal de Justiça.</div>
+        {/* PODER JUDICIÁRIO (ARIAL - PRÓXIMO DA ASSINATURA - SUBIDO 1MM GERAL) */}
+        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 58.8, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "11pt", fontFamily: "Arial, sans-serif" }}>
+           <div style={{ textTransform: "uppercase", fontWeight: 400, letterSpacing: "1px", color: "#374151", marginBottom: 2 }}>PODER JUDICIÁRIO</div>
+           <div style={{ fontStyle: "italic", color: "#374151", fontSize: "11.5pt", marginLeft: "-3.8px" }}>TJ – Tribunal de Justiça.</div>
         </div>
 
         {/* Assinatura Judicial (Respeitando MARGIN_BOTTOM) */}
