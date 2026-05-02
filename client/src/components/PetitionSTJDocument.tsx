@@ -91,10 +91,10 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            {/* Brasão da República (ALINHADO E CENTRALIZADO) */}
            <img src="/assets/peticao/brasao_republica.png" style={{ width: "85pt", marginBottom: "4pt", display: "inline-block" }} alt="Brasão" />
            
-           {/* Informações Institucionais (Abaixo do Brasão - PROXIMIDADE VERTICAL) */}
-           <div style={{ color: "#000", fontSize: "12pt", fontWeight: 400, letterSpacing: "0.5px" }}>TRIBUNAL DE JUSTIÇA</div>
-           <div style={{ color: "#000", fontSize: "10pt", fontWeight: 400, marginTop: -2 }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: 0284748/2026</div>
-           <div style={{ color: "#000", fontSize: "10pt", fontWeight: 400, marginTop: -2 }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
+           {/* Informações Institucionais (Abaixo do Brasão - COMPACTAÇÃO RADICAL E REDUÇÃO 6%) */}
+           <div style={{ color: "#000", fontSize: "11.3pt", fontWeight: 400, letterSpacing: "0.5px" }}>TRIBUNAL DE JUSTIÇA</div>
+           <div style={{ color: "#000", fontSize: "9.4pt", fontWeight: 400, marginTop: -3 }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: 0284748/2026</div>
+           <div style={{ color: "#000", fontSize: "9.4pt", fontWeight: 400, marginTop: -3 }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
         </div>
 
         {/* Logo OAB (BEM NA BORDA - Canto Superior Esquerdo + 3% EXTRA = 79.3pt) */}
