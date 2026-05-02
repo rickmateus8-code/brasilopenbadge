@@ -41,12 +41,12 @@ const MARGIN_BOTTOM = 75.6;  // 2.0 cm
 
 const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
   ({ data }, ref) => {
-    // Estilo base para os textos (CORPO UNIFICADO - SINCRONIZADO 11.7pt)
+    // Estilo base para os textos (CORPO UNIFICADO - SINCRONIZADO 12.2pt - Aumentado +4%)
     const textStyle: React.CSSProperties = {
       position: "absolute",
       fontFamily: "Arial, sans-serif",
       color: "#000",
-      fontSize: "11.7pt", 
+      fontSize: "12.2pt", 
       whiteSpace: "nowrap",
       zIndex: 10
     };
@@ -60,6 +60,15 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
     const valueStyle: React.CSSProperties = {
       fontWeight: 400,
       fontFamily: "Arial, sans-serif"
+    };
+
+    const formatLongDate = (dateStr: string) => {
+      if (!dateStr || !dateStr.includes('/')) return "2 de maio de 2026";
+      const parts = dateStr.split('/');
+      if (parts.length !== 3) return dateStr;
+      const [d, m, y] = parts.map(Number);
+      const months = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+      return `${d} de ${months[m - 1]} de ${y < 2026 ? 2026 : y}`;
     };
 
     return (
@@ -158,29 +167,20 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <img src="/assets/peticao/cod_de_barras.png" style={{ width: "130pt", height: "30pt" }} alt="Barcode" />
         </div>
 
-        {/* Valor de Repasse (SEM QUEBRA DE LINHA - SINCRONIZADO 11.7pt) */}
+        {/* Valor de Repasse (SEM QUEBRA DE LINHA - SINCRONIZADO 12.2pt) */}
         <div style={{ ...textStyle, top: MARGIN_TOP + 556.2, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap" }}>
           Valor a receber: <span style={valueStyle}>R$ {data.valor || ""}</span> será depositado em conta corrente de sua titularidade..
         </div>
 
-        {/* Texto Legal / Informativo (SINCRONIZADO 11.7pt) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 626.2, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "normal", textAlign: "justify", lineHeight: "1.5", fontFamily: "Arial, sans-serif" }}>
+        {/* Texto Legal / Informativo (ARIAL - Aumentado +5% ≈ 12.3pt) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 626.2, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", textAlign: "justify", lineHeight: "1.5", fontSize: "12.3pt", fontFamily: "Arial, sans-serif" }}>
           Os autos foram encaminhados pelo TJ à Vara da Fazenda para a execução do processo e <br/>
           posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
         </div>
 
-        {/* Data Formatada por Extenso (Abaixo do Informativo) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 761.2, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif" }}>
-          {data.data ? (
-            (() => {
-              const d = new Date(data.data);
-              const day = String(d.getDate()).padStart(2, '0');
-              const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-              const month = months[d.getMonth()];
-              const year = d.getFullYear() < 2026 ? 2026 : d.getFullYear();
-              return `${day} de ${month} de ${year}`;
-            })()
-          ) : "02 de Maio de 2026"}
+        {/* Data Formatada por Extenso (Abaixo do Informativo - DESCIDO 1 LINHA EXTRA) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 766.2, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "12.2pt" }}>
+          {formatLongDate(data.data)}
         </div>
 
         {/* ─── Rodapé e Assinatura ─── */}

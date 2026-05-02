@@ -54,6 +54,16 @@ export default function PeticaoCria() {
     return `R$ ${formattedInt},${dec}`;
   };
 
+  const formatDateMask = (val: string) => {
+    const v = val.replace(/\D/g, "").slice(0, 8);
+    if (v.length >= 5) {
+      return `${v.slice(0, 2)}/${v.slice(2, 4)}/${v.slice(4)}`;
+    } else if (v.length >= 3) {
+      return `${v.slice(0, 2)}/${v.slice(2)}`;
+    }
+    return v;
+  };
+
   const [form, setForm] = useState<PetitionData>({
     id: "XXXX.XXXX",
     processo: "",
@@ -62,8 +72,23 @@ export default function PeticaoCria() {
     advogado: "",
     contra: "",
     valor: "",
-    data: new Date(2026, 4, 2).toISOString() // Padrão 02 de maio de 2026
+    data: "02/05/2026"
   });
+
+  const handleReset = () => {
+    setForm({
+      id: "XXXX.XXXX",
+      processo: "",
+      credor: "",
+      cpf_cnpj: "",
+      advogado: "",
+      contra: "",
+      valor: "",
+      data: "02/05/2026"
+    });
+    toast.success("Formulário resetado");
+  };
+
 
   const getFitScale = useCallback(() => {
     const container = document.getElementById("preview-container");
@@ -229,6 +254,13 @@ export default function PeticaoCria() {
           
           <div className="ml-auto flex items-center gap-3">
             <button
+              onClick={handleReset}
+              className="flex items-center gap-2 text-xs font-bold h-9 px-4 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-all border border-red-100 shadow-sm active:scale-95"
+              disabled={isExporting}
+            >
+              <X size={14} /> LIMPAR
+            </button>
+            <button
               className={`flex items-center gap-2 text-xs font-black h-9 px-5 rounded-xl transition-all shadow-lg active:scale-95 ${
                 saved ? "bg-emerald-500 text-white" : "bg-white text-[#1e1b4b] hover:bg-gray-50 shadow-indigo-900/20"
               }`}
@@ -274,9 +306,9 @@ export default function PeticaoCria() {
                 <div className="flex gap-2 mb-4">
                   <input 
                     style={{ ...inp, marginBottom: 0, flex: 1 }} 
-                    value={form.data.includes('T') ? format(new Date(form.data), "PPP", { locale: ptBR }) : form.data} 
-                    onChange={(e) => setForm(p => ({ ...p, data: e.target.value }))} 
-                    placeholder="Ex: 02 de Maio de 2026" 
+                    value={form.data} 
+                    onChange={(e) => setForm(p => ({ ...p, data: formatDateMask(e.target.value) }))} 
+                    placeholder="DD/MM/AAAA" 
                   />
                   <Popover>
                     <PopoverTrigger asChild>
@@ -290,12 +322,16 @@ export default function PeticaoCria() {
                     <PopoverContent className="w-auto p-0" align="end">
                       <Calendar
                         mode="single"
-                        selected={form.data.includes('T') ? new Date(form.data) : undefined}
+                        selected={form.data.includes('/') && form.data.length === 10 ? (()=>{
+                          const [d,m,y] = form.data.split('/').map(Number);
+                          return new Date(y, m-1, d);
+                        })() : undefined}
                         onSelect={(date) => {
                           if (date) {
-                            const finalDate = new Date(date);
-                            if (finalDate.getFullYear() < 2026) finalDate.setFullYear(2026);
-                            setForm(p => ({ ...p, data: finalDate.toISOString() }));
+                            const d = String(date.getDate()).padStart(2, '0');
+                            const m = String(date.getMonth() + 1).padStart(2, '0');
+                            const y = date.getFullYear() < 2026 ? 2026 : date.getFullYear();
+                            setForm(p => ({ ...p, data: `${d}/${m}/${y}` }));
                           }
                         }}
                         initialFocus
