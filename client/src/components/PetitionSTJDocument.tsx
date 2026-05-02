@@ -107,12 +107,12 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <img src="/assets/peticao/background_logo.png" style={{ width: "100%" }} alt="Watermark" />
         </div>
 
-        {/* ─── Cabeçalho Superior Centralizado ─── */}
-        <div style={{ position: "absolute", top: MARGIN_TOP - 70, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11, fontFamily: "'Liberation Sans', Helvetica" }}>
+        {/* ─── Cabeçalho Superior Centralizado (Brasão Elevação +5% e Espaçamento +2%) ─── */}
+        <div style={{ position: "absolute", top: MARGIN_TOP - 85, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11, fontFamily: "'Liberation Sans', Helvetica" }}>
            <img src="/assets/peticao/brasao_republica.png" style={{ width: "99.3pt", marginBottom: "4pt", display: "inline-block" }} alt="Brasão" />
            
            <div style={{ color: "#222222", fontSize: "10.1pt", fontWeight: 400, letterSpacing: "0.5px" }}>TRIBUNAL DE JUSTIÇA</div>
-           <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400, marginTop: -3 }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: {alvara_final}</div>
+           <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400, marginTop: 5 }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: {alvara_final}</div>
            <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400, marginTop: -3 }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
         </div>
 
@@ -169,31 +169,31 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={{ ...valueStyle, color: "#000" }}>AUTORIZADO</span>
         </div>
 
-        {/* Código de Barras Dinâmico (AJUSTADO: -5% LARGURA / +4% GROSSURA / 1 LINHA ESPAÇAMENTO) */}
-        <div style={{ position: "absolute", top: MARGIN_TOP + 461.2, left: MARGIN_LEFT_BODY - 8.1, zIndex: 11 }}>
+        {/* Código de Barras Dinâmico (AJUSTADO: -10% LARGURA / +5% ALTURA / 2 LINHAS RESPIRO) */}
+        <div style={{ position: "absolute", top: MARGIN_TOP + 485.2, left: MARGIN_LEFT_BODY - 8.1, zIndex: 11 }}>
            <Barcode 
              value={alvara_final}
-             width={1.55}
-             height={38.3}
+             width={1.4}
+             height={40.2}
              displayValue={false}
              margin={0}
              background="transparent"
            />
         </div>
 
-        {/* Valor de Repasse (Garantindo 1 linha de respiro inferior do barcode: 461.2 + 38.3 + 24 = 523.5) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 523.5, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", fontSize: "13.1pt" }}>
+        {/* Valor de Repasse (Garantindo 2 linhas de respiro inferior do barcode: 485.2 + 40.2 + 48 = 573.4) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 573.4, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", fontSize: "13.1pt" }}>
           Valor a receber: <span style={valueStyle}>R$ {data.valor || ""}</span> será depositado em conta corrente de sua titularidade..
         </div>
 
         {/* Texto Legal / Informativo (Deslocado proporcionalmente) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 585.5, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", textAlign: "justify", lineHeight: "1.5", fontSize: "12.8pt", fontFamily: "Arial, sans-serif" }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 635.4, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", textAlign: "justify", lineHeight: "1.5", fontSize: "12.8pt", fontFamily: "Arial, sans-serif" }}>
           Os autos foram encaminhados pelo TJ à Vara da Fazenda para a execução do processo e <br/>
           posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
         </div>
 
         {/* Data Formatada (Deslocada proporcionalmente) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 665.5, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "14.0pt" }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 715.4, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "14.0pt" }}>
           {formatLongDate(data.data)}
         </div>
 
