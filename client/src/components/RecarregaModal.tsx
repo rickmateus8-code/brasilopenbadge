@@ -230,7 +230,9 @@ export default function RecarregaModal({
                 <div className="absolute inset-0 bg-gradient-to-tr from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 {pixData?.qr_code_base64 ? (
                   <img
-                    src={`data:image/png;base64,${pixData.qr_code_base64}`}
+                    src={pixData.qr_code_base64.startsWith("data:") 
+                      ? pixData.qr_code_base64 
+                      : `data:image/png;base64,${pixData.qr_code_base64}`}
                     alt="QR Code PIX"
                     className="w-52 h-52 relative z-10"
                   />
