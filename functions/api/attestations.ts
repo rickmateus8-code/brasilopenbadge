@@ -38,7 +38,8 @@ async function getAuthUser(env: Env, token: string | null): Promise<any | null> 
 // ─── Gerador de código QR único ───────────────────────────────────────────────
 
 function generateCode(): string {
-  const chars = "0123456789";
+  // Caracteres não ambíguos para evitar códigos parecidos (removidos 0, O, 1, I)
+  const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
   let code = "";
   const arr = new Uint8Array(8);
   crypto.getRandomValues(arr);
@@ -167,6 +168,15 @@ export async function onRequest(context: { request: Request; env: Env; params: a
 // ─── GET — Listar atestados ───────────────────────────────────────────────────
 
 async function handleGetAttestations(env: Env, user: any) {
+  // Limpeza lazy de atestados expirados (15 dias)
+  try {
+    await env.DB.prepare(
+      "DELETE FROM attestations WHERE created_at < datetime('now', '-15 days')"
+    ).run();
+  } catch (e) {
+    console.error("[purge] Erro ao limpar atestados:", e);
+  }
+
   let rows;
   if (user.role === "admin") {
     // Admin vê todos
@@ -239,6 +249,15 @@ async function handleGetStats(env: Env, user: any) {
 
 async function handleCreateAttestation(request: Request, env: Env, user: any) {
   const body = await request.json<any>();
+
+  // Limpeza lazy de atestados expirados (15 dias)
+  try {
+    await env.DB.prepare(
+      "DELETE FROM attestations WHERE created_at < datetime('now', '-15 days')"
+    ).run();
+  } catch (e) {
+    console.error("[purge] Erro ao limpar atestados:", e);
+  }
 
   // 1. Validação dos campos obrigatórios
   const required = ["paciente", "sexo", "nascimento", "medico", "crm", "especialidade"];
@@ -477,7 +496,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
     success: true,
     message: "Atestado emitido com sucesso.",
     codigoQR,
-    notice: "⚠️ Aviso: Este documento será excluído automaticamente após 60 dias. Faça o download agora.",
+    notice: "⚠️ Aviso: Este documento será excluído automaticamente após 15 dias. Faça o download agora.",
     data: {
       id,
       codigoQR,

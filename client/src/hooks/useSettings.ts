@@ -17,7 +17,7 @@ const DEFAULT_SETTINGS: SystemSettings = {
   site_name: "DocMaster",
   support_whatsapp: "",
   max_documents_per_day: "100",
-  auto_delete_days: "60",
+  auto_delete_days: "15",
   maintenance_mode: false,
 };
 
@@ -68,6 +68,6 @@ export function useSettings() {
     settings,
     loading,
     /** Número de dias de validade dos documentos (lido do banco) */
-    validityDays: parseInt(settings.auto_delete_days, 10) || 60,
+    validityDays: parseInt(settings.auto_delete_days, 10) || 15,
   };
 }

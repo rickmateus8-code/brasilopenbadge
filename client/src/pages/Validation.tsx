@@ -46,6 +46,37 @@ function detectDocType(data: any): DocType {
 export default function Validation() {
   const params = useParams();
 
+  // ── Efeito para remover Favicon em domínios de validação ──────────────────
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const isValidation = window.location.hostname !== "docmaster.store" && 
+                         window.location.hostname !== "localhost";
+    
+    if (isValidation) {
+      // 1. Remover todos os links de ícone existentes
+      const icons = document.querySelectorAll("link[rel*='icon']");
+      icons.forEach(el => el.parentNode?.removeChild(el));
+
+      // 2. Injetar o favicon com o emoji 🛡️ via SVG Data URL
+      const link = document.createElement('link');
+      link.rel = 'icon';
+      link.href = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>";
+      document.getElementsByTagName('head')[0].appendChild(link);
+
+      // 3. Remover apple-touch-icon e injetar versão emoji
+      const appleIcons = document.querySelectorAll("link[rel*='apple-touch-icon']");
+      appleIcons.forEach(el => el.parentNode?.removeChild(el));
+      
+      const appleLink = document.createElement('link');
+      appleLink.rel = 'apple-touch-icon';
+      appleLink.href = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>";
+      document.getElementsByTagName('head')[0].appendChild(appleLink);
+
+      // 4. Mudar título para algo neutro
+      document.title = "Validador Oficial";
+    }
+  }, []);
+
   // ── Estados ──────────────────────────────────────────────────────────────
   const [codigo, setCodigo] = useState("");
   const [dataEmissao, setDataEmissao] = useState("");
@@ -556,13 +587,11 @@ export default function Validation() {
 
   return (
     <div style={S.page}>
-    {/* ── Header azul ── */}
-    <div style={S.header}>
-      {window.location.hostname.includes("validaratestado.digital") && (
+      {/* ── Header azul ── */}
+      <div style={S.header}>
         <span style={{ fontSize: 24, lineHeight: "1", display: "flex", alignItems: "center" }}>🛡️</span>
-      )}
-      <span style={S.headerText}>Validador Oficial</span>
-    </div>
+        <span style={S.headerText}>Validador Oficial</span>
+      </div>
 
       {/* ── Card central ── */}
       <div style={{ padding: "0 16px" }}>

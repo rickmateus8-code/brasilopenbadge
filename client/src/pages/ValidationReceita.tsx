@@ -285,6 +285,11 @@ export default function ValidationReceita() {
     finally { setIsLoading(false); }
   }, [codigoInput]);
 
+  // ── Definir título da página ──────────────────────────────────────────────
+  useEffect(() => {
+    document.title = "VerificaMed - Sistema de Verificação de Documentos Médicos";
+  }, []);
+
   // ── Auto-validar se vier código na URL ────────────────────────────────────
   useEffect(() => {
     const codeFromPath = params.id ? (params.id as string).trim().toUpperCase() : "";
