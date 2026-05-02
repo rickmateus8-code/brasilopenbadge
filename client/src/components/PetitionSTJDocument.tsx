@@ -37,7 +37,7 @@ const EXPORT_SCALE = 1.92; // Reajustado para a nova largura de 826px
 const MARGIN_TOP = 170.0;    // Aumentado +3% (135.4 -> 170.0)
 const MARGIN_LEFT = 129.4;   
 const MARGIN_LEFT_BODY = 97.3; 
-const MARGIN_RIGHT = 99.6;   
+const MARGIN_RIGHT = 116.1;   // Aumentado +2% (99.6 -> 116.1)
 const MARGIN_BOTTOM = 86.6;  
 
 const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
