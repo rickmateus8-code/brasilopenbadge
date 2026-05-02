@@ -30,10 +30,9 @@ const DOC_HEIGHT_PX = 1123;
 
 const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
   ({ data }, ref) => {
-    // Estilo base para os textos (fidelidade forense - UNIFICADO)
+    // Estilo base para os textos (fidelidade forense - UNIFICADO COM FONTE PADRÃO)
     const textStyle: React.CSSProperties = {
       position: "absolute",
-      fontFamily: "'Times New Roman', Times, serif",
       color: "#000",
       fontSize: "12.5pt",
       whiteSpace: "nowrap",
@@ -42,13 +41,11 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
 
     const labelStyle: React.CSSProperties = {
       fontWeight: 400,
-      marginRight: 5,
-      fontFamily: "'Times New Roman', Times, serif"
+      marginRight: 5
     };
 
     const valueStyle: React.CSSProperties = {
-      fontWeight: 700,
-      fontFamily: "'Times New Roman', Times, serif"
+      fontWeight: 700
     };
 
     return (
@@ -84,9 +81,9 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <img src="/assets/peticao/brasao_republica.png" style={{ width: "85pt", marginBottom: "8pt", display: "inline-block" }} alt="Brasão" />
            
            {/* Informações Institucionais (Abaixo do Brasão) */}
-           <div style={{ color: "#000", fontSize: "12pt", fontWeight: 700, fontFamily: "'Times New Roman', serif", letterSpacing: "0.5px" }}>TRIBUNAL DE JUSTIÇA</div>
-           <div style={{ color: "#000", fontSize: "10pt", fontWeight: 400, fontFamily: "'Times New Roman', serif", marginTop: 2 }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: 0284748/2026</div>
-           <div style={{ color: "#000", fontSize: "10pt", fontWeight: 400, fontFamily: "'Times New Roman', serif" }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
+           <div style={{ color: "#000", fontSize: "12pt", fontWeight: 700, letterSpacing: "0.5px" }}>TRIBUNAL DE JUSTIÇA</div>
+           <div style={{ color: "#000", fontSize: "10pt", fontWeight: 400, marginTop: 2 }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: 0284748/2026</div>
+           <div style={{ color: "#000", fontSize: "10pt", fontWeight: 400 }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
         </div>
 
         {/* Logo OAB (BEM NA BORDA + 5% EXTRA) */}
@@ -101,8 +98,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
 
         {/* Título do Documento (ESPAÇAMENTO DE +4 LINHAS APÓS CABEÇALHO) */}
         <div style={{ position: "absolute", top: 295, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10 }}>
-           <div style={{ fontSize: "18pt", fontWeight: 700, color: "#000", fontFamily: "'Times New Roman', serif" }}>PROCESSO JUDICIAL ELETRÔNICO</div>
-           <div style={{ fontSize: "12pt", fontWeight: 400, marginTop: -6, color: "#000", fontFamily: "'Times New Roman', serif" }}>Poder Judiciário do Estado</div>
+           <div style={{ fontSize: "18pt", fontWeight: 700, color: "#000" }}>PROCESSO JUDICIAL ELETRÔNICO</div>
+           <div style={{ fontSize: "12pt", fontWeight: 400, marginTop: -6, color: "#000" }}>Poder Judiciário do Estado</div>
         </div>
 
         {/* ─── Corpo da Petição (Grid Pixel-Perfect) ─── */}
@@ -152,14 +149,14 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         </div>
 
         {/* Texto Legal / Informativo */}
-        <div style={{ ...textStyle, top: 740, left: 80, width: 634, whiteSpace: "normal", textAlign: "justify", lineHeight: "1.5", fontSize: "11pt", fontFamily: "'Times New Roman', serif" }}>
+        <div style={{ ...textStyle, top: 740, left: 80, width: 634, whiteSpace: "normal", textAlign: "justify", lineHeight: "1.5", fontSize: "11pt" }}>
           Os autos foram encaminhados pelo TJ à Vara da Fazenda para a execução do processo e <br/>
           posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
         </div>
 
         {/* ─── Rodapé e Assinatura ─── */}
         {/* PODER JUDICIÁRIO (ACIMA DA ASSINATURA - DESCIDO 2 LINHAS) */}
-        <div style={{ position: "absolute", bottom: 150, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "11pt", fontFamily: "'Times New Roman', serif" }}>
+        <div style={{ position: "absolute", bottom: 150, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "11pt" }}>
            <div style={{ textTransform: "uppercase", fontWeight: 700, letterSpacing: "1px", color: "#000" }}>PODER JUDICIÁRIO</div>
            <div style={{ fontStyle: "italic", color: "#000" }}>TJ – Tribunal de Justiça.</div>
         </div>
