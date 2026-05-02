@@ -44,12 +44,12 @@ export default function PeticaoCria() {
 
   const [form, setForm] = useState<PetitionData>({
     id: "XXXX.XXXX",
-    processo: "1002384-22.2024.8.26.0601",
-    credor: "LAZARA MARGARIDA PEREIRA PINTO",
-    cpf_cnpj: "15036134885",
-    advogado: "KEVIN PEREIRA LEAL",
-    contra: "BANCO ITAU CONSIGNADO S.A.",
-    valor: "26.516,28",
+    processo: "",
+    credor: "",
+    cpf_cnpj: "",
+    advogado: "",
+    contra: "",
+    valor: "",
     data: new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
   });
 

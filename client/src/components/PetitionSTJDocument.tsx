@@ -111,27 +111,27 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         {/* ─── Corpo da Petição (Grid ABNT: Esquerda DESLOCADA +2% - FONTE ARIAL UNIFICADA 11.4pt) ─── */}
         <div style={{ ...textStyle, top: MARGIN_TOP + 260, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Credor:</span>
-          <span style={valueStyle}>{data.credor?.toUpperCase() || "LAZARA MARGARIDA PEREIRA PINTO"}</span>
+          <span style={valueStyle}>{data.credor?.toUpperCase() || ""}</span>
         </div>
         
         <div style={{ ...textStyle, top: MARGIN_TOP + 285, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>CPF/CNPJ:</span>
-          <span style={valueStyle}>{data.cpf_cnpj || "15036134885"}</span>
+          <span style={valueStyle}>{data.cpf_cnpj || ""}</span>
         </div>
 
         <div style={{ ...textStyle, top: MARGIN_TOP + 310, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Advogado(a):</span>
-          <span style={valueStyle}>{data.advogado?.toUpperCase() || "KEVIN PEREIRA LEAL"}</span>
+          <span style={valueStyle}>{data.advogado?.toUpperCase() || ""}</span>
         </div>
 
         <div style={{ ...textStyle, top: MARGIN_TOP + 360, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Processo N°:</span>
-          <span style={valueStyle}>{data.processo || "1002384-22.2024.8.26.0601"}</span>
+          <span style={valueStyle}>{data.processo || ""}</span>
         </div>
 
         <div style={{ ...textStyle, top: MARGIN_TOP + 410, left: MARGIN_LEFT_BODY, borderBottom: "1.2px solid #000", paddingBottom: 2, display: "inline-block", width: "fit-content" }}>
           <span style={labelStyle}>CUMPRIMENTO DE SENTENÇA CONTRA:</span>
-          <span style={valueStyle}>{data.contra?.toUpperCase() || "BANCO ITAU CONSIGNADO S.A."}</span>
+          <span style={valueStyle}>{data.contra?.toUpperCase() || ""}</span>
         </div>
 
         {/* Bloco de Decisão (Unificado) */}
@@ -151,7 +151,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
 
         {/* Valor de Repasse (SEM QUEBRA DE LINHA - SINCRONIZADO 11.4pt) */}
         <div style={{ ...textStyle, top: MARGIN_TOP + 575, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap" }}>
-          Valor a receber: <span style={valueStyle}>R$ {data.valor || "26.516,28"}</span> será depositado em conta corrente de sua titularidade..
+          Valor a receber: <span style={valueStyle}>R$ {data.valor || ""}</span> será depositado em conta corrente de sua titularidade..
         </div>
 
         {/* Texto Legal / Informativo (SINCRONIZADO 11.4pt) */}
