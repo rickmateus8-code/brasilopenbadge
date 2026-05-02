@@ -299,46 +299,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { theme, toggleTheme } = useTheme();
   usePresenceTracker();
   const [location, setLocation] = useLocation();
-
-  // ── FORÇA A RESTAURAÇÃO DA IDENTIDADE DOCMASTER NO DASHBOARD ────────────────
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    
-    const restoreDocMasterIdentity = () => {
-      // 1. Restaurar o ícone original (/favicon.ico)
-      const icons = document.querySelectorAll("link[rel*='icon']");
-      let foundOriginal = false;
-      
-      icons.forEach(el => {
-        const href = (el as HTMLLinkElement).href;
-        if (href.includes("favicon.ico") || href.includes("logo-icon.png")) {
-          foundOriginal = true;
-          // Garantir que a versão com cache buster esteja lá
-          if (!href.includes("v=2")) {
-            (el as HTMLLinkElement).href = "/favicon.ico?v=2";
-          }
-        } else {
-          // Remove qualquer outro favicon (como o de emoji)
-          el.parentNode?.removeChild(el);
-        }
-      });
-
-      if (!foundOriginal) {
-        const link = document.createElement('link');
-        link.rel = 'icon';
-        link.type = 'image/x-icon';
-        link.href = '/favicon.ico?v=2';
-        document.getElementsByTagName('head')[0].appendChild(link);
-      }
-
-      // 2. Restaurar o título padrão se necessário
-      if (document.title === "Validador Oficial") {
-        document.title = "DocMaster";
-      }
-    };
-
-    restoreDocMasterIdentity();
-  }, [location]); // Roda sempre que a rota mudar dentro do DocMaster
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showNovoDocModal, setShowNovoDocModal] = useState(false);

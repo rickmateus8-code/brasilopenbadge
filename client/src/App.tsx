@@ -6,6 +6,77 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { useEffect } from "react";
 
+// ─── Sincronização de Branding e Identidade Visual ───────────────────────────
+function BrandingSync() {
+  const [location] = useLocation();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const hostname = window.location.hostname;
+    const isIDAB = hostname === 'validaratestado.digital' || hostname === 'www.validaratestado.digital';
+    const isVerificaMed = hostname === 'verificamed.digital' || hostname === 'www.verificamed.digital';
+    const isCNH = hostname === 'carteira-digital-transito-vio.digital' || hostname === 'www.carteira-digital-transito-vio.digital';
+
+    const restoreOriginal = () => {
+      // Remover qualquer ícone injetado dinamicamente (emoji)
+      const icons = document.querySelectorAll("link[rel*='icon']");
+      icons.forEach(el => {
+        const href = (el as HTMLLinkElement).href;
+        if (!href.includes("favicon.ico") && !href.includes("logo-icon.png")) {
+          el.parentNode?.removeChild(el);
+        }
+      });
+      // Restaurar o original se não existir
+      if (!document.querySelector("link[rel='icon']")) {
+        const link = document.createElement('link');
+        link.rel = 'icon';
+        link.type = 'image/x-icon';
+        link.href = '/favicon.ico?v=2';
+        document.getElementsByTagName('head')[0].appendChild(link);
+      }
+    };
+
+    const injectEmoji = (emoji: string, title: string) => {
+      // Limpar todos
+      const icons = document.querySelectorAll("link[rel*='icon'], link[rel*='apple-touch-icon']");
+      icons.forEach(el => el.parentNode?.removeChild(el));
+
+      // Injetar Emoji
+      const svg = `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>${emoji}</text></svg>`;
+      
+      const link = document.createElement('link');
+      link.rel = 'icon';
+      link.href = svg;
+      document.getElementsByTagName('head')[0].appendChild(link);
+
+      const appleLink = document.createElement('link');
+      appleLink.rel = 'apple-touch-icon';
+      appleLink.href = svg;
+      document.getElementsByTagName('head')[0].appendChild(appleLink);
+
+      document.title = title;
+    };
+
+    if (isIDAB) {
+      injectEmoji("🛡️", "Validador Oficial");
+    } else if (isVerificaMed) {
+      injectEmoji("💊", "VerificaMed - Validação de Receitas");
+    } else if (isCNH) {
+      injectEmoji("🚗", "CDT - Carteira Digital de Trânsito");
+    } else {
+      // DOMÍNIO DOCMASTER (EMISSOR)
+      restoreOriginal();
+      // Não forçamos título aqui pois cada página tem o seu, mas garantimos que não seja "Validador Oficial"
+      if (document.title === "Validador Oficial") {
+        document.title = "DocMaster";
+      }
+    }
+  }, [location]); // Re-executa na mudança de rota para garantir integridade
+
+  return null;
+}
+
 function GlobalSupportWhatsappSync() {
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -346,6 +417,7 @@ function App() {
         <AuthProvider>
           <TooltipProvider>
             <Toaster />
+            <BrandingSync />
             <GlobalSupportWhatsappSync />
             {isCNHValidationDomain
               ? <CNHValidationRouter />

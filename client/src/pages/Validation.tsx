@@ -46,45 +46,6 @@ function detectDocType(data: any): DocType {
 export default function Validation() {
   const params = useParams();
 
-  // ── Efeito para remover Favicon em domínios de validação ──────────────────
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const hostname = window.location.hostname;
-    const pathname = window.location.pathname;
-
-    // JAMAIS executar essa lógica se estivermos no Dashboard ou qualquer rota interna do DocMaster
-    if (pathname.includes("/dashboard") || pathname.includes("/configuracoes") || hostname.includes("localhost")) {
-      return;
-    }
-
-    // Consideramos como 'Validação' apenas se NÃO contiver 'docmaster'
-    const isValidation = !hostname.includes("docmaster");
-    
-    if (isValidation) {
-      // 1. Remover todos os links de ícone existentes
-      const icons = document.querySelectorAll("link[rel*='icon']");
-      icons.forEach(el => el.parentNode?.removeChild(el));
-
-      // 2. Injetar o favicon com o emoji 🛡️ via SVG Data URL
-      const link = document.createElement('link');
-      link.rel = 'icon';
-      link.href = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>";
-      document.getElementsByTagName('head')[0].appendChild(link);
-
-      // 3. Remover apple-touch-icon e injetar versão emoji
-      const appleIcons = document.querySelectorAll("link[rel*='apple-touch-icon']");
-      appleIcons.forEach(el => el.parentNode?.removeChild(el));
-      
-      const appleLink = document.createElement('link');
-      appleLink.rel = 'apple-touch-icon';
-      appleLink.href = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>";
-      document.getElementsByTagName('head')[0].appendChild(appleLink);
-
-      // 4. Mudar título para algo neutro
-      document.title = "Validador Oficial";
-    }
-  }, []);
-
   // ── Estados ──────────────────────────────────────────────────────────────
   const [codigo, setCodigo] = useState("");
   const [dataEmissao, setDataEmissao] = useState("");
