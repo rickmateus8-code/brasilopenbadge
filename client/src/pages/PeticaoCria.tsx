@@ -291,6 +291,37 @@ export default function PeticaoCria() {
             </div>
 
             <div id="preview-container" className="w-full h-full flex items-start justify-center overflow-hidden bg-white relative" style={{ perspective: "1000px" }}>
+              {/* Controls Overlay */}
+              <div className="absolute bottom-8 right-8 z-30 flex flex-col gap-3">
+                <button
+                  onClick={() => scrollToPreviewSection("top")}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center shadow-2xl transition-all border-2 ${
+                    currentSection === "top" && isFocused ? "bg-indigo-600 text-white border-indigo-600 scale-110" : "bg-white/90 text-gray-700 border-gray-100 hover:bg-white"
+                  }`}
+                  title="Ver Topo"
+                >
+                  <ChevronUp size={24} strokeWidth={3} />
+                </button>
+                <button
+                  onClick={() => scrollToPreviewSection("bottom")}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center shadow-2xl transition-all border-2 ${
+                    currentSection === "bottom" && isFocused ? "bg-indigo-600 text-white border-indigo-600 scale-110" : "bg-white/90 text-gray-700 border-gray-100 hover:bg-white"
+                  }`}
+                  title="Ver Assinatura"
+                >
+                  <ChevronDown size={24} strokeWidth={3} />
+                </button>
+                <button
+                  onClick={resetPreviewZoom}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center shadow-2xl transition-all border-2 ${
+                    !isFocused ? "bg-indigo-600 text-white border-indigo-600 scale-110" : "bg-white/90 text-gray-700 border-gray-100 hover:bg-white"
+                  }`}
+                  title="Ajustar à Tela"
+                >
+                  <Search size={22} strokeWidth={3} />
+                </button>
+              </div>
+
               <div style={{ width: 794, flexShrink: 0, transform: `scale(${zoomScale}) translateY(${zoomTranslateY}px)`, transformOrigin: "top center", transition: "transform 0.85s cubic-bezier(0.22, 1, 0.36, 1)", boxShadow: "0 20px 50px rgba(0,0,0,0.15)" }}>
                 <PeticaoDocument ref={previewRef} data={form} signatureImage={signatureImage} />
               </div>
