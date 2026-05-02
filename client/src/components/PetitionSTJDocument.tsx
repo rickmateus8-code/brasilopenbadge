@@ -117,35 +117,35 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400, marginTop: -3 }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
         </div>
 
-        {/* Logo OAB */}
-        <div style={{ position: "absolute", top: "-54pt", left: "4pt", zIndex: 11 }}>
+        {/* Logo OAB (ABAIXADO PARA DENTRO DA MARGEM) */}
+        <div style={{ position: "absolute", top: "20px", left: "4pt", zIndex: 11 }}>
            <img src="/assets/peticao/oab_logo.png" style={{ width: "99.1pt" }} alt="OAB" />
         </div>
 
-        {/* Título do Documento (SUBIDO +1% ≈ -11px) */}
-        <div style={{ position: "absolute", top: MARGIN_TOP + 145, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10, fontFamily: "'Liberation Sans', Helvetica" }}>
+        {/* Título do Documento (SUBIDO +2 LINHAS ≈ -48px) */}
+        <div style={{ position: "absolute", top: MARGIN_TOP + 97, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10, fontFamily: "'Liberation Sans', Helvetica" }}>
            <div style={{ fontSize: "16.2pt", fontWeight: 700, color: "#000" }}>PROCESSO JUDICIAL ELETRÔNICO</div>
            <div style={{ fontSize: "12.8pt", fontWeight: 400, marginTop: -6, color: "#000" }}>Processo Judiciário</div>
         </div>
 
         {/* ─── Corpo da Petição ─── */}
-        {/* Dados Superiores (SUBIDO +1 LINHA ≈ -24px) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 217.2, left: MARGIN_LEFT_BODY }}>
+        {/* Dados Superiores (SUBIDO +2 LINHAS ≈ -48px) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 169.2, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Credor:</span>
           <span style={valueStyle}>{data.credor?.toUpperCase() || ""}</span>
         </div>
         
-        <div style={{ ...textStyle, top: MARGIN_TOP + 246, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 198, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>CPF/CNPJ:</span>
           <span style={valueStyle}>{data.cpf_cnpj || ""}</span>
         </div>
 
-        <div style={{ ...textStyle, top: MARGIN_TOP + 267.2, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 219.2, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Advogado(a):</span>
           <span style={valueStyle}>{data.advogado?.toUpperCase() || ""}</span>
         </div>
 
-        <div style={{ ...textStyle, top: MARGIN_TOP + 317.2, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 269.2, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Processo N°:</span>
           <span style={valueStyle}>{data.processo || ""}</span>
         </div>
