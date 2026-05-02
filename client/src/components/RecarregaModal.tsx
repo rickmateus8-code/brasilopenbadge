@@ -39,7 +39,7 @@ export default function RecarregaModal({
   userName = "",
   userCpf = "",
 }: RecarregaModalProps) {
-  const [amount, setAmount] = useState<number>(50);
+  const [amount, setAmount] = useState<number>(20);
   const [loading, setLoading] = useState(false);
   const [pixData, setPixData] = useState<any>(null);
   const [copied, setCopied] = useState(false);
