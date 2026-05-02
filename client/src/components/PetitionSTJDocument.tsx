@@ -101,8 +101,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
 
         {/* ─── Cabeçalho Superior Centralizado (Dentro da Margem ABNT - ABAIXADO 2%) ─── */}
         <div style={{ position: "absolute", top: MARGIN_TOP - 48, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11, fontFamily: "'Liberation Sans', Helvetica" }}>
-           {/* Brasão da República (ALINHADO E CENTRALIZADO) */}
-           <img src="/assets/peticao/brasao_republica.png" style={{ width: "85pt", marginBottom: "4pt", display: "inline-block" }} alt="Brasão" />
+           {/* Brasão da República (ALINHADO E CENTRALIZADO + EXTRA 4%) */}
+           <img src="/assets/peticao/brasao_republica.png" style={{ width: "91.9pt", marginBottom: "4pt", display: "inline-block" }} alt="Brasão" />
            
            {/* Informações Institucionais (REDUÇÃO EXTRA 1% = 10.1pt / 8.4pt) */}
            <div style={{ color: "#000", fontSize: "10.1pt", fontWeight: 400, letterSpacing: "0.5px" }}>TRIBUNAL DE JUSTIÇA</div>
@@ -178,8 +178,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
         </div>
 
-        {/* Data Formatada por Extenso (Abaixo do Informativo - SUBIDO 2 LINHAS) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 742.2, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "12.2pt" }}>
+        {/* Data Formatada por Extenso (Abaixo do Informativo - SUBIDO MAIS 2 LINHAS) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 718.2, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "12.2pt" }}>
           {formatLongDate(data.data)}
         </div>
 
