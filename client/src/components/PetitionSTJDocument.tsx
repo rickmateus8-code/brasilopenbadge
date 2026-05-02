@@ -30,9 +30,10 @@ const DOC_HEIGHT_PX = 1123;
 
 const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
   ({ data }, ref) => {
-    // Estilo base para os textos (fidelidade forense - UNIFICADO COM FONTE PADRÃO)
+    // Estilo base para os textos (fidelidade forense - UNIFICADO COM LIBERATION SANS)
     const textStyle: React.CSSProperties = {
       position: "absolute",
+      fontFamily: "'Liberation Sans', sans-serif",
       color: "#000",
       fontSize: "12.5pt",
       whiteSpace: "nowrap",
@@ -41,11 +42,13 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
 
     const labelStyle: React.CSSProperties = {
       fontWeight: 400,
-      marginRight: 5
+      marginRight: 5,
+      fontFamily: "'Liberation Sans', sans-serif"
     };
 
     const valueStyle: React.CSSProperties = {
-      fontWeight: 700
+      fontWeight: 700,
+      fontFamily: "'Liberation Sans', sans-serif"
     };
 
     return (
@@ -56,6 +59,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           width: DOC_WIDTH_PX,
           height: DOC_HEIGHT_PX,
           backgroundColor: "#ffffff",
+          fontFamily: "'Liberation Sans', sans-serif",
           position: "relative",
           overflow: "hidden",
           boxSizing: "border-box",
@@ -76,7 +80,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         </div>
 
         {/* ─── Cabeçalho Superior Centralizado ─── */}
-        <div style={{ position: "absolute", top: "30pt", left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11 }}>
+        <div style={{ position: "absolute", top: "30pt", left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11, fontFamily: "'Liberation Sans', sans-serif" }}>
            {/* Brasão da República (ALINHADO E CENTRALIZADO) */}
            <img src="/assets/peticao/brasao_republica.png" style={{ width: "85pt", marginBottom: "8pt", display: "inline-block" }} alt="Brasão" />
            
@@ -97,7 +101,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         </div>
 
         {/* Título do Documento (ESPAÇAMENTO DE +4 LINHAS APÓS CABEÇALHO) */}
-        <div style={{ position: "absolute", top: 295, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10 }}>
+        <div style={{ position: "absolute", top: 295, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10, fontFamily: "'Liberation Sans', sans-serif" }}>
            <div style={{ fontSize: "18pt", fontWeight: 700, color: "#000" }}>PROCESSO JUDICIAL ELETRÔNICO</div>
            <div style={{ fontSize: "12pt", fontWeight: 400, marginTop: -6, color: "#000" }}>Poder Judiciário do Estado</div>
         </div>
@@ -149,14 +153,14 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         </div>
 
         {/* Texto Legal / Informativo */}
-        <div style={{ ...textStyle, top: 740, left: 80, width: 634, whiteSpace: "normal", textAlign: "justify", lineHeight: "1.5", fontSize: "11pt" }}>
+        <div style={{ ...textStyle, top: 740, left: 80, width: 634, whiteSpace: "normal", textAlign: "justify", lineHeight: "1.5", fontSize: "11pt", fontFamily: "'Liberation Sans', sans-serif" }}>
           Os autos foram encaminhados pelo TJ à Vara da Fazenda para a execução do processo e <br/>
           posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
         </div>
 
         {/* ─── Rodapé e Assinatura ─── */}
         {/* PODER JUDICIÁRIO (ACIMA DA ASSINATURA - DESCIDO 2 LINHAS) */}
-        <div style={{ position: "absolute", bottom: 150, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "11pt" }}>
+        <div style={{ position: "absolute", bottom: 150, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "11pt", fontFamily: "'Liberation Sans', sans-serif" }}>
            <div style={{ textTransform: "uppercase", fontWeight: 700, letterSpacing: "1px", color: "#000" }}>PODER JUDICIÁRIO</div>
            <div style={{ fontStyle: "italic", color: "#000" }}>TJ – Tribunal de Justiça.</div>
         </div>
