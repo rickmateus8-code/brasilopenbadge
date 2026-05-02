@@ -69,18 +69,25 @@ export default function PeticaoCria() {
       const containerHeight = container.offsetHeight;
       const padding = 15;
       
-      // Preservar o zoomScale atual ou usar o mínimo focado
-      const currentScale = Math.max(zoomScale, 0.95);
+      // Preservar o zoomScale atual ou usar o mínimo focado (compensando a escala na translação)
+      const s = Math.max(zoomScale, 0.95);
       
       let targetY = 0;
       if (section === "top") {
-        targetY = padding; 
+        // Alinha o topo do documento (escalado) ao topo do container + padding
+        targetY = padding / s; 
       } else {
-        const scaledHeight = 1123 * currentScale;
-        targetY = containerHeight - scaledHeight - padding;
+        const scaledHeight = 1123 * s;
+        if (scaledHeight > containerHeight) {
+          // Se o documento é maior que a tela, alinha a base do doc (escalado) à base do container - padding
+          targetY = (containerHeight - padding) / s - 1123;
+        } else {
+          // Se o documento cabe na tela, mantém no topo com padding
+          targetY = padding / s;
+        }
       }
       
-      setZoomScale(currentScale);
+      setZoomScale(s);
       setZoomTranslateY(targetY);
       setCurrentSection(section);
       setIsFocused(true);
@@ -93,8 +100,9 @@ export default function PeticaoCria() {
     let ty = 0;
     if (container) {
       const containerHeight = container.offsetHeight;
-      const scaledHeight = 1123 * scale;
-      if (containerHeight > scaledHeight) ty = (containerHeight - scaledHeight) / 2;
+      const docHeight = 1123;
+      // Centraliza verticalmente compensando a escala
+      ty = (containerHeight / scale - docHeight) / 2;
     }
     setZoomScale(scale);
     setZoomTranslateY(ty);
@@ -112,15 +120,13 @@ export default function PeticaoCria() {
   const handleRequestEmit = useCallback(() => {
     if (!form.credor) { toast.error("Preencha o Nome do Credor"); return; }
     if (!form.advogado) { toast.error("Preencha o Nome do Advogado"); return; }
-    const totalSize = getUploadSizeInBytes(signatureImage);
-    if (totalSize > 2.5 * 1024 * 1024) { toast.error("⚠️ Assinatura muito grande."); return; }
     const balance = user?.balance || 0;
     if (user?.role !== 'admin' && balance < documentPrice) {
       toast.error(`Saldo insuficiente. Necessário R$ ${(documentPrice/100).toFixed(2)}`);
       return;
     }
     setShowConfirmModal(true);
-  }, [form.credor, form.advogado, user?.balance, user?.role, documentPrice, signatureImage]);
+  }, [form.credor, form.advogado, user?.balance, user?.role, documentPrice]);
 
   const handleSave = useCallback(async () => {
     setIsExporting(true);
@@ -257,30 +263,34 @@ export default function PeticaoCria() {
                 <p style={subfonte}>Ex: 26.516,28</p>
 
                 <label style={lbl}>Data do Documento</label>
-                <input style={inp} value={form.data} onChange={(e) => setForm(p => ({ ...p, data: e.target.value }))} placeholder="Ex: 27 de Abril de 2026." />
-                <p style={subfonte}>Padrão: {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
-              </div>
-
-              <div style={card}>
-                <p className="text-sm font-bold text-indigo-950 mb-4 flex items-center gap-2"><CheckCircle size={16} /> ✒️ Assinatura</p>
-                <button 
-                  onClick={() => signatureRef.current?.click()}
-                  className="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-indigo-500 hover:text-indigo-500 transition-all text-sm font-bold flex items-center justify-center gap-2"
-                >
-                  <Download size={16} /> {signatureImage ? "ALTERAR ASSINATURA" : "UPLOAD ASSINATURA"}
-                </button>
-                <input type="file" ref={signatureRef} className="hidden" accept="image/*" onChange={async (e) => {
-                  const file = e.target.files?.[0]; if (!file) return;
-                  const reader = new FileReader();
-                  reader.onload = (ev) => setSignatureImage(ev.target?.result as string);
-                  reader.readAsDataURL(file);
-                }} />
-                {signatureImage && (
-                  <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100 flex justify-center relative group">
-                    <img src={signatureImage} className="h-20 object-contain" alt="Preview" />
-                    <button onClick={() => setSignatureImage("")} className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><X size={12} /></button>
-                  </div>
-                )}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full justify-start text-left font-normal mb-4 h-10 border-gray-300",
+                        !form.data && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {form.data ? format(new Date(form.data), "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={form.data ? new Date(form.data) : undefined}
+                      onSelect={(date) => {
+                        if (date) {
+                          const finalDate = new Date(date);
+                          if (finalDate.getFullYear() < 2026) finalDate.setFullYear(2026);
+                          setForm(p => ({ ...p, data: finalDate.toISOString() }));
+                        }
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
           </aside>
