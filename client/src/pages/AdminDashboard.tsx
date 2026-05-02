@@ -356,19 +356,17 @@ export default function AdminDashboard() {
         setEditingDisplayName(edn);
         setEditingIsActive(eia);
       }
-    } catch { toast.error("Erro ao carregar preços"); }
+    } catch { /* Silent fail in background */ }
   }, []);
 
   const loadFinancial = useCallback(async () => {
     try {
-      setLoadingFinancial(true);
       const res = await fetch("/api/admin/financial", { credentials: "include" });
       const data = await res.json();
       if (data.success) {
         setGatewayFinancial(data.data);
       }
-    } catch { /* silently fail */ }
-    finally { setLoadingFinancial(false); }
+    } catch { /* Silent fail in background */ }
   }, []);
 
   const loadNotices = useCallback(async () => {

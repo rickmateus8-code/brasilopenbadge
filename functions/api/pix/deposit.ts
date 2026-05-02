@@ -71,23 +71,17 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const amountCents = Math.round(amount * 100);
     const apiKey = (env as any).PAYMENTS_BLACK_API_KEY || FALLBACK_API_KEY;
     const apiSecret = (env as any).PAYMENTS_BLACK_API_SECRET || FALLBACK_API_SECRET;
-    const cpf = body.user_cpf ? sanitizeCpf(body.user_cpf) : '';
+    const cpf = body.user_cpf ? sanitizeCpf(body.user_cpf) : (user.cpf ? sanitizeCpf(user.cpf) : '11111111111');
 
     const customer: any = {
       name: body.user_name || user.display_name || user.username || 'CLIENTE DOCMASTER',
       email: user.email || 'financeiro@docmaster.store',
-    };
-
-    if (user.phone) {
-      customer.phone = String(user.phone).replace(/\D/g, '');
-    }
-
-    if (cpf && cpf.length === 11) {
-      customer.document = {
-        number: cpf,
+      phone: String(user.phone || '11999999999').replace(/\D/g, ''),
+      document: {
+        number: cpf.length === 11 ? cpf : '11111111111',
         type: 'cpf',
-      };
-    }
+      }
+    };
 
     const externalTransactionId = crypto.randomUUID().replace(/-/g, '');
     const postbackUrl = 'https://docmaster.store/api/pix/webhook';
@@ -106,7 +100,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         items: [
           {
             title: 'Recarga de saldo DocMaster',
-            unitPrice: amountCents,
+            unitPrice: amount, // A API espera o valor unitário igual ao amount do body principal
             quantity: 1,
           },
         ],

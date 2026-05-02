@@ -194,23 +194,6 @@ export default function RecarregaModal({
                 </button>
               </div>
 
-              {/* Grid de Valores Predefinidos (Opcional, mas mantido para facilidade) */}
-              <div className="grid grid-cols-4 gap-2 w-full">
-                {[20, 50, 100, 150].map((val) => (
-                  <button
-                    key={val}
-                    onClick={() => setAmount(val)}
-                    className={`py-2 rounded-xl font-bold text-[11px] transition-all border ${
-                      amount === val
-                        ? "bg-green-600 border-green-600 text-white shadow-lg shadow-green-600/20"
-                        : "bg-white border-gray-200 text-gray-500 hover:border-gray-300 dark:bg-white/5 dark:border-white/10"
-                    }`}
-                  >
-                    R$ {val}
-                  </button>
-                ))}
-              </div>
-
               {amount >= 150 && (
                 <div className="bg-amber-50 dark:bg-amber-950/10 border border-amber-100 dark:border-amber-900/20 rounded-2xl p-3 flex gap-3 items-center w-full">
                   <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
