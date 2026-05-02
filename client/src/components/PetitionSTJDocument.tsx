@@ -87,9 +87,9 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <div style={{ color: "#000", fontSize: "10pt", fontWeight: 400, fontFamily: "'Times New Roman', serif" }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
         </div>
 
-        {/* Logo OAB (Mantido na direita para balanço ou conforme layout base) */}
-        <div style={{ position: "absolute", top: "35pt", right: "45pt", zIndex: 11 }}>
-           <img src="/assets/peticao/oab_logo.png" style={{ width: "70pt" }} alt="OAB" />
+        {/* Logo OAB (SUPERIOR ESQUERDO + 4%) */}
+        <div style={{ position: "absolute", top: "40pt", left: "40pt", zIndex: 11 }}>
+           <img src="/assets/peticao/oab_logo.png" style={{ width: "73pt" }} alt="OAB" />
         </div>
 
         {/* Código de Barras */}
@@ -140,8 +140,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={valueStyle}>DECISÃO FAVORÁVEL - EXPEDIÇÃO DE ALVARÁ</span>
         </div>
         <div style={{ ...textStyle, top: 535, left: 80 }}>
-          <span style={labelStyle}>Situação:</span>
-          <span style={{ ...valueStyle, color: "#15803d" }}>DEFERIDO / AUTORIZADO</span>
+          <span style={labelStyle}>SITUAÇÃO:</span>
+          <span style={{ ...valueStyle, color: "#000" }}>AUTORIZADO</span>
         </div>
 
         {/* Valor de Repasse */}
@@ -151,12 +151,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
 
         {/* Texto Legal / Informativo */}
         <div style={{ ...textStyle, top: 710, left: 80, width: 634, whiteSpace: "normal", textAlign: "justify", lineHeight: "1.5", fontSize: "11pt" }}>
-          Certifico que os autos foram encaminhados pela Instância Superior à Vara da Fazenda Pública para o cumprimento imediato da sentença, devendo o setor de pagamentos realizar o depósito em até 48 horas úteis.
-        </div>
-
-        {/* Data e Localidade */}
-        <div style={{ ...textStyle, top: 810, left: 80, fontStyle: "italic", fontSize: "11pt" }}>
-          Documento expedido eletronicamente em {data.data || "27 de Abril de 2026."}
+          Os autos foram encaminhados pelo TJ à Vara da Fazenda para a execução do processo e posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
         </div>
 
         {/* ─── Rodapé e Assinatura ─── */}
@@ -165,19 +160,17 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <div style={{ fontStyle: "italic", color: "#4b5563" }}>TJ – Tribunal de Justiça Eletrônico.</div>
         </div>
 
-        {/* Assinatura Judicial */}
-        <div style={{ position: "absolute", bottom: 60, left: "50%", transform: "translateX(-50%)", width: 480, textAlign: "center" }}>
+        {/* Assinatura Judicial (CENTRALIZADA NO RODAPÉ) */}
+        <div style={{ position: "absolute", bottom: 40, left: "50%", transform: "translateX(-50%)", width: "100%", textAlign: "center" }}>
            {/* Imagem de Assinatura (Fundo) */}
            <img 
              src={data.signatureImage || "/assets/peticao/assinatura_juiz.png"} 
              style={{ 
-               position: "absolute", 
-               bottom: 25, 
-               left: "50%", 
-               transform: "translateX(-50%)", 
                height: 110, 
                zIndex: 12,
-               pointerEvents: "none"
+               pointerEvents: "none",
+               margin: "0 auto",
+               display: "block"
              }} 
              alt="Assinatura Judicial" 
            />
