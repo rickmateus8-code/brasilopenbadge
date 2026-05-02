@@ -64,6 +64,28 @@ export default function PeticaoCria() {
     return v;
   };
 
+  const formatProcessMask = (val: string) => {
+    const v = val.replace(/\D/g, "").slice(0, 20); // Máximo 20 dígitos CNJ
+    
+    // Formato: 0000000-00.0000.0.00.0000
+    if (v.length > 17) {
+      return `${v.slice(0, 7)}-${v.slice(7, 9)}.${v.slice(9, 13)}.${v.slice(13, 14)}.${v.slice(14, 16)}.${v.slice(16)}`;
+    } else if (v.length > 15) {
+      return `${v.slice(0, 7)}-${v.slice(7, 9)}.${v.slice(9, 13)}.${v.slice(13, 14)}.${v.slice(14)}`;
+    } else if (v.length > 14) {
+      return `${v.slice(0, 7)}-${v.slice(7, 9)}.${v.slice(9, 13)}.${v.slice(13)}`;
+    } else if (v.length > 9) {
+      return `${v.slice(0, 7)}-${v.slice(7, 9)}.${v.slice(9)}`;
+    } else if (v.length > 7) {
+      return `${v.slice(0, 7)}-${v.slice(7)}`;
+    }
+    return v;
+  };
+
+  const generateAlvaraNumber = () => {
+    return Math.floor(1000000 + Math.random() * 9000000).toString();
+  };
+
   const [form, setForm] = useState<PetitionData>({
     id: "XXXX.XXXX",
     processo: "",
@@ -72,7 +94,8 @@ export default function PeticaoCria() {
     advogado: "",
     contra: "",
     valor: "",
-    data: "02/05/2026"
+    data: "02/05/2026",
+    alvara_numero: generateAlvaraNumber()
   });
 
   const handleReset = () => {
@@ -84,7 +107,8 @@ export default function PeticaoCria() {
       advogado: "",
       contra: "",
       valor: "",
-      data: "02/05/2026"
+      data: "02/05/2026",
+      alvara_numero: generateAlvaraNumber()
     });
     toast.success("Formulário resetado");
   };
@@ -289,7 +313,7 @@ export default function PeticaoCria() {
                 <input style={inp} value={form.advogado} onChange={(e) => setForm(p => ({ ...p, advogado: e.target.value }))} placeholder="Ex: KEVIN PEREIRA..." />
 
                 <label style={lbl}>Número do Processo</label>
-                <input style={inp} value={form.processo} onChange={(e) => setForm(p => ({ ...p, processo: e.target.value }))} placeholder="Ex: 1002384-..." />
+                <input style={inp} value={form.processo} onChange={(e) => setForm(p => ({ ...p, processo: formatProcessMask(e.target.value) }))} placeholder="0000000-00.0000.0.00.0000" />
 
                 <label style={lbl}>Execução Contra</label>
                 <input style={inp} value={form.contra} onChange={(e) => setForm(p => ({ ...p, contra: e.target.value }))} placeholder="Ex: BANCO ITAU..." />
