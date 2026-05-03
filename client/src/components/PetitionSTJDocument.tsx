@@ -36,7 +36,7 @@ const EXPORT_SCALE = 1.92; // Reajustado para a nova largura de 826px
 // Constantes de conversão ABNT expandidas para zona de respiro técnica
 const MARGIN_TOP = 170.0;    // Aumentado +3% (135.4 -> 170.0)
 const MARGIN_LEFT = 129.4;   
-const MARGIN_LEFT_BODY = 97.3; 
+const MARGIN_LEFT_BODY = 89.0; 
 const MARGIN_RIGHT = 116.1;   // Aumentado +2% (99.6 -> 116.1)
 const MARGIN_BOTTOM = 86.6;  
 
@@ -45,7 +45,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
     // Estilo base para os textos (CORPO UNIFICADO - SINCRONIZADO 13.3pt - Aumentado +5% sobre 12.7pt)
     const textStyle: React.CSSProperties = {
       position: "absolute",
-      fontFamily: "Arial, sans-serif",
+      fontFamily: "'Times New Roman', serif",
       color: "#000",
       fontSize: "13.3pt", 
       whiteSpace: "nowrap",
@@ -55,12 +55,12 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
     const labelStyle: React.CSSProperties = {
       fontWeight: 400,
       marginRight: 5,
-      fontFamily: "Arial, sans-serif"
+      fontFamily: "'Times New Roman', serif"
     };
 
     const valueStyle: React.CSSProperties = {
       fontWeight: 400,
-      fontFamily: "Arial, sans-serif"
+      fontFamily: "'Times New Roman', serif"
     };
 
     const formatLongDate = (dateStr: string) => {
@@ -118,7 +118,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         </div>
 
         {/* Logo OAB (TOPO ABSOLUTO E +2% TAMANHO) */}
-        <div style={{ position: "absolute", top: "0", left: "4pt", zIndex: 11 }}>
+        <div style={{ position: "absolute", top: "-2%", left: "4pt", zIndex: 11 }}>
            <img src="/assets/peticao/oab_logo.png" style={{ width: "101.1pt" }} alt="OAB" />
         </div>
 
@@ -135,7 +135,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={valueStyle}>{data.credor?.toUpperCase() || ""}</span>
         </div>
         
-        <div style={{ ...textStyle, top: MARGIN_TOP + 187, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 186.1, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>CPF/CNPJ:</span>
           <span style={valueStyle}>{data.cpf_cnpj || ""}</span>
         </div>
@@ -145,31 +145,31 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={valueStyle}>{data.advogado?.toUpperCase() || ""}</span>
         </div>
 
-        <div style={{ ...textStyle, top: MARGIN_TOP + 293.2, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 278.2, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Processo N°:</span>
           <span style={valueStyle}>{data.processo || ""}</span>
         </div>
 
-        <div style={{ ...textStyle, top: MARGIN_TOP + 391.2, left: MARGIN_LEFT_BODY, borderBottom: "1px solid #000", paddingBottom: 2, display: "inline-block", paddingRight: 130 }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 376.2, left: MARGIN_LEFT_BODY, borderBottom: "1px solid #000", paddingBottom: 2, display: "inline-block", paddingRight: 130 }}>
           <span style={labelStyle}>CUMPRIMENTO DE SENTENÇA CONTRA:</span>
           <span style={valueStyle}>{data.contra?.toUpperCase() || ""}</span>
         </div>
 
         {/* Bloco de Decisão */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 436.2, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 421.2, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Assunto:</span>
           <span style={valueStyle}>Decisão Favorável</span>
         </div>
-        <div style={{ ...textStyle, top: MARGIN_TOP + 461.2, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 445.95, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Situação:</span>
           <span style={{ ...valueStyle, color: "#000" }}>AUTORIZADO</span>
         </div>
 
         {/* Código de Barras Dinâmico (AJUSTADO: -10% LARGURA / +5% ALTURA / 2 LINHAS RESPIRO) */}
-        <div style={{ position: "absolute", top: MARGIN_TOP + 509.2, left: MARGIN_LEFT_BODY - 8.1, zIndex: 11 }}>
+        <div style={{ position: "absolute", top: MARGIN_TOP + 524.2, left: MARGIN_LEFT_BODY, zIndex: 11 }}>
            <Barcode 
              value={alvara_final}
-             width={1.4}
+             width={1.41}
              height={40.2}
              displayValue={false}
              margin={0}
@@ -178,7 +178,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         </div>
 
         {/* Valor de Repasse (Garantindo 2 linhas de respiro inferior do barcode: 509.2 + 40.2 + 48 = 597.4) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 597.4, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", fontSize: "13.1pt" }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 582.4, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", fontSize: "13.1pt" }}>
           Valor a receber: <span style={valueStyle}>R$ {data.valor || ""}</span> será depositado em conta corrente de sua titularidade..
         </div>
 
