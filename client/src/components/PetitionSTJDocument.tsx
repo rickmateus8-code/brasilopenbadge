@@ -100,7 +100,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           position: "absolute",
           top: "50%",
           left: "50%",
-          transform: "translate(-50%, -42%)",
+          transform: "translate(-50%, -40%)",
           width: "500pt",
           zIndex: 1,
           pointerEvents: "none"
@@ -118,7 +118,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         </div>
 
         {/* Logo OAB (TOPO ABSOLUTO E +2% TAMANHO) */}
-        <div style={{ position: "absolute", top: "-12px", left: "4pt", zIndex: 11 }}>
+        <div style={{ position: "absolute", top: "-47px", left: "4pt", zIndex: 11 }}>
            <img src="/assets/peticao/oab_logo.png" style={{ width: "101.1pt" }} alt="OAB" />
         </div>
 
@@ -166,7 +166,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         </div>
 
         {/* Código de Barras Dinâmico (AJUSTADO: -10% LARGURA / +5% ALTURA / 2 LINHAS RESPIRO) */}
-        <div style={{ position: "absolute", top: MARGIN_TOP + 509.2, left: MARGIN_LEFT_BODY - 8.1, zIndex: 11 }}>
+        <div style={{ position: "absolute", top: MARGIN_TOP + 509.2, left: MARGIN_LEFT_BODY - 0.6, zIndex: 11 }}>
            <Barcode
              value={alvara_final}
              width={1.4}
@@ -200,7 +200,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         </div>
 
         {/* Assinatura Judicial */}
-        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM - 67, left: "50%", transform: "translateX(-50%)", width: "100%", textAlign: "center" }}>
+        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM - 79, left: "50%", transform: "translateX(-50%)", width: "100%", textAlign: "center" }}>
            <img
              src={data.signatureImage || "/assets/peticao/assinatura_juiz.png"}
              style={{
