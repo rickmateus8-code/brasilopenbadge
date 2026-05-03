@@ -302,8 +302,8 @@ export default function AdminDashboard() {
   }>({ open: false, title: "", message: "", onConfirm: () => {}, type: "info" });
 
    // ── Data Loaders ──────────────────────────────────────────────────────────
-  const loadUsers = useCallback(async (withPasswords = false) => {
-    setLoading(true);
+  const loadUsers = useCallback(async (withPasswords = false, silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const url = withPasswords ? "/api/admin/users?show_passwords=1" : "/api/admin/users";
       const res = await fetch(url, { credentials: "include" });
@@ -316,7 +316,7 @@ export default function AdminDashboard() {
     } catch (err: any) {
       toast.error(`Erro ao carregar usuários: ${err?.message || 'Erro de conexão'}`);
     }
-    finally { setLoading(false); }
+    finally { if (!silent) setLoading(false); }
   }, []);
 
   const loadSettings = useCallback(async () => {
@@ -378,8 +378,8 @@ export default function AdminDashboard() {
     } catch {}
   }, []);
 
-  const loadLogs = useCallback(async () => {
-    setLoading(true);
+  const loadLogs = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       let url = `/api/admin/system-logs?category=${logCategory}&limit=200`;
       if (logDateFrom) url += `&from=${logDateFrom}`;
@@ -397,7 +397,7 @@ export default function AdminDashboard() {
         if (data.success) setLogs(data.logs || []);
       } catch { toast.error("Erro ao carregar logs"); }
     }
-    finally { setLoading(false); }
+    finally { if (!silent) setLoading(false); }
   }, [logCategory, logDateFrom, logDateTo]);
 
   const clearLogs = (clearType: string = "all") => {
@@ -577,7 +577,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (tab !== "users") return;
-    const interval = setInterval(() => loadUsers(showPasswords), 10000);
+    const interval = setInterval(() => loadUsers(showPasswords, true), 10000);
     return () => clearInterval(interval);
   }, [tab, loadUsers, showPasswords]);
 
@@ -1053,6 +1053,14 @@ export default function AdminDashboard() {
   const formatDateShort = (d: string) => {
     if (!d) return "—";
     try { return new Date(d).toLocaleDateString("pt-BR"); } catch { return d; }
+  };
+
+  const formatDate = (d: string) => {
+    if (!d) return "—";
+    try {
+      const date = new Date(d);
+      return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    } catch { return d; }
   };
 
   const timeAgo = (d: string) => {
