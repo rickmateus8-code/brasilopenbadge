@@ -98,7 +98,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         {/* ─── Layer de Fundo: Marca d'Água ─── */}
         <div style={{
           position: "absolute",
-          top: "50%",
+          top: "calc(50% + 15px)",
           left: "50%",
           transform: "translate(-50%, -44%)", 
           width: "500pt", 
