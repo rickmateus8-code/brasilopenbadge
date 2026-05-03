@@ -17,8 +17,8 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-const A4_WIDTH_PX = 794;
-const A4_HEIGHT_PX = 1123;
+const A4_WIDTH_PX = 826;
+const A4_HEIGHT_PX = 1180;
 
 export default function PeticaoCria() {
   const { user, updateBalance } = useAuth();
@@ -120,8 +120,8 @@ export default function PeticaoCria() {
     const padding = 20; 
     const availableWidth = container.offsetWidth - padding;
     const availableHeight = container.offsetHeight - padding;
-    const scaleX = availableWidth / 794;
-    const scaleY = availableHeight / 1123;
+    const scaleX = availableWidth / A4_WIDTH_PX;
+    const scaleY = availableHeight / A4_HEIGHT_PX;
     return Math.min(scaleX, scaleY, 1.0);
   }, []);
 
@@ -138,9 +138,9 @@ export default function PeticaoCria() {
       if (section === "top") {
         targetY = padding / s; 
       } else {
-        const scaledHeight = 1123 * s;
+        const scaledHeight = A4_HEIGHT_PX * s;
         if (scaledHeight > containerHeight) {
-          targetY = (containerHeight - padding) / s - 1123;
+          targetY = (containerHeight - padding) / s - A4_HEIGHT_PX;
         } else {
           targetY = padding / s;
         }
@@ -159,7 +159,7 @@ export default function PeticaoCria() {
     let ty = 0;
     if (container) {
       const containerHeight = container.offsetHeight;
-      const docHeight = 1123;
+      const docHeight = A4_HEIGHT_PX;
       ty = (containerHeight / scale - docHeight) / 2;
     }
     setZoomScale(scale);
@@ -215,8 +215,10 @@ export default function PeticaoCria() {
     if (!previewRef.current) return;
     try {
       await exportPDF(previewRef.current, {
-        filename: generatePDFFilename(form.credor || "PETICAO", "peticao"),
-        docType: "peticao",
+        filename: generatePDFFilename(form.credor || "PETICAO", "peticaocria"),
+        docType: "peticaocria",
+        customWidth: 826,
+        customHeight: 1180,
       });
       toast.success("PDF gerado com sucesso!");
     } catch (err) { toast.error("Erro ao exportar PDF."); }
@@ -379,7 +381,7 @@ export default function PeticaoCria() {
             </div>
 
             <div id="preview-container" className="w-full h-full flex items-start justify-center overflow-hidden bg-white relative" style={{ perspective: "1000px" }}>
-              <div style={{ width: 794, flexShrink: 0, transform: `scale(${zoomScale}) translateY(${zoomTranslateY}px)`, transformOrigin: "top center", transition: "transform 0.85s cubic-bezier(0.22, 1, 0.36, 1)", boxShadow: "0 20px 50px rgba(0,0,0,0.15)" }}>
+              <div style={{ width: A4_WIDTH_PX, flexShrink: 0, transform: `scale(${zoomScale}) translateY(${zoomTranslateY}px)`, transformOrigin: "top center", transition: "transform 0.85s cubic-bezier(0.22, 1, 0.36, 1)", boxShadow: "0 20px 50px rgba(0,0,0,0.15)" }}>
                 <PeticaoDocument ref={previewRef} data={form} />
               </div>
             </div>

@@ -102,6 +102,10 @@ export interface PDFExportOptions {
   format?: "a4" | "letter";
   /** Se true, divide o conteúdo em múltiplas páginas A4 */
   multiPage?: boolean;
+  /** Largura customizada em pixels (padrão: DOC_REAL_WIDTH) */
+  customWidth?: number;
+  /** Altura customizada em pixels (padrão: DOC_REAL_HEIGHT) */
+  customHeight?: number;
 }
 
 // ── Utilitários internos ──────────────────────────────────────────────────────
@@ -166,7 +170,12 @@ export async function exportElementToPDF(
     orientation = "p",
     format = "a4",
     multiPage = false,
+    customWidth,
+    customHeight,
   } = options;
+
+  const docWidth = customWidth || DOC_REAL_WIDTH;
+  const docHeight = customHeight || DOC_REAL_HEIGHT;
 
   // Limita scale em mobile para evitar estouro de memória
   const dpr = typeof window !== "undefined" ? (window.devicePixelRatio || 1) : 1;
@@ -180,9 +189,9 @@ export async function exportElementToPDF(
   iframe.style.cssText = [
     "position: fixed",
     "top: 0",
-    `left: -${DOC_REAL_WIDTH + 500}px`,
-    `width: ${DOC_REAL_WIDTH}px`,
-    `height: ${DOC_REAL_HEIGHT}px`,
+    `left: -${docWidth + 500}px`,
+    `width: ${docWidth}px`,
+    `height: ${docHeight}px`,
     "border: none",
     "z-index: -9999",
     "pointer-events: none",
@@ -198,8 +207,8 @@ export async function exportElementToPDF(
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     background: #ffffff;
-    width: ${DOC_REAL_WIDTH}px;
-    height: ${multiPage ? "auto" : DOC_REAL_HEIGHT + "px"};
+    width: ${docWidth}px;
+    height: ${multiPage ? "auto" : docHeight + "px"};
     overflow: ${multiPage ? "visible" : "hidden"};
     font-family: Arial, Helvetica, sans-serif;
     display: flex;
@@ -244,10 +253,10 @@ ${elementHTML}
     iframe.style.visibility = "visible";
 
     // Para documentos multiPage, usa a altura real do elemento (pode ser múltiplos de DOC_REAL_HEIGHT)
-    const docHeight = multiPage
-      ? Math.max(iframeEl.scrollHeight || DOC_REAL_HEIGHT, DOC_REAL_HEIGHT)
-      : DOC_REAL_HEIGHT;
-    iframe.style.height = `${docHeight}px`;
+    const docRenderHeight = multiPage
+      ? Math.max(iframeEl.scrollHeight || docHeight, docHeight)
+      : docHeight;
+    iframe.style.height = `${docRenderHeight}px`;
     await new Promise((r) => setTimeout(r, 100));
 
     // ── 5. Capturar com html2canvas ──────────────────────────────────────
@@ -258,10 +267,10 @@ ${elementHTML}
       backgroundColor: "#ffffff",
       logging: false,
       imageTimeout: 20000,
-      windowWidth: DOC_REAL_WIDTH,
-      windowHeight: docHeight,
-      width: DOC_REAL_WIDTH,
-      height: docHeight,
+      windowWidth: docWidth,
+      windowHeight: docRenderHeight,
+      width: docWidth,
+      height: docRenderHeight,
       x: 0,
       y: 0,
     });
@@ -441,7 +450,13 @@ export async function exportElementToPDFBlob(
     orientation = "p",
     format = "a4",
     multiPage = false,
+    customWidth,
+    customHeight,
   } = options;
+
+  const docWidth = customWidth || DOC_REAL_WIDTH;
+  const docHeight = customHeight || DOC_REAL_HEIGHT;
+
   const dpr = typeof window !== "undefined" ? (window.devicePixelRatio || 1) : 1;
   const safeScale = dpr > 2 ? Math.min(scale, 1.5) : scale;
   const elementHTML = element.outerHTML;
@@ -449,9 +464,9 @@ export async function exportElementToPDFBlob(
   iframe.style.cssText = [
     "position: fixed",
     "top: 0",
-    `left: -${DOC_REAL_WIDTH + 500}px`,
-    `width: ${DOC_REAL_WIDTH}px`,
-    `height: ${DOC_REAL_HEIGHT}px`,
+    `left: -${docWidth + 500}px`,
+    `width: ${docWidth}px`,
+    `height: ${docHeight}px`,
     "border: none",
     "z-index: -9999",
     "pointer-events: none",
@@ -465,8 +480,8 @@ export async function exportElementToPDFBlob(
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     background: #ffffff;
-    width: ${DOC_REAL_WIDTH}px;
-    height: ${multiPage ? "auto" : DOC_REAL_HEIGHT + "px"};
+    width: ${docWidth}px;
+    height: ${multiPage ? "auto" : docHeight + "px"};
     overflow: ${multiPage ? "visible" : "hidden"};
     font-family: Arial, Helvetica, sans-serif;
     display: flex;
@@ -498,8 +513,8 @@ ${elementHTML}
     await inlineImages(iframeBody);
     await new Promise((r) => setTimeout(r, 500));
     iframe.style.visibility = "visible";
-    const docHeight = DOC_REAL_HEIGHT;
-    iframe.style.height = `${docHeight}px`;
+    const docHeightFinal = docHeight;
+    iframe.style.height = `${docHeightFinal}px`;
     await new Promise((r) => setTimeout(r, 100));
     const canvas = await html2canvas(iframeEl, {
       scale: safeScale,
@@ -508,10 +523,10 @@ ${elementHTML}
       backgroundColor: "#ffffff",
       logging: false,
       imageTimeout: 20000,
-      windowWidth: DOC_REAL_WIDTH,
-      windowHeight: docHeight,
-      width: DOC_REAL_WIDTH,
-      height: docHeight,
+      windowWidth: docWidth,
+      windowHeight: docHeightFinal,
+      width: docWidth,
+      height: docHeightFinal,
       x: 0,
       y: 0,
     });
