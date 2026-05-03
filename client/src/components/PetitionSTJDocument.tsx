@@ -100,7 +100,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           position: "absolute",
           top: "50%",
           left: "50%",
-          transform: "translate(-50%, -44%)",
+          transform: "translate(-50%, -42%)",
           width: "500pt",
           zIndex: 1,
           pointerEvents: "none"
@@ -118,7 +118,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         </div>
 
         {/* Logo OAB (TOPO ABSOLUTO E +2% TAMANHO) */}
-        <div style={{ position: "absolute", top: "0", left: "4pt", zIndex: 11 }}>
+        <div style={{ position: "absolute", top: "-12px", left: "4pt", zIndex: 11 }}>
            <img src="/assets/peticao/oab_logo.png" style={{ width: "101.1pt" }} alt="OAB" />
         </div>
 
@@ -194,7 +194,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         </div>
 
         {/* ─── Rodapé (SUBIDO +1% ≈ +11px bottom) ─── */}
-        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 59, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "10.8pt", fontFamily: "Arial, sans-serif" }}>
+        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 47, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "10.8pt", fontFamily: "Arial, sans-serif" }}>
            <div style={{ textTransform: "uppercase", fontWeight: 400, letterSpacing: "1px", color: "#374151", marginBottom: 2 }}>PODER JUDICIÁRIO</div>
            <div style={{ fontStyle: "italic", color: "#374151", fontSize: "11.8pt", marginLeft: "4.2px" }}>TJ – Tribunal de Justiça.</div>  
         </div>
