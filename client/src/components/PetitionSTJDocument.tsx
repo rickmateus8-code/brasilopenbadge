@@ -135,7 +135,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={valueStyle}>{data.credor?.toUpperCase() || ""}</span>
         </div>
 
-        <div style={{ ...textStyle, top: MARGIN_TOP + 187, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 179.2, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>CPF/CNPJ:</span>
           <span style={valueStyle}>{data.cpf_cnpj || ""}</span>
         </div>
