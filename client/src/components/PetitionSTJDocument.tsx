@@ -124,7 +124,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
 
         {/* Título do Documento (SUBIDO +2 LINHAS ≈ -48px) */}
         <div style={{ position: "absolute", top: MARGIN_TOP + 97, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10, fontFamily: "'Liberation Sans', Helvetica" }}>
-           <div style={{ fontSize: "16.2pt", fontWeight: 700, color: "#000", transform: "scaleY(0.97)", transformOrigin: "center" }}>PROCESSO JUDICIAL ELETRÔNICO</div>
+           <div style={{ fontSize: "16.2pt", fontWeight: 700, color: "#000", transform: "scaleX(0.97) scaleY(0.97)", transformOrigin: "center" }}>PROCESSO JUDICIAL ELETRÔNICO</div>
            <div style={{ fontSize: "12.8pt", fontWeight: 400, marginTop: -6, color: "#000" }}>Processo Judiciário</div>
         </div>
 
