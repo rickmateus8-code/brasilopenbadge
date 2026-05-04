@@ -1,16 +1,33 @@
 import { forwardRef } from "react";
 
+import { forwardRef } from "react";
+import Barcode from "react-barcode";
+
 interface LayoutElement {
-  fieldId: string;
-  top: number | string;
-  left: number | string;
+  fieldId?: string; // ID do campo no formulário (se dinâmico)
+  content?: string; // Texto estático (se não for dinâmico)
+  type?: "text" | "image" | "barcode" | "static";
+  top?: number | string;
+  bottom?: number | string;
+  left?: number | string;
+  right?: number | string;
   fontSize?: string;
   fontWeight?: number | string;
   color?: string;
   fontFamily?: string;
   textAlign?: "left" | "center" | "right";
   width?: number | string;
+  height?: number | string;
   zIndex?: number;
+  transform?: string;
+  transformOrigin?: string;
+  letterSpacing?: string;
+  opacity?: number;
+  src?: string; // Para tipo 'image'
+  fontStyle?: "normal" | "italic";
+  borderBottom?: string;
+  paddingBottom?: number | string;
+  paddingRight?: number | string;
 }
 
 interface UniversalTemplate {
@@ -22,7 +39,10 @@ interface UniversalTemplate {
     backgroundColor: string;
     watermarkUrl?: string;
   };
+  fields_definition: any[];
   layout_definition: LayoutElement[];
+  name?: string;
+  price: number;
 }
 
 interface UniversalDocumentProps {
@@ -64,25 +84,70 @@ const UniversalDocument = forwardRef<HTMLDivElement, UniversalDocumentProps>(
           </div>
         )}
 
-        {/* Camada 2: Elementos Dinâmicos */}
+        {/* Camada 2: Elementos Dinâmicos e Estáticos */}
         {template.layout_definition.map((el, idx) => {
-          const value = data[el.fieldId] || "";
+          const type = el.type || "text";
+          const value = el.fieldId ? (data[el.fieldId] || "") : (el.content || "");
           
+          const commonStyle: React.CSSProperties = {
+            position: "absolute",
+            top: el.top,
+            bottom: el.bottom,
+            left: el.left,
+            right: el.right,
+            zIndex: el.zIndex || 10,
+            transform: el.transform,
+            transformOrigin: el.transformOrigin,
+            opacity: el.opacity,
+          };
+
+          if (type === "image") {
+            const imgSrc = el.fieldId ? data[el.fieldId] : el.src;
+            if (!imgSrc) return null;
+            return (
+              <div key={`${idx}`} style={commonStyle}>
+                <img 
+                  src={imgSrc} 
+                  style={{ width: el.width, height: el.height, display: "block" }} 
+                  alt="Asset" 
+                />
+              </div>
+            );
+          }
+
+          if (type === "barcode") {
+            if (!value) return null;
+            return (
+              <div key={`${idx}`} style={commonStyle}>
+                <Barcode
+                  value={String(value)}
+                  width={Number(el.width) || 1.4}
+                  height={Number(el.height) || 40}
+                  displayValue={false}
+                  margin={0}
+                  background="transparent"
+                />
+              </div>
+            );
+          }
+
           return (
             <div
-              key={`${el.fieldId}-${idx}`}
+              key={`${idx}`}
               style={{
-                position: "absolute",
-                top: el.top,
-                left: el.left,
+                ...commonStyle,
                 fontSize: el.fontSize || "12pt",
                 fontWeight: el.fontWeight || 400,
                 color: el.color || "#000000",
                 fontFamily: el.fontFamily || "Arial, sans-serif",
                 textAlign: el.textAlign || "left",
                 width: el.width || "auto",
-                zIndex: el.zIndex || 10,
-                whiteSpace: "nowrap"
+                whiteSpace: "nowrap",
+                letterSpacing: el.letterSpacing,
+                fontStyle: el.fontStyle,
+                borderBottom: el.borderBottom,
+                paddingBottom: el.paddingBottom,
+                paddingRight: el.paddingRight
               }}
             >
               {value}

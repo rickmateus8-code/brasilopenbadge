@@ -8,7 +8,7 @@ import {
   Users, Settings, Plus, Minus, Shield,
   RefreshCw, DollarSign, Trash2, ToggleLeft, ToggleRight,
   Bell, AlertTriangle, CheckCircle, Info, FileText,
-  Activity, Database, Search, Eye, EyeOff, X, Save,
+  Activity, Database, Search, Eye, EyeOff, X, Save, Layout,
   Download, Pencil, Wifi, WifiOff, Monitor, Globe,
   CreditCard, AlertCircle, Filter, Gift, Percent, Wallet,
   Link, Copy, Calendar, Trash, Lock, UserPlus
@@ -106,6 +106,7 @@ const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "users", label: "Usuários", icon: Users },
   { key: "monitoring", label: "Monitoramento", icon: Monitor },
   { key: "pricing", label: "Preços", icon: DollarSign },
+  { key: "templates", label: "Templates (Engine)", icon: Layout },
   { key: "notices", label: "Avisos", icon: Bell },
   { key: "logs", label: "Logs", icon: Activity },
   { key: "emissions", label: "Emissões", icon: FileText },
@@ -1722,6 +1723,23 @@ export default function AdminDashboard() {
                 </div>
               </>
             )}
+          </div>
+        )}
+
+        {/* ── TEMPLATES TAB (Redirect) ── */}
+        {tab === "templates" && (
+          <div className="text-center py-20 bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
+            <Layout className="w-16 h-16 mx-auto mb-4 text-indigo-500 animate-pulse" />
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Motor Universal de Documentos</h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-md mx-auto">
+              Gerencie templates dinâmicos, campos de formulário e layouts complexos em uma interface dedicada.
+            </p>
+            <button
+              onClick={() => setLocation("/admin/templates")}
+              className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-lg shadow-indigo-200 dark:shadow-none transition-all active:scale-95"
+            >
+              Abrir Gerenciador de Templates
+            </button>
           </div>
         )}
 

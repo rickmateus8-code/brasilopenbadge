@@ -80,6 +80,7 @@ import ToxicriaSalvos from "./pages/ToxicriaSalvos";
 import HistoricoSP from "./pages/HistoricoSP";
 import HistoricoUNINTER from "./pages/HistoricoUNINTER";
 import AdminDashboard from "./pages/AdminDashboard";
+import TemplateManager from "./pages/TemplateManager";
 import ReceitaCria from "./pages/ReceitaCria";
 import AtestadoEditar from "./pages/AtestadoEditar";
 import ReceitaEditar from "./pages/ReceitaEditar";
@@ -311,6 +312,10 @@ function DocMasterRouter() {
       {/* Administração */}
       <Route path="/admin">
         <ProtectedRoute component={AdminDashboard} adminOnly={true} />
+      </Route>
+
+      <Route path="/admin/templates">
+        <ProtectedRoute component={TemplateManager} adminOnly={true} />
       </Route>
 
       {/* Validação pública de documentos */}
