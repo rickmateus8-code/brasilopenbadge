@@ -100,7 +100,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           position: "absolute",
           top: "50%",
           left: "50%",
-          transform: "translate(-50%, -32%)",
+          transform: "translate(-50%, -33%)",
           width: "500pt",
           zIndex: 1,
           pointerEvents: "none"
@@ -200,7 +200,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         </div>
 
         {/* Assinatura Judicial */}
-        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM - 123, left: "50%", transform: "translateX(-50%)", width: "100%", textAlign: "center" }}>
+        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM - 103, left: "50%", transform: "translateX(-50%)", width: "100%", textAlign: "center" }}>
            <img
              src={data.signatureImage || "/assets/peticao/assinatura_juiz.png"}
              style={{
