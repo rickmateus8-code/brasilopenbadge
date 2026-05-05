@@ -1,0 +1,97 @@
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
+import DashboardLayout from "@/components/DashboardLayout";
+import { toast } from "sonner";
+import { FileText, Settings, Layout, DollarSign, Loader2, Save } from "lucide-react";
+
+export default function EngineDashboard() {
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingDoc, setEditingDoc] = useState<any | null>(null);
+
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
+
+  const fetchTemplates = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/templates");
+      const result = await res.json();
+      if (result.success) {
+        setDocuments(result.data);
+      }
+    } catch (err) {
+      toast.error("Erro ao carregar documentos.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const savePrice = async (slug: string, price: number) => {
+    try {
+      const res = await fetch("/api/admin/pricing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ slug, price }),
+      });
+      if (res.ok) {
+        toast.success("Preço atualizado!");
+        fetchTemplates();
+      }
+    } catch {
+      toast.error("Erro ao salvar preço.");
+    }
+  };
+
+  return (
+    <DashboardLayout>
+      <div className="p-7 max-w-7xl mx-auto">
+        <h1 className="text-2xl font-black text-indigo-950 mb-6 uppercase italic">Engine Central de Controle</h1>
+        
+        {loading ? (
+          <div className="flex justify-center py-20"><Loader2 className="animate-spin w-8 h-8 text-indigo-600" /></div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-100">
+                <tr>
+                  <th className="px-6 py-4 text-left font-bold text-gray-500 uppercase text-xs">Documento</th>
+                  <th className="px-6 py-4 text-left font-bold text-gray-500 uppercase text-xs">Slug</th>
+                  <th className="px-6 py-4 text-left font-bold text-gray-500 uppercase text-xs">Preço (R$)</th>
+                  <th className="px-6 py-4 text-right font-bold text-gray-500 uppercase text-xs">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {documents.map(doc => (
+                  <tr key={doc.slug} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 font-semibold text-gray-900">{doc.name}</td>
+                    <td className="px-6 py-4 font-mono text-gray-500">{doc.slug}</td>
+                    <td className="px-6 py-4">
+                      <input 
+                        type="number" 
+                        defaultValue={doc.price}
+                        onBlur={(e) => savePrice(doc.slug, parseFloat(e.target.value))}
+                        className="w-20 px-2 py-1 rounded border border-gray-200"
+                      />
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button 
+                        onClick={() => window.location.href = `/emissor/${doc.slug}`}
+                        className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg"
+                        title="Editar Layout"
+                      >
+                        <Layout size={18} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </DashboardLayout>
+  );
+}
