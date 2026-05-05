@@ -28,20 +28,24 @@ export default function EngineDashboard() {
     }
   };
 
-  const savePrice = async (slug: string, price: number) => {
+  const saveMetadata = async (slug: string, data: any) => {
     try {
-      const res = await fetch("/api/admin/pricing", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch(`/api/admin/templates/${slug}`, {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache"
+        },
         credentials: "include",
-        body: JSON.stringify({ slug, price }),
+        body: JSON.stringify(data),
       });
       if (res.ok) {
-        toast.success("Preço atualizado!");
+        toast.success("Documento atualizado!");
         fetchTemplates();
       }
     } catch {
-      toast.error("Erro ao salvar preço.");
+      toast.error("Erro ao salvar.");
     }
   };
 
@@ -72,7 +76,7 @@ export default function EngineDashboard() {
                       <input 
                         type="number" 
                         defaultValue={doc.price}
-                        onBlur={(e) => savePrice(doc.slug, parseFloat(e.target.value))}
+                        onBlur={(e) => saveMetadata(doc.slug, { ...doc, price: parseFloat(e.target.value) })}
                         className="w-20 px-2 py-1 rounded border border-gray-200"
                       />
                     </td>
