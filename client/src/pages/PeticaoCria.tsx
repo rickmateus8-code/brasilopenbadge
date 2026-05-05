@@ -86,17 +86,40 @@ export default function PeticaoCria() {
     return Math.floor(1000000 + Math.random() * 9000000).toString();
   };
 
-  const [form, setForm] = useState<PetitionData>({
-    id: "XXXX.XXXX",
-    processo: "",
-    credor: "",
-    cpf_cnpj: "",
-    advogado: "",
-    contra: "",
-    valor: "",
-    data: "02/05/2026",
-    alvara_numero: generateAlvaraNumber()
-  });
+  const [processoBusca, setProcessoBusca] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+
+  const handleBuscarProcesso = async () => {
+    if (!processoBusca) { toast.error("Insira o número do processo"); return; }
+    setIsSearching(true);
+    try {
+      const res = await fetch("/api/datajud-engine", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: processoBusca, type: "processo" })
+      });
+      const result = await res.json();
+      if (result.success) {
+        toast.success("Processo encontrado!");
+        // Preenchimento automático (exemplo mapeamento)
+        const data = result.data.raw; 
+        setForm(p => ({ 
+          ...p, 
+          processo: data.numeroProcesso || processoBusca,
+          credor: data.partes?.[0]?.nome || "", // Mapeamento hipotético
+          advogado: data.partes?.[1]?.nome || ""
+        }));
+        // Exibir resumo IA em um modal ou toast
+        toast.info(result.data.summary, { duration: 10000 });
+      } else {
+        toast.error("Processo não localizado.");
+      }
+    } catch {
+      toast.error("Falha na consulta processual.");
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   const handleReset = () => {
     setForm({
@@ -303,6 +326,23 @@ export default function PeticaoCria() {
           <aside className={`transition-all duration-300 border-r border-gray-200 bg-white shadow-xl z-10 flex flex-col ${sidebarOpen ? "w-[400px]" : "w-0 overflow-hidden"}`}>
             <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
               <div style={card}>
+                <p className="text-sm font-bold text-indigo-950 mb-4 flex items-center gap-2"><FileText size={16} /> ⚖️ Consulta Processual</p>
+                <div className="flex gap-2 mb-6">
+                  <input 
+                    style={{ ...inp, marginBottom: 0 }} 
+                    value={processoBusca} 
+                    onChange={(e) => setProcessoBusca(e.target.value)} 
+                    placeholder="Número do Processo / OAB / CPF" 
+                  />
+                  <button 
+                    onClick={handleBuscarProcesso}
+                    disabled={isSearching}
+                    className="bg-indigo-900 text-white px-4 rounded-lg font-bold text-xs hover:bg-indigo-800"
+                  >
+                    {isSearching ? <Loader2 className="animate-spin" size={16} /> : <Search size={16} />}
+                  </button>
+                </div>
+                
                 <p className="text-sm font-bold text-indigo-950 mb-4 flex items-center gap-2"><FileText size={16} /> ⚖️ Dados do Processo</p>
                 
                 <label style={lbl}>Credor</label>
