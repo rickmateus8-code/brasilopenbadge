@@ -36,33 +36,33 @@ export default function BotAdvDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="p-7 max-w-7xl mx-auto">
-        <h1 className="text-2xl font-black text-indigo-950 mb-6 uppercase italic">Bot Adv: Consultoria Inteligente</h1>
+      <div className="p-7 max-w-7xl mx-auto min-h-screen bg-gray-950 text-white">
+        <h1 className="text-2xl font-black mb-6 uppercase italic">Bot Adv: Consultoria Inteligente</h1>
         
-        <div className="bg-white p-6 rounded-2xl shadow-sm border mb-6 flex gap-4">
+        <div className="bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-800 mb-6 flex gap-4">
           <input 
-            className="flex-1 p-3 bg-gray-900 text-white border border-gray-700 rounded-xl placeholder-gray-500"
+            className="flex-1 p-3 bg-black text-white border border-gray-700 rounded-xl placeholder-gray-500"
             placeholder="Consulte por OAB, CPF, CNPJ ou Processo..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <button onClick={handleConsultar} className="bg-indigo-900 text-white px-6 rounded-xl font-bold flex items-center gap-2">
+          <button onClick={handleConsultar} className="bg-indigo-900 text-white px-6 rounded-xl font-bold flex items-center gap-2 hover:bg-indigo-800">
             {isSearching ? <Loader2 className="animate-spin" /> : <Search />} Consultar
           </button>
         </div>
 
         {result && (
           <div className="grid grid-cols-2 gap-6">
-            <div className="bg-white p-6 rounded-2xl border shadow-sm">
-              <h2 className="font-black text-indigo-950 mb-4">Resumo IA</h2>
-              <p className="text-sm text-gray-600 leading-relaxed">{result.summary}</p>
+            <div className="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-sm">
+              <h2 className="font-black text-indigo-400 mb-4">Resumo IA</h2>
+              <p className="text-sm text-gray-300 leading-relaxed">{result.summary}</p>
             </div>
-            <div className="bg-white p-6 rounded-2xl border shadow-sm flex flex-col items-center justify-center">
-              <h3 className="font-bold mb-4">Pré-visualização da Petição</h3>
-              <div className="w-full h-64 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">
+            <div className="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-sm flex flex-col items-center justify-center">
+              <h3 className="font-bold mb-4 text-white">Pré-visualização da Petição</h3>
+              <div className="w-full h-64 bg-black rounded-xl flex items-center justify-center text-gray-700 border border-gray-800">
                 <FileText size={48} />
               </div>
-              <button className="mt-4 bg-emerald-600 text-white w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2">
+              <button className="mt-4 bg-emerald-600 text-white w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-700">
                 <Download size={18} /> Exportar Petição
               </button>
             </div>
