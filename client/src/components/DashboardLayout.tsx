@@ -21,7 +21,6 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  ...[
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     {
       icon: FileText, label: "Atestado",
@@ -52,33 +51,30 @@ const menuItems: MenuItem[] = [
       ],
     },
     { icon: Search, label: "Bot Adv", path: "/bot-adv" },
-  ]
-];
-  {
-    icon: FlaskConical, label: "Toxicológico",
-    children: [
-      { label: "Laudo Sodré", path: "/toxicria", isCreation: true },
-      { label: "Laudos Sodré Salvos", path: "/toxicriasalvos" },
-    ],
-  },
-  {
-    icon: GraduationCap, label: "Histórico Escolar",
-    children: [
-      { label: "Histórico SP", path: "/historico-sp", isCreation: true },
-      { label: "Histórico UNINTER", path: "/historico-uninter", isCreation: true },
-      { label: "Salvos (SP)", path: "/historico-sp-salvos" },
-      { label: "Salvos (UNINTER)", path: "/historico-uninter-salvos" },
-    ],
-  },
-  {
-    icon: Pill, label: "Receituário",
-    children: [
-      { label: "Dr. Consulta", path: "/receitacria", isCreation: true },
-      { label: "Receitas Salvas", path: "/receitassalvas" },
-    ],
-  },
-  { icon: Gift, label: "Indique e Ganhe", path: "/indicacoes" },
-  { icon: Search, label: "Bot Adv", path: "/bot-adv" },
+    {
+      icon: FlaskConical, label: "Toxicológico",
+      children: [
+        { label: "Laudo Sodré", path: "/toxicria", isCreation: true },
+        { label: "Laudos Sodré Salvos", path: "/toxicriasalvos" },
+      ],
+    },
+    {
+      icon: GraduationCap, label: "Histórico Escolar",
+      children: [
+        { label: "Histórico SP", path: "/historico-sp", isCreation: true },
+        { label: "Histórico UNINTER", path: "/historico-uninter", isCreation: true },
+        { label: "Salvos (SP)", path: "/historico-sp-salvos" },
+        { label: "Salvos (UNINTER)", path: "/historico-uninter-salvos" },
+      ],
+    },
+    {
+      icon: Pill, label: "Receituário",
+      children: [
+        { label: "Dr. Consulta", path: "/receitacria", isCreation: true },
+        { label: "Receitas Salvas", path: "/receitassalvas" },
+      ],
+    },
+    { icon: Gift, label: "Indique e Ganhe", path: "/indicacoes" },
 ];
 
 function SidebarItem({

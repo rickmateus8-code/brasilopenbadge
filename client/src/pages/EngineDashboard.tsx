@@ -93,9 +93,9 @@ export default function EngineDashboard() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button 
-                        onClick={() => window.location.href = `/emissor/${doc.slug}`}
+                        onClick={() => setLocation(`/engine-builder/${doc.slug}`)}
                         className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg"
-                        title="Editar Layout"
+                        title="Editar Layout (VLE)"
                       >
                         <Layout size={18} />
                       </button>
