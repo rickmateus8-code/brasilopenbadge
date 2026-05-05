@@ -47,6 +47,27 @@ export default function EngineBuilder() {
     setTemplate({ ...template, layout_definition: newLayout });
   };
 
+  const saveLayout = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/admin/templates/${slug}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ layout_definition: template.layout_definition }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        toast.success("Layout salvo com sucesso!");
+      } else {
+        toast.error("Erro ao salvar: " + result.error);
+      }
+    } catch {
+      toast.error("Erro de conexão.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) return <DashboardLayout><div className="flex justify-center p-20"><Loader2 className="animate-spin" /></div></DashboardLayout>;
 
   return (
@@ -76,10 +97,16 @@ export default function EngineBuilder() {
                 </div>
               </div>
             ))}
-            <button className="w-full bg-emerald-600 text-white p-4 rounded-xl font-black uppercase hover:bg-emerald-700 shadow-lg">Salvar Canvas</button>
+            <button 
+              onClick={saveLayout}
+              className="w-full bg-emerald-600 text-white p-4 rounded-xl font-black uppercase hover:bg-emerald-700 shadow-lg"
+            >
+              Salvar Canvas
+            </button>
           </div>
         </div>
       </div>
     </DashboardLayout>
   );
+
 }
