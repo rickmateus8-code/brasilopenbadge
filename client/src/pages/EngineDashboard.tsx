@@ -3,15 +3,21 @@ import { useLocation } from "wouter";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
 import { FileText, Settings, Layout, DollarSign, Loader2, Save } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function EngineDashboard() {
+  const { isAdmin } = useAuth();
+  const [, setLocation] = useLocation();
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingDoc, setEditingDoc] = useState<any | null>(null);
 
   useEffect(() => {
+    if (isAdmin === false) {
+      setLocation("/dashboard");
+      return;
+    }
     fetchTemplates();
-  }, []);
+  }, [isAdmin, setLocation]);
 
   const fetchTemplates = async () => {
     try {
