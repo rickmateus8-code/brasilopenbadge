@@ -15,20 +15,23 @@ export default function BotAdvDashboard() {
     if (!query) return toast.error("Insira o processo/OAB/CPF");
     setIsSearching(true);
     try {
+      console.log("Consultando:", query);
       const res = await fetch("/api/datajud-engine", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query, type: "processo" })
       });
       const data = await res.json();
-      if (data.success) {
+      console.log("Resposta da Engine:", data);
+      if (data.success && data.data && data.data.raw) {
         setResult(data.data);
         toast.success("Dados carregados!");
       } else {
-        toast.error("Não encontrado.");
+        toast.error("Processo não encontrado ou erro de formato.");
       }
-    } catch {
-      toast.error("Erro na consulta.");
+    } catch (e) {
+      console.error("Erro na busca:", e);
+      toast.error("Falha na consulta processual.");
     } finally {
       setIsSearching(false);
     }
@@ -37,7 +40,7 @@ export default function BotAdvDashboard() {
   return (
     <DashboardLayout>
       <div className="p-7 max-w-7xl mx-auto min-h-screen bg-gray-950 text-white">
-        <h1 className="text-2xl font-black mb-6 uppercase italic">Bot Adv: Consultoria Inteligente</h1>
+        <h1 className="text-2xl font-black mb-6 uppercase italic text-gray-200">Bot Adv: Consultoria Inteligente</h1>
         
         <div className="bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-800 mb-6 flex gap-4">
           <input 
