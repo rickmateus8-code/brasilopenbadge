@@ -266,6 +266,23 @@ export default function PeticaoCria() {
 
   return (
     <div className="h-screen w-full flex flex-col overflow-hidden bg-white font-sans">
+      <style>{`
+        @media (max-width: 768px) {
+          header { padding: 0 12px; height: 60px; }
+          header h1 { font-size: 11px; }
+          aside { 
+            position: fixed; 
+            top: 60px; 
+            left: 0; 
+            width: 100% !important; 
+            height: calc(100vh - 60px); 
+            z-index: 50; 
+          }
+          .ml-auto { gap: 8px; }
+          .ml-auto button { px: 2; font-size: 10px; height: 32px; }
+          main .absolute { top: 70px; left: 10px; }
+        }
+      `}</style>
       <header className="h-14 bg-[#1e1b4b] flex items-center px-6 gap-4 shrink-0 shadow-md z-10">
           <button
             onClick={() => setLocation("/dashboard")}
