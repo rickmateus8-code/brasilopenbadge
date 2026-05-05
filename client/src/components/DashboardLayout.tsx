@@ -74,6 +74,7 @@ const menuItems: MenuItem[] = [
     ],
   },
   { icon: Gift, label: "Indique e Ganhe", path: "/indicacoes" },
+  { icon: Search, label: "Bot Adv", path: "/bot-adv" },
 ];
 
 function SidebarItem({
