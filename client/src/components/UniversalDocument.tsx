@@ -48,10 +48,13 @@ interface UniversalTemplate {
 interface UniversalDocumentProps {
   template: UniversalTemplate;
   data: Record<string, any>;
+  editMode?: boolean;
+  selectedElementIndex?: number | null;
+  onSelectElement?: (index: number) => void;
 }
 
 const UniversalDocument = forwardRef<HTMLDivElement, UniversalDocumentProps>(
-  ({ template, data }, ref) => {
+  ({ template, data, editMode, selectedElementIndex, onSelectElement }, ref) => {
     const { width, height, backgroundColor, watermarkUrl } = template.base_config;
 
     return (
@@ -88,6 +91,7 @@ const UniversalDocument = forwardRef<HTMLDivElement, UniversalDocumentProps>(
         {template.layout_definition.map((el, idx) => {
           const type = el.type || "text";
           const value = el.fieldId ? (data[el.fieldId] || "") : (el.content || "");
+          const isSelected = selectedElementIndex === idx;
           
           const commonStyle: React.CSSProperties = {
             position: "absolute",
@@ -99,13 +103,24 @@ const UniversalDocument = forwardRef<HTMLDivElement, UniversalDocumentProps>(
             transform: el.transform,
             transformOrigin: el.transformOrigin,
             opacity: el.opacity,
+            cursor: editMode ? "pointer" : "inherit",
+            border: editMode ? (isSelected ? "2px solid #2563eb" : "1px dashed rgba(37, 99, 235, 0.3)") : "none",
+            backgroundColor: editMode && isSelected ? "rgba(37, 99, 235, 0.05)" : "transparent",
+            transition: "all 0.1s ease-out"
+          };
+
+          const handleElementClick = (e: React.MouseEvent) => {
+            if (editMode && onSelectElement) {
+              e.stopPropagation();
+              onSelectElement(idx);
+            }
           };
 
           if (type === "image") {
             const imgSrc = el.fieldId ? data[el.fieldId] : el.src;
             if (!imgSrc) return null;
             return (
-              <div key={`${idx}`} style={commonStyle}>
+              <div key={`${idx}`} style={commonStyle} onClick={handleElementClick}>
                 <img 
                   src={imgSrc} 
                   style={{ width: el.width, height: el.height, display: "block" }} 
@@ -118,7 +133,7 @@ const UniversalDocument = forwardRef<HTMLDivElement, UniversalDocumentProps>(
           if (type === "barcode") {
             if (!value) return null;
             return (
-              <div key={`${idx}`} style={commonStyle}>
+              <div key={`${idx}`} style={commonStyle} onClick={handleElementClick}>
                 <Barcode
                   value={String(value)}
                   width={Number(el.width) || 1.4}
@@ -134,6 +149,7 @@ const UniversalDocument = forwardRef<HTMLDivElement, UniversalDocumentProps>(
           return (
             <div
               key={`${idx}`}
+              onClick={handleElementClick}
               style={{
                 ...commonStyle,
                 fontSize: el.fontSize || "12pt",
