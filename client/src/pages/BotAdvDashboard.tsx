@@ -41,7 +41,7 @@ export default function BotAdvDashboard() {
         
         <div className="bg-white p-6 rounded-2xl shadow-sm border mb-6 flex gap-4">
           <input 
-            className="flex-1 p-3 border rounded-xl"
+            className="flex-1 p-3 bg-gray-900 text-white border border-gray-700 rounded-xl placeholder-gray-500"
             placeholder="Consulte por OAB, CPF, CNPJ ou Processo..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
