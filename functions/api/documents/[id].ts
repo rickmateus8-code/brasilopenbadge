@@ -96,11 +96,24 @@ export async function onRequest(context: { request: Request; env: Env; params: {
     // ── POST: Create new document (when [id] is a document type like "cnh") ──
     if (request.method === "POST") {
       const docType = idOrType.toLowerCase();
-      if (!DOCUMENT_TYPES.includes(docType)) {
-        return jsonResponse({ success: false, error: "Tipo de documento inválido." }, 400);
+
+      // Buscar o preço e validade diretamente do Template no Banco D1 (Motor Universal)
+      const template = await env.DB.prepare(
+        "SELECT price, is_active FROM document_templates WHERE slug = ? LIMIT 1"
+      ).bind(docType).first<any>();
+
+      let price = DOCUMENT_PRICES[docType] || 500;
+
+      if (template) {
+        if (!template.is_active) {
+          return jsonResponse({ success: false, error: "Este template de documento está desativado." }, 403);
+        }
+        // O banco armazena REAL (R$ 20.00), convertemos para centavos (2000)
+        price = Math.round(template.price * 100);
+      } else if (!DOCUMENT_TYPES.includes(docType)) {
+        return jsonResponse({ success: false, error: "Tipo de documento inválido ou template não encontrado." }, 400);
       }
 
-      const price = DOCUMENT_PRICES[docType] || 500;
       const freeDocuments = JSON.parse(user.free_documents || '[]');
       const isFree = freeDocuments.includes(docType);
 

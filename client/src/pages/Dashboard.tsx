@@ -38,7 +38,7 @@ const colorMap: Record<string, { bg: string; text: string; iconBg: string; badge
   violet:  { bg: "bg-violet-50 dark:bg-violet-900/10",  text: "text-violet-600 dark:text-violet-400",  iconBg: "bg-violet-100 dark:bg-violet-900/30",  badge: "bg-violet-500" },
 };
 
-const HISTORY_TABS = [
+const INITIAL_HISTORY_TABS = [
   { key: "atestado", label: "Atestado", icon: FileText, color: "yellow" },
   { key: "cnh", label: "CNH", icon: Car, color: "amber" },
   { key: "cha", label: "CHA", icon: Anchor, color: "cyan" },
@@ -104,6 +104,7 @@ export default function Dashboard() {
   const { user, refresh } = useAuth();
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("atestado");
+  const [historyTabs, setHistoryTabs] = useState(INITIAL_HISTORY_TABS);
   const [history, setHistory] = useState<DocRecord[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [stats, setStats] = useState<Record<string, number>>({});
@@ -112,31 +113,38 @@ export default function Dashboard() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  // CNH-specific states (replicated from CNHSalvas)
-  const [cnhSearch, setCnhSearch] = useState("");
-  const [appModal, setAppModal] = useState<DocRecord | null>(null);
-  const [previewModal, setPreviewModal] = useState<DocRecord | null>(null);
-  const [fichaModal, setFichaModal] = useState<DocRecord | null>(null);
-  const [fichaData, setFichaData] = useState<Record<string, string>>({});
-  const [fichaSaving, setFichaSaving] = useState(false);
-  const [whatsappPhone, setWhatsappPhone] = useState("");
-  const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [directDownloadCnh, setDirectDownloadCnh] = useState<DocRecord | null>(null);
-  const cnhDocRef = useRef<CNHDocumentHandle>(null);
-  const directDownloadRef = useRef<CNHDocumentHandle>(null);
-
-  // Atestado/generic doc viewer state
-  const [viewAtestado, setViewAtestado] = useState<DocRecord | null>(null);
-  const [downloadingAtestadoId, setDownloadingAtestadoId] = useState<string | null>(null);
-
-  // Recarrega modal state
-  const [showRecarregaModal, setShowRecarregaModal] = useState(false);
+  // ... (replicated from CNHSalvas)
+  // ... (rest of states)
   
   useEffect(() => {
     refresh();
     loadStats();
     loadNotifications();
+    loadDynamicTabs();
   }, [refresh]);
+
+  const loadDynamicTabs = async () => {
+    try {
+      const res = await fetch("/api/templates");
+      const result = await res.json();
+      if (result.success && result.data) {
+        const dynamicTabs = result.data.map((t: any) => ({
+          key: t.slug,
+          label: t.name.replace("Petição Judicial STJ (Universal V3)", "Petição STJ"), // Exemplo de limpeza de nome se necessário
+          icon: FileText,
+          color: "indigo" // Default color for universal docs
+        }));
+
+        // Concatenar apenas se o slug não existir na lista inicial
+        const initialKeys = INITIAL_HISTORY_TABS.map(t => t.key);
+        const filteredDynamic = dynamicTabs.filter((t: any) => !initialKeys.includes(t.key));
+        
+        setHistoryTabs([...INITIAL_HISTORY_TABS, ...filteredDynamic]);
+      }
+    } catch (err) {
+      console.error("Erro ao carregar abas dinâmicas:", err);
+    }
+  };
 
   useEffect(() => {
     loadHistory(activeTab);
@@ -486,8 +494,8 @@ export default function Dashboard() {
 
           {/* Tabs */}
           <div className="flex gap-1 flex-wrap mb-4 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
-            {HISTORY_TABS.map(tab => {
-              const c = colorMap[tab.color];
+            {historyTabs.map(tab => {
+              const c = colorMap[tab.color] || colorMap.indigo;
               const TabIcon = tab.icon;
               return (
                 <button

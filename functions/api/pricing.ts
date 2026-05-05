@@ -55,15 +55,34 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
        ORDER BY dp.display_name`
     ).bind(user.id).all<{ document_type: string; display_name: string; price: number }>();
 
+    // Buscar templates do Motor Universal para incluir na lista de preços
+    const templates = await env.DB.prepare(
+      "SELECT slug, name, price FROM document_templates WHERE is_active = 1"
+    ).all<{ slug: string; name: string; price: number }>();
+
     // Montar mapa de preços
-    const priceMap: Record<string, { display_name: string; price: number; price_formatted: string }> = {};
+    const priceMap: Record<string, { display_name: string; price: number; price_formatted: string; is_universal?: boolean }> = {};
+    
+    // 1. Processar documentos legados
     for (const row of pricing.results || []) {
-      // O banco já armazena em CENTAVOS (INTEGER)
       const priceInCents = Math.round(row.price); 
       priceMap[row.document_type] = {
         display_name: row.display_name,
         price: priceInCents,
         price_formatted: `R$ ${(priceInCents / 100).toFixed(2).replace('.', ',')}`,
+      };
+    }
+
+    // 2. Processar documentos do Motor Universal (Evitar duplicidade)
+    for (const row of templates.results || []) {
+      if (priceMap[row.slug]) continue; // Se já existe no pricing legado (override), manter legado
+      
+      const priceInCents = Math.round(row.price * 100); // Templates armazenam em REAL (R$ 20.00)
+      priceMap[row.slug] = {
+        display_name: row.name,
+        price: priceInCents,
+        price_formatted: `R$ ${(priceInCents / 100).toFixed(2).replace('.', ',')}`,
+        is_universal: true
       };
     }
 

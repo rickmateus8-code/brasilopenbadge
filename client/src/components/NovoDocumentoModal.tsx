@@ -76,7 +76,7 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
             key,
             label: val.display_name,
             icon: DOC_ICONS[key] || FileText,
-            path: DOC_PATHS[key] || "/dashboard",
+            path: val.is_universal ? `/emissor/${key}` : (DOC_PATHS[key] || "/dashboard"),
             price: val.price,
             priceFormatted: val.price_formatted,
           }));
