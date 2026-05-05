@@ -22,11 +22,16 @@ export default function EngineDashboard() {
   const fetchTemplates = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/templates");
-      const result = await res.json();
-      if (result.success) {
-        setDocuments(result.data);
-      }
+      const [resUniversal, resLegado] = await Promise.all([
+        fetch("/api/templates"),
+        fetch("/api/admin/legados")
+      ]);
+      const [uni, leg] = await Promise.all([resUniversal.json(), resLegado.json()]);
+      const combined = [
+        ...(uni.success ? uni.data : []),
+        ...(leg.success ? leg.data : [])
+      ];
+      setDocuments(combined);
     } catch (err) {
       toast.error("Erro ao carregar documentos.");
     } finally {
