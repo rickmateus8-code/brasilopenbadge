@@ -4,6 +4,7 @@
  */
 
 import type { Env } from '../../types';
+import { isValidCpf, isValidCrm, isValidCid } from '../../utils/validation';
 
 function getSessionToken(request: Request): string | null {
   const cookieHeader = request.headers.get("Cookie") || "";
@@ -229,6 +230,16 @@ export async function onRequest(context: { request: Request; env: Env; params: {
 
       if (body.cpf && existing.cpf && body.cpf !== existing.cpf) {
         return jsonResponse({ success: false, error: "CPF não pode ser alterado após emissão." }, 400);
+      }
+
+      if (body.cpf && !isValidCpf(body.cpf)) {
+        return jsonResponse({ success: false, error: "CPF inválido." }, 400);
+      }
+      if (body.crm && !isValidCrm(body.crm)) {
+        return jsonResponse({ success: false, error: "CRM inválido." }, 400);
+      }
+      if (body.cid && !isValidCid(body.cid)) {
+        return jsonResponse({ success: false, error: "CID inválido." }, 400);
       }
 
       const now = new Date().toISOString();
