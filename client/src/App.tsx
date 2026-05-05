@@ -103,6 +103,7 @@ import HistoricoSPSalvos from "./pages/HistoricoSPSalvos";
 import HistoricoUNINTERSalvos from "./pages/HistoricoUNINTERSalvos";
 import PeticaoCria from "./pages/PeticaoCria";
 import PeticaoSalvos from "./pages/PeticaoSalvos";
+import BotAdvDashboard from "./pages/BotAdvDashboard";
 import UniversalEmissor from "./pages/UniversalEmissor";
 import CNHLanding from "./pages/cnh-validation/CNHLanding";
 import CNHAutorizacao from "./pages/cnh-validation/CNHAutorizacao";
