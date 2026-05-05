@@ -287,6 +287,10 @@ function DocMasterRouter() {
         <ProtectedRoute component={PeticaoSalvos} />
       </Route>
 
+      <Route path="/bot-adv">
+        <ProtectedRoute component={BotAdvDashboard} />
+      </Route>
+
       {/* Motor Universal */}
       <Route path="/emissor/:slug">
         <ProtectedRoute component={UniversalEmissor} />
