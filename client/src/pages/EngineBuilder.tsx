@@ -8,11 +8,15 @@ export default function EngineBuilder() {
   const { slug } = useParams();
   const [template, setTemplate] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const workerRef = useRef<Worker | null>(null);
 
   useEffect(() => {
-    fetchTemplate();
-  }, [slug]);
+    workerRef.current = new Worker(new URL('@/workers/canvasWorker.js', import.meta.url));
+    workerRef.current.onmessage = (e) => {
+      if (e.data.success) toast.success("Processamento concluído via Worker.");
+    };
+    return () => workerRef.current?.terminate();
+  }, []);
 
   const fetchTemplate = async () => {
     try {
