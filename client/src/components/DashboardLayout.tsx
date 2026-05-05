@@ -9,8 +9,9 @@ import {
   LayoutDashboard, FileText, CreditCard, Receipt, LogOut,
   ChevronDown, ChevronRight, Menu, X, Sun, Moon,
   Shield, GraduationCap, Car, Anchor, FlaskConical,
-  User, Wallet, Settings, HelpCircle, Plus, Bell, Pill, Gift, FilePlus
+  User, Wallet, Settings, HelpCircle, Plus, Bell, Pill, Gift, FilePlus, Search
 } from "lucide-react";
+import { menuItems as externalMenuItems } from "./menuConfig";
 
 interface MenuItem {
   icon: React.ElementType;
@@ -20,36 +21,39 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-
-  {
-    icon: FileText, label: "Atestado",
-    children: [
-      { label: "Novo Atestado", path: "/atestadocria", isCreation: true },
-      { label: "Atestados Salvos", path: "/atestadosalvos" },
-    ],
-  },
-  {
-    icon: Car, label: "CNH Digital",
-    children: [
-      { label: "Criar CNH", path: "/cnhcria", isCreation: true },
-      { label: "CNHs Salvas", path: "/cnhsalvas" },
-    ],
-  },
-  {
-    icon: Anchor, label: "CHA Náutica",
-    children: [
-      { label: "Nova CHA", path: "/chacria", isCreation: true },
-      { label: "CHAs Salvas", path: "/chasalvas" },
-    ],
-  },
-  {
-    icon: FileText, label: "Petição STJ",
-    children: [
-      { label: "Nova Petição", path: "/peticaocria", isCreation: true },
-      { label: "Petições Salvas", path: "/peticaocria-salvos" },
-    ],
-  },
+  ...[
+    { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+    {
+      icon: FileText, label: "Atestado",
+      children: [
+        { label: "Novo Atestado", path: "/atestadocria", isCreation: true },
+        { label: "Atestados Salvos", path: "/atestadosalvos" },
+      ],
+    },
+    {
+      icon: Car, label: "CNH Digital",
+      children: [
+        { label: "Criar CNH", path: "/cnhcria", isCreation: true },
+        { label: "CNHs Salvas", path: "/cnhsalvas" },
+      ],
+    },
+    {
+      icon: Anchor, label: "CHA Náutica",
+      children: [
+        { label: "Nova CHA", path: "/chacria", isCreation: true },
+        { label: "CHAs Salvas", path: "/chasalvas" },
+      ],
+    },
+    {
+      icon: FileText, label: "Petição STJ",
+      children: [
+        { label: "Nova Petição", path: "/peticaocria", isCreation: true },
+        { label: "Petições Salvas", path: "/peticaocria-salvos" },
+      ],
+    },
+    { icon: Search, label: "Bot Adv", path: "/bot-adv" },
+  ]
+];
   {
     icon: FlaskConical, label: "Toxicológico",
     children: [
