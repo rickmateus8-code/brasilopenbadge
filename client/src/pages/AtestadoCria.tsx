@@ -2314,20 +2314,14 @@ export default function AtestadoCria() {
             </button>
           </div>
 
-          <div id="preview-container" style={{ 
-            flex: 1, overflow: "hidden", background: "#ffffff", borderRadius: 10, 
-            padding: "0", maxHeight: "calc(100vh - 84px)", // Altura maximizada
-            display: "flex", alignItems: "flex-start", justifyContent: "center",
-            position: "relative"
-          }}>
-            {/* A4: 794px x 1123px @ 96dpi */}
+          <div id="preview-container" className="flex-1 overflow-hidden bg-white rounded-xl p-2 md:p-0 md:max-h-[calc(100vh-84px)] flex items-start justify-center relative touch-none">
             <div style={{ 
               width: 794, 
               flexShrink: 0,
-              boxShadow: "0 10px 30px rgba(0,0,0,0.08)", // Sombra mais elegante
+              boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
               transform: `scale(${zoomScale}) translateY(${zoomTranslateY}px)`,
               transformOrigin: "top center",
-              transition: "transform 0.85s cubic-bezier(0.22, 1, 0.36, 1)",
+              transition: "transform 0.3s cubic-bezier(0.2, 0, 0, 1)",
             }}>
               <AttestationDocument
                 ref={previewRef}
