@@ -132,6 +132,7 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   laudocria: "Laudo Sodré",
   "historico-sp": "Histórico SP",
   "historico-uninter": "Histórico UNINTER",
+  "peticao-stj": "Petição STJ",
 };
 
 const PAGE_LABELS: Record<string, string> = {
@@ -176,19 +177,19 @@ export default function AdminDashboard() {
   const [userHistory, setUserHistory] = useState<any[]>([]);
   const [userDetails, setUserDetails] = useState<any>(null);
   const [balanceModalUser, setBalanceModalUser] = useState<UserRow | null>(null);
-  const [selectedUser, setSelectedElement] = useState<any>(null);
+  const [aclSelectedUser, setAclSelectedUser] = useState<any>(null);
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
   const [userPermissions, setUserPermissions] = useState<any>({ editaveis: [], ferramentas: [] });
 
   const handleOpenPermissions = (user: any) => {
-    setSelectedElement(user);
+    setAclSelectedUser(user);
     setUserPermissions(user.permissions ? JSON.parse(user.permissions) : { editaveis: [], ferramentas: [] });
     setShowPermissionsModal(true);
   };
 
   const savePermissions = async () => {
     try {
-      await fetch(`/api/admin/users/${selectedUser.id}/permissions`, {
+      await fetch(`/api/admin/users/${aclSelectedUser.id}/permissions`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ permissions: userPermissions })
