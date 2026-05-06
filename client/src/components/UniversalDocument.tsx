@@ -1,9 +1,9 @@
-import { forwardRef } from "react";
-
-import { forwardRef } from "react";
+import { forwardRef, useEffect } from "react";
 import Barcode from "react-barcode";
+import { loadDynamicFont } from "@/lib/fontLoader";
 
 interface LayoutElement {
+// ... resto da interface ...
   fieldId?: string; // ID do campo no formulário (se dinâmico)
   content?: string; // Texto estático (se não for dinâmico)
   type?: "text" | "image" | "barcode" | "static";
@@ -56,6 +56,15 @@ interface UniversalDocumentProps {
 const UniversalDocument = forwardRef<HTMLDivElement, UniversalDocumentProps>(
   ({ template, data, editMode, selectedElementIndex, onSelectElement }, ref) => {
     const { width, height, backgroundColor, watermarkUrl } = template.base_config;
+
+    // Carregar fontes dinamicamente baseadas na definição de layout
+    useEffect(() => {
+      const fonts = new Set<string>();
+      template.layout_definition.forEach(el => {
+        if (el.fontFamily) fonts.add(el.fontFamily);
+      });
+      fonts.forEach(font => loadDynamicFont(font));
+    }, [template.layout_definition]);
 
     return (
       <div
