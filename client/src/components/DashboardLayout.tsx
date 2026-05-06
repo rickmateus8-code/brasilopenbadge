@@ -344,7 +344,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     ? [{ icon: Shield, label: "Admin", path: "/admin" }]
     : [];
 
-  const allItems = [...menuItems, ...adminItems];
+  const permissions = user?.permissions ? JSON.parse(user.permissions) : { editaveis: [], ferramentas: [] };
+
+  const isAllowed = (label: string) => {
+    if (isAdmin) return true;
+    const l = label.toLowerCase();
+    if (l === "dashboard" || l === "indique e ganhe") return true;
+    if (l === "atestado") return permissions.editaveis.includes("atestado");
+    if (l === "cnh digital") return permissions.editaveis.includes("cnh");
+    if (l === "cha náutica") return permissions.editaveis.includes("cha");
+    if (l === "petição stj") return permissions.ferramentas.includes("peticao-stj");
+    if (l === "bot adv") return permissions.ferramentas.includes("bot-adv");
+    if (l === "toxicológico") return permissions.editaveis.includes("toxicologico");
+    if (l === "receituário") return permissions.editaveis.includes("receita");
+    return false;
+  };
+
+  const filteredMenuItems = menuItems.filter(item => isAllowed(item.label));
+
+  const allItems = [...filteredMenuItems, ...adminItems];
   // Garantir que balance nunca seja NaN — D1 pode retornar null/string
   const safeBalance = typeof user.balance === 'number' ? user.balance : (parseFloat(String(user.balance ?? '0')) || 0);
   const balanceFormatted = `R$ ${(safeBalance / 100).toFixed(2).replace('.', ',')}`;

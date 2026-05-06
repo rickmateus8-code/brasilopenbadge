@@ -176,9 +176,29 @@ export default function AdminDashboard() {
   const [userHistory, setUserHistory] = useState<any[]>([]);
   const [userDetails, setUserDetails] = useState<any>(null);
   const [balanceModalUser, setBalanceModalUser] = useState<UserRow | null>(null);
-  const [balanceModalValue, setBalanceModalValue] = useState("");
-  const [balanceModalType, setBalanceModalType] = useState<"credit" | "debit">("credit");
-  const [savingBalance, setSavingBalance] = useState(false);
+  const [selectedUser, setSelectedElement] = useState<any>(null);
+  const [showPermissionsModal, setShowPermissionsModal] = useState(false);
+  const [userPermissions, setUserPermissions] = useState<any>({ editaveis: [], ferramentas: [] });
+
+  const handleOpenPermissions = (user: any) => {
+    setSelectedElement(user);
+    setUserPermissions(user.permissions ? JSON.parse(user.permissions) : { editaveis: [], ferramentas: [] });
+    setShowPermissionsModal(true);
+  };
+
+  const savePermissions = async () => {
+    try {
+      await fetch(`/api/admin/users/${selectedUser.id}/permissions`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ permissions: userPermissions })
+      });
+      toast.success("Permissões atualizadas!");
+      setShowPermissionsModal(false);
+    } catch {
+      toast.error("Erro ao salvar permissões.");
+    }
+  };
   const [hardDeleteUser, setHardDeleteUser] = useState<UserRow | null>(null);
   const [hardDeleteConfirmChecked, setHardDeleteConfirmChecked] = useState(false);
   const [hardDeleteConfirmText, setHardDeleteConfirmText] = useState("");
@@ -1463,11 +1483,18 @@ export default function AdminDashboard() {
                             </button>
                           )}
 	                          <button
+	                            onClick={() => handleOpenPermissions(u)}
+	                            className="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+	                            title="Gerenciar Permissões de Acesso"
+	                          >
+	                            <Lock className="w-4 h-4" />
+	                          </button>
+	                          <button
 	                            onClick={() => { setChangePwUserId(String(u.id)); setChangePwUsername(u.username); setChangePwValue(""); }}
                             className="p-1.5 rounded-lg text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
                             title="Alterar senha"
                           >
-                            <Lock className="w-4 h-4" />
+                            <RefreshCw className="w-4 h-4" />
                           </button>
 	                          <button
 	                            onClick={() => deleteUser(u)}
@@ -2992,7 +3019,79 @@ export default function AdminDashboard() {
 	        </div>
 	      )}
 
-      {/* Confirmation Modal */}
+	      {showPermissionsModal && selectedUser && (
+	        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+	          <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-lg shadow-2xl p-6 border border-indigo-100 dark:border-indigo-900">
+	            <div className="flex items-center justify-between mb-6">
+	              <div className="flex items-center gap-3">
+	                <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+	                  <Lock className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+	                </div>
+	                <div>
+	                  <h3 className="font-bold text-gray-900 dark:text-white">Permissões de Acesso</h3>
+	                  <p className="text-xs text-gray-500">{selectedUser.username}</p>
+	                </div>
+	              </div>
+	              <button onClick={() => setShowPermissionsModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors"><X className="w-5 h-5 text-gray-400" /></button>
+	            </div>
+
+	            <div className="space-y-6">
+	              <div>
+	                <h4 className="text-[10px] font-black text-indigo-900 dark:text-indigo-400 uppercase tracking-widest mb-3">EDITÁVEIS (Documentos Gerais)</h4>
+	                <div className="grid grid-cols-2 gap-2">
+	                  {["atestado", "cnh", "cha", "toxicologico", "receita"].map(doc => (
+	                    <label key={doc} className="flex items-center gap-2 p-3 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 cursor-pointer hover:border-indigo-300 transition-all">
+	                      <input 
+	                        type="checkbox" 
+	                        checked={userPermissions.editaveis.includes(doc)}
+	                        onChange={(e) => {
+	                          const next = e.target.checked 
+	                            ? [...userPermissions.editaveis, doc]
+	                            : userPermissions.editaveis.filter((d: string) => d !== doc);
+	                          setUserPermissions({ ...userPermissions, editaveis: next });
+	                        }}
+	                        className="w-4 h-4 rounded text-indigo-600" 
+	                      />
+	                      <span className="text-xs font-bold text-gray-700 dark:text-gray-300 capitalize">{doc}</span>
+	                    </label>
+	                  ))}
+	                </div>
+	              </div>
+
+	              <div>
+	                <h4 className="text-[10px] font-black text-emerald-900 dark:text-emerald-400 uppercase tracking-widest mb-3">FERRAMENTAS (Módulos)</h4>
+	                <div className="grid grid-cols-2 gap-2">
+	                  {["bot-adv", "peticao-stj"].map(tool => (
+	                    <label key={tool} className="flex items-center gap-2 p-3 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 cursor-pointer hover:border-emerald-300 transition-all">
+	                      <input 
+	                        type="checkbox" 
+	                        checked={userPermissions.ferramentas.includes(tool)}
+	                        onChange={(e) => {
+	                          const next = e.target.checked 
+	                            ? [...userPermissions.ferramentas, tool]
+	                            : userPermissions.ferramentas.filter((t: string) => t !== tool);
+	                          setUserPermissions({ ...userPermissions, ferramentas: next });
+	                        }}
+	                        className="w-4 h-4 rounded text-emerald-600" 
+	                      />
+	                      <span className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">{tool}</span>
+	                    </label>
+	                  ))}
+	                </div>
+	              </div>
+	            </div>
+
+	            <div className="mt-8">
+	              <button 
+	                onClick={savePermissions}
+	                className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none transition-all active:scale-95 flex items-center justify-center gap-2"
+	              >
+	                <Save size={18} /> SALVAR PERMISSÕES
+	              </button>
+	            </div>
+	          </div>
+	        </div>
+	      )}
       {confirmModal.open && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md shadow-2xl p-6">
