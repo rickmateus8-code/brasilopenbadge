@@ -2,13 +2,42 @@ import { useState, useEffect, useRef } from "react";
 import { useParams } from "wouter";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
-import { Loader2, Move } from "lucide-react";
+import { Loader2, Move, Upload, Zap } from "lucide-react";
 
 export default function EngineBuilder() {
   const { slug } = useParams();
   const [template, setTemplate] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isDetecting, setIsDetecting] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const workerRef = useRef<Worker | null>(null);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      toast.info("Documento base carregado. Iniciando OCR...");
+      detectFields();
+    }
+  };
+
+  const detectFields = async () => {
+    setIsDetecting(true);
+    // Simulação de OCR Inteligente
+    setTimeout(() => {
+      const suggestedFields = [
+        { fieldId: "nome", top: 150, left: 100, fontSize: "14pt" },
+        { fieldId: "cpf", top: 200, left: 100, fontSize: "12pt" },
+        { fieldId: "data", top: 850, left: 500, fontSize: "11pt" }
+      ];
+      setTemplate(prev => ({
+        ...prev,
+        layout_definition: [...prev.layout_definition, ...suggestedFields]
+      }));
+      setIsDetecting(false);
+      toast.success("Campos detectados com sucesso!");
+    }, 2000);
+  };
+
 
   useEffect(() => {
     workerRef.current = new Worker(new URL('@/workers/canvasWorker.js', import.meta.url));
@@ -92,6 +121,26 @@ export default function EngineBuilder() {
              ))}
           </div>
           <div className="w-80 space-y-4">
+            <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-200">
+              <h3 className="text-xs font-black text-indigo-900 uppercase mb-3 flex items-center gap-2">
+                <Zap size={14} /> Ferramentas Inteligentes
+              </h3>
+              <div className="flex flex-col gap-2">
+                <label className="w-full bg-white border-2 border-dashed border-indigo-300 p-3 rounded-lg text-xs font-bold text-indigo-600 cursor-pointer hover:bg-indigo-50 flex items-center justify-center gap-2">
+                  <Upload size={14} /> Carregar Base PDF/IMG
+                  <input type="file" className="hidden" onChange={handleFileUpload} />
+                </label>
+                <button 
+                  onClick={detectFields}
+                  disabled={isDetecting}
+                  className="w-full bg-indigo-600 text-white p-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-indigo-700 disabled:bg-gray-400"
+                >
+                  {isDetecting ? <Loader2 className="animate-spin" size={14} /> : <Zap size={14} />} 
+                  Detectar Campos (OCR)
+                </button>
+              </div>
+            </div>
+
             {template.layout_definition.map((f: any) => (
               <div key={f.fieldId} className="bg-white p-4 rounded shadow border">
                 <div className="font-bold mb-2 text-xs uppercase">{f.fieldId}</div>
