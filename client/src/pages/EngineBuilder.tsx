@@ -39,13 +39,24 @@ export default function EngineBuilder() {
   };
 
 
+  const [history, setHistory] = useState<any[]>([]);
+
   useEffect(() => {
-    workerRef.current = new Worker(new URL('@/workers/canvasWorker.js', import.meta.url));
-    workerRef.current.onmessage = (e) => {
-      if (e.data.success) toast.success("Processamento concluído via Worker.");
-    };
-    return () => workerRef.current?.terminate();
-  }, []);
+    fetchHistory();
+  }, [slug]);
+
+  const fetchHistory = async () => {
+    try {
+      const res = await fetch(`/api/admin/templates/history?slug=${slug}`);
+      const result = await res.json();
+      if (result.success) setHistory(result.data);
+    } catch {}
+  };
+
+  const rollback = (h: any) => {
+    setTemplate({ ...template, layout_definition: JSON.parse(h.layout_definition) });
+    toast.success("Versão carregada! Salve para confirmar o rollback.");
+  };
 
   const fetchTemplate = async () => {
     try {
@@ -152,10 +163,27 @@ export default function EngineBuilder() {
             ))}
             <button 
               onClick={saveLayout}
-              className="w-full bg-emerald-600 text-white p-4 rounded-xl font-black uppercase hover:bg-emerald-700 shadow-lg"
+              className="w-full bg-emerald-600 text-white p-4 rounded-xl font-black uppercase hover:bg-emerald-700 shadow-lg mb-6"
             >
               Salvar Canvas
             </button>
+
+            {history.length > 0 && (
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                <h3 className="text-xs font-black text-gray-900 uppercase mb-3">Histórico de Versões</h3>
+                <div className="space-y-2">
+                  {history.map((h, i) => (
+                    <button 
+                      key={i} 
+                      onClick={() => rollback(h)}
+                      className="w-full text-left p-2 hover:bg-gray-100 rounded text-[10px] border border-transparent hover:border-gray-300"
+                    >
+                      Versão {new Date(h.created_at).toLocaleString('pt-BR')}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

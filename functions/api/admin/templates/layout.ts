@@ -18,7 +18,18 @@ export const onRequestPut: PagesFunction<Env> = async ({ request, env }) => {
       });
     }
 
-    // Atualizar o layout no banco D1
+    // 1. Backup da versão atual para o histórico
+    const current = await env.DB.prepare(
+      "SELECT layout_definition FROM document_templates WHERE slug = ?"
+    ).bind(slug).first() as any;
+
+    if (current && current.layout_definition) {
+      await env.DB.prepare(
+        "INSERT INTO document_template_history (template_slug, layout_definition) VALUES (?, ?)"
+      ).bind(slug, current.layout_definition).run();
+    }
+
+    // 2. Atualizar o layout no banco D1
     await env.DB.prepare(
       "UPDATE document_templates SET layout_definition = ? WHERE slug = ?"
     ).bind(JSON.stringify(layout_definition), slug).run();

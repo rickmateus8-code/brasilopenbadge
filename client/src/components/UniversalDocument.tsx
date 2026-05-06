@@ -6,7 +6,7 @@ interface LayoutElement {
 // ... resto da interface ...
   fieldId?: string; // ID do campo no formulário (se dinâmico)
   content?: string; // Texto estático (se não for dinâmico)
-  type?: "text" | "image" | "barcode" | "static";
+  type?: "text" | "image" | "barcode" | "static" | "signature";
   top?: number | string;
   bottom?: number | string;
   left?: number | string;
@@ -151,6 +151,24 @@ const UniversalDocument = forwardRef<HTMLDivElement, UniversalDocumentProps>(
                   margin={0}
                   background="transparent"
                 />
+              </div>
+            );
+          }
+
+          if (type === "signature") {
+            const sigUrl = el.fieldId ? data[el.fieldId] : el.src;
+            return (
+              <div key={`${idx}`} style={{ ...commonStyle, textAlign: "center" }} onClick={handleElementClick}>
+                {sigUrl ? (
+                  <img src={sigUrl} style={{ width: el.width || 200, height: el.height || 60, objectFit: "contain" }} alt="Signature" />
+                ) : (
+                  <div style={{ fontFamily: el.fontFamily || "'Dancing Script', cursive", fontSize: el.fontSize || "24pt", color: el.color || "#000" }}>
+                    {data.advogado || data.nome || "Assinatura Digital"}
+                  </div>
+                )}
+                <div style={{ fontSize: "8pt", marginTop: 2, color: "#666" }}>
+                  Assinado digitalmente em {data.data_assinatura || data.data || new Date().toLocaleDateString()}
+                </div>
               </div>
             );
           }
