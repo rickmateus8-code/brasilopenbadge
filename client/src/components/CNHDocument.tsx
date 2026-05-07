@@ -131,7 +131,9 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       if (!cvs) return null;
       return new Promise<Blob | null>((resolve) => {
         cvs.toBlob((blob) => resolve(blob), "image/jpeg", 0.92);
-      exportAsPdf: async () => {
+      });
+    },
+    exportAsPdf: async () => {
         // Garantir o carregamento da imagem antes de exportar
         const bg = await loadImage("/assets/cnh_modelo.jpg");
 
