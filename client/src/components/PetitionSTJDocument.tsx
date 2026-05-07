@@ -145,6 +145,11 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={valueStyle}>{data.advogado?.toUpperCase() || ""}</span>
         </div>
 
+        <div style={{ ...textStyle, top: MARGIN_TOP + 235.2, left: MARGIN_LEFT_BODY }}>
+          <span style={labelStyle}>CPF/CNPJ:</span>
+          <span style={valueStyle}>{data.cpf_cnpj || ""}</span>
+        </div>
+
         <div style={{ ...textStyle, top: MARGIN_TOP + 293.2, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Processo N°:</span>
           <span style={valueStyle}>{data.processo || ""}</span>
@@ -165,8 +170,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={{ ...valueStyle, color: "#000" }}>AUTORIZADO</span>
         </div>
 
-        {/* Código de Barras Dinâmico (AJUSTADO: -10% LARGURA / +5% ALTURA / 2 LINHAS RESPIRO) */}
-        <div style={{ position: "absolute", top: MARGIN_TOP + 509.2, left: MARGIN_LEFT_BODY + 20, zIndex: 11 }}>
+        {/* Código de Barras Dinâmico (AJUSTADO: Move esquerda -16px / -2%) */}
+        <div style={{ position: "absolute", top: MARGIN_TOP + 509.2, left: MARGIN_LEFT_BODY + 4, zIndex: 11 }}>
            <Barcode
              value={alvara_final}
              width={1.4}
