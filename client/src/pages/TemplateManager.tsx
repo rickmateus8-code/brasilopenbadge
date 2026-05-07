@@ -50,7 +50,23 @@ export default function TemplateManager() {
           
           <button 
             className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-6 rounded-xl shadow-lg shadow-indigo-200 transition-all active:scale-95 text-sm"
-            onClick={() => toast.info("Funcionalidade de criação em breve no VLE")}
+            onClick={async () => {
+              const name = prompt("Nome do novo template:");
+              const slug = prompt("Slug (ex: atestado-novo):");
+              if (!name || !slug) return;
+              const res = await fetch("/api/templates/create", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, slug, category: "Geral", price: 0 })
+              });
+              const data = await res.json();
+              if (data.success) {
+                toast.success("Template criado! Redirecionando...");
+                setLocation(`/engine-builder/${slug}`);
+              } else {
+                toast.error(data.error);
+              }
+            }}
           >
             <Plus size={18} /> NOVO TEMPLATE
           </button>
@@ -115,7 +131,10 @@ export default function TemplateManager() {
                           <ExternalLink size={18} />
                         </button>
                         <button 
-                          onClick={() => setLocation(`/engine-builder/${t.slug}`)}
+                          onClick={() => {
+                             const targetSlug = t.slug === 'peticao-stj-v3' ? 'peticaocria' : t.slug;
+                             setLocation(`/engine-builder/${targetSlug}`);
+                          }}
                           className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
                           title="Editar Layout"
                         >
