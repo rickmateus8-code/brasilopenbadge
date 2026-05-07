@@ -155,15 +155,8 @@ export default function TemplateManager() {
           </div>
         </div>
 
-        <div className="mt-8 bg-indigo-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl shadow-indigo-200">
-           <div className="relative z-10">
-              <h2 className="text-xl font-black italic uppercase mb-2">Visual Layout Editor (VLE)</h2>
-              <p className="text-indigo-100 text-sm max-w-2xl leading-relaxed">
-                Em breve você poderá criar e editar layouts de documentos arrastando elementos em tempo real. 
-                O sistema gerará automaticamente o JSON de configuração para o Banco D1.
-              </p>
-           </div>
-           <Layout size={120} className="absolute -right-8 -bottom-8 text-white/10 rotate-12" />
+        {/* Engine funcional - Rodapé limpo */}
+        <div className="mt-8">
         </div>
       </div>
     </DashboardLayout>
