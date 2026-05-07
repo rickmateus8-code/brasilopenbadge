@@ -93,22 +93,28 @@ export default function UniversalEmissor({ overrideSlug }: { overrideSlug?: stri
     async function fetchTemplate() {
       try {
         setLoading(true);
-        // Prioridade absoluta para o slug da engine
-        const targetSlug = slug || "peticaocria";
-        const res = await fetch(`/api/templates?slug=${targetSlug}`);
-        const result = await res.json();
+        // Tenta buscar pelo slug atual ou força peticaocria como fallback
+        let targetSlug = slug || "peticaocria";
+        let res = await fetch(`/api/templates?slug=${targetSlug}`);
+        let result = await res.json();
         
+        // Fallback para garantir peticaocria
+        if (!result.success || !result.data) {
+           console.warn("Template não encontrado, tentando fallback para peticaocria...");
+           res = await fetch(`/api/templates?slug=peticaocria`);
+           result = await res.json();
+        }
+
         if (result.success && result.data) {
           setTemplate(result.data);
           const initialForm: Record<string, any> = { id: "XXXX.XXXX" };
           result.data.fields_definition.forEach((f: any) => { initialForm[f.id] = ""; });
           setForm(initialForm);
         } else {
-          // Fallback forense: se falhar, não trava a UI
-          toast.error("Template carregado via modo de segurança.");
+          toast.error("Template inacessível.");
         }
       } catch {
-        toast.error("Erro crítico ao carregar template");
+        toast.error("Falha na Engine de Emissão");
       } finally {
         setLoading(false);
       }
