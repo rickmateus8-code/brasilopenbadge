@@ -106,6 +106,7 @@ const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "users", label: "Usuários", icon: Users },
   { key: "monitoring", label: "Monitoramento", icon: Monitor },
   { key: "pricing", label: "Preços", icon: DollarSign },
+  { key: "templates", label: "Templates (Engine)", icon: Layout },
   { key: "notices", label: "Avisos", icon: Bell },
   { key: "logs", label: "Logs", icon: Activity },
   { key: "emissions", label: "Emissões", icon: FileText },
