@@ -2099,8 +2099,9 @@ export default function AdminDashboard() {
 	                </thead>
 	                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
 	                    {filteredEmissions.map(e => {
-	                L2102- 	                const createDate = new Date(e.created_at);
-	                L2103- 	                const docDateValue = e.emission_date || e.data_emissao || e.dataEmissao || e.data || "";
+	                        const createDate = new Date(e.created_at);
+	                        const docDateValue = e.emission_date || e.data_emissao || e.dataEmissao || e.data || "";
+
 
 	                return (
 	                <tr key={`${e.table_source}-${e.id}`} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">

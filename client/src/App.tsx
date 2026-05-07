@@ -288,8 +288,8 @@ function DocMasterRouter() {
         <ProtectedRoute component={PeticaoSalvos} />
       </Route>
 
-      <Route path="/bot-adv">
-        <ProtectedRoute component={BotAdvDashboard} />
+      <Route path="/engine-builder/:slug">
+        <ProtectedRoute component={EngineBuilder} />
       </Route>
 
       {/* Motor Universal */}
