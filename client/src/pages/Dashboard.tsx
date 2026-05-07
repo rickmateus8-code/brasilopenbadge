@@ -144,14 +144,16 @@ export default function Dashboard() {
       const res = await fetch("/api/templates");
       const result = await res.json();
       if (result.success && result.data) {
-        // Usar um Set para rastrear labels já existentes para evitar duplicidade visual
-        const existingLabels = new Set(INITIAL_HISTORY_TABS.map(t => t.label));
-        const initialKeys = new Set(INITIAL_HISTORY_TABS.map(t => t.key));
+        // Filtragem agressiva para evitar duplicidade
+        const initialKeys = new Set(INITIAL_HISTORY_TABS.map(t => t.key.toLowerCase()));
+        const initialLabels = new Set(INITIAL_HISTORY_TABS.map(t => t.label.toLowerCase()));
         
         const dynamicTabs = result.data
           .map((t: any) => {
             let label = t.name;
-            if (label.includes("Petição")) label = "Petição STJ";
+            // Padronização de nomes conhecidos para detecção de duplicidade
+            if (label.toLowerCase().includes("petição")) label = "Petição STJ";
+            
             return {
               key: t.slug,
               label: label,
@@ -160,8 +162,13 @@ export default function Dashboard() {
             };
           })
           .filter((t: any) => {
-            if (initialKeys.has(t.key) || existingLabels.has(t.label)) return false;
-            existingLabels.add(t.label);
+            const lowLabel = t.label.toLowerCase();
+            const lowKey = t.key.toLowerCase();
+            // Se já existe na lista inicial ou se o label já foi adicionado
+            if (initialKeys.has(lowKey) || initialLabels.has(lowLabel)) return false;
+            
+            // Marcar como processado
+            initialLabels.add(lowLabel);
             return true;
           });
 

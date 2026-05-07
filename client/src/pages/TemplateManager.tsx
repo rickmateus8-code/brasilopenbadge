@@ -115,9 +115,9 @@ export default function TemplateManager() {
                           <ExternalLink size={18} />
                         </button>
                         <button 
-                          onClick={() => toast.info("Visual Layout Editor (VLE) em desenvolvimento")}
+                          onClick={() => setLocation(`/engine-builder/${t.slug}`)}
                           className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
-                          title="Editar Layout"
+                          title="Editar Layout (VLE)"
                         >
                           <Settings size={18} />
                         </button>
@@ -138,10 +138,9 @@ export default function TemplateManager() {
 
         <div className="mt-8 bg-indigo-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl shadow-indigo-200">
            <div className="relative z-10">
-              <h2 className="text-xl font-black italic uppercase mb-2">Visual Layout Editor (VLE)</h2>
+              <h2 className="text-xl font-black italic uppercase mb-2">Visual Layout Editor (VLE) Ativado</h2>
               <p className="text-indigo-100 text-sm max-w-2xl leading-relaxed">
-                Em breve você poderá criar e editar layouts de documentos arrastando elementos em tempo real. 
-                O sistema gerará automaticamente o JSON de configuração para o Banco D1.
+                O motor de renderização dinâmico está operacional. Edite qualquer template clicando no ícone de engrenagem para ajustar coordenadas, fontes e logos em tempo real.
               </p>
            </div>
            <Layout size={120} className="absolute -right-8 -bottom-8 text-white/10 rotate-12" />

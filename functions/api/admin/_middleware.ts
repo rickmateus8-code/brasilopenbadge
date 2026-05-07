@@ -55,7 +55,7 @@ export const onRequest: PagesFunction<Env>[] = [
       const adminUser = await env.DB.prepare(
         `SELECT u.id, u.username, u.role
          FROM sessions s
-         JOIN users u ON s.user_id = u.id
+         JOIN users u ON CAST(s.user_id AS TEXT) = CAST(u.id AS TEXT)
          WHERE s.token = ?
            AND s.expires_at > datetime('now')
            AND u.is_active = 1

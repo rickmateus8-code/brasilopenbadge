@@ -2099,8 +2099,9 @@ export default function AdminDashboard() {
 	                </thead>
 	                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
 	                    {filteredEmissions.map(e => {
-	                const createDate = new Date(e.created_at);
-	                const docDateValue = e.data_emissao || e.dataEmissao || e.data || "";
+	                L2102- 	                const createDate = new Date(e.created_at);
+	                L2103- 	                const docDateValue = e.emission_date || e.data_emissao || e.dataEmissao || e.data || "";
+
 	                return (
 	                <tr key={`${e.table_source}-${e.id}`} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
 	                <td className="px-4 py-2.5 font-mono text-gray-400 text-[10px]">{e.id.slice(0, 8)}...</td>
@@ -2807,21 +2808,26 @@ export default function AdminDashboard() {
                             <input 
                               type="checkbox" 
                               checked={isChecked}
-                              onChange={async (e) => {
+                            onChange={async (e) => {
                                 const nextPerms = { ...perms };
                                 if (e.target.checked) nextPerms.editaveis.push(doc);
                                 else nextPerms.editaveis = nextPerms.editaveis.filter((d: string) => d !== doc);
+                                
+                                // Optimistic update
+                                setSelectedUser({ ...selectedUser, permissions: JSON.stringify(nextPerms) });
+                                
                                 try {
-                                  const res = await fetch(`/api/admin/users/${selectedUser.id}/permissions`, {
+                                  await fetch(`/api/admin/users/${selectedUser.id}/permissions`, {
                                     method: "PUT",
                                     headers: { "Content-Type": "application/json" },
                                     body: JSON.stringify({ permissions: nextPerms })
                                   });
-                                  if (res.ok) {
-                                    setSelectedUser({ ...selectedUser, permissions: JSON.stringify(nextPerms) });
-                                    toast.success("Acesso atualizado!");
-                                  }
-                                } catch { toast.error("Erro ao salvar"); }
+                                  toast.success("Acesso atualizado!");
+                                } catch { 
+                                  // Rollback on error
+                                  setSelectedUser({ ...selectedUser, permissions: JSON.stringify(perms) });
+                                  toast.error("Erro ao salvar"); 
+                                }
                               }}
                               className="w-4 h-4 rounded text-indigo-600" 
                             />
