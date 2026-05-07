@@ -3,7 +3,7 @@
  *
  * Usa o template de imagem (cnh_modelo.jpg) como background e desenha
  * todos os campos por cima via Canvas 2D, replicando fielmente
- * o layout do docmaster.store com coordenadas pixel-perfect.
+ * o layout do elitedoc.store com coordenadas pixel-perfect.
  *
  * Fontes: Ultra (AltraW00-SmallCaps.woff2) + OCR-B (ocrbstd.otf)
  * Exporta como imagem JPEG de alta qualidade.
@@ -41,12 +41,6 @@ export interface CNHDocumentProps {
   observacoes: string;
   fotoUrl: string;
   assinaturaUrl: string;
-  fotoScale?: number;
-  fotoOffsetX?: number;
-  fotoOffsetY?: number;
-  assScale?: number;
-  assOffsetX?: number;
-  assOffsetY?: number;
   codigoQR?: string;
   blurred?: boolean;
 }
@@ -187,7 +181,7 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
     await loadFonts();
 
     try {
-      // Carregar template original do docmaster (modelo.jpg)
+      // Carregar template original do elitedoc (modelo.jpg)
       const bg = await loadImage("/assets/cnh_modelo.jpg");
       cvs.width = bg.width;
       cvs.height = bg.height;
@@ -197,7 +191,7 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       ctx.fillStyle = "#000";
       ctx.textBaseline = "top";
 
-      // Função helper txt() — idêntica à do docmaster
+      // Função helper txt() — idêntica à do elitedoc
       // txt(texto, x, y, tamanho, bold, cor, maxWidth)
       const txt = (t: string, x: number, y: number, s: number, _b?: boolean | number, c?: string, mw?: number) => {
         if (!t) return;
@@ -223,7 +217,7 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
 
       const d = (v: string) => fmtDate(v);
 
-      // ===== CAMPOS PRINCIPAIS (posições idênticas ao docmaster) =====
+      // ===== CAMPOS PRINCIPAIS (posições idênticas ao elitedoc) =====
 
       // Nome Completo
       txt(props.nome, 314, 452, 22, 1, "#000", 520);
@@ -344,18 +338,12 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       if (props.fotoUrl) {
         try {
           const fotoImg = await loadImage(props.fotoUrl);
-          const scale = props.fotoScale ?? 1.0;
-          const offsetX = props.fotoOffsetX ?? 0;
-          const offsetY = props.fotoOffsetY ?? 0;
-          const baseBw = 247, baseBh = 300;
-          const bw = Math.round(baseBw * scale);
-          const bh = Math.round(baseBh * scale);
-          const bx = 305 + Math.round((baseBw - bw) / 2) + offsetX;
-          const by = 550 + Math.round((baseBh - bh) / 2) + offsetY;
+          const bx = 305, by = 550, bw = 247, bh = 300;
           ctx.save();
           ctx.beginPath();
           ctx.rect(bx, by, bw, bh);
           ctx.clip();
+          // Centralizar e cobrir o box (cover)
           const imgRatio = fotoImg.width / fotoImg.height;
           const boxRatio = bw / bh;
           let drawW: number, drawH: number, drawX: number, drawY: number;
@@ -373,7 +361,7 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
           ctx.drawImage(fotoImg, drawX, drawY, drawW, drawH);
           ctx.restore();
         } catch (e) {
-          console.warn("Erro foto:", e);
+          console.warn("Erro ao carregar foto:", e);
         }
       }
 
@@ -381,38 +369,26 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       if (props.assinaturaUrl) {
         try {
           const assImg = await loadImage(props.assinaturaUrl);
-          const scale = props.assScale ?? 1.0;
-          const offsetX = props.assOffsetX ?? 0;
-          const offsetY = props.assOffsetY ?? 0;
-          const baseBw = 250, baseBh = 60;
-          const bw = Math.round(baseBw * scale);
-          const bh = Math.round(baseBh * scale);
-          const bx = 303 + Math.round((baseBw - bw) / 2) + offsetX;
-          const by = 870 + Math.round((baseBh - bh) / 2) + offsetY;
+          const bx = 303, by = 870, bw = 250, bh = 60;
           ctx.save();
           ctx.beginPath();
           ctx.rect(bx, by, bw, bh);
           ctx.clip();
-
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = assImg.width;
-          tempCanvas.height = assImg.height;
-          const tctx = tempCanvas.getContext('2d')!;
-          tctx.fillStyle = '#FFFFFF';
-          tctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-          tctx.drawImage(assImg, 0, 0);
-
-          const ratio = Math.min(bw / assImg.width, bh / assImg.height);
-          const drawW = assImg.width * ratio;
-          const drawH = assImg.height * ratio;
-          const drawX = bx + (bw - drawW) / 2;
-          const drawY = by + (bh - drawH) / 2;
-
+          // Filtro idêntico ao elitedoc: contraste alto + escurecer + grayscale
           ctx.filter = "contrast(5) brightness(0.3) grayscale(1)";
-          ctx.drawImage(tempCanvas, drawX, drawY, drawW, drawH);
+
+          const imgW = assImg.width;
+          const imgH = assImg.height;
+          const ratio = Math.min(bw / imgW, bh / imgH);
+          const scale = ratio; // Aumentado de 0.9 para 1.0 (30% maior)
+          const finalW = imgW * scale;
+          const finalH = imgH * scale;
+          const drawX = bx + (bw - finalW) / 2;
+          const drawY = by + (bh - finalH) / 2 - 5; // Ajuste vertical de 5px
+          ctx.drawImage(assImg, drawX, drawY, finalW, finalH);
           ctx.restore();
         } catch (e) {
-          console.warn("Erro assinatura:", e);
+          console.warn("Erro ao carregar assinatura:", e);
         }
       }
 

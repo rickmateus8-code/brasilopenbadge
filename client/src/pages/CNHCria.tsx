@@ -1,7 +1,7 @@
 /**
  * CNHCria — Formulário de criação de CNH Digital
  *
- * Layout visual idêntico ao docmaster.store/cnhcria:
+ * Layout visual idêntico ao elitedoc.store/cnhcria:
  * - Single column (sem preview lateral)
  * - Inputs com border tracejada em vermelho/laranja
  * - Botão SALVAR DOCUMENTO flutuante no bottom
@@ -19,7 +19,7 @@ import { getQRCodeCNH } from "@/config.qrcode";
 import { validarCPF, formatarCPF as formatarCPFUtil, formatarRG, displayDateToHtml } from "@/lib/utils";
 import EmissionModal from "@/components/EmissionModal";
 import {
-  ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Save, Download, MessageCircle, Copy, Zap,
+  ArrowLeft, Save, Download, MessageCircle, Copy, Zap,
   Upload, Type, Lock, AlertCircle, Car
 } from "lucide-react";
 
@@ -71,8 +71,6 @@ function formatarCPFInput(v: string): string {
   return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
 }
 
-const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
-
 // ─── Componente ──────────────────────────────────────────────────────────────
 export default function CNHCria() {
   const { user, updateBalance } = useAuth();
@@ -88,12 +86,6 @@ export default function CNHCria() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isApplyingAI, setIsApplyingAI] = useState(false);
   const [documentPrice, setDocumentPrice] = useState(0);
-  const [fotoScale, setFotoScale] = useState(1.0);
-  const [fotoOffsetX, setFotoOffsetX] = useState(0);
-  const [fotoOffsetY, setFotoOffsetY] = useState(0);
-  const [assScale, setAssScale] = useState(1.0);
-  const [assOffsetX, setAssOffsetX] = useState(0);
-  const [assOffsetY, setAssOffsetY] = useState(0);
 
   const [data, setData] = useState<CNHDocumentProps>({
     nome: "", cpf: "", rg: "", orgaoEmissor: "", ufRG: "",
@@ -113,25 +105,6 @@ export default function CNHCria() {
     if (field === "rg") val = val.replace(/\./g, ""); // RG sem pontos, apenas números
     setData(d => ({ ...d, [field]: val }));
   }, []);
-
-  const changeFotoScale = (delta: number) => {
-    setFotoScale((prev) => clamp(Number((prev + delta).toFixed(2)), 0.5, 1.8));
-  };
-  const changeFotoOffsetX = (delta: number) => {
-    setFotoOffsetX((prev) => clamp(prev + delta, -80, 80));
-  };
-  const changeFotoOffsetY = (delta: number) => {
-    setFotoOffsetY((prev) => clamp(prev + delta, -80, 80));
-  };
-  const changeAssScale = (delta: number) => {
-    setAssScale((prev) => clamp(Number((prev + delta).toFixed(2)), 0.5, 2.5));
-  };
-  const changeAssOffsetX = (delta: number) => {
-    setAssOffsetX((prev) => clamp(prev + delta, -80, 80));
-  };
-  const changeAssOffsetY = (delta: number) => {
-    setAssOffsetY((prev) => clamp(prev + delta, -40, 40));
-  };
 
   // ─── AUTO Generators ──────────────────────────────────────────────────────
   const handleAutoRegistro = () => setData(d => ({ ...d, registro: gerarNumero(11) }));
@@ -489,50 +462,6 @@ export default function CNHCria() {
       setLoading(false);
     }
   };
-
-  const handleExportFrente = async () => {
-    if (!docRef.current) return;
-    setLoading(true);
-    try {
-      const blob = await docRef.current.exportCropBlob(0, 0, 2461, 1700);
-      if (!blob) throw new Error("Falha ao gerar frente");
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `CNH_FRENTE_${data.nome || "DOC"}.jpg`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      toast.success("Frente exportada com sucesso!");
-    } catch {
-      toast.error("Erro ao exportar frente");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleExportVerso = async () => {
-    if (!docRef.current) return;
-    setLoading(true);
-    try {
-      const blob = await docRef.current.exportCropBlob(0, 1700, 2461, 1796);
-      if (!blob) throw new Error("Falha ao gerar verso");
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `CNH_VERSO_${data.nome || "DOC"}.jpg`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      toast.success("Verso exportado com sucesso!");
-    } catch {
-      toast.error("Erro ao exportar verso");
-    } finally {
-      setLoading(false);
-    }
-  };
   // ─── WhatsApp Share ────────────────────────────────────────────────────────
   const handleWhatsApp = () => {
     const texto = encodeURIComponent(
@@ -551,7 +480,7 @@ export default function CNHCria() {
 
   // ─── RENDER ────────────────────────────────────────────────────────────────
   return (
-    <div className="h-screen w-full flex flex-col overflow-hidden bg-[#0f172a] font-sans">
+    <DashboardLayout>
       {/* CSS tema escuro DocMaster */}
       <style>{`
         .cnh-form {
@@ -562,8 +491,7 @@ export default function CNHCria() {
           padding-bottom: 120px;
           width: 100%;
           max-width: 100%;
-          flex: 1;
-          overflow-y: auto;
+          min-height: 100vh;
           box-sizing: border-box;
         }
         .cnh-header-top {
@@ -745,60 +673,12 @@ export default function CNHCria() {
           background: #1e293b;
         }
         .cnh-preview-rosto {
-          width: 230px;
-          height: 279px;
+          width: 150px;
+          height: 200px;
         }
         .cnh-preview-ass {
           width: 100%;
-          height: 110px;
-        }
-        .cnh-preview-frame {
-          width: 100%;
-          height: 100%;
-          overflow: hidden;
-          position: relative;
-          background: #0f172a;
-        }
-        .cnh-preview-frame img {
-          width: 100%;
-          height: 100%;
-          display: block;
-        }
-        .cnh-arrow-controls {
-          margin-top: 8px;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-        .cnh-arrow-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 8px;
-          font-size: 11px;
-          color: #94a3b8;
-          font-weight: 600;
-        }
-        .cnh-arrow-buttons {
-          display: inline-flex;
-          gap: 4px;
-        }
-        .cnh-arrow-btn {
-          width: 28px;
-          height: 28px;
-          border: 1px solid #334155;
-          border-radius: 6px;
-          background: #1e293b;
-          color: #e2e8f0;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: border-color 0.2s, background 0.2s;
-        }
-        .cnh-arrow-btn:hover {
-          border-color: #2563eb;
-          background: #1d4ed8;
+          height: 60px;
         }
         .cnh-ass-option {
           padding: 10px;
@@ -968,22 +848,12 @@ export default function CNHCria() {
           margin: 20px 0 10px 0;
         }
         @media (max-width: 640px) {
-          .cnh-form { padding: 16px; padding-bottom: 100px; }
-          .cnh-import-box { grid-template-columns: 1fr; gap: 10px; }
-          .cnh-fotos-grid { grid-template-columns: 1fr; gap: 20px; }
-          .cnh-form-grid { grid-template-columns: 1fr; gap: 12px; }
-          .cnh-form-group { grid-column: span 1 !important; }
-          .cnh-header-top h1 { font-size: 16px; }
-          .cnh-header-top { margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
-          .cnh-preview-rosto { width: 100%; max-width: 280px; height: 340px; margin: 0 auto; }
-          .cnh-preview-ass { width: 100%; height: 120px; }
-          .cnh-arrow-btn { width: 44px; height: 44px; } /* Aumentar target de toque */
-          .cnh-floating-save { width: calc(100% - 32px); bottom: 16px; height: 56px; font-size: 15px; }
+          .cnh-import-box { grid-template-columns: 1fr; }
+          .cnh-fotos-grid { grid-template-columns: 1fr; }
+          .cnh-form-grid { grid-template-columns: 1fr 1fr; }
         }
         @media (max-width: 480px) {
-          .cnh-header-top { flex-direction: column; align-items: flex-start; }
-          .cnh-btn-voltar { width: 100%; justify-content: center; }
-          .cnh-import-box .modelo-text, .cnh-import-box textarea { height: 120px; }
+          .cnh-form-grid { grid-template-columns: 1fr; }
         }
       `}</style>
 
@@ -1018,12 +888,6 @@ export default function CNHCria() {
               </button>
               <button className="cnh-btn-download" onClick={handleExportJPEG} disabled={loading} style={{ background: "#6b7280" }}>
                 <Download size={14} /> Baixar JPEG
-              </button>
-              <button className="cnh-btn-download" onClick={handleExportFrente} disabled={loading} style={{ background: "#0f766e" }}>
-                📷 Download FRENTE
-              </button>
-              <button className="cnh-btn-download" onClick={handleExportVerso} disabled={loading} style={{ background: "#1d4ed8" }}>
-                📷 Download VERSO
               </button>
               <button className="cnh-btn-whatsapp" onClick={handleWhatsApp}>
                 <MessageCircle size={14} /> Enviar via WhatsApp
@@ -1218,58 +1082,12 @@ export default function CNHCria() {
             </div>
             <div className="cnh-preview-box cnh-preview-rosto">
               {data.fotoUrl ? (
-                <div className="cnh-preview-frame">
-                  <img
-                    src={data.fotoUrl}
-                    alt="Rosto"
-                    style={{
-                      objectFit: "cover",
-                      transform: `translate(${fotoOffsetX}px, ${fotoOffsetY}px) scale(${fotoScale})`,
-                      transformOrigin: "center",
-                    }}
-                  />
-                </div>
+                <img src={data.fotoUrl} alt="Rosto" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               ) : (
                 <span style={{ fontSize: 12, color: "#64748b" }}>Prévia Rosto</span>
               )}
             </div>
-            {data.fotoUrl && (
-              <div className="cnh-arrow-controls">
-                <div className="cnh-arrow-row">
-                  <span>Tamanho Foto 3x4: {Math.round(fotoScale * 100)}%</span>
-                  <div className="cnh-arrow-buttons">
-                    <button type="button" className="cnh-arrow-btn" onClick={() => changeFotoScale(-0.05)} aria-label="Diminuir tamanho da foto">
-                      <ArrowDown size={14} />
-                    </button>
-                    <button type="button" className="cnh-arrow-btn" onClick={() => changeFotoScale(0.05)} aria-label="Aumentar tamanho da foto">
-                      <ArrowUp size={14} />
-                    </button>
-                  </div>
-                </div>
-                <div className="cnh-arrow-row">
-                  <span>Posição Horizontal: {fotoOffsetX}px</span>
-                  <div className="cnh-arrow-buttons">
-                    <button type="button" className="cnh-arrow-btn" onClick={() => changeFotoOffsetX(-2)} aria-label="Mover foto para esquerda">
-                      <ArrowLeft size={14} />
-                    </button>
-                    <button type="button" className="cnh-arrow-btn" onClick={() => changeFotoOffsetX(2)} aria-label="Mover foto para direita">
-                      <ArrowRight size={14} />
-                    </button>
-                  </div>
-                </div>
-                <div className="cnh-arrow-row">
-                  <span>Posição Vertical: {fotoOffsetY}px</span>
-                  <div className="cnh-arrow-buttons">
-                    <button type="button" className="cnh-arrow-btn" onClick={() => changeFotoOffsetY(-2)} aria-label="Mover foto para cima">
-                      <ArrowUp size={14} />
-                    </button>
-                    <button type="button" className="cnh-arrow-btn" onClick={() => changeFotoOffsetY(2)} aria-label="Mover foto para baixo">
-                      <ArrowDown size={14} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Botão Aplicar Ajustes Visuais (Gemini Nano Banana) */}
             {data.fotoUrl && (
               <button
                 onClick={handleApplyAI}
@@ -1356,58 +1174,11 @@ export default function CNHCria() {
             {/* Prévia Assinatura */}
             <div className="cnh-preview-box cnh-preview-ass">
               {data.assinaturaUrl ? (
-                <div className="cnh-preview-frame">
-                  <img
-                    src={data.assinaturaUrl}
-                    alt="Assinatura"
-                    style={{
-                      objectFit: "contain",
-                      transform: `translate(${assOffsetX}px, ${assOffsetY}px) scale(${assScale})`,
-                      transformOrigin: "center",
-                    }}
-                  />
-                </div>
+                <img src={data.assinaturaUrl} alt="Assinatura" style={{ height: "40px", objectFit: "contain" }} />
               ) : (
                 <span style={{ fontSize: 12, color: "#64748b" }}>Prévia Assinatura</span>
               )}
             </div>
-            {data.assinaturaUrl && (
-              <div className="cnh-arrow-controls">
-                <div className="cnh-arrow-row">
-                  <span>Tamanho Assinatura: {Math.round(assScale * 100)}%</span>
-                  <div className="cnh-arrow-buttons">
-                    <button type="button" className="cnh-arrow-btn" onClick={() => changeAssScale(-0.05)} aria-label="Diminuir tamanho da assinatura">
-                      <ArrowDown size={14} />
-                    </button>
-                    <button type="button" className="cnh-arrow-btn" onClick={() => changeAssScale(0.05)} aria-label="Aumentar tamanho da assinatura">
-                      <ArrowUp size={14} />
-                    </button>
-                  </div>
-                </div>
-                <div className="cnh-arrow-row">
-                  <span>Posição Horizontal: {assOffsetX}px</span>
-                  <div className="cnh-arrow-buttons">
-                    <button type="button" className="cnh-arrow-btn" onClick={() => changeAssOffsetX(-2)} aria-label="Mover assinatura para esquerda">
-                      <ArrowLeft size={14} />
-                    </button>
-                    <button type="button" className="cnh-arrow-btn" onClick={() => changeAssOffsetX(2)} aria-label="Mover assinatura para direita">
-                      <ArrowRight size={14} />
-                    </button>
-                  </div>
-                </div>
-                <div className="cnh-arrow-row">
-                  <span>Posição Vertical: {assOffsetY}px</span>
-                  <div className="cnh-arrow-buttons">
-                    <button type="button" className="cnh-arrow-btn" onClick={() => changeAssOffsetY(-2)} aria-label="Mover assinatura para cima">
-                      <ArrowUp size={14} />
-                    </button>
-                    <button type="button" className="cnh-arrow-btn" onClick={() => changeAssOffsetY(2)} aria-label="Mover assinatura para baixo">
-                      <ArrowDown size={14} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -1435,12 +1206,6 @@ export default function CNHCria() {
           <CNHDocument
             ref={docRef}
             {...data}
-            fotoScale={fotoScale}
-            fotoOffsetX={fotoOffsetX}
-            fotoOffsetY={fotoOffsetY}
-            assScale={assScale}
-            assOffsetX={assOffsetX}
-            assOffsetY={assOffsetY}
             codigoQR={saved ? codigoQR : "PREVIEW"}
             blurred={!saved}
           />
@@ -1485,6 +1250,6 @@ export default function CNHCria() {
 
       {/* Animação de spin */}
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
+    </DashboardLayout>
   );
 }
