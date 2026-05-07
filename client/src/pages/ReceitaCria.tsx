@@ -331,48 +331,62 @@ export default function ReceitaCria() {
         </span>
       </div>
 
-      <div style={{ display: "flex", gap: 14, padding: 14, maxWidth: 2000, margin: "0 auto" }}>
+      <div className="flex flex-col lg:flex-row gap-4 p-3 md:p-4 max-w-[1600px] mx-auto overflow-hidden">
         {/* ═══ COLUNA ESQUERDA — FORMULÁRIO ═══ */}
-        <div style={{ width: 580, flexShrink: 0, overflowY: "auto", maxHeight: "calc(100vh - 70px)" }}>
-          <form onSubmit={handleShowConfirm}>
+        <div className="w-full lg:w-[540px] xl:w-[580px] lg:flex-shrink-0 lg:overflow-y-auto lg:max-h-[calc(100vh-100px)] custom-scrollbar">
+          <form onSubmit={handleShowConfirm} className="space-y-4">
 
             {/* Tipo de Receituário */}
-            <div style={card}>
-              <p style={secTitle}>Tipo de Receituário</p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800">
+              <p className="text-xs font-black text-indigo-900 dark:text-indigo-400 uppercase tracking-widest mb-4 border-b pb-2">Tipo de Receituário</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {([
-                  { value: "simples", label: "Simples", desc: "Branco", color: "#374151" },
-                  { value: "controle_especial", label: "Controle Especial", desc: "2 vias — Retenção", color: "#92400e" },
-                  { value: "antimicrobiano", label: "Antimicrobiano", desc: "Notificação", color: "#1e40af" },
+                  { value: "simples", label: "Simples", desc: "Branco", color: "gray" },
+                  { value: "controle_especial", label: "Controle Especial", desc: "2 vias — Retenção", color: "amber" },
+                  { value: "antimicrobiano", label: "Antimicrobiano", desc: "Notificação", color: "blue" },
                 ] as const).map(t => (
-                  <button key={t.value} type="button" onClick={() => setTipoReceituario(t.value)}
-                    style={{
-                      padding: "10px 8px", borderRadius: 8, fontWeight: 700, fontSize: 11, cursor: "pointer", textAlign: "center",
-                      border: tipoReceituario === t.value ? `2px solid ${t.color}` : "2px solid #d1d5db",
-                      background: tipoReceituario === t.value ? `${t.color}15` : "#f8fafc",
-                      color: tipoReceituario === t.value ? t.color : "#374151",
-                    }}>
-                    <div style={{ marginBottom: 2 }}>{t.label}</div>
-                    <div style={{ fontSize: 9, fontWeight: 400, color: "#6b7280" }}>{t.desc}</div>
+                  <button 
+                    key={t.value} 
+                    type="button" 
+                    onClick={() => setTipoReceituario(t.value)}
+                    className={`
+                      p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-1
+                      ${tipoReceituario === t.value 
+                        ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-900 dark:text-indigo-100 shadow-md ring-2 ring-indigo-500/10' 
+                        : 'border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 text-gray-500'
+                      }
+                    `}
+                  >
+                    <div className="text-xs font-black uppercase">{t.label}</div>
+                    <div className="text-[10px] font-medium opacity-60">{t.desc}</div>
                   </button>
                 ))}
               </div>
             </div>
 
             {/* ── 1. Unidade Dr. Consulta ── */}
-            <div style={card}>
-              <p style={secTitle}>1. Unidade Dr. Consulta</p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
-                <div>
-                  <label style={lbl}>Estado (UF) *</label>
-                  <select style={sel} value={filtroUF} onChange={e => { setFiltroUF(e.target.value); setFiltroCidade(""); setUnidades([]); setFiltroUnidade(null); setMedicoSelecionado(false); setResultados([]); setShowResultados(false); }}>
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800">
+              <p className="text-xs font-black text-indigo-900 dark:text-indigo-400 uppercase tracking-widest mb-4 border-b pb-2">1. Unidade Dr. Consulta</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Estado (UF) *</label>
+                  <select 
+                    className="w-full h-11 px-4 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm focus:border-indigo-500 outline-none transition-all"
+                    value={filtroUF} 
+                    onChange={e => { setFiltroUF(e.target.value); setFiltroCidade(""); setUnidades([]); setFiltroUnidade(null); setMedicoSelecionado(false); setResultados([]); setShowResultados(false); }}
+                  >
                     <option value="">Selecione</option>
                     {ufs.map(uf => <option key={uf} value={uf}>{uf}</option>)}
                   </select>
                 </div>
-                <div>
-                  <label style={lbl}>Cidade *</label>
-                  <select style={sel} value={filtroCidade} onChange={e => { setFiltroCidade(e.target.value); setFiltroUnidade(null); }} disabled={!filtroUF || cidades.length === 0}>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Cidade *</label>
+                  <select 
+                    className="w-full h-11 px-4 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm focus:border-indigo-500 outline-none transition-all disabled:opacity-50"
+                    value={filtroCidade} 
+                    onChange={e => { setFiltroCidade(e.target.value); setFiltroUnidade(null); }} 
+                    disabled={!filtroUF || cidades.length === 0}
+                  >
                     <option value="">Selecione</option>
                     {cidades.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
@@ -381,269 +395,246 @@ export default function ReceitaCria() {
 
               {/* Lista de unidades */}
               {unidades.length > 0 && (
-                <div>
-                  <label style={lbl}>Unidade *</label>
-                  <div style={{ maxHeight: 180, overflowY: "auto", border: "1px solid #e5e7eb", borderRadius: 8 }}>
+                <div className="mt-4">
+                  <label className="text-[11px] font-bold text-gray-600 uppercase ml-1 mb-2 block">Selecione a Unidade *</label>
+                  <div className="max-h-48 overflow-y-auto border-2 border-gray-100 dark:border-gray-800 rounded-xl divide-y divide-gray-50 dark:divide-gray-800 bg-white dark:bg-gray-950">
                     {unidades.map(u => (
-                      <div key={u.id} onClick={() => selecionarUnidade(u)}
-                        style={{
-                          padding: "8px 12px", borderBottom: "1px solid #f3f4f6", cursor: "pointer",
-                          background: filtroUnidade?.id === u.id ? "#eff6ff" : "",
-                          borderLeft: filtroUnidade?.id === u.id ? "3px solid #005CA9" : "3px solid transparent",
-                        }}
-                        onMouseEnter={e => { if (filtroUnidade?.id !== u.id) e.currentTarget.style.background = "#f8fafc"; }}
-                        onMouseLeave={e => { if (filtroUnidade?.id !== u.id) e.currentTarget.style.background = ""; }}>
-                        <strong style={{ fontSize: 12, color: "#111" }}>{u.nome}</strong>
-                        <br />
-                        <span style={{ fontSize: 10, color: "#6b7280" }}>{u.endereco}, {u.bairro}</span>
-                        {u.rt_nome && <span style={{ fontSize: 10, color: "#059669", marginLeft: 6 }}>RT: {u.rt_nome}</span>}
+                      <div 
+                        key={u.id} 
+                        onClick={() => selecionarUnidade(u)}
+                        className={`
+                          p-3 cursor-pointer transition-all hover:bg-indigo-50 dark:hover:bg-indigo-900/10
+                          ${filtroUnidade?.id === u.id ? "bg-indigo-50 dark:bg-indigo-900/20 border-l-4 border-indigo-600" : "border-l-4 border-transparent"}
+                        `}
+                      >
+                        <div className="text-xs font-black text-gray-900 dark:text-white uppercase">{u.nome}</div>
+                        <div className="text-[10px] text-gray-500 mt-0.5">{u.endereco}, {u.bairro}</div>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
-
-              {/* Unidade selecionada */}
-              {filtroUnidade && (
-                <div style={{ marginTop: 8, background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "8px 12px" }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#166534", marginBottom: 2 }}>Unidade Selecionada:</div>
-                  <div style={{ fontSize: 12, color: "#111", fontWeight: 600 }}>{form.unidade}</div>
-                  <div style={{ fontSize: 10, color: "#6b7280" }}>{form.enderecoEmitente}</div>
-                </div>
-              )}
             </div>
 
             {/* ── 2. Médico ── */}
-            <div style={card}>
-              <p style={secTitle}>2. Médico Prescritor</p>
-
-              {/* Modo: manual ou busca */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
-                <div>
-                  <label style={lbl}>Especialidade</label>
-                  <select style={sel} value={filtroEsp} onChange={e => setFiltroEsp(e.target.value)}>
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800">
+              <p className="text-xs font-black text-indigo-900 dark:text-indigo-400 uppercase tracking-widest mb-4 border-b pb-2">2. Médico Prescritor</p>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Especialidade</label>
+                  <select 
+                    className="w-full h-11 px-4 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none"
+                    value={filtroEsp} 
+                    onChange={e => setFiltroEsp(e.target.value)}
+                  >
                     <option value="">Todas</option>
                     {especialidades.map(e => <option key={e} value={e}>{e}</option>)}
                   </select>
                 </div>
-                <div>
-                  <label style={lbl}>Buscar por Nome</label>
-                  <input style={inp} value={termoBusca} onChange={e => setTermoBusca(e.target.value)}
-                    placeholder="Nome do médico..." onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); buscarMedicos(); } }} />
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Buscar por Nome</label>
+                  <input 
+                    className="w-full h-11 px-4 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none"
+                    value={termoBusca} 
+                    onChange={e => setTermoBusca(e.target.value)}
+                    placeholder="Nome do médico..." 
+                    onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); buscarMedicos(); } }} 
+                  />
                 </div>
               </div>
 
-              <button type="button" style={{ ...btnBlue, width: "100%", marginBottom: 8 }} onClick={buscarMedicos} disabled={buscando || !filtroUF}>
-                {buscando ? "Buscando..." : "BUSCAR MÉDICO"}
+              <button 
+                type="button" 
+                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none transition-all active:scale-95 disabled:opacity-50"
+                onClick={buscarMedicos} 
+                disabled={buscando || !filtroUF}
+              >
+                {buscando ? "BUSCANDO..." : "BUSCAR MÉDICO"}
               </button>
 
-              {/* Resultados */}
-              {showResultados && (
-                <div>
-                  {erroBusca && <p style={{ color: "#ef4444", fontSize: 12, margin: "6px 0" }}>{erroBusca}</p>}
-                  {resultados.length > 0 && (
-                    <div style={{ maxHeight: 180, overflowY: "auto", border: "1px solid #e5e7eb", borderRadius: 8 }}>
-                      {resultados.map((m, i) => (
-                        <div key={m.id || i} onClick={() => selecionarMedico(m)}
-                          style={{ padding: "8px 12px", borderBottom: "1px solid #f3f4f6", cursor: "pointer" }}
-                          onMouseEnter={e => e.currentTarget.style.background = "#eff6ff"}
-                          onMouseLeave={e => e.currentTarget.style.background = ""}>
-                          <strong style={{ fontSize: 12, color: "#111" }}>{m.nome_medico}</strong>
-                          <span style={{ fontSize: 11, color: "#6b7280", marginLeft: 8 }}>CRM/{m.uf_crm || m.uf_local} {m.crm}</span>
-                          <br /><span style={{ color: "#059669", fontSize: 11 }}>{m.especialidade}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Médico selecionado ou preenchimento manual */}
-              {medicoSelecionado && form.medico ? (
-                <div style={{ marginTop: 8, background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "8px 12px" }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#166534", marginBottom: 2 }}>Médico Selecionado:</div>
-                  <div style={{ fontSize: 12, color: "#111" }}>{form.medico}</div>
-                  <div style={{ fontSize: 11, color: "#6b7280" }}>{form.crm} — {form.especialidade}</div>
-                  <button type="button" style={{ ...btnGray, padding: "4px 10px", fontSize: 10, marginTop: 4 }} onClick={() => { setMedicoSelecionado(false); setShowResultados(true); }}>
-                    Alterar
-                  </button>
-                </div>
-              ) : (
-                <div style={{ marginTop: 8, padding: "8px 0" }}>
-                  <p style={{ fontSize: 10, color: "#6b7280", margin: "0 0 6px" }}>Ou preencha manualmente:</p>
-                  <div style={{ display: "grid", gap: 6 }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 6 }}>
-                      <div>
-                        <label style={lbl}>Nome Completo *</label>
-                        <input style={inp} value={form.medico} onChange={e => setForm(p => ({ ...p, medico: e.target.value.toUpperCase() }))} placeholder="NOME DO MÉDICO" />
-                      </div>
-                      <div>
-                        <label style={lbl}>CRM *</label>
-                        <input style={inp} value={form.crm} onChange={e => setForm(p => ({ ...p, crm: e.target.value }))} placeholder="CRM/UF 000000" />
-                      </div>
-                    </div>
-                    <div>
-                      <label style={lbl}>Especialidade</label>
-                      <select style={sel} value={form.especialidade} onChange={e => setForm(p => ({ ...p, especialidade: e.target.value }))}>
-                        <option value="">Selecione</option>
-                        {especialidades.map(e => <option key={e} value={e}>{e}</option>)}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Assinatura */}
-              <div style={{ marginTop: 10, borderTop: "1px solid #e5e7eb", paddingTop: 10 }}>
-                <p style={{ fontSize: 11, fontWeight: 700, color: "#374151", marginBottom: 6 }}>Assinatura do Médico</p>
-                <div style={{ display: "grid", gap: 6 }}>
-                  <div>
-                    <label style={lbl}>Cor da Tinta</label>
-                    <select style={sel} value={signatureColor} onChange={e => setSignatureColor(e.target.value)}>
-                      <option value="#0b109f">Azul Caneta</option>
-                      <option value="#000000">Preto</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={lbl}>Foto da Assinatura</label>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      {signatureImage ? (
-                        <div style={{ position: "relative" }}>
-                          <img src={signatureImage} alt="Assinatura" style={{ maxHeight: 50, maxWidth: 160, objectFit: "contain", border: "1px solid #e5e7eb", borderRadius: 6 }} />
-                          <button type="button" onClick={() => { setSignatureImage(""); if (signatureRef.current) signatureRef.current.value = ""; }}
-                            style={{ position: "absolute", top: -6, right: -6, background: "#ef4444", color: "#fff", border: "none", borderRadius: "50%", width: 18, height: 18, fontSize: 10, cursor: "pointer" }}>✕</button>
-                        </div>
-                      ) : (
-                        <label style={{ ...btnBlue, padding: "5px 10px", cursor: "pointer", fontSize: 10 }}>
-                          ENVIAR FOTO
-                          <input ref={signatureRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleSignatureUpload} />
-                        </label>
-                      )}
-                    </div>
-                  </div>
+              {/* Médico fields manual... */}
+              <div className="mt-6 pt-6 border-t border-gray-50 dark:border-gray-800 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                   <div className="space-y-1.5">
+                      <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Nome Completo *</label>
+                      <input 
+                        className="w-full h-11 px-4 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none uppercase"
+                        value={form.medico} 
+                        onChange={e => setForm(p => ({ ...p, medico: e.target.value.toUpperCase() }))} 
+                        placeholder="NOME DO MÉDICO" 
+                      />
+                   </div>
+                   <div className="space-y-1.5">
+                      <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">CRM *</label>
+                      <input 
+                        className="w-full h-11 px-4 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none"
+                        value={form.crm} 
+                        onChange={e => setForm(p => ({ ...p, crm: e.target.value }))} 
+                        placeholder="CRM/UF 000000" 
+                      />
+                   </div>
                 </div>
               </div>
             </div>
 
             {/* ── 3. Paciente ── */}
-            <div style={card}>
-              <p style={secTitle}>3. Dados do Paciente</p>
-              <div style={{ display: "grid", gap: 8 }}>
-                <div>
-                  <label style={lbl}>Nome Completo *</label>
-                  <input style={inp} value={form.paciente} onChange={e => setForm(p => ({ ...p, paciente: e.target.value }))} placeholder="Nome Completo do Paciente" required />
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800">
+              <p className="text-xs font-black text-indigo-900 dark:text-indigo-400 uppercase tracking-widest mb-4 border-b pb-2">3. Dados do Paciente</p>
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Nome Completo *</label>
+                  <input 
+                    className="w-full h-11 px-4 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none"
+                    value={form.paciente} 
+                    onChange={e => setForm(p => ({ ...p, paciente: e.target.value }))} 
+                    placeholder="Nome Completo do Paciente" 
+                    required 
+                  />
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                  <div>
-                    <label style={lbl}>CPF {createdCode && <span style={{ fontSize: 9, color: "#ef4444", fontWeight: 700 }}>🔒 BLOQUEADO</span>}</label>
-                    <input style={{ ...inp, ...(createdCode ? { background: "#f3f4f6", color: "#6b7280", cursor: "not-allowed" } : {}) }} value={form.cpf} onChange={e => { if (!createdCode) setForm(p => ({ ...p, cpf: maskCPF(e.target.value) })); }} placeholder="000.000.000-00" inputMode="numeric" maxLength={14} readOnly={!!createdCode} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">CPF</label>
+                    <input 
+                      className="w-full h-11 px-4 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none"
+                      value={form.cpf} 
+                      onChange={e => setForm(p => ({ ...p, cpf: maskCPF(e.target.value) }))} 
+                      placeholder="000.000.000-00" 
+                      inputMode="numeric" 
+                      maxLength={14} 
+                    />
                   </div>
-                  <div>
-                    <label style={lbl}>RG / Identidade</label>
-                    <input style={inp} value={form.identidade} onChange={e => setForm(p => ({ ...p, identidade: e.target.value }))} placeholder="Número do RG" />
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Cidade</label>
+                    <input 
+                      className="w-full h-11 px-4 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none uppercase"
+                      value={form.cidade} 
+                      onChange={e => setForm(p => ({ ...p, cidade: e.target.value.toUpperCase() }))} 
+                      placeholder="Ex: SÃO PAULO" 
+                    />
                   </div>
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                  <div>
-                    <label style={lbl}>Telefone</label>
-                    <input style={inp} value={form.telefone} onChange={e => setForm(p => ({ ...p, telefone: e.target.value }))} placeholder="(00) 00000-0000" />
-                  </div>
-                  <div>
-                    <label style={lbl}>Cidade</label>
-                    <input style={inp} value={form.cidade} onChange={e => setForm(p => ({ ...p, cidade: e.target.value.toUpperCase() }))} placeholder="Ex: SÃO PAULO" />
-                  </div>
-                </div>
-                <div>
-                  <label style={lbl}>Endereço Completo</label>
-                  <input style={inp} value={form.endereco} onChange={e => setForm(p => ({ ...p, endereco: e.target.value }))} placeholder="Rua, Número, Bairro, CEP" />
                 </div>
               </div>
             </div>
 
             {/* ── 4. Prescrição ── */}
-            <div style={card}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                <p style={{ ...secTitle, margin: 0, border: "none", padding: 0 }}>4. Prescrição Médica</p>
-                <button type="button" style={{ ...btnBlue, padding: "5px 12px", fontSize: 11 }} onClick={addMedicamento}>+ ADICIONAR</button>
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800">
+              <div className="flex items-center justify-between mb-4 border-b pb-2">
+                <p className="text-xs font-black text-indigo-900 dark:text-indigo-400 uppercase tracking-widest">4. Prescrição Médica</p>
+                <button 
+                  type="button" 
+                  className="px-3 py-1.5 bg-indigo-600 text-white font-bold text-[10px] rounded-lg hover:bg-indigo-700 transition-colors uppercase"
+                  onClick={addMedicamento}
+                >
+                  + Adicionar
+                </button>
               </div>
-              {prescricao.map((item, idx) => (
-                <div key={idx} style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: "10px 12px", marginBottom: 8, background: "#fafafa" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#005CA9", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700 }}>{idx + 1}</div>
-                      <button type="button" onClick={() => updateMedicamento(idx, "uso_interno", !item.uso_interno)}
-                        style={{ padding: "3px 10px", borderRadius: 4, fontWeight: 600, fontSize: 10, cursor: "pointer", background: item.uso_interno ? "#059669" : "#7c3aed", color: "#fff", border: "none" }}>
-                        {item.uso_interno ? "USO INTERNO" : "USO EXTERNO"}
-                      </button>
-                    </div>
-                    {prescricao.length > 1 && <button type="button" style={btnRed} onClick={() => removeMedicamento(idx)}>✕</button>}
-                  </div>
-                  <div style={{ display: "grid", gap: 5 }}>
-                    <input style={inp} value={item.medicamento} onChange={e => updateMedicamento(idx, "medicamento", e.target.value.toUpperCase())} placeholder="Nome do Medicamento — Ex: AMOXICILINA 500MG CÁPSULA" required={idx === 0} />
-                    <div style={{ display: "grid", gridTemplateColumns: "auto 1fr 2fr", gap: 5, alignItems: "end" }}>
-                      <div>
-                        <label style={{ ...lbl, fontSize: 10 }}>Qtd</label>
-                        <select style={{ ...sel, width: 60, padding: "7px 4px", fontSize: 12 }}
-                          value={(() => { const m = item.quantidade.match(/^(\d+)/); return m ? (parseInt(m[1]) <= 10 ? m[1] : "custom") : ""; })()}
-                          onChange={e => {
-                            const v = e.target.value;
-                            if (v === "custom") { updateMedicamento(idx, "quantidade", ""); return; }
-                            if (!v) { updateMedicamento(idx, "quantidade", ""); return; }
-                            const n = parseInt(v);
-                            const ext: Record<number,string> = {1:"uma",2:"duas",3:"três",4:"quatro",5:"cinco",6:"seis",7:"sete",8:"oito",9:"nove",10:"dez"};
-                            const numStr = String(n).padStart(2, "0");
-                            updateMedicamento(idx, "quantidade", `${numStr} (${ext[n]}) caixa${n > 1 ? "s" : ""}`);
-                          }}>
-                          <option value="">-</option>
-                          {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={String(n)}>{String(n).padStart(2,"0")}</option>)}
-                          <option value="custom">+</option>
-                        </select>
+              <div className="space-y-4">
+                {prescricao.map((item, idx) => (
+                  <div key={idx} className="p-4 rounded-xl border-2 border-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950/50 space-y-3 relative group">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-black">{idx + 1}</div>
+                        <button 
+                          type="button" 
+                          onClick={() => updateMedicamento(idx, "uso_interno", !item.uso_interno)}
+                          className={`px-3 py-1 rounded-md text-[10px] font-black uppercase transition-colors ${item.uso_interno ? 'bg-emerald-600 text-white' : 'bg-blue-600 text-white'}`}
+                        >
+                          {item.uso_interno ? "USO INTERNO" : "USO EXTERNO"}
+                        </button>
                       </div>
-                      <div>
-                        <label style={{ ...lbl, fontSize: 10 }}>Quantidade</label>
-                        <input style={inp} value={item.quantidade} onChange={e => updateMedicamento(idx, "quantidade", e.target.value)} placeholder="Ex: 01 (uma) caixa" />
-                      </div>
-                      <input style={inp} value={item.modo_uso} onChange={e => updateMedicamento(idx, "modo_uso", e.target.value)} placeholder="Uso: Tomar 1 cápsula de 8/8h por 7 dias" />
+                      {prescricao.length > 1 && (
+                        <button 
+                          type="button" 
+                          className="w-6 h-6 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-lg flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
+                          onClick={() => removeMedicamento(idx)}
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
+                    <input 
+                      className="w-full h-11 px-4 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950 text-sm outline-none uppercase"
+                      value={item.medicamento} 
+                      onChange={e => updateMedicamento(idx, "medicamento", e.target.value.toUpperCase())} 
+                      placeholder="Nome do Medicamento" 
+                      required={idx === 0} 
+                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <input 
+                        className="w-full h-11 px-4 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950 text-sm outline-none"
+                        value={item.quantidade} 
+                        onChange={e => updateMedicamento(idx, "quantidade", e.target.value)} 
+                        placeholder="Quantidade (ex: 01 caixa)" 
+                      />
+                      <input 
+                        className="w-full h-11 px-4 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950 text-sm outline-none"
+                        value={item.modo_uso} 
+                        onChange={e => updateMedicamento(idx, "modo_uso", e.target.value)} 
+                        placeholder="Modo de uso" 
+                      />
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
             {/* ── 5. Data ── */}
-            <div style={card}>
-              <p style={secTitle}>5. Data de Emissão</p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                <div>
-                  <label style={lbl}>Data *</label>
-                  <input style={inp} value={form.dataEmissao} onChange={e => setForm(p => ({ ...p, dataEmissao: handleDateInput(e.target.value) }))} placeholder="DD/MM/AAAA" maxLength={10} inputMode="numeric" required />
-                </div>
-                <div>
-                  <label style={lbl}>Hora</label>
-                  <input style={inp} type="time" value={form.horaEmissao} onChange={e => setForm(p => ({ ...p, horaEmissao: e.target.value }))} />
-                </div>
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800">
+              <p className="text-xs font-black text-indigo-900 dark:text-indigo-400 uppercase tracking-widest mb-4 border-b pb-2">5. Data de Emissão</p>
+              <div className="grid grid-cols-2 gap-4">
+                <input 
+                  className="w-full h-11 px-4 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none"
+                  value={form.dataEmissao} 
+                  onChange={e => setForm(p => ({ ...p, dataEmissao: handleDateInput(e.target.value) }))} 
+                  placeholder="DD/MM/AAAA" 
+                  maxLength={10} 
+                  inputMode="numeric" 
+                  required 
+                />
+                <input 
+                  className="w-full h-11 px-4 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none"
+                  type="time" 
+                  value={form.horaEmissao} 
+                  onChange={e => setForm(p => ({ ...p, horaEmissao: e.target.value }))} 
+                />
               </div>
             </div>
 
-            {/* Botões */}
-            <div style={{ display: "flex", gap: 10, paddingBottom: 20 }}>
-              <button type="button" style={{ ...btnGray, flex: 1 }} onClick={() => navigate("/dashboard")}>CANCELAR</button>
-              <button type="submit" disabled={isLoading}
-                style={{ ...btnGreen, flex: 2, opacity: isLoading ? 0.7 : 1, fontSize: 14, padding: "12px 0" }}>
-                {isLoading ? "Emitindo..." : "CONFIRMAR E EMITIR RECEITA"}
+            {/* Botões de Ação */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
+              <button 
+                type="button" 
+                className="flex-1 py-4 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-black text-sm rounded-2xl active:scale-95 transition-all"
+                onClick={() => navigate("/dashboard")}
+              >
+                CANCELAR
+              </button>
+              <button 
+                type="submit" 
+                disabled={isLoading}
+                className="flex-[2] py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm rounded-2xl shadow-xl shadow-emerald-100 dark:shadow-none active:scale-95 transition-all disabled:opacity-50"
+              >
+                {isLoading ? "EMITINDO..." : "CONFIRMAR E EMITIR RECEITA"}
               </button>
             </div>
           </form>
         </div>
 
         {/* ═══ COLUNA DIREITA — PREVIEW ═══ */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, padding: "8px 12px", background: "#fff", borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
-            <span style={{ fontWeight: 700, color: "#374151", fontSize: 14 }}>Preview em Tempo Real</span>
-            <span style={{ fontSize: 11, color: "#6b7280", background: "#fef3c7", padding: "3px 8px", borderRadius: 5, fontWeight: 600 }}>QR Code gerado somente após emissão</span>
+        <div className="hidden lg:flex flex-1 flex-col min-w-0">
+          <div className="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm mb-4 flex items-center justify-between">
+            <span className="text-sm font-black text-gray-800 dark:text-gray-200 italic uppercase">Preview em Tempo Real</span>
+            <div className="px-3 py-1 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-[10px] font-black rounded-lg border border-amber-100 dark:border-amber-800">
+              QR CODE GERADO PÓS-EMISSÃO
+            </div>
           </div>
-          <div style={{ flex: 1, overflow: "auto", background: "#525659", borderRadius: 10, padding: 14, maxHeight: "calc(100vh - 120px)" }}>
-            <div ref={previewRef} style={{ width: 794, margin: "0 auto", boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}>
+          <div className="flex-1 bg-gray-200 dark:bg-gray-800 rounded-3xl p-6 overflow-auto shadow-inner flex items-start justify-center">
+            <div 
+              ref={previewRef} 
+              className="bg-white shadow-2xl origin-top transition-transform"
+              style={{ width: 794, minHeight: 1123, flexShrink: 0 }}
+            >
               <PrescricaoDocument data={previewData} />
             </div>
           </div>

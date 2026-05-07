@@ -45,7 +45,6 @@ const INITIAL_HISTORY_TABS = [
   { key: "historico-sp", label: "Histórico SP", icon: GraduationCap, color: "green" },
   { key: "historico-uninter", label: "UNINTER", icon: GraduationCap, color: "indigo" },
   { key: "receita", label: "Receitas", icon: Pill, color: "violet" },
-  { key: "peticaocria", label: "Petição STJ", icon: FileText, color: "indigo" },
 ];
 
 const APP_LINKS = {
@@ -145,18 +144,28 @@ export default function Dashboard() {
       const res = await fetch("/api/templates");
       const result = await res.json();
       if (result.success && result.data) {
-        const dynamicTabs = result.data.map((t: any) => ({
-          key: t.slug,
-          label: t.name.replace("Petição Judicial STJ (Universal V3)", "Petição STJ"), // Exemplo de limpeza de nome se necessário
-          icon: FileText,
-          color: "indigo" // Default color for universal docs
-        }));
-
-        // Concatenar apenas se o slug não existir na lista inicial
-        const initialKeys = INITIAL_HISTORY_TABS.map(t => t.key);
-        const filteredDynamic = dynamicTabs.filter((t: any) => !initialKeys.includes(t.key));
+        // Usar um Set para rastrear labels já existentes para evitar duplicidade visual
+        const existingLabels = new Set(INITIAL_HISTORY_TABS.map(t => t.label));
+        const initialKeys = new Set(INITIAL_HISTORY_TABS.map(t => t.key));
         
-        setHistoryTabs([...INITIAL_HISTORY_TABS, ...filteredDynamic]);
+        const dynamicTabs = result.data
+          .map((t: any) => {
+            let label = t.name;
+            if (label.includes("Petição")) label = "Petição STJ";
+            return {
+              key: t.slug,
+              label: label,
+              icon: FileText,
+              color: "indigo"
+            };
+          })
+          .filter((t: any) => {
+            if (initialKeys.has(t.key) || existingLabels.has(t.label)) return false;
+            existingLabels.add(t.label);
+            return true;
+          });
+
+        setHistoryTabs([...INITIAL_HISTORY_TABS, ...dynamicTabs]);
       }
     } catch (err) {
       console.error("Erro ao carregar abas dinâmicas:", err);
@@ -445,14 +454,14 @@ export default function Dashboard() {
         )}
 
         {/* Welcome Banner */}
-        <div className="bg-gradient-to-r from-red-600 to-red-500 rounded-2xl p-7 mb-7 text-white shadow-lg">
-          <h1 className="text-2xl font-bold">
+        <div className="bg-gradient-to-r from-red-600 to-red-500 rounded-2xl p-5 md:p-7 mb-6 md:mb-7 text-white shadow-lg">
+          <h1 className="text-xl md:text-2xl font-bold">
             Olá, <span className="text-red-100">{user?.displayName || user?.username}</span>!
           </h1>
-          <p className="text-red-100 mt-1 text-sm">
+          <p className="text-red-100 mt-1 text-xs md:text-sm">
             Bem-vindo ao maior e melhor painel da atualidade — <strong>DocMaster</strong>
           </p>
-          <div className="mt-4 flex items-center gap-3">
+          <div className="mt-4 flex items-center gap-2 md:gap-3">
             <button
               onClick={() => {
                 if (user && user.balance < 100) {
@@ -461,23 +470,23 @@ export default function Dashboard() {
                   setShowNovoDocModal(true);
                 }
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-semibold transition-all"
+              className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 bg-white/20 hover:bg-white/30 rounded-xl text-xs md:text-sm font-semibold transition-all active:scale-95"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5 md:w-4 md:h-4" />
               Novo Documento
             </button>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="mb-7">
+        <div className="mb-6 md:mb-7">
           <div className="flex items-center gap-2 mb-4">
             <BarChart3 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 uppercase tracking-wide">
+            <h2 className="text-sm md:text-base font-semibold text-gray-800 dark:text-gray-200 uppercase tracking-wide">
               Estatísticas
             </h2>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
             {[
               { icon: FileText, label: "Atestados Emitidos", value: stats.atestado ?? 0, color: "yellow" },
               { icon: Car, label: "CNHs Emitidas", value: stats.cnh ?? 0, color: "amber" },
@@ -486,13 +495,13 @@ export default function Dashboard() {
             ].map(({ icon: Icon, label, value, color }) => {
               const c = colorMap[color];
               return (
-                <div key={label} className={`${c.bg} rounded-xl p-5 flex items-center gap-3`}>
-                  <div className={`${c.iconBg} rounded-lg p-3 flex-shrink-0`}>
-                    <Icon className={`w-6 h-6 ${c.text}`} />
+                <div key={label} className={`${c.bg} rounded-xl p-4 md:p-5 flex items-center gap-3 md:gap-4 border border-transparent dark:border-white/5`}>
+                  <div className={`${c.iconBg} rounded-lg p-2.5 md:p-3 flex-shrink-0`}>
+                    <Icon className={`w-5 h-5 md:w-6 md:h-6 ${c.text}`} />
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{label}</p>
+                  <div className="min-w-0">
+                    <p className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white truncate">{value}</p>
+                    <p className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 mt-0.5 uppercase font-medium tracking-tight truncate">{label}</p>
                   </div>
                 </div>
               );

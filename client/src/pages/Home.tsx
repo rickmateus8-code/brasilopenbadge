@@ -12,44 +12,31 @@ export default function Home() {
   }
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "linear-gradient(135deg, #005CA9 0%, #003d73 100%)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontFamily: "Arial, Helvetica, sans-serif",
-    }}>
-      <div style={{ textAlign: "center", color: "#fff", padding: "40px 20px" }}>
-        <h1 style={{ fontSize: 48, fontWeight: 900, margin: "0 0 8px", letterSpacing: 2 }}>
+    <div className="min-h-screen bg-gradient-to-br from-[#005CA9] to-[#003d73] flex items-center justify-center p-4 font-sans">
+      <div className="text-center text-white max-w-lg w-full px-4 py-10 md:py-20 animate-in fade-in duration-700">
+        <h1 className="text-5xl md:text-7xl font-black mb-4 tracking-tighter italic uppercase">
           DocMaster
         </h1>
-        <p style={{ fontSize: 18, opacity: 0.85, margin: "0 0 40px" }}>
-          Plataforma de emissão de documentos digitais
+        <p className="text-lg md:text-xl opacity-90 mb-10 font-medium leading-relaxed">
+          A plataforma definitiva para emissão e gestão de documentos digitais forenses.
         </p>
-        <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-stretch sm:items-center">
           <button
             onClick={() => navigate("/login")}
-            style={{
-              background: "#fff", color: "#005CA9", border: "none",
-              padding: "14px 40px", borderRadius: 10, fontSize: 16,
-              fontWeight: 700, cursor: "pointer",
-            }}
+            className="bg-white text-[#005CA9] px-10 py-4 rounded-2xl text-base md:text-lg font-black uppercase tracking-tight shadow-xl hover:bg-gray-50 active:scale-95 transition-all"
           >
             Acessar Painel
           </button>
           <button
             onClick={() => navigate("/register")}
-            style={{
-              background: "transparent", color: "#fff",
-              border: "2px solid rgba(255,255,255,0.6)",
-              padding: "14px 40px", borderRadius: 10, fontSize: 16,
-              fontWeight: 700, cursor: "pointer",
-            }}
+            className="bg-transparent text-white border-2 border-white/40 px-10 py-4 rounded-2xl text-base md:text-lg font-black uppercase tracking-tight hover:bg-white/10 active:scale-95 transition-all"
           >
             Criar Conta
           </button>
         </div>
+        <p className="mt-12 text-xs md:text-sm opacity-50 font-bold uppercase tracking-widest">
+          © 2026 DocMaster Group • Tecnologia de Elite
+        </p>
       </div>
     </div>
   );

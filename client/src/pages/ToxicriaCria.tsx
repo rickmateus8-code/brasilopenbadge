@@ -499,135 +499,115 @@ export default function ToxicriaCria() {
         </span>
       </div>
 
-      <div style={{ flex: 1, display: "flex", gap: 14, padding: 14, maxWidth: 2000, margin: "0 auto", overflow: "hidden" }}>
+      <div className="flex-1 flex flex-col lg:flex-row gap-4 p-3 md:p-4 max-w-[1600px] mx-auto overflow-hidden">
         {/* ═══ COLUNA ESQUERDA — FORMULÁRIO ═══ */}
-        <div style={{ width: 340, flexShrink: 0, overflowY: "auto", height: "100%" }}>
-
+        <div className="w-full lg:w-[340px] xl:w-[400px] lg:flex-shrink-0 lg:overflow-y-auto lg:max-h-[calc(100vh-100px)] custom-scrollbar">
+          <div className="space-y-4">
             {/* Dados do Paciente */}
-            <div style={card}>
-              <div style={secTitle}>Dados do Paciente</div>
-              <div style={{ marginBottom: 10 }}>
-                <label style={lbl}>Nome Completo *</label>
-                <input style={inp} value={form.nome} onChange={e => handleChange("nome", e.target.value.toUpperCase())} placeholder="NOME DO PACIENTE" />
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <label style={lbl}>CPF *</label>
-                <input style={inp} value={form.cpf} onChange={e => handleChange("cpf", maskCPF(e.target.value))} placeholder="000.000.000-00" maxLength={14} />
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <label style={lbl}>Lab. Coletor (Endereço)</label>
-                <input style={inp} value={form.labColetor} onChange={e => handleChange("labColetor", e.target.value.toUpperCase())} placeholder="RUA CORONEL JOAO ANTONIO XAVIER, 757..." />
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={lbl}>Comprimento (CM)</label>
-                  <input style={inp} value={form.comprimento} onChange={e => handleChange("comprimento", e.target.value)} placeholder="3,00" />
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800">
+              <p className="text-xs font-black text-indigo-900 dark:text-indigo-400 uppercase tracking-widest mb-4 border-b pb-2">Dados do Paciente</p>
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Nome Completo *</label>
+                  <input className="w-full h-10 px-3 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none uppercase" value={form.nome} onChange={e => handleChange("nome", e.target.value.toUpperCase())} placeholder="NOME DO PACIENTE" />
                 </div>
-                <div style={{ flex: 1 }}>
-                  <label style={lbl}>Data da Coleta</label>
-                  <input style={inp} value={form.dataColeta} onChange={e => handleChange("dataColeta", handleDateInput(e.target.value))} placeholder="DD/MM/AAAA" maxLength={10} />
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">CPF *</label>
+                  <input className="w-full h-10 px-3 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none" value={form.cpf} onChange={e => handleChange("cpf", maskCPF(e.target.value))} placeholder="000.000.000-00" maxLength={14} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Lab. Coletor</label>
+                  <input className="w-full h-10 px-3 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none uppercase" value={form.labColetor} onChange={e => handleChange("labColetor", e.target.value.toUpperCase())} placeholder="ENDEREÇO DO LABORATÓRIO" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Comprimento</label>
+                    <input className="w-full h-10 px-3 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none" value={form.comprimento} onChange={e => handleChange("comprimento", e.target.value)} placeholder="3,00 CM" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Data Coleta</label>
+                    <input className="w-full h-10 px-3 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none" value={form.dataColeta} onChange={e => handleChange("dataColeta", handleDateInput(e.target.value))} placeholder="DD/MM/AAAA" maxLength={10} />
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Dados do Laudo */}
-            <div style={card}>
-              <div style={secTitle}>Dados do Laudo</div>
-              <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={lbl}>Número O.S</label>
-                  <input style={inp} value={form.os} onChange={e => handleChange("os", e.target.value)} placeholder="56392178" />
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800">
+              <p className="text-xs font-black text-indigo-900 dark:text-indigo-400 uppercase tracking-widest mb-4 border-b pb-2">Dados do Laudo</p>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Número O.S</label>
+                    <input className="w-full h-10 px-3 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none" value={form.os} onChange={e => handleChange("os", e.target.value)} placeholder="56392178" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Nº Laudo</label>
+                    <input className="w-full h-10 px-3 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none" value={form.numeroLaudo} onChange={e => handleChange("numeroLaudo", e.target.value)} placeholder="2024001234" />
+                  </div>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <label style={lbl}>Nº do Laudo</label>
-                  <input style={inp} value={form.numeroLaudo} onChange={e => handleChange("numeroLaudo", e.target.value)} placeholder="2024001234" />
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Recebimento Amostra</label>
+                  <input className="w-full h-10 px-3 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none" value={form.dataRecebimento} onChange={e => handleChange("dataRecebimento", handleDateInput(e.target.value))} placeholder="DD/MM/AAAA" maxLength={10} />
                 </div>
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <label style={lbl}>Data Recebimento da Amostra</label>
-                <input style={inp} value={form.dataRecebimento} onChange={e => handleChange("dataRecebimento", handleDateInput(e.target.value))} placeholder="DD/MM/AAAA" maxLength={10} />
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <label style={lbl}>Data de Liberação</label>
-                <input style={inp} value={form.dataLiberacao} onChange={e => handleChange("dataLiberacao", handleDateInput(e.target.value))} placeholder="DD/MM/AAAA" maxLength={10} />
-              </div>
-              <div>
-                <label style={lbl}>Validade do Exame</label>
-                <input style={inp} value={form.validadeExame} onChange={e => handleChange("validadeExame", handleDateInput(e.target.value))} placeholder="DD/MM/AAAA" maxLength={10} />
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Data Liberação</label>
+                  <input className="w-full h-10 px-3 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none" value={form.dataLiberacao} onChange={e => handleChange("dataLiberacao", handleDateInput(e.target.value))} placeholder="DD/MM/AAAA" maxLength={10} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Validade Exame</label>
+                  <input className="w-full h-10 px-3 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none font-bold text-indigo-600" value={form.validadeExame} onChange={e => handleChange("validadeExame", handleDateInput(e.target.value))} placeholder="DD/MM/AAAA" maxLength={10} />
+                </div>
               </div>
             </div>
 
-            {/* Informações Técnicas */}
-            <div style={card}>
-              <div style={secTitle}>Informações Técnicas</div>
-              <div style={{ marginBottom: 10 }}>
-                <label style={lbl}>Título do Exame</label>
-                <input style={inp} value={form.tituloExame} onChange={e => handleChange("tituloExame", e.target.value.toUpperCase())} placeholder="EXAME TOXICOLÓGICO DE LONGA JANELA DE DETECÇÃO" />
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <label style={lbl}>Realizado por</label>
-                <input style={inp} value={form.realizadoPor} onChange={e => handleChange("realizadoPor", e.target.value.toUpperCase())} placeholder="LABORATÓRIO SODRÉ" />
-              </div>
-              <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={lbl}>Material</label>
-                  <input style={inp} value={form.material} onChange={e => handleChange("material", e.target.value.toUpperCase())} placeholder="CABELO" />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={lbl}>J. Detecção</label>
-                  <input style={inp} value={form.jDeteccao} onChange={e => handleChange("jDeteccao", e.target.value.toUpperCase())} placeholder="90 DIAS" />
-                </div>
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <label style={lbl}>Método</label>
-                <input style={inp} value={form.metodo} onChange={e => handleChange("metodo", e.target.value.toUpperCase())} placeholder="LC-MS/MS" />
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <label style={lbl}>Procedimento</label>
-                <input style={inp} value={form.procedimento} onChange={e => handleChange("procedimento", e.target.value.toUpperCase())} placeholder="IMUNOENSAIO / CROMATOGRAFIA LÍQUIDA..." />
-              </div>
-              <div>
-                <label style={lbl}>Valor de Referência</label>
-                <input style={inp} value={form.valorReferencia} onChange={e => handleChange("valorReferencia", e.target.value.toUpperCase())} placeholder="NEGATIVO" />
-              </div>
-            </div>
-
-            {/* Botões de ação */}
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" as const }}>
-              <button style={{ ...btnBlue, flex: 1 }} onClick={() => setShowConfirmModal(true)}>
-                <Save size={13} style={{ display: "inline", marginRight: 5 }} />EMITIR LAUDO
+            {/* Ações */}
+            <div className="flex flex-col gap-2 pt-2">
+              <button 
+                className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none active:scale-95 transition-all"
+                onClick={() => setShowConfirmModal(true)}
+              >
+                <Save size={16} className="inline mr-2" /> EMITIR LAUDO
               </button>
               {saved && (
-                <button style={{ ...btnGreen, flex: 1 }} onClick={() => { setIsDownloading(true); handleExport().finally(() => setIsDownloading(false)); }}>
-                  <Download size={13} style={{ display: "inline", marginRight: 5 }} />BAIXAR PDF
+                <button 
+                  className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm rounded-2xl shadow-xl shadow-emerald-100 dark:shadow-none active:scale-95 transition-all"
+                  onClick={() => { setIsDownloading(true); handleExport().finally(() => setIsDownloading(false)); }}
+                >
+                  <Download size={16} className="inline mr-2" /> BAIXAR PDF
                 </button>
               )}
             </div>
 
             {saved && codigoLaudo && (
-              <div style={{ marginTop: 12, padding: "10px 14px", background: isDark ? "#0d2d1a" : "#f0fdf4", border: "1px solid #16a34a", borderRadius: 8 }}>
-                <p style={{ fontSize: 11, fontWeight: 700, color: "#16a34a", margin: "0 0 4px" }}>✅ Laudo emitido com sucesso!</p>
-                <p style={{ fontSize: 11, margin: "0 0 2px", color: isDark ? "#86efac" : "#166534" }}>Código: <strong style={{ fontFamily: "monospace" }}>{codigoLaudo}</strong></p>
-                <p style={{ fontSize: 10, margin: 0, color: isDark ? "#86efac" : "#166534", wordBreak: "break-all" as const }}>
-                  Validação: {validationUrl}
-                </p>
+              <div className="mt-4 p-4 bg-emerald-50 dark:bg-emerald-950/20 border-2 border-emerald-500 rounded-2xl animate-in zoom-in-95">
+                <p className="text-[11px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-1">✅ Sucesso!</p>
+                <p className="text-xs text-emerald-900 dark:text-emerald-100 mb-2">Código: <strong className="font-mono">{codigoLaudo}</strong></p>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-500 break-all opacity-80">{validationUrl}</p>
               </div>
             )}
           </div>
+        </div>
 
-          {/* ═══ COLUNA DIREITA — PREVIEW ═══ */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ ...card, padding: "8px 12px", marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontWeight: 700, color: isDark ? "#e2e8f0" : "#374151", fontSize: 14 }}>📄 Preview em Tempo Real</span>
-              <span style={{ fontSize: 11, color: isDark ? "#94a3b8" : "#6b7280" }}>Laudo Toxicológico Sodré</span>
+        {/* ═══ COLUNA DIREITA — PREVIEW ═══ */}
+        <div className="hidden lg:flex flex-1 flex-col min-w-0 h-full">
+          <div className="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm mb-4 flex items-center justify-between">
+            <span className="text-sm font-black text-gray-800 dark:text-gray-200 italic uppercase">Preview Realtime</span>
+            <div className="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 text-[10px] font-black rounded-lg">
+              LAUDO SODRÉ
             </div>
-            <div style={{ background: "#fff", borderRadius: 10, boxShadow: "0 2px 12px rgba(0,0,0,0.12)", overflow: "hidden" }}>
-              <div ref={previewRef}>
-                <LaudoPreview form={form} codigoLaudo={codigoLaudo} validationUrl={validationUrl} />
-              </div>
+          </div>
+          <div className="flex-1 bg-gray-200 dark:bg-gray-800 rounded-3xl p-6 overflow-auto shadow-inner flex items-start justify-center">
+            <div 
+              ref={previewRef} 
+              className="bg-white shadow-2xl origin-top transition-transform"
+              style={{ width: 794, flexShrink: 0 }}
+            >
+              <LaudoPreview form={form} codigoLaudo={codigoLaudo} validationUrl={validationUrl} />
             </div>
           </div>
         </div>
+      </div>
 
       {/* Modal de Confirmação + Sucesso */}
       <EmissionModal

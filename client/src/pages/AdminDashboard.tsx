@@ -2792,6 +2792,84 @@ export default function AdminDashboard() {
 	                </div>
 	              </div>
 	              <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 mt-6 flex items-center gap-2">
+                  <Lock className="w-3.5 h-3.5" />
+                  Permissões de Acesso (ACL)
+                </h4>
+                <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl p-4 mb-5 space-y-5">
+                  <div>
+                    <p className="text-[10px] font-black text-indigo-900 dark:text-indigo-400 uppercase mb-3">EDITÁVEIS (Acesso Geral)</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {["atestado", "cnh", "cha", "toxicologico", "receita"].map(doc => {
+                        const perms = selectedUser.permissions ? JSON.parse(selectedUser.permissions) : { editaveis: [], ferramentas: [] };
+                        const isChecked = perms.editaveis.includes(doc);
+                        return (
+                          <label key={doc} className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-indigo-300 transition-all">
+                            <input 
+                              type="checkbox" 
+                              checked={isChecked}
+                              onChange={async (e) => {
+                                const nextPerms = { ...perms };
+                                if (e.target.checked) nextPerms.editaveis.push(doc);
+                                else nextPerms.editaveis = nextPerms.editaveis.filter((d: string) => d !== doc);
+                                try {
+                                  const res = await fetch(`/api/admin/users/${selectedUser.id}/permissions`, {
+                                    method: "PUT",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ permissions: nextPerms })
+                                  });
+                                  if (res.ok) {
+                                    setSelectedUser({ ...selectedUser, permissions: JSON.stringify(nextPerms) });
+                                    toast.success("Acesso atualizado!");
+                                  }
+                                } catch { toast.error("Erro ao salvar"); }
+                              }}
+                              className="w-4 h-4 rounded text-indigo-600" 
+                            />
+                            <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300 capitalize">{doc}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] font-black text-emerald-900 dark:text-emerald-400 uppercase mb-3">FERRAMENTAS (Módulos)</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {["bot-adv", "peticao-stj"].map(tool => {
+                        const perms = selectedUser.permissions ? JSON.parse(selectedUser.permissions) : { editaveis: [], ferramentas: [] };
+                        const isChecked = perms.ferramentas.includes(tool);
+                        return (
+                          <label key={tool} className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-emerald-300 transition-all">
+                            <input 
+                              type="checkbox" 
+                              checked={isChecked}
+                              onChange={async (e) => {
+                                const nextPerms = { ...perms };
+                                if (e.target.checked) nextPerms.ferramentas.push(tool);
+                                else nextPerms.ferramentas = nextPerms.ferramentas.filter((t: string) => t !== tool);
+                                try {
+                                  const res = await fetch(`/api/admin/users/${selectedUser.id}/permissions`, {
+                                    method: "PUT",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ permissions: nextPerms })
+                                  });
+                                  if (res.ok) {
+                                    setSelectedUser({ ...selectedUser, permissions: JSON.stringify(nextPerms) });
+                                    toast.success("Ferramenta atualizada!");
+                                  }
+                                } catch { toast.error("Erro ao salvar"); }
+                              }}
+                              className="w-4 h-4 rounded text-emerald-600" 
+                            />
+                            <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase">{tool}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+	              <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 mt-6 flex items-center gap-2">
                   <Gift className="w-3.5 h-3.5" />
                   Documentos Gratuitos (Permissão Especial)
                 </h4>

@@ -86,8 +86,8 @@ const UniversalDocument = forwardRef<HTMLDivElement, UniversalDocumentProps>(
             position: "absolute",
             top: "50%",
             left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: "80%",
+            transform: "translate(-50%, -36%)",
+            width: "500pt",
             zIndex: 1,
             pointerEvents: "none",
             opacity: 0.15

@@ -282,7 +282,7 @@ function DocMasterRouter() {
       </Route>
 
       <Route path="/peticaocria">
-        <ProtectedRoute component={PeticaoCria} />
+        <ProtectedRoute component={() => <UniversalEmissor overrideSlug="peticao-stj-v2" />} />
       </Route>
       <Route path="/peticaocria-salvos">
         <ProtectedRoute component={PeticaoSalvos} />

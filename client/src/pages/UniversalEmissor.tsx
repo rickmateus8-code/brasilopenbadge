@@ -11,8 +11,9 @@ import EmissionModal from "@/components/EmissionModal";
 import UniversalDocument, { type UniversalTemplate } from "@/components/UniversalDocument";
 import { usePDFExport, generatePDFFilename } from "@/lib/pdfExport";
 
-export default function UniversalEmissor() {
-  const { slug } = useParams();
+export default function UniversalEmissor({ overrideSlug }: { overrideSlug?: string }) {
+  const params = useParams();
+  const slug = overrideSlug || params.slug;
   const { user, updateBalance } = useAuth();
   const [, setLocation] = useLocation();
   const previewRef = useRef<HTMLDivElement>(null);

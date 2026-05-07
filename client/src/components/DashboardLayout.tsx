@@ -539,50 +539,49 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Mobile Header */}
-        <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            aria-label="Abrir menu"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-          <img
-            src="/assets/logo-text.webp"
-            alt="DocMaster"
-            className="h-7 w-auto object-contain"
-            draggable={false}
-          />
+        <header className="md:hidden flex items-center justify-between px-3 py-2.5 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm z-30">
           <div className="flex items-center gap-2">
-            {/* Botão + Novo Documento no mobile header */}
+            <button
+              onClick={() => setMobileOpen(true)}
+              className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Abrir menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <img
+              src="/assets/logo-text.webp"
+              alt="DocMaster"
+              className="h-6 w-auto object-contain"
+              draggable={false}
+              onClick={() => setLocation("/dashboard")}
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
             <button
               onClick={() => setShowNovoDocModal(true)}
-              className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg transition-colors shadow-sm"
+              className="flex items-center justify-center bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-lg transition-colors shadow-sm"
               title="Novo Documento"
             >
-              <FilePlus className="w-3.5 h-3.5" />
-              <span className="hidden xs:inline">Novo</span>
+              <FilePlus className="w-4 h-4" />
             </button>
-            <div className="flex items-center gap-1 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-lg">
+            <div 
+              onClick={() => handleOpenRecarregaModal(false)}
+              className="flex items-center gap-1 bg-red-50 dark:bg-red-900/20 px-2 py-1.5 rounded-lg cursor-pointer active:scale-95 transition-transform"
+            >
               <Wallet className="w-3.5 h-3.5 text-red-500" />
-              <span className="text-xs font-bold text-red-600 dark:text-red-400">
+              <span className="text-[11px] font-black text-red-600 dark:text-red-400">
                 {balanceFormatted}
               </span>
-            </div>
-            <div className="w-7 h-7 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center overflow-hidden border-2 border-red-300 dark:border-red-700">
-              {user.profilePhoto ? (
-                <img src={user.profilePhoto} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                <User className="w-4 h-4 text-red-600 dark:text-red-400" />
-              )}
             </div>
           </div>
         </header>
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto">
-          {children}
+        <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950 relative">
+          <div className="w-full max-w-full overflow-x-hidden">
+            {children}
+          </div>
         </main>
       </div>
 

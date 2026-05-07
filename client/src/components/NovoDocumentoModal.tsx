@@ -154,92 +154,57 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
   if (insufficientDoc) {
     return (
       <div
-        style={{
-          position: "fixed", inset: 0, zIndex: 9999,
-          background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          padding: "16px",
-        }}
+        className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
         onClick={() => setInsufficientDoc(null)}
       >
         <div
-          style={{
-            background: "#fff", borderRadius: 20, padding: "36px 32px",
-            maxWidth: 400, width: "100%", textAlign: "center",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
-          }}
+          className="bg-white dark:bg-gray-900 rounded-3xl p-6 md:p-8 max-w-sm w-full text-center shadow-2xl"
           onClick={e => e.stopPropagation()}
         >
           {/* Ícone de aviso */}
-          <div style={{
-            width: 72, height: 72, borderRadius: "50%",
-            border: "3px solid #f97316", display: "flex", alignItems: "center",
-            justifyContent: "center", margin: "0 auto 20px",
-          }}>
-            <AlertTriangle style={{ width: 36, height: 36, color: "#f97316" }} />
+          <div className="w-16 h-16 rounded-full border-4 border-orange-500 flex items-center justify-center mx-auto mb-6">
+            <AlertTriangle className="w-8 h-8 text-orange-500" />
           </div>
 
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111827", marginBottom: 12 }}>
+          <h2 className="text-xl font-black text-gray-900 dark:text-white mb-2 uppercase italic">
             Saldo Insuficiente
           </h2>
-          <p style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.6, marginBottom: 20 }}>
-            O valor deste documento é{" "}
-            <strong style={{ color: "#dc2626" }}>{insufficientDoc.priceFormatted}</strong>.
-            Seu saldo atual é insuficiente.
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
+            O valor deste documento é <strong className="text-red-600">{insufficientDoc.priceFormatted}</strong>. Seu saldo atual é insuficiente.
           </p>
 
           {/* Saldo atual */}
-          <div style={{
-            background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10,
-            padding: "10px 16px", marginBottom: 20, display: "flex",
-            alignItems: "center", justifyContent: "center", gap: 8,
-          }}>
-            <Wallet style={{ width: 16, height: 16, color: "#dc2626" }} />
-            <span style={{ fontSize: 13, color: "#dc2626", fontWeight: 700 }}>
-              Saldo atual: R$ {(userBalance / 100).toFixed(2)}
+          <div className="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-xl p-3 mb-6 flex items-center justify-center gap-2">
+            <Wallet className="w-4 h-4 text-red-600 dark:text-red-400" />
+            <span className="text-sm font-bold text-red-600 dark:text-red-400">
+              Saldo atual: R$ {(userBalance / 100).toFixed(2).replace(".", ",")}
             </span>
           </div>
 
           {/* Botões */}
-          <div style={{ display: "flex", gap: 10, flexDirection: "column" }}>
-            <div style={{ display: "flex", gap: 10 }}>
+          <div className="space-y-2">
+            <div className="flex gap-2">
               <button
                 onClick={handleRecarregar}
-                style={{
-                  flex: 1, padding: "12px 0", borderRadius: 10, border: "none",
-                  background: "#16a34a", color: "#fff", fontWeight: 700,
-                  fontSize: 14, cursor: "pointer",
-                }}
+                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-all"
               >
-                Recarregar Agora
+                Recarregar
               </button>
               <button
                 onClick={() => setInsufficientDoc(null)}
-                style={{
-                  flex: 1, padding: "12px 0", borderRadius: 10, border: "none",
-                  background: "#6b7280", color: "#fff", fontWeight: 700,
-                  fontSize: 14, cursor: "pointer",
-                }}
+                className="flex-1 py-3 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-bold rounded-xl transition-all"
               >
                 Cancelar
               </button>
             </div>
-
-            {/* Fallback WhatsApp */}
             {whatsappLink && (
               <a
                 href={whatsappLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                  padding: "11px 0", borderRadius: 10,
-                  background: "#f0fdf4", border: "1.5px solid #bbf7d0",
-                  color: "#15803d", fontWeight: 700, fontSize: 13,
-                  textDecoration: "none",
-                }}
+                className="flex items-center justify-center gap-2 w-full py-3 bg-green-50 dark:bg-green-900/10 text-green-700 dark:text-green-400 font-bold rounded-xl border border-green-100 dark:border-green-900/20 text-xs"
               >
-                <MessageCircle style={{ width: 15, height: 15 }} />
+                <MessageCircle size={16} />
                 Solicitar via WhatsApp
               </a>
             )}
@@ -252,156 +217,82 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
   // Modal principal — Lista de documentos
   return (
     <div
-      style={{
-        position: "fixed", inset: 0, zIndex: 9998,
-        background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "16px",
-      }}
+      className="fixed inset-0 z-[9998] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div
-        style={{
-          background: "#fff", borderRadius: 20, padding: "28px 28px 24px",
-          maxWidth: 520, width: "100%", maxHeight: "90vh", overflowY: "auto",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
-        }}
+        className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: "#059669", margin: 0 }}>
-            Novo Documento
-          </h2>
+        <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between shrink-0">
+          <div>
+            <h2 className="text-xl font-black text-emerald-600 uppercase italic">
+              Novo Documento
+            </h2>
+            <p className="text-xs text-gray-500 font-medium">O que você deseja emitir hoje?</p>
+          </div>
           <button
             onClick={onClose}
-            style={{
-              width: 32, height: 32, borderRadius: "50%", border: "none",
-              background: "#f3f4f6", cursor: "pointer", display: "flex",
-              alignItems: "center", justifyContent: "center",
-              color: "#374151", fontSize: 18, fontWeight: 700,
-            }}
+            className="w-8 h-8 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400"
           >
-            <X style={{ width: 18, height: 18 }} />
+            <X size={18} />
           </button>
         </div>
-        <p style={{ fontSize: 14, color: "#6b7280", marginBottom: 20 }}>
-          O que você deseja emitir hoje?
-        </p>
 
-        {/* Saldo do usuário */}
-        <div style={{
-          background: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: 10,
-          padding: "8px 14px", marginBottom: 20, display: "flex",
-          alignItems: "center", gap: 8,
-        }}>
-          <Wallet style={{ width: 15, height: 15, color: "#059669" }} />
-          <span style={{ fontSize: 13, color: "#047857", fontWeight: 600 }}>
-            Seu saldo: <strong>R$ {(userBalance / 100).toFixed(2)}</strong>
-          </span>
-        </div>
-
-        {/* Grade de documentos */}
-        {loading ? (
-          <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af" }}>
-            Carregando documentos...
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
+          <div className="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/20 rounded-xl p-3 mb-5 flex items-center gap-3">
+            <Wallet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300">
+              Seu saldo: <strong>R$ {(userBalance / 100).toFixed(2).replace(".", ",")}</strong>
+            </span>
           </div>
-        ) : (
-          <div style={{
-            display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14,
-          }}>
-            {docs.map(doc => {
-              const Icon = doc.icon;
-              const canAfford = userBalance >= doc.price;
-              return (
-                <button
-                  key={doc.key}
-                  onClick={() => handleSelectDoc(doc)}
-                  style={{
-                    background: "#fff", border: "1.5px solid #e5e7eb",
-                    borderRadius: 14, padding: "18px 14px", cursor: "pointer",
-                    display: "flex", flexDirection: "column", alignItems: "center",
-                    gap: 10, transition: "all 0.18s", textAlign: "center",
-                    boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.borderColor = "#10b981";
-                    e.currentTarget.style.boxShadow = "0 4px 16px rgba(16,185,129,0.12)";
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.borderColor = "#e5e7eb";
-                    e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.05)";
-                    e.currentTarget.style.transform = "translateY(0)";
-                  }}
-                >
-                  <Icon style={{ width: 28, height: 28, color: "#10b981" }} />
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "#111827", lineHeight: 1.3 }}>
-                    {doc.label}
-                  </span>
-                  <span style={{
-                    fontSize: 12, fontWeight: 700,
-                    color: canAfford ? "#059669" : "#dc2626",
-                    background: canAfford ? "#ecfdf5" : "#fef2f2",
-                    border: `1px solid ${canAfford ? "#a7f3d0" : "#fecaca"}`,
-                    borderRadius: 20, padding: "3px 12px",
-                  }}>
-                    {doc.priceFormatted}
-                  </span>
-                  {!canAfford && (
-                    <span style={{ fontSize: 10, color: "#ef4444", fontWeight: 600 }}>
-                      Saldo insuficiente
+
+          {loading ? (
+            <div className="py-10 text-center text-gray-400 text-xs font-bold uppercase tracking-widest">
+              Carregando...
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {docs.map(doc => {
+                const Icon = doc.icon;
+                const canAfford = userBalance >= doc.price;
+                return (
+                  <button
+                    key={doc.key}
+                    onClick={() => handleSelectDoc(doc)}
+                    className={`
+                      flex flex-col items-center text-center p-4 rounded-2xl border-2 transition-all active:scale-95
+                      ${canAfford ? 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-800 hover:border-emerald-500' : 'bg-gray-50 dark:bg-gray-900 border-gray-100 dark:border-gray-800 opacity-60'}
+                    `}
+                  >
+                    <Icon className={`w-7 h-7 mb-2 ${canAfford ? 'text-emerald-500' : 'text-gray-400'}`} />
+                    <span className="text-[11px] font-black text-gray-900 dark:text-white uppercase leading-tight mb-2">
+                      {doc.label}
                     </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Rodapé */}
-        <div style={{
-          marginTop: 20, paddingTop: 16, borderTop: "1px solid #f3f4f6",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          flexWrap: "wrap", gap: 8,
-        }}>
-          <button
-            onClick={() => { onClose(); openRecarregaModal(); }}
-            style={{
-              display: "flex", alignItems: "center", gap: 6,
-              background: "none", border: "1.5px solid #e5e7eb", borderRadius: 8,
-              padding: "8px 14px", cursor: "pointer", fontSize: 12,
-              color: "#6b7280", fontWeight: 600, transition: "all 0.15s",
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "#16a34a"; e.currentTarget.style.color = "#16a34a"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.color = "#6b7280"; }}
-          >
-            <CreditCard style={{ width: 14, height: 14 }} />
-            Recarregar Saldo
-          </button>
-
-          {/* Link WhatsApp no rodapé */}
-          {whatsappLink && (
-            <a
-              href={`https://wa.me/${supportWhatsapp.replace(/\D/g, "")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "flex", alignItems: "center", gap: 6,
-                fontSize: 12, color: "#16a34a", fontWeight: 600, textDecoration: "none",
-              }}
-            >
-              <MessageCircle style={{ width: 13, height: 13 }} />
-              Suporte
-            </a>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${canAfford ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'}`}>
+                      {doc.priceFormatted}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           )}
+        </div>
 
+        {/* Footer */}
+        <div className="p-5 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/30 shrink-0 flex items-center justify-between gap-4">
+          <button
+            onClick={() => { onClose(); handleRecarregar(); }}
+            className="flex items-center gap-2 text-xs font-black text-gray-500 hover:text-emerald-600"
+          >
+            <CreditCard size={14} />
+            RECARREGAR
+          </button>
           <button
             onClick={onClose}
-            style={{
-              background: "none", border: "none", cursor: "pointer",
-              fontSize: 13, color: "#9ca3af", fontWeight: 500,
-            }}
+            className="text-xs font-black text-gray-400 hover:text-gray-600 uppercase tracking-widest"
           >
             Fechar
           </button>
