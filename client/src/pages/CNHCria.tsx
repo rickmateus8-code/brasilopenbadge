@@ -485,8 +485,8 @@ export default function CNHCria() {
       <style>{`
         .cnh-form {
           font-family: 'Inter', sans-serif;
-          background: #0f172a;
-          color: #e2e8f0;
+          background: #ffffff;
+          color: #1e293b;
           padding: 24px;
           padding-bottom: 120px;
           width: 100%;
@@ -499,21 +499,24 @@ export default function CNHCria() {
           justify-content: space-between;
           align-items: center;
           margin-bottom: 24px;
+          border-bottom: 2px solid #005CA9;
+          padding-bottom: 12px;
         }
         .cnh-header-top h1 {
           font-size: 20px;
           font-weight: 800;
           margin: 0;
+          color: #005CA9;
         }
-        .cnh-header-top h1 span.brand-black { color: #f1f5f9; }
-        .cnh-header-top h1 span.brand-blue { color: #ef4444; }
+        .cnh-header-top h1 span.brand-black { color: #1e293b; }
+        .cnh-header-top h1 span.brand-blue { color: #005CA9; }
         .cnh-divider {
           padding: 10px 0;
           font-size: 11px;
           text-transform: uppercase;
-          color: #94a3b8;
+          color: #64748b;
           font-weight: 700;
-          border-bottom: 1px solid #1e293b;
+          border-bottom: 1px solid #e2e8f0;
           margin: 25px 0 15px 0;
           display: flex;
           align-items: center;
@@ -533,37 +536,37 @@ export default function CNHCria() {
         .cnh-form-group label {
           font-size: 12px;
           font-weight: 600;
-          color: #94a3b8;
+          color: #64748b;
         }
         .cnh-form-group input,
         .cnh-form-group select,
         .cnh-form-group textarea {
           padding: 10px 12px;
           border-radius: 8px;
-          border: 1px solid #334155;
-          background: #1e293b;
-          color: #f1f5f9;
+          border: 1px solid #cbd5e1;
+          background: #ffffff;
+          color: #0f172a;
           outline: none;
           font-size: 13px;
           font-family: 'Inter', sans-serif;
-          transition: border-color 0.2s, background 0.2s;
+          transition: border-color 0.2s, box-shadow 0.2s;
         }
         .cnh-form-group input:focus,
         .cnh-form-group select:focus,
         .cnh-form-group textarea:focus {
-          border-color: #ef4444;
-          background: #1e293b;
+          border-color: #005CA9;
+          box-shadow: 0 0 0 2px rgba(0, 92, 169, 0.1);
         }
         .cnh-form-group textarea {
           resize: vertical;
           min-height: 60px;
         }
         .cnh-form-group .obs-textarea {
-          border-color: #ef4444;
+          border-color: #005CA9;
         }
         .cnh-badge-auto {
           font-size: 9px;
-          background: #22c55e;
+          background: #059669;
           color: white;
           padding: 3px 8px;
           border-radius: 4px;
@@ -574,30 +577,30 @@ export default function CNHCria() {
           transition: background 0.2s;
         }
         .cnh-badge-auto:hover {
-          background: #16a34a;
+          background: #047857;
         }
         .cnh-import-box {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 15px;
           padding: 16px;
-          border: 1px solid #334155;
+          border: 1px solid #e2e8f0;
           border-radius: 12px;
-          background: #1e293b;
+          background: #f8fafc;
           margin-bottom: 16px;
         }
         .cnh-import-box .import-col h3 {
           font-size: 12px;
           font-weight: 600;
-          color: #94a3b8;
+          color: #64748b;
           margin: 0 0 8px 0;
         }
         .cnh-import-box .modelo-text {
           font-family: monospace;
           font-size: 11px;
-          color: #94a3b8;
-          background: #0f172a;
-          border: 1px solid #334155;
+          color: #475569;
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
           border-radius: 8px;
           padding: 10px;
           height: 160px;
@@ -609,23 +612,23 @@ export default function CNHCria() {
           width: 100%;
           height: 160px;
           padding: 10px;
-          border: 1px solid #334155;
+          border: 1px solid #e2e8f0;
           border-radius: 8px;
-          background: #0f172a;
+          background: #ffffff;
           font-size: 12px;
           font-family: 'Inter', sans-serif;
           resize: none;
           outline: none;
-          color: #f1f5f9;
+          color: #0f172a;
           margin-bottom: 8px;
         }
         .cnh-import-box textarea:focus {
-          border-color: #ef4444;
+          border-color: #005CA9;
         }
         .cnh-btn-copiar {
           width: 100%;
           padding: 10px;
-          background: linear-gradient(135deg, #f59e0b, #eab308);
+          background: #f59e0b;
           color: white;
           border: none;
           border-radius: 8px;
@@ -642,7 +645,7 @@ export default function CNHCria() {
         .cnh-btn-processar {
           width: 100%;
           padding: 10px;
-          background: linear-gradient(135deg, #2563eb, #3b82f6);
+          background: #005CA9;
           color: white;
           border: none;
           border-radius: 8px;
@@ -664,13 +667,13 @@ export default function CNHCria() {
         }
         .cnh-preview-box {
           margin-top: 10px;
-          border: 1px solid #334155;
+          border: 1px solid #e2e8f0;
           border-radius: 8px;
           display: flex;
           align-items: center;
           justify-content: center;
           overflow: hidden;
-          background: #1e293b;
+          background: #f1f5f9;
         }
         .cnh-preview-rosto {
           width: 150px;
@@ -686,12 +689,12 @@ export default function CNHCria() {
           margin-bottom: 10px;
         }
         .cnh-ass-option.green {
-          background: #1a2e1a;
-          border: 1px solid #22c55e33;
+          background: #f0fdf4;
+          border: 1px solid #bbf7d0;
         }
         .cnh-ass-option.blue {
-          background: #1a1e2e;
-          border: 1px solid #3b82f633;
+          background: #eff6ff;
+          border: 1px solid #bfdbfe;
         }
         .cnh-ass-option h4 {
           font-size: 12px;
@@ -701,8 +704,8 @@ export default function CNHCria() {
           align-items: center;
           gap: 5px;
         }
-        .cnh-ass-option.green h4 { color: #4ade80; }
-        .cnh-ass-option.blue h4 { color: #60a5fa; }
+        .cnh-ass-option.green h4 { color: #15803d; }
+        .cnh-ass-option.blue h4 { color: #1d4ed8; }
         .cnh-ass-option p {
           font-size: 10px;
           color: #64748b;
@@ -715,13 +718,13 @@ export default function CNHCria() {
           transform: translateX(-50%);
           width: 90%;
           max-width: 500px;
-          background: #ef4444;
+          background: #059669;
           color: white;
           padding: 15px;
           border-radius: 12px;
           font-size: 16px;
           font-weight: bold;
-          box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.5);
+          box-shadow: 0 10px 25px -5px rgba(5, 150, 105, 0.4);
           border: none;
           cursor: pointer;
           display: flex;
@@ -731,28 +734,28 @@ export default function CNHCria() {
           z-index: 100;
           transition: background 0.2s;
         }
-        .cnh-floating-save:hover { background: #dc2626; }
+        .cnh-floating-save:hover { background: #047857; }
         .cnh-floating-save:disabled {
-          background: #475569;
+          background: #94a3b8;
           cursor: not-allowed;
           box-shadow: none;
         }
         .cnh-result-box {
           padding: 20px;
-          background: #1a2e1a;
-          border: 1px solid #22c55e44;
+          background: #f0fdf4;
+          border: 1px solid #bbf7d0;
           border-radius: 12px;
           margin-bottom: 20px;
         }
         .cnh-result-box h3 {
           font-size: 16px;
           font-weight: 700;
-          color: #4ade80;
+          color: #15803d;
           margin: 0 0 8px 0;
         }
         .cnh-result-box p {
           font-size: 13px;
-          color: #86efac;
+          color: #166534;
           margin: 4px 0;
         }
         .cnh-result-btns {
@@ -763,7 +766,7 @@ export default function CNHCria() {
         }
         .cnh-btn-download {
           padding: 10px 20px;
-          background: #16a34a;
+          background: #005CA9;
           color: white;
           border: none;
           border-radius: 8px;
@@ -775,7 +778,7 @@ export default function CNHCria() {
           gap: 6px;
           transition: background 0.2s;
         }
-        .cnh-btn-download:hover { background: #15803d; }
+        .cnh-btn-download:hover { background: #004a87; }
         .cnh-btn-whatsapp {
           padding: 10px 20px;
           background: #25D366;
@@ -793,8 +796,8 @@ export default function CNHCria() {
         .cnh-btn-whatsapp:hover { background: #1da851; }
         .cnh-btn-voltar {
           background: transparent;
-          color: #94a3b8;
-          border: 1px solid #334155;
+          color: #64748b;
+          border: 1px solid #e2e8f0;
           padding: 8px 16px;
           border-radius: 8px;
           font-weight: bold;
@@ -805,18 +808,18 @@ export default function CNHCria() {
           gap: 5px;
           transition: 0.2s;
         }
-        .cnh-btn-voltar:hover { background: #1e293b; color: #f1f5f9; }
+        .cnh-btn-voltar:hover { background: #f8fafc; color: #1e293b; }
         .cnh-balance-warn {
           display: flex;
           align-items: center;
           gap: 10px;
           padding: 12px 16px;
-          background: #2e1a1a;
-          border: 1px solid #ef444444;
+          background: #fef2f2;
+          border: 1px solid #fecaca;
           border-radius: 10px;
           margin-bottom: 20px;
           font-size: 13px;
-          color: #fca5a5;
+          color: #991b1b;
         }
         .cnh-input-with-auto {
           display: flex;
@@ -831,19 +834,19 @@ export default function CNHCria() {
           align-items: center;
           gap: 6px;
           padding: 8px 14px;
-          border: 1px solid #334155;
+          border: 1px solid #cbd5e1;
           border-radius: 8px;
           cursor: pointer;
           font-size: 12px;
-          color: #94a3b8;
-          background: #1e293b;
+          color: #475569;
+          background: #ffffff;
           transition: border-color 0.2s;
         }
-        .cnh-file-label:hover { border-color: #ef4444; }
+        .cnh-file-label:hover { border-color: #005CA9; }
         .cnh-acesso-divider {
           font-size: 11px;
           text-transform: uppercase;
-          color: #94a3b8;
+          color: #64748b;
           font-weight: 700;
           margin: 20px 0 10px 0;
         }

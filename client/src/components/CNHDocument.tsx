@@ -134,25 +134,25 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       });
     },
     exportAsPdf: async () => {
-        // Garantir o carregamento da imagem antes de exportar
-        const bg = await loadImage("/assets/cnh_modelo.jpg");
-
         const cvs = canvasRef.current;
         if (!cvs) return;
-
-        const ctx = cvs.getContext("2d");
-        if (ctx) ctx.drawImage(bg, 0, 0, 595, 3496);
 
         const { default: jsPDF } = await import("jspdf");
         const cw = cvs.width;
         const ch = cvs.height;
-        const pxToMm = 0.2646;
+        const pxToMm = 0.2645833333; // 96 DPI
         const wMm = cw * pxToMm;
         const hMm = ch * pxToMm;
-        const orientation = wMm > hMm ? "l" : "p";
-        const pdf = new jsPDF({ orientation, unit: "mm", format: [wMm, hMm] });
-        const imgData = cvs.toDataURL("image/jpeg", 0.95);
-        pdf.addImage(imgData, "JPEG", 0, 0, wMm, hMm);
+        
+        // Criar PDF com as dimensões exatas do canvas em mm
+        const pdf = new jsPDF({ 
+          orientation: wMm > hMm ? "l" : "p", 
+          unit: "mm", 
+          format: [wMm, hMm] 
+        });
+        
+        const imgData = cvs.toDataURL("image/jpeg", 0.98);
+        pdf.addImage(imgData, "JPEG", 0, 0, wMm, hMm, undefined, 'FAST');
 
         const nomeFormatado = ((props as any).nome || "DOCUMENTO").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
         pdf.save(`CNH_${nomeFormatado}.pdf`);
