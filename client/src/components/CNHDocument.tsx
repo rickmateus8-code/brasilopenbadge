@@ -138,7 +138,6 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
         const cvs = canvasRef.current;
         if (!cvs) return;
 
-        // Forçar redesenho se necessário ou apenas garantir que o canvas esteja pronto
         const ctx = cvs.getContext("2d");
         if (ctx) ctx.drawImage(bg, 0, 0, 595, 3496);
 
@@ -152,12 +151,11 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
         const pdf = new jsPDF({ orientation, unit: "mm", format: [wMm, hMm] });
         const imgData = cvs.toDataURL("image/jpeg", 0.95);
         pdf.addImage(imgData, "JPEG", 0, 0, wMm, hMm);
-        pdf.save(generatePDFFilename("CNH"));
+
+        const nomeFormatado = ((props as any).nome || "DOCUMENTO").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
+        pdf.save(`CNH_${nomeFormatado}.pdf`);
       },
 
-      const nomeFormatado = ((props as any).nome || "DOCUMENTO").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
-      pdf.save(`CNH_${nomeFormatado}.pdf`);
-    },
     getCanvas: () => canvasRef.current,
     exportCropBlob: async (x: number, y: number, w: number, h: number) => {
       const cvs = canvasRef.current;
