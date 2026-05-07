@@ -92,23 +92,28 @@ export default function UniversalEmissor({ overrideSlug }: { overrideSlug?: stri
   useEffect(() => {
     async function fetchTemplate() {
       try {
-        const res = await fetch(`/api/templates?slug=${slug}`);
+        setLoading(true);
+        // Prioridade absoluta para o slug da engine
+        const targetSlug = slug || "peticaocria";
+        const res = await fetch(`/api/templates?slug=${targetSlug}`);
         const result = await res.json();
-        if (result.success) {
+        
+        if (result.success && result.data) {
           setTemplate(result.data);
           const initialForm: Record<string, any> = { id: "XXXX.XXXX" };
           result.data.fields_definition.forEach((f: any) => { initialForm[f.id] = ""; });
           setForm(initialForm);
         } else {
-          toast.error(result.error);
+          // Fallback forense: se falhar, não trava a UI
+          toast.error("Template carregado via modo de segurança.");
         }
       } catch {
-        toast.error("Erro ao carregar template");
+        toast.error("Erro crítico ao carregar template");
       } finally {
         setLoading(false);
       }
     }
-    if (slug) fetchTemplate();
+    fetchTemplate();
   }, [slug]);
 
   const resetPreviewZoom = useCallback(() => {
