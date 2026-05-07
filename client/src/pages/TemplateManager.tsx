@@ -133,40 +133,27 @@ export default function TemplateManager() {
                         <button 
                           onClick={() => {
                              const targetSlug = t.slug === 'peticao-stj-v3' ? 'peticaocria' : t.slug;
-                             setLocation(`/engine-builder/${targetSlug}`);
-                          }}
-                          className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
-                          title="Editar Layout"
-                        >
-                          <Settings size={18} />
-                        </button>
-  const deleteTemplate = async (slug: string) => {
-    if (!confirm("Tem certeza que deseja excluir este template?")) return;
-    try {
-      const res = await fetch(`/api/admin/templates/${slug}`, { method: "DELETE" });
-      if (res.ok) {
-        toast.success("Template excluído!");
-        setTemplates(templates.filter(t => t.slug !== slug));
-      } else {
-        toast.error("Erro ao excluir.");
-      }
-    } catch {
-      toast.error("Erro na conexão.");
-    }
-  };
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                             <button 
+                               onClick={() => deleteTemplate(t.slug)}
+                               className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                               title="Excluir"
+                             >
+                               <Trash2 size={18} />
+                             </button>
+                             </div>
+                             </td>
+                             </tr>
+                             ))}
+                             </tbody>
+                             </table>
+                             </div>
+                             </div>
 
-        {/* Engine funcional - Rodapé limpo */}
-        <div className="mt-8">
-        </div>
-      </div>
-    </DashboardLayout>
-  );
-}
+                             {/* Engine funcional - Rodapé limpo */}
+                             <div className="mt-8">
+                             </div>
+                             </div>
+                             </DashboardLayout>
+                             );
+                             }
+
