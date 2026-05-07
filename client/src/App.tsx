@@ -80,7 +80,6 @@ import ToxicriaSalvos from "./pages/ToxicriaSalvos";
 import HistoricoSP from "./pages/HistoricoSP";
 import HistoricoUNINTER from "./pages/HistoricoUNINTER";
 import AdminDashboard from "./pages/AdminDashboard";
-import TemplateManager from "./pages/TemplateManager";
 import ReceitaCria from "./pages/ReceitaCria";
 import AtestadoEditar from "./pages/AtestadoEditar";
 import ReceitaEditar from "./pages/ReceitaEditar";
