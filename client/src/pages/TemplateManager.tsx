@@ -115,7 +115,7 @@ export default function TemplateManager() {
                           <ExternalLink size={18} />
                         </button>
                         <button 
-                          onClick={() => toast.info("Visual Layout Editor (VLE) em desenvolvimento")}
+                          onClick={() => setLocation(`/engine-builder/${t.slug}`)}
                           className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
                           title="Editar Layout"
                         >
