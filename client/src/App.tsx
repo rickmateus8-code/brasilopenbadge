@@ -313,10 +313,6 @@ function DocMasterRouter() {
         <ProtectedRoute component={AdminDashboard} adminOnly={true} />
       </Route>
 
-      <Route path="/admin/templates">
-        <ProtectedRoute component={TemplateManager} adminOnly={true} />
-      </Route>
-
       {/* Validação pública de documentos */}
       <Route path="/validar" component={Validation} />
       <Route path="/v/:id" component={Validation} />
