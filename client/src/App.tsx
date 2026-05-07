@@ -96,7 +96,8 @@ import NotFound from "./pages/NotFound";
 import CNHSalvas from "./pages/CNHSalvas";
 import AtestadosSalvos from "./pages/AtestadosSalvos";
 import CHASalvas from "./pages/CHASalvas";
-import ReceitasSalvos from "./pages/ReceitasSalvos";
+import ReceitasSalvas from "./pages/ReceitasSalvas";
+
 import HistoricoSPSalvos from "./pages/HistoricoSPSalvos";
 import HistoricoUNINTERSalvos from "./pages/HistoricoUNINTERSalvos";
 import PeticaoCria from "./pages/PeticaoCria";
