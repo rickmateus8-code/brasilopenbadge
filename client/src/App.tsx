@@ -81,6 +81,7 @@ import HistoricoSP from "./pages/HistoricoSP";
 import HistoricoUNINTER from "./pages/HistoricoUNINTER";
 import EngineDashboard from "./pages/EngineDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import EngineBuilderPro from "./pages/EngineBuilderPro";
 import TemplateManager from "./pages/TemplateManager";
 import ReceitaCria from "./pages/ReceitaCria";
 import AtestadoEditar from "./pages/AtestadoEditar";

@@ -15,5 +15,16 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('fabric')) return 'vendor-fabric';
+            if (id.includes('jspdf')) return 'vendor-pdf';
+            return 'vendor';
+          }
+        }
+      }
+    }
   },
 });
