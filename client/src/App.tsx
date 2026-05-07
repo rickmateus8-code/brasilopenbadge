@@ -96,13 +96,13 @@ import NotFound from "./pages/NotFound";
 import CNHSalvas from "./pages/CNHSalvas";
 import AtestadosSalvos from "./pages/AtestadosSalvos";
 import CHASalvas from "./pages/CHASalvas";
-import ReceitasSalvas from "./pages/ReceitasSalvas";
+import ReceitasSalvas from "./pages/ReceitasSalvos";
 import HistoricoSPSalvos from "./pages/HistoricoSPSalvos";
 import HistoricoUNINTERSalvos from "./pages/HistoricoUNINTERSalvos";
 import PeticaoCria from "./pages/PeticaoCria";
 import PeticaoSalvos from "./pages/PeticaoSalvos";
-import UniversalEmissor from "./pages/UniversalEmissor";
 import CNHLanding from "./pages/cnh-validation/CNHLanding";
+
 import CNHAutorizacao from "./pages/cnh-validation/CNHAutorizacao";
 import CNHPainel from "./pages/cnh-validation/CNHPainel";
 import CNHCondutor from "./pages/cnh-validation/CNHCondutor";
@@ -283,11 +283,6 @@ function DocMasterRouter() {
       </Route>
       <Route path="/peticaocria-salvos">
         <ProtectedRoute component={PeticaoSalvos} />
-      </Route>
-
-      {/* Motor Universal */}
-      <Route path="/emissor/:slug">
-        <ProtectedRoute component={UniversalEmissor} />
       </Route>
 
       {/* Financeiro */}
