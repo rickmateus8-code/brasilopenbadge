@@ -140,12 +140,20 @@ export default function TemplateManager() {
                         >
                           <Settings size={18} />
                         </button>
-                        <button 
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                          title="Excluir"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+  const deleteTemplate = async (slug: string) => {
+    if (!confirm("Tem certeza que deseja excluir este template?")) return;
+    try {
+      const res = await fetch(`/api/admin/templates/${slug}`, { method: "DELETE" });
+      if (res.ok) {
+        toast.success("Template excluído!");
+        setTemplates(templates.filter(t => t.slug !== slug));
+      } else {
+        toast.error("Erro ao excluir.");
+      }
+    } catch {
+      toast.error("Erro na conexão.");
+    }
+  };
                       </div>
                     </td>
                   </tr>
