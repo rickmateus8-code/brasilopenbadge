@@ -91,12 +91,13 @@ export default function EngineDashboard() {
                         className="w-20 px-2 py-1 rounded border border-gray-200"
                       />
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 text-right">
                       <button 
-                        onClick={() => setLocation(`/engine-builder/${doc.slug}`)}
-                        className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-black hover:bg-indigo-700 shadow-lg shadow-indigo-100 flex items-center gap-2"
+                        onClick={() => window.location.href = `/emissor/${doc.slug}`}
+                        className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg"
+                        title="Editar Layout"
                       >
-                        <Layout size={14} /> EDITAR LAYOUT
+                        <Layout size={18} />
                       </button>
                     </td>
                   </tr>

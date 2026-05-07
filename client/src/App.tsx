@@ -81,7 +81,6 @@ import HistoricoSP from "./pages/HistoricoSP";
 import HistoricoUNINTER from "./pages/HistoricoUNINTER";
 import EngineDashboard from "./pages/EngineDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-import EngineBuilder from "./pages/EngineBuilder";
 import TemplateManager from "./pages/TemplateManager";
 import ReceitaCria from "./pages/ReceitaCria";
 import AtestadoEditar from "./pages/AtestadoEditar";
@@ -104,7 +103,6 @@ import HistoricoSPSalvos from "./pages/HistoricoSPSalvos";
 import HistoricoUNINTERSalvos from "./pages/HistoricoUNINTERSalvos";
 import PeticaoCria from "./pages/PeticaoCria";
 import PeticaoSalvos from "./pages/PeticaoSalvos";
-import BotAdvDashboard from "./pages/BotAdvDashboard";
 import UniversalEmissor from "./pages/UniversalEmissor";
 import CNHLanding from "./pages/cnh-validation/CNHLanding";
 import CNHAutorizacao from "./pages/cnh-validation/CNHAutorizacao";
@@ -287,10 +285,6 @@ function DocMasterRouter() {
       </Route>
       <Route path="/peticaocria-salvos">
         <ProtectedRoute component={PeticaoSalvos} />
-      </Route>
-
-      <Route path="/engine-builder/:slug">
-        <ProtectedRoute component={EngineBuilder} />
       </Route>
 
       {/* Motor Universal */}
