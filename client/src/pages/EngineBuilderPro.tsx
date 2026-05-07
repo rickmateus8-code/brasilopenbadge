@@ -1,18 +1,21 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useLocation } from "wouter";
-import { fabric } from "fabric";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
-import { Loader2, Save, Type, Image as ImageIcon, Signature } from "lucide-react";
+import { Loader2, Save, Type, Layout } from "lucide-react";
+
+// Importação dinâmica do fabric para evitar erro de inicialização no SSR/Bundle
+const fabric = typeof window !== 'undefined' ? require('fabric').fabric : null;
 
 export default function EngineBuilderPro() {
   const { slug } = useParams();
-  const [canvas, setCanvas] = useState<fabric.Canvas | null>(null);
+  const [canvas, setCanvas] = useState<any>(null);
   const canvasEl = useRef<HTMLCanvasElement>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!canvasEl.current) return;
+    if (!fabric || !canvasEl.current) return;
+    
     const c = new fabric.Canvas(canvasEl.current, {
       width: 826,
       height: 1180,
