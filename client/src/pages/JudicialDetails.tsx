@@ -221,95 +221,99 @@ export default function JudicialDetails() {
 
   return (
     <div className="min-h-screen bg-[#f4f6f9] flex flex-col font-sans">
-      <header className="h-16 bg-[#1a237e] text-white flex items-center px-8 shadow-lg sticky top-0 z-50">
-        <button onClick={() => setLocation("/bot-adv")} className="flex items-center gap-2 hover:bg-white/10 px-4 py-2 rounded-xl transition-all text-sm font-bold">
-           <ArrowLeft size={18} /> BUSCA
+      <header className="h-16 md:h-20 bg-[#1a237e] text-white flex items-center px-4 md:px-8 shadow-lg sticky top-0 z-50">
+        <button onClick={() => setLocation("/bot-adv")} className="flex items-center gap-1.5 md:gap-2 hover:bg-white/10 px-2 md:px-4 py-2 rounded-xl transition-all text-xs md:text-sm font-bold">
+           <ArrowLeft size={18} /> <span className="hidden xs:inline">BUSCA</span>
         </button>
-        <div className="h-8 w-px bg-white/20 mx-4" />
-        <div className="flex flex-col">
-           <span className="text-[10px] font-black opacity-60 uppercase tracking-widest">Processo nº</span>
-           <h1 className="text-sm font-bold tracking-tight">{process?.process_number}</h1>
+        <div className="h-6 md:h-8 w-px bg-white/20 mx-2 md:mx-4" />
+        <div className="flex flex-col min-w-0">
+           <span className="text-[8px] md:text-[10px] font-black opacity-60 uppercase tracking-widest truncate">Processo nº</span>
+           <h1 className="text-xs md:text-sm font-bold tracking-tight truncate">{process?.process_number}</h1>
         </div>
         
-        <div className="ml-auto flex items-center gap-4">
-           <div className="flex items-center gap-2 bg-emerald-500/20 px-3 py-1.5 rounded-full border border-emerald-500/30">
-              <CheckBadgeIcon size={16} />
-              <span className="text-[10px] font-black uppercase">Verificado</span>
+        <div className="ml-auto flex items-center gap-2 md:gap-4">
+           <div className="flex items-center gap-1.5 md:gap-2 bg-emerald-500/20 px-2 md:px-3 py-1 md:py-1.5 rounded-full border border-emerald-500/30">
+              <CheckBadgeIcon size={14} className="md:w-4" />
+              <span className="text-[8px] md:text-[10px] font-black uppercase">Verificado</span>
            </div>
         </div>
       </header>
 
-      <main className="flex-1 max-w-7xl w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         
         {/* Coluna Esquerda: Dados do Processo */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 md:space-y-6">
            
            {/* Card Detalhes */}
-           <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-50">
-                 <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
-                    <Scale size={24} className="text-[#1a237e]" /> INFORMAÇÕES GERAIS
+           <div className="bg-white rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between mb-6 md:mb-8 pb-4 border-b border-gray-50">
+                 <h2 className="text-lg md:text-xl font-black text-gray-900 flex items-center gap-2">
+                    <Scale size={20} className="text-[#1a237e] md:w-6 md:h-6" /> INFORMAÇÕES
                  </h2>
-                 <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Justiça Estadual / DF</span>
+                 <span className="text-[9px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest">Justiça Estadual</span>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 md:gap-y-8 gap-x-8 md:gap-x-12">
                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Classe Processual</label>
-                    <div className="font-bold text-gray-900">{process?.classe}</div>
+                    <label className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Classe Processual</label>
+                    <div className="text-sm md:text-base font-bold text-gray-900">{process?.classe}</div>
                  </div>
                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Assunto Principal</label>
-                    <div className="font-bold text-gray-900">{process?.assunto}</div>
+                    <label className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Assunto Principal</label>
+                    <div className="text-sm md:text-base font-bold text-gray-900">{process?.assunto}</div>
                  </div>
                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Valor da Causa</label>
-                    <div className="text-2xl font-black text-emerald-600">R$ {process?.valor_causa?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                    <label className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Valor da Causa</label>
+                    <div className="text-xl md:text-2xl font-black text-emerald-600">R$ {process?.valor_causa?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                  </div>
                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Distribuição</label>
-                    <div className="font-bold text-gray-900 flex items-center gap-2"><Clock size={16} className="text-gray-400" /> {new Date(process?.data_distribuicao).toLocaleDateString("pt-BR")}</div>
+                    <label className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Distribuição</label>
+                    <div className="text-sm md:text-base font-bold text-gray-900 flex items-center gap-2"><Clock size={16} className="text-gray-400" /> {new Date(process?.data_distribuicao).toLocaleDateString("pt-BR")}</div>
                  </div>
               </div>
            </div>
 
            {/* Card Partes */}
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                 <h3 className="text-sm font-black text-gray-900 mb-6 flex items-center gap-2 uppercase italic tracking-tight">
-                    <User size={18} className="text-indigo-600" /> Polo Ativo (Autor)
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+              <div className="bg-white rounded-2xl md:rounded-3xl p-5 md:p-6 shadow-sm border border-gray-100">
+                 <h3 className="text-xs md:text-sm font-black text-gray-900 mb-4 md:mb-6 flex items-center gap-2 uppercase italic tracking-tight">
+                    <User size={16} className="text-indigo-600 md:w-[18px]" /> Polo Ativo (Autor)
                  </h3>
-                 {process?.polo_ativo?.map((p: any, i: number) => (
-                    <div key={i} className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
-                       <div className="font-black text-[#1a237e] uppercase text-xs">{p.nome}</div>
-                       <div className="text-[10px] font-bold text-indigo-400 mt-1">CPF/CNPJ: {p.cpf}</div>
-                    </div>
-                 ))}
+                 <div className="space-y-3">
+                    {process?.polo_ativo?.map((p: any, i: number) => (
+                        <div key={i} className="bg-indigo-50/50 p-3 md:p-4 rounded-xl md:rounded-2xl border border-indigo-100">
+                        <div className="font-black text-[#1a237e] uppercase text-[10px] md:text-xs">{p.nome}</div>
+                        <div className="text-[8px] md:text-[10px] font-bold text-indigo-400 mt-1">CPF/CNPJ: {p.cpf}</div>
+                        </div>
+                    ))}
+                 </div>
               </div>
-              <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                 <h3 className="text-sm font-black text-gray-900 mb-6 flex items-center gap-2 uppercase italic tracking-tight">
-                    <Gavel size={18} className="text-red-600" /> Polo Passivo (Réu)
+              <div className="bg-white rounded-2xl md:rounded-3xl p-5 md:p-6 shadow-sm border border-gray-100">
+                 <h3 className="text-xs md:text-sm font-black text-gray-900 mb-4 md:mb-6 flex items-center gap-2 uppercase italic tracking-tight">
+                    <Gavel size={16} className="text-red-600 md:w-[18px]" /> Polo Passivo (Réu)
                  </h3>
-                 {process?.polo_passivo?.map((p: any, i: number) => (
-                    <div key={i} className="bg-red-50/30 p-4 rounded-2xl border border-red-100">
-                       <div className="font-black text-red-900 uppercase text-xs">{p.nome}</div>
-                       <div className="text-[10px] font-bold text-red-400 mt-1">CNPJ: {p.cnpj || "—"}</div>
-                    </div>
-                 ))}
+                 <div className="space-y-3">
+                    {process?.polo_passivo?.map((p: any, i: number) => (
+                        <div key={i} className="bg-red-50/30 p-3 md:p-4 rounded-xl md:rounded-2xl border border-red-100">
+                        <div className="font-black text-red-900 uppercase text-[10px] md:text-xs">{p.nome}</div>
+                        <div className="text-[8px] md:text-[10px] font-bold text-red-400 mt-1">CNPJ: {p.cnpj || "—"}</div>
+                        </div>
+                    ))}
+                 </div>
               </div>
            </div>
 
            {/* Movimentações */}
-           <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-              <h2 className="text-sm font-black text-gray-900 mb-8 flex items-center gap-2 uppercase tracking-widest">
-                 <Clock size={20} className="text-[#1a237e]" /> MOVIMENTAÇÕES PROCESSUAIS
+           <div className="bg-white rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100">
+              <h2 className="text-xs md:text-sm font-black text-gray-900 mb-6 md:mb-8 flex items-center gap-2 uppercase tracking-widest">
+                 <Clock size={18} className="text-[#1a237e] md:w-5" /> MOVIMENTAÇÕES
               </h2>
-              <div className="space-y-6 relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-100">
+              <div className="space-y-5 md:space-y-6 relative before:absolute before:left-2.5 md:before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-100">
                  {process?.movimentacoes?.map((m: any, i: number) => (
-                    <div key={i} className="pl-10 relative">
-                       <div className="absolute left-1.5 top-1.5 w-3.5 h-3.5 bg-[#1a237e] rounded-full border-4 border-white ring-1 ring-[#1a237e]/20 shadow-sm" />
-                       <div className="text-[10px] font-black text-gray-400 uppercase mb-1">{new Date(m.data).toLocaleDateString("pt-BR")}</div>
-                       <div className="text-sm font-bold text-gray-700 leading-tight">{m.texto}</div>
+                    <div key={i} className="pl-8 md:pl-10 relative">
+                       <div className="absolute left-1 md:left-1.5 top-1.5 w-3 md:w-3.5 h-3 md:h-3.5 bg-[#1a237e] rounded-full border-2 md:border-4 border-white ring-1 ring-[#1a237e]/20 shadow-sm" />
+                       <div className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase mb-0.5 md:mb-1">{new Date(m.data).toLocaleDateString("pt-BR")}</div>
+                       <div className="text-xs md:text-sm font-bold text-gray-700 leading-tight">{m.texto}</div>
                     </div>
                  ))}
               </div>
@@ -317,37 +321,37 @@ export default function JudicialDetails() {
         </div>
 
         {/* Coluna Direita: Ações e Edição */}
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
            
            {/* Botão de Edição Principal */}
            <button 
               onClick={() => setIsEditing(!isEditing)}
-              className={`w-full py-4 rounded-2xl font-black text-sm tracking-widest transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3 ${
-                isEditing ? "bg-red-50 text-red-600 border border-red-200" : "bg-[#FF9800] text-white shadow-orange-500/20 border-b-4 border-orange-700"
+              className={`w-full py-3 md:py-4 rounded-xl md:rounded-2xl font-black text-xs md:text-sm tracking-widest transition-all shadow-lg md:shadow-xl active:scale-95 flex items-center justify-center gap-2 md:gap-3 ${
+                isEditing ? "bg-red-50 text-red-600 border border-red-200" : "bg-[#FF9800] text-white shadow-orange-500/20 border-b-2 md:border-b-4 border-orange-700"
               }`}
            >
-              {isEditing ? <><X size={20} /> CANCELAR EDICÃO</> : <><Edit2 size={20} /> CONFIGURAR ALVARÁ</>}
+              {isEditing ? <><X size={18} /> CANCELAR EDICÃO</> : <><Edit2 size={18} /> CONFIGURAR ALVARÁ</>}
            </button>
 
            {isEditing && (
-              <div className="bg-white rounded-3xl p-6 shadow-2xl border-2 border-[#FF9800] space-y-5 animate-in slide-in-from-top-4 duration-300">
-                 <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xs font-black text-orange-600 uppercase tracking-widest">Painel de Edição</h3>
+              <div className="bg-white rounded-2xl md:rounded-3xl p-5 md:p-6 shadow-2xl border-2 border-[#FF9800] space-y-4 md:space-y-5 animate-in slide-in-from-top-4 duration-300">
+                 <div className="flex items-center justify-between mb-1 md:mb-2">
+                    <h3 className="text-[10px] md:text-xs font-black text-orange-600 uppercase tracking-widest">Edição</h3>
                     <button 
                       onClick={handleSuggest}
                       disabled={isSuggesting}
-                      className="text-[10px] font-black bg-indigo-50 text-[#1a237e] px-3 py-1.5 rounded-lg border border-indigo-100 flex items-center gap-2 hover:bg-indigo-100 disabled:opacity-50"
+                      className="text-[8px] md:text-[10px] font-black bg-indigo-50 text-[#1a237e] px-2 md:px-3 py-1 md:py-1.5 rounded-lg border border-indigo-100 flex items-center gap-1.5 md:gap-2 hover:bg-indigo-100 disabled:opacity-50"
                     >
-                       <Sparkles size={14} /> {isSuggesting ? "SUGERINDO..." : "AUTO-FILL AI"}
+                       <Sparkles size={12} className="md:w-3.5" /> {isSuggesting ? "..." : "AUTO-FILL AI"}
                     </button>
                  </div>
 
-                 <div className="space-y-4">
+                 <div className="space-y-3 md:space-y-4">
                     <div>
-                       <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">CPF do Credor</label>
+                       <label className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase mb-1 block">CPF do Credor</label>
                        <div className="relative">
                           <input 
-                             className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-bold focus:border-orange-500 outline-none"
+                             className="w-full bg-gray-50 border border-gray-200 p-2.5 md:p-3 rounded-lg md:rounded-xl text-xs md:text-sm font-bold focus:border-orange-500 outline-none"
                              value={process.credor_cpf || ""}
                              onChange={e => {
                                 const val = e.target.value;
@@ -356,14 +360,14 @@ export default function JudicialDetails() {
                              }}
                              placeholder="000.000.000-00"
                           />
-                          {isCPFLoading && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />}
+                          {isCPFLoading && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />}
                        </div>
                     </div>
 
                     <div>
-                       <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Nome do Credor</label>
+                       <label className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase mb-1 block">Nome do Credor</label>
                        <input 
-                          className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-bold focus:border-orange-500 outline-none"
+                          className="w-full bg-gray-50 border border-gray-200 p-2.5 md:p-3 rounded-lg md:rounded-xl text-xs md:text-sm font-bold focus:border-orange-500 outline-none"
                           value={process.credor_nome || ""}
                           onChange={e => setProcess((p:any)=>({...p, credor_nome: e.target.value}))}
                           placeholder="Nome Completo"
@@ -371,9 +375,9 @@ export default function JudicialDetails() {
                     </div>
 
                     <div>
-                       <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Nome do Advogado</label>
+                       <label className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase mb-1 block">Nome do Advogado</label>
                        <input 
-                          className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-bold focus:border-orange-500 outline-none"
+                          className="w-full bg-gray-50 border border-gray-200 p-2.5 md:p-3 rounded-lg md:rounded-xl text-xs md:text-sm font-bold focus:border-orange-500 outline-none"
                           value={process.advogado_nome || ""}
                           onChange={e => setProcess((p:any)=>({...p, advogado_nome: e.target.value}))}
                           placeholder="Dr. Nome do Advogado"
@@ -381,9 +385,9 @@ export default function JudicialDetails() {
                     </div>
 
                     <div>
-                       <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Valor de Liberação</label>
+                       <label className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase mb-1 block">Valor de Liberação</label>
                        <input 
-                          className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-black text-emerald-600 focus:border-orange-500 outline-none"
+                          className="w-full bg-gray-50 border border-gray-200 p-2.5 md:p-3 rounded-lg md:rounded-xl text-xs md:text-sm font-black text-emerald-600 focus:border-orange-500 outline-none"
                           value={process.valor || ""}
                           onChange={e => setProcess((p:any)=>({...p, valor: e.target.value}))}
                           placeholder="R$ 0,00"
@@ -393,66 +397,66 @@ export default function JudicialDetails() {
                     <button 
                        onClick={handleExportPDF}
                        disabled={isExporting}
-                       className="w-full py-4 bg-[#1a237e] text-white rounded-2xl font-black text-sm shadow-lg shadow-indigo-900/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+                       className="w-full py-3 md:py-4 bg-[#1a237e] text-white rounded-xl md:rounded-2xl font-black text-xs md:text-sm shadow-lg shadow-indigo-900/20 active:scale-95 transition-all flex items-center justify-center gap-2"
                     >
-                       <Download size={20} /> {isExporting ? "GERANDO PDF..." : "GERAR ALVARÁ FINAL"}
+                       <Download size={18} className="md:w-5" /> {isExporting ? "GERANDO..." : "GERAR ALVARÁ FINAL"}
                     </button>
                  </div>
               </div>
            )}
 
            {/* Card de Contatos e Telefones */}
-           <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-              <h3 className="text-xs font-black text-gray-900 mb-4 uppercase tracking-widest flex items-center gap-2">
-                 <Phone size={16} className="text-indigo-600" /> Telefones Identificados
+           <div className="bg-white rounded-2xl md:rounded-3xl p-5 md:p-6 shadow-sm border border-gray-100">
+              <h3 className="text-[10px] md:text-xs font-black text-gray-900 mb-4 uppercase tracking-widest flex items-center gap-2">
+                 <Phone size={14} className="text-indigo-600 md:w-4" /> Telefones Identificados
               </h3>
               
-              <div className="space-y-3">
+              <div className="space-y-2.5 md:space-y-3">
                  {telefonesEncontrados.length > 0 ? (
                     telefonesEncontrados.map((tel, i) => (
-                       <div key={i} className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-100 group">
-                          <div className="flex-1 font-bold text-gray-700 text-sm">{tel}</div>
-                          <button onClick={() => copyToClipboard(tel)} className="p-1.5 hover:bg-white rounded-lg text-gray-400 hover:text-indigo-600 transition-all"><Copy size={14}/></button>
+                       <div key={i} className="flex items-center gap-2 p-2.5 md:p-3 bg-gray-50 rounded-lg md:rounded-xl border border-gray-100 group">
+                          <div className="flex-1 font-bold text-gray-700 text-xs md:text-sm truncate">{tel}</div>
+                          <button onClick={() => copyToClipboard(tel)} className="p-1 md:p-1.5 hover:bg-white rounded-lg text-gray-400 hover:text-indigo-600 transition-all shrink-0"><Copy size={12} className="md:w-3.5"/></button>
                           <button 
                              onClick={() => handleVerifyWA(tel)}
                              disabled={isVerifyingWA[tel]}
-                             className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all flex items-center gap-1 ${
+                             className={`px-2 md:px-3 py-1 md:py-1.5 rounded-lg text-[8px] md:text-[10px] font-black uppercase transition-all flex items-center gap-1 shrink-0 ${
                                 waStatus[tel] === "existe" ? "bg-emerald-100 text-emerald-600" : "bg-gray-100 text-gray-400 hover:bg-gray-200"
                              }`}
                           >
-                             {isVerifyingWA[tel] ? "..." : waStatus[tel] === "existe" ? <><CheckCircle size={12}/> WA EXISTE</> : "VERIFICAR WA"}
+                             {isVerifyingWA[tel] ? "..." : waStatus[tel] === "existe" ? <><CheckCircle size={10} className="md:w-3"/> EXISTE</> : "V. WA"}
                           </button>
                        </div>
                     ))
                  ) : (
-                    <div className="text-center py-6 opacity-40">
-                       <Search size={24} className="mx-auto mb-2 text-gray-300" />
-                       <p className="text-[10px] font-bold uppercase">Busque um CPF para carregar contatos</p>
+                    <div className="text-center py-4 md:py-6 opacity-40">
+                       <Search size={20} className="mx-auto mb-2 text-gray-300 md:w-6" />
+                       <p className="text-[8px] md:text-[10px] font-bold uppercase">Consulte um CPF</p>
                     </div>
                  )}
               </div>
 
-              <div className="mt-6 pt-6 border-t border-gray-50">
+              <div className="mt-5 md:mt-6 pt-5 md:pt-6 border-t border-gray-50">
                  <a 
                     href={`https://wa.me/55${(telefonesEncontrados[0] || "21999999999").replace(/\D/g,"")}?text=Olá, sou do setor de pagamentos e vi seu processo ${process?.process_number}.`}
                     target="_blank"
-                    className="w-full bg-[#25D366] text-white py-4 rounded-2xl flex items-center justify-center gap-2 font-black text-xs shadow-lg shadow-green-500/20 hover:scale-[1.02] active:scale-95 transition-all"
+                    className="w-full bg-[#25D366] text-white py-3 md:py-4 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 font-black text-[10px] md:text-xs shadow-lg shadow-green-500/20 hover:scale-[1.01] active:scale-95 transition-all text-center leading-tight"
                  >
-                    <WhatsAppIcon size={20} /> FALAR COM SETOR DE PAGAMENTOS
+                    <WhatsAppIcon size={18} className="md:w-5" /> FALAR COM SETOR DE PAGAMENTOS
                  </a>
               </div>
            </div>
 
            {/* Documentos Anexos */}
-           <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-              <h3 className="text-xs font-black text-gray-900 mb-4 uppercase tracking-widest flex items-center gap-2">
-                 <FileText size={16} className="text-indigo-600" /> DOCUMENTOS DO PROCESSO
+           <div className="bg-white rounded-2xl md:rounded-3xl p-5 md:p-6 shadow-sm border border-gray-100">
+              <h3 className="text-[10px] md:text-xs font-black text-gray-900 mb-4 uppercase tracking-widest flex items-center gap-2">
+                 <FileText size={14} className="text-indigo-600 md:w-4" /> DOCUMENTOS
               </h3>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2.5 md:gap-3">
                  {process?.documentos?.map((doc: any) => (
-                    <button key={doc.id} className="p-3 bg-gray-50 border border-gray-100 rounded-xl hover:bg-indigo-50 hover:border-indigo-200 transition-all group flex flex-col items-center gap-2">
-                       <FileText size={24} className="text-gray-400 group-hover:text-indigo-600" />
-                       <span className="text-[10px] font-bold text-gray-500 group-hover:text-indigo-900 uppercase truncate w-full text-center">{doc.nome}</span>
+                    <button key={doc.id} className="p-2.5 md:p-3 bg-gray-50 border border-gray-100 rounded-lg md:rounded-xl hover:bg-indigo-50 hover:border-indigo-200 transition-all group flex flex-col items-center gap-1.5 md:gap-2 min-w-0">
+                       <FileText size={20} className="text-gray-400 group-hover:text-indigo-600 md:w-6" />
+                       <span className="text-[8px] md:text-[10px] font-bold text-gray-500 group-hover:text-indigo-900 uppercase truncate w-full text-center">{doc.nome}</span>
                     </button>
                  ))}
               </div>
