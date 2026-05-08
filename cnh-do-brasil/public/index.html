@@ -72,24 +72,26 @@
   }
 
   // ============================================================
-  // TELA 1 - SPLASH (MARINHA)
+  // TELA 1 - SPLASH
   // ============================================================
   function showSplash() {
     show(`
-      <div id="tela-capa" style="width:100%; height:100%; display:flex; flex-direction:column; background-color:#fff; position:relative;">
-        <div class="capa-area"></div>
-        <div class="conteudo-branco">
-          <div class="logo-container">
-            <img src="img_marinha/logo_cnh.png" alt="CNH Digital">
+      <div style="min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;background:#000;">
+        <div style="flex:0 0 55%;position:relative;overflow:hidden;">
+          <img src="assets/splash_woman.png" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">
+        </div>
+        <div style="flex:1;background:#fff;border-radius:24px 24px 0 0;margin-top:-24px;position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;padding:40px 20px 30px;">
+          <div style="flex:1;display:flex;align-items:center;justify-content:center;">
+            <img src="assets/cnh_logo_brasil.png" alt="CNH DO BRASIL" style="width:140px;object-fit:contain;">
           </div>
-          <div style="width: 100%;">
-            <div class="termos-texto">
-              Ao entrar, você concorda com nosso <br>
-              <a href="#">Termo de Responsabilidade</a> e <br>
-              <a href="#">Política de Privacidade</a>
-            </div>
-            <button class="btn-gov" onclick="showLoginCPF()">ENTRAR COM gov.br</button>
+          <div style="text-align:center;margin-bottom:25px;">
+            <p style="font-size:12px;color:#666;line-height:1.5;margin:0;">Ao entrar, você concorda com nosso</p>
+            <p style="font-size:12px;margin:0;"><a href="#" style="color:#1351B4;text-decoration:underline;">Termo de Responsabilidade</a></p>
+            <p style="font-size:12px;margin:0;">e <a href="#" style="color:#1351B4;text-decoration:underline;">Política de Privacidade</a></p>
           </div>
+          <button onclick="showLoginCPF()" style="width:100%;padding:14px;background:#1351B4;color:#fff;border:none;border-radius:50px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;text-transform:uppercase;">
+            ENTRAR COM <img src="gov/arquivos/padrao-govbr/img/govbr.png" alt="gov.br" style="height:20px;">
+          </button>
         </div>
       </div>
     `);
