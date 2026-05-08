@@ -31,7 +31,7 @@ Sexo:
 RG: 
 Orgão Emissor: 
 UF RG: 
-Nacionalidade: BRASILEIRA
+Nacionalidade: BRASILEIRO(A)
 Data Nascimento: 
 Local Nascimento: 
 UF Nasc: 
@@ -88,7 +88,7 @@ export default function CNHCria() {
 
   const [data, setData] = useState<CNHDocumentProps>({
     nome: "", cpf: "", rg: "", orgaoEmissor: "", ufRG: "",
-    sexo: "", nacionalidade: "BRASILEIRA", dataNascimento: "",
+    sexo: "", nacionalidade: "BRASILEIRO(A)", dataNascimento: "",
     localNascimento: "", ufNascimento: "", nomePai: "", nomeMae: "",
     categoria: "", tipo: "Definitiva", registro: "", espelho: "",
     validade: "", validadeCNH2: "", dataEmissao: "", primeiraHabilitacao: "",
@@ -150,7 +150,7 @@ export default function CNHCria() {
       rg: cleanRG(get("RG")) || d.rg,
       orgaoEmissor: get("Org[aã]o Emissor") || d.orgaoEmissor,
       ufRG: get("UF RG") || d.ufRG,
-      nacionalidade: get("Nacionalidade") || d.nacionalidade || "BRASILEIRA",
+      nacionalidade: get("Nacionalidade") || d.nacionalidade || "BRASILEIRO(A)",
       dataNascimento: convertDate(get("Data Nascimento")) || d.dataNascimento,
       localNascimento: get("Local Nascimento") || d.localNascimento,
       ufNascimento: get("UF Nasc") || d.ufNascimento,
