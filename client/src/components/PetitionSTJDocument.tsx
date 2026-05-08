@@ -101,7 +101,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -33%)",
-          width: "500pt",
+          width: "495pt",
           zIndex: 1,
           pointerEvents: "none"
         }}>
@@ -140,7 +140,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={valueStyle}>{data.cpf_cnpj || ""}</span>
         </div>
 
-        <div style={{ ...textStyle, top: MARGIN_TOP + 205.3, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 200.2, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Advogado(a):</span>
           <span style={valueStyle}>{data.advogado?.toUpperCase() || ""}</span>
         </div>
