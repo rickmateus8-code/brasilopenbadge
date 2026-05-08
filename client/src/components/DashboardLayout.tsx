@@ -63,6 +63,7 @@ const menuItems: MenuItem[] = [
       children: [
         { label: "Histórico SP", path: "/historico-sp", isCreation: true },
         { label: "Histórico UNINTER", path: "/historico-uninter", isCreation: true },
+        { label: "Diploma UNINTER", path: "/diplomaunintercria", isCreation: true },
         { label: "Salvos (SP)", path: "/historico-sp-salvos" },
         { label: "Salvos (UNINTER)", path: "/historico-uninter-salvos" },
       ],

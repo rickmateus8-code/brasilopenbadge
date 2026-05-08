@@ -82,7 +82,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
         const defaults: Record<string, number> = {
           'atestado': 1000, 'cnh': 1500, 'cha': 1500, 'toxicologico': 1500,
           'toxicria': 1500, 'historico-sp': 1800, 'historico-uninter': 1800,
-          'peticao-stj': 2000, 'peticaocria': 2000, 'receita': 1000
+          'peticao-stj': 2000, 'peticaocria': 2000, 'receita': 1000,
+          'diploma-uninter': 2500
         };
         price = defaults[docType] || 1000;
         retentionDays = (docType === 'peticao-stj' || docType === 'peticaocria') ? 3 : 30; // STJ/Peticao default 3 dias

@@ -102,6 +102,7 @@ import HistoricoSPSalvos from "./pages/HistoricoSPSalvos";
 import HistoricoUNINTERSalvos from "./pages/HistoricoUNINTERSalvos";
 import PeticaoCria from "./pages/PeticaoCria";
 import PeticaoSalvos from "./pages/PeticaoSalvos";
+import DiplomaUninterCria from "./pages/DiplomaUninterCria";
 import CNHLanding from "./pages/cnh-validation/CNHLanding";
 
 import CNHAutorizacao from "./pages/cnh-validation/CNHAutorizacao";
@@ -284,6 +285,10 @@ function DocMasterRouter() {
       </Route>
       <Route path="/peticaocria-salvos">
         <ProtectedRoute component={PeticaoSalvos} />
+      </Route>
+
+      <Route path="/diplomaunintercria">
+        <ProtectedRoute component={DiplomaUninterCria} />
       </Route>
 
       {/* Financeiro */}

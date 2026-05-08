@@ -42,6 +42,7 @@ const DOC_ICONS: Record<string, React.ElementType> = {
   "historico-uninter": GraduationCap,
   receita: Pill,
   peticaocria: FileText,
+  "diploma-uninter": GraduationCap,
 };
 
 // Mapeamento de rotas por tipo de documento
@@ -55,6 +56,7 @@ const DOC_PATHS: Record<string, string> = {
   "historico-uninter": "/historico-uninter",
   receita: "/receitacria",
   peticaocria: "/peticaocria",
+  "diploma-uninter": "/diplomaunintercria",
 };
 
 export default function NovoDocumentoModal({ open, onClose, userBalance, username }: NovoDocumentoModalProps) {
@@ -109,6 +111,7 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
             { key: "toxicria", label: "Laudo Toxicológico Sodré", icon: DOC_ICONS["toxicria"], path: DOC_PATHS["toxicria"], price: 1500, priceFormatted: "R$ 15,00" },
             { key: "historico-sp", label: "Histórico Escolar SP", icon: DOC_ICONS["historico-sp"], path: DOC_PATHS["historico-sp"], price: 1800, priceFormatted: "R$ 18,00" },
             { key: "historico-uninter", label: "Histórico UNINTER", icon: DOC_ICONS["historico-uninter"], path: DOC_PATHS["historico-uninter"], price: 1800, priceFormatted: "R$ 18,00" },
+            { key: "diploma-uninter", label: "Diploma UNINTER", icon: DOC_ICONS["diploma-uninter"], path: DOC_PATHS["diploma-uninter"], price: 2500, priceFormatted: "R$ 25,00" },
             { key: "receita", label: "Dr. Consulta", icon: DOC_ICONS["receita"], path: DOC_PATHS["receita"], price: 1000, priceFormatted: "R$ 10,00" },
             { key: "peticaocria", label: "Petição Judicial", icon: DOC_ICONS["peticaocria"], path: DOC_PATHS["peticaocria"], price: 2000, priceFormatted: "R$ 20,00" },
           ].sort((a, b) => a.label.localeCompare(b.label));
