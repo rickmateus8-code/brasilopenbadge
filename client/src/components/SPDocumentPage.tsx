@@ -113,12 +113,14 @@ export function SPPage1({
   const cellS = (extra: CSSProperties = {}): CSSProperties => ({
     border: b, 
     fontFamily: ff, 
-    padding: "0 2px", 
+    padding: "0 4px", 
     verticalAlign: "middle",
-    lineHeight: "14.66px",
+    lineHeight: "1.1",
     height: "18.66px",
     boxSizing: "border-box",
     overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
     ...extra,
   });
   const centerS = (extra: CSSProperties = {}): CSSProperties => ({
@@ -263,14 +265,23 @@ export function SPPage1({
       style={{
         width: "794px", height: "1123px", minHeight: "1123px", maxHeight: "1123px",
         overflow: "hidden", background: "white", fontFamily: ff, fontSize: "13.33px",
-        lineHeight: "15.33px", color: "#000", boxSizing: "border-box", position: "relative",
-        padding: "37.4px 48px 45.4px 54.8px",
+        lineHeight: "1.1", color: "#000", boxSizing: "border-box", position: "relative",
+        padding: "37px 48px 45px 55px",
       }}
       >
       <style>{`
         .doc-page-sp *, .doc-page-sp table, .doc-page-sp td { box-sizing: border-box !important; }
-        .doc-page-sp table { border-spacing: 0; border-collapse: collapse; width: 100%; table-layout: fixed; }
-        .doc-page-sp td { vertical-align: middle !important; line-height: 14.66px !important; padding-top: 0 !important; padding-bottom: 0 !important; height: 18.66px; }
+        .doc-page-sp table { border-spacing: 0; border-collapse: collapse; width: 100%; table-layout: fixed; border-collapse: separate; }
+        .doc-page-sp td { 
+          vertical-align: middle !important; 
+          line-height: 1.1 !important; 
+          padding-top: 0 !important; 
+          padding-bottom: 0 !important; 
+          height: 18.66px;
+          overflow: hidden !important;
+          text-overflow: ellipsis !important;
+          white-space: nowrap !important;
+        }
         @media print { .doc-page-sp { transform: none !important; } }
       `}</style>
       <div
