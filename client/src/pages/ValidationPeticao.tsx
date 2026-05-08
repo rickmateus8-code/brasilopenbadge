@@ -1,5 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useLocation } from "wouter";
+import PeticaoDocument from "@/components/PetitionSTJDocument";
+import { usePDFExport, generatePDFFilename } from "@/lib/pdfExport";
+import { toast } from "sonner";
 
 /**
  * ValidationPeticao.tsx
@@ -82,6 +85,9 @@ export default function ValidationPeticao() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [doc, setDoc] = useState<any>(null);
+  
+  const previewRef = useRef<HTMLDivElement>(null);
+  const { exportPDF, exporting: isExporting } = usePDFExport();
 
   // Extrair ID da rota ou da query string (processo=...)
   const getDocId = useCallback(() => {
@@ -113,6 +119,21 @@ export default function ValidationPeticao() {
     fetchDoc();
     document.title = "Consulta Processual - Tribunal de Justiça";
   }, [fetchDoc]);
+
+  const handleExportPDF = useCallback(async () => {
+    if (!previewRef.current || !doc) return;
+    try {
+      await exportPDF(previewRef.current, {
+        filename: generatePDFFilename(doc.credor || doc.nome || "PETICAO", "peticaocria"),
+        docType: "peticaocria",
+        customWidth: 826,
+        customHeight: 1180,
+      });
+      toast.success("Alvará baixado com sucesso!");
+    } catch (err) { 
+      toast.error("Erro ao gerar PDF."); 
+    }
+  }, [exportPDF, doc]);
 
   if (isLoading) return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>Carregando dados processuais...</div>;
 
@@ -187,8 +208,8 @@ export default function ValidationPeticao() {
           <p style={{ fontSize: 13, color: THEME.muted, marginBottom: 20 }}>Os documentos abaixo foram gerados eletronicamente e possuem fé pública.</p>
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <button className="btn btn-primary" onClick={() => window.print()}>
-              <DownloadIcon size={18} /> BAIXAR ALVARÁ PDF
+            <button className="btn btn-primary" onClick={handleExportPDF} disabled={isExporting}>
+              <DownloadIcon size={18} /> {isExporting ? "GERANDO..." : "BAIXAR ALVARÁ PDF"}
             </button>
             <button className="btn" style={{ background: '#eee', color: '#333' }}>
                SENTENÇA.PDF
@@ -216,6 +237,13 @@ export default function ValidationPeticao() {
               <div className="timeline-date">{new Date(Date.now() - 172800000).toLocaleDateString("pt-BR")}</div>
               <div className="timeline-text">Processo distribuído por sorteio.</div>
             </div>
+          </div>
+        </div>
+
+        {/* Renderizador Invisível para o PDF */}
+        <div style={{ position: "absolute", left: "-9999px", top: "-9999px" }}>
+          <div ref={previewRef} style={{ width: 826 }}>
+            <PeticaoDocument data={doc} />
           </div>
         </div>
 
