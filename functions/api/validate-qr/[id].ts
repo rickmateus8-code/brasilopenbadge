@@ -48,6 +48,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     // Return the relevant fields for validation display
     const response = {
       data: {
+        // Campos CNH/Gerais
         nome: doc.nome || docData.nome || '',
         cpf: doc.cpf || docData.cpf || '',
         rg: docData.rg || '',
@@ -61,8 +62,20 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         uf_emissao: docData.ufEmissao || docData.uf_emissao || '',
         emissao: docData.emissao || '',
         foto: docData.foto || '',
+        
+        // Campos Petição / Processo
+        credor: docData.credor || doc.nome || '',
+        advogado: docData.advogado || '',
+        contra: docData.contra || '',
+        valor: docData.valor || '',
+        processo: docData.processo || doc.codigo_qr || '',
+        data_documento: docData.data || '',
+        alvara_numero: docData.alvara_numero || '',
+        telefone: docData.telefone || '',
+
         status: doc.status || 'emitido',
         created_at: doc.created_at || '',
+        type: doc.type || ''
       }
     };
 

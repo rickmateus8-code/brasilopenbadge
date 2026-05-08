@@ -86,6 +86,11 @@ export default function PeticaoCria() {
     return Math.floor(1000000 + Math.random() * 9000000).toString();
   };
 
+  const todayBR = () => {
+    const d = new Date();
+    return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  };
+
   const [form, setForm] = useState<PetitionData>({
     id: "XXXX.XXXX",
     processo: "",
@@ -94,7 +99,7 @@ export default function PeticaoCria() {
     advogado: "",
     contra: "",
     valor: "",
-    data: "02/05/2026",
+    data: todayBR(),
     alvara_numero: generateAlvaraNumber()
   });
 
@@ -107,7 +112,7 @@ export default function PeticaoCria() {
       advogado: "",
       contra: "",
       valor: "",
-      data: "02/05/2026",
+      data: todayBR(),
       alvara_numero: generateAlvaraNumber()
     });
     toast.success("Formulário resetado");
@@ -266,7 +271,7 @@ export default function PeticaoCria() {
 
   return (
     <div className="h-screen w-full flex flex-col overflow-hidden bg-white font-sans">
-      <header className="h-14 bg-[#1e1b4b] flex items-center px-6 gap-4 shrink-0 shadow-md z-10">
+      <header className="h-14 bg-[#005CA9] flex items-center px-6 gap-4 shrink-0 shadow-md z-10">
           <button
             onClick={() => setLocation("/dashboard")}
             className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all"
@@ -288,7 +293,7 @@ export default function PeticaoCria() {
             </button>
             <button
               className={`flex items-center gap-2 text-xs font-black h-9 px-5 rounded-xl transition-all shadow-lg active:scale-95 ${
-                saved ? "bg-emerald-500 text-white" : "bg-white text-[#1e1b4b] hover:bg-gray-50 shadow-indigo-900/20"
+                saved ? "bg-emerald-500 text-white" : "bg-white text-[#005CA9] hover:bg-gray-50 shadow-indigo-900/20"
               }`}
               onClick={handleRequestEmit}
               disabled={isExporting || saved}
