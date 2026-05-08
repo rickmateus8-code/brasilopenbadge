@@ -85,6 +85,7 @@ export type DocType =
   | "historico-uninter"
   | "receita"
   | "peticaocria"
+  | "diploma-uninter"
   | "generic";
 
 export interface PDFExportOptions {

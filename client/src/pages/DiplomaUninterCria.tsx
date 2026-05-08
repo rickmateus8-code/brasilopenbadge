@@ -163,8 +163,8 @@ export default function DiplomaUninterCria() {
     setIsDownloading(true);
     try {
       await exportPDF(docRef.current, {
-        filename: generatePDFFilename(data.nome_diplomado, "DIPLOMA_UNINTER"),
-        docType: "generic", // Using generic for multi-page custom layouts
+        filename: generatePDFFilename(data.nome_diplomado, "diploma-uninter"),
+        docType: "diploma-uninter",
         orientation: "l",
         multiPage: true,
         scale: 2,
