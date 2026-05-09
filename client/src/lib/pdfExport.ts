@@ -205,36 +205,22 @@ export async function exportElementToPDF(
 <head>
 <meta charset="UTF-8">
 <style>
-  * { 
-    box-sizing: border-box !important; 
-    margin: 0; 
-    padding: 0; 
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  html, body {
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
     background: #ffffff;
     width: ${docWidth}px;
-    margin: 0 auto;
-    padding: 0;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: geometricPrecision;
-  }
-  body {
     height: ${multiPage ? "auto" : docHeight + "px"};
     overflow: ${multiPage ? "visible" : "hidden"};
     font-family: Arial, Helvetica, sans-serif;
-    display: block;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
   }
   #attestation-document {
     margin: 0 auto !important;
     box-shadow: none !important;
-    transform: none !important;
-    transform-origin: top left !important;
   }
-  table { border-collapse: separate !important; border-spacing: 0 !important; }
-  td { padding: 0 !important; }
 </style>
 </head>
 <body>
