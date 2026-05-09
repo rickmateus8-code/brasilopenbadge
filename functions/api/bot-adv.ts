@@ -65,6 +65,31 @@ async function searchDatajudProcess(processNumber: string) {
   if (hits.length === 0) return null;
 
   const source = hits[0]._source;
+  
+  // DEEP RECOVERY: Mapeamento agressivo de partes e advogados
+  const extractName = (p: any) => p.nome || p.pessoa?.nome || p.razaoSocial || "";
+  
+  const partes = source.partes || [];
+  const poloAtivo = partes
+    .filter((p: any) => ["AT", "ATIVO", "1", 1, "REQUERENTE", "AUTOR"].includes(String(p.polo).toUpperCase()))
+    .map((p: any) => ({ nome: extractName(p), cpf: p.cpf || p.cnpj || p.pessoa?.numeroDocumento || "" }))
+    .filter((p: any) => p.nome && !p.nome.includes("***"));
+
+  const poloPassivo = partes
+    .filter((p: any) => ["PA", "PASSIVO", "2", 2, "REQUERIDO", "REU"].includes(String(p.polo).toUpperCase()))
+    .map((p: any) => ({ nome: extractName(p), cpf: p.cpf || p.cnpj || p.pessoa?.numeroDocumento || "" }))
+    .filter((p: any) => p.nome && !p.nome.includes("***"));
+
+  // Tenta extrair advogado do primeiro registro que possuir
+  let advogadoRecuperado = "";
+  for (const p of partes) {
+    const advs = p.advogados || [];
+    if (advs.length > 0) {
+      advogadoRecuperado = advs[0].nome || advs[0].pessoa?.nome || "";
+      if (advogadoRecuperado) break;
+    }
+  }
+
   return {
     id: source.id || cleanNumber,
     processo: source.numeroProcesso,
@@ -78,12 +103,9 @@ async function searchDatajudProcess(processNumber: string) {
     })).sort((a: any, b: any) => new Date(b.data).getTime() - new Date(a.data).getTime()),
     orgao_julgador: source.orgaoJulgador?.nome,
     tribunal: source.tribunal,
-    polo_ativo: (source.partes || [])
-      .filter((p: any) => p.polo === "AT" || p.polo === "ATIVO")
-      .map((p: any) => ({ nome: p.nome, cpf: p.cpf || p.cnpj || "" })),
-    polo_passivo: (source.partes || [])
-      .filter((p: any) => p.polo === "PA" || p.polo === "PASSIVO")
-      .map((p: any) => ({ nome: p.nome, cpf: p.cpf || p.cnpj || "" })),
+    advogado: advogadoRecuperado,
+    polo_ativo: poloAtivo,
+    polo_passivo: poloPassivo,
   };
 }
 
