@@ -1,0 +1,56 @@
+# Guia: Gemini CLI para DocMaster (`bot-adv`)
+
+Este documento descreve como configurar e utilizar uma interface de linha de comando (CLI) baseada em inteligência artificial para automatizar consultas no ecossistema DocMaster.
+
+## 1. Arquitetura da Solução
+
+O **Gemini CLI** atua como um agente autônomo que:
+
+1. **Intercepta** o número do processo fornecido pelo usuário.
+
+1. **Normaliza** os dados para o padrão CNJ.
+
+1. **Realiza requisições** diretamente para o backend do `docmaster.store`.
+
+1. **Processa e resume** os dados jurídicos complexos em um relatório legível.
+
+## 2. Configuração do Ambiente
+
+Para executar o script, você precisará do Python 3 instalado e da biblioteca `requests`.
+
+```bash
+pip install requests
+```
+
+## 3. Como usar o Script (`gemini_cli_docmaster.py`)
+
+O script foi desenhado para ser intuitivo. Basta passar o número do processo como argumento.
+
+### Consulta Padrão (Relatório Formatado)
+
+```bash
+python3 gemini_cli_docmaster.py 5016085-27.2023.8.08.0048
+```
+
+### Exportação para Integração (Saída JSON)
+
+Se você deseja integrar esses dados com outro sistema (como um bot de WhatsApp), use a flag `--json`:
+
+```bash
+python3 gemini_cli_docmaster.py 5016085-27.2023.8.08.0048 --json
+```
+
+## 4. Endpoints Identificados
+
+Através da análise de rede, mapeamos os seguintes pontos de acesso:
+
+| Recurso | Método | Endpoint Presumido |
+| --- | --- | --- |
+| Consulta Processo | `GET` | `https://docmaster.store/api/consulta/{cnj}` |
+| Histórico | `GET` | `https://docmaster.store/api/historico` |
+| Geração de Alvará | `POST` | `https://docmaster.store/api/alvara/gerar` |
+
+---
+
+> **Nota de Segurança:** O site utiliza proteção contra bots. Para uso em larga escala, o Gemini CLI deve ser configurado com cabeçalhos de navegador reais (`User-Agent` ) e, se necessário, lidar com cookies de sessão gerados no acesso inicial ao `docmaster.store/bot-adv/`.
+
