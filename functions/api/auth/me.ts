@@ -1,14 +1,16 @@
 import type { Env } from '../../types';
 
+const getCorsHeaders = (origin: string | null) => ({
+  'Access-Control-Allow-Origin': origin || '*',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Credentials': 'true',
+  'Content-Type': 'application/json',
+});
+
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
-  const origin = request.headers.get('Origin') || '*';
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Credentials': 'true',
-    'Content-Type': 'application/json',
-  };
+  const origin = request.headers.get('Origin');
+  const corsHeaders = getCorsHeaders(origin);
 
   try {
     const token = getSessionToken(request);
@@ -21,7 +23,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     ).bind(token).first<any>();
 
     if (!session) {
-      return new Response(JSON.stringify({ success: false, error: 'Sessão inválida ou expirada' }), { status: 401, headers: corsHeaders });
+      return new Response(JSON.stringify({ success: false, error: 'Sessão inválida' }), { status: 401, headers: corsHeaders });
     }
 
     const user = await env.DB.prepare(
@@ -51,19 +53,13 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 };
 
 export const onRequestOptions: PagesFunction = async ({ request }) => {
-  const origin = request.headers.get('Origin') || '*';
-  return new Response(null, {
-    headers: {
-      'Access-Control-Allow-Origin': origin,
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-      'Access-Control-Allow-Credentials': 'true',
-    }
-  });
+  return new Response(null, { headers: getCorsHeaders(request.headers.get('Origin')) });
 };
 
 function getSessionToken(request: Request): string | null {
-  const cookie = request.headers.get('Cookie') || '';
-  const match = cookie.match(/docmaster_session=([^;]+)/);
-  return match ? match[1] : null;
+  const cookies = request.headers.get('Cookie');
+  if (!cookies) return null;
+  // Parser de cookie mais robusto
+  const match = cookies.split(';').map(c => c.trim()).find(c => c.startsWith('docmaster_session='));
+  return match ? match.split('=')[1] : null;
 }

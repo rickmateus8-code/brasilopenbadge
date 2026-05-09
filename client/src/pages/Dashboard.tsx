@@ -141,7 +141,7 @@ export default function Dashboard() {
 
   const loadDynamicTabs = async () => {
     try {
-      const res = await fetch("/api/templates");
+      const res = await fetch("/api/templates", { credentials: "include" });
       const result = await res.json();
       if (result.success && result.data) {
         // Filtragem agressiva para evitar duplicidade

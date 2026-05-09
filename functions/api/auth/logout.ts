@@ -1,40 +1,27 @@
 import type { Env } from '../../types';
 
+const getCorsHeaders = (origin: string | null) => ({
+  'Access-Control-Allow-Origin': origin || '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Credentials': 'true',
+  'Content-Type': 'application/json',
+});
+
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Content-Type': 'application/json',
-  };
+  const origin = request.headers.get('Origin');
+  const corsHeaders = getCorsHeaders(origin);
 
   try {
-    const token = getSessionToken(request);
-    if (token) {
-      await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(token).run();
-    }
-
     const headers = new Headers(corsHeaders);
     headers.set('Set-Cookie', 'docmaster_session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0');
 
     return new Response(JSON.stringify({ success: true }), { status: 200, headers });
-  } catch {
-    return new Response(JSON.stringify({ success: true }), { status: 200, headers: corsHeaders });
+  } catch (err: any) {
+    return new Response(JSON.stringify({ success: false, error: 'Erro interno' }), { status: 500, headers: corsHeaders });
   }
 };
 
-export const onRequestOptions: PagesFunction = async () => {
-  return new Response(null, {
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    }
-  });
+export const onRequestOptions: PagesFunction = async ({ request }) => {
+  return new Response(null, { headers: getCorsHeaders(request.headers.get('Origin')) });
 };
-
-function getSessionToken(request: Request): string | null {
-  const cookie = request.headers.get('Cookie') || '';
-  const match = cookie.match(/docmaster_session=([^;]+)/);
-  return match ? match[1] : null;
-}

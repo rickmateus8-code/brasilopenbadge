@@ -1,14 +1,16 @@
 import type { Env } from '../../types';
 
+const getCorsHeaders = (origin: string | null) => ({
+  'Access-Control-Allow-Origin': origin || '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Credentials': 'true',
+  'Content-Type': 'application/json',
+});
+
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
-  const origin = request.headers.get('Origin') || '*';
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Credentials': 'true',
-    'Content-Type': 'application/json',
-  };
+  const origin = request.headers.get('Origin');
+  const corsHeaders = getCorsHeaders(origin);
 
   try {
     const body = await request.json() as { username: string; password: string };
@@ -18,7 +20,6 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       return new Response(JSON.stringify({ success: false, error: 'Usuário e senha são obrigatórios' }), { status: 400, headers: corsHeaders });
     }
 
-    // Aceita login por username OU email
     const user = await env.DB.prepare(
       'SELECT * FROM users WHERE (LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?)) AND is_active = 1'
     ).bind(username.trim(), username.trim()).first<any>();
@@ -27,7 +28,6 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       return new Response(JSON.stringify({ success: false, error: 'Usuário não encontrado ou inativo' }), { status: 401, headers: corsHeaders });
     }
 
-    // Simple password check (in production use bcrypt)
     const passwordHash = await hashPassword(password);
     if (user.password_hash !== passwordHash) {
       return new Response(JSON.stringify({ success: false, error: 'Senha incorreta' }), { status: 401, headers: corsHeaders });
@@ -54,25 +54,17 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     };
 
     const headers = new Headers(corsHeaders);
-    // IMPORTANTE: Secure; SameSite=Lax (ou None se for cross-domain real)
+    // SameSite=Lax é o ideal para same-domain. Secure é obrigatório para Cloudflare.
     headers.set('Set-Cookie', `docmaster_session=${sessionToken}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=604800`);
 
     return new Response(JSON.stringify(responseData), { status: 200, headers });
   } catch (err: any) {
-    return new Response(JSON.stringify({ success: false, error: 'Erro interno do servidor' }), { status: 500, headers: corsHeaders });
+    return new Response(JSON.stringify({ success: false, error: 'Erro interno' }), { status: 500, headers: corsHeaders });
   }
 };
 
 export const onRequestOptions: PagesFunction = async ({ request }) => {
-  const origin = request.headers.get('Origin') || '*';
-  return new Response(null, {
-    headers: {
-      'Access-Control-Allow-Origin': origin,
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-      'Access-Control-Allow-Credentials': 'true',
-    }
-  });
+  return new Response(null, { headers: getCorsHeaders(request.headers.get('Origin')) });
 };
 
 async function hashPassword(password: string): Promise<string> {

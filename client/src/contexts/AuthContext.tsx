@@ -47,12 +47,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(null);
           localStorage.removeItem("docmaster_user");
         }
-      } else {
+      } else if (res.status === 401) {
+        // Apenas limpa se for explicitamente não autorizado (401)
         setUser(null);
         localStorage.removeItem("docmaster_user");
       }
-    } catch {
-      // Keep local user if fetch fails (e.g. offline) but don't set null
+      // Se for 500 ou erro de rede, mantém o usuário local (se existir)
+    } catch (err) {
+      console.error("Auth sync error:", err);
     } finally {
       setLoading(false);
     }
