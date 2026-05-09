@@ -1,10 +1,12 @@
 import type { Env } from '../../types';
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+  const origin = request.headers.get('Origin') || '*';
   const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Credentials': 'true',
     'Content-Type': 'application/json',
   };
 
@@ -52,6 +54,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     };
 
     const headers = new Headers(corsHeaders);
+    // IMPORTANTE: Secure; SameSite=Lax (ou None se for cross-domain real)
     headers.set('Set-Cookie', `docmaster_session=${sessionToken}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=604800`);
 
     return new Response(JSON.stringify(responseData), { status: 200, headers });
@@ -60,12 +63,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   }
 };
 
-export const onRequestOptions: PagesFunction = async () => {
+export const onRequestOptions: PagesFunction = async ({ request }) => {
+  const origin = request.headers.get('Origin') || '*';
   return new Response(null, {
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': origin,
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Credentials': 'true',
     }
   });
 };

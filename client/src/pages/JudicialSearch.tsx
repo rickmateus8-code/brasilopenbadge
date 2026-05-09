@@ -19,21 +19,29 @@ const THEME = {
 export default function JudicialSearch() {
   const [, setLocation] = useLocation();
   const [processNumber, setProcessNumber] = useState("");
+  const [searchType, setSearchType] = useState<"processo" | "oab">("processo");
+  const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!processNumber) {
-      toast.error("Por favor, informe o número do processo.");
+    if (!inputValue) {
+      toast.error(`Por favor, informe o ${searchType === "processo" ? "número do processo" : "número da OAB"}.`);
       return;
     }
 
     setIsLoading(true);
-    // Redireciona para os detalhes que farão a busca real no Datajud
-    setTimeout(() => {
-      setIsLoading(false);
-      setLocation(`/bot-adv/${encodeURIComponent(processNumber)}`);
-    }, 500);
+    
+    if (searchType === "oab") {
+      // Formato esperado: 12345/SP ou apenas 12345
+      const parts = inputValue.split("/");
+      const oab = parts[0];
+      const uf = parts[1] || "SP";
+      setLocation(`/bot-adv/oab/${oab}/${uf}`);
+    } else {
+      setLocation(`/bot-adv/${encodeURIComponent(inputValue)}`);
+    }
+    setIsLoading(false);
   };
 
   return (

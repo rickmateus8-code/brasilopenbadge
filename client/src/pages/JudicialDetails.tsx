@@ -356,6 +356,7 @@ export default function JudicialDetails() {
       <div style={{ position: "absolute", left: "-9999px", top: "-9999px" }}>
         <div ref={previewRef} style={{ width: 826 }}>
           <PeticaoDocument data={{
+             id: process?.processo || "preview",
              processo: formatCNJ(process?.processo || ""),
              credor: process?.credor_nome || process?.credores?.[0]?.nome,
              cpf_cnpj: process?.credor_cpf || process?.credores?.[0]?.cpf,

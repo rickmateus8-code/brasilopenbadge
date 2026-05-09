@@ -401,6 +401,7 @@ const DOC_PREFIXES: Record<DocType, string> = {
   "historico-uninter": "HISTORICO_UNINTER",
   receita: "RECEITA",
   peticaocria: "PETICAO_JUDICIAL",
+  "diploma-uninter": "DIPLOMA_UNINTER",
   generic: "DOCUMENTO",
 };
 

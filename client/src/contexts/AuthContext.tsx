@@ -29,7 +29,10 @@ const AuthContext = createContext<AuthContextType | null>(null);
 const API_BASE = "/api";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(() => {
+    const saved = localStorage.getItem("docmaster_user");
+    return saved ? JSON.parse(saved) : null;
+  });
   const [loading, setLoading] = useState(true);
 
   const fetchMe = useCallback(async () => {
@@ -39,14 +42,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = await res.json();
         if (data.success && data.user) {
           setUser(data.user);
+          localStorage.setItem("docmaster_user", JSON.stringify(data.user));
         } else {
           setUser(null);
+          localStorage.removeItem("docmaster_user");
         }
       } else {
         setUser(null);
+        localStorage.removeItem("docmaster_user");
       }
     } catch {
-      setUser(null);
+      // Keep local user if fetch fails (e.g. offline) but don't set null
     } finally {
       setLoading(false);
     }
@@ -68,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(data.error || "Credenciais inválidas");
     }
     setUser(data.user);
+    localStorage.setItem("docmaster_user", JSON.stringify(data.user));
   }, []);
 
   const register = useCallback(async (input: { username: string; password: string; email?: string; displayName?: string }) => {
@@ -82,11 +89,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(data.error || "Erro ao criar conta");
     }
     setUser(data.user);
+    localStorage.setItem("docmaster_user", JSON.stringify(data.user));
   }, []);
 
   const logout = useCallback(() => {
     fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" }).finally(() => {
       setUser(null);
+      localStorage.removeItem("docmaster_user");
     });
   }, []);
 

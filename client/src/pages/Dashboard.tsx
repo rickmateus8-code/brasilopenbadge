@@ -693,7 +693,7 @@ export default function Dashboard() {
                     <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                       {history.map(doc => {
                         const codigoQR = doc.codigo_qr || doc.codigo_validacao || "";
-                        const dataEmissao = doc.data_emissao || doc.dataEmissao || doc.data?.dataEmissao || doc.created_at;
+                        const dataEmissao = doc.data_emissao || doc.dataEmissao || doc.created_at;
                         const creationDate = new Date(doc.created_at);
                         return (
                           <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">

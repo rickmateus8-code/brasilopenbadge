@@ -1,10 +1,12 @@
 import type { Env } from '../../types';
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
+  const origin = request.headers.get('Origin') || '*';
   const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Credentials': 'true',
     'Content-Type': 'application/json',
   };
 
@@ -48,12 +50,14 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   }
 };
 
-export const onRequestOptions: PagesFunction = async () => {
+export const onRequestOptions: PagesFunction = async ({ request }) => {
+  const origin = request.headers.get('Origin') || '*';
   return new Response(null, {
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': origin,
       'Access-Control-Allow-Methods': 'GET, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Credentials': 'true',
     }
   });
 };
