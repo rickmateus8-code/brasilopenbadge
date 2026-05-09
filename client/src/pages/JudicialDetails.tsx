@@ -33,20 +33,30 @@ const GavelIcon = ({ size = 24 }: { size?: number }) => (
   </svg>
 );
 
+// ─── Helpers ───────────────────────────────────────────────────────────────
+function formatCNJ(raw: string): string {
+  const clean = raw.replace(/\D/g, "");
+  if (clean.length !== 20) return raw;
+  // NNNNNNN-DD.AAAA.J.TR.OOOO
+  return `${clean.substring(0, 7)}-${clean.substring(7, 9)}.${clean.substring(9, 13)}.${clean.substring(13, 14)}.${clean.substring(14, 16)}.${clean.substring(16, 20)}`;
+}
+
 // ─── Estilos Customizados do Clone ──────────────────────────────────────────
 const STYLES = `
-  .clone-container { max-width: 1200px; margin: 0 auto; background: white; padding: 2rem; border-radius: 0.375rem; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
+  .clone-container { max-width: 1200px; margin: 0 auto; background: white; padding: 2rem; border-radius: 0.375rem; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; color: #000 !important; }
+  .clone-container * { color: #000 !important; }
   .clone-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; border-bottom: 3px solid #007bff; padding-bottom: 1rem; gap: 1rem; }
-  .clone-header h2 { margin: 0; color: #007bff; font-size: 1.5rem; font-weight: 700; }
+  .clone-header h2 { margin: 0; color: #007bff !important; font-size: 1.5rem; font-weight: 700; }
   .adv-info { display: flex; align-items: center; background: #f8f9fa; padding: 1rem; border-radius: 0.375rem; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); flex: 1; justify-content: flex-end; text-align: right; }
   .details-box { border: 1px solid #e0e0e0; padding: 1.5rem; margin-bottom: 1.5rem; border-radius: 0.375rem; background: #fafbfc; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); }
   .clone-btn { padding: 0.75rem 1.5rem; border: none; border-radius: 0.375rem; cursor: pointer; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.3s; font-size: 1rem; }
-  .btn-docs { background: linear-gradient(45deg, #28a745, #20c997); color: white; }
-  .btn-alvara { background: linear-gradient(45deg, #ffc107, #fd7e14); color: #212529; }
-  .btn-edit { background: linear-gradient(45deg, #17a2b8, #138496); color: white; }
+  .btn-docs { background: linear-gradient(45deg, #28a745, #20c997); color: white !important; }
+  .btn-alvara { background: linear-gradient(45deg, #ffc107, #fd7e14); color: #000 !important; }
+  .btn-edit { background: linear-gradient(45deg, #17a2b8, #138496); color: white !important; }
   .phone-item { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background: #f8f9fa; border-radius: 5px; margin-bottom: 0.5rem; border-left: 3px solid #007bff; }
   .timeline-clone { border-left: 2px solid #007bff; padding-left: 1.5rem; position: relative; margin-top: 1rem; }
   .timeline-dot { position: absolute; left: -7px; top: 5px; width: 12px; height: 12px; background: #007bff; border-radius: 50%; }
+  label { font-weight: 800 !important; }
 `;
 
 export default function JudicialDetails() {
@@ -104,8 +114,15 @@ export default function JudicialDetails() {
       const data = await res.json();
       if (data.success) {
         setTelefonesEncontrados(data.telefones || []);
-        if (data.NOME && !process?.credor_nome) {
-           setProcess((p: any) => ({ ...p, credor_nome: data.NOME, credor_cpf: cleanCPF, RENDA: data.RENDA, NASCIMENTO: data.NASCIMENTO, SEXO: data.SEXO }));
+        if (data.NOME) {
+           setProcess((p: any) => ({ 
+             ...p, 
+             credor_nome: data.NOME, 
+             credor_cpf: cleanCPF, 
+             RENDA: data.RENDA, 
+             NASCIMENTO: data.NASCIMENTO, 
+             SEXO: data.SEXO 
+           }));
         }
       }
     } catch (e) { /* ignore */ }
@@ -127,10 +144,10 @@ export default function JudicialDetails() {
     if (!previewRef.current || !process) return;
     try {
       const docData = {
-        processo: process.processo,
+        processo: formatCNJ(process.processo),
         credor: process.credor_nome || process.credores?.[0]?.nome,
         cpf_cnpj: process.credor_cpf || process.credores?.[0]?.cpf,
-        advogado: process.advogado_nome || process.advogado || "Dr. Advogado",
+        advogado: process.advogado || "Dr. Advogado",
         contra: process.parte_contraria,
         valor: process.valor_limpo || process.valor || (process.valor_numerico ? process.valor_numerico.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : "0,00"),
         data: new Date().toLocaleDateString("pt-BR"),
@@ -146,6 +163,11 @@ export default function JudicialDetails() {
       toast.success("Alvará baixado com sucesso!");
     } catch (err) { toast.error("Erro ao gerar PDF."); }
   }, [exportPDF, process]);
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copiado!");
+  };
 
   if (isLoading) return <div className="flex items-center justify-center h-screen bg-[#f5f7fa] font-bold text-[#007bff]">Carregando dados processuais...</div>;
 
@@ -169,21 +191,21 @@ export default function JudicialDetails() {
         <div id="content">
           <div className="clone-header">
             <div>
-              <h2>Processo: <strong>{process?.processo}</strong></h2>
-              <p className="text-sm text-gray-600 mt-2"><strong>Fonte dos dados:</strong> API Primária</p>
-              <p className="text-sm text-gray-600"><strong>Tribunal:</strong> {process?.tribunal || "Tribunal de Justiça"}</p>
-              <p className="text-sm text-gray-600"><strong>Órgão Julgador:</strong> {process?.orgao_julgador || "NÃO INFORMADO"}</p>
+              <h2>Processo: <strong>{formatCNJ(process?.processo || "")}</strong></h2>
+              <p className="text-sm mt-2"><strong>Fonte dos dados:</strong> API Primária</p>
+              <p className="text-sm"><strong>Tribunal:</strong> {process?.tribunal || "Tribunal de Justiça"}</p>
+              <p className="text-sm"><strong>Órgão Julgador:</strong> {process?.orgao_julgador || "NÃO INFORMADO"}</p>
             </div>
             <div className="adv-info">
               <div>
-                <p className="text-xs text-gray-400 uppercase font-black mb-1">Advogado Principal:</p>
-                <p className="text-sm font-bold text-gray-800">{process?.advogado || "NÃO IDENTIFICADO"}</p>
+                <p className="text-xs uppercase font-black mb-1">Advogado Principal:</p>
+                <p className="text-sm font-bold">{process?.advogado || "NÃO IDENTIFICADO"}</p>
               </div>
             </div>
           </div>
 
           <hr className="border-gray-100 my-6" />
-          <h2 className="text-lg font-bold text-gray-800 mb-4">Geração de Alvará</h2>
+          <h2 className="text-lg font-bold mb-4">Geração de Alvará</h2>
           <div className="details-box">
              <p className="text-sm">Clique em <strong>Gerar e Baixar Alvará</strong> para iniciar o download automático.</p>
           </div>
@@ -205,38 +227,38 @@ export default function JudicialDetails() {
             <div className="details-box animate-in slide-in-from-top-4 duration-300">
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Polo Ativo (Credor)</label>
-                    <input className="w-full border p-2 rounded text-sm font-bold" value={process.credor_nome || ""} onChange={e => setProcess((p:any)=>({...p, credor_nome: e.target.value}))} />
+                    <label className="text-[10px] font-black uppercase block mb-1">Polo Ativo (Credor)</label>
+                    <input className="w-full border p-2 rounded text-sm font-bold bg-white" value={process.credor_nome || ""} onChange={e => setProcess((p:any)=>({...p, credor_nome: e.target.value}))} />
                   </div>
                   <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">CPF/CNPJ</label>
-                    <input className="w-full border p-2 rounded text-sm font-bold" value={process.credor_cpf || ""} onChange={e => handleCPFQuery(e.target.value)} />
+                    <label className="text-[10px] font-black uppercase block mb-1">CPF/CNPJ</label>
+                    <input className="w-full border p-2 rounded text-sm font-bold bg-white" value={process.credor_cpf || ""} onChange={e => handleCPFQuery(e.target.value)} />
                   </div>
                   <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Advogado</label>
-                    <input className="w-full border p-2 rounded text-sm font-bold" value={process.advogado_nome || ""} onChange={e => setProcess((p:any)=>({...p, advogado_nome: e.target.value}))} />
+                    <label className="text-[10px] font-black uppercase block mb-1">Advogado</label>
+                    <input className="w-full border p-2 rounded text-sm font-bold bg-white" value={process.advogado || ""} onChange={e => setProcess((p:any)=>({...p, advogado: e.target.value}))} />
                   </div>
                   <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Valor de Liberação</label>
-                    <input className="w-full border p-2 rounded text-sm font-bold text-emerald-600" value={process.valor_limpo || ""} onChange={e => setProcess((p:any)=>({...p, valor_limpo: e.target.value}))} />
+                    <label className="text-[10px] font-black uppercase block mb-1">Valor de Liberação</label>
+                    <input className="w-full border p-2 rounded text-sm font-bold bg-white text-emerald-600" value={process.valor_limpo || ""} onChange={e => setProcess((p:any)=>({...p, valor_limpo: e.target.value}))} />
                   </div>
                </div>
             </div>
           )}
 
-          <h2 className="text-lg font-bold text-gray-800 mb-4">Detalhes Gerais</h2>
+          <h2 className="text-lg font-bold mb-4">Detalhes Gerais</h2>
           <div className="details-box">
              <p className="text-sm"><strong>Classe:</strong> {process?.classe || "Procedimento Comum"}</p>
              <p className="text-sm"><strong>Assunto:</strong> {process?.assunto || "Tutela de Urgência"}</p>
              <p className="text-sm"><strong>Valor da Ação:</strong> {process?.valor || "R$ 0,00"}</p>
-             <p className="text-sm"><strong>Data de Início:</strong> {process?.data_distribuicao ? new Date(process.data_distribuicao).toLocaleString("pt-BR") : "N/A"}</p>
+             <p className="text-sm"><strong>Data de Início:</strong> {process?.data_distribuicao || "N/A"}</p>
              <p className="text-sm"><strong>Último Movimento:</strong> {process?.movimentacoes?.[0]?.texto || "N/A"}</p>
           </div>
 
-          <h2 className="text-lg font-bold text-gray-800 mb-4">Partes Envolvidas</h2>
+          <h2 className="text-lg font-bold mb-4">Partes Envolvidas</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
              <div className="details-box h-full">
-                <h4 className="text-sm font-bold text-gray-700 mb-4">Polo Ativo (Credor)</h4>
+                <h4 className="text-sm font-bold mb-4">Polo Ativo (Credor)</h4>
                 <p className="text-xs"><strong>Parte:</strong> {process?.credores?.[0]?.nome} (Doc: {process?.credores?.[0]?.cpf || "—"})</p>
                 <p className="text-xs"><strong>Advogado:</strong> {process?.advogado || "N/A"}</p>
                 
@@ -250,14 +272,14 @@ export default function JudicialDetails() {
                 </div>
              </div>
              <div className="details-box h-full">
-                <h4 className="text-sm font-bold text-gray-700 mb-4">Polo Passivo (Parte Contrária)</h4>
+                <h4 className="text-sm font-bold mb-4">Polo Passivo (Parte Contrária)</h4>
                 <p className="text-xs"><strong>Parte:</strong> {process?.parte_contraria}</p>
                 <p className="text-xs"><strong>Interpretado como:</strong> {process?.parte_contraria?.split(" - ")[0]}</p>
                 <p className="text-xs"><strong>Advogado:</strong> N/A</p>
              </div>
           </div>
 
-          <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold mb-4 flex items-center justify-between">
             Movimentações Completas 
             <button onClick={() => setShowMovs(!showMovs)} className="text-xs bg-[#007bff] text-white px-3 py-1 rounded">
                {showMovs ? "👁️ Ocultar" : "👁️ Exibir"}
@@ -269,8 +291,8 @@ export default function JudicialDetails() {
                   {process?.movimentacoes?.map((m: any, i: number) => (
                     <div key={i} className="timeline-clone">
                        <div className="timeline-dot" />
-                       <div className="text-[10px] font-bold text-gray-400 uppercase">{new Date(m.data).toLocaleDateString("pt-BR")}</div>
-                       <div className="text-xs font-bold text-gray-700 leading-tight">{m.texto}</div>
+                       <div className="text-[10px] font-bold uppercase">{m.data?.includes("T") ? new Date(m.data).toLocaleDateString("pt-BR") : m.data}</div>
+                       <div className="text-xs font-bold leading-tight">{m.texto}</div>
                     </div>
                   ))}
                </div>
@@ -280,9 +302,9 @@ export default function JudicialDetails() {
 
         <hr className="border-gray-200 my-8" />
         <div className="details-box !bg-[#f1f3f5] border-none shadow-none">
-           <h2 className="text-lg font-bold text-gray-800 mb-6">Contatos dos Credores</h2>
+           <h2 className="text-lg font-bold mb-6">Contatos dos Credores</h2>
            <div className="details-box !bg-white">
-              <h4 className="text-sm font-bold text-gray-700 mb-4">{process?.credor_nome} - CPF: <strong>{process?.credor_cpf}</strong></h4>
+              <h4 className="text-sm font-bold mb-4">{process?.credor_nome} - CPF: <strong>{process?.credor_cpf}</strong></h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 pb-6 border-b border-gray-100">
                  <div className="space-y-1">
                     <p className="text-xs"><strong>Nome:</strong> {process?.credor_nome}</p>
@@ -295,11 +317,11 @@ export default function JudicialDetails() {
                  </div>
               </div>
 
-              <h5 className="text-xs font-bold text-gray-600 mb-3 uppercase">Telefones de {process?.credor_nome}:</h5>
+              <h5 className="text-xs font-bold mb-3 uppercase">Telefones de {process?.credor_nome}:</h5>
               <div className="space-y-2">
                  {telefonesEncontrados.map((tel, i) => (
                     <div key={i} className="phone-item">
-                       <span className="text-sm font-bold text-gray-800">{tel}</span>
+                       <span className="text-sm font-bold">{tel}</span>
                        <div className="flex gap-2">
                           <button onClick={() => copyToClipboard(tel)} className="text-[10px] font-bold bg-gray-200 px-2 py-1 rounded">📋 Copiar</button>
                           <a 
@@ -312,7 +334,7 @@ export default function JudicialDetails() {
                        </div>
                     </div>
                  ))}
-                 {isCPFLoading && <div className="text-xs text-[#007bff] animate-pulse">Buscando contatos na API Snoop...</div>}
+                 {isCPFLoading && <div className="text-xs text-[#007bff] animate-pulse">Recuperando dados Snoop...</div>}
               </div>
 
               <div className="mt-6 flex justify-center">
@@ -332,10 +354,10 @@ export default function JudicialDetails() {
       <div style={{ position: "absolute", left: "-9999px", top: "-9999px" }}>
         <div ref={previewRef} style={{ width: 826 }}>
           <PeticaoDocument data={{
-             processo: process?.processo,
+             processo: formatCNJ(process?.processo || ""),
              credor: process?.credor_nome || process?.credores?.[0]?.nome,
              cpf_cnpj: process?.credor_cpf || process?.credores?.[0]?.cpf,
-             advogado: process?.advogado_nome || process?.advogado,
+             advogado: process?.advogado || "Dr. Advogado",
              contra: process?.parte_contraria,
              valor: process?.valor_limpo || process?.valor || (process?.valor_numerico?.toLocaleString('pt-BR')),
              data: new Date().toLocaleDateString("pt-BR"),
