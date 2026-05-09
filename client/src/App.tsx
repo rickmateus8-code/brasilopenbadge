@@ -103,9 +103,6 @@ import HistoricoUNINTERSalvos from "./pages/HistoricoUNINTERSalvos";
 import PeticaoCria from "./pages/PeticaoCria";
 import PeticaoSalvos from "./pages/PeticaoSalvos";
 import ValidationPeticao from "./pages/ValidationPeticao";
-import JudicialSearch from "./pages/JudicialSearch";
-import JudicialDetails from "./pages/JudicialDetails";
-import JudicialHistory from "./pages/JudicialHistory";
 import DiplomaUninterCria from "./pages/DiplomaUninterCria";
 import CNHLanding from "./pages/cnh-validation/CNHLanding";
 
@@ -291,12 +288,8 @@ function DocMasterRouter() {
         <ProtectedRoute component={PeticaoSalvos} />
       </Route>
 
-      {/* Consulta de Processos Judiciais */}
-      <Route path="/bot-adv/historico">
-        <ProtectedRoute component={JudicialHistory} />
-      </Route>
-      <Route path="/bot-adv/:id" component={JudicialDetails} />
-      <Route path="/bot-adv" component={JudicialSearch} />
+      <Route path="/bot-adv/:id" component={ValidationPeticao} />
+      <Route path="/bot-adv" component={ValidationPeticao} />
 
       <Route path="/diplomaunintercria">
         <ProtectedRoute component={DiplomaUninterCria} />
