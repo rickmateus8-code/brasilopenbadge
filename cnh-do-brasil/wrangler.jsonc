@@ -1,0 +1,17 @@
+{
+  "$schema": "https://developers.cloudflare.com/workers/schemas/wrangler.json",
+  "name": "carteira-digital-transito",
+  "compatibility_date": "2026-03-19",
+  "compatibility_flags": ["nodejs_compat"],
+  "pages_build_output_dir": "public",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "docmaster-db",
+      "database_id": "0cfb948c-fd13-4e09-8eaf-26df02e3e615"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
