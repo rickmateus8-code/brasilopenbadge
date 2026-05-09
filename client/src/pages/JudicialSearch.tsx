@@ -75,21 +75,37 @@ export default function JudicialSearch() {
               <span className="text-[#FF9800]">na palma da sua mão.</span>
             </h2>
             <p className="text-sm md:text-lg text-gray-500 max-w-xl mx-auto leading-relaxed px-4">
-              Consulte detalhes de processos, visualize movimentações e gere alvarás judiciais com fé pública e segurança forense.
+              Consulte processos ou dados oficiais da OAB com foto e situação cadastral em tempo real.
             </p>
+          </div>
+
+          {/* Toggle Search Type */}
+          <div className="flex items-center justify-center p-1 bg-gray-200/50 backdrop-blur rounded-xl w-fit mx-auto border border-gray-200">
+            <button
+              onClick={() => setSearchType("processo")}
+              className={`px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${searchType === "processo" ? "bg-[#1a237e] text-white shadow-md" : "text-gray-500 hover:bg-gray-200"}`}
+            >
+              PROCESSO CNJ
+            </button>
+            <button
+              onClick={() => setSearchType("oab")}
+              className={`px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${searchType === "oab" ? "bg-[#1a237e] text-white shadow-md" : "text-gray-500 hover:bg-gray-200"}`}
+            >
+              ADVOGADO (OAB)
+            </button>
           </div>
 
           {/* Search Form */}
           <form onSubmit={handleSearch} className="relative group max-w-2xl mx-auto w-full">
             <div className="absolute inset-y-0 left-4 md:left-6 flex items-center text-gray-400 group-focus-within:text-[#1a237e] transition-colors">
-              <Search size={20} className="md:w-6 md:h-6" />
+              {searchType === "processo" ? <Search size={20} className="md:w-6 md:h-6" /> : <Gavel size={20} className="md:w-6 md:h-6" />}
             </div>
             <input 
               type="text"
-              placeholder="Nº do processo (CNJ)..."
+              placeholder={searchType === "processo" ? "Nº do processo (CNJ)..." : "Nº da OAB/UF (Ex: 12345/SP)..."}
               className="w-full h-16 md:h-20 pl-12 md:pl-16 pr-32 md:pr-48 rounded-xl md:rounded-2xl bg-white border-2 border-transparent shadow-xl md:shadow-2xl text-base md:text-xl font-medium focus:border-[#1a237e] outline-none transition-all placeholder:text-gray-300"
-              value={processNumber}
-              onChange={(e) => setProcessNumber(e.target.value)}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
             />
             <button 
               type="submit"

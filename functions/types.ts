@@ -91,6 +91,8 @@ export interface ValidateResponse {
 
 export interface Env {
   DB: D1Database;
+  ADV_PHOTOS_BUCKET: R2Bucket;
+  CAPSOLVER_API_KEY?: string;
   ENVIRONMENT: 'production' | 'staging' | 'development';
   PAYMENTS_BLACK_API_KEY?: string;
   PAYMENTS_BLACK_API_SECRET?: string;

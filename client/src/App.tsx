@@ -304,6 +304,9 @@ function DocMasterRouter() {
       <Route path="/bot-adv/historico">
         <ProtectedRoute component={JudicialHistory} requiredTool="bot-adv" />
       </Route>
+      <Route path="/bot-adv/oab/:uf/:oab">
+        <ProtectedRoute component={JudicialOabDetails} requiredTool="bot-adv" />
+      </Route>
       <Route path="/bot-adv/:id">
         {(params) => <ProtectedRoute component={JudicialDetails} params={params} requiredTool="bot-adv" />}
       </Route>
