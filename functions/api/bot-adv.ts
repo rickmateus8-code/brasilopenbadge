@@ -128,7 +128,6 @@ async function fetchRealCPFData(cpf: string) {
        const pJson = await phonesRes.json() as any;
        const pList = pJson?.body || pJson?.data || [];
        if (Array.isArray(pList)) {
-          // Extrai os números reais
           phones = pList.map((p: any) => p.numero || p.telefone || p).filter(Boolean).slice(0, 3);
        }
     }
@@ -138,7 +137,7 @@ async function fetchRealCPFData(cpf: string) {
       NASCIMENTO: normalizeDate(body.nascimento || body.birth_date),
       SEXO: body.sexo === "F" ? "F" : "M",
       RENDA: body.renda || "R$ 3.840,00",
-      telefones: phones.length > 0 ? phones : ["(27) 99972-7938", "(27) 3355-4389"]
+      telefones: phones
     };
   } catch (e) { return null; }
 }
@@ -176,25 +175,31 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         return new Response(JSON.stringify({ success: false, error: "Processo não encontrado na Base Nacional (Datajud)." }), { status: 404, headers: CORS_HEADERS });
       }
 
+      // Parsing de data real
+      let dataInicio = "—"; 
+      if (judicialData.data_distribuicao) {
+        const d = new Date(judicialData.data_distribuicao);
+        if (!isNaN(d.getTime())) {
+           dataInicio = d.toLocaleString("pt-BR");
+        }
+      }
+
       const responseData = {
         credores: judicialData.polo_ativo?.length > 0 ? judicialData.polo_ativo : [
-          { nome: "ABRAAO LINCOLN DIAS DE OLIVEIRA", cpf: "24424463753" }
+          { nome: "NOME NÃO RETORNADO PELA API PÚBLICA", cpf: "" }
         ],
-        advogado: judicialData.advogado || "ALYNE FERNANDES DE OLIVEIRA",
+        advogado: judicialData.advogado || "NÃO IDENTIFICADO",
         processo: judicialData.processo,
-        parte_contraria: judicialData.polo_passivo?.[0]?.nome || "ESTADO DO ESPIRITO SANTO",
+        parte_contraria: judicialData.polo_passivo?.[0]?.nome || "NÃO IDENTIFICADO",
         valor: judicialData.valor_numerico > 0 ? `R$ ${judicialData.valor_numerico.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : "R$ 0,00",
         valor_limpo: judicialData.valor_numerico > 0 ? judicialData.valor_numerico.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : "0,00",
         valor_numerico: judicialData.valor_numerico,
-        movimentacoes: judicialData.movimentacoes?.length > 0 ? judicialData.movimentacoes : [
-          { data: new Date().toISOString(), texto: "Expedição de documento" },
-          { data: new Date(Date.now() - 86400000).toISOString(), texto: "Concluso para despacho" }
-        ],
-        classe: judicialData.classe || "Procedimento Comum Cível",
-        assunto: judicialData.assunto || "Tutela de Urgência",
-        data_distribuicao: normalizeDate(judicialData.data_distribuicao),
+        movimentacoes: judicialData.movimentacoes || [],
+        classe: judicialData.classe || "NÃO INFORMADO",
+        assunto: judicialData.assunto || "NÃO INFORMADO",
+        data_distribuicao: dataInicio,
         tribunal: judicialData.tribunal || "Tribunal de Justiça",
-        orgao_julgador: judicialData.orgao_julgador || "VARA DA FAZENDA PÚBLICA ESTADUAL"
+        orgao_julgador: judicialData.orgao_julgador || "VARA NÃO INFORMADA"
       };
 
       return new Response(JSON.stringify({ success: true, data: responseData }), { headers: CORS_HEADERS });
@@ -203,7 +208,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
   }
 
-  // 1. consultar_cpf_automatico (Real Snoop Integration - NO MASKING)
+  // 1. consultar_cpf_automatico (Real Snoop Integration)
   if (action === "consultar_cpf_automatico") {
     const cpf = url.searchParams.get("cpf")?.replace(/\D/g, "");
     if (!cpf || cpf.length !== 11) {
@@ -216,12 +221,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
 
     return new Response(JSON.stringify({
-      success: true,
-      telefones: ["(27) 99972-7938", "(27) 3355-4389"],
-      NOME: "ABRAAO LINCOLN DIAS DE OLIVEIRA",
-      NASCIMENTO: "12/10/1952",
-      SEXO: "M",
-      RENDA: "R$ 1.249,47"
+      success: false,
+      error: "Dados não localizados para este CPF na base Snoop."
     }), { headers: CORS_HEADERS });
   }
 
