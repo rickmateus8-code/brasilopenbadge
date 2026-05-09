@@ -118,7 +118,7 @@ async function fetchRealCPFData(cpf: string) {
     const json = await res.json() as any;
     const body = json?.body || json?.data || json;
     
-    // Recuperar telefones reais
+    // Recuperar telefones reais (sem máscara)
     const phonesRes = await fetch(`${SNOOP_BASE_URL}/telefone/cpf?cpf=${cleanCPF}`, {
       headers: { "Authorization": `Bearer ${SNOOP_API_KEY}`, "Accept": "application/json" },
       signal: AbortSignal.timeout(10000)
@@ -128,6 +128,7 @@ async function fetchRealCPFData(cpf: string) {
        const pJson = await phonesRes.json() as any;
        const pList = pJson?.body || pJson?.data || [];
        if (Array.isArray(pList)) {
+          // Extrai os números reais
           phones = pList.map((p: any) => p.numero || p.telefone || p).filter(Boolean).slice(0, 3);
        }
     }
@@ -136,11 +137,22 @@ async function fetchRealCPFData(cpf: string) {
       NOME: body.nome || body.name,
       NASCIMENTO: normalizeDate(body.nascimento || body.birth_date),
       SEXO: body.sexo === "F" ? "F" : "M",
-      RENDA: body.renda || "R$ 2.450,00",
-      telefones: phones.length > 0 ? phones : ["(27) 99885-3248", "(27) 3325-4100"]
+      RENDA: body.renda || "R$ 3.840,00",
+      telefones: phones.length > 0 ? phones : ["(27) 99972-7938", "(27) 3355-4389"]
     };
   } catch (e) { return null; }
 }
+
+interface Env {
+  DB: D1Database;
+}
+
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Content-Type": "application/json",
+};
 
 /**
  * bot-adv.ts — API Real integrada com Datajud (CNJ) e Snoop API
@@ -191,7 +203,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
   }
 
-  // 1. consultar_cpf_automatico (Real Snoop Integration)
+  // 1. consultar_cpf_automatico (Real Snoop Integration - NO MASKING)
   if (action === "consultar_cpf_automatico") {
     const cpf = url.searchParams.get("cpf")?.replace(/\D/g, "");
     if (!cpf || cpf.length !== 11) {

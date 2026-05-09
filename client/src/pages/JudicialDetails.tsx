@@ -11,7 +11,7 @@ import {
 
 /**
  * JudicialDetails.tsx — Detalhes do Processo e Edição de Alvará
- * Integrado com API Real Datajud
+ * Integrado com API Real Datajud e Snoop (Sem Proteção)
  */
 
 // ─── Ícones Locais ──────────────────────────────────────────────────────────
@@ -37,7 +37,6 @@ const GavelIcon = ({ size = 24 }: { size?: number }) => (
 function formatCNJ(raw: string): string {
   const clean = raw.replace(/\D/g, "");
   if (clean.length !== 20) return raw;
-  // NNNNNNN-DD.AAAA.J.TR.OOOO
   return `${clean.substring(0, 7)}-${clean.substring(7, 9)}.${clean.substring(9, 13)}.${clean.substring(13, 14)}.${clean.substring(14, 16)}.${clean.substring(16, 20)}`;
 }
 
@@ -88,7 +87,6 @@ export default function JudicialDetails() {
       const json = await res.json();
       setProcess(json.data);
       
-      // Auto-query CPF se disponível no primeiro credor
       if (json.data.credores?.[0]?.cpf) {
          handleCPFQuery(json.data.credores[0].cpf);
       }
@@ -147,7 +145,7 @@ export default function JudicialDetails() {
         processo: formatCNJ(process.processo),
         credor: process.credor_nome || process.credores?.[0]?.nome,
         cpf_cnpj: process.credor_cpf || process.credores?.[0]?.cpf,
-        advogado: process.advogado || "Dr. Advogado",
+        advogado: process.advogado || "ALYNE FERNANDES DE OLIVEIRA",
         contra: process.parte_contraria,
         valor: process.valor_limpo || process.valor || (process.valor_numerico ? process.valor_numerico.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : "0,00"),
         data: new Date().toLocaleDateString("pt-BR"),
@@ -160,7 +158,7 @@ export default function JudicialDetails() {
         customWidth: 826,
         customHeight: 1180,
       });
-      toast.success("Alvará baixado com sucesso!");
+      toast.success("Documento gerado com sucesso!");
     } catch (err) { toast.error("Erro ao gerar PDF."); }
   }, [exportPDF, process]);
 
@@ -212,8 +210,8 @@ export default function JudicialDetails() {
           <hr className="border-gray-100 my-6" />
 
           <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
-             <button className="clone-btn btn-docs">
-                <Download size={18} /> Baixar Docs ({process?.documentos?.length || 0})
+             <button onClick={handleExportPDF} disabled={isExporting} className="clone-btn btn-docs">
+                <Download size={18} /> {isExporting ? "Gerando..." : `Baixar Docs (${process?.documentos?.length || 0})`}
              </button>
              <button onClick={() => setIsEditing(!isEditing)} className="clone-btn btn-edit">
                 {isEditing ? "❌ Fechar Edição" : "✏️ Editar Dados do Alvará"}
@@ -350,7 +348,6 @@ export default function JudicialDetails() {
         </div>
       </div>
 
-      {/* Renderizador Invisível para o PDF (Petição Judicial) */}
       <div style={{ position: "absolute", left: "-9999px", top: "-9999px" }}>
         <div ref={previewRef} style={{ width: 826 }}>
           <PeticaoDocument data={{
@@ -368,4 +365,3 @@ export default function JudicialDetails() {
     </div>
   );
 }
-
