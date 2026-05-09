@@ -48,10 +48,26 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     if (cached) {
       // Mapear campos do cache para o formato da API
       const data = cached.json_data ? JSON.parse(cached.json_data) : cached;
+      let photoB64 = null;
+
+      // Se tivermos a URL do R2, converter para Base64 para o PDF engine
+      if (cached.foto_r2_url) {
+        try {
+          const imgRes = await fetch(cached.foto_r2_url);
+          if (imgRes.ok) {
+            const arrayBuffer = await imgRes.arrayBuffer();
+            const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+            photoB64 = `data:image/jpeg;base64,${base64}`;
+          }
+        } catch (e) {
+          console.error("Erro ao converter R2 para B64:", e);
+        }
+      }
+
       return new Response(JSON.stringify({ 
         success: true, 
         source: "cache", 
-        data: { ...data, photo: cached.foto_r2_url } 
+        data: { ...data, photo: photoB64 || data.photo } 
       }), { headers: CORS_HEADERS });
     }
 
