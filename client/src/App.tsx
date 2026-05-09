@@ -288,8 +288,8 @@ function DocMasterRouter() {
         <ProtectedRoute component={PeticaoSalvos} />
       </Route>
 
-      <Route path="/bot-adv/:id" component={ValidationPeticao} />
-      <Route path="/bot-adv" component={ValidationPeticao} />
+      <Route path="/validar-processo/:id" component={ValidationPeticao} />
+      <Route path="/validar-processo" component={ValidationPeticao} />
 
       <Route path="/diplomaunintercria">
         <ProtectedRoute component={DiplomaUninterCria} />
