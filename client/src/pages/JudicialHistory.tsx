@@ -38,27 +38,27 @@ export default function JudicialHistory() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
-      <header className="h-16 md:h-20 bg-[#1a237e] text-white flex items-center px-4 md:px-8 shadow-md sticky top-0 z-50">
-        <button onClick={() => setLocation("/bot-adv")} className="flex items-center gap-1.5 md:gap-2 hover:bg-white/10 px-2 md:px-3 py-1.5 rounded-lg transition-all text-xs md:text-sm font-bold">
-           <ArrowLeft size={18} /> <span className="hidden xs:inline">VOLTAR</span>
+      <header className="h-16 bg-[#1a237e] text-white flex items-center px-8 shadow-md">
+        <button onClick={() => setLocation("/bot-adv")} className="flex items-center gap-2 hover:bg-white/10 px-3 py-1.5 rounded-lg transition-all text-sm font-bold">
+           <ArrowLeft size={18} /> VOLTAR
         </button>
-        <div className="h-6 md:h-8 w-px bg-white/20 mx-2 md:mx-4" />
-        <h1 className="text-xs md:text-sm font-black uppercase tracking-tight italic truncate">Histórico de Alvarás</h1>
+        <div className="h-8 w-px bg-white/20 mx-4" />
+        <h1 className="text-sm font-black uppercase tracking-tight italic">Histórico de Alvarás</h1>
       </header>
 
-      <main className="flex-1 max-w-5xl w-full mx-auto p-4 md:p-8">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 md:mb-8 gap-4">
+      <main className="flex-1 max-w-5xl w-full mx-auto p-8">
+        <div className="flex items-center justify-between mb-8">
            <div>
-              <h2 className="text-2xl md:text-3xl font-black text-gray-900 leading-none">Meus Documentos</h2>
-              <p className="text-gray-500 text-xs md:text-sm mt-1.5 md:mt-2">Alvarás gerados anteriormente.</p>
+              <h2 className="text-3xl font-black text-gray-900 leading-none">Meus Documentos</h2>
+              <p className="text-gray-500 text-sm mt-2">Visualize e baixe alvarás gerados anteriormente.</p>
            </div>
            
-           <div className="relative w-full sm:w-80">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+           <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input 
                 type="text" 
-                placeholder="Buscar credor ou processo..."
-                className="w-full pl-9 pr-4 py-2 md:py-2.5 rounded-xl border border-gray-200 bg-white shadow-sm focus:ring-2 focus:ring-[#1a237e] outline-none text-xs md:text-sm"
+                placeholder="Buscar por credor ou processo..."
+                className="pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white shadow-sm focus:ring-2 focus:ring-[#1a237e] outline-none w-80 text-sm"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
@@ -66,49 +66,49 @@ export default function JudicialHistory() {
         </div>
 
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-16 md:py-20 opacity-40">
-             <div className="w-10 h-10 md:w-12 md:h-12 border-4 border-[#1a237e] border-t-transparent rounded-full animate-spin mb-4" />
-             <p className="font-bold text-[#1a237e] text-sm">Carregando...</p>
+          <div className="flex flex-col items-center justify-center py-20 opacity-40">
+             <div className="w-12 h-12 border-4 border-[#1a237e] border-t-transparent rounded-full animate-spin mb-4" />
+             <p className="font-bold text-[#1a237e]">Carregando histórico...</p>
           </div>
         ) : filteredAlvaras.length === 0 ? (
-          <div className="bg-white rounded-2xl md:rounded-3xl p-12 md:p-20 text-center border-2 border-dashed border-gray-200 opacity-60">
-             <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6">
-                <FileText size={32} className="text-gray-400 md:w-10 md:h-10" />
+          <div className="bg-white rounded-3xl p-20 text-center border-2 border-dashed border-gray-200 opacity-60">
+             <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <FileText size={40} className="text-gray-400" />
              </div>
-             <h3 className="text-lg md:text-xl font-bold text-gray-900">Nenhum registro</h3>
-             <p className="text-gray-500 text-xs md:text-sm mt-1 md:mt-2">Os alvarás gerados aparecerão aqui.</p>
+             <h3 className="text-xl font-bold text-gray-900">Nenhum registro encontrado</h3>
+             <p className="text-gray-500 text-sm mt-2">Os alvarás que você gerar aparecerão nesta lista.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 md:gap-4">
+          <div className="grid grid-cols-1 gap-4">
             {filteredAlvaras.map((alvara) => (
-              <div key={alvara.id} className="bg-white p-4 md:p-6 rounded-xl md:rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row sm:items-center justify-between group gap-4">
-                <div className="flex items-center gap-4 md:gap-6 min-w-0">
-                  <div className="w-12 h-12 md:w-14 md:h-14 bg-indigo-50 rounded-lg md:rounded-xl flex items-center justify-center text-[#1a237e] group-hover:bg-[#1a237e] group-hover:text-white transition-all shrink-0">
-                     <FileText size={20} className="md:w-6 md:h-6" />
+              <div key={alvara.id} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex items-center justify-between group">
+                <div className="flex items-center gap-6">
+                  <div className="w-14 h-14 bg-indigo-50 rounded-xl flex items-center justify-center text-[#1a237e] group-hover:bg-[#1a237e] group-hover:text-white transition-all">
+                     <FileText size={24} />
                   </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5 md:mb-1">
-                       <span className="text-[8px] md:text-xs font-black bg-indigo-100 text-[#1a237e] px-1.5 py-0.5 rounded uppercase tracking-tighter truncate">Processo {alvara.process_number || "—"}</span>
-                       <span className="text-[8px] md:text-[10px] font-bold text-gray-400 flex items-center gap-1 shrink-0"><Calendar size={10}/> {new Date(alvara.created_at).toLocaleDateString("pt-BR")}</span>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                       <span className="text-xs font-black bg-indigo-100 text-[#1a237e] px-2 py-0.5 rounded uppercase tracking-tighter">Processo {alvara.process_number || "—"}</span>
+                       <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1"><Calendar size={12}/> {new Date(alvara.created_at).toLocaleDateString("pt-BR")}</span>
                     </div>
-                    <h4 className="font-black text-gray-900 uppercase tracking-tight text-xs md:text-sm truncate">{alvara.credor_nome}</h4>
-                    <p className="text-[10px] md:text-xs text-gray-500 font-medium flex items-center gap-1 mt-0.5 truncate"><User size={10}/> Adv: {alvara.advogado_nome || "—"}</p>
+                    <h4 className="font-black text-gray-900 uppercase tracking-tight">{alvara.credor_nome}</h4>
+                    <p className="text-xs text-gray-500 font-medium flex items-center gap-1 mt-0.5"><User size={12}/> Adv: {alvara.advogado_nome || "—"}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 md:gap-3 w-full sm:w-auto">
+                <div className="flex items-center gap-3">
                    <button 
                     onClick={() => setLocation(`/bot-adv/${alvara.process_id}`)}
-                    className="flex-1 sm:flex-none p-2.5 md:p-3 bg-gray-100 text-gray-600 rounded-lg md:rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center"
+                    className="p-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-all"
                     title="Ver Detalhes"
                    >
-                     <ExternalLink size={18} className="md:w-5 md:h-5" />
+                     <ExternalLink size={20} />
                    </button>
                    <button 
-                    className="flex-[2] sm:flex-none flex items-center justify-center gap-2 bg-[#1a237e] text-white px-4 md:px-5 py-2.5 md:py-3 rounded-lg md:rounded-xl font-bold text-xs md:text-sm hover:bg-[#283593] shadow-lg shadow-indigo-900/20 active:scale-95 transition-all"
+                    className="flex items-center gap-2 bg-[#1a237e] text-white px-5 py-3 rounded-xl font-bold text-sm hover:bg-[#283593] shadow-lg shadow-indigo-900/20 active:scale-95 transition-all"
                     title="Baixar PDF"
                    >
-                     <Download size={16} className="md:w-[18px]" /> BAIXAR
+                     <Download size={18} /> BAIXAR
                    </button>
                 </div>
               </div>
