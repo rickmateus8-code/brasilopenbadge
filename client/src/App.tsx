@@ -102,7 +102,6 @@ import HistoricoSPSalvos from "./pages/HistoricoSPSalvos";
 import HistoricoUNINTERSalvos from "./pages/HistoricoUNINTERSalvos";
 import PeticaoCria from "./pages/PeticaoCria";
 import PeticaoSalvos from "./pages/PeticaoSalvos";
-import ValidationPeticao from "./pages/ValidationPeticao";
 import DiplomaUninterCria from "./pages/DiplomaUninterCria";
 import CNHLanding from "./pages/cnh-validation/CNHLanding";
 
@@ -287,9 +286,6 @@ function DocMasterRouter() {
       <Route path="/peticaocria-salvos">
         <ProtectedRoute component={PeticaoSalvos} />
       </Route>
-
-      <Route path="/validar-processo/:id" component={ValidationPeticao} />
-      <Route path="/validar-processo" component={ValidationPeticao} />
 
       <Route path="/diplomaunintercria">
         <ProtectedRoute component={DiplomaUninterCria} />

@@ -99,22 +99,22 @@ interface ToxicriaForm {
 const EMPTY: ToxicriaForm = {
   nome: "",
   cpf: "",
-  labColetor: "MAIA POSTO OFICIAL DE COLETAS TOXICOLOGICAS",
+  labColetor: "",
   comprimento: "3,00",
   dataColeta: todayBR(),
   dataRecebimento: todayBR(),
-  dataLiberacao: addDays(todayBR(), 1),
-  validadeExame: addYears(todayBR(), 5),
-  os: "2501151896",
+  dataLiberacao: "",
+  validadeExame: "",
+  os: "",
   // Campos adicionais com defaults
-  numeroLaudo: "QY19VGYPIP7G8XF5F",
-  tituloExame: "EXAME TOXICOLÓGICO - CNH",
-  realizadoPor: "LAB.SODRÉ",
-  material: "QUERATINA (CABELO)",
-  jDeteccao: "APROX. 90 DIAS",
+  numeroLaudo: "",
+  tituloExame: "EXAME TOXICOLÓGICO DE LONGA JANELA DE DETECÇÃO",
+  realizadoPor: "LABORATÓRIO SODRÉ",
+  material: "CABELO",
+  jDeteccao: "90 DIAS",
   metodo: "LC-MS/MS",
-  procedimento: "IT.TOX.008/POP.TOX.022/POP.TOX.032/POP.TOX.033",
-  valorReferencia: "CUT OFF",
+  procedimento: "IMUNOENSAIO / CROMATOGRAFIA LÍQUIDA ACOPLADA À ESPECTROMETRIA DE MASSAS",
+  valorReferencia: "NEGATIVO",
 };
 
 // ─── Componente de Preview do Laudo ──────────────────────────────────────────
@@ -123,211 +123,217 @@ function LaudoPreview({ form, codigoLaudo, validationUrl }: {
   codigoLaudo: string | null;
   validationUrl: string | null;
 }) {
-  const calibriBold: React.CSSProperties = { fontFamily: "'Calibri', sans-serif", fontWeight: 700 };
-  const calibri: React.CSSProperties = { fontFamily: "'Calibri', sans-serif", fontWeight: 400 };
-  const times: React.CSSProperties = { fontFamily: "'Times New Roman', serif" };
-
   return (
     <div style={{
-      ...calibri,
-      fontSize: "12px",
+      fontFamily: "Arial, Helvetica, sans-serif",
+      fontSize: 11,
       color: "#000",
       background: "#fff",
       width: "100%",
       maxWidth: 794,
-      minHeight: 1123, // A4 aspect ratio
       margin: "0 auto",
-      padding: "30px 40px",
+      padding: "20px 24px",
       boxSizing: "border-box",
-      position: "relative",
     }}>
       {/* ── Header ── */}
-      <div style={{ display: "flex", alignItems: "flex-start", marginBottom: 15 }}>
-        {/* Logo SODRÉ Simulado */}
-        <div style={{ marginRight: 20 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", borderBottom: "2px solid #000", paddingBottom: 10, marginBottom: 10 }}>
+        {/* Logo SODRÉ */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{
-            width: 75, height: 75, borderRadius: "50%",
-            background: "linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)",
+            width: 60, height: 60, borderRadius: "50%",
+            background: "linear-gradient(135deg, #1a3a6b 0%, #2563eb 100%)",
             display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0,
           }}>
-            <span style={{ color: "#fff", fontWeight: 900, fontSize: 32 }}>S</span>
+            <span style={{ color: "#fff", fontWeight: 900, fontSize: 16, letterSpacing: -1 }}>S</span>
+          </div>
+          <div>
+            <div style={{ fontWeight: 900, fontSize: 18, color: "#1a3a6b", letterSpacing: 1 }}>SODRÉ</div>
+            <div style={{ fontSize: 9, color: "#555", fontWeight: 600 }}>LABORATÓRIO</div>
+          </div>
+          <div style={{ marginLeft: 12 }}>
+            <div style={{ fontWeight: 700, fontSize: 11 }}>SODRE SL DIAGNOSTICOS E PESQUISAS LABORATORIAIS LTDA</div>
+            <div style={{ fontSize: 10, color: "#333" }}>05.934.885/0016-04</div>
+            <div style={{ fontSize: 10, color: "#333", marginTop: 3 }}>CNES: 9778608</div>
           </div>
         </div>
-        <div style={{ flex: 1, paddingTop: 10 }}>
-          <div style={{ ...calibriBold, fontSize: "14px", color: "#000", marginBottom: 2 }}>
-            SODRE SL DIAGNOSTICOS E PESQUISAS LABORATORIAIS LTDA
-          </div>
-          <div style={{ ...calibri, fontSize: "11px", color: "#333" }}>
-            05.934.885/0016-04 - Rua Luiz Gama, 1801. Lins/SP
-          </div>
-          <div style={{ ...calibri, fontSize: "9px", color: "#666", marginTop: 4 }}>
-            LS.TOX.017 - REV. 3 – 25/11/2024
-            <span style={{ marginLeft: 30 }}>CNES: 9778608</span>
-          </div>
+        {/* Logo CAP ACCREDITED */}
+        <div style={{
+          border: "2px solid #1a3a6b", borderRadius: 6, padding: "4px 8px",
+          textAlign: "center", fontSize: 9, color: "#1a3a6b", fontWeight: 700,
+          minWidth: 80,
+        }}>
+          <div style={{ fontSize: 14, fontWeight: 900 }}>CAP</div>
+          <div style={{ fontSize: 7 }}>ACCREDITED</div>
+          <div style={{ fontSize: 7, fontWeight: 400 }}>COLLEGE of AMERICAN PATHOLOGISTS</div>
         </div>
       </div>
 
-      <div style={{ borderBottom: "1px solid #000", marginBottom: 20 }} />
-
-      {/* ── Seção de Dados do Paciente e Laudo ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 30, marginBottom: 20 }}>
-        {/* Coluna Esquerda */}
-        <div style={{ spaceY: 8 }}>
-          <div style={{ marginBottom: 6 }}>
-            <span style={{ ...calibriBold }}>Nome: </span>
-            <span style={{ ...calibriBold, fontSize: "14px", textTransform: "uppercase" }}>{form.nome || "MARCOS PAULO PORTO"}</span>
+      {/* ── Dados do Paciente + Laudo ── */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+        {/* Coluna esquerda - Dados do Paciente */}
+        <div style={{ flex: 1, border: "1px solid #ccc", borderRadius: 4, padding: "8px 10px" }}>
+          <div style={{ marginBottom: 5 }}>
+            <span style={{ fontWeight: 700 }}>Nome: </span>
+            <span>{form.nome || "—"}</span>
           </div>
-          <div style={{ marginBottom: 6 }}>
-            <span style={{ ...calibriBold }}>CPF: </span>
-            <span style={{ ...calibriBold }}>{form.cpf || "000.000.000-00"}</span>
+          <div style={{ marginBottom: 5 }}>
+            <span style={{ fontWeight: 700 }}>CPF: </span>
+            <span>{form.cpf || "—"}</span>
           </div>
-          <div style={{ marginBottom: 6 }}>
-            <span style={{ ...calibriBold }}>Lab. Coletor: </span>
-            <span style={{ fontSize: "10px", textTransform: "uppercase" }}>{form.labColetor || "—"}</span>
+          <div style={{ marginBottom: 5, fontSize: 10 }}>
+            <span style={{ fontWeight: 700 }}>Lab. Coletor: </span>
+            <span>{form.labColetor || "—"}</span>
           </div>
-          <div style={{ marginBottom: 6 }}>
-            <span style={{ ...calibriBold }}>Material: </span>
-            <span style={{ ...calibriBold, textTransform: "uppercase" }}>{form.material || "QUERATINA (CABELO)"}</span>
+          <div style={{ marginBottom: 5 }}>
+            <span style={{ fontWeight: 700 }}>Material: </span>
+            <span>QUERATINA ({form.material || "CABELO"})</span>
           </div>
-          <div style={{ display: "flex", gap: 20 }}>
-            <div><span style={{ ...calibriBold }}>Comprimento: </span>{form.comprimento || "3,00"} CM</div>
-            <div><span style={{ ...calibriBold }}>Data da Coleta: </span>{form.dataColeta || todayBR()}</div>
+          <div style={{ display: "flex", gap: 16, marginBottom: 5 }}>
+            <div>
+              <span style={{ fontWeight: 700 }}>Comprimento: </span>
+              <span>{form.comprimento || "3,00"} CM</span>
+            </div>
+            <div>
+              <span style={{ fontWeight: 700 }}>J.Detecção: </span>
+              <span>APROX. {form.jDeteccao || "90 DIAS"}</span>
+            </div>
+          </div>
+          <div>
+            <span style={{ fontWeight: 700 }}>Data da Coleta: </span>
+            <span>{form.dataColeta || "—"}</span>
           </div>
         </div>
 
-        {/* Coluna Direita (Laudo + QR) */}
-        <div style={{ position: "relative" }}>
-          <div style={{ borderLeft: "1px solid #eee", paddingLeft: 15 }}>
-            <div style={{ marginBottom: 4 }}>
-              <span style={{ ...calibriBold }}>O.S: </span>
-              <span style={{ ...calibriBold }}>{form.os || "—"}</span>
-            </div>
-            <div style={{ marginBottom: 4 }}>
-              <span style={{ ...calibriBold }}>Laudo: </span>
-              <span style={{ ...calibriBold }}>{form.numeroLaudo || codigoLaudo || "—"}</span>
-            </div>
-            <div style={{ marginBottom: 4, fontSize: "11px" }}>
-              <span style={{ ...calibriBold }}>Exame realizado por: </span>{form.realizadoPor || "LAB.SODRÉ"}
-            </div>
-            <div style={{ marginBottom: 4, fontSize: "11px" }}>
-              <span style={{ ...calibriBold }}>Data recebimento da amostra: </span>{form.dataRecebimento || todayBR()}
-            </div>
-            <div style={{ marginBottom: 4, fontSize: "11px" }}>
-              <span style={{ ...calibriBold }}>Data de liberação: </span>{form.dataLiberacao || todayBR()}
-            </div>
-            <div style={{ marginBottom: 4, fontSize: "11px" }}>
-              <span style={{ ...calibriBold }}>Validade do exame: </span>{form.validadeExame || todayBR()}
-            </div>
-          </div>
-
-          {/* QR Code de Validação Flutuante */}
-          <div style={{ position: "absolute", top: 0, right: 0, textAlign: "center" }}>
-            <div style={{ border: "2px solid #000", padding: 3, background: "#fff" }}>
-              {validationUrl ? (
-                <QRCodeSVG value={validationUrl} size={65} />
-              ) : (
-                <div style={{ width: 65, height: 65, background: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "8px", color: "#64748b", textAlign: "center" }}>
-                  QR CODE<br/>VALIDAÇÃO
+        {/* Coluna direita - Dados do Laudo + QR */}
+        <div style={{ width: 280, border: "1px solid #ccc", borderRadius: 4, padding: "8px 10px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ marginBottom: 4 }}>
+                <span style={{ fontWeight: 700 }}>Laudo: </span>
+                <span style={{ fontWeight: 700 }}>{form.numeroLaudo || codigoLaudo || "—"}</span>
+                {form.os && <span style={{ marginLeft: 6 }}>O.S {form.os}</span>}
+              </div>
+              <div style={{ marginBottom: 3, fontSize: 10 }}>
+                <span style={{ fontWeight: 700 }}>Exame realizado por: </span>{form.realizadoPor || "LAB.SODRÉ"}
+              </div>
+              <div style={{ marginBottom: 3, fontSize: 10 }}>
+                <span style={{ fontWeight: 700 }}>Data recebimento da amostra: </span>
+                {form.dataRecebimento || "—"}
+              </div>
+              <div style={{ marginBottom: 3, fontSize: 10 }}>
+                <span style={{ fontWeight: 700 }}>Data de liberação: </span>
+                {form.dataLiberacao || "—"}
+              </div>
+              <div style={{ marginBottom: 3, fontSize: 10 }}>
+                <span style={{ fontWeight: 700 }}>Validade do exame: </span>
+                {form.validadeExame || "—"}
+              </div>
+              <div style={{ marginBottom: 3, fontSize: 10 }}>
+                <span style={{ fontWeight: 700 }}>Realizado pelo laboratório em: </span>{form.realizadoPor || "SODRÉ"}
+              </div>
+              <div style={{ marginTop: 6, fontSize: 10 }}>
+                <span style={{ fontWeight: 700 }}>Informações de segurança: </span>
+                <div style={{ background: "#000", height: 20, width: 100, marginTop: 2, display: "inline-block", verticalAlign: "middle" }}>
+                  {/* Barcode placeholder */}
+                  <div style={{ display: "flex", height: "100%", gap: 1, padding: "0 2px" }}>
+                    {Array.from({ length: 20 }).map((_, i) => (
+                      <div key={i} style={{ flex: i % 3 === 0 ? 2 : 1, background: i % 2 === 0 ? "#000" : "#fff", height: "100%" }} />
+                    ))}
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
-            <div style={{ ...calibriBold, fontSize: "9px", marginTop: 4 }}>VALIDAÇÃO</div>
+            {/* QR Code */}
+            <div style={{ marginLeft: 8, display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <div style={{ border: "2px solid #333", padding: 3, borderRadius: 3, background: "#fff" }}>
+                {validationUrl ? (
+                  <QRCodeSVG value={validationUrl} size={60} />
+                ) : (
+                  <div style={{ width: 60, height: 60, background: "#f0f0f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, color: "#999", textAlign: "center" }}>
+                    QR após emissão
+                  </div>
+                )}
+              </div>
+              <div style={{ fontSize: 8, marginTop: 3, textAlign: "center", color: "#555", fontWeight: 700 }}>VALIDAÇÃO</div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* ── Título do Exame ── */}
-      <div style={{ 
-        ...calibriBold, 
-        fontSize: "15px", 
-        borderTop: "2px solid #000", 
-        borderBottom: "2px solid #000", 
-        padding: "8px 0", 
-        marginBottom: 15,
-        textAlign: "left"
-      }}>
-        {form.tituloExame || "EXAME TOXICOLÓGICO - CNH"}
-        <div style={{ float: "right", textAlign: "right", fontSize: "10px", fontWeight: 400 }}>
-          <div><span style={{ ...calibriBold }}>Procedimento: </span>{form.procedimento}</div>
-          <div>
-            <span style={{ ...calibriBold }}>Método: </span>{form.metodo}
-            <span style={{ ...calibriBold, marginLeft: 15 }}>Valor de referência: </span>{form.valorReferencia}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", border: "1px solid #ccc", borderRadius: 4, padding: "8px 12px", marginBottom: 10 }}>
+        <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: 0.5 }}>
+          {form.tituloExame || "EXAME TOXICOLÓGICO DE LONGA JANELA DE DETECÇÃO"}
+        </div>
+        <div style={{ textAlign: "right", fontSize: 10 }}>
+          <div><span style={{ fontWeight: 700 }}>Procedimento: </span>{form.procedimento || "IT.TOX.008/POP.TOX.022/POP.TOX.032/POP.TOX.033"}</div>
+          <div style={{ marginTop: 3 }}>
+            <span style={{ fontWeight: 700 }}>Método: </span>{form.metodo || "CLAE-EM/EM"}
+            <span style={{ marginLeft: 16, fontWeight: 700 }}>Valor de referência: </span>{form.valorReferencia || "CUT OFF"}
           </div>
         </div>
       </div>
 
-      <div style={{ ...calibriBold, fontSize: "11px", marginBottom: 5 }}>J.Detecção: {form.jDeteccao || "APROX. 90 DIAS"}</div>
-
       {/* ── Tabela de Resultados ── */}
-      <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 20, fontSize: "11px" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 14, fontSize: 10 }}>
         <thead>
-          <tr style={{ background: "#f3f4f6" }}>
-            <th style={{ border: "1px solid #000", padding: "6px 10px", textAlign: "left", width: "45%" }}>SUBSTÂNCIAS (METABÓLITO)</th>
-            <th style={{ border: "1px solid #000", padding: "6px 10px", textAlign: "center", width: "20%" }}>RESULTADO</th>
-            <th style={{ border: "1px solid #000", padding: "6px 10px", textAlign: "center", width: "17.5%" }}>TRIAGEM</th>
-            <th style={{ border: "1px solid #000", padding: "6px 10px", textAlign: "center", width: "17.5%" }}>CONFIRMAÇÃO</th>
+          <tr style={{ background: "#e8e8e8" }}>
+            <th style={{ border: "1px solid #ccc", padding: "5px 8px", textAlign: "left", fontWeight: 700, width: "50%" }}>SUBSTÂNCIAS (METABÓLITO)</th>
+            <th style={{ border: "1px solid #ccc", padding: "5px 8px", textAlign: "center", fontWeight: 700, width: "20%" }}>RESULTADO</th>
+            <th style={{ border: "1px solid #ccc", padding: "5px 8px", textAlign: "center", fontWeight: 700, width: "15%" }}>TRIAGEM</th>
+            <th style={{ border: "1px solid #ccc", padding: "5px 8px", textAlign: "center", fontWeight: 700, width: "15%" }}>CONFIRMAÇÃO</th>
           </tr>
         </thead>
         <tbody>
           {SUBSTANCIAS.map(grupo => (
-            <React.Fragment key={grupo.grupo}>
-              <tr>
-                <td colSpan={4} style={{ border: "1px solid #000", padding: "4px 10px", background: "#fafafa" }}>
-                  <span style={{ ...calibriBold }}>{grupo.grupo}</span>
+            <>
+              <tr key={grupo.grupo} style={{ background: "#f5f5f5" }}>
+                <td colSpan={4} style={{ border: "1px solid #ccc", padding: "4px 8px", fontWeight: 700, fontSize: 10 }}>
+                  {grupo.grupo}
                 </td>
               </tr>
               {grupo.itens.map(item => (
                 <tr key={item.nome}>
-                  <td style={{ border: "1px solid #000", padding: "3px 10px" }}>{item.nome}</td>
-                  <td style={{ border: "1px solid #000", padding: "3px 10px", textAlign: "center", ...calibriBold, color: "#16a34a" }}>NEGATIVO</td>
-                  <td style={{ border: "1px solid #000", padding: "3px 10px", textAlign: "center" }}>{item.triagem}</td>
-                  <td style={{ border: "1px solid #000", padding: "3px 10px", textAlign: "center" }}>{item.confirmacao}</td>
+                  <td style={{ border: "1px solid #ccc", padding: "3px 8px" }}>{item.nome}</td>
+                  <td style={{ border: "1px solid #ccc", padding: "3px 8px", textAlign: "center", fontWeight: 700, color: "#16a34a" }}>NEGATIVO</td>
+                  <td style={{ border: "1px solid #ccc", padding: "3px 8px", textAlign: "center" }}>{item.triagem}</td>
+                  <td style={{ border: "1px solid #ccc", padding: "3px 8px", textAlign: "center" }}>{item.confirmacao}</td>
                 </tr>
               ))}
-            </React.Fragment>
+            </>
           ))}
         </tbody>
       </table>
 
-      {/* ── Notas de Rodapé ── */}
-      <div style={{ fontSize: "10px", color: "#333", lineHeight: 1.4, marginBottom: 20 }}>
-        <p style={{ margin: "0 0 3px" }}>Este relatório de ensaio é válido exclusivamente para as amostras analisadas e só pode ser reproduzido na íntegra. Reprodução parcial requer aprovação por escrito do laboratório.</p>
-        <p style={{ margin: "0 0 3px" }}>Um resultado negativo significa que a droga não foi detectada em quantidades que atinjam o valor de <strong>cut off</strong>.</p>
-        <p style={{ margin: "0 0 3px" }}>Um resultado positivo significa que a droga foi identificada em quantidades que igualam ou excedam o valor de <strong>cut off</strong>.</p>
-        <p style={{ margin: "0 0 3px" }}>Exame repetido e confirmado através de duas extrações.</p>
-        <p style={{ margin: 0 }}>Exame realizado pelo Laboratório Sodré - CAP Number: 8313438</p>
+      {/* ── Texto Legal ── */}
+      <div style={{ fontSize: 9, color: "#333", lineHeight: 1.5, marginBottom: 12 }}>
+        <p style={{ margin: "0 0 4px" }}>Este relatório de ensaio é válido exclusivamente para as amostras analisadas e só pode ser reproduzido na íntegra. Reprodução parcial requer aprovação por escrito do laboratório.</p>
+        <p style={{ margin: "0 0 4px" }}>Um resultado negativo significa que a droga não foi detectada em quantidades que atinjam o valor de <em>cut off</em>.</p>
+        <p style={{ margin: "0 0 4px" }}>Um resultado positivo significa que a droga foi identificada em quantidades que igualam ou excedam o valor de <em>cut off</em>.</p>
+        <p style={{ margin: "0 0 4px" }}>Exame repetido e confirmado através de duas extrações.</p>
+        <p style={{ margin: 0 }}>Exame realizado pelo Laboratório Sodré</p>
       </div>
 
-      {/* ── Link de Validação Real ── */}
+      {/* ── Validação QR ── */}
       {validationUrl && (
-        <div style={{ fontSize: "10px", color: "#333", borderTop: "1px dashed #ccc", paddingTop: 10, marginBottom: 30 }}>
+        <div style={{ fontSize: 9, color: "#333", marginBottom: 16 }}>
           <p style={{ margin: 0 }}>
             Para garantir a autenticidade do laudo por meio do código QR, verifique se o link aberto pertence ao Laboratório Sodré. Nossos links seguem o seguinte padrão:
           </p>
-          <p style={{ margin: "3px 0 0", color: "#2563eb", fontWeight: 700 }}>{validationUrl}</p>
+          <p style={{ margin: "2px 0 0", fontFamily: "monospace", fontSize: 9 }}>{validationUrl}</p>
         </div>
       )}
 
-      {/* ── Assinatura Forense ── */}
-      <div style={{ marginTop: 40, textAlign: "center" }}>
-        <div style={{ width: "300px", margin: "0 auto" }}>
-          <div style={{ fontStyle: "italic", fontSize: "16px", marginBottom: 5, fontFamily: "'Caveat', cursive", color: "#1a3a6b" }}>
-            Amadeu Cardoso Jr.
-          </div>
-          <div style={{ borderTop: "1.5px solid #000", paddingBottom: 5 }} />
-          <div style={{ ...calibriBold, fontSize: "11px", textTransform: "uppercase" }}>
-            DR. AMADEU CARDOSO JUNIOR - TOXICOLOGISTA - CRF-RJ 21698
-          </div>
-          <div style={{ fontSize: "10px", color: "#666", marginTop: 2 }}>
-            F9F5CEBDBAA0B0714AFA7AB21D10BE0F
-          </div>
-          <div style={{ fontSize: "10px", color: "#666" }}>
-            Laboratório – Divisão Toxicológica – REG.CRBM No. 2019-5802-08
-          </div>
-          <div style={{ fontSize: "10px", color: "#000", marginTop: 10, ...calibriBold }}>
-            www.sodretox.com.br – 0800 777 8547
-          </div>
+      {/* ── Assinatura ── */}
+      <div style={{ marginTop: 24, textAlign: "center" }}>
+        <div style={{ fontStyle: "italic", fontSize: 14, marginBottom: 4, fontFamily: "Georgia, serif", color: "#333" }}>
+          Amadeu Cardoso Jr.
         </div>
+        <div style={{ borderTop: "1px solid #333", width: 200, margin: "0 auto 6px" }} />
+        <div style={{ fontSize: 10, fontWeight: 700 }}>DR. AMADEU CARDOSO JUNIOR - TOXICOLOGISTA - CRF-RJ 21698</div>
+        <div style={{ fontSize: 9, color: "#555", marginTop: 2 }}>F9F5CEBDBAA0B0714AFA7AB21D10BE0F</div>
+        <div style={{ fontSize: 9, color: "#555" }}>Laboratório – Divisão Toxicológica – REG.CRBM No. 2019-5802-08</div>
       </div>
     </div>
   );

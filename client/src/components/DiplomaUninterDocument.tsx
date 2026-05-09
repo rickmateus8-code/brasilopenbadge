@@ -50,11 +50,10 @@ const DiplomaUninterDocument = forwardRef<HTMLDivElement, DiplomaUninterDocument
     const textStyle: React.CSSProperties = {
       position: "absolute",
       color: "#000",
-      fontFamily: "'Times New Roman', serif",
+      fontFamily: "Times New Roman, serif",
       zIndex: 10,
       textAlign: "center",
       width: "100%",
-      lineHeight: "1.2",
     };
 
     const labelStyle: React.CSSProperties = {
@@ -62,7 +61,7 @@ const DiplomaUninterDocument = forwardRef<HTMLDivElement, DiplomaUninterDocument
     };
 
     return (
-      <div ref={ref} id="uninter-diploma-document" style={{ width: PAGE_WIDTH_PX, display: "flex", flexDirection: "column", gap: 0, background: "#f3f4f6" }}>
+      <div ref={ref} id="uninter-diploma-document" style={{ width: PAGE_WIDTH_PX, display: "flex", flexDirection: "column", gap: 20 }}>
         {/* PAGE 1: FRENTE */}
         <div
           style={{
@@ -70,73 +69,73 @@ const DiplomaUninterDocument = forwardRef<HTMLDivElement, DiplomaUninterDocument
             height: PAGE_HEIGHT_PX,
             backgroundColor: "#ffffff",
             backgroundImage: "url('/assets/diploma_uninter_frente.jpg')",
-            backgroundSize: "100% 100%",
+            backgroundSize: "cover",
             position: "relative",
             overflow: "hidden",
             boxSizing: "border-box",
-            boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
           }}
         >
-          {/* Texto de abertura */}
-          <div style={{ ...textStyle, top: "215px", fontSize: "14pt" }}>
+          {/* O Reitor do Centro Universitário... */}
+          <div style={{ ...textStyle, top: 210, fontSize: "14pt" }}>
             O Reitor do Centro Universitário Internacional UNINTER, no uso de suas atribuições e tendo em vista
           </div>
 
-          <div style={{ ...textStyle, top: "245px", fontSize: "14pt" }}>
-            a conclusão do Curso Superior de <span style={labelStyle}>{data.curso || "CURSO NÃO INFORMADO"}</span>,
+          <div style={{ ...textStyle, top: 240, fontSize: "14pt" }}>
+            a conclusão do Curso Superior de <span style={labelStyle}>{data.curso || "ELETRICISTA PREDIAL"}</span>,
           </div>
 
-          <div style={{ ...textStyle, top: "275px", fontSize: "14pt" }}>
-            em {data.data_conclusao || "—"} e a Colação de Grau em {data.data_colacao || "—"}, confere o título de
+          <div style={{ ...textStyle, top: 270, fontSize: "14pt" }}>
+            em {data.data_conclusao || "15 de dezembro de 2010"} e a Colação de Grau em {data.data_colacao || "20 de dezembro de 2010"}, confere o título de
           </div>
 
-          <div style={{ ...textStyle, top: "315px", fontSize: "20pt", fontWeight: "bold", textTransform: "uppercase" }}>
-            {data.titulo_conferido || "GRADUADO"} a
+          <div style={{ ...textStyle, top: 310, fontSize: "20pt", fontWeight: "bold", textTransform: "uppercase" }}>
+            {data.titulo_conferido || "CURSO PROFISSIONALIZANTE"} a
           </div>
 
           {/* NOME DO DIPLOMADO */}
-          <div style={{ ...textStyle, top: "385px", fontSize: "38pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "1px" }}>
-            {data.nome_diplomado || "NOME DO DIPLOMADO"}
+          <div style={{ ...textStyle, top: 380, fontSize: "36pt", fontWeight: "bold", textTransform: "uppercase" }}>
+            {data.nome_diplomado || "DANIEL SANTOS MOREIRA"}
           </div>
 
-          {/* Dados pessoais */}
-          <div style={{ ...textStyle, top: "485px", fontSize: "13pt" }}>
-            de nacionalidade {data.nacionalidade || "BRASILEIRO(A)"}, natural do Estado de {data.naturalidade_estado || "—"}, nascido a {data.data_nascimento || "—"},
+          <div style={{ ...textStyle, top: 480, fontSize: "12pt" }}>
+            de nacionalidade {data.nacionalidade || "BRASILEIRO(A)"}, natural do Estado de {data.naturalidade_estado || "SALVADOR-BA"}, nascido a {data.data_nascimento || "7 de junho de 1977"},
           </div>
 
-          <div style={{ ...textStyle, top: "515px", fontSize: "13pt" }}>
-            portador do documento nº {data.documento_numero || "—"},
+          <div style={{ ...textStyle, top: 510, fontSize: "12pt" }}>
+            portador do documento nº {data.documento_numero || "05.223.209-37"},
           </div>
 
-          <div style={{ ...textStyle, top: "545px", fontSize: "13pt" }}>
+          <div style={{ ...textStyle, top: 540, fontSize: "12pt" }}>
             e outorga-lhe o presente Diploma, a fim de que possa gozar de todos os direitos e prerrogativas legais.
           </div>
 
           {/* CIDADE E DATA */}
-          <div style={{ ...textStyle, top: "605px", fontSize: "15pt", fontWeight: "bold" }}>
-            {data.cidade_emissao || "Curitiba"}, {data.data_emissao || "—"}.
+          <div style={{ ...textStyle, top: 590, fontSize: "14pt" }}>
+            {data.cidade_emissao || "Curitiba"}, {data.data_emissao || "12 de janeiro de 2011"}.
           </div>
 
           {/* ASSINATURAS FRENTE */}
-          <div style={{ position: "absolute", bottom: "120px", left: "120px", textAlign: "center", width: "350px" }}>
-             {data.assSecretariaImg && <img src={data.assSecretariaImg} style={{ height: "70px", position: "absolute", top: "-50px", left: "50%", transform: "translateX(-50%)", zIndex: 5 }} alt="Assinatura Secretária" />}
-             <div style={{ borderTop: "1px solid #000", paddingTop: "8px", fontSize: "11pt", ...textStyle, position: "relative", width: "100%" }}>
-               <strong>{data.secretaria_nome || "Simone Ramos de Oliveira"}</strong><br />
+          <div style={{ position: "absolute", bottom: 100, left: 150, textAlign: "center", width: 300 }}>
+             {data.assSecretariaImg && <img src={data.assSecretariaImg} style={{ height: 60, marginBottom: 5 }} alt="Assinatura Secretária" />}
+             <div style={{ borderTop: "1px solid #000", paddingTop: 5, fontSize: "11pt" }}>
+               {data.secretaria_nome || "Simone Ramos de Oliveira"}<br />
                <span style={{ fontSize: "9pt" }}>Secretária Geral de Gestão Acadêmica</span>
              </div>
           </div>
 
-          <div style={{ position: "absolute", bottom: "120px", right: "120px", textAlign: "center", width: "350px" }}>
-             {data.assReitorImg && <img src={data.assReitorImg} style={{ height: "70px", position: "absolute", top: "-50px", left: "50%", transform: "translateX(-50%)", zIndex: 5 }} alt="Assinatura Reitor" />}
-             <div style={{ borderTop: "1px solid #000", paddingTop: "8px", fontSize: "11pt", ...textStyle, position: "relative", width: "100%" }}>
-               <strong>{data.reitor_nome || "Benhur Etelberto Gaio"}</strong><br />
+          <div style={{ position: "absolute", bottom: 100, right: 150, textAlign: "center", width: 300 }}>
+             {data.assReitorImg && <img src={data.assReitorImg} style={{ height: 60, marginBottom: 5 }} alt="Assinatura Reitor" />}
+             <div style={{ borderTop: "1px solid #000", paddingTop: 5, fontSize: "11pt" }}>
+               {data.reitor_nome || "Benhur Etelberto Gaio"}<br />
                <span style={{ fontSize: "9pt" }}>Reitor</span>
              </div>
           </div>
 
-          {/* CÓDIGO VALIDAÇÃO FRENTE (OPCIONAL/DISCRETO) */}
-          <div style={{ position: "absolute", bottom: "30px", right: "40px", textAlign: "right", fontSize: "7pt", color: "#666", opacity: 0.8 }}>
-            Código de Validação: <span style={{ fontFamily: "monospace" }}>{data.codigo_validacao}</span>
+          {/* CÓDIGO VALIDAÇÃO */}
+          <div style={{ position: "absolute", bottom: 40, right: 40, textAlign: "right", fontSize: "8pt", color: "#333" }}>
+            Código de Validação<br />
+            <span style={{ fontFamily: "monospace", fontSize: "9pt" }}>{data.codigo_validacao || "57babfed8f82479b5a923b1a0ffbe665f51d04ed0f69a4471c28641b0c947156"}</span><br />
+            {data.url_validacao || "https://uninter-meudiploma.online"}
           </div>
         </div>
 
@@ -147,77 +146,72 @@ const DiplomaUninterDocument = forwardRef<HTMLDivElement, DiplomaUninterDocument
             height: PAGE_HEIGHT_PX,
             backgroundColor: "#ffffff",
             backgroundImage: "url('/assets/diploma_uninter_verso.jpg')",
-            backgroundSize: "100% 100%",
+            backgroundSize: "cover",
             position: "relative",
             overflow: "hidden",
             boxSizing: "border-box",
-            marginTop: "20px", // Visual separation in preview
-            boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
           }}
         >
           {/* BOX TOP LEFT: RECREDENCIAMENTO */}
-          <div style={{ position: "absolute", top: "50px", left: "60px", width: "400px", fontSize: "9.5pt", textAlign: "left", lineHeight: "1.4", fontFamily: "'Times New Roman', serif" }}>
+          <div style={{ position: "absolute", top: 40, left: 40, width: 350, fontSize: "9pt", textAlign: "left", lineHeight: "1.3" }}>
             <strong>Centro Universitário Internacional Uninter</strong><br />
-            Recredenciado pela Portaria n.° {data.portaria_recredenciamento},<br />
-            DOU n.° {data.dou_recredenciamento},<br />
-            retificada no DOU de {data.retificacao_dou}.
+            Recredenciado pela Portaria n.° {data.portaria_recredenciamento || "1.219, de 25/05/2012"},<br />
+            DOU n.° {data.dou_recredenciamento || "244, Seção 1, pág. 125, de 20/12/2018"},<br />
+            retificada no DOU de {data.retificacao_dou || "27/12/2018, n.° 248, Seção 1, pág. 85"}.
           </div>
 
           {/* BOX MIDDLE LEFT: RECONHECIMENTO CURSO */}
-          <div style={{ position: "absolute", top: "170px", left: "60px", width: "400px", fontSize: "9.5pt", textAlign: "left", lineHeight: "1.4", fontFamily: "'Times New Roman', serif" }}>
-            <strong>Curso Superior de {data.curso}</strong><br />
-            Reconhecido pela Portaria n.° {data.portaria_reconhecimento},<br />
-            DOU {data.dou_reconhecimento}<br />
-            Processo {data.processo_numero}.
+          <div style={{ position: "absolute", top: 150, left: 40, width: 350, fontSize: "9pt", textAlign: "left", lineHeight: "1.3" }}>
+            <strong>Curso Superior de {data.curso || "ELETRICISTA PREDIAL"}</strong><br />
+            Reconhecido pela Portaria n.° {data.portaria_reconhecimento || "913, de 20/12/2022"},<br />
+            DOU {data.dou_reconhecimento || "245, Seção 1, pág. 35-40 n.°"}<br />
+            Processo {data.processo_numero || "201827038"}.
           </div>
 
           {/* BOX BOTTOM LEFT: REGISTRO */}
-          <div style={{ position: "absolute", top: "300px", left: "60px", width: "500px", fontSize: "10pt", textAlign: "left", lineHeight: "1.5", fontFamily: "'Times New Roman', serif" }}>
+          <div style={{ position: "absolute", top: 260, left: 40, width: 450, fontSize: "9pt", textAlign: "left", lineHeight: "1.4" }}>
             Centro Universitário Internacional - Uninter<br />
             Divisão de Registro de Diplomas<br />
-            <strong>Diploma Registrado sob o nº {data.registro_numero}</strong><br />
+            <strong>Diploma Registrado sob o nº {data.registro_numero || "4521|08|127|2466"}</strong><br />
             Nos termos do art. 48, § 1º da Lei de 9.394, de 20/12/1996 e §2º do art. 99 do Decreto nº 9.235 de 15/12/2017.<br />
             <br />
-            {data.cidade_emissao}, {data.data_emissao}<br />
-            <div style={{ textAlign: "center", width: "280px", marginTop: "15px", position: "relative" }}>
-               {data.assRegistroImg && <img src={data.assRegistroImg} style={{ height: "50px", position: "absolute", top: "-35px", left: "50%", transform: "translateX(-50%)" }} alt="Assinatura Registro" />}
-               <div style={{ borderTop: "1px dotted #000", paddingTop: "5px" }}>
-                 <strong>{data.secretaria_registro_nome}</strong><br />
-                 Port. nº {data.portaria_registro}
+            {data.cidade_emissao || "Curitiba"}, {data.data_emissao || "5 de janeiro de 2011"}<br />
+            <div style={{ textAlign: "center", width: 250, marginTop: 10 }}>
+               {data.assRegistroImg && <img src={data.assRegistroImg} style={{ height: 40 }} alt="Assinatura Registro" />}
+               <div style={{ borderTop: "1px dotted #000", paddingTop: 2 }}>
+                 {data.secretaria_registro_nome || "EDILAINE ALVES BELCHIOR"}<br />
+                 Port. nº {data.portaria_registro || "169/2021"}
                </div>
             </div>
           </div>
 
           {/* BOX LOWER LEFT: ASSINATURAS E MANTENEDORA */}
-          <div style={{ position: "absolute", bottom: "180px", left: "60px", width: "450px", fontSize: "10pt", textAlign: "left", fontFamily: "'Times New Roman', serif" }}>
-             <div style={{ marginBottom: "20px" }}>
-               <strong>{data.secretaria_nome}</strong><br />
+          <div style={{ position: "absolute", bottom: 200, left: 40, width: 400, fontSize: "9pt", textAlign: "left" }}>
+             <div style={{ marginBottom: 15 }}>
+               <strong>{data.secretaria_nome || "Simone Ramos de Oliveira"}</strong><br />
                Secretária Geral de Gestão Acadêmica
              </div>
-             <div style={{ marginBottom: "20px" }}>
-               <strong>{data.reitor_nome}</strong><br />
+             <div style={{ marginBottom: 15 }}>
+               <strong>{data.reitor_nome || "Benhur Etelberto Gaio"}</strong><br />
                Reitor
              </div>
-             <div style={{ fontSize: "9pt", color: "#333" }}>
-               Mantenedora: {data.mantenedora_nome}<br />
-               CNPJ: {data.mantenedora_cnpj}
+             <div>
+               Mantenedora: {data.mantenedora_nome || "UNINTER EDUCACIONAL S/A"}<br />
+               CNPJ: {data.mantenedora_cnpj || "02.261.854/0001-57"}
              </div>
           </div>
 
           {/* BOTTOM LEGAL TEXT */}
-          <div style={{ position: "absolute", bottom: "60px", left: "60px", width: "500px", fontSize: "8.5pt", textAlign: "left", color: "#444" }}>
+          <div style={{ position: "absolute", bottom: 60, left: 40, width: 400, fontSize: "8pt", textAlign: "left" }}>
             Diploma Digital assinado nos termos da Portaria 554/2019/MEC.<br />
-            A validação deste documento é dada por meio do endereço eletrônico:<br />
-            <strong style={{ color: "#005CA9" }}>{data.url_validacao}</strong>
+            A validação deste documento é dada por meio do endereço eletrônico {data.url_validacao || "uninter-meudiploma.online"}
           </div>
 
           {/* QR CODE VERSO */}
-          <div style={{ position: "absolute", bottom: "60px", right: "80px", textAlign: "center" }}>
-            <div style={{ background: "#fff", padding: "10px", border: "1px solid #eee", boxShadow: "0 4px 10px rgba(0,0,0,0.05)" }}>
-              <QRCodeSVG value={data.url_validacao} size={140} />
-            </div>
-            <div style={{ textAlign: "center", marginTop: "15px" }}>
-               <img src="/assets/uninter_logo_p_b.png" style={{ width: "120px", opacity: 0.9 }} alt="Uninter Logo" />
+          <div style={{ position: "absolute", bottom: 60, right: 60 }}>
+            <QRCodeSVG value={data.url_validacao || "https://uninter-meudiploma.online"} size={120} />
+            <div style={{ textAlign: "center", marginTop: 10 }}>
+               <img src="/assets/uninter_logo_p_b.png" style={{ width: 100 }} alt="Uninter Logo" />
             </div>
           </div>
 
