@@ -112,16 +112,21 @@ export default function JudicialDetails() {
       const data = await res.json();
       if (data.success) {
         setTelefonesEncontrados(data.telefones || []);
-        if (data.NOME) {
-           setProcess((p: any) => ({ 
-             ...p, 
-             credor_nome: data.NOME, 
-             credor_cpf: cleanCPF, 
-             RENDA: data.RENDA, 
-             NASCIMENTO: data.NASCIMENTO, 
-             SEXO: data.SEXO 
-           }));
-        }
+        
+        // Mapeamento Agressivo (Case Insensitive)
+        const realName = data.NOME || data.nome || data.name || data.dados?.nome;
+        const realBirth = data.NASCIMENTO || data.nascimento || data.birth_date || data.dados?.nascimento;
+        const realGender = data.SEXO || data.sexo || data.gender || data.dados?.sexo;
+        const realIncome = data.RENDA || data.renda || data.income || data.dados?.renda;
+
+        setProcess((p: any) => ({ 
+          ...p, 
+          credor_nome: realName || p.credor_nome, 
+          credor_cpf: cleanCPF, 
+          RENDA: realIncome, 
+          NASCIMENTO: realBirth, 
+          SEXO: realGender 
+        }));
       }
     } catch (e) { /* ignore */ }
     finally { setIsCPFLoading(false); }
