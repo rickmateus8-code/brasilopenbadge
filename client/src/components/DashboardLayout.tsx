@@ -59,6 +59,16 @@ const menuItems: MenuItem[] = [
       ],
     },
     {
+      icon: GraduationCap, label: "Histórico Escolar",
+      children: [
+        { label: "Histórico SP", path: "/historico-sp", isCreation: true },
+        { label: "Histórico UNINTER", path: "/historico-uninter", isCreation: true },
+        { label: "Diploma UNINTER", path: "/diplomaunintercria", isCreation: true },
+        { label: "Salvos (SP)", path: "/historico-sp-salvos" },
+        { label: "Salvos (UNINTER)", path: "/historico-uninter-salvos" },
+      ],
+    },
+    {
       icon: Pill, label: "Receituário",
       children: [
         { label: "Dr. Consulta", path: "/receitacria", isCreation: true },
@@ -437,31 +447,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </button>
       </div>
 
+      {/* Nav */}
       <nav className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto">
         {allItems.map(item => (
-          <div key={item.label} className="space-y-0.5">
-            <SidebarItem
-              item={item}
-              collapsed={!mobile && collapsed}
-              onNavigate={mobile ? () => setMobileOpen(false) : undefined}
-              userBalance={userBalanceSafe}
-              onInsufficientBalance={() => {
-                if (mobile) setMobileOpen(false);
-                setShowInsufficientBalance(true);
-              }}
-            />
-            {item.label === "CHA Náutica" && (
-              <button
-                onClick={() => { setShowHistoricoModal(true); if (mobile) setMobileOpen(false); }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all
-                  text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 hover:text-gray-900 dark:hover:text-gray-100`}
-              >
-                <GraduationCap className="w-4 h-4 flex-shrink-0" />
-                {(!collapsed || mobile) && <span>Histórico</span>}
-              </button>
-            )}
-          </div>
+          <SidebarItem
+            key={item.label}
+            item={item}
+            collapsed={!mobile && collapsed}
+            onNavigate={mobile ? () => setMobileOpen(false) : undefined}
+            userBalance={userBalanceSafe}
+            onInsufficientBalance={() => {
+              if (mobile) setMobileOpen(false);
+              setShowInsufficientBalance(true);
+            }}
+          />
         ))}
+        {/* Item HISTÓRICO — abre pop-up de seleção */}
+        <button
+          onClick={() => { setShowHistoricoModal(true); if (mobile) setMobileOpen(false); }}
+          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all
+            text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 hover:text-gray-900 dark:hover:text-gray-100`}
+        >
+          <GraduationCap className="w-4 h-4 flex-shrink-0" />
+          {(!collapsed || mobile) && <span>Histórico</span>}
+        </button>
       </nav>
 
       {/* Footer */}
