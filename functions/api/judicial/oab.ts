@@ -32,11 +32,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   try {
     // 1. Verificar Cache Local (D1)
-    let query = "SELECT * FROM advogados_cache WHERE ";
+    let query = "SELECT * FROM oab_cache WHERE ";
     let params: string[] = [];
 
     if (oab && uf) {
-      query += "inscricao_oab = ? AND uf_seccional = ?";
+      query += "oab = ? AND uf = ?";
       params = [oab, uf];
     } else {
       query += "LOWER(nome) = LOWER(?)";
@@ -46,7 +46,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const cached = await env.DB.prepare(query).bind(...params).first<any>();
 
     if (cached) {
-      return new Response(JSON.stringify({ success: true, source: "cache", data: cached }), { headers: CORS_HEADERS });
+      // Mapear campos do cache para o formato da API
+      const data = cached.json_data ? JSON.parse(cached.json_data) : cached;
+      return new Response(JSON.stringify({ 
+        success: true, 
+        source: "cache", 
+        data: { ...data, photo: cached.foto_r2_url } 
+      }), { headers: CORS_HEADERS });
     }
 
     // 2. Não há cache -> Iniciar Bypass com CapSolver
