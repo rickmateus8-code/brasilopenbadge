@@ -100,7 +100,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           position: "absolute",
           top: "50%",
           left: "50%",
-          transform: "translate(-50%, -36%)",
+          transform: "translate(-50%, -36.5%)",
           width: "500pt",
           zIndex: 1,
           pointerEvents: "none"
@@ -110,11 +110,11 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
 
         {/* ─── Cabeçalho Superior Centralizado (Brasão Elevação +5% e Espaçamento +2%) ─── */}
         <div style={{ position: "absolute", top: MARGIN_TOP - 140, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11, fontFamily: "'Liberation Sans', Helvetica" }}>
-           <img src="/assets/peticao/brasao_republica.png" style={{ width: "99.3pt", marginBottom: "4pt", display: "inline-block" }} alt="Brasão" />
+           <img src="/assets/peticao/brasao_republica.png" style={{ width: "99.3pt", marginBottom: "8pt", display: "inline-block" }} alt="Brasão" />
 
            <div style={{ color: "#222222", fontSize: "10.1pt", fontWeight: 400, letterSpacing: "0.5px" }}>TRIBUNAL DE JUSTIÇA</div>
-           <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400, marginTop: -3 }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: {alvara_final}</div>
-           <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400, marginTop: -3 }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
+           <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400, marginTop: 2, marginBottom: "8pt" }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: {alvara_final}</div>
+           <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400, marginTop: 2, marginBottom: "8pt" }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
         </div>
 
         {/* Logo OAB (TOPO ABSOLUTO E +2% TAMANHO) */}
@@ -140,14 +140,9 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={valueStyle}>{data.cpf_cnpj || ""}</span>
         </div>
 
-        <div style={{ ...textStyle, top: MARGIN_TOP + 208.2, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 200.2, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Advogado(a):</span>
           <span style={valueStyle}>{data.advogado?.toUpperCase() || ""}</span>
-        </div>
-
-        <div style={{ ...textStyle, top: MARGIN_TOP + 235.2, left: MARGIN_LEFT_BODY }}>
-          <span style={labelStyle}>CPF/CNPJ:</span>
-          <span style={valueStyle}>{data.cpf_cnpj || ""}</span>
         </div>
 
         <div style={{ ...textStyle, top: MARGIN_TOP + 293.2, left: MARGIN_LEFT_BODY }}>
@@ -155,7 +150,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={valueStyle}>{data.processo || ""}</span>
         </div>
 
-        <div style={{ ...textStyle, top: MARGIN_TOP + 371.2, left: MARGIN_LEFT_BODY, borderBottom: "1px solid #000", paddingBottom: 2, display: "inline-block", paddingRight: 130 }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 371.2, left: MARGIN_LEFT_BODY, borderBottom: "1px solid #000", paddingBottom: 6, display: "inline-block", paddingRight: 130 }}>
           <span style={labelStyle}>CUMPRIMENTO DE SENTENÇA CONTRA:</span>
           <span style={valueStyle}>{data.contra?.toUpperCase() || ""}</span>
         </div>
@@ -221,7 +216,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
 
         {/* Marca d'água de Preview */}
         {(!data.id || data.id === "XXXX.XXXX") && (
-          <div style={{
+          <div className="preview-watermark" style={{
             position: "absolute",
             top: "50%",
             left: "50%",
@@ -240,6 +235,12 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
             DOCUMENTO INVÁLIDO - PRÉVIA
           </div>
         )}
+
+        <style>{`
+          @media print {
+            .preview-watermark { display: none !important; }
+          }
+        `}</style>
       </div>
     );
   }

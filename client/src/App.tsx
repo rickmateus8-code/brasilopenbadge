@@ -45,7 +45,7 @@ function GlobalSupportWhatsappSync() {
 }
 
 // Helper for protected routes
-function ProtectedRoute({ component: Component, adminOnly = false, ...rest }: any) {
+function ProtectedRoute({ component: Component, adminOnly = false, requiredTool, ...rest }: any) {
   const { user, loading, isAdmin } = useAuth();
   const [, setLocation] = useLocation();
 
@@ -55,12 +55,22 @@ function ProtectedRoute({ component: Component, adminOnly = false, ...rest }: an
         setLocation("/login");
       } else if (adminOnly && !isAdmin) {
         setLocation("/dashboard");
+      } else if (!isAdmin && requiredTool) {
+        const perms = user.permissions ? JSON.parse(user.permissions) : { ferramentas: [] };
+        if (!perms.ferramentas?.includes(requiredTool)) {
+          setLocation("/dashboard");
+        }
       }
     }
-  }, [user, loading, isAdmin, adminOnly, setLocation]);
+  }, [user, loading, isAdmin, adminOnly, requiredTool, setLocation]);
 
   if (loading) return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
   if (!user || (adminOnly && !isAdmin)) return null;
+  
+  if (!isAdmin && requiredTool) {
+    const perms = user.permissions ? JSON.parse(user.permissions) : { ferramentas: [] };
+    if (!perms.ferramentas?.includes(requiredTool)) return null;
+  }
 
   return <Component {...rest} />;
 }
@@ -284,18 +294,22 @@ function DocMasterRouter() {
       </Route>
 
       <Route path="/peticaocria">
-        <ProtectedRoute component={PeticaoCria} />
+        <ProtectedRoute component={PeticaoCria} requiredTool="bot-adv" />
       </Route>
       <Route path="/peticaocria-salvos">
-        <ProtectedRoute component={PeticaoSalvos} />
+        <ProtectedRoute component={PeticaoSalvos} requiredTool="bot-adv" />
       </Route>
 
       {/* Consulta de Processos Judiciais */}
       <Route path="/bot-adv/historico">
-        <ProtectedRoute component={JudicialHistory} />
+        <ProtectedRoute component={JudicialHistory} requiredTool="bot-adv" />
       </Route>
-      <Route path="/bot-adv/:id" component={JudicialDetails} />
-      <Route path="/bot-adv" component={JudicialSearch} />
+      <Route path="/bot-adv/:id">
+        {(params) => <ProtectedRoute component={JudicialDetails} params={params} requiredTool="bot-adv" />}
+      </Route>
+      <Route path="/bot-adv">
+        <ProtectedRoute component={JudicialSearch} requiredTool="bot-adv" />
+      </Route>
 
       <Route path="/diplomaunintercria">
         <ProtectedRoute component={DiplomaUninterCria} />

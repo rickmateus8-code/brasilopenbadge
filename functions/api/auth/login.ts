@@ -47,6 +47,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         displayName: user.display_name || user.username,
         role: user.role,
         balance: user.balance,
+        permissions: user.permissions || '{"ferramentas":[]}',
       }
     };
 

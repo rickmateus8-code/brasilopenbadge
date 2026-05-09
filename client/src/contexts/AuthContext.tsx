@@ -8,6 +8,7 @@ export type AuthUser = {
   balance: number;
   displayName?: string;
   profilePhoto?: string | null;
+  permissions?: string;
 };
 
 type AuthContextType = {

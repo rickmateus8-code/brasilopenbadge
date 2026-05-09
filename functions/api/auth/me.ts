@@ -23,7 +23,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     }
 
     const user = await env.DB.prepare(
-      'SELECT id, username, email, display_name, role, balance, is_active, profile_photo FROM users WHERE id = ? AND is_active = 1'
+      'SELECT id, username, email, display_name, role, balance, is_active, profile_photo, permissions FROM users WHERE id = ? AND is_active = 1'
     ).bind(session.user_id).first<any>();
 
     if (!user) {
@@ -40,6 +40,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         role: user.role,
         balance: typeof user.balance === 'number' ? user.balance : (parseInt(String(user.balance ?? '0'), 10) || 0),
         profilePhoto: user.profile_photo || null,
+        permissions: user.permissions || '{"ferramentas":[]}',
       }
     }), { status: 200, headers: corsHeaders });
   } catch (err: any) {
