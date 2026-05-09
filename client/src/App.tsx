@@ -115,6 +115,7 @@ import PeticaoSalvos from "./pages/PeticaoSalvos";
 import JudicialSearch from "./pages/JudicialSearch";
 import JudicialDetails from "./pages/JudicialDetails";
 import JudicialHistory from "./pages/JudicialHistory";
+import JudicialOabDetails from "./pages/JudicialOabDetails";
 import DiplomaUninterCria from "./pages/DiplomaUninterCria";
 import CNHLanding from "./pages/cnh-validation/CNHLanding";
 
