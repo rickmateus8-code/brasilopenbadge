@@ -585,13 +585,29 @@ export default function Dashboard() {
                 ) : cnhFiltered.length === 0 ? (
                   <div className="text-center py-16">
                     <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                    <p className="text-sm text-gray-500">Nenhuma CNH emitida ainda</p>
-                    <button
-                      onClick={() => setShowNovoDocModal(true)}
-                      className="mt-3 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-lg transition-colors"
-                    >
-                      Novo Documento
-                    </button>
+                            <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">Nenhuma {TAB_LABELS[activeTab]} emitida ainda</h3>
+                            <p className="text-xs text-gray-500 mt-1 mb-6">Comece agora mesmo criando seu primeiro documento.</p>
+                            <button
+                              onClick={() => {
+                                const routes: Record<string, string> = {
+                                  atestado: "/atestadocria",
+                                  cnh: "/cnhcria",
+                                  cha: "/chacria",
+                                  toxicologico: "/toxicologicocria",
+                                  receita: "/receitacria",
+                                  "historico-sp": "/historico-sp",
+                                  "historico-uninter": "/historico-uninter",
+                                  "diploma-uninter": "/diploma-uninter",
+                                };
+                                const route = routes[activeTab];
+                                if (route) setLocation(route);
+                                else setShowNovoDocModal(true);
+                              }}
+                              className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white text-xs font-black rounded-2xl transition-all shadow-lg shadow-red-900/20 uppercase tracking-widest active:scale-95"
+                            >
+                              <Plus className="w-4 h-4" />
+                              Emitir Documento
+                            </button>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
