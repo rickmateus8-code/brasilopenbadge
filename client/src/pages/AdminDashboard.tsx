@@ -1305,24 +1305,49 @@ export default function AdminDashboard() {
 
             {/* Formulário Criar Usuário */}
             {showCreateUser && (
-              <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 mb-4">
-                <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2"><UserPlus className="w-4 h-4" /> Novo Usuário</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <input type="text" placeholder="Username *" value={newUsername} onChange={e => setNewUsername(e.target.value)} className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400" />
-                  <input type="password" placeholder="Senha *" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400" />
-                  <input type="text" placeholder="Nome de Exibição" value={newDisplayName} onChange={e => setNewDisplayName(e.target.value)} className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400" />
-                  <input type="email" placeholder="Email" value={newEmail} onChange={e => setNewEmail(e.target.value)} className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400" />
-                  <select value={newRole} onChange={e => setNewRole(e.target.value)} className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400">
-                    <option value="user">Usuário</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                  <input type="number" placeholder="Saldo Inicial (R$)" value={newBalance} onChange={e => setNewBalance(e.target.value)} className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+              <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-6 mb-8 shadow-xl animate-in zoom-in duration-300 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-red-600" />
+                <h3 className="text-lg font-black text-gray-900 dark:text-white mb-6 flex items-center gap-2 uppercase tracking-tight">
+                  <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-900/30 flex items-center justify-center">
+                    <UserPlus className="w-4 h-4 text-red-600" />
+                  </div>
+                  Cadastrar Novo Operador
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Usuário *</label>
+                    <input type="text" placeholder="ex: ricky_admin" value={newUsername} onChange={e => setNewUsername(e.target.value)} className="w-full px-4 py-3 text-sm rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Senha *</label>
+                    <input type="password" placeholder="••••••••" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full px-4 py-3 text-sm rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nome de Exibição</label>
+                    <input type="text" placeholder="Nome Completo" value={newDisplayName} onChange={e => setNewDisplayName(e.target.value)} className="w-full px-4 py-3 text-sm rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Email</label>
+                    <input type="email" placeholder="contato@exemplo.com" value={newEmail} onChange={e => setNewEmail(e.target.value)} className="w-full px-4 py-3 text-sm rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Perfil de Acesso</label>
+                    <select value={newRole} onChange={e => setNewRole(e.target.value)} className="w-full px-4 py-3 text-sm rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-all cursor-pointer">
+                      <option value="user">Usuário Padrão</option>
+                      <option value="admin">Administrador Geral</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Saldo Inicial (R$)</label>
+                    <input type="number" placeholder="0,00" value={newBalance} onChange={e => setNewBalance(e.target.value)} className="w-full px-4 py-3 text-sm rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all" />
+                  </div>
                 </div>
-                <div className="flex gap-2 mt-3">
-                  <button onClick={createUser} disabled={creatingUser} className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl transition-colors disabled:opacity-50">
-                    {creatingUser ? "Criando..." : "Criar Usuário"}
+                <div className="flex gap-3 mt-8">
+                  <button onClick={createUser} disabled={creatingUser} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-8 py-3.5 text-xs font-black uppercase tracking-widest bg-red-600 hover:bg-red-700 text-white rounded-2xl transition-all shadow-lg shadow-red-900/20 active:scale-95 disabled:opacity-50">
+                    {creatingUser ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                    {creatingUser ? "Processando..." : "Finalizar Cadastro"}
                   </button>
-                  <button onClick={() => setShowCreateUser(false)} className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
+                  <button onClick={() => setShowCreateUser(false)} className="px-8 py-3.5 text-xs font-black uppercase tracking-widest text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-all">
                     Cancelar
                   </button>
                 </div>
@@ -1351,159 +1376,143 @@ export default function AdminDashboard() {
             ) : (
               <div className="space-y-2">
                 {filteredUsers.map(u => (
-                  <div key={u.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center overflow-hidden border-2 border-yellow-200 dark:border-yellow-800 flex-shrink-0">
-                          {u.profile_photo ? (
-                            <img src={u.profile_photo} alt={u.username} className="w-full h-full object-cover" />
-                          ) : (
-                            <span className="text-sm font-bold text-yellow-600 dark:text-yellow-400">
-                              {u.username.charAt(0).toUpperCase()}
-                            </span>
-                          )}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{u.username}</p>
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
-                              u.role === "admin"
-                                ? "bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400"
-                                : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
-                            }`}>
-                              {u.role === "admin" ? "Admin" : "Usuário"}
-                            </span>
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
-                              u.is_active
-                                ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400"
-                                : "bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400"
-                            }`}>
-                              {u.is_active ? "Ativo" : "Inativo"}
-                            </span>
-                            {/* Online indicator */}
-                            {presence.find(p => String(p.user_id) === String(u.id) && p.is_online) && (
-                              <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-semibold">
-                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                                Online
+                  <div key={u.id} className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 p-5 hover:shadow-lg hover:border-red-100 dark:hover:border-red-900/30 transition-all duration-300 group animate-in fade-in slide-in-from-bottom-2">
+                    <div className="flex flex-wrap items-center justify-between gap-5">
+                      <div className="flex items-center gap-4">
+                        <div className="relative">
+                          <div className="w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center overflow-hidden border-2 border-white dark:border-gray-800 shadow-sm flex-shrink-0 group-hover:scale-105 transition-transform duration-500">
+                            {u.profile_photo ? (
+                              <img src={u.profile_photo} alt={u.username} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-xl font-black text-red-600 dark:text-red-500">
+                                {u.username.charAt(0).toUpperCase()}
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{u.email}</p>
-	                          {showPasswords && (
-                            <p className="text-xs font-mono bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded flex items-center gap-1 mt-0.5">
-                              <Lock className="w-3 h-3" />
-                              {(u as any).plain_password
-                                ? (u as any).plain_password
-                                : <span className="italic opacity-60">senha não registrada</span>}
-                            </p>
-	                          )}
-	                          <p className="text-xs text-gray-400 dark:text-gray-500">ID: {u.id}</p>
-	                          <div className="mt-1 flex flex-col">
-                              <span className="text-[10px] text-gray-400 uppercase font-semibold">Cadastro:</span>
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">{new Date(u.created_at).toLocaleDateString("pt-BR")}</span>
-                                <span className="text-[10px] text-gray-400 italic">{new Date(u.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
-                              </div>
-                            </div>
-	                        </div>
-	                      </div>
-	                      <div className="flex flex-col items-end gap-2">
-	                        <p className="text-sm font-bold text-green-600 dark:text-green-400">
-	                          R$ {(u.balance / 100).toFixed(2).replace(".", ",")}
-	                        </p>
-	                        <div className="flex flex-wrap items-center gap-1.5">
-	                          <button
-	                            onClick={() => { setBalanceModalUser(u); setBalanceModalValue(""); setBalanceModalType("credit"); }}
-	                            className="inline-flex items-center gap-1 px-2 py-1 text-[10px] rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 transition-colors font-semibold"
-	                            title="Ajustar saldo"
-	                          >
-	                            <Wallet className="w-3.5 h-3.5" />
-	                            Ajustar saldo
-	                          </button>
-	                          <button
-	                            onClick={() => openUserDetail(u)}
-	                            className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-	                            title="Ver detalhes"
-	                          >
-	                            <Eye className="w-4 h-4" />
-	                          </button>
-	                          <button
-	                            onClick={() => toggleUserRole(u)}
-	                            className="p-1.5 rounded-lg text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors"
-	                            title={u.role === "admin" ? "Tornar usuário" : "Tornar admin"}
-	                          >
-	                            <Shield className="w-4 h-4" />
-	                          </button>
-	                          <button
-	                            onClick={() => toggleUserActive(u.id, !!u.is_active)}
-	                            className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-	                            title={u.is_active ? "Desativar" : "Ativar"}
-	                          >
-                            {u.is_active
-                              ? <ToggleRight className="w-4 h-4 text-green-500" />
-                              : <ToggleLeft className="w-4 h-4" />}
-                          </button>
-	                          <button
-	                            onClick={() => {
-	                              setDeleteTargetUserId(u.id);
-	                              setDeleteTargetUsername(u.username);
-                              setDeleteUserConfirm("");
-                              setTab("database");
-                            }}
-                            className="p-1.5 rounded-lg text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
-                            title="Excluir dados do usuário"
-                          >
-                            <Database className="w-4 h-4" />
-                          </button>
-                          {/* % Cashback (Depósito) */}
-                          {cashbackEditId === u.id ? (
-                            <div className="flex items-center gap-1">
-                              <input
-                                type="number" step="0.5" min="0" max="100"
-                                placeholder="CB %"
-                                value={cashbackEditValue}
-                                onChange={e => setCashbackEditValue(e.target.value)}
-                                className="w-16 px-1.5 py-1 text-xs rounded-lg border border-orange-300 dark:border-orange-600 bg-orange-50 dark:bg-orange-900/20 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-400"
-                                autoFocus
-                              />
-                              <button onClick={() => saveCashbackForUser(u.id)} className="p-1.5 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors" title="Salvar">
-                                <Save className="w-3.5 h-3.5" />
-                              </button>
-                              <button onClick={() => { setCashbackEditId(null); setCashbackEditValue(""); }} className="p-1.5 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors" title="Cancelar">
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => { setCashbackEditId(u.id); setCashbackEditValue(u.cashback_percentage != null ? String(u.cashback_percentage) : ""); }}
-                              className="flex items-center gap-1 px-2 py-1 text-[10px] rounded-lg bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 hover:bg-orange-100 transition-colors font-semibold"
-                              title="Definir % Cashback no depósito"
-                            >
-                              <span>💰</span>
-                              {u.cashback_percentage != null ? `CB: ${u.cashback_percentage}%` : "CB %"}
-                            </button>
+                          {presence.find(p => String(p.user_id) === String(u.id) && p.is_online) && (
+                            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-2 border-white dark:border-gray-900 animate-pulse shadow-sm" />
                           )}
-	                          <button
-	                            onClick={() => handleOpenPermissions(u)}
-	                            className="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
-	                            title="Gerenciar Permissões de Acesso"
-	                          >
-	                            <Lock className="w-4 h-4" />
-	                          </button>
-	                          <button
-	                            onClick={() => { setChangePwUserId(String(u.id)); setChangePwUsername(u.username); setChangePwValue(""); }}
-                            className="p-1.5 rounded-lg text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
-                            title="Alterar senha"
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <p className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight group-hover:text-red-600 transition-colors">{u.username}</p>
+                            <span className={`text-[9px] px-2 py-0.5 rounded-lg font-black uppercase tracking-widest ${
+                              u.role === "admin"
+                                ? "bg-red-600 text-white shadow-md shadow-red-900/20"
+                                : "bg-gray-100 dark:bg-gray-800 text-gray-500"
+                            }`}>
+                              {u.role === "admin" ? "Master" : "Operador"}
+                            </span>
+                            <span className={`text-[9px] px-2 py-0.5 rounded-lg font-black uppercase tracking-widest border ${
+                              u.is_active
+                                ? "bg-emerald-50 border-emerald-100 text-emerald-600"
+                                : "bg-red-50 border-red-100 text-red-600"
+                            }`}>
+                              {u.is_active ? "Ativo" : "Bloqueado"}
+                            </span>
+                          </div>
+                          <p className="text-xs font-medium text-gray-400 dark:text-gray-500">{u.email || "Sem email cadastrado"}</p>
+                          <div className="mt-2 flex items-center gap-3">
+                            <div className="flex flex-col">
+                              <span className="text-[9px] font-black text-gray-300 uppercase tracking-tighter">ID Operador</span>
+                              <span className="text-[10px] font-mono text-gray-400">#{u.id.slice(0, 8)}</span>
+                            </div>
+                            <div className="w-px h-6 bg-gray-100 dark:bg-gray-800" />
+                            <div className="flex flex-col">
+                              <span className="text-[9px] font-black text-gray-300 uppercase tracking-tighter">Desde</span>
+                              <span className="text-[10px] font-bold text-gray-500">{new Date(u.created_at).toLocaleDateString("pt-BR")}</span>
+                            </div>
+                          </div>
+	                          {showPasswords && (
+                            <div className="mt-2 inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 animate-in slide-in-from-left-2">
+                              <Lock className="w-3 h-3 text-purple-600" />
+                              <span className="text-[11px] font-mono font-bold text-purple-700 dark:text-purple-300">
+                                {(u as any).plain_password || "••••••••"}
+                              </span>
+                            </div>
+	                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-end gap-3 ml-auto">
+                        <div className="text-right">
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Saldo Disponível</p>
+                          <p className="text-2xl font-black text-emerald-600 dark:text-emerald-500 tabular-nums">
+                            R$ {(u.balance / 100).toFixed(2).replace(".", ",")}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => { setBalanceModalUser(u); setBalanceModalValue(""); setBalanceModalType("credit"); }}
+                            className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all active:scale-95 border border-emerald-100 dark:border-emerald-900/30 shadow-sm"
+                            title="Ajustar saldo"
                           >
-                            <RefreshCw className="w-4 h-4" />
+                            <Wallet className="w-3.5 h-3.5" />
+                            Saldo
                           </button>
-	                          <button
-	                            onClick={() => deleteUser(u)}
-	                            className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-	                            title="Excluir usuário"
-	                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          
+                          <div className="flex items-center gap-1 bg-gray-50 dark:bg-gray-800/50 p-1 rounded-xl border border-gray-100 dark:border-gray-800">
+                            <button
+                              onClick={() => openUserDetail(u)}
+                              className="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all active:scale-90"
+                              title="Ver detalhes"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleOpenPermissions(u)}
+                              className="p-2 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all active:scale-90"
+                              title="Permissões ACL"
+                            >
+                              <Shield className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => { setChangePwUserId(String(u.id)); setChangePwUsername(u.username); setChangePwValue(""); }}
+                              className="p-2 rounded-lg text-gray-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-all active:scale-90"
+                              title="Resetar Senha"
+                            >
+                              <RefreshCw className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => toggleUserActive(u.id, !!u.is_active)}
+                              className={`p-2 rounded-lg transition-all active:scale-90 ${u.is_active ? "text-emerald-500 hover:bg-emerald-50" : "text-gray-400 hover:text-red-600 hover:bg-red-50"}`}
+                              title={u.is_active ? "Bloquear" : "Ativar"}
+                            >
+                              {u.is_active ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+                            </button>
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            {cashbackEditId === u.id ? (
+                              <div className="flex items-center gap-1 bg-white dark:bg-gray-900 border border-red-200 p-1 rounded-xl shadow-lg animate-in zoom-in">
+                                <input
+                                  type="number" step="0.5" min="0" max="100"
+                                  value={cashbackEditValue}
+                                  onChange={e => setCashbackEditValue(e.target.value)}
+                                  className="w-14 px-2 py-1 text-[10px] font-black rounded-lg bg-gray-50 border-none focus:ring-0"
+                                  autoFocus
+                                />
+                                <button onClick={() => saveCashbackForUser(u.id)} className="p-1.5 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600"><Save size={12} /></button>
+                                <button onClick={() => { setCashbackEditId(null); setCashbackEditValue(""); }} className="p-1.5 rounded-lg bg-gray-100 text-gray-500"><X size={12} /></button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => { setCashbackEditId(u.id); setCashbackEditValue(u.cashback_percentage != null ? String(u.cashback_percentage) : ""); }}
+                                className="flex items-center gap-1 px-3 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl bg-slate-800 text-white hover:bg-slate-900 transition-all active:scale-95 shadow-md shadow-slate-900/20"
+                                title="Definir % Cashback"
+                              >
+                                <Percent className="w-3.5 h-3.5" />
+                                {u.cashback_percentage != null ? `${u.cashback_percentage}%` : "CB%"}
+                              </button>
+                            )}
+                            <button
+                              onClick={() => deleteUser(u)}
+                              className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all active:scale-90 border border-red-100"
+                              title="Remover Operador"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1590,99 +1599,125 @@ export default function AdminDashboard() {
             ) : (
               <div className="space-y-2">
                 {presence.map(p => (
-	                  <div key={p.user_id} className={`bg-white dark:bg-gray-900 rounded-xl border p-4 transition-all ${
-	                    p.is_online
-	                      ? "border-green-200 dark:border-green-800 shadow-sm shadow-green-100 dark:shadow-green-900/20"
-	                      : "border-gray-100 dark:border-gray-800 opacity-60"
-	                  }`}>
-	                    <div className="flex items-center justify-between gap-3">
-	                      <div className="flex items-center gap-3">
+                  <div key={p.user_id} className={`bg-white dark:bg-gray-900 rounded-[2rem] border p-6 transition-all duration-500 hover:shadow-xl group animate-in fade-in slide-in-from-right-4 ${
+                    p.is_online
+                      ? "border-emerald-100 dark:border-emerald-900/30 bg-gradient-to-r from-emerald-50/30 to-transparent"
+                      : "border-gray-100 dark:border-gray-800 opacity-60 grayscale"
+                  }`}>
+                    <div className="flex flex-wrap items-center justify-between gap-6">
+                      <div className="flex items-center gap-4">
                         <div className="relative">
-                          <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden border-2 border-gray-200 dark:border-gray-700">
+                          <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden border-2 border-white dark:border-gray-700 shadow-md group-hover:scale-110 transition-transform duration-500">
                             {p.profile_photo ? (
                               <img src={p.profile_photo} alt={p.username} className="w-full h-full object-cover" />
                             ) : (
-                              <span className="text-sm font-bold text-gray-500 dark:text-gray-400">
+                              <span className="text-2xl font-black text-gray-400 dark:text-gray-500">
                                 {(p.username || "?").charAt(0).toUpperCase()}
                               </span>
                             )}
                           </div>
-                          <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-gray-900 ${
-                            p.is_online ? "bg-green-500 animate-pulse" : "bg-gray-400"
+                          <span className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-4 border-white dark:border-gray-900 shadow-sm ${
+                            p.is_online ? "bg-emerald-500 animate-pulse" : "bg-gray-400"
                           }`} />
                         </div>
                         <div>
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{p.username || `User #${p.user_id}`}</p>
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight group-hover:text-emerald-600 transition-colors">
+                              {p.username || `Operador #${p.user_id}`}
+                            </p>
                             {p.role === "admin" && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 font-semibold">
-                                Admin
+                              <span className="text-[9px] px-2 py-0.5 rounded-lg bg-red-600 text-white font-black uppercase tracking-widest shadow-sm">
+                                Master
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-gray-400 dark:text-gray-500">{p.email}</p>
+                          <div className="flex items-center gap-3">
+                            <p className="text-xs font-medium text-gray-400 dark:text-gray-500">{p.email || "Sem email"}</p>
+                            <div className="w-1 h-1 rounded-full bg-gray-300" />
+                            <p className="text-[10px] font-mono text-gray-400">ID: {p.user_id}</p>
+                          </div>
                         </div>
                       </div>
-	                      <div className="text-right">
-                        <div className="flex items-center gap-2 justify-end mb-1">
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                            p.is_online
-                              ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400"
-                              : "bg-gray-100 dark:bg-gray-800 text-gray-500"
-                          }`}>
-                            {p.is_online ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-                            {p.is_online ? "Online" : "Offline"}
-                          </span>
+
+                      <div className="flex-1 min-w-[200px] flex flex-col items-center sm:items-start">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-2 h-2 rounded-full bg-blue-500" />
+                          <p className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">
+                            {PAGE_LABELS[p.current_page] || p.current_page || "Ocioso"}
+                          </p>
                         </div>
-	                        <p className="text-xs font-medium text-blue-600 dark:text-blue-400">
-	                          {PAGE_LABELS[p.current_page] || p.current_page || "—"}
-	                        </p>
-	                        <p className="text-[10px] text-gray-400">{p.current_action || "navegando"}</p>
-	                        <p className="text-[10px] text-gray-400 mt-0.5">{timeAgo(p.last_seen)}</p>
-	                        <p className="text-[10px] text-gray-400">Sessão: {formatDuration(p.total_session_seconds)}</p>
-	                        <p className="text-[10px] text-gray-400">Página: {formatDuration(p.current_page_duration_seconds)}</p>
-	                      </div>
-	                    </div>
-	                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-4">
-	                      <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 p-3">
-	                        <p className="text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-2 uppercase tracking-wide">Timeline</p>
-	                        <div className="space-y-2">
-	                          {(p.timeline || []).slice(0, 5).map((item) => (
-	                            <div key={item.id} className="flex items-start justify-between gap-3 text-[11px]">
-	                              <div>
-	                                <p className="font-medium text-gray-700 dark:text-gray-200">
-	                                  {PAGE_LABELS[item.page_path] || item.page_path}
-	                                </p>
-	                                <p className="text-gray-500 dark:text-gray-400">{item.action || "navegando"}</p>
-	                              </div>
-	                              <div className="text-right text-gray-400">
-	                                <p>{formatDuration(item.duration_seconds)}</p>
-	                                <p>{timeAgo(item.started_at)}</p>
-	                              </div>
-	                            </div>
-	                          ))}
-	                          {(p.timeline || []).length === 0 && (
-	                            <p className="text-[11px] text-gray-400">Nenhuma atividade registrada.</p>
-	                          )}
-	                        </div>
-	                      </div>
-	                      <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 p-3">
-	                        <p className="text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-2 uppercase tracking-wide">Tempo por página</p>
-	                        <div className="space-y-2">
-	                          {(p.page_totals || []).slice(0, 5).map((item) => (
-	                            <div key={item.page} className="flex items-center justify-between gap-3 text-[11px]">
-	                              <span className="text-gray-700 dark:text-gray-200">{PAGE_LABELS[item.page] || item.page}</span>
-	                              <span className="text-gray-400">{formatDuration(item.duration_seconds)}</span>
-	                            </div>
-	                          ))}
-	                          {(p.page_totals || []).length === 0 && (
-	                            <p className="text-[11px] text-gray-400">Sem agregados ainda.</p>
-	                          )}
-	                        </div>
-	                      </div>
-	                    </div>
-	                  </div>
-	                ))}
+                        <div className="px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800">
+                          <p className="text-[11px] font-bold text-gray-600 dark:text-gray-400 italic">
+                            &ldquo;{p.current_action || "Apenas navegando"}&rdquo;
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-6">
+                        <div className="text-right">
+                          <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Visto por último</p>
+                          <p className="text-xs font-bold text-gray-700 dark:text-gray-200 tabular-nums">{timeAgo(p.last_seen)}</p>
+                        </div>
+                        <div className="h-10 w-px bg-gray-100 dark:bg-gray-800" />
+                        <div className="text-right">
+                          <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Sessão Atual</p>
+                          <p className="text-sm font-black text-emerald-600 dark:text-emerald-500 tabular-nums">{formatDuration(p.total_session_seconds)}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6 pt-6 border-t border-gray-50 dark:border-gray-800/50">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Activity className="w-3.5 h-3.5 text-gray-400" />
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Fluxo de Atividade</p>
+                        </div>
+                        <div className="space-y-2">
+                          {(p.timeline || []).slice(0, 4).map((item) => (
+                            <div key={item.id} className="flex items-center justify-between gap-4 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                                <div>
+                                  <p className="text-[11px] font-bold text-gray-700 dark:text-gray-200">
+                                    {PAGE_LABELS[item.page_path] || item.page_path}
+                                  </p>
+                                  <p className="text-[9px] text-gray-400 uppercase font-medium">{item.action || "navegando"}</p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-[10px] font-mono text-gray-500">{formatDuration(item.duration_seconds)}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Clock className="w-3.5 h-3.5 text-gray-400" />
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Distribuição de Tempo</p>
+                        </div>
+                        <div className="space-y-2">
+                          {(p.page_totals || []).slice(0, 4).map((item) => (
+                            <div key={item.page} className="flex items-center justify-between gap-4 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                              <span className="text-[11px] font-bold text-gray-600 dark:text-gray-300">{PAGE_LABELS[item.page] || item.page}</span>
+                              <div className="flex items-center gap-3 flex-1">
+                                <div className="h-1 bg-gray-100 dark:bg-gray-800 flex-1 rounded-full overflow-hidden">
+                                  <div 
+                                    className="h-full bg-emerald-500 rounded-full" 
+                                    style={{ width: `${Math.min(100, (item.duration_seconds / (p.total_session_seconds || 1)) * 100)}%` }}
+                                  />
+                                </div>
+                                <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-500 w-10 text-right">
+                                  {formatDuration(item.duration_seconds)}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -3029,27 +3064,48 @@ export default function AdminDashboard() {
 	      )}
 
 	      {balanceModalUser && (
-	        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setBalanceModalUser(null)}>
-	          <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md shadow-2xl p-6" onClick={e => e.stopPropagation()}>
-	            <h3 className="font-bold text-gray-900 dark:text-white mb-1">Ajustar saldo</h3>
-	            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Usuário: {balanceModalUser.username}</p>
-	            <div className="flex gap-2 mb-4">
-	              <button onClick={() => setBalanceModalType("credit")} className={`flex-1 py-2 rounded-xl text-sm font-semibold ${balanceModalType === "credit" ? "bg-green-600 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-500"}`}>Crédito</button>
-	              <button onClick={() => setBalanceModalType("debit")} className={`flex-1 py-2 rounded-xl text-sm font-semibold ${balanceModalType === "debit" ? "bg-red-600 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-500"}`}>Débito</button>
+	        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[120] flex items-center justify-center p-4 animate-in fade-in duration-300">
+	          <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] w-full max-w-md shadow-2xl p-8 border border-gray-100 dark:border-gray-800 animate-in zoom-in duration-300" onClick={e => e.stopPropagation()}>
+              <div className="flex flex-col items-center text-center mb-8">
+                <div className="w-20 h-20 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mb-4 border-4 border-emerald-100 dark:border-emerald-800">
+                  <Wallet className="w-10 h-10 text-emerald-600" />
+                </div>
+	              <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Gestão de Saldo</h3>
+	              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Ajustando conta de <span className="text-red-600 font-bold">@{balanceModalUser.username}</span></p>
+              </div>
+
+	            <div className="flex gap-2 p-1.5 bg-gray-100 dark:bg-gray-800/50 rounded-2xl mb-6">
+	              <button onClick={() => setBalanceModalType("credit")} className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${balanceModalType === "credit" ? "bg-emerald-600 text-white shadow-lg shadow-emerald-900/20" : "text-gray-500 hover:text-gray-700"}`}>
+                  <div className="flex items-center justify-center gap-2">
+                    <Plus className="w-3.5 h-3.5" /> Crédito
+                  </div>
+                </button>
+	              <button onClick={() => setBalanceModalType("debit")} className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${balanceModalType === "debit" ? "bg-red-600 text-white shadow-lg shadow-red-900/20" : "text-gray-500 hover:text-gray-700"}`}>
+                  <div className="flex items-center justify-center gap-2">
+                    <Minus className="w-3.5 h-3.5" /> Débito
+                  </div>
+                </button>
 	            </div>
-	            <input
-	              type="number"
-	              min="0"
-	              step="0.01"
-	              value={balanceModalValue}
-	              onChange={e => setBalanceModalValue(e.target.value)}
-	              placeholder="Valor em R$"
-	              className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-	            />
-	            <div className="flex gap-3 mt-4">
-	              <button onClick={() => setBalanceModalUser(null)} className="flex-1 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-semibold">Cancelar</button>
-	              <button onClick={submitBalanceAdjustment} disabled={savingBalance} className="flex-1 py-2.5 bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 text-white rounded-xl text-sm font-semibold">
-	                {savingBalance ? "Salvando..." : "Confirmar"}
+
+              <div className="relative group mb-8">
+                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-lg font-black text-gray-400 group-focus-within:text-emerald-600 transition-colors">R$</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={balanceModalValue}
+                  onChange={e => setBalanceModalValue(e.target.value)}
+                  placeholder="0,00"
+                  autoFocus
+                  className="w-full pl-14 pr-6 py-5 text-3xl font-black rounded-3xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all placeholder:text-gray-300"
+                />
+              </div>
+
+	            <div className="grid grid-cols-2 gap-4">
+	              <button onClick={() => setBalanceModalUser(null)} className="py-4 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-gray-200 transition-all">Cancelar</button>
+	              <button onClick={submitBalanceAdjustment} disabled={savingBalance} className={`py-4 ${balanceModalType === 'credit' ? 'bg-emerald-600' : 'bg-red-600'} hover:opacity-90 disabled:opacity-50 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2`}>
+	                {savingBalance ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                  {savingBalance ? "Salvando..." : "Confirmar"}
 	              </button>
 	            </div>
 	          </div>
