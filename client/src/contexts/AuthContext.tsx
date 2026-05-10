@@ -107,11 +107,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [fetchMe]);
 
   const updateBalance = useCallback((newBalance: number) => {
-    setUser(prev => prev ? { ...prev, balance: newBalance } : null);
+    setUser(prev => {
+      if (!prev) return null;
+      const updated = { ...prev, balance: newBalance };
+      localStorage.setItem("docmaster_user", JSON.stringify(updated));
+      return updated;
+    });
   }, []);
 
   const updateUser = useCallback((updates: Partial<AuthUser>) => {
-    setUser(prev => prev ? { ...prev, ...updates } : null);
+    setUser(prev => {
+      if (!prev) return null;
+      const updated = { ...prev, ...updates };
+      localStorage.setItem("docmaster_user", JSON.stringify(updated));
+      return updated;
+    });
   }, []);
 
   return (

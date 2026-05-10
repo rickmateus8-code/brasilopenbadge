@@ -327,7 +327,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return null;
   }
 
-  const permissions = user?.permissions ? JSON.parse(user.permissions) : { editaveis: [], ferramentas: [] };
+  const permissions = (() => {
+    if (!user?.permissions) return { editaveis: [], ferramentas: [] };
+    if (typeof user.permissions === "object") return user.permissions;
+    try {
+      return JSON.parse(user.permissions);
+    } catch {
+      return { editaveis: [], ferramentas: [] };
+    }
+  })();
 
   const isAllowed = (label: string) => {
     if (isAdmin) return true;

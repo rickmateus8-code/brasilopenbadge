@@ -191,13 +191,18 @@ export default function AdminDashboard() {
 
   const savePermissions = async () => {
     try {
-      await fetch(`/api/admin/users/${aclSelectedUser.id}/permissions`, {
+      const res = await fetch(`/api/admin/users/${aclSelectedUser.id}/permissions`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ permissions: userPermissions })
       });
-      toast.success("Permissões atualizadas!");
-      setShowPermissionsModal(false);
+      if (res.ok) {
+        toast.success("Permissões atualizadas!");
+        setUsers(prev => prev.map(u => u.id === aclSelectedUser.id ? { ...u, permissions: JSON.stringify(userPermissions) } : u));
+        setShowPermissionsModal(false);
+      } else {
+        toast.error("Erro ao salvar permissões.");
+      }
     } catch {
       toast.error("Erro ao salvar permissões.");
     }
@@ -3213,8 +3218,8 @@ export default function AdminDashboard() {
 	            <div className="space-y-6">
 	              <div>
 	                <h4 className="text-[10px] font-black text-indigo-900 dark:text-indigo-400 uppercase tracking-widest mb-3">EDITÁVEIS (Documentos Gerais)</h4>
-	                <div className="grid grid-cols-2 gap-2">
-	                  {["atestado", "cnh", "cha", "toxicologico", "receita"].map(doc => (
+	                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+	                  {["atestado", "cnh", "cha", "toxicologico", "receita", "historico-sp", "historico-uninter", "diploma-uninter"].map(doc => (
 	                    <label key={doc} className="flex items-center gap-2 p-3 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 cursor-pointer hover:border-indigo-300 transition-all">
 	                      <input 
 	                        type="checkbox" 
@@ -3227,7 +3232,7 @@ export default function AdminDashboard() {
 	                        }}
 	                        className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500" 
 	                      />
-	                      <span className="text-xs font-bold text-gray-700 dark:text-gray-300 capitalize">{doc}</span>
+	                      <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 uppercase truncate">{doc}</span>
 	                    </label>
 	                  ))}
 	                </div>

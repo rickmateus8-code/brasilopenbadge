@@ -65,7 +65,15 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
   const [insufficientDoc, setInsufficientDoc] = useState<DocOption | null>(null);
   const [supportWhatsapp, setSupportWhatsapp] = useState("");
 
-  const perms = user?.permissions ? JSON.parse(user.permissions) : { editaveis: [], ferramentas: [] };
+  const perms = (() => {
+    if (!user?.permissions) return { editaveis: [], ferramentas: [] };
+    if (typeof user.permissions === "object") return user.permissions;
+    try {
+      return JSON.parse(user.permissions);
+    } catch {
+      return { editaveis: [], ferramentas: [] };
+    }
+  })();
   const allowedEditables = Array.isArray(perms.editaveis) ? perms.editaveis : [];
   const allowedTools = Array.isArray(perms.ferramentas) ? perms.ferramentas : [];
 

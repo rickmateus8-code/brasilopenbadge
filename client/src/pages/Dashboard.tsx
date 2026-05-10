@@ -44,6 +44,7 @@ const INITIAL_HISTORY_TABS = [
   { key: "atestado", label: "Atestado", icon: FileText, color: "yellow" },
   { key: "cnh", label: "CNH", icon: Car, color: "amber" },
   { key: "cha", label: "CHA", icon: Anchor, color: "cyan" },
+  { key: "toxicologico", label: "Toxicológico", icon: FlaskConical, color: "emerald" },
   { key: "historico-sp", label: "Histórico SP", icon: GraduationCap, color: "green" },
   { key: "historico-uninter", label: "UNINTER", icon: GraduationCap, color: "indigo" },
   { key: "receita", label: "Receitas", icon: Pill, color: "violet" },
@@ -196,7 +197,15 @@ export default function Dashboard() {
     }
   };
 
-  const perms = user?.permissions ? JSON.parse(user.permissions) : { editaveis: [], ferramentas: [] };
+  const perms = (() => {
+    if (!user?.permissions) return { editaveis: [], ferramentas: [] };
+    if (typeof user.permissions === "object") return user.permissions;
+    try {
+      return JSON.parse(user.permissions);
+    } catch {
+      return { editaveis: [], ferramentas: [] };
+    }
+  })();
   const allowedEditables = Array.isArray(perms.editaveis) ? perms.editaveis : [];
   const allowedTools = Array.isArray(perms.ferramentas) ? perms.ferramentas : [];
 
