@@ -137,8 +137,10 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
   if (!open) return null;
 
   const handleSelectDoc = (doc: DocOption) => {
+    const isFree = user?.free_documents?.includes(doc.key);
     const currentBalance = Number(userBalance) || 0;
-    const docPrice = Number(doc.price) || 0;
+    const docPrice = isFree ? 0 : (Number(doc.price) || 0);
+
     if (currentBalance < docPrice) {
       setInsufficientDoc(doc);
       return;
@@ -192,12 +194,16 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
             <div className="grid grid-cols-2 gap-3">
               {docs.map(doc => {
                 const Icon = doc.icon;
-                const canAfford = userBalance >= doc.price;
+                const isFree = user?.free_documents?.includes(doc.key);
+                const canAfford = isFree || userBalance >= doc.price;
+
                 return (
                   <button key={doc.key} onClick={() => handleSelectDoc(doc)} className={`flex flex-col items-center text-center p-4 rounded-2xl border-2 transition-all active:scale-95 ${canAfford ? 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-800 hover:border-emerald-500' : 'bg-gray-50 dark:bg-gray-900 border-gray-100 dark:border-gray-800 opacity-60'}`}>
                     <Icon className={`w-7 h-7 mb-2 ${canAfford ? 'text-emerald-500' : 'text-gray-400'}`} />
                     <span className="text-[11px] font-black text-gray-900 dark:text-white uppercase leading-tight mb-2">{doc.label}</span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${canAfford ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'}`}>{doc.priceFormatted}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isFree ? 'bg-emerald-500 text-white' : canAfford ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'}`}>
+                      {isFree ? 'GRÁTIS' : doc.priceFormatted}
+                    </span>
                   </button>
                 );
               })}

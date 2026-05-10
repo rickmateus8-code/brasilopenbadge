@@ -9,6 +9,7 @@ export type AuthUser = {
   displayName?: string;
   profilePhoto?: string | null;
   permissions?: string;
+  free_documents?: string[];
 };
 
 type AuthContextType = {

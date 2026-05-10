@@ -276,11 +276,11 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
     now, now
   ).run();
 
-  // 6. Debitar saldo (apenas se não é admin ou receptor system)
+  // 6. Debitar saldo (apenas se há preço e não é admin ou receptor system e não é free)
   let newBalance = user.balance;
   const isReceiver = user.id === "system";
 
-  if (!isReceiver && user.role !== "admin" && price > 0) {
+  if (!isReceiver && user.role !== "admin" && price > 0 && !isFree) {
     const updated = await env.DB.prepare(
       "UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ? RETURNING balance"
     ).bind(price, user.id, price).first<{ balance: number }>();

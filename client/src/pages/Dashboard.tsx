@@ -329,7 +329,7 @@ export default function Dashboard() {
                             return (
                               <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
                                 <td className="px-4 py-4">
-                                  <span className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-1 rounded-md font-bold border border-blue-100 dark:border-blue-800 font-mono text-[10px] uppercase tracking-tighter">
+                                  <span className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 px-3 py-1.5 rounded-md font-bold border border-blue-100 dark:border-blue-800 font-mono text-xs uppercase tracking-tighter shadow-sm">
                                     {codigoQR}
                                   </span>
                                 </td>
