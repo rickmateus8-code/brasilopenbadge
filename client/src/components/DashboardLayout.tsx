@@ -239,13 +239,6 @@ function UserDropdown({
               Configurações
             </button>
             <button
-              onClick={() => { setLocation("/indicacoes"); setOpen(false); }}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            >
-              <Gift className="w-4 h-4" />
-              Indicações
-            </button>
-            <button
               onClick={() => { setLocation("/extrato"); setOpen(false); }}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
@@ -259,6 +252,16 @@ function UserDropdown({
               <CreditCard className="w-4 h-4" />
               Recarregar Saldo
             </button>
+          </div>
+          
+          <div className="border-t border-gray-100 dark:border-gray-800 py-1">
+            <button
+              onClick={() => { setLocation("/indicacoes"); setOpen(false); }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-emerald-600 dark:text-emerald-400 font-black hover:bg-emerald-50 dark:hover:bg-emerald-900/10 transition-colors"
+            >
+              <Gift className="w-4 h-4" />
+              Indique e Ganhe
+            </button>
             <a
               href="https://wa.me/5511965355468?text=Preciso+de+suporte"
               target="_blank"
@@ -268,8 +271,6 @@ function UserDropdown({
               <HelpCircle className="w-4 h-4" />
               Ajuda / Suporte
             </a>
-          </div>
-          <div className="border-t border-gray-100 dark:border-gray-800 py-1">
             <button
               onClick={() => { logout(); setOpen(false); }}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"

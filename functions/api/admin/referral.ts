@@ -11,6 +11,10 @@ const getCorsHeaders = (request: Request) => {
   };
 };
 
+const JSON_HEADERS = {
+  'Content-Type': 'application/json',
+};
+
 function getSessionToken(request: Request): string | null {
   const cookie = request.headers.get('Cookie') || '';
   const match = cookie.match(/docmaster_session=([^;]+)/);
