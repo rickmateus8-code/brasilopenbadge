@@ -1192,64 +1192,65 @@ export default function AdminDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="p-7 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-wrap items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-            <Shield className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+        <div className="flex flex-wrap items-center gap-5 mb-8 animate-in fade-in duration-700">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-600 to-red-500 shadow-lg shadow-red-900/20 flex items-center justify-center">
+            <Shield className="w-7 h-7 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Painel Administrativo</h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Controle total do sistema DocMaster</p>
+            <h1 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Painel Administrativo</h1>
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-0.5">Controle central de operações — <span className="text-red-600 font-bold">DocMaster Elite</span></p>
           </div>
-          <div className="ml-auto flex items-center gap-3 flex-wrap">
-            <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-xl px-4 py-2 text-center">
-              <p className="text-xs text-gray-500 dark:text-gray-400">Total Usuários</p>
-              <p className="text-lg font-bold text-yellow-600 dark:text-yellow-400">{users.length}</p>
+          <div className="ml-auto flex items-center gap-4 flex-wrap">
+            <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl px-5 py-3 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 min-w-[120px]">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Usuários</p>
+              <p className="text-xl font-black text-red-600 dark:text-red-500 mt-1">{users.length}</p>
             </div>
-            <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-xl px-4 py-2 text-center">
-              <p className="text-xs text-gray-500 dark:text-gray-400">Saldo Total</p>
-              <p className="text-lg font-bold text-green-600 dark:text-green-400">
+            <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl px-5 py-3 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 min-w-[140px]">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Saldo Total</p>
+              <p className="text-xl font-black text-emerald-600 dark:text-emerald-500 mt-1">
                 R$ {(totalBalance / 100).toFixed(2).replace(".", ",")}
               </p>
             </div>
             {gatewayFinancial && (
-              <div className="bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-800 rounded-xl px-4 py-2 text-center">
-                <p className="text-xs text-gray-500 dark:text-gray-400">Saldo Gateway</p>
-                <p className="text-lg font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1.5 justify-center">
-                  <CreditCard className="w-3.5 h-3.5" />
+              <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl px-5 py-3 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 min-w-[140px]">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Gateway</p>
+                <p className="text-xl font-black text-purple-600 dark:text-purple-500 mt-1 flex items-center gap-2">
+                  <CreditCard className="w-4 h-4" />
                   R$ {Number(gatewayFinancial.saldo_disponivel || 0).toFixed(2).replace(".", ",")}
                 </p>
               </div>
             )}
-            <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-2 text-center">
-              <p className="text-xs text-gray-500 dark:text-gray-400">Usuários Online</p>
-              <p className="text-lg font-bold text-blue-600 dark:text-blue-400 flex items-center justify-center gap-1.5">
-                <Wifi className="w-4 h-4" />
-                {onlineCount}
-              </p>
+            <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl px-5 py-3 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 min-w-[120px]">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Online</p>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <p className="text-xl font-black text-blue-600 dark:text-blue-400">{onlineCount}</p>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 flex-wrap mb-6 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+        <div className="flex gap-2 flex-wrap mb-8 bg-gray-100/50 dark:bg-gray-800/50 p-1.5 rounded-2xl backdrop-blur-sm border border-gray-100 dark:border-gray-800">
           {TABS.map(t => {
             const Icon = t.icon;
+            const isActive = tab === t.key;
             return (
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                  tab === t.key
-                    ? "bg-yellow-500 text-white shadow-sm"
-                    : "text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700"
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 ${
+                  isActive
+                    ? "bg-red-600 text-white shadow-lg shadow-red-900/20 translate-y-[-1px]"
+                    : "text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200"
                 }`}
               >
-                <Icon className="w-3.5 h-3.5" />
+                <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-gray-400"}`} />
                 {t.label}
                 {t.key === "monitoring" && onlineCount > 0 && (
-                  <span className="ml-1 w-5 h-5 rounded-full bg-green-500 text-white text-[10px] flex items-center justify-center font-bold">
+                  <span className={`ml-1 w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-bold ${isActive ? "bg-white text-red-600" : "bg-red-600 text-white"}`}>
                     {onlineCount}
                   </span>
                 )}
@@ -1260,48 +1261,45 @@ export default function AdminDashboard() {
 
         {/* ── USERS TAB ── */}
         {tab === "users" && (
-          <div>
-	            <div className="flex items-center gap-3 mb-4">
-	              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+	            <div className="flex items-center gap-3 mb-6 flex-wrap">
+	              <div className="relative flex-1 min-w-[300px]">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Buscar usuário..."
+                  placeholder="Pesquisar por username, email ou ID..."
                   value={userSearch}
                   onChange={e => setUserSearch(e.target.value)}
-	                  className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+	                  className="w-full pl-11 pr-4 py-3 text-sm rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all shadow-sm"
 	                />
 	              </div>
 	              <select
 	                value={userRoleFilter}
 	                onChange={e => setUserRoleFilter(e.target.value)}
-	                className="px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+	                className="px-4 py-3 text-sm rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-all shadow-sm cursor-pointer"
 	              >
 	                <option value="all">Todos os perfis</option>
-	                <option value="user">Usuários</option>
-	                <option value="admin">Admins</option>
+	                <option value="user">Apenas Usuários</option>
+	                <option value="admin">Administradores</option>
 	              </select>
-	              <button onClick={() => loadUsers(showPasswords)} style={{ display: "none" }} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="Atualizar">
-	                <RefreshCw className="w-4 h-4" />
-	              </button>
               <button
                 onClick={() => {
                 const next = !showPasswords;
                 setShowPasswords(next);
                 loadUsers(next);
               }}
-                className={`flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-xl transition-colors ${
+                className={`flex items-center gap-2 px-5 py-3 text-sm font-black uppercase tracking-widest rounded-2xl transition-all shadow-sm active:scale-95 ${
                   showPasswords
-                    ? "bg-purple-600 hover:bg-purple-700 text-white"
-                    : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                    ? "bg-purple-600 text-white shadow-purple-900/20"
+                    : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-100 dark:border-gray-800 hover:bg-gray-50"
                 }`}
                 title={showPasswords ? "Ocultar senhas" : "Ver senhas"}
               >
                 {showPasswords ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                <span className="hidden sm:inline">{showPasswords ? "Ocultar Senhas" : "Ver Senhas"}</span>
+                <span className="hidden lg:inline">{showPasswords ? "Privacidade" : "Ver Senhas"}</span>
               </button>
-              <button onClick={() => setShowCreateUser(!showCreateUser)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-xl bg-yellow-600 hover:bg-yellow-700 text-white transition-colors">
-                <UserPlus className="w-4 h-4" /> Criar Usuário
+              <button onClick={() => setShowCreateUser(!showCreateUser)} className="flex items-center gap-2 px-6 py-3 text-sm font-black uppercase tracking-widest rounded-2xl bg-red-600 hover:bg-red-700 text-white transition-all shadow-lg shadow-red-900/20 active:scale-95">
+                <UserPlus className="w-4 h-4" /> Novo Usuário
               </button>
             </div>
 
@@ -1540,28 +1538,45 @@ export default function AdminDashboard() {
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-              <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-xl p-4 text-center">
-                <Wifi className="w-6 h-6 mx-auto mb-1 text-green-500" />
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{onlineCount}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Online Agora</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all group">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
+                    <Wifi className="w-5 h-5 text-emerald-500" />
+                  </div>
+                  <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded-full">Ativo</span>
+                </div>
+                <p className="text-3xl font-black text-emerald-600 dark:text-emerald-500">{onlineCount}</p>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Online Agora</p>
               </div>
-              <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center">
-                <WifiOff className="w-6 h-6 mx-auto mb-1 text-gray-400" />
-                <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">{offlineCount}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Offline</p>
+              <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
+                    <WifiOff className="w-5 h-5 text-gray-400" />
+                  </div>
+                </div>
+                <p className="text-3xl font-black text-gray-700 dark:text-gray-300">{offlineCount}</p>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Offline</p>
               </div>
-	              <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl p-4 text-center">
-	                <FileText className="w-6 h-6 mx-auto mb-1 text-blue-500" />
-	                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+	              <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all">
+	                <div className="flex items-center justify-between mb-4">
+	                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
+	                    <FileText className="w-5 h-5 text-blue-500" />
+	                  </div>
+	                </div>
+	                <p className="text-3xl font-black text-blue-600 dark:text-blue-400">
 	                  {presence.filter(p => p.is_online && /(criando|editando|emitindo)/i.test(p.current_action || "")).length}
 	                </p>
-	                <p className="text-xs text-gray-500 dark:text-gray-400">Emitindo Docs</p>
+	                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Emitindo Docs</p>
 	              </div>
-              <div className="bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-800 rounded-xl p-4 text-center">
-                <Globe className="w-6 h-6 mx-auto mb-1 text-purple-500" />
-                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{totalTracked}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Total Usuários</p>
+              <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center">
+                    <Globe className="w-5 h-5 text-purple-500" />
+                  </div>
+                </div>
+                <p className="text-3xl font-black text-purple-600 dark:text-purple-400">{totalTracked}</p>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Total Tracked</p>
               </div>
             </div>
 
@@ -1939,78 +1954,83 @@ export default function AdminDashboard() {
             </div>
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="animate-spin w-6 h-6 border-2 border-yellow-500 border-t-transparent rounded-full" />
+                <div className="animate-spin w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full" />
               </div>
             ) : filteredLogs.length === 0 ? (
-              <div className="text-center py-12 text-gray-400 text-sm">
-                <Activity className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                <p>Nenhum log encontrado</p>
+              <div className="text-center py-20 bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
+                <Activity className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-700" />
+                <p className="text-gray-500 dark:text-gray-400 font-medium">Nenhum registro encontrado para estes filtros.</p>
               </div>
             ) : (
-              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Data</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Usuário</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Categoria</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ação</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Detalhes</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-                    {filteredLogs.map(l => {
-                      const severity = l.severity || "info";
-                      const category = l.category || "admin";
-                      return (
-                        <tr key={l.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                          <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400 whitespace-nowrap">{formatDate(l.created_at)}</td>
-                          <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{l.username || `#${l.user_id}` || "Sistema"}</td>
-                          <td className="px-4 py-2.5">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full font-semibold ${
-                              category === "payment"
-                                ? "bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400"
-                                : category === "error"
-                                ? "bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400"
-                                : category === "admin"
-                                ? "bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400"
-                                : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
-                            }`}>
-                              {category}
-                            </span>
-                          </td>
-                          <td className="px-4 py-2.5">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full font-semibold ${
-                              severity === "error"
-                                ? "bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400"
-                                : l.action.includes("delete") || l.action.includes("exclu")
-                                ? "bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400"
-                                : l.action.includes("emit") || l.action.includes("create") || l.action.includes("credito")
-                                ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400"
-                                : l.action.includes("login")
-                                ? "bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
-                                : l.action.includes("debito")
-                                ? "bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400"
-                                : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
-                            }`}>
-                              {l.action}
-                            </span>
-                          </td>
-                          <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400 hidden md:table-cell max-w-xs truncate">
-                            {(() => {
-                              try {
-                                const parsed = JSON.parse(l.details || "{}");
-                                if (parsed.amount) return `R$ ${(parsed.amount / 100).toFixed(2)} - ${parsed.description || ""}`;
-                                if (parsed.price) return `Preço: R$ ${(parsed.price / 100).toFixed(2)}`;
-                                return l.details || "—";
-                              } catch { return l.details || "—"; }
-                            })()}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+              <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 backdrop-blur-sm">
+                        <th className="px-5 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Timestamp</th>
+                        <th className="px-5 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Operador</th>
+                        <th className="px-5 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Categoria</th>
+                        <th className="px-5 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Ação Realizada</th>
+                        <th className="px-5 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest hidden md:table-cell">Payload / Detalhes</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
+                      {filteredLogs.map(l => {
+                        const severity = l.severity || "info";
+                        const category = l.category || "admin";
+                        return (
+                          <tr key={l.id} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/20 transition-colors group">
+                            <td className="px-5 py-4 whitespace-nowrap">
+                              {formatDateTime(l.created_at)}
+                            </td>
+                            <td className="px-5 py-4">
+                              <p className="text-sm font-bold text-gray-700 dark:text-gray-200 group-hover:text-red-600 transition-colors">{l.username || "Sistema"}</p>
+                              <p className="text-[10px] font-mono text-gray-400">ID: {l.user_id || "SYS"}</p>
+                            </td>
+                            <td className="px-5 py-4">
+                              <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter ${
+                                category === "payment"
+                                  ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400"
+                                  : category === "error"
+                                  ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
+                                  : category === "admin"
+                                  ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                                  : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                              }`}>
+                                {category}
+                              </span>
+                            </td>
+                            <td className="px-5 py-4">
+                              <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold border ${
+                                severity === "error"
+                                  ? "bg-red-50 border-red-100 text-red-700"
+                                  : l.action.includes("delete") || l.action.includes("exclu")
+                                  ? "bg-red-50 border-red-100 text-red-700"
+                                  : l.action.includes("emit") || l.action.includes("create") || l.action.includes("credito")
+                                  ? "bg-emerald-50 border-emerald-100 text-emerald-700"
+                                  : "bg-gray-50 border-gray-100 text-gray-600 dark:bg-gray-800/50 dark:border-gray-700 dark:text-gray-400"
+                              }`}>
+                                {l.action}
+                              </span>
+                            </td>
+                            <td className="px-5 py-4 hidden md:table-cell max-w-sm">
+                              <div className="text-[11px] text-gray-500 dark:text-gray-400 truncate font-mono bg-gray-50 dark:bg-gray-800/30 px-2 py-1 rounded border border-gray-100 dark:border-gray-800">
+                                {(() => {
+                                  try {
+                                    const parsed = JSON.parse(l.details || "{}");
+                                    if (parsed.amount) return `R$ ${(parsed.amount / 100).toFixed(2)} - ${parsed.description || ""}`;
+                                    if (parsed.price) return `Preço: R$ ${(parsed.price / 100).toFixed(2)}`;
+                                    return l.details || "—";
+                                  } catch { return l.details || "—"; }
+                                })()}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>
