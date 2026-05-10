@@ -72,19 +72,19 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
 
     // 2. Não há cache -> Iniciar Bypass com noCaptcha Ai (Mais barato/Viável)
-    if (!env.NOCAPTCHA_API_KEY) {
-      return new Response(JSON.stringify({ error: "Serviço de Captcha não configurado" }), { status: 500, headers: CORS_HEADERS });
+    const captchaKey = env.NOCAPTCHA_API_KEY || env.CAPSOLVER_API_KEY;
+    if (!captchaKey) {
+      return new Response(JSON.stringify({ error: "Serviço de Captcha não configurado no Environment" }), { status: 500, headers: CORS_HEADERS });
     }
 
-    console.log(`[*] Iniciando busca live para: ${oab || nome} via noCaptcha Ai`);
+    console.log(`[*] Iniciando busca live via noCaptcha Ai`);
 
     // Solicitar Resolução ao noCaptcha Ai
-    // Documentação: https://nocaptchaai.com/docs
     const captchaRes = await fetch("https://api.nocaptchaai.com/api/solve", {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
-        "apikey": env.NOCAPTCHA_API_KEY 
+        "apikey": captchaKey 
       },
       body: JSON.stringify({
         method: "userrecaptcha",
