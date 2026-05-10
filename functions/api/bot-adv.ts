@@ -1,91 +1,87 @@
-const REFERENCE_BASE_URL = "https://supremodoseteoriginal.com";
+import type { Env } from "../types";
 
 /**
- * Normaliza datas retornadas pela referência
+ * bot-adv.ts — API de Consulta Judicial via Escavador V2
+ * Substitui o scraper antigo por uma fonte oficial e confiável.
  */
-function normalizeDate(raw: string): string {
-  if (!raw) return "—";
-  const clean = String(raw).trim();
-  if (clean.includes("-") && clean.length >= 10) {
-    const parts = clean.substring(0, 10).split("-");
-    if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
-  }
-  return clean;
-}
-
-/**
- * Extrai dados reais fazendo SCRAPE da referência (Proxy High-Fidelity)
- */
-async function fetchRealProcessFromReference(processo: string) {
-  const url = `${REFERENCE_BASE_URL}/?processo=${encodeURIComponent(processo)}`;
-  try {
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html"
-      },
-      signal: AbortSignal.timeout(15000)
-    });
-    if (!res.ok) return null;
-    const html = await res.text();
-
-    const extract = (pattern: RegExp) => {
-      const match = html.match(pattern);
-      return match ? match[1].trim() : "";
-    };
-
-    const advogado = extract(/Advogado Principal:.*?<strong>(.*?)<\/strong>/s) || extract(/Advogado:.*?Advogado: (.*?) \(CPF/s);
-    const classe = extract(/Classe:<\/strong> (.*?)<\/p>/);
-    const assunto = extract(/Assunto:<\/strong> (.*?)<\/p>/);
-    const valor = extract(/Valor da Ação:<\/strong> (.*?)<\/p>/);
-    const dataInicio = extract(/Data de Início:<\/strong> (.*?)<\/p>/);
-    const orgao = extract(/Órgão Julgador:<\/strong> (.*?)<\/p>/) || extract(/Órgão Julgador: (.*?)<\/p>/);
-    
-    const credoresMatch = html.match(/Credores Identificados:.*?<ul.*?>(.*?)<\/ul>/s);
-    const credores: any[] = [];
-    if (credoresMatch) {
-       const liMatches = credoresMatch[1].matchAll(/<li>\s*<strong>(.*?)<\/strong>\s*\(CPF\/CNPJ: (.*?)\)\s*<\/li>/gs);
-       for (const m of liMatches) {
-          credores.push({ nome: m[1].trim(), cpf: m[2].trim() });
-       }
-    }
-
-    const passivo = extract(/Polo Passivo \(Parte Contrária\).*?Parte:<\/strong> (.*?)<\/p>/s);
-
-    if (!credores.length && !advogado) return null;
-
-    return {
-      credores,
-      advogado,
-      processo,
-      parte_contraria: passivo,
-      valor,
-      valor_limpo: valor.replace("R$", "").replace(/\./g, "").replace(",", ".").trim(),
-      classe,
-      assunto,
-      data_distribuicao: dataInicio,
-      orgao_julgador: orgao,
-      movimentacoes: []
-    };
-  } catch (e) { return null; }
-}
-
-interface Env {
-  DB: D1Database;
-}
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Content-Type": "application/json",
 };
 
 /**
- * bot-adv.ts — API 100% Real (Proxy de supremodoseteoriginal.com)
+ * Busca dados reais via API do Escavador V2
  */
+async function fetchFromEscavador(processo: string, apiKey: string) {
+  const cleanProcesso = processo.replace(/[^\d]/g, "");
+  const url = `https://api.escavador.com/api/v2/processos/numero_cnj/${cleanProcesso}`;
+
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "X-Requested-With": "XMLHttpRequest",
+        "Accept": "application/json"
+      }
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json() as any;
+      console.error("Escavador API Error:", errorData);
+      return null;
+    }
+
+    const data = await res.json() as any;
+    
+    // Mapeamento para o formato do Frontend DocMaster
+    // Pegamos a primeira fonte disponível para extrair os detalhes da capa
+    const principalFonte = data.fontes?.[0] || {};
+    const capa = principalFonte.capa || {};
+    
+    // Extração de credores (Polo Ativo) e Advogados
+    const credores: any[] = [];
+    let advogadoPrincipal = "";
+
+    if (principalFonte.envolvidos) {
+      principalFonte.envolvidos.forEach((env: any) => {
+        if (env.polo === "ATIVO") {
+          credores.push({
+            nome: env.nome,
+            cpf: env.cpf || env.cnpj || ""
+          });
+          
+          // Tenta pegar o primeiro advogado do polo ativo
+          if (!advogadoPrincipal && env.advogados?.length > 0) {
+            advogadoPrincipal = env.advogados[0].nome;
+          }
+        }
+      });
+    }
+
+    return {
+      credores,
+      advogado: advogadoPrincipal || "N/A",
+      processo: data.numero_cnj || processo,
+      parte_contraria: data.titulo_polo_passivo || "N/A",
+      valor: capa.valor_causa?.valor_formatado || "R$ 0,00",
+      valor_limpo: capa.valor_causa?.valor || "0",
+      classe: capa.classe || "N/A",
+      assunto: capa.assunto || "N/A",
+      data_distribuicao: data.data_inicio || "N/A",
+      orgao_julgador: capa.orgao_julgador || "N/A",
+      movimentacoes: [] // Movimentações podem ser buscadas em outro endpoint se necessário
+    };
+  } catch (e) {
+    console.error("Fetch Escavador failed:", e);
+    return null;
+  }
+}
+
 export const onRequest: PagesFunction<Env> = async (context) => {
-  const { request } = context;
+  const { request, env } = context;
   const url = new URL(request.url);
   const action = url.searchParams.get("action");
   const processoNum = url.searchParams.get("processo");
@@ -94,18 +90,32 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
   }
 
-  // ─── CONSULTA REAL VIA PROXY REFERÊNCIA ───────────────────────────────────
+  // 1. Chave da API
+  const apiKey = env.ESCAVADOR_API_KEY;
+  if (!apiKey) {
+    return new Response(JSON.stringify({ success: false, error: "API do Escavador não configurada." }), { status: 500, headers: CORS_HEADERS });
+  }
+
+  // ─── CONSULTA REAL VIA ESCAVADOR ──────────────────────────────────────────
   if (!action && processoNum) {
     try {
-      const data = await fetchRealProcessFromReference(processoNum);
-      if (!data) return new Response(JSON.stringify({ success: false, error: "Processo não localizado ou dados indisponíveis." }), { status: 404, headers: CORS_HEADERS });
+      const data = await fetchFromEscavador(processoNum, apiKey);
+      if (!data) {
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: "Processo não localizado no Escavador. Verifique o número ou tente novamente mais tarde." 
+        }), { status: 404, headers: CORS_HEADERS });
+      }
       return new Response(JSON.stringify({ success: true, data }), { headers: CORS_HEADERS });
     } catch (err: any) {
       return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers: CORS_HEADERS });
     }
   }
 
-  // 1. consultar_cpf_automatico (Proxy Direto)
+  // Os endpoints de CPF e WhatsApp continuam dependendo da referência original se ainda estiverem ativos,
+  // ou podem ser migrados para o Escavador futuramente.
+  const REFERENCE_BASE_URL = "https://supremodoseteoriginal.com";
+
   if (action === "consultar_cpf_automatico") {
     const cpf = url.searchParams.get("cpf")?.replace(/\D/g, "");
     try {
@@ -118,7 +128,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
   }
 
-  // 2. verificar_whatsapp (Proxy Direto)
   if (action === "verificar_whatsapp") {
     const telefone = url.searchParams.get("telefone")?.replace(/\D/g, "");
     try {

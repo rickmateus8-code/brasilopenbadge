@@ -88,24 +88,22 @@ export interface ValidateResponse {
   message: string;
   data?: AttestationFrontend;
 }
+
 export interface Env {
   DB: D1Database;
   ADV_PHOTOS_BUCKET: R2Bucket;
   NOCAPTCHA_API_KEY?: string;
   CAPSOLVER_API_KEY?: string;
-  ENVIRONMENT?: string;
-}
-  ADV_PHOTOS_BUCKET: R2Bucket;
-  CAPSOLVER_API_KEY?: string;
-  ENVIRONMENT: 'production' | 'staging' | 'development';
+  ESCAVADOR_API_KEY?: string;
+  ENVIRONMENT?: 'production' | 'staging' | 'development';
   PAYMENTS_BLACK_API_KEY?: string;
   PAYMENTS_BLACK_API_SECRET?: string;
   PAYMENTS_BLACK_WEBHOOK_SECRET?: string;
   PAYMENTS_BLACK_DOCS_URL?: string;
   APP_DOMAIN?: string;
   VALIDATION_BASE_URL?: string;
-  IDAB_SYNC_TOKEN?: string; // Token de autenticação para sincronização com o Atestados-IDAB
-  SNOOP_API_KEY?: string; // API Key para busca de dados por CPF via Snoop Intelligence
+  IDAB_SYNC_TOKEN?: string;
+  SNOOP_API_KEY?: string;
 }
 
 // D1 Database type
