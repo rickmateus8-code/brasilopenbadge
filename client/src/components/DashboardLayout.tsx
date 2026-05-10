@@ -11,7 +11,6 @@ import {
   Shield, GraduationCap, Car, Anchor, FlaskConical,
   User, Wallet, Settings, HelpCircle, Plus, Bell, Pill, Gift, FilePlus, Search
 } from "lucide-react";
-import { menuItems as externalMenuItems } from "./menuConfig";
 
 interface MenuItem {
   icon: React.ElementType;
@@ -65,7 +64,6 @@ const menuItems: MenuItem[] = [
         { label: "Receitas Salvas", path: "/receitassalvas" },
       ],
     },
-    { icon: Gift, label: "Indique e Ganhe", path: "/indicacoes" },
 ];
 
 function SidebarItem({
@@ -89,7 +87,6 @@ function SidebarItem({
     : isChildActive;
   const Icon = item.icon;
 
-  // Sincronizar estado open quando a rota muda (corrige bug de piscar)
   useEffect(() => {
     if (item.children) {
       const active = item.children.some(c => location === c.path);
@@ -98,7 +95,6 @@ function SidebarItem({
   }, [location, item.children]);
 
   const navigate = useCallback((path: string, isCreation?: boolean) => {
-    // Bloquear navegação para criação se saldo zerado
     if (isCreation && userBalance <= 0) {
       onInsufficientBalance?.();
       return;
@@ -107,7 +103,6 @@ function SidebarItem({
     onNavigate?.();
   }, [setLocation, onNavigate, userBalance, onInsufficientBalance]);
 
-  // Toggle manual — só alterna se não há filho ativo (evita fechar menu ativo)
   const handleToggle = useCallback(() => {
     setOpen(o => !o);
   }, []);
@@ -332,10 +327,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return null;
   }
 
-  const adminItems: MenuItem[] = isAdmin
-    ? [{ icon: Shield, label: "Admin", path: "/admin" }]
-    : [];
-
   const permissions = user?.permissions ? JSON.parse(user.permissions) : { editaveis: [], ferramentas: [] };
 
   const isAllowed = (label: string) => {
@@ -356,16 +347,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   const filteredMenuItems = menuItems.filter(item => isAllowed(item.label));
+  const allItems = filteredMenuItems;
 
-  const allItems = [...filteredMenuItems, ...adminItems];
-  // Garantir que balance nunca seja NaN — D1 pode retornar null/string
   const safeBalance = typeof user.balance === 'number' ? user.balance : (parseFloat(String(user.balance ?? '0')) || 0);
   const balanceFormatted = `R$ ${(safeBalance / 100).toFixed(2).replace('.', ',')}`;
-  // Expor balance seguro para os componentes filhos
   const userBalanceSafe = safeBalance;
-  const userCpf = typeof (user as AuthUser & { cpf?: string | null }).cpf === "string"
-    ? (user as AuthUser & { cpf?: string | null }).cpf || ""
-    : "";
+  const userCpf = typeof (user as any).cpf === "string" ? (user as any).cpf || "" : "";
 
   const handleOpenRecarregaModal = useCallback((closeMobile = false) => {
     if (closeMobile) setMobileOpen(false);
@@ -378,63 +365,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       className={`flex flex-col h-full ${mobile ? "w-72" : collapsed ? "w-18" : "w-64"} 
         bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-200`}
     >
-      {/* Header com Logo */}
       <div className="flex items-center justify-between px-3 py-3 border-b border-gray-200 dark:border-gray-800 min-h-[64px]">
         {(!collapsed || mobile) && (
-          <div className="flex items-center cursor-pointer" onClick={() => setLocation("/dashboard")} title="Ir para Dashboard">
-            <img
-              src="/assets/logo-text.webp"
-              alt="DocMaster"
-              className="h-9 w-auto object-contain"
-              draggable={false}
-            />
+          <div className="flex items-center cursor-pointer" onClick={() => setLocation("/dashboard")}>
+            <img src="/assets/logo-text.webp" alt="DocMaster" className="h-9 w-auto object-contain" />
           </div>
         )}
         {collapsed && !mobile && (
-          <div className="flex items-center justify-center w-full cursor-pointer" onClick={() => setLocation("/dashboard")} title="Ir para Dashboard">
-            <img
-              src="/assets/logo-icon.png"
-              alt="DM"
-              className="h-9 w-9 object-contain"
-              draggable={false}
-            />
+          <div className="flex items-center justify-center w-full cursor-pointer" onClick={() => setLocation("/dashboard")}>
+            <img src="/assets/logo-icon.png" alt="DM" className="h-9 w-9 object-contain" />
           </div>
         )}
         {!mobile && (
-          <button
-            onClick={() => setCollapsed(c => !c)}
-            className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
-            title={collapsed ? "Expandir menu" : "Recolher menu"}
-          >
-            {collapsed
-              ? <ChevronRight className="w-4 h-4" />
-              : <ChevronDown className="w-4 h-4 rotate-90" />}
+          <button onClick={() => setCollapsed(c => !c)} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4 rotate-90" />}
           </button>
         )}
         {mobile && (
-          <button
-            onClick={() => setMobileOpen(false)}
-            className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-          >
+          <button onClick={() => setMobileOpen(false)} className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         )}
       </div>
 
-      {/* Botão + NOVO DOCUMENTO — destaque no topo da nav */}
       <div className={`px-2 pt-3 pb-1 ${collapsed && !mobile ? "flex justify-center" : ""}`}>
         <button
           onClick={() => { setShowNovoDocModal(true); if (mobile) setMobileOpen(false); }}
-          className={`
-            flex items-center gap-2 rounded-xl font-bold text-sm transition-all shadow-sm
-            bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700
-            text-white active:scale-95
-            ${collapsed && !mobile
-              ? "w-10 h-10 justify-center p-0"
-              : "w-full px-4 py-2.5 justify-center"
-            }
-          `}
-          title="Novo Documento"
+          className={`flex items-center gap-2 rounded-xl font-bold text-sm transition-all shadow-sm bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white active:scale-95 ${collapsed && !mobile ? "w-10 h-10 justify-center p-0" : "w-full px-4 py-2.5 justify-center"}`}
         >
           <FilePlus className="w-4 h-4 flex-shrink-0" />
           {(!collapsed || mobile) && <span>Novo Documento</span>}
@@ -457,8 +414,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {item.label === "CHA Náutica" && (
               <button
                 onClick={() => { setShowHistoricoModal(true); if (mobile) setMobileOpen(false); }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all
-                  text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 hover:text-gray-900 dark:hover:text-gray-100`}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 hover:text-gray-900 dark:hover:text-gray-100`}
               >
                 <GraduationCap className="w-4 h-4 flex-shrink-0" />
                 {(!collapsed || mobile) && <span>Histórico</span>}
@@ -471,13 +427,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-800">
             <button
               onClick={() => { setLocation("/admin"); if (mobile) setMobileOpen(false); }}
-              className={`
-                group relative flex items-center gap-3 px-3 py-3 rounded-xl transition-all overflow-hidden
-                bg-slate-900 dark:bg-white text-white dark:text-slate-950 hover:scale-[1.02] active:scale-95
-                shadow-lg shadow-slate-200 dark:shadow-none
-                ${collapsed && !mobile ? "justify-center w-12 h-12" : "w-full"}
-              `}
-              title="Portal Administrativo"
+              className={`group relative flex items-center gap-3 px-3 py-3 rounded-xl transition-all overflow-hidden bg-slate-900 dark:bg-white text-white dark:text-slate-950 hover:scale-[1.02] active:scale-95 shadow-lg shadow-slate-200 dark:shadow-none ${collapsed && !mobile ? "justify-center w-12 h-12" : "w-full"}`}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-20 transition-opacity" />
               <Shield className="w-5 h-5 flex-shrink-0 animate-pulse text-yellow-400 dark:text-indigo-600" />
@@ -492,46 +442,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         )}
       </nav>
 
-      {/* Footer */}
       <div className="px-2 py-3 border-t border-gray-200 dark:border-gray-800 space-y-2">
-        {/* Saldo com botão + */}
         {(!collapsed || mobile) && (
           <div className="px-3 py-2 bg-red-50 dark:bg-red-900/10 rounded-lg border border-red-100 dark:border-red-900/20 flex items-center justify-between">
             <div>
               <p className="text-[10px] text-gray-500 dark:text-gray-500 uppercase tracking-wider">Saldo</p>
-              <p className="text-sm font-bold text-red-600 dark:text-red-400">
-                {balanceFormatted}
-              </p>
+              <p className="text-sm font-bold text-red-600 dark:text-red-400">{balanceFormatted}</p>
             </div>
-            <button
-              onClick={() => handleOpenRecarregaModal(mobile)}
-              className="w-7 h-7 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors shadow-sm"
-              title="Adicionar saldo"
-            >
+            <button onClick={() => handleOpenRecarregaModal(mobile)} className="w-7 h-7 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-sm">
               <Plus className="w-4 h-4" />
             </button>
           </div>
         )}
-        {/* User dropdown */}
-        <UserDropdown
-          user={user}
-          logout={logout}
-          collapsed={!mobile && collapsed}
-          onOpenRecarregaModal={() => handleOpenRecarregaModal(mobile)}
-        />
-        {/* Theme toggle */}
+        <UserDropdown user={user} logout={logout} collapsed={!mobile && collapsed} onOpenRecarregaModal={() => handleOpenRecarregaModal(mobile)} />
         <div className={`flex gap-1 ${collapsed && !mobile ? "flex-col items-center" : ""}`}>
-          <button
-            onClick={toggleTheme}
-            className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            title={theme === "dark" ? "Modo claro" : "Modo escuro"}
-          >
-            {theme === "dark"
-              ? <Sun className="w-3.5 h-3.5" />
-              : <Moon className="w-3.5 h-3.5" />}
-            {(!collapsed || mobile) && (
-              <span>{theme === "dark" ? "Claro" : "Escuro"}</span>
-            )}
+          <button onClick={toggleTheme} className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            {theme === "dark" ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+            {(!collapsed || mobile) && <span>{theme === "dark" ? "Claro" : "Escuro"}</span>}
           </button>
         </div>
       </div>
@@ -540,332 +467,66 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden">
-      {/* Desktop Sidebar */}
-      <div className="hidden md:flex flex-shrink-0">
-        <SidebarContent />
-      </div>
-
-      {/* Mobile Sidebar Overlay */}
+      <div className="hidden md:flex flex-shrink-0"><SidebarContent /></div>
       {mobileOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden">
-          <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setMobileOpen(false)}
-          />
-          <div className="relative z-50 shadow-2xl">
-            <SidebarContent mobile />
-          </div>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <div className="relative z-50 shadow-2xl"><SidebarContent mobile /></div>
         </div>
       )}
-
-      {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        {/* Mobile Header */}
         <header className="md:hidden flex items-center justify-between px-3 py-2.5 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm z-30">
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setMobileOpen(true)}
-              className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              aria-label="Abrir menu"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-            <img
-              src="/assets/logo-text.webp"
-              alt="DocMaster"
-              className="h-6 w-auto object-contain"
-              draggable={false}
-              onClick={() => setLocation("/dashboard")}
-            />
+            <button onClick={() => setMobileOpen(true)} className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"><Menu className="w-5 h-5" /></button>
+            <img src="/assets/logo-text.webp" alt="DocMaster" className="h-6 w-auto object-contain" onClick={() => setLocation("/dashboard")} />
           </div>
           <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => setShowNovoDocModal(true)}
-              className="flex items-center justify-center bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-lg transition-colors shadow-sm"
-              title="Novo Documento"
-            >
-              <FilePlus className="w-4 h-4" />
-            </button>
-            <div 
-              onClick={() => handleOpenRecarregaModal(false)}
-              className="flex items-center gap-1 bg-red-50 dark:bg-red-900/20 px-2 py-1.5 rounded-lg cursor-pointer active:scale-95 transition-transform"
-            >
-              <Wallet className="w-3.5 h-3.5 text-red-500" />
-              <span className="text-[11px] font-black text-red-600 dark:text-red-400">
-                {balanceFormatted}
-              </span>
+            <button onClick={() => setShowNovoDocModal(true)} className="flex items-center justify-center bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-lg transition-colors shadow-sm"><FilePlus className="w-4 h-4" /></button>
+            <div onClick={() => handleOpenRecarregaModal(false)} className="flex items-center gap-1 bg-red-50 dark:bg-red-900/20 px-2 py-1.5 rounded-lg cursor-pointer active:scale-95 transition-transform">
+              <Wallet className="w-3.5 h-3.5 text-red-500" /><span className="text-[11px] font-black text-red-600 dark:text-red-400">{balanceFormatted}</span>
             </div>
           </div>
         </header>
-        {/* Page Content */}
         <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950 relative">
-          <div className="w-full max-w-full overflow-x-hidden">
-            {children}
-          </div>
+          <div className="w-full max-w-full overflow-x-hidden">{children}</div>
         </main>
       </div>
-
-      {/* WhatsApp Button */}
-      <a
-        href="https://wa.me/5511965355468?text=Venho%20de%20https%3A%2F%2Fdocmaster.store.%20Voc%C3%AA%20poderia%20me%20ajudar%3F"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-green-500 hover:bg-green-600 active:scale-95 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all"
-        title="Suporte via WhatsApp"
-        aria-label="Contato WhatsApp"
-      >
-        <svg viewBox="0 0 24 24" className="w-7 h-7 fill-white" xmlns="http://www.w3.org/2000/svg">
-          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-        </svg>
+      <a href="https://wa.me/5511965355468?text=Suporte" target="_blank" rel="noopener noreferrer" className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-green-500 hover:bg-green-600 active:scale-95 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all">
+        <svg viewBox="0 0 24 24" className="w-7 h-7 fill-white" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
       </a>
-
-      {/* Modal Novo Documento — disponível em qualquer página */}
-      <NovoDocumentoModal
-        open={showNovoDocModal}
-        onClose={() => setShowNovoDocModal(false)}
-        userBalance={userBalanceSafe}
-        username={user.username}
-      />
-
-      <RecarregaModal
-        isOpen={showRecarregaModal}
-        onClose={() => setShowRecarregaModal(false)}
-        userName={user.displayName || user.username}
-        userCpf={userCpf}
-      />
-
-      {/* Modal HISTÓRICO — seleção de tipo */}
+      <NovoDocumentoModal open={showNovoDocModal} onClose={() => setShowNovoDocModal(false)} userBalance={userBalanceSafe} username={user.username} />
+      <RecarregaModal isOpen={showRecarregaModal} onClose={() => setShowRecarregaModal(false)} userName={user.displayName || user.username} userCpf={userCpf} />
       {showHistoricoModal && (
-        <div
-          style={{
-            position: "fixed", inset: 0, zIndex: 9999,
-            background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            padding: "16px",
-          }}
-          onClick={() => setShowHistoricoModal(false)}
-        >
-          <div
-            style={{
-              background: "#fff", borderRadius: 20, padding: "28px 28px 24px",
-              maxWidth: 520, width: "100%", maxHeight: "90vh", overflowY: "auto",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-              <h2 style={{ fontSize: 22, fontWeight: 800, color: "#b45309", margin: 0 }}>
-                Histórico
-              </h2>
-              <button
-                onClick={() => setShowHistoricoModal(false)}
-                style={{
-                  width: 32, height: 32, borderRadius: "50%", border: "none",
-                  background: "#f3f4f6", cursor: "pointer", display: "flex",
-                  alignItems: "center", justifyContent: "center",
-                  color: "#374151", fontSize: 18, fontWeight: 700,
-                }}
-              >
-                <X style={{ width: 18, height: 18 }} />
-              </button>
-            </div>
-            <p style={{ fontSize: 14, color: "#6b7280", marginBottom: 20 }}>
-              Selecione o tipo de histórico que deseja visualizar
-            </p>
-
-            {/* Saldo do usuário (Visual apenas para manter consistência) */}
-            <div style={{
-              background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 10,
-              padding: "8px 14px", marginBottom: 20, display: "flex",
-              alignItems: "center", gap: 8,
-            }}>
-              <GraduationCap style={{ width: 15, height: 15, color: "#d97706" }} />
-              <span style={{ fontSize: 13, color: "#92400e", fontWeight: 600 }}>
-                Seu saldo: <strong>{balanceFormatted}</strong>
-              </span>
-            </div>
-
-            {/* Grade de opções */}
+        <div style={{position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px"}} onClick={() => setShowHistoricoModal(false)}>
+          <div style={{background: "#fff", borderRadius: 20, padding: "28px 28px 24px", maxWidth: 520, width: "100%", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.25)"}} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}><h2 style={{ fontSize: 22, fontWeight: 800, color: "#b45309", margin: 0 }}>Histórico</h2><button onClick={() => setShowHistoricoModal(false)} style={{width: 32, height: 32, borderRadius: "50%", border: "none", background: "#f3f4f6", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#374151", fontSize: 18, fontWeight: 700}}><X style={{ width: 18, height: 18 }} /></button></div>
+            <p style={{ fontSize: 14, color: "#6b7280", marginBottom: 20 }}>Selecione o tipo de histórico que deseja visualizar</p>
+            <div style={{background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 10, padding: "8px 14px", marginBottom: 20, display: "flex", alignItems: "center", gap: 8}}><GraduationCap style={{ width: 15, height: 15, color: "#d97706" }} /><span style={{ fontSize: 13, color: "#92400e", fontWeight: 600 }}>Seu saldo: <strong>{balanceFormatted}</strong></span></div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-              {/* Histórico Escolar SP */}
-              <button
-                onClick={() => {
-                  setShowHistoricoModal(false);
-                  if (userBalanceSafe <= 0) { setShowInsufficientBalance(true); return; }
-                  setLocation("/historico-sp");
-                }}
-                style={{
-                  background: "#fff", border: "1.5px solid #e5e7eb",
-                  borderRadius: 14, padding: "20px 14px", cursor: "pointer",
-                  display: "flex", flexDirection: "column", alignItems: "center",
-                  gap: 10, transition: "all 0.18s", textAlign: "center",
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = "#4f46e5";
-                  e.currentTarget.style.boxShadow = "0 4px 16px rgba(79,70,229,0.12)";
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = "#e5e7eb";
-                  e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.05)";
-                  e.currentTarget.style.transform = "translateY(0)";
-                }}
-              >
-                <div style={{
-                  width: 48, height: 48, borderRadius: 12,
-                  background: "linear-gradient(135deg, #4f46e5, #3730a3)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  <GraduationCap style={{ width: 22, height: 22, color: "#fff" }} />
-                </div>
-                <div>
-                  <p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 2px", color: "#1e1b4b" }}>Histórico Escolar</p>
-                  <p style={{ fontSize: 11, margin: 0, color: "#4338ca", fontWeight: 600 }}>Estado de SP</p>
-                </div>
+              <button onClick={() => { setShowHistoricoModal(false); if (userBalanceSafe <= 0) { setShowInsufficientBalance(true); return; } setLocation("/historico-sp"); }} style={{background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 14, padding: "20px 14px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, transition: "all 0.18s", textAlign: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.05)"}}>
+                <div style={{width: 48, height: 48, borderRadius: 12, background: "linear-gradient(135deg, #4f46e5, #3730a3)", display: "flex", alignItems: "center", justifyContent: "center"}}><GraduationCap style={{ width: 22, height: 22, color: "#fff" }} /></div>
+                <div><p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 2px", color: "#1e1b4b" }}>Histórico Escolar</p><p style={{ fontSize: 11, margin: 0, color: "#4338ca", fontWeight: 600 }}>Estado de SP</p></div>
               </button>
-
-              {/* Histórico UNINTER */}
-              <button
-                onClick={() => {
-                  setShowHistoricoModal(false);
-                  if (userBalanceSafe <= 0) { setShowInsufficientBalance(true); return; }
-                  setLocation("/historico-uninter");
-                }}
-                style={{
-                  background: "#fff", border: "1.5px solid #e5e7eb",
-                  borderRadius: 14, padding: "20px 14px", cursor: "pointer",
-                  display: "flex", flexDirection: "column", alignItems: "center",
-                  gap: 10, transition: "all 0.18s", textAlign: "center",
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = "#f59e0b";
-                  e.currentTarget.style.boxShadow = "0 4px 16px rgba(245,158,11,0.12)";
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = "#e5e7eb";
-                  e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.05)";
-                  e.currentTarget.style.transform = "translateY(0)";
-                }}
-              >
-                <div style={{
-                  width: 48, height: 48, borderRadius: 12,
-                  background: "linear-gradient(135deg, #f59e0b, #d97706)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  <GraduationCap style={{ width: 22, height: 22, color: "#fff" }} />
-                </div>
-                <div>
-                  <p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 2px", color: "#451a03" }}>Histórico UNINTER</p>
-                  <p style={{ fontSize: 11, margin: 0, color: "#b45309", fontWeight: 600 }}>Centro Universitário</p>
-                </div>
+              <button onClick={() => { setShowHistoricoModal(false); if (userBalanceSafe <= 0) { setShowInsufficientBalance(true); return; } setLocation("/historico-uninter"); }} style={{background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 14, padding: "20px 14px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, transition: "all 0.18s", textAlign: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.05)"}}>
+                <div style={{width: 48, height: 48, borderRadius: 12, background: "linear-gradient(135deg, #f59e0b, #d97706)", display: "flex", alignItems: "center", justifyContent: "center"}}><GraduationCap style={{ width: 22, height: 22, color: "#fff" }} /></div>
+                <div><p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 2px", color: "#451a03" }}>Histórico UNINTER</p><p style={{ fontSize: 11, margin: 0, color: "#b45309", fontWeight: 600 }}>Centro Universitário</p></div>
               </button>
             </div>
-
-            {/* Links para salvos (Footer style) */}
-            <div style={{
-              marginTop: 20, paddingTop: 16, borderTop: "1px solid #f3f4f6",
-              display: "flex", gap: 10,
-            }}>
-              <button
-                onClick={() => { setShowHistoricoModal(false); setLocation("/historico-sp-salvos"); }}
-                style={{
-                  flex: 1, padding: "10px 0", borderRadius: 10, border: "1.5px solid #e5e7eb",
-                  background: "#f9fafb", fontSize: 12, fontWeight: 700, color: "#4b5563",
-                  cursor: "pointer", transition: "all 0.15s",
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "#4f46e5"; e.currentTarget.style.color = "#4f46e5"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.color = "#4b5563"; }}
-              >
-                SP Salvos
-              </button>
-              <button
-                onClick={() => { setShowHistoricoModal(false); setLocation("/historico-uninter-salvos"); }}
-                style={{
-                  flex: 1, padding: "10px 0", borderRadius: 10, border: "1.5px solid #e5e7eb",
-                  background: "#f9fafb", fontSize: 12, fontWeight: 700, color: "#4b5563",
-                  cursor: "pointer", transition: "all 0.15s",
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "#f59e0b"; e.currentTarget.style.color = "#f59e0b"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.color = "#4b5563"; }}
-              >
-                UNINTER Salvos
-              </button>
+            <div style={{marginTop: 20, paddingTop: 16, borderTop: "1px solid #f3f4f6", display: "flex", gap: 10}}>
+              <button onClick={() => { setShowHistoricoModal(false); setLocation("/historico-sp-salvos"); }} style={{flex: 1, padding: "10px 0", borderRadius: 10, border: "1.5px solid #e5e7eb", background: "#f9fafb", fontSize: 12, fontWeight: 700, color: "#4b5563", cursor: "pointer", transition: "all 0.15s"}}>SP Salvos</button>
+              <button onClick={() => { setShowHistoricoModal(false); setLocation("/historico-uninter-salvos"); }} style={{flex: 1, padding: "10px 0", borderRadius: 10, border: "1.5px solid #e5e7eb", background: "#f9fafb", fontSize: 12, fontWeight: 700, color: "#4b5563", cursor: "pointer", transition: "all 0.15s"}}>UNINTER Salvos</button>
             </div>
           </div>
         </div>
       )}
-
-      {/* Modal Saldo Insuficiente — acionado pelo submenu */}
       {showInsufficientBalance && (
-        <div
-          style={{
-            position: "fixed", inset: 0, zIndex: 9999,
-            background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            padding: "16px",
-          }}
-          onClick={() => setShowInsufficientBalance(false)}
-        >
-          <div
-            style={{
-              background: "#fff", borderRadius: 20, padding: "36px 32px",
-              maxWidth: 380, width: "100%", textAlign: "center",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div style={{
-              width: 72, height: 72, borderRadius: "50%",
-              border: "3px solid #f97316", display: "flex", alignItems: "center",
-              justifyContent: "center", margin: "0 auto 20px",
-            }}>
-              <svg viewBox="0 0 24 24" style={{ width: 36, height: 36, color: "#f97316" }} fill="none" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-              </svg>
-            </div>
-            <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111827", marginBottom: 12 }}>
-              Saldo Insuficiente
-            </h2>
-            <p style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.6, marginBottom: 28 }}>
-              Você não possui saldo suficiente para criar um novo documento.
-              Recarregue seu saldo para continuar.
-            </p>
-            <div style={{
-              background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10,
-              padding: "10px 16px", marginBottom: 24, display: "flex",
-              alignItems: "center", justifyContent: "center", gap: 8,
-            }}>
-              <Wallet style={{ width: 16, height: 16, color: "#dc2626" }} />
-              <span style={{ fontSize: 13, color: "#dc2626", fontWeight: 700 }}>
-                Saldo atual: R$ {(userBalanceSafe / 100).toFixed(2).replace(".", ",")}
-              </span>
-            </div>
-            <div style={{ display: "flex", gap: 12 }}>
-              <button
-                onClick={() => { setShowInsufficientBalance(false); handleOpenRecarregaModal(); }}
-                style={{
-                  flex: 1, padding: "12px 0", borderRadius: 10, border: "none",
-                  background: "#16a34a", color: "#fff", fontWeight: 700,
-                  fontSize: 14, cursor: "pointer",
-                }}
-              >
-                Recarregar Agora
-              </button>
-              <button
-                onClick={() => setShowInsufficientBalance(false)}
-                style={{
-                  flex: 1, padding: "12px 0", borderRadius: 10, border: "none",
-                  background: "#6b7280", color: "#fff", fontWeight: 700,
-                  fontSize: 14, cursor: "pointer",
-                }}
-              >
-                Cancelar
-              </button>
-            </div>
+        <div style={{position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px"}} onClick={() => setShowInsufficientBalance(false)}>
+          <div style={{background: "#fff", borderRadius: 20, padding: "36px 32px", maxWidth: 380, width: "100%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.25)"}} onClick={e => e.stopPropagation()}>
+            <div style={{width: 72, height: 72, borderRadius: "50%", border: "3px solid #f97316", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px"}}><svg viewBox="0 0 24 24" style={{ width: 36, height: 36, color: "#f97316" }} fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg></div>
+            <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111827", marginBottom: 12 }}>Saldo Insuficiente</h2>
+            <p style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.6, marginBottom: 28 }}>Você não possui saldo suficiente para criar um novo documento. Recarregue seu saldo para continuar.</p>
+            <div style={{background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: "10px 16px", marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "center", gap: 8}}><Wallet style={{ width: 16, height: 16, color: "#dc2626" }} /><span style={{ fontSize: 13, color: "#dc2626", fontWeight: 700 }}>Saldo atual: R$ {(userBalanceSafe / 100).toFixed(2).replace(".", ",")}</span></div>
+            <div style={{ display: "flex", gap: 12 }}><button onClick={() => { setShowInsufficientBalance(false); handleOpenRecarregaModal(); }} style={{flex: 1, padding: "12px 0", borderRadius: 10, border: "none", background: "#16a34a", color: "#fff", fontWeight: 700, fontSize: 14, cursor: "pointer"}}>Recarregar Agora</button><button onClick={() => setShowInsufficientBalance(false)} style={{flex: 1, padding: "12px 0", borderRadius: 10, border: "none", background: "#6b7280", color: "#fff", fontWeight: 700, fontSize: 14, cursor: "pointer"}}>Cancelar</button></div>
           </div>
         </div>
       )}
