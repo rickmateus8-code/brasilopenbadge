@@ -1195,12 +1195,12 @@ export default function AdminDashboard() {
       <div className="p-7 max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-wrap items-center gap-5 mb-8 animate-in fade-in duration-700">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-600 to-red-500 shadow-lg shadow-red-900/20 flex items-center justify-center">
-            <Shield className="w-7 h-7 text-white" />
+          <div className="w-16 h-16 rounded-2xl bg-white dark:bg-gray-900 shadow-xl flex items-center justify-center overflow-hidden border border-gray-100 dark:border-gray-800 group hover:scale-105 transition-transform duration-500">
+            <img src="/assets/logo-elite-dm.png" alt="DocMaster Elite" className="w-12 h-12 object-contain" />
           </div>
           <div>
             <h1 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Painel Administrativo</h1>
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-0.5">Controle central de operações — <span className="text-red-600 font-bold">DocMaster Elite</span></p>
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-0.5">Gestão de Operações — <span className="text-red-600 font-bold tracking-tighter">DOCMASTER ELITE</span></p>
           </div>
           <div className="ml-auto flex items-center gap-4 flex-wrap">
             <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl px-5 py-3 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 min-w-[120px]">
@@ -1233,7 +1233,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 flex-wrap mb-8 bg-gray-100/50 dark:bg-gray-800/50 p-1.5 rounded-2xl backdrop-blur-sm border border-gray-100 dark:border-gray-800">
+        <div className="flex gap-2 flex-nowrap overflow-x-auto pb-2 mb-8 bg-gray-100/50 dark:bg-gray-800/50 p-1.5 rounded-2xl backdrop-blur-sm border border-gray-100 dark:border-gray-800 no-scrollbar">
           {TABS.map(t => {
             const Icon = t.icon;
             const isActive = tab === t.key;
@@ -1241,14 +1241,14 @@ export default function AdminDashboard() {
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 ${
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 flex-shrink-0 ${
                   isActive
                     ? "bg-red-600 text-white shadow-lg shadow-red-900/20 translate-y-[-1px]"
                     : "text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200"
                 }`}
               >
                 <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-gray-400"}`} />
-                {t.label}
+                <span className="whitespace-nowrap">{t.label}</span>
                 {t.key === "monitoring" && onlineCount > 0 && (
                   <span className={`ml-1 w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-bold ${isActive ? "bg-white text-red-600" : "bg-red-600 text-white"}`}>
                     {onlineCount}
@@ -3194,9 +3194,9 @@ export default function AdminDashboard() {
 	        </div>
 	      )}
 
-	      {showPermissionsModal && selectedUser && (
+	      {showPermissionsModal && aclSelectedUser && (
 	        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
-	          <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-lg shadow-2xl p-6 border border-indigo-100 dark:border-indigo-900">
+	          <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-lg shadow-2xl p-6 border border-indigo-100 dark:border-indigo-900 animate-in zoom-in duration-300">
 	            <div className="flex items-center justify-between mb-6">
 	              <div className="flex items-center gap-3">
 	                <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
@@ -3204,10 +3204,10 @@ export default function AdminDashboard() {
 	                </div>
 	                <div>
 	                  <h3 className="font-bold text-gray-900 dark:text-white">Permissões de Acesso</h3>
-	                  <p className="text-xs text-gray-500">{selectedUser.username}</p>
+	                  <p className="text-xs text-gray-500 tracking-tight font-black uppercase">{aclSelectedUser.username}</p>
 	                </div>
 	              </div>
-	              <button onClick={() => setShowPermissionsModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors"><X className="w-5 h-5 text-gray-400" /></button>
+	              <button onClick={() => setShowPermissionsModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"><X className="w-5 h-5 text-gray-400" /></button>
 	            </div>
 
 	            <div className="space-y-6">
@@ -3225,7 +3225,7 @@ export default function AdminDashboard() {
 	                            : userPermissions.editaveis.filter((d: string) => d !== doc);
 	                          setUserPermissions({ ...userPermissions, editaveis: next });
 	                        }}
-	                        className="w-4 h-4 rounded text-indigo-600" 
+	                        className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500" 
 	                      />
 	                      <span className="text-xs font-bold text-gray-700 dark:text-gray-300 capitalize">{doc}</span>
 	                    </label>
@@ -3247,7 +3247,7 @@ export default function AdminDashboard() {
 	                            : userPermissions.ferramentas.filter((t: string) => t !== tool);
 	                          setUserPermissions({ ...userPermissions, ferramentas: next });
 	                        }}
-	                        className="w-4 h-4 rounded text-emerald-600" 
+	                        className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500" 
 	                      />
 	                      <span className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">{tool}</span>
 	                    </label>
