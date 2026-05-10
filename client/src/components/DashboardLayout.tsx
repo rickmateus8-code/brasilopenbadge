@@ -465,6 +465,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             )}
           </div>
         ))}
+
+        {isAdmin && (
+          <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-800">
+            <button
+              onClick={() => { setLocation("/admin"); if (mobile) setMobileOpen(false); }}
+              className={`
+                group relative flex items-center gap-3 px-3 py-3 rounded-xl transition-all overflow-hidden
+                bg-slate-900 dark:bg-white text-white dark:text-slate-950 hover:scale-[1.02] active:scale-95
+                shadow-lg shadow-slate-200 dark:shadow-none
+                ${collapsed && !mobile ? "justify-center w-12 h-12" : "w-full"}
+              `}
+              title="Portal Administrativo"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-20 transition-opacity" />
+              <Shield className="w-5 h-5 flex-shrink-0 animate-pulse text-yellow-400 dark:text-indigo-600" />
+              {(!collapsed || mobile) && (
+                <div className="flex flex-col items-start leading-tight">
+                  <span className="text-[11px] font-black uppercase tracking-widest opacity-70">Acesso Restrito</span>
+                  <span className="text-sm font-black italic">Admin Portal</span>
+                </div>
+              )}
+            </button>
+          </div>
+        )}
       </nav>
 
       {/* Footer */}
