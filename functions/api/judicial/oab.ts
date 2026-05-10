@@ -71,49 +71,54 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       }), { headers: CORS_HEADERS });
     }
 
-    // 2. Não há cache -> Iniciar Bypass com CapSolver
-    if (!env.CAPSOLVER_API_KEY) {
+    // 2. Não há cache -> Iniciar Bypass com noCaptcha Ai (Mais barato/Viável)
+    if (!env.NOCAPTCHA_API_KEY) {
       return new Response(JSON.stringify({ error: "Serviço de Captcha não configurado" }), { status: 500, headers: CORS_HEADERS });
     }
 
-    console.log(`[*] Iniciando busca live para: ${oab || nome}`);
+    console.log(`[*] Iniciando busca live para: ${oab || nome} via noCaptcha Ai`);
 
-    // Solicitar Token do CapSolver
-    const captchaRes = await fetch("https://api.capsolver.com/createTask", {
+    // Solicitar Resolução ao noCaptcha Ai
+    // Documentação: https://nocaptchaai.com/docs
+    const captchaRes = await fetch("https://api.nocaptchaai.com/api/solve", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "apikey": env.NOCAPTCHA_API_KEY 
+      },
       body: JSON.stringify({
-        clientKey: env.CAPSOLVER_API_KEY,
-        task: {
-          type: "ReCaptchaV2EnterpriseTaskProxyless",
-          websiteURL: "https://cna.oab.org.br/",
-          websiteKey: RECAPTCHA_SITE_KEY,
-        }
+        method: "userrecaptcha",
+        sitekey: RECAPTCHA_SITE_KEY,
+        url: "https://cna.oab.org.br/",
+        version: "v2_enterprise",
+        enterprise: 1
       })
     });
 
     const captchaData = await captchaRes.json() as any;
-    if (!captchaData.taskId) {
-      throw new Error("Falha ao criar tarefa no CapSolver");
+    if (captchaData.status === "error" || !captchaData.id) {
+      throw new Error(`Falha no noCaptcha Ai: ${captchaData.message || "Erro desconhecido"}`);
     }
 
     // Polling para obter o resultado
     let token = "";
-    for (let i = 0; i < 30; i++) {
+    const taskId = captchaData.id;
+    for (let i = 0; i < 40; i++) {
       await new Promise(r => setTimeout(r, 2000));
-      const statusRes = await fetch("https://api.capsolver.com/getTaskResult", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientKey: env.CAPSOLVER_API_KEY, taskId: captchaData.taskId })
+      const statusRes = await fetch(`https://api.nocaptchaai.com/api/status?id=${taskId}`, {
+        method: "GET",
+        headers: { "apikey": env.NOCAPTCHA_API_KEY }
       });
       const statusData = await statusRes.json() as any;
-      if (statusData.status === "ready") {
-        token = statusData.solution.gRecaptchaResponse;
+      
+      if (statusData.status === "ready" || statusData.status === "solved") {
+        token = statusData.solution || statusData.gRecaptchaResponse;
         break;
       }
+      if (statusData.status === "error") throw new Error("Erro na resolução do noCaptcha Ai");
     }
 
-    if (!token) throw new Error("Timeout na resolução do Captcha");
+    if (!token) throw new Error("Timeout na resolução do noCaptcha Ai");
 
     // 3. Consultar API Oficial da OAB
     const oabRes = await fetch(OAB_API_URL, {
@@ -167,30 +172,26 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
 
     // 5. Salvar no D1
-    const newId = crypto.randomUUID();
-    const contatos = JSON.stringify({
-      email: advocate.email || "",
-      telefone: advocate.phone || "",
-      endereco: advocate.address || ""
-    });
-
+    const cacheId = `OAB-${advocate.seccional}-${advocate.oabNumber}`;
+    
     await env.DB.prepare(
-      "INSERT INTO advogados_cache (id, nome, inscricao_oab, uf_seccional, tipo_inscricao, situacao, foto_b64, contatos) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+      "INSERT INTO oab_cache (id, oab, uf, nome, tipo_inscricao, situacao, data_inscricao, foto_r2_url, json_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
     ).bind(
-      newId,
-      advocate.name,
+      cacheId,
       advocate.oabNumber,
       advocate.seccional,
+      advocate.name,
       advocate.type || "Advogado",
       advocate.status || "Regular",
-      fotoPublicUrl, // Usamos a coluna foto_b64 para guardar a URL do R2 por simplicidade arquitetural no momento
-      contatos
+      advocate.date || "",
+      fotoPublicUrl,
+      JSON.stringify(advocate)
     ).run();
 
     return new Response(JSON.stringify({ 
       success: true, 
       source: "live", 
-      data: { ...advocate, foto_b64: fotoPublicUrl } 
+      data: { ...advocate, photo: fotoPublicUrl } 
     }), { headers: CORS_HEADERS });
 
   } catch (error: any) {
