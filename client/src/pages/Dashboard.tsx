@@ -4,7 +4,6 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import NovoDocumentoModal from "@/components/NovoDocumentoModal";
 import RecarregaModal from "@/components/RecarregaModal";
-import { toast } from "sonner";
 import {
   FileText, Car, Anchor, FlaskConical, GraduationCap,
   Wallet, TrendingUp, BarChart3, ChevronRight, Plus,
@@ -12,15 +11,16 @@ import {
   Copy, X, Send, RefreshCw, Search, Save, Smartphone, AlertTriangle, Gift, Users, Loader2
 } from "lucide-react";
 
-const quickActions = [
-  { icon: FileText, label: "Novo Atestado", desc: "Emitir atestado médico", path: "/atestadocria", color: "yellow" },
-  { icon: Car, label: "Nova CNH", desc: "Emitir CNH digital", path: "/cnhcria", color: "amber" },
-  { icon: Anchor, label: "Nova CHA", desc: "Emitir CHA náutica", path: "/chacria", color: "cyan" },
-  { icon: FlaskConical, label: "Laudo Toxicológico Sodré", desc: "Emitir laudo toxicológico Sodré", path: "/toxicria", color: "emerald" },
-  { icon: GraduationCap, label: "Histórico SP", desc: "Emitir histórico escolar SP", path: "/historico-sp", color: "green" },
-  { icon: GraduationCap, label: "Histórico UNINTER", desc: "Emitir histórico UNINTER", path: "/historico-uninter", color: "indigo" },
-  { icon: Pill, label: "Dr. Consulta", desc: "Emitir receituário médico", path: "/receitacria", color: "violet" },
-  { icon: FileText, label: "STJ Petição", desc: "Emitir petição jurídica STJ", path: "/peticaocria", color: "indigo" },
+const quickActionsRaw = [
+  { key: "atestado", icon: FileText, label: "Novo Atestado", desc: "Emitir atestado médico", path: "/atestadocria", color: "yellow" },
+  { key: "cnh", icon: Car, label: "Nova CNH", desc: "Emitir CNH digital", path: "/cnhcria", color: "amber" },
+  { key: "cha", icon: Anchor, label: "Nova CHA", desc: "Emitir CHA náutica", path: "/chacria", color: "cyan" },
+  { key: "toxicologico", icon: FlaskConical, label: "Toxicológico", desc: "Emitir laudo toxicológico", path: "/toxicria", color: "emerald" },
+  { key: "historico-sp", icon: GraduationCap, label: "Histórico SP", desc: "Emitir histórico escolar SP", path: "/historico-sp", color: "green" },
+  { key: "historico-uninter", icon: GraduationCap, label: "Histórico UNINTER", desc: "Emitir histórico UNINTER", path: "/historico-uninter", color: "indigo" },
+  { key: "receita", icon: Pill, label: "Dr. Consulta", desc: "Emitir receituário médico", path: "/receitacria", color: "violet" },
+  { key: "peticao-stj", icon: FileText, label: "STJ Petição", desc: "Emitir petição jurídica STJ", path: "/peticaocria", color: "indigo" },
+  { key: "bot-adv", icon: Search, label: "Bot Adv", desc: "Consulta Judicial Inteligente", path: "/bot-adv", color: "blue" },
 ];
 
 const colorMap: Record<string, { bg: string; text: string; iconBg: string; badge: string }> = {
@@ -32,6 +32,7 @@ const colorMap: Record<string, { bg: string; text: string; iconBg: string; badge
   indigo:  { bg: "bg-indigo-50 dark:bg-indigo-900/10",  text: "text-indigo-600 dark:text-indigo-400",  iconBg: "bg-indigo-100 dark:bg-indigo-900/30", badge: "bg-indigo-500" },
   emerald: { bg: "bg-emerald-50 dark:bg-emerald-900/10",text: "text-emerald-600 dark:text-emerald-400",iconBg: "bg-emerald-100 dark:bg-emerald-900/30",badge: "bg-emerald-500" },
   violet:  { bg: "bg-violet-50 dark:bg-violet-900/10",  text: "text-violet-600 dark:text-violet-400",  iconBg: "bg-violet-100 dark:bg-violet-900/30",  badge: "bg-violet-500" },
+  blue:    { bg: "bg-blue-50 dark:bg-blue-900/10",    text: "text-blue-600 dark:text-blue-400",    iconBg: "bg-blue-100 dark:bg-blue-900/30",   badge: "bg-blue-500" },
 };
 
 const INITIAL_HISTORY_TABS = [
@@ -121,7 +122,20 @@ export default function Dashboard() {
     loadHistory(activeTab);
   }, [activeTab]);
 
-  const hasEmissions = Object.values(stats).some(val => val > 0);
+  const perms = user?.permissions ? JSON.parse(user.permissions) : { editaveis: [], ferramentas: [] };
+  const allowedEditables = Array.isArray(perms.editaveis) ? perms.editaveis : [];
+  const allowedTools = Array.isArray(perms.ferramentas) ? perms.ferramentas : [];
+
+  const isToolAllowed = (key: string) => {
+    if (user?.role === "admin") return true;
+    if (["bot-adv", "peticao-stj"].includes(key)) return allowedTools.includes(key);
+    if (key === "toxicria") return allowedEditables.includes("toxicologico");
+    return allowedEditables.includes(key);
+  };
+
+  const filteredQuickActions = quickActionsRaw.filter(action => isToolAllowed(action.key));
+  const hasAnyPermission = filteredQuickActions.length > 0;
+  const hasEmissions = Object.values(stats).some(val => typeof val === 'number' && val > 0);
 
   return (
     <DashboardLayout>
@@ -135,20 +149,30 @@ export default function Dashboard() {
             <p className="text-gray-500 dark:text-gray-400 text-sm md:text-base font-medium max-w-2xl">
               Bem-vindo ao maior e melhor painel da atualidade — <span className="text-red-600 font-bold">DocMaster</span>
             </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <button onClick={() => setShowNovoDocModal(true)} className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-red-900/20 active:scale-95 flex items-center gap-2">
-                <Plus className="w-4 h-4" /> Novo Documento
-              </button>
-              <button onClick={() => setLocation("/configuracoes")} className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-gray-200 transition-all flex items-center gap-2">
-                <Settings className="w-4 h-4" /> Configurações
-              </button>
-            </div>
+            {hasAnyPermission && (
+              <div className="mt-6 flex flex-wrap gap-3">
+                <button onClick={() => setShowNovoDocModal(true)} className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-red-900/20 active:scale-95 flex items-center gap-2">
+                  <Plus className="w-4 h-4" /> Novo Documento
+                </button>
+                <button onClick={() => setLocation("/configuracoes")} className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-gray-200 transition-all flex items-center gap-2">
+                  <Settings className="w-4 h-4" /> Configurações
+                </button>
+              </div>
+            )}
+            {!hasAnyPermission && user?.role !== "admin" && (
+              <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800 rounded-2xl">
+                <p className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-widest flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" /> Aguardando Liberação do Administrador
+                </p>
+                <p className="text-[10px] text-amber-600 dark:text-amber-500 mt-1">Sua conta está ativa, mas você ainda não possui ferramentas liberadas.</p>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Stats */}
         {hasEmissions && (
-          <div className="mb-8">
+          <div className="mb-8 animate-in fade-in duration-500">
             <div className="flex items-center gap-2 mb-4">
               <BarChart3 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               <h2 className="text-sm md:text-base font-bold text-gray-800 dark:text-gray-200 uppercase tracking-widest">Estatísticas</h2>
@@ -174,28 +198,17 @@ export default function Dashboard() {
 
         {/* History */}
         {hasEmissions && (
-          <div className="mb-8">
+          <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 <h2 className="text-sm md:text-base font-bold text-gray-800 dark:text-gray-200 uppercase tracking-widest">Histórico de Emissões</h2>
               </div>
-              <button
-                onClick={() => {
-                  const routes: any = { atestado: "/atestadocria", cnh: "/cnhcria", cha: "/chacria", receita: "/receitacria" };
-                  const route = routes[activeTab];
-                  if (route) setLocation(route);
-                  else setShowNovoDocModal(true);
-                }}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-[10px] font-black rounded-xl uppercase transition-all active:scale-95"
-              >
-                <Plus className="w-3.5 h-3.5" /> Emitir Documento
-              </button>
             </div>
             
             <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm">
               <div className="flex border-b border-gray-100 dark:border-gray-800 overflow-x-auto no-scrollbar">
-                {historyTabs.map(tab => (
+                {historyTabs.filter(t => isToolAllowed(t.key)).map(tab => (
                   <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`px-6 py-4 text-xs font-black uppercase tracking-widest transition-all border-b-2 whitespace-nowrap ${activeTab === tab.key ? "border-red-600 text-red-600 bg-red-50/30" : "border-transparent text-gray-400 hover:text-gray-600"}`}>
                     {tab.label}
                   </button>
@@ -208,6 +221,7 @@ export default function Dashboard() {
                   <div className="py-20 text-center border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl">
                     <FileText className="w-12 h-12 text-gray-200 mx-auto mb-3" />
                     <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Nenhuma {TAB_LABELS[activeTab] || activeTab} emitida ainda</h3>
+                    <button onClick={() => setLocation(quickActionsRaw.find(a => a.key === activeTab)?.path || "/dashboard")} className="mt-4 px-4 py-2 bg-red-600 text-white text-[10px] font-black rounded-lg uppercase">Emitir Documento</button>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -239,14 +253,14 @@ export default function Dashboard() {
         )}
 
         {/* Quick Access */}
-        {hasEmissions && (
-          <div>
+        {hasAnyPermission && (
+          <div className="animate-in fade-in slide-in-from-bottom-6 duration-1000">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               <h2 className="text-sm md:text-base font-bold text-gray-800 dark:text-gray-200 uppercase tracking-widest">Acesso Rápido</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {quickActions.map((action, i) => (
+              {filteredQuickActions.map((action, i) => (
                 <button key={i} onClick={() => setLocation(action.path)} className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-red-200 transition-all text-left group">
                   <div className={`w-10 h-10 rounded-xl mb-3 flex items-center justify-center ${colorMap[action.color].iconBg}`}>
                     <action.icon className={`w-5 h-5 ${colorMap[action.color].text}`} />
