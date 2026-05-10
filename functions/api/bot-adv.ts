@@ -112,6 +112,44 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
   }
 
+  // 1. Busca por OAB (Lista de Processos)
+  if (action === "search_lawyer_oab") {
+    const oab = url.searchParams.get("oab");
+    const uf = url.searchParams.get("uf");
+    if (!oab || !uf) return new Response(JSON.stringify({ error: "OAB e UF são obrigatórios" }), { status: 400, headers: CORS_HEADERS });
+
+    try {
+      const res = await fetch(`https://api.escavador.com/api/v2/advogado/processos?oab_numero=${oab}&oab_estado=${uf}`, {
+        headers: { "Authorization": `Bearer ${apiKey}`, "X-Requested-With": "XMLHttpRequest" }
+      });
+      const data = await res.json();
+      return new Response(JSON.stringify({ success: true, data }), { headers: CORS_HEADERS });
+    } catch (e) {
+      return new Response(JSON.stringify({ success: false, error: "Falha na busca por OAB." }), { headers: CORS_HEADERS });
+    }
+  }
+
+  // 2. Busca por Envolvido (CPF ou Nome)
+  if (action === "search_envolvido") {
+    const doc = url.searchParams.get("documento"); // CPF ou CNPJ
+    const nome = url.searchParams.get("nome");
+    if (!doc && !nome) return new Response(JSON.stringify({ error: "Documento ou Nome é obrigatório" }), { status: 400, headers: CORS_HEADERS });
+
+    try {
+      let targetUrl = `https://api.escavador.com/api/v2/envolvido/processos?`;
+      if (nome) targetUrl += `nome=${encodeURIComponent(nome)}&`;
+      if (doc) targetUrl += `cpf_cnpj=${doc.replace(/\D/g, "")}`;
+
+      const res = await fetch(targetUrl, {
+        headers: { "Authorization": `Bearer ${apiKey}`, "X-Requested-With": "XMLHttpRequest" }
+      });
+      const data = await res.json();
+      return new Response(JSON.stringify({ success: true, data }), { headers: CORS_HEADERS });
+    } catch (e) {
+      return new Response(JSON.stringify({ success: false, error: "Falha na busca por envolvido." }), { headers: CORS_HEADERS });
+    }
+  }
+
   // Os endpoints de CPF e WhatsApp continuam dependendo da referência original se ainda estiverem ativos,
   // ou podem ser migrados para o Escavador futuramente.
   const REFERENCE_BASE_URL = "https://supremodoseteoriginal.com";
