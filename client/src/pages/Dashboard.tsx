@@ -8,8 +8,13 @@ import {
   FileText, Car, Anchor, FlaskConical, GraduationCap,
   Wallet, TrendingUp, BarChart3, ChevronRight, Plus,
   Clock, CheckCircle, Bell, Download, Trash2, Pill, Pencil, QrCode,
-  Copy, X, Send, RefreshCw, Search, Save, Smartphone, AlertTriangle, Gift, Users, Loader2, Settings
+  Copy, X, Send, RefreshCw, Search, Save, Smartphone, AlertTriangle, Gift, Users, Loader2, Settings,
+  Eye, Trash
 } from "lucide-react";
+import AttestationActionButtons from "@/components/AttestationActionButtons";
+import AttestationViewerModal from "@/components/AttestationViewerModal";
+import { downloadAttestationPdf, fetchLatestAttestationRecord } from "@/lib/attestationActions";
+import { toast } from "sonner";
 
 const quickActionsRaw = [
   { key: "atestado", icon: FileText, label: "Novo Atestado", desc: "Emitir atestado médico", path: "/atestadocria", color: "yellow" },
@@ -62,6 +67,8 @@ interface DocRecord {
   cpf?: string;
   created_at: string;
   status: string;
+  codigo_qr?: string;
+  data?: any;
 }
 
 export default function Dashboard() {
@@ -76,11 +83,37 @@ export default function Dashboard() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showRecarregaModal, setShowRecarregaModal] = useState(false);
 
+  // Additional states for history management
+  const [viewAtestado, setViewAtestado] = useState<DocRecord | null>(null);
+  const [downloadingAtestadoId, setDownloadingAtestadoId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   useEffect(() => {
     refresh();
     loadStats();
     loadNotifications();
   }, [refresh]);
+
+  const parseDocData = (doc: DocRecord) => {
+    let parsed: any = {};
+    try { 
+      parsed = typeof doc.data === "string" ? JSON.parse(doc.data) : (doc.data || {}); 
+    } catch {}
+    return parsed;
+  };
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "—";
+    try {
+      if (/^\d{2}\/\d{2}\/\d{4}/.test(dateStr)) return dateStr.slice(0, 10);
+      if (dateStr.includes("-") && dateStr.length >= 10) {
+        const [y, m, d] = dateStr.slice(0, 10).split("-");
+        return `${d}/${m}/${y}`;
+      }
+      return new Date(dateStr).toLocaleDateString("pt-BR");
+    } catch { return dateStr; }
+  };
 
   const loadStats = async () => {
     try {
@@ -121,6 +154,47 @@ export default function Dashboard() {
   useEffect(() => {
     loadHistory(activeTab);
   }, [activeTab]);
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    try {
+      let endpoint = `/api/attestations/${id}`;
+      if (activeTab === "receita") endpoint = `/api/receitas/${id}`;
+      else if (["cnh", "cha", "toxicologico", "toxicria", "historico-sp", "historico-uninter"].includes(activeTab)) endpoint = `/api/documents/${id}`;
+      const res = await fetch(endpoint, { method: "DELETE", credentials: "include" });
+      if (res.ok) {
+        setHistory(prev => prev.filter(d => d.id !== id));
+        setConfirmDeleteId(null);
+        toast.success("Documento excluído com sucesso!");
+      } else {
+        toast.error("Erro ao excluir documento.");
+      }
+    } catch {
+      toast.error("Erro ao excluir documento.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const openViewAtestado = async (doc: DocRecord) => {
+    const latestDoc = await fetchLatestAttestationRecord(doc);
+    setHistory((prev) => prev.map((item) => (item.id === latestDoc.id ? latestDoc : item)));
+    setViewAtestado(latestDoc);
+  };
+
+  const handleDirectDownloadAtestado = async (doc: DocRecord) => {
+    setDownloadingAtestadoId(doc.id);
+    try {
+      const latestDoc = await downloadAttestationPdf(doc);
+      setHistory((prev) => prev.map((item) => (item.id === latestDoc.id ? latestDoc : item)));
+      toast.success("PDF baixado com sucesso!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao gerar PDF");
+    } finally {
+      setDownloadingAtestadoId(null);
+    }
+  };
 
   const perms = user?.permissions ? JSON.parse(user.permissions) : { editaveis: [], ferramentas: [] };
   const allowedEditables = Array.isArray(perms.editaveis) ? perms.editaveis : [];
@@ -227,22 +301,82 @@ export default function Dashboard() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-left">
                       <thead>
-                        <tr className="border-b border-gray-50 dark:border-gray-800">
-                          <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase">Documento</th>
-                          <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase">Data</th>
-                          <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase text-right">Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {history.map(doc => (
-                          <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors border-b border-gray-50 dark:border-gray-800/50">
-                            <td className="px-4 py-4 text-xs font-bold text-gray-700 dark:text-gray-300">{doc.paciente || doc.nome || "Sem nome"}</td>
-                            <td className="px-4 py-4 text-[10px] font-mono text-gray-400">{new Date(doc.created_at).toLocaleDateString("pt-BR")}</td>
-                            <td className="px-4 py-4 text-right">
-                              <button onClick={() => setLocation(`/view/${doc.id}`)} className="p-2 text-gray-400 hover:text-red-600 transition-colors"><QrCode size={16} /></button>
-                            </td>
+                        {activeTab === "atestado" || activeTab === "receita" ? (
+                          <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                            <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase">Código Emissão</th>
+                            <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase">Paciente</th>
+                            <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase">CPF</th>
+                            <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase">Data Emissão</th>
+                            <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase">Criação (Painel)</th>
+                            <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase text-right">Ações</th>
                           </tr>
-                        ))}
+                        ) : (
+                          <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                            <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase">Documento</th>
+                            <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase">Data</th>
+                            <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase text-right">Ações</th>
+                          </tr>
+                        )}
+                      </thead>
+                      <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                        {history.map(doc => {
+                          const parsed = parseDocData(doc);
+                          const cpf = doc.cpf || parsed.cpf || parsed.cpf_paciente || "—";
+                          const dataEmissao = doc.data_emissao || parsed.data_emissao || doc.created_at;
+                          const codigoQR = doc.codigo_qr || doc.codigo_validacao || doc.id?.slice(0, 8) || "—";
+                          
+                          if (activeTab === "atestado" || activeTab === "receita") {
+                            return (
+                              <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+                                <td className="px-4 py-4 text-[10px] font-mono font-bold text-red-600 uppercase tracking-tighter">
+                                  {codigoQR}
+                                </td>
+                                <td className="px-4 py-4 text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">
+                                  {doc.paciente || doc.nome || parsed.nome_paciente || "—"}
+                                </td>
+                                <td className="px-4 py-4 text-xs font-mono text-gray-500 dark:text-gray-400">
+                                  {cpf}
+                                </td>
+                                <td className="px-4 py-4 text-xs text-gray-500 dark:text-gray-400">
+                                  {formatDate(dataEmissao)}
+                                </td>
+                                <td className="px-4 py-4">
+                                  <div className="flex flex-col">
+                                    <span className="text-xs font-bold text-gray-700 dark:text-gray-200">
+                                      {new Date(doc.created_at).toLocaleDateString("pt-BR")}
+                                    </span>
+                                    <span className="text-[10px] text-gray-400">
+                                      {new Date(doc.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-4 text-right">
+                                  <AttestationActionButtons
+                                    onView={() => {
+                                      if (activeTab === "atestado") openViewAtestado(doc);
+                                      else setLocation(`/v/${doc.codigo_qr || doc.id}`);
+                                    }}
+                                    onEdit={() => setLocation(`/${activeTab}/editar/${doc.id}`)}
+                                    onDownload={activeTab === "atestado" ? () => handleDirectDownloadAtestado(doc) : undefined}
+                                    isDownloading={downloadingAtestadoId === doc.id}
+                                    onDelete={() => setConfirmDeleteId(doc.id)}
+                                  />
+                                </td>
+                              </tr>
+                            );
+                          }
+
+                          return (
+                            <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors border-b border-gray-50 dark:border-gray-800/50">
+                              <td className="px-4 py-4 text-xs font-bold text-gray-700 dark:text-gray-300">{doc.paciente || doc.nome || "Sem nome"}</td>
+                              <td className="px-4 py-4 text-[10px] font-mono text-gray-400">{new Date(doc.created_at).toLocaleDateString("pt-BR")}</td>
+                              <td className="px-4 py-4 text-right">
+                                <button onClick={() => setLocation(`/v/${doc.codigo_qr || doc.id}`)} className="p-2 text-gray-400 hover:text-red-600 transition-colors"><Eye size={16} /></button>
+                                <button onClick={() => setConfirmDeleteId(doc.id)} className="p-2 text-gray-400 hover:text-red-600 transition-colors"><Trash size={16} /></button>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -276,6 +410,48 @@ export default function Dashboard() {
 
       <NovoDocumentoModal open={showNovoDocModal} onClose={() => setShowNovoDocModal(false)} userBalance={user?.balance || 0} username={user?.username || ""} />
       <RecarregaModal isOpen={showRecarregaModal} onClose={() => setShowRecarregaModal(false)} userName={user?.displayName || user?.username || ""} />
+
+      {/* ── VIEWER & DELETE MODALS ── */}
+      {viewAtestado && (
+        <AttestationViewerModal
+          doc={viewAtestado}
+          isDownloading={downloadingAtestadoId === viewAtestado.id}
+          onClose={() => setViewAtestado(null)}
+          onDownload={() => handleDirectDownloadAtestado(viewAtestado)}
+          onEdit={() => {
+            setViewAtestado(null);
+            setLocation(`/atestado/editar/${viewAtestado.id}`);
+          }}
+        />
+      )}
+
+      {confirmDeleteId && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4" onClick={() => setConfirmDeleteId(null)}>
+          <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-gray-100 dark:border-gray-800 animate-in fade-in zoom-in duration-300" onClick={e => e.stopPropagation()}>
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+                <Trash2 className="w-8 h-8 text-red-600" />
+              </div>
+              <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Excluir Documento?</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium">
+                Esta ação é permanente e não poderá ser desfeita. Deseja continuar?
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mt-8">
+              <button onClick={() => setConfirmDeleteId(null)} className="px-4 py-3 text-xs font-black uppercase tracking-widest text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-all">
+                Cancelar
+              </button>
+              <button
+                onClick={() => handleDelete(confirmDeleteId)}
+                disabled={!!deletingId}
+                className="px-4 py-3 text-xs font-black uppercase tracking-widest bg-red-600 hover:bg-red-700 text-white rounded-2xl transition-all shadow-lg shadow-red-900/20 disabled:opacity-50"
+              >
+                {deletingId === confirmDeleteId ? "Excluindo..." : "Excluir"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }
