@@ -328,8 +328,10 @@ export default function Dashboard() {
                           if (activeTab === "atestado" || activeTab === "receita") {
                             return (
                               <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
-                                <td className="px-4 py-4 text-[10px] font-mono font-bold text-red-600 uppercase tracking-tighter">
-                                  {codigoQR}
+                                <td className="px-4 py-4">
+                                  <span className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-1 rounded-md font-bold border border-blue-100 dark:border-blue-800 font-mono text-[10px] uppercase tracking-tighter">
+                                    {codigoQR}
+                                  </span>
                                 </td>
                                 <td className="px-4 py-4 text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">
                                   {doc.paciente || doc.nome || parsed.nome_paciente || "—"}
