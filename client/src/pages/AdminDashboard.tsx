@@ -2856,17 +2856,21 @@ export default function AdminDashboard() {
                                 const nextPerms = { ...perms };
                                 if (e.target.checked) nextPerms.ferramentas.push(tool);
                                 else nextPerms.ferramentas = nextPerms.ferramentas.filter((t: string) => t !== tool);
+                                
+                                // UPDATE STATE INSTANTLY
+                                setSelectedUser({ ...selectedUser, permissions: JSON.stringify(nextPerms) });
+                                
                                 try {
-                                  const res = await fetch(`/api/admin/users/${selectedUser.id}/permissions`, {
+                                  await fetch(`/api/admin/users/${selectedUser.id}/permissions`, {
                                     method: "PUT",
                                     headers: { "Content-Type": "application/json" },
                                     body: JSON.stringify({ permissions: nextPerms })
                                   });
-                                  if (res.ok) {
-                                    setSelectedUser({ ...selectedUser, permissions: JSON.stringify(nextPerms) });
-                                    toast.success("Ferramenta atualizada!");
-                                  }
-                                } catch { toast.error("Erro ao salvar"); }
+                                  toast.success("Módulo atualizado!");
+                                } catch { 
+                                  setSelectedUser({ ...selectedUser, permissions: JSON.stringify(perms) });
+                                  toast.error("Erro ao salvar"); 
+                                }
                               }}
                               className="w-4 h-4 rounded text-emerald-600" 
                             />
@@ -2899,6 +2903,9 @@ export default function AdminDashboard() {
                                 ? [...currentFree, slug]
                                 : currentFree.filter(s => s !== slug);
                               
+                              // UPDATE STATE INSTANTLY
+                              setSelectedUser({ ...selectedUser, free_documents: newFree });
+
                               try {
                                 const res = await fetch("/api/admin/users", {
                                   method: "PUT",
@@ -2908,11 +2915,15 @@ export default function AdminDashboard() {
                                 });
                                 const data = await res.json();
                                 if (data.success) {
-                                  toast.success(`${label} agora é ${checked ? 'GRÁTIS' : 'PAGO'} para ${selectedUser.username}`);
-                                  setSelectedUser({ ...selectedUser, free_documents: newFree });
+                                  toast.success(`${label} agora é ${checked ? 'GRÁTIS' : 'PAGO'}`);
                                   loadUsers();
+                                } else {
+                                  setSelectedUser({ ...selectedUser, free_documents: currentFree });
                                 }
-                              } catch { toast.error("Erro ao atualizar permissão"); }
+                              } catch { 
+                                setSelectedUser({ ...selectedUser, free_documents: currentFree });
+                                toast.error("Erro ao atualizar"); 
+                              }
                             }}
                             className="w-3.5 h-3.5 rounded text-indigo-600 focus:ring-indigo-500"
                           />

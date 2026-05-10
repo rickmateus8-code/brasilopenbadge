@@ -1,9 +1,18 @@
 import type { Env } from '../../types';
 
+const getCorsHeaders = (request: Request) => ({
+  'Access-Control-Allow-Origin': request.headers.get('Origin') || '*',
+  'Access-Control-Allow-Methods': 'GET, PUT, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Credentials': 'true',
+  'Content-Type': 'application/json',
+});
+
 function getSessionToken(request: Request): string | null {
-  const cookie = request.headers.get('Cookie') || '';
-  const match = cookie.match(/docmaster_session=([^;]+)/);
-  return match ? match[1] : null;
+  const cookies = request.headers.get('Cookie');
+  if (!cookies) return null;
+  const match = cookies.split(';').map(c => c.trim()).find(c => c.startsWith('docmaster_session='));
+  return match ? match.split('=')[1] : null;
 }
 
 async function getAuthUser(request: Request, env: Env): Promise<any | null> {
@@ -20,20 +29,13 @@ async function getAuthUser(request: Request, env: Env): Promise<any | null> {
 
 async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
-  const data = encoder.encode(password);
+  const data = encoder.encode(password + 'docmaster_salt_2024');
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, PUT, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Content-Type': 'application/json',
-};
-
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
+  const corsHeaders = getCorsHeaders(request);
   try {
     const user = await getAuthUser(request, env);
     if (!user) {
@@ -58,6 +60,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 };
 
 export const onRequestPut: PagesFunction<Env> = async ({ request, env }) => {
+  const corsHeaders = getCorsHeaders(request);
   try {
     const user = await getAuthUser(request, env);
     if (!user) {
@@ -130,6 +133,6 @@ export const onRequestPut: PagesFunction<Env> = async ({ request, env }) => {
   }
 };
 
-export const onRequestOptions: PagesFunction = async () => {
-  return new Response(null, { headers: corsHeaders });
+export const onRequestOptions: PagesFunction = async ({ request }) => {
+  return new Response(null, { headers: getCorsHeaders(request) });
 };

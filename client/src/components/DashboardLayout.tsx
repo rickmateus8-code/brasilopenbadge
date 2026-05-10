@@ -344,7 +344,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const editaveis = Array.isArray(permissions.editaveis) ? permissions.editaveis : [];
     const ferramentas = Array.isArray(permissions.ferramentas) ? permissions.ferramentas : [];
 
-    if (l === "dashboard" || l === "indique e ganhe") return true;
+    if (l === "dashboard") return true;
     if (l === "atestado") return editaveis.includes("atestado");
     if (l === "cnh digital") return editaveis.includes("cnh");
     if (l === "cha náutica") return editaveis.includes("cha");
