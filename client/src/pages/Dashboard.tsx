@@ -228,42 +228,42 @@ export default function Dashboard() {
   const hasEmissions = Object.values(stats).some(val => typeof val === 'number' && val > 0);
 
 const intelligentStats = [
-    { key: \"atestado\", icon: FileText, label: \"Atestados\", color: \"blue\" },
-    { key: \"cnh\", icon: Car, label: \"CNHs\", color: \"blue\" },
-    { key: \"cha\", icon: Anchor, label: \"CHAs\", color: \"blue\" },
-    { key: \"toxicologico\", icon: FlaskConical, label: \"Toxicológico\", color: \"blue\" },
-    { key: \"receita\", icon: Pill, label: \"Receitas\", color: \"blue\" },
-    { key: \"historico-sp\", icon: GraduationCap, label: \"Histórico SP\", color: \"blue\" },
-    { key: \"historico-uninter\", icon: GraduationCap, label: \"UNINTER\", color: \"blue\" },
+    { key: "atestado", icon: FileText, label: "Atestados", color: "blue" },
+    { key: "cnh", icon: Car, label: "CNHs", color: "blue" },
+    { key: "cha", icon: Anchor, label: "CHAs", color: "blue" },
+    { key: "toxicologico", icon: FlaskConical, label: "Toxicológico", color: "blue" },
+    { key: "receita", icon: Pill, label: "Receitas", color: "blue" },
+    { key: "historico-sp", icon: GraduationCap, label: "Histórico SP", color: "blue" },
+    { key: "historico-uninter", icon: GraduationCap, label: "UNINTER", color: "blue" },
   ].map(s => ({ ...s, value: stats[s.key] ?? 0 }))
    .sort((a, b) => b.value - a.value)
    .slice(0, 4);
 
   return (
     <DashboardLayout>
-      <div className=\"p-7 max-w-7xl mx-auto\">
+      <div className="p-7 max-w-7xl mx-auto">
         {/* Banner de Boas-vindas */}
-        <div className=\"bg-white dark:bg-gray-900 rounded-3xl p-8 border border-gray-100 dark:border-gray-800 shadow-sm mb-8 relative overflow-hidden\">
-          <div className=\"relative z-10\">
-            <h1 className=\"text-2xl md:text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tight mb-2\">
+        <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 border border-gray-100 dark:border-gray-800 shadow-sm mb-8 relative overflow-hidden">
+          <div className="relative z-10">
+            <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tight mb-2">
               {getGreeting()}, {user?.displayName || user?.username}!
             </h1>
-            <p className=\"text-gray-500 dark:text-gray-400 text-sm md:text-base font-medium max-w-2xl\">
-              Bem-vindo ao maior e melhor painel da atualidade — <span className=\"text-blue-600 font-bold\">DocMaster</span>
+            <p className="text-gray-500 dark:text-gray-400 text-sm md:text-base font-medium max-w-2xl">
+              Bem-vindo ao maior e melhor painel da atualidade — <span className="text-blue-600 font-bold">DocMaster</span>
             </p>
             {hasAnyPermission && (
-              <div className=\"mt-6 flex flex-wrap gap-3\">
-                <button onClick={() => setShowNovoDocModal(true)} className=\"bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20 active:scale-95 flex items-center gap-2\">
-                  <Plus className=\"w-4 h-4\" /> Novo Documento
+              <div className="mt-6 flex flex-wrap gap-3">
+                <button onClick={() => setShowNovoDocModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20 active:scale-95 flex items-center gap-2">
+                  <Plus className="w-4 h-4" /> Novo Documento
                 </button>
               </div>
             )}
-            {!hasAnyPermission && user?.role !== \"admin\" && (
-              <div className=\"mt-6 p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800 rounded-2xl\">
-                <p className=\"text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-widest flex items-center gap-2\">
-                  <AlertTriangle className=\"w-4 h-4\" /> Aguardando Liberação do Administrador
+            {!hasAnyPermission && user?.role !== "admin" && (
+              <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800 rounded-2xl">
+                <p className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-widest flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" /> Aguardando Liberação do Administrador
                 </p>
-                <p className=\"text-[10px] text-amber-600 dark:text-amber-500 mt-1\">Sua conta está ativa, mas você ainda não possui ferramentas liberadas.</p>
+                <p className="text-[10px] text-amber-600 dark:text-amber-500 mt-1">Sua conta está ativa, mas você ainda não possui ferramentas liberadas.</p>
               </div>
             )}
           </div>
@@ -271,19 +271,19 @@ const intelligentStats = [
 
         {/* Stats */}
         {hasEmissions && (
-          <div className=\"mb-8 animate-in fade-in duration-500\">
-            <div className=\"flex items-center gap-2 mb-4\">
-              <BarChart3 className=\"w-5 h-5 text-gray-600 dark:text-gray-400\" />
-              <h2 className=\"text-sm md:text-base font-bold text-gray-800 dark:text-gray-200 uppercase tracking-widest\">Estatísticas Inteligentes</h2>
+          <div className="mb-8 animate-in fade-in duration-500">
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <h2 className="text-sm md:text-base font-bold text-gray-800 dark:text-gray-200 uppercase tracking-widest">Estatísticas Inteligentes</h2>
             </div>
-            <div className=\"grid grid-cols-2 md:grid-cols-4 gap-4\">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {intelligentStats.map((s, i) => (
-                <div key={i} className=\"bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm group hover:-translate-y-1 transition-all duration-300\">
+                <div key={i} className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm group hover:-translate-y-1 transition-all duration-300">
                   <div className={`w-10 h-10 rounded-xl mb-3 flex items-center justify-center ${colorMap[s.color].iconBg}`}>
                     <s.icon className={`w-5 h-5 ${colorMap[s.color].text}`} />
                   </div>
-                  <p className=\"text-[10px] text-gray-400 uppercase font-black tracking-tighter\">{s.label}</p>
-                  <p className=\"text-2xl font-black text-gray-900 dark:text-white mt-1 group-hover:text-blue-600 transition-colors\">{s.value}</p>
+                  <p className="text-[10px] text-gray-400 uppercase font-black tracking-tighter">{s.label}</p>
+                  <p className="text-2xl font-black text-gray-900 dark:text-white mt-1 group-hover:text-blue-600 transition-colors">{s.value}</p>
                 </div>
               ))}
             </div>
@@ -292,30 +292,30 @@ const intelligentStats = [
 
         {/* History */}
         {hasEmissions && (
-          <div className=\"mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700\">
-            <div className=\"flex items-center justify-between mb-4\">
-              <div className=\"flex items-center gap-2\">
-                <Clock className=\"w-5 h-5 text-gray-600 dark:text-gray-400\" />
-                <h2 className=\"text-sm md:text-base font-bold text-gray-800 dark:text-gray-200 uppercase tracking-widest\">Histórico de Emissões</h2>
+          <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <h2 className="text-sm md:text-base font-bold text-gray-800 dark:text-gray-200 uppercase tracking-widest">Histórico de Emissões</h2>
               </div>
             </div>
             
-            <div className=\"bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm\">
-              <div className=\"flex border-b border-gray-100 dark:border-gray-800 overflow-x-auto no-scrollbar\">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm">
+              <div className="flex border-b border-gray-100 dark:border-gray-800 overflow-x-auto no-scrollbar">
                 {historyTabs.filter(t => isToolAllowed(t.key)).map(tab => (
-                  <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`px-6 py-4 text-xs font-black uppercase tracking-widest transition-all border-b-2 whitespace-nowrap ${activeTab === tab.key ? \"border-blue-600 text-blue-600 bg-blue-50/30\" : \"border-transparent text-gray-400 hover:text-gray-600\"}`}>
+                  <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`px-6 py-4 text-xs font-black uppercase tracking-widest transition-all border-b-2 whitespace-nowrap ${activeTab === tab.key ? "border-blue-600 text-blue-600 bg-blue-50/30" : "border-transparent text-gray-400 hover:text-gray-600"}`}>
                     {tab.label}
                   </button>
                 ))}
               </div>
-              <div className=\"p-4\">
+              <div className="p-4">
                 {historyLoading ? (
-                  <div className=\"py-20 text-center\"><Loader2 className=\"w-8 h-8 animate-spin mx-auto text-blue-500\" /></div>
+                  <div className="py-20 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-500" /></div>
                 ) : history.length === 0 ? (
-                  <div className=\"py-20 text-center border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl\">
-                    <FileText className=\"w-12 h-12 text-gray-200 mx-auto mb-3\" />
-                    <h3 className=\"text-xs font-black text-gray-400 uppercase tracking-widest\">Nenhuma {TAB_LABELS[activeTab] || activeTab} emitida ainda</h3>
-                    <button onClick={() => setLocation(quickActionsRaw.find(a => a.key === activeTab)?.path || \"/dashboard\")} className=\"mt-4 px-4 py-2 bg-blue-600 text-white text-[10px] font-black rounded-lg uppercase\">Emitir Documento</button>
+                  <div className="py-20 text-center border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl">
+                    <FileText className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Nenhuma {TAB_LABELS[activeTab] || activeTab} emitida ainda</h3>
+                    <button onClick={() => setLocation(quickActionsRaw.find(a => a.key === activeTab)?.path || "/dashboard")} className="mt-4 px-4 py-2 bg-blue-600 text-white text-[10px] font-black rounded-lg uppercase">Emitir Documento</button>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">

@@ -437,12 +437,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               onClick={() => { setLocation("/admin"); if (mobile) setMobileOpen(false); }}
               className={`group relative flex items-center gap-3 px-3 py-3 rounded-xl transition-all overflow-hidden bg-blue-50 dark:bg-blue-900/10 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 active:scale-95 shadow-sm border border-blue-100 dark:border-blue-800/50 ${collapsed && !mobile ? "justify-center w-12 h-12" : "w-full"}`}
             >
-              <div className=\"absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-500 opacity-0 group-hover:opacity-10 transition-opacity\" />
-              <Shield className=\"w-5 h-5 flex-shrink-0 text-blue-600 dark:text-blue-400\" />
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-500 opacity-0 group-hover:opacity-10 transition-opacity" />
+              <Shield className="w-5 h-5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
               {(!collapsed || mobile) && (
-                <div className=\"flex flex-col items-start leading-tight\">
-                  <span className=\"text-[11px] font-black uppercase tracking-widest opacity-80\">Acesso Restrito</span>
-                  <span className=\"text-sm font-black italic\">Admin Portal</span>
+                <div className="flex flex-col items-start leading-tight">
+                  <span className="text-[11px] font-black uppercase tracking-widest opacity-80">Acesso Restrito</span>
+                  <span className="text-sm font-black italic">Admin Portal</span>
                 </div>
               )}
             </button>
