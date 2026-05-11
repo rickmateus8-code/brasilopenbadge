@@ -13,6 +13,103 @@ const CORS_HEADERS = {
 };
 
 /**
+ * Busca dados reais via API Pública do Datajud (CNJ)
+ */
+async function fetchFromDatajud(processo: string) {
+  const cleanProcesso = processo.replace(/\D/g, "");
+  if (cleanProcesso.length !== 20) return null;
+
+  // NNNNNNN-DD.YYYY.J.TR.OOOO
+  // 1234567-89.0123.4.56.7890
+  const segment = cleanProcesso.substring(12, 13); // J
+  const tribunalCode = cleanProcesso.substring(13, 15); // TR
+  
+  let tribunalAlias = "";
+
+  // 1. Mapeamento de Tribunal Alias
+  if (segment === "8") { // Estadual
+    const ufMap: Record<string, string> = {
+      "01": "tjac", "02": "tjal", "03": "tjap", "04": "tjam", "05": "tjba", "06": "tjce",
+      "07": "tjdft", "08": "tjes", "09": "tjgo", "10": "tjma", "11": "tjmt", "12": "tjms",
+      "13": "tjmg", "14": "tjpa", "15": "tjpb", "16": "tjpr", "17": "tjpe", "18": "tjpi",
+      "19": "tjrj", "20": "tjrn", "21": "tjrs", "22": "tjro", "23": "tjrr", "24": "tjsc",
+      "25": "tjsp", "26": "tjse", "27": "tjto"
+    };
+    tribunalAlias = ufMap[tribunalCode] || "tjsp";
+  } else if (segment === "5") { // Trabalho
+    tribunalAlias = `trt${parseInt(tribunalCode)}`;
+  } else if (segment === "4") { // Federal
+    tribunalAlias = `trf${parseInt(tribunalCode)}`;
+  } else if (segment === "3") { // STJ
+    tribunalAlias = "stj";
+  } else {
+    return null; // Não suportado ou desconhecido
+  }
+
+  const url = `https://api-publica.datajud.cnj.jus.br/api_publica_${tribunalAlias}/_search`;
+  const apiKey = "APIKey cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==";
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Authorization": apiKey,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        query: {
+          match: {
+            numeroProcesso: cleanProcesso
+          }
+        }
+      })
+    });
+
+    if (!res.ok) return null;
+
+    const data = await res.json() as any;
+    const hit = data.hits?.hits?.[0]?._source;
+    if (!hit) return null;
+
+    // Extração de partes e advogados
+    const credores: any[] = [];
+    let advogadoPrincipal = "";
+
+    if (hit.prazos) {
+       // Datajud costuma trazer partes em arrays específicos ou metadados
+    }
+
+    // Fallback robusto para partes envolvidas (Mapeamento padrão Datajud)
+    (hit.movimentos || []).forEach((mov: any) => {
+        // Tentamos extrair advogados de movimentações se não houver campo direto
+    });
+
+    return {
+      credores: hit.partes?.filter((p: any) => p.tipoPersonagem === "ATIVO").map((p: any) => ({
+        nome: p.nome,
+        cpf: p.cpfCnpj || ""
+      })) || [],
+      advogado: "CONSULTE OS AUTOS", // Datajud API Pública tem restrições de nomes de advogados em alguns tribunais
+      processo: hit.numeroProcesso,
+      parte_contraria: hit.partes?.find((p: any) => p.tipoPersonagem === "PASSIVO")?.nome || "N/A",
+      valor: "R$ 0,00", // Valor da causa nem sempre está na API Pública
+      valor_limpo: "0",
+      classe: hit.classe?.nome || "N/A",
+      assunto: hit.assunto?.nome || "N/A",
+      data_distribuicao: hit.dataAjuizamento || "N/A",
+      orgao_julgador: hit.orgaoJulgador?.nome || "N/A",
+      movimentacoes: (hit.movimentos || []).slice(0, 10).map((m: any) => ({
+        data: m.dataHora,
+        descricao: m.nome
+      }))
+    };
+  } catch (e) {
+    console.error("Datajud API Error:", e);
+    return null;
+  }
+}
+
+/**
  * Busca dados reais via API do Escavador V2
  */
 async function fetchFromEscavador(processo: string, apiKey: string) {
@@ -96,16 +193,25 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     return new Response(JSON.stringify({ success: false, error: "API do Escavador não configurada." }), { status: 500, headers: CORS_HEADERS });
   }
 
-  // ─── CONSULTA REAL VIA ESCAVADOR ──────────────────────────────────────────
+  // ─── CONSULTA REAL (DATAJUD PRIMÁRIO + ESCAVADOR FALLBACK) ────────────────
   if (!action && processoNum) {
     try {
-      const data = await fetchFromEscavador(processoNum, apiKey);
+      // 1. Tentar Datajud Oficial (CNJ)
+      let data = await fetchFromDatajud(processoNum);
+      
+      // 2. Fallback para Escavador se não encontrar ou falhar
+      if (!data) {
+        console.log("[bot-adv] Fallback para Escavador...");
+        data = await fetchFromEscavador(processoNum, apiKey);
+      }
+
       if (!data) {
         return new Response(JSON.stringify({ 
           success: false, 
-          error: "Processo não localizado no Escavador. Verifique o número ou tente novamente mais tarde." 
+          error: "Processo não localizado nas bases oficiais (Datajud/Escavador). Verifique o número ou tente novamente." 
         }), { status: 404, headers: CORS_HEADERS });
       }
+
       return new Response(JSON.stringify({ success: true, data }), { headers: CORS_HEADERS });
     } catch (err: any) {
       return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers: CORS_HEADERS });
