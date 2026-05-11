@@ -274,16 +274,16 @@ const intelligentStats = [
           <div className="mb-8 animate-in fade-in duration-500">
             <div className="flex items-center gap-2 mb-4">
               <BarChart3 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              <h2 className="text-sm md:text-base font-bold text-gray-800 dark:text-gray-200 uppercase tracking-widest">Estatísticas Inteligentes</h2>
+              <h2 className="text-sm md:text-base font-bold text-gray-800 dark:text-gray-200 uppercase tracking-widest">Estatísticas</h2>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {intelligentStats.map((s, i) => (
-                <div key={i} className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm group hover:-translate-y-1 transition-all duration-300">
-                  <div className={`w-10 h-10 rounded-xl mb-3 flex items-center justify-center ${colorMap[s.color].iconBg}`}>
-                    <s.icon className={`w-5 h-5 ${colorMap[s.color].text}`} />
+                <div key={i} className="bg-white dark:bg-gray-900 p-6 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm group hover:-translate-y-1 transition-all duration-300">
+                  <div className={`w-12 h-12 rounded-2xl mb-4 flex items-center justify-center ${colorMap[s.color].iconBg}`}>
+                    <s.icon className={`w-6 h-6 ${colorMap[s.color].text}`} />
                   </div>
-                  <p className="text-[10px] text-gray-400 uppercase font-black tracking-tighter">{s.label}</p>
-                  <p className="text-2xl font-black text-gray-900 dark:text-white mt-1 group-hover:text-blue-600 transition-colors">{s.value}</p>
+                  <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest">{s.label}</p>
+                  <p className="text-3xl font-black text-gray-900 dark:text-white mt-1 group-hover:text-blue-600 transition-colors tabular-nums">{s.value}</p>
                 </div>
               ))}
             </div>

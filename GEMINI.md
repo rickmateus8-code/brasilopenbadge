@@ -5,7 +5,7 @@ Este arquivo contém mandatos inegociáveis para qualquer agente de IA ou desenv
 ## 1. Fluxo de Deploy e Sincronia
 *   **REGRA DE OURO:** O fluxo é sempre **Ambiente Local > GitHub > Cloudflare**.
 *   Nunca realize alterações apenas localmente ou direto no Cloudflare sem realizar o `git push origin main`.
-*   **PONTO DE OURO 2 (MARCO DE ESTABILIDADE):** O estado de paridade atual está consolidado no commit `13bbbae`. Este é o novo baseline de segurança e layout.
+*   **PONTO DE OURO 3 (CONSOLIDAÇÃO ELITE):** O estado de paridade e UI/UX Premium está consolidado no commit `7aea5e7`. O módulo `/atestadocria` foi oficialmente FINALIZADO com paridade 1:1 e validação estrita.
 
 ## 2. Identidade Visual (Estado de Ouro 2)
 *   **Layout A4:** Fundo Branco Absoluto (#ffffff).
