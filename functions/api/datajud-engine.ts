@@ -74,6 +74,49 @@ async function fetchFromDatajud(processo: string) {
   } catch { return null; }
 }
 
+async function fetchFromSupremo(processo: string) {
+  const url = `https://supremodoseteoriginal.com/?processo=${processo.replace(/\D/g, "")}`;
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html"
+      }
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+
+    const extract = (regex: RegExp) => {
+      const m = html.match(regex);
+      return m ? m[1].trim() : "";
+    };
+
+    const advogado = extract(/Advogado:<\/strong>\s*([^<]+)/i);
+    const classe = extract(/Classe:<\/strong>\s*([^<]+)/i);
+    const orgao = extract(/Órgão Julgador:<\/strong>\s*([^<]+)/i);
+    const valor = extract(/Valor da Ação:<\/strong>\s*([^<]+)/i);
+
+    const credores: any[] = [];
+    const credorMatches = html.matchAll(/Credor:<\/strong>\s*([^<]+)(?:.*?CPF:<\/strong>\s*([\d.-]+))?/gi);
+    for (const m of credorMatches) {
+      credores.push({ nome: m[1].trim(), cpf: m[2] ? m[2].trim() : "" });
+    }
+
+    if (!advogado && credores.length === 0) return null;
+
+    return {
+      credores,
+      advogado: advogado || "N/A",
+      processo,
+      parte_contraria: "N/A",
+      valor: valor || "R$ 0,00",
+      classe: classe || "N/A",
+      orgao_julgador: orgao || "N/A",
+      summary: `Processo ${processo} localizado via Referência. Órgão: ${orgao || "N/A"}.`
+    };
+  } catch { return null; }
+}
+
 export const onRequest: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
 
@@ -91,15 +134,21 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
     if (!query) return new Response(JSON.stringify({ error: "Query is required" }), { status: 400, headers: CORS_HEADERS });
 
-    // Tentar Datajud
-    const data = await fetchFromDatajud(query);
+    // 1. Tentar Datajud
+    let data = await fetchFromDatajud(query);
+    
+    // 2. Fallback para Supremo
+    if (!data) {
+      data = await fetchFromSupremo(query);
+    }
+
     if (data) {
       return new Response(JSON.stringify({ success: true, data }), { headers: CORS_HEADERS });
     }
 
     return new Response(JSON.stringify({ 
       success: false, 
-      error: "Processo não encontrado no Datajud ou Tribunal não suportado." 
+      error: "Processo não encontrado no Datajud ou Referência." 
     }), { status: 404, headers: CORS_HEADERS });
 
   } catch (err: any) {
