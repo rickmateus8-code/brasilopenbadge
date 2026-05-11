@@ -78,6 +78,39 @@
   --sidebar-ring: oklch(0.623 0.214 259.815);
 }
 
+/* ─── Modern Global Scrollbars ────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.6 0.01 259.815 / 20%) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: oklch(0.6 0.01 259.815 / 20%);
+  border-radius: 20px;
+  transition: background 0.3s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.6 0.01 259.815 / 40%);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: oklch(0.3 0.01 259.815 / 50%);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.4 0.01 259.815 / 70%);
+}
+
 .dark {
   --primary: var(--color-blue-700);
   --primary-foreground: var(--color-blue-50);
