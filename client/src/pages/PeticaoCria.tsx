@@ -388,7 +388,24 @@ export default function PeticaoCria() {
           </main>
         </div>
 
-        <EmissionModal open={showConfirmModal} onClose={() => setShowConfirmModal(false)} onConfirm={handleSave} isExporting={isExporting} price={documentPrice} />
+        <EmissionModal 
+          docLabel="Petição Judicial"
+          docEmoji="⚖️"
+          documentPrice={documentPrice}
+          userBalance={user?.balance || 0}
+          showConfirm={showConfirmModal}
+          showSuccess={showSuccessModal}
+          isEmitting={isExporting}
+          isDownloading={isDownloading}
+          onConfirm={handleSave}
+          onCancel={() => setShowConfirmModal(false)}
+          onDownload={handleExportPDF}
+          onClose={() => {
+            setShowConfirmModal(false);
+            setShowSuccessModal(false);
+          }}
+          historyPath="/peticaocria-salvos"
+        />
         {showSuccessModal && (
           <div className="fixed inset-0 bg-indigo-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
             <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center border border-white/20 animate-in fade-in zoom-in duration-300">

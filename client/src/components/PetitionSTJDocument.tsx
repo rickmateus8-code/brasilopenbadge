@@ -112,9 +112,9 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         <div style={{ position: "absolute", top: MARGIN_TOP - 140, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11, fontFamily: "'Liberation Sans', Helvetica" }}>
            <img src="/assets/peticao/brasao_republica.png" style={{ width: "99.3pt", marginBottom: "4pt", display: "inline-block" }} alt="Brasão" />
 
-           <div style={{ color: "#222222", fontSize: "10.1pt", fontWeight: 400, letterSpacing: "0.5px", marginBottom: "1pt" }}>TRIBUNAL DE JUSTIÇA</div>
-           <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400, marginBottom: "1pt" }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: {alvara_final}</div>
-           <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400 }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
+           <div style={{ color: "#222222", fontSize: "10.1pt", fontWeight: 400, letterSpacing: "0.5px", margin: 0, padding: 0, lineHeight: "1" }}>TRIBUNAL DE JUSTIÇA</div>
+           <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400, margin: 0, padding: 0, lineHeight: "1" }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: {alvara_final}</div>
+           <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400, margin: 0, padding: 0, lineHeight: "1" }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
         </div>
 
         {/* Logo OAB (TOPO ABSOLUTO E +2% TAMANHO) */}
