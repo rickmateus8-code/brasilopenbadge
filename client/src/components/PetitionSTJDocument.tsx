@@ -110,11 +110,11 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
 
         {/* ─── Cabeçalho Superior Centralizado (Brasão Elevação +5% e Espaçamento +2%) ─── */}
         <div style={{ position: "absolute", top: MARGIN_TOP - 140, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11, fontFamily: "'Liberation Sans', Helvetica" }}>
-           <img src="/assets/peticao/brasao_republica.png" style={{ width: "99.3pt", marginBottom: "8pt", display: "inline-block" }} alt="Brasão" />
+           <img src="/assets/peticao/brasao_republica.png" style={{ width: "99.3pt", marginBottom: "4pt", display: "inline-block" }} alt="Brasão" />
 
-           <div style={{ color: "#222222", fontSize: "10.1pt", fontWeight: 400, letterSpacing: "0.5px" }}>TRIBUNAL DE JUSTIÇA</div>
-           <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400, marginTop: 2, marginBottom: "8pt" }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: {alvara_final}</div>
-           <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400, marginTop: 2, marginBottom: "8pt" }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
+           <div style={{ color: "#222222", fontSize: "10.1pt", fontWeight: 400, letterSpacing: "0.5px", marginBottom: "1pt" }}>TRIBUNAL DE JUSTIÇA</div>
+           <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400, marginBottom: "1pt" }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: {alvara_final}</div>
+           <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400 }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
         </div>
 
         {/* Logo OAB (TOPO ABSOLUTO E +2% TAMANHO) */}
@@ -200,7 +200,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         </div>
 
         {/* Assinatura Judicial */}
-        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM - 44, left: "50%", transform: "translateX(-50%)", width: "100%", textAlign: "center" }}>
+        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM - 79, left: "50%", transform: "translateX(-50%)", width: "100%", textAlign: "center" }}>
            <img
              src={data.signatureImage || "/assets/peticao/assinatura_juiz.png"}
              style={{
