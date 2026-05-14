@@ -318,6 +318,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
       texto_atestado, data_assinatura, hora_assinatura, data_emissao,
       logo_url, logo_right, signature_color, signature_image, modo_carimbo,
       logo_left_scale, logo_right_scale, logo_left_x, logo_left_y, logo_right_x, logo_right_y,
+      stamp_scale, stamp_x, stamp_y, stamp_rotate, hide_qr_code,
       cidade, document_type, status, created_at, updated_at
     ) VALUES (
       ?, ?, ?, ?, ?, ?, ?, ?, ?,
@@ -326,6 +327,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
       ?, ?, ?, ?,
       ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?,
       ?, ?, 'emitido', ?, ?
     )
   `).bind(
@@ -360,6 +362,11 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
     body.logoLeftY ?? 0,
     body.logoRightX ?? 0,
     body.logoRightY ?? 0,
+    body.stampScale ?? 1.0,
+    body.stampX ?? 0,
+    body.stampY ?? 0,
+    body.stampRotate ?? 0,
+    body.hideQRCode ? 1 : 0,
     body.cidade || "",
     body.documentType || body.document_type || 'atestado',
     now, now
@@ -440,6 +447,11 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
       signature_color: body.signatureColor || body.signature_color || "#0b109f",
       signature_image: body.signatureImage || body.signature_image || "",
       modo_carimbo: body.modoCarimbo ?? body.modo_carimbo ?? false,
+      stamp_scale: body.stampScale ?? body.stamp_scale ?? 1.0,
+      stamp_x: body.stampX ?? body.stamp_x ?? 0,
+      stamp_y: body.stampY ?? body.stamp_y ?? 0,
+      stamp_rotate: body.stampRotate ?? body.stamp_rotate ?? 0,
+      hide_qr_code: body.hideQRCode ?? body.hide_qr_code ?? false,
       logo_left_scale: body.logoLeftScale ?? body.logo_left_scale ?? 1.0,
       logo_right_scale: body.logoRightScale ?? body.logo_right_scale ?? 1.0,
       logo_left_x: body.logoLeftX ?? body.logo_left_x ?? 0,
@@ -756,6 +768,11 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
       signature_color: updated.signature_color || "#0b109f",
       signature_image: updated.signature_image || "",
       modo_carimbo: updated.modo_carimbo || 0,
+      stamp_scale: updated.stamp_scale ?? 1.0,
+      stamp_x: updated.stamp_x ?? 0,
+      stamp_y: updated.stamp_y ?? 0,
+      stamp_rotate: updated.stamp_rotate ?? 0,
+      hide_qr_code: updated.hide_qr_code || 0,
       logo_left_scale: updated.logo_left_scale ?? 1.0,
       logo_right_scale: updated.logo_right_scale ?? 1.0,
       logo_left_x: updated.logo_left_x ?? 0,

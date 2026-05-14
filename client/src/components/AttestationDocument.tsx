@@ -39,6 +39,11 @@ interface AttestationDocumentProps {
   logoLeftY?: number;
   logoRightX?: number;
   logoRightY?: number;
+  stampScale?: number;
+  stampX?: number;
+  stampY?: number;
+  stampRotate?: number;
+  hideQRCode?: boolean;
 }
 
 // Gerar rubrica cursiva a partir do nome do médico
@@ -61,7 +66,11 @@ const PAD_H = 56;  // ~15mm top/bottom
 const PAD_V = 60;  // ~16mm left/right
 
 const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>(
-  ({ data, logoUrl, logoLeft, logoRight, signatureColor, signatureImage, documentType, logoLeftScale = 1, logoRightScale = 1, logoLeftX = 0, logoLeftY = 0, logoRightX = 0, logoRightY = 0 }, ref) => {
+  ({ 
+    data, logoUrl, logoLeft, logoRight, signatureColor, signatureImage, documentType, 
+    logoLeftScale = 1, logoRightScale = 1, logoLeftX = 0, logoLeftY = 0, logoRightX = 0, logoRightY = 0,
+    stampScale = 1, stampX = 0, stampY = 0, stampRotate = 0, hideQRCode = false
+  }, ref) => {
     const isEmitted = data.codigoQR && data.codigoQR !== "XXXX.XXXX";
     // QR Code aponta para validaratestado.digital/validar?codigo=XXXX&data=YYYY-MM-DD
     // A data no banco está em DD/MM/YYYY — converte para YYYY-MM-DD para o parâmetro da URL
@@ -409,9 +418,9 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         </div>
 
         {/* ===== RODAPÉ DIGITAL ===== */}
-        {!modoCarimbo && (
+        {(!hideQRCode) && (
           <div id="preview-footer" style={{
-            marginTop: "auto",
+            marginTop: modoCarimbo ? 20 : "auto",
             position: "relative",
             zIndex: 2,
             flexShrink: 0,
@@ -436,7 +445,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               paddingLeft: 0,
               paddingRight: 0,
             }}>
-              {/* Esquerda: cidade/data + URL validação — AJUSTADO PARA ALINHAMENTO NA BASE DA MOLDURA */}
+              {/* Esquerda: cidade/data + URL validação */}
               <div style={{ 
                 color: "#000", 
                 lineHeight: 1.2, 
@@ -444,13 +453,13 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 flexShrink: 0, 
                 display: "flex", 
                 flexDirection: "column", 
-                justifyContent: "flex-end", // Alinhado ao limite inferior (base da moldura)
+                justifyContent: "flex-end", 
                 marginRight: "auto", 
                 height: 111, 
                 boxSizing: "border-box", 
                 paddingLeft: 2,
-                paddingBottom: 4, // Modificado de 2 para 4 para não cortar letras como 'g'
-                overflow: "visible", // Permitir que descendentes fiquem perfeitamente legíveis
+                paddingBottom: 4, 
+                overflow: "visible", 
                 gap: 3, 
               }}>
                 <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.21, marginBottom: 0 }}>
@@ -480,7 +489,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 marginLeft: "auto",
                 marginRight: 0,
               }}>
-                {/* Coluna esquerda: QR centralizado | padding 6px left/right, 19px top/bottom */}
+                {/* Coluna esquerda: QR centralizado */}
                 <div style={{ width: 108, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "19px 6px" }}>
                   {isEmitted ? (
                     <QRCode
@@ -508,7 +517,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                     </div>
                   )}
                 </div>
-                {/* Coluna direita: texto médico alinhado à DIREITA, centralizado verticalmente */}
+                {/* Coluna direita: texto médico alinhado à DIREITA */}
                 <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "center", textAlign: "right", lineHeight: 1.2, color: "#000", paddingRight: 10 }}>
                   <div style={{ fontSize: 9.5, fontWeight: 400, whiteSpace: "nowrap" }}>Documento assinado digitalmente conforme MP nº 2.200-2</div>
                   <strong style={{ fontWeight: 700, fontSize: 11.2, textTransform: "uppercase", display: "block" }}>
@@ -525,7 +534,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </div>
         )}
 
-        {/* ===== RODAPÉ FÍSICO (CARIMBO) ===== */}
+        {/* ===== RODAPÉ FÍSICO (CARIMBO ELITE 2.0) ===== */}
         {modoCarimbo && (
           <div style={{
             display: "flex",
@@ -533,68 +542,98 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             alignItems: "center",
             justifyContent: "center",
             width: "100%",
-            position: "relative",
-            zIndex: 2,
-            paddingBottom: 46,
-            marginTop: "auto",
+            position: hideQRCode ? "relative" : "absolute",
+            bottom: hideQRCode ? "auto" : 120,
+            left: 0,
+            zIndex: 10,
+            paddingBottom: hideQRCode ? 46 : 0,
+            marginTop: hideQRCode ? "auto" : 0,
             flexShrink: 0,
+            transform: `scale(${stampScale}) translate(${stampX}px, ${stampY}px) rotate(${stampRotate}deg)`,
+            transformOrigin: "center center",
+            transition: "transform 0.1s ease-out",
+            pointerEvents: "none",
           }}>
-            <div style={{ fontWeight: 700, textTransform: "uppercase", marginBottom: 30, fontSize: 11 }}>
-              {dataFormatada || data.dataEmissao}
-            </div>
-
+            {/* Visual de Carimbo Físico (Moldura Retangular) */}
             <div style={{
-              position: "relative",
-              textAlign: "center",
-              width: 300,
-              height: 90,
+              border: `2.5px solid ${corAssinatura}`,
+              borderRadius: 6,
+              padding: "12px 25px",
               display: "flex",
+              flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              opacity: 0.85,
-              filter: "contrast(120%) sepia(20%)",
-              transform: "rotate(-1deg)",
+              background: "rgba(255, 255, 255, 0.05)",
+              boxShadow: `inset 0 0 0 1px ${corAssinatura}11`,
+              position: "relative",
             }}>
-              {fotoAssinatura ? (
-                <img
-                  src={fotoAssinatura}
-                  alt="Assinatura"
-                  crossOrigin={getCrossOrigin(fotoAssinatura)}
-                  style={{ maxWidth: 240, maxHeight: 75, objectFit: "contain", position: "absolute", zIndex: 3 }}
-                />
-              ) : (
-                <span
-                  style={{
-                    fontFamily: "'Herr Von Muellerhoff', cursive",
-                    fontSize: 44,
-                    fontWeight: 100,
-                    position: "absolute",
-                    top: -8,
-                    left: "50%",
-                    transform: "translateX(-50%) rotate(-8deg)",
-                    zIndex: 2,
-                    whiteSpace: "nowrap",
-                    color: corAssinatura,
-                  }}
-                  dangerouslySetInnerHTML={{ __html: gerarRubrica(data.medico) }}
-                />
-              )}
-              <div style={{
-                position: "absolute",
-                bottom: 0,
-                left: "50%",
-                transform: "translateX(-50%)",
-                width: 220,
-                height: 1,
-                background: "#000",
-                zIndex: 1,
-              }} />
-            </div>
+              {/* Data dentro do carimbo (opcional ou conforme estilo) */}
+              <div style={{ 
+                fontWeight: 700, 
+                textTransform: "uppercase", 
+                marginBottom: 15, 
+                fontSize: 10,
+                color: corAssinatura,
+                opacity: 0.9
+              }}>
+                {dataFormatada || data.dataEmissao}
+              </div>
 
-            <div style={{ textAlign: "center", marginTop: 6 }}>
-              <div style={{ fontWeight: 700, fontSize: 11, textTransform: "uppercase" }}>{data.medico}</div>
-              <div style={{ fontSize: 10 }}>{data.crm}</div>
-              <div style={{ fontSize: 9, color: "#000" }}>{data.especialidade}</div>
+              {/* Área da Assinatura/Rubrica */}
+              <div style={{
+                position: "relative",
+                textAlign: "center",
+                width: 240,
+                height: 70,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                filter: "contrast(110%) brightness(105%)",
+              }}>
+                {fotoAssinatura ? (
+                  <img
+                    src={fotoAssinatura}
+                    alt="Assinatura"
+                    crossOrigin={getCrossOrigin(fotoAssinatura)}
+                    style={{ maxWidth: 220, maxHeight: 65, objectFit: "contain", position: "absolute", zIndex: 3 }}
+                  />
+                ) : (
+                  <span
+                    style={{
+                      fontFamily: "'Herr Von Muellerhoff', cursive",
+                      fontSize: 40,
+                      fontWeight: 100,
+                      position: "absolute",
+                      top: -6,
+                      left: "50%",
+                      transform: "translateX(-50%) rotate(-5deg)",
+                      zIndex: 2,
+                      whiteSpace: "nowrap",
+                      color: corAssinatura,
+                    }}
+                    dangerouslySetInnerHTML={{ __html: gerarRubrica(data.medico) }}
+                  />
+                )}
+                {/* Linha da Assinatura dentro da moldura */}
+                <div style={{
+                  position: "absolute",
+                  bottom: 5,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  width: 180,
+                  height: 1,
+                  background: corAssinatura,
+                  opacity: 0.6,
+                  zIndex: 1,
+                }} />
+              </div>
+
+              {/* Dados do Médico no Carimbo */}
+              <div style={{ textAlign: "center", marginTop: 8, color: corAssinatura }}>
+                <div style={{ fontWeight: 700, fontSize: 11, textTransform: "uppercase", lineHeight: 1.1 }}>{data.medico}</div>
+                <div style={{ fontSize: 9.5, fontWeight: 600 }}>{data.crm}</div>
+                <div style={{ fontSize: 8.5, opacity: 0.9 }}>{data.especialidade}</div>
+              </div>
             </div>
           </div>
         )}

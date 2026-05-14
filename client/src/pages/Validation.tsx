@@ -550,8 +550,12 @@ export default function Validation() {
               logoRightX={validDoc.logoRightX ?? validDoc.logo_right_x}
               logoRightY={validDoc.logoRightY ?? validDoc.logo_right_y}
               modoCarimbo={validDoc.modoCarimbo || validDoc.modo_carimbo}
-            />
-          </div>
+              stampScale={validDoc.stampScale ?? validDoc.stamp_scale}
+              stampX={validDoc.stampX ?? validDoc.stamp_x}
+              stampY={validDoc.stampY ?? validDoc.stamp_y}
+              stampRotate={validDoc.stampRotate ?? validDoc.stamp_rotate}
+              hideQRCode={validDoc.hideQRCode || validDoc.hide_qr_code === 1}
+              />          </div>
         );
       case "receita":
         return (
