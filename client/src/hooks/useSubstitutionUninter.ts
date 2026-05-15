@@ -120,6 +120,7 @@ function parseImportText(text: string): {
     const rawValue = line.slice(idx + 1).trim();
     if (!rawValue) continue;
 
+    // Pessoal
     if (rawLabel.includes("NOME") && rawLabel.includes("ALUNO")) updates.nome = rawValue;
     if (rawLabel === "NOME") updates.nome = rawValue;
     if (rawLabel === "CPF") updates.cpf = rawValue;
@@ -129,6 +130,8 @@ function parseImportText(text: string): {
     if (rawLabel.includes("DATA") && rawLabel.includes("NASC")) updates.data_nascimento = normalizeDate(rawValue);
     if (rawLabel.includes("UF") && rawLabel.includes("NASC")) updates.uf_nascimento = normalizeUpper(rawValue);
     if (rawLabel.includes("ENDERE")) updates.endereco = rawValue;
+
+    // Acadêmico
     if (rawLabel.includes("MATR")) updates.matricula = rawValue;
     if (rawLabel.includes("SITUA")) updates.situacao_matricula = normalizeUpper(rawValue);
     if (rawLabel.includes("CURSO")) {
@@ -141,6 +144,19 @@ function parseImportText(text: string): {
     if (rawLabel.includes("EXPED") && rawLabel.includes("HIST")) updates.expedicao_historico = normalizeDate(rawValue);
     if (rawLabel.includes("CARGA") && rawLabel.includes("HOR")) updates.carga_horaria = rawValue.replace(/[^\d]/g, "");
     if (rawLabel.includes("TITULA")) updates.titulacao = rawValue;
+    
+    // Novos campos Acadêmicos
+    if (rawLabel.includes("RECONHECIMENTO")) updates.reconhecimento = rawValue;
+    if (rawLabel.includes("CREDENCIAMENTO")) updates.credenciamento = rawValue;
+    if (rawLabel.includes("EMEC") || rawLabel.includes("E-MEC")) updates.processo_emec = rawValue;
+    if (rawLabel.includes("SELETIVO")) updates.processo_seletivo = normalizeUpper(rawValue);
+    if (rawLabel.includes("MES") && rawLabel.includes("REALIZA")) updates.ingresso_mes_ano = rawValue;
+    if (rawLabel.includes("ANO") && rawLabel.includes("INGRES")) updates.ingresso_ano = rawValue;
+
+    // Institucionais
+    if (rawLabel.includes("POLO") || rawLabel.includes("INSTITU")) updates.instituicao_polo = rawValue;
+    if (rawLabel.includes("REITOR")) updates.nome_reitor = rawValue;
+    if (rawLabel.includes("SECRET")) updates.nome_secretaria = normalizeUpper(rawValue);
   }
 
   return { updates, gradeRows, historicoKey };
@@ -194,7 +210,8 @@ export function useSubstitution() {
 
   const applyHistorico = useCallback((historico: HistoricoDisponivelKey) => {
     setActiveHistorico(historico);
-    setFields(createEmptyFields());
+    const blueprint = createSubstitutionFields(PROFILES[HISTORICO_TO_PROFILE[historico]]);
+    setFields(blueprint);
     setCustomGrades([]);
   }, []);
 
@@ -235,7 +252,7 @@ export function useSubstitution() {
     const historico = normalizeHistoricoKey(historicoInput);
     setActiveHistorico(historico);
 
-    const baseFields = createEmptyFields();
+    const baseFields = createSubstitutionFields(PROFILES[HISTORICO_TO_PROFILE[historico]]);
     const normalized = baseFields.map((field) => {
       const value = incoming[field.id];
       if (value === undefined || value === null) return field;

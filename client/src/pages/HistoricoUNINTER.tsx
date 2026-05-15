@@ -1,9 +1,9 @@
 /**
- * Histórico UNINTER — DocMaster Elite
- * Layout: DocumentPages (réplica visual do histórico UNINTER — 6 páginas)
+ * Histórico UNINTER — DocMaster Elite 3.0
+ * Layout: UninterDocument (réplica visual do histórico UNINTER — Paginação Inteligente)
  * Fluxo: DocMaster (useAuth, fetch, EmissionModal, jsPDF + html2canvas)
  */
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -15,19 +15,9 @@ import {
 import EmissionModal from "@/components/EmissionModal";
 import { useSubstitutionUninter } from "@/hooks/useSubstitutionUninter";
 import SubstitutionPanelUninter from "@/components/SubstitutionPanelUninter";
-import { Page1, Page2, Page3, Page4, Page5, Page6 } from "@/components/DocumentPages";
+import UninterDocument, { Page1, Page2, Page3, Page4, GradePage } from "@/components/DocumentPages";
 import { usePDFExport, generatePDFFilename } from "@/lib/pdfExport";
 import HistoricoUNINTERDocument from "@/components/HistoricoUNINTERDocument";
-
-const TOTAL_PAGES = 6;
-const PAGE_LABELS = [
-  "Pág 1: Informativo de Conclusão",
-  "Pág 2: Certificado Oficial",
-  "Pág 3: Histórico (Dados)",
-  "Pág 4: Selo Institucional",
-  "Pág 5: Grade Curricular A",
-  "Pág 6: Grade Curricular B",
-];
 
 export default function HistoricoUNINTER() {
   const { user, updateBalance } = useAuth();
@@ -60,9 +50,36 @@ export default function HistoricoUNINTER() {
     generateMatricula,
   } = useSubstitutionUninter();
 
+  const formatDateExtenso = (dateStr: string) => {
+    if (!dateStr || !dateStr.includes("/")) return undefined;
+    const parts = dateStr.split("/");
+    if (parts.length !== 3) return undefined;
+    const [day, month, year] = parts;
+    const months = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+    const mIdx = parseInt(month) - 1;
+    if (isNaN(mIdx) || mIdx < 0 || mIdx > 11) return undefined;
+    return `Curitiba/PR, ${parseInt(day)} de ${months[mIdx]} de ${year}.`;
+  };
+
+  const effectiveDateText = useMemo(() => formatDateExtenso(fieldMap.expedicao_diploma || ""), [fieldMap.expedicao_diploma]);
+
+  // Paginação dinâmica baseada nas notas
+  const gradeChunks = useMemo(() => {
+    const remaining = [...gradeRows];
+    const chunks: any[][] = [];
+    while (remaining.length > 0) {
+      const isLastPage = remaining.length <= 18;
+      const count = isLastPage ? remaining.length : 26;
+      chunks.push(remaining.splice(0, count));
+    }
+    return chunks;
+  }, [gradeRows]);
+
+  const totalPages = 4 + gradeChunks.length;
+
   const goToPage = useCallback((page: number) => {
-    if (page >= 1 && page <= TOTAL_PAGES) setCurrentPage(page);
-  }, []);
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
+  }, [totalPages]);
 
   const handleRequestEmit = useCallback(() => {
     const nome = fieldMap.nome || fieldMap.nome_aluno || fieldMap.nome_completo || "";
@@ -84,13 +101,13 @@ export default function HistoricoUNINTER() {
         rg: fieldMap.rg || "",
         ra: fieldMap.matricula || "",
         curso: fieldMap.curso || "",
-        polo: fieldMap.polo || "",
+        polo: fieldMap.instituicao_polo || fieldMap.polo || "",
         dataEmissao: fieldMap.data_expedicao_historico || "",
         dataConclusao: fieldMap.conclusao_curso || "",
         historicoKey: activeHistorico,
         profileKey: activeProfile,
         gradeRows,
-        ...fieldMap,
+        data: { ...fieldMap, gradeRows },
       };
       const res = await fetch("/api/documents/historico-uninter", {
         method: "POST",
@@ -132,36 +149,40 @@ export default function HistoricoUNINTER() {
     toast.success("Formulário resetado");
   }, [resetToOriginal]);
 
-  const formatDateExtenso = (dateStr: string) => {
-    if (!dateStr || !dateStr.includes("/")) return undefined;
-    const parts = dateStr.split("/");
-    if (parts.length !== 3) return undefined;
-    const [day, month, year] = parts;
-    const months = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
-    const mIdx = parseInt(month) - 1;
-    if (isNaN(mIdx) || mIdx < 0 || mIdx > 11) return undefined;
-    return `Curitiba/PR, ${parseInt(day)} de ${months[mIdx]} de ${year}.`;
-  };
-
-  const effectiveDateText = formatDateExtenso(fieldMap.expedicao_diploma || "");
-
   const renderCurrentPage = () => {
     const props = { 
       f: { ...fieldMap, dateText: effectiveDateText }, 
       highlightModified: showHighlights, 
       profileKey: activeProfile,
-      gradeRows
     };
-    switch (currentPage) {
-      case 1: return <Page1 {...props} />;
-      case 2: return <Page2 {...props} />;
-      case 3: return <Page3 {...props} />;
-      case 4: return <Page4 />;
-      case 5: return <Page5 {...props} />;
-      case 6: return <Page6 {...props} />;
-      default: return <Page1 {...props} />;
+    
+    if (currentPage <= 3) {
+      if (currentPage === 1) return <Page1 {...props} />;
+      if (currentPage === 2) return <Page2 {...props} />;
+      if (currentPage === 3) return <Page3 {...props} />;
     }
+    if (currentPage === 4) return <Page4 />;
+    
+    const chunkIdx = currentPage - 5;
+    if (gradeChunks[chunkIdx]) {
+      return (
+        <GradePage
+          {...props}
+          rows={gradeChunks[chunkIdx]}
+          isLast={chunkIdx === gradeChunks.length - 1}
+        />
+      );
+    }
+    return <Page1 {...props} />;
   };
+
+  const pageLabels = useMemo(() => [
+    "Pág 1: Informativo",
+    "Pág 2: Certificado",
+    "Pág 3: Histórico",
+    "Pág 4: Selo",
+    ...gradeChunks.map((_, i) => `Grade Pág ${i + 1}`)
+  ], [gradeChunks]);
 
   return (
     <>
@@ -176,7 +197,7 @@ export default function HistoricoUNINTER() {
             </button>
             <div className="h-8 w-px bg-white/20" />
             <h1 className="text-sm font-black tracking-tight text-white uppercase italic">
-              DocMaster <span className="font-light mx-1">|</span> Histórico UNINTER Elite
+              DocMaster <span className="font-light mx-1">|</span> Emissor UNINTER Elite
             </h1>
             
             <div className="ml-auto flex items-center gap-3">
@@ -232,12 +253,12 @@ export default function HistoricoUNINTER() {
                   >
                     <ChevronLeft size={18} />
                   </button>
-                  <div className="flex gap-1">
-                    {Array.from({ length: TOTAL_PAGES }, (_, i) => i + 1).map((p) => (
+                  <div className="flex gap-1 overflow-x-auto max-w-[300px] scrollbar-hide">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                       <button
                         key={p}
                         onClick={() => goToPage(p)}
-                        className={`h-7 min-w-[28px] px-2 rounded-lg text-[11px] font-bold transition-all ${
+                        className={`h-7 min-w-[28px] px-2 rounded-lg text-[10px] font-bold transition-all shrink-0 ${
                           p === currentPage ? "bg-[#005CA9] text-white shadow-md shadow-blue-200" : "text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800"
                         }`}
                       >
@@ -248,14 +269,14 @@ export default function HistoricoUNINTER() {
                   <button
                     className="h-8 w-8 flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all disabled:opacity-30"
                     onClick={() => goToPage(currentPage + 1)}
-                    disabled={currentPage === TOTAL_PAGES}
+                    disabled={currentPage === totalPages}
                   >
                     <ChevronRight size={18} />
                   </button>
                 </div>
 
                 <div className="h-6 w-px bg-gray-200 dark:bg-slate-800 ml-2" />
-                <span className="text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">{PAGE_LABELS[currentPage - 1]}</span>
+                <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest truncate max-w-[150px]">{pageLabels[currentPage - 1]}</span>
 
                 <div className="ml-auto flex items-center gap-3">
                   <button

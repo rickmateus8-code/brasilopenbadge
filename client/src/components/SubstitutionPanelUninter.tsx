@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { UserRoundPen, RotateCcw, ArrowRightLeft, ChevronDown, ChevronRight, Copy, FileText, WandSparkles, Sparkles } from "lucide-react";
+import { UserRoundPen, RotateCcw, ArrowRightLeft, ChevronDown, ChevronRight, Copy, FileText, WandSparkles, Sparkles, School, GraduationCap, FileSignature } from "lucide-react";
 import { useState } from "react";
-import { UNINTER_IMPORT_TEMPLATE } from "@/lib/documentData_uninter";
+import { UNINTER_IMPORT_TEMPLATE, HISTORICOS_DISPONIVEIS } from "@/lib/documentData_uninter";
 
 interface Props {
   fields: SubstitutionField[];
@@ -26,13 +26,13 @@ const CATEGORY_LABELS: Record<string, string> = {
   institucional: "Dados Institucionais",
 };
 
-const CATEGORY_ORDER = ["pessoal", "academico", "institucional"];
+const CATEGORY_ICONS: Record<string, any> = {
+  pessoal: UserRoundPen,
+  academico: GraduationCap,
+  institucional: School,
+};
 
-const HISTORICO_BUTTONS: { key: HistoricoDisponivelKey; label: string; shortLabel: string }[] = [
-  { key: "historia", label: "HISTÓRICO-UNINTER — HISTÓRIA", shortLabel: "HIST" },
-  { key: "pedagogia", label: "HISTÓRICO-UNINTER — PEDAGOGIA", shortLabel: "PED" },
-  { key: "engenharia_controle_automacao", label: "HISTÓRICO-UNINTER — ENG. CONTROLE E AUTOMAÇÃO", shortLabel: "ENG" },
-];
+const CATEGORY_ORDER = ["pessoal", "academico", "institucional"];
 
 export default function SubstitutionPanel({
   fields,
@@ -59,6 +59,7 @@ export default function SubstitutionPanel({
   const grouped = CATEGORY_ORDER.map((cat) => ({
     category: cat,
     label: CATEGORY_LABELS[cat],
+    Icon: CATEGORY_ICONS[cat],
     items: fields.filter((f) => f.category === cat),
   }));
 
@@ -90,7 +91,7 @@ export default function SubstitutionPanel({
         <div className="flex items-center justify-between">
           <h3 className="text-[13px] font-black text-slate-800 dark:text-slate-100 flex items-center gap-2 uppercase tracking-tight">
              <div className="w-1.5 h-4 bg-[#005CA9] rounded-full shadow-sm shadow-blue-500/50" />
-             Painel de Edição
+             Painel de Edição Elite
           </h3>
           <Button 
             size="sm" 
@@ -111,16 +112,16 @@ export default function SubstitutionPanel({
 
       <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-2">
         {/* Escolha do Curso */}
-        <div className="p-3 mb-2 rounded-2xl bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+        <div className="p-3 mb-2 rounded-2xl bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 shadow-sm">
           <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] mb-4 ml-1">Modelo Acadêmico</p>
           <div className="space-y-2">
-            {HISTORICO_BUTTONS.map((pb) => {
+            {HISTORICOS_DISPONIVEIS.map((pb) => {
               const isActive = activeHistorico === pb.key;
               return (
                 <button
                   key={pb.key}
                   onClick={() => onApplyHistorico(pb.key)}
-                  className={`w-full text-left px-4 py-3 rounded-2xl border text-[11px] font-black transition-all flex items-center gap-3 group relative overflow-hidden ${
+                  className={`w-full text-left px-4 py-3 rounded-2xl border text-[10px] font-black transition-all flex items-center gap-3 group relative overflow-hidden ${
                     isActive
                       ? "border-[#005CA9] bg-blue-50/50 dark:bg-blue-900/10 text-[#005CA9] dark:text-blue-400 shadow-sm"
                       : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400 hover:border-blue-200 dark:hover:border-blue-800"
@@ -145,7 +146,7 @@ export default function SubstitutionPanel({
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase">Script do Cliente</label>
+              <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase">1. Modelo para o Cliente</label>
               <Button
                 type="button"
                 size="sm"
@@ -163,11 +164,11 @@ export default function SubstitutionPanel({
           </div>
 
           <div className="space-y-3">
-            <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase block">Resposta Preenchida</label>
+            <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase block">2. Resposta Preenchida</label>
             <Textarea
               value={importText}
               onChange={(e) => onUpdateImportText(e.target.value)}
-              placeholder="Cole os dados aqui..."
+              placeholder="Cole os dados aqui para preencher automaticamente aluno, notas e informações institucionais..."
               className="min-h-24 text-[11px] bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 resize-none focus-visible:ring-[#005CA9] rounded-xl"
             />
             <Button
@@ -181,10 +182,11 @@ export default function SubstitutionPanel({
         </div>
 
         {/* Categorias */}
-        <div className="space-y-3 pb-12">
+        <div className="space-y-3 pb-12 px-1">
           {grouped.map((group) => {
             const isExpanded = expandedCategories[group.category];
-            const modifiedInGroup = group.items.filter((i) => i.currentValue !== i.originalValue).length;
+            const modifiedInGroup = group.items.filter((i) => i.currentValue !== i.originalValue && i.currentValue !== "").length;
+            const { Icon } = group;
 
             return (
               <div key={group.category} className={`rounded-2xl border transition-all ${isExpanded ? "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/10 shadow-sm" : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950"}`}>
@@ -194,7 +196,7 @@ export default function SubstitutionPanel({
                   onClick={() => toggleCategory(group.category)}
                 >
                   <div className={`p-2 rounded-xl ${isExpanded ? "bg-[#005CA9] text-white shadow-md shadow-blue-300/30" : "bg-slate-100 dark:bg-slate-800 text-slate-400"}`}>
-                    <UserRoundPen size={14} className="shrink-0" />
+                    <Icon size={14} className="shrink-0" />
                   </div>
                   <span className={`text-[11px] font-black uppercase tracking-tight flex-1 ${isExpanded ? "text-slate-800 dark:text-slate-100" : "text-slate-500 dark:text-slate-400"}`}>{group.label}</span>
                   <div className="flex items-center gap-2">
@@ -205,8 +207,10 @@ export default function SubstitutionPanel({
                 {isExpanded && (
                   <div className="px-5 pb-5 pt-2 space-y-5">
                     {group.items.map((field) => {
-                      const isModified = field.currentValue !== field.originalValue;
+                      const isModified = field.currentValue !== field.originalValue && field.currentValue !== "";
                       const isMatricula = field.id === "matricula";
+                      const isTextArea = ["reconhecimento", "credenciamento", "instituicao_polo", "endereco"].includes(field.id);
+
                       return (
                         <div key={field.id} className="space-y-1.5 group/field">
                           <div className="flex items-center justify-between">
@@ -234,6 +238,14 @@ export default function SubstitutionPanel({
                                 <WandSparkles size={12} />
                               </Button>
                             </div>
+                          ) : isTextArea ? (
+                            <Textarea
+                              value={field.currentValue}
+                              onChange={(e) => onUpdateField(field.id, e.target.value)}
+                              className={`min-h-[60px] text-xs border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus-visible:ring-[#005CA9] transition-all rounded-xl resize-none ${
+                                isModified ? "border-blue-400 dark:border-blue-600 bg-blue-50/20 shadow-sm" : ""
+                              }`}
+                            />
                           ) : (
                             <Input
                               value={field.currentValue}
@@ -246,7 +258,7 @@ export default function SubstitutionPanel({
                           {isModified && (
                             <div className="text-[9px] text-slate-400 dark:text-slate-600 italic flex items-center gap-1.5 ml-1">
                               <span className="font-black text-[8px] uppercase not-italic">Original:</span>
-                              <span className="line-through">{field.originalValue || "(vazio)"}</span>
+                              <span className="line-through truncate max-w-[200px]">{field.originalValue || "(vazio)"}</span>
                             </div>
                           )}
                         </div>

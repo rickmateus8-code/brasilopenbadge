@@ -1,11 +1,11 @@
 // ============================================================
-// Document Data Model — Histórico Escolar UNINTER
+// Document Data Model — Histórico Escolar UNINTER Elite 3.0
 // Design: "Document Studio" — Swiss Design / Functional
 // Supports multiple course profiles (História, Pedagogia, Engenharia, etc.)
 // ============================================================
 
 // URLs Restauradas (Estado de Ouro)
-export const LOGO_URL = "https://uninter.com/wp-content/uploads/2021/04/uninter-logo-2.png"; // Fallback estável
+export const LOGO_URL = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663380726083/LSKlJlDWSFXTKSLM.png";
 export const ASSINATURA_URL = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663380914608/sWeWwfmzoBJtdiXv.png";
 export const SELO_URL = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663380914608/NxEAVgNOkxUCbVre.png";
 
@@ -58,7 +58,9 @@ export const UNINTER_IMPORT_TEMPLATE = [
   "Situação de Matrícula:",
   "Curso:",
   "Ato Autorizativo de Reconhecimento:",
+  "Ato Autorizativo de Credenciamento:",
   "Processo e-MEC:",
+  "Processo Seletivo:",
   "Mês / Ano de Realização:",
   "Ano de Ingresso:",
   "Conclusão do Curso:",
@@ -67,6 +69,11 @@ export const UNINTER_IMPORT_TEMPLATE = [
   "Expedição do Histórico:",
   "Carga Horária:",
   "Titulação:",
+  "",
+  "DADOS INSTITUCIONAIS",
+  "Instituição / Polo:",
+  "Nome do Reitor:",
+  "Nome da Secretária:",
   "",
   "COMPONENTES CURRICULARES",
   "Ano/Mês*\tDisciplinas\tC.H.\tMédia\tResultado\tDocente\tTitulação",
@@ -121,7 +128,12 @@ export const LINDOMAR_PROFILE: Profile = {
     ingresso_mes_ano: "Março / 2015",
     ingresso_ano: "2015",
     reconhecimento: "Reconhecido pela Portaria nº 357, de 24/05/2018, DOU nº 100, Seção 1, pág. 16, de 25/05/2018",
+    credenciamento: "Portaria n.º 688 de 25/05/2012 publicada no D.O.U. n.º 102 de 28/05/2012, seção 1, p.23. Recredenciado pela Portaria n.º 1.219 de 28/11/2019 publicada no D.O.U. n.º 208, seção 1, p.24",
     processo_emec: "201605151",
+    processo_seletivo: "VESTIBULAR",
+    instituicao_polo: "CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER | POLO TIRADENTES (CENTRO) - PR",
+    nome_reitor: "Professor Dr. Benhur Etelberto Gaio",
+    nome_secretaria: "SIMONE RAMOS DE OLIVEIRA",
   },
 };
 
@@ -151,7 +163,12 @@ export const THAIS_HISTORIA_PROFILE: Profile = {
     ingresso_mes_ano: "Março / 2018",
     ingresso_ano: "2018",
     reconhecimento: "Reconhecido pela Portaria nº 913, de 27/12/2018, DOU nº 245, Seção 1, pág. 35-40",
+    credenciamento: "Portaria n.º 688 de 25/05/2012 publicada no D.O.U. n.º 102 de 28/05/2012, seção 1, p.23. Recredenciado pela Portaria n.º 1.219 de 28/11/2019 publicada no D.O.U. n.º 208, seção 1, p.24",
     processo_emec: "201605151",
+    processo_seletivo: "VESTIBULAR",
+    instituicao_polo: "CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER | POLO CURITIBA (CENTRO) - PR",
+    nome_reitor: "Professor Dr. Benhur Etelberto Gaio",
+    nome_secretaria: "SIMONE RAMOS DE OLIVEIRA",
   },
 };
 
@@ -181,7 +198,12 @@ export const THAIS_PEDAGOGIA_PROFILE: Profile = {
     ingresso_mes_ano: "Março / 2018",
     ingresso_ano: "2018",
     reconhecimento: "Reconhecido pela Portaria nº 913, DOU nº 245, Seção 1",
+    credenciamento: "Portaria n.º 688 de 25/05/2012 publicada no D.O.U. n.º 102 de 28/05/2012, seção 1, p.23. Recredenciado pela Portaria n.º 1.219 de 28/11/2019 publicada no D.O.U. n.º 208, seção 1, p.24",
     processo_emec: "201605151",
+    processo_seletivo: "VESTIBULAR",
+    instituicao_polo: "CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER | POLO CURITIBA (CENTRO) - PR",
+    nome_reitor: "Professor Dr. Benhur Etelberto Gaio",
+    nome_secretaria: "SIMONE RAMOS DE OLIVEIRA",
   },
 };
 
@@ -211,7 +233,12 @@ export const ENGENHARIA_CONTROLE_AUTOMACAO_PROFILE: Profile = {
     ingresso_mes_ano: "NÃO INFORMADO",
     ingresso_ano: "NÃO INFORMADO",
     reconhecimento: "Diploma registrado conforme Lei nº 9.394/1996 (LDB), Decreto nº 9.235/2017 e Portaria MEC nº 554/2019.",
+    credenciamento: "Portaria n.º 688 de 25/05/2012 publicada no D.O.U. n.º 102 de 28/05/2012, seção 1, p.23. Recredenciado pela Portaria n.º 1.219 de 28/11/2019 publicada no D.O.U. n.º 208, seção 1, p.24",
     processo_emec: "201605151",
+    processo_seletivo: "VESTIBULAR",
+    instituicao_polo: "CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER | POLO CURITIBA (CENTRO) - PR",
+    nome_reitor: "Professor Dr. Benhur Etelberto Gaio",
+    nome_secretaria: "SIMONE RAMOS DE OLIVEIRA",
   },
 };
 
@@ -313,11 +340,16 @@ export function createSubstitutionFields(profile: Profile): SubstitutionField[] 
     { id: "ingresso_mes_ano", label: "Mês / Ano de Realização", category: "academico", originalValue: LINDOMAR_PROFILE.fields.ingresso_mes_ano, currentValue: profile.fields.ingresso_mes_ano, pages: [3] },
     { id: "ingresso_ano", label: "Ano de Ingresso", category: "academico", originalValue: LINDOMAR_PROFILE.fields.ingresso_ano, currentValue: profile.fields.ingresso_ano, pages: [3] },
     { id: "reconhecimento", label: "Ato de Reconhecimento", category: "academico", originalValue: LINDOMAR_PROFILE.fields.reconhecimento, currentValue: profile.fields.reconhecimento, pages: [1, 2, 3] },
+    { id: "credenciamento", label: "Ato de Credenciamento", category: "academico", originalValue: LINDOMAR_PROFILE.fields.credenciamento, currentValue: profile.fields.credenciamento, pages: [3] },
     { id: "processo_emec", label: "Processo e-MEC*", category: "academico", originalValue: LINDOMAR_PROFILE.fields.processo_emec, currentValue: profile.fields.processo_emec, pages: [3] },
+    { id: "processo_seletivo", label: "Processo Seletivo", category: "academico", originalValue: LINDOMAR_PROFILE.fields.processo_seletivo, currentValue: profile.fields.processo_seletivo, pages: [3] },
     { id: "expedicao_diploma", label: "Expedição do Diploma", category: "academico", originalValue: LINDOMAR_PROFILE.fields.expedicao_diploma, currentValue: profile.fields.expedicao_diploma, pages: [3] },
     { id: "expedicao_historico", label: "Expedição do Histórico", category: "academico", originalValue: LINDOMAR_PROFILE.fields.expedicao_historico, currentValue: profile.fields.expedicao_historico, pages: [3] },
     { id: "carga_horaria", label: "Carga Horária", category: "academico", originalValue: LINDOMAR_PROFILE.fields.carga_horaria, currentValue: profile.fields.carga_horaria, pages: [2, 6] },
     { id: "titulacao", label: "Titulação", category: "academico", originalValue: LINDOMAR_PROFILE.fields.titulacao, currentValue: profile.fields.titulacao, pages: [5, 6] },
+    { id: "instituicao_polo", label: "Instituição / Polo", category: "institucional", originalValue: LINDOMAR_PROFILE.fields.instituicao_polo, currentValue: profile.fields.instituicao_polo, pages: [3] },
+    { id: "nome_reitor", label: "Nome do Reitor", category: "institucional", originalValue: LINDOMAR_PROFILE.fields.nome_reitor, currentValue: profile.fields.nome_reitor, pages: [1] },
+    { id: "nome_secretaria", label: "Nome da Secretária", category: "institucional", originalValue: LINDOMAR_PROFILE.fields.nome_secretaria, currentValue: profile.fields.nome_secretaria, pages: [1, 2, 6] },
   ];
 }
 

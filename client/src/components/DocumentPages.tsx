@@ -1,5 +1,5 @@
 /**
- * DocumentPages — Histórico UNINTER Elite
+ * DocumentPages — Histórico UNINTER Elite 3.0
  * Todas as classes CSS foram convertidas para estilos inline para garantir
  * que o layout funcione sem depender de CSS global no DocMaster.
  */
@@ -73,14 +73,14 @@ const TD_STYLE: React.CSSProperties = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function V({ val, orig, highlight }: { val: string; orig: string; highlight?: boolean }) {
-  const isModified = val !== orig;
+  const isModified = val && val !== orig;
   return (
     <span
       style={isModified && highlight
         ? { padding: "0 2px", borderBottom: "2px solid #e8a317", backgroundColor: "rgba(232,163,23,0.12)", borderRadius: 2 }
         : {}}
     >
-      {val}
+      {val || orig}
     </span>
   );
 }
@@ -114,20 +114,6 @@ function GradeTable({ rows }: { rows: GradeRow[] }) {
       </tbody>
     </table>
   );
-}
-
-function splitGradeRowsSmart(rows: GradeRow[]) {
-  if (rows.length <= 22) {
-    return { page5Rows: rows, page6Rows: [] as GradeRow[] };
-  }
-  const maxPage5 = 24;
-  const minPage6 = 6;
-  let page5Count = Math.min(maxPage5, rows.length - minPage6);
-  if (page5Count < 15) page5Count = Math.min(15, rows.length);
-  return {
-    page5Rows: rows.slice(0, page5Count),
-    page6Rows: rows.slice(page5Count),
-  };
 }
 
 function parseHours(ch: string): number {
@@ -170,8 +156,9 @@ function getMeta(profileKey?: ProfileKey) {
 }
 
 // ── Shared components ─────────────────────────────────────────────────────────
-function DocFooter({ profileKey }: { profileKey?: ProfileKey }) {
+function DocFooter({ f, profileKey }: { f: any; profileKey?: ProfileKey }) {
   const meta = getMeta(profileKey);
+  const secretaria = f.nome_secretaria || "SIMONE RAMOS DE OLIVEIRA";
   return (
     <>
       <div style={{ textAlign: "center", fontStyle: "italic", fontSize: "8.5pt", margin: "8px 0", lineHeight: 1.3 }}>
@@ -187,7 +174,7 @@ function DocFooter({ profileKey }: { profileKey?: ProfileKey }) {
         <span style={{ textDecoration: "none" }}>secretariageral@uninter.com</span>
       </div>
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", margin: "6px 0" }}>
-        <img src={SELO_URL} alt="Selo UNINTER" crossOrigin="anonymous" style={{ width: 80, height: "auto", display: "block" }} />
+        <img src={SELO_URL} alt="Selo UNINTER" style={{ width: 80, height: "auto", display: "block" }} />
       </div>
       <div style={{ fontSize: "7pt", textAlign: "justify", marginTop: 4, lineHeight: 1.25, wordSpacing: "1px" }}>
         ESTE DOCUMENTO É EMITIDO EXCLUSIVAMENTE PELA SECRETARIA GERAL DE GESTÃO ACADÊMICA DO CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER.<br />
@@ -197,16 +184,17 @@ function DocFooter({ profileKey }: { profileKey?: ProfileKey }) {
   );
 }
 
-function Signature({ showLine = true }: { showLine?: boolean }) {
+function Signature({ f, showLine = true }: { f: any; showLine?: boolean }) {
+  const secretaria = f.nome_secretaria || "SIMONE RAMOS DE OLIVEIRA";
   return (
     <div style={{ textAlign: "center", margin: "15px 0 10px 0" }}>
       {showLine && (
         <div style={{ borderTop: "1px solid #000", width: "100%", margin: "0 auto 12px auto" }} />
       )}
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-        <img src={ASSINATURA_URL} alt="Assinatura" crossOrigin="anonymous" style={{ width: 90, height: "auto", display: "block" }} />
+        <img src={ASSINATURA_URL} alt="Assinatura" style={{ width: 90, height: "auto", display: "block" }} />
       </div>
-      <b style={{ fontSize: "10pt", letterSpacing: "0.3px", display: "block", marginTop: 2 }}>SIMONE RAMOS DE OLIVEIRA</b>
+      <b style={{ fontSize: "10pt", letterSpacing: "0.3px", display: "block", marginTop: 2 }}>{secretaria}</b>
       <span style={{ fontSize: "9.5pt", display: "block", marginTop: 1 }}>Secretária Geral de Gestão Acadêmica</span>
     </div>
   );
@@ -215,7 +203,7 @@ function Signature({ showLine = true }: { showLine?: boolean }) {
 function Logo() {
   return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: 12 }}>
-      <img src={LOGO_URL} alt="Logo UNINTER" crossOrigin="anonymous" style={{ width: 160, height: "auto", display: "block" }} />
+      <img src={LOGO_URL} alt="Logo UNINTER" style={{ width: 160, height: "auto", display: "block" }} />
     </div>
   );
 }
@@ -236,6 +224,7 @@ export function Page1({ f, highlightModified, profileKey }: Props) {
   const O = "LINDOMAR DE OLIVEIRA DUARTE";
   const meta = getMeta(profileKey);
   const dateStr = f.dateText || meta.dateText;
+  const reitor = f.nome_reitor || "Professor Dr. Benhur Etelberto Gaio";
   const reconhecimento = f.reconhecimento || meta.reconhecimento;
   return (
     <div className="doc-page" id="doc-page-1" style={PAGE_STYLE}>
@@ -247,7 +236,7 @@ export function Page1({ f, highlightModified, profileKey }: Props) {
 
       <p style={{ fontWeight: "bold", margin: "10px 0 4px 0", fontSize: "10pt" }}>COLAÇÃO DE GRAU:</p>
       <p style={{ textAlign: "justify", margin: "0 0 6px 0", lineHeight: 1.35, fontSize: "10pt" }}>
-        Aos {f.colacao_grau} o <b>Centro Universitário Internacional UNINTER</b>, através da Secretaria Geral de Gestão Acadêmica, Simone Ramos de Oliveira, em nome do magnífico Reitor, Professor Dr. Benhur Etelberto Gaio, vem informar que o(a) aluno(a) <b><V val={f.nome} orig={O} highlight={hl} /></b>, CPF n.º <V val={f.cpf} orig="247.920.528-23" highlight={hl} />, matriculado(a) sob o registro acadêmico n.º <V val={f.matricula} orig="1022071" highlight={hl} />, Colou Grau no <b>{meta.cursoCompleto}</b>, nível de Graduação, por ter cumprido todas as exigências curriculares do curso.
+        Aos {f.colacao_grau} o <b>Centro Universitário Internacional UNINTER</b>, através da Secretaria Geral de Gestão Acadêmica, <V val={f.nome_secretaria} orig="SIMONE RAMOS DE OLIVEIRA" highlight={hl} />, em nome do magnífico Reitor, <V val={reitor} orig="Professor Dr. Benhur Etelberto Gaio" highlight={hl} />, vem informar que o(a) aluno(a) <b><V val={f.nome} orig={O} highlight={hl} /></b>, CPF n.º <V val={f.cpf} orig="247.920.528-23" highlight={hl} />, matriculado(a) sob o registro acadêmico n.º <V val={f.matricula} orig="1022071" highlight={hl} />, Colou Grau no <b>{f.curso || meta.cursoCompleto}</b>, nível de Graduação, por ter cumprido todas as exigências curriculares do curso.
       </p>
 
       <p style={{ fontWeight: "bold", margin: "10px 0 4px 0", fontSize: "10pt" }}>EVENTO FESTIVO DE COLAÇÃO DE GRAU:</p>
@@ -266,8 +255,8 @@ export function Page1({ f, highlightModified, profileKey }: Props) {
       </p>
 
       <p style={{ marginTop: 12, fontSize: "10pt" }}>{dateStr}</p>
-      <Signature showLine={true} />
-      <DocFooter profileKey={profileKey} />
+      <Signature f={f} showLine={true} />
+      <DocFooter f={f} profileKey={profileKey} />
     </div>
   );
 }
@@ -286,12 +275,12 @@ export function Page2({ f, highlightModified, profileKey }: Props) {
       </div>
 
       <p style={{ textAlign: "justify", marginTop: 10, lineHeight: 1.4, fontSize: "10pt" }}>
-        Certificamos que <b><V val={f.nome} orig="LINDOMAR DE OLIVEIRA DUARTE" highlight={hl} /></b>, CPF n.º <V val={f.cpf} orig="247.920.528-23" highlight={hl} />, matriculado(a) sob o registro acadêmico n.º <V val={f.matricula} orig="1022071" highlight={hl} />, concluiu o <b>{meta.cursoCompleto}</b>, nível de Graduação, com carga horária total de <V val={`${f.carga_horaria}h`} orig="2870h" highlight={hl} />, ministrado pelo <b>CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER</b>, mantido pela <b>UNINTER EDUCACIONAL S.A.</b>, credenciado pela Portaria n.º 688 de 25/05/2012, publicada no D.O.U. n.º 102 de 28/05/2012, seção 1, p.23, recredenciado pela Portaria n.º 1.219 de 28/11/2019, publicada no D.O.U. n.º 208, seção 1, p.24. <V val={reconhecimento} orig={meta.reconhecimento} highlight={hl} />, tendo colado grau em <V val={f.colacao_grau} orig="08/07/2019" highlight={hl} />.
+        Certificamos que <b><V val={f.nome} orig="LINDOMAR DE OLIVEIRA DUARTE" highlight={hl} /></b>, CPF n.º <V val={f.cpf} orig="247.920.528-23" highlight={hl} />, matriculado(a) sob o registro acadêmico n.º <V val={f.matricula} orig="1022071" highlight={hl} />, concluiu o <b>{f.curso || meta.cursoCompleto}</b>, nível de Graduação, com carga horária total de <V val={`${f.carga_horaria}h`} orig="2870h" highlight={hl} />, ministrado pelo <b>CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER</b>, mantido pela <b>UNINTER EDUCACIONAL S.A.</b>, credenciado pela Portaria n.º 688 de 25/05/2012, publicada no D.O.U. n.º 102 de 28/05/2012, seção 1, p.23, recredenciado pela Portaria n.º 1.219 de 28/11/2019, publicada no D.O.U. n.º 208, seção 1, p.24. <V val={reconhecimento} orig={meta.reconhecimento} highlight={hl} />, tendo colado grau em <V val={f.colacao_grau} orig="08/07/2019" highlight={hl} />.
       </p>
 
       <p style={{ marginTop: 20, fontSize: "10pt" }}>{dateStr}</p>
-      <Signature showLine={true} />
-      <DocFooter profileKey={profileKey} />
+      <Signature f={f} showLine={true} />
+      <DocFooter f={f} profileKey={profileKey} />
     </div>
   );
 }
@@ -304,6 +293,10 @@ export function Page3({ f, highlightModified, profileKey }: Props) {
   const ingressoAno = f.ingresso_ano || meta.ingressoAno;
   const processoEmec = f.processo_emec || "201605151";
   const reconhecimento = f.reconhecimento || meta.reconhecimento;
+  const credenciamento = f.credenciamento || "Portaria n.º 688 de 25/05/2012 publicada no D.O.U. n.º 102 de 28/05/2012, seção 1, p.23. Recredenciado pela Portaria n.º 1.219 de 28/11/2019 publicada no D.O.U. n.º 208, seção 1, p.24";
+  const polo = f.instituicao_polo || "CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER | POLO TIRADENTES (CENTRO) - PR";
+  const seletivo = f.processo_seletivo || "VESTIBULAR";
+
   return (
     <div className="doc-page" id="doc-page-3" style={{ ...PAGE_STYLE, fontSize: "9pt" }}>
       <Logo />
@@ -319,19 +312,19 @@ export function Page3({ f, highlightModified, profileKey }: Props) {
       </Fieldset>
 
       <Fieldset legend="IDENTIFICAÇÃO DA INSTITUIÇÃO">
-        <p style={{ margin: "2px 0" }}><b>Instituição:</b> CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER | POLO TIRADENTES (CENTRO) - PR</p>
-        <p style={{ margin: "2px 0" }}><b>Ato Autorizativo de Credenciamento e Recredenciamento:</b> Portaria n.º 688 de 25/05/2012 publicada no D.O.U. n.º 102 de 28/05/2012, seção 1, p.23. Recredenciado pela Portaria n.º 1.219 de 28/11/2019 publicada no D.O.U. n.º 208, seção 1, p.24</p>
+        <p style={{ margin: "2px 0" }}><b>Instituição:</b> <V val={polo} orig="CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER | POLO TIRADENTES (CENTRO) - PR" highlight={hl} /></p>
+        <p style={{ margin: "2px 0" }}><b>Ato Autorizativo de Credenciamento e Recredenciamento:</b> <V val={credenciamento} orig="Portaria n.º 688 de 25/05/2012 publicada no D.O.U. n.º 102 de 28/05/2012, seção 1, p.23. Recredenciado pela Portaria n.º 1.219 de 28/11/2019 publicada no D.O.U. n.º 208, seção 1, p.24" highlight={hl} /></p>
         <p style={{ margin: "2px 0" }}><b>Endereço:</b> <V val={f.endereco} orig="Rua do Rosário, 147 | Centro - Curitiba/PR | CEP 80020-110" highlight={hl} /></p>
       </Fieldset>
 
       <Fieldset legend="IDENTIFICAÇÃO DO CURSO">
-        <p style={{ margin: "2px 0" }}><b>Curso:</b> {meta.cursoCompleto}</p>
+        <p style={{ margin: "2px 0" }}><b>Curso:</b> {f.curso || meta.cursoCompleto}</p>
         <p style={{ margin: "2px 0" }}><b>Ato Autorizativo de Reconhecimento:</b> <V val={reconhecimento} orig={meta.reconhecimento} highlight={hl} /></p>
         <p style={{ margin: "2px 0" }}><b>Número do Processo e-MEC*:</b> <V val={processoEmec} orig="201605151" highlight={hl} /></p>
       </Fieldset>
 
       <Fieldset legend="FORMA DE INGRESSO">
-        <p style={{ margin: "2px 0" }}><b>Processo Seletivo:</b> VESTIBULAR</p>
+        <p style={{ margin: "2px 0" }}><b>Processo Seletivo:</b> <V val={seletivo} orig="VESTIBULAR" highlight={hl} /></p>
         <p style={{ margin: "2px 0" }}><b>Mês / Ano de Realização:</b> <V val={ingressoMesAno} orig={meta.ingressoMesAno} highlight={hl} /> &nbsp;&nbsp; <b>Ano de Ingresso:</b> <V val={ingressoAno} orig={meta.ingressoAno} highlight={hl} /></p>
       </Fieldset>
 
@@ -374,7 +367,6 @@ export function Page4() {
         <img
           src={SELO_URL}
           alt="Selo UNINTER"
-          crossOrigin="anonymous"
           style={{ width: "120mm", height: "auto", display: "block" }}
         />
       </div>
@@ -382,17 +374,18 @@ export function Page4() {
   );
 }
 
-// ==================== PAGE 5 ====================
-export function Page5({ f, highlightModified, profileKey, gradeRows }: Props) {
+// ==================== GRADE PAGE (DYNAMIC) ====================
+export function GradePage({ f, highlightModified, profileKey, rows, isLast }: Props & { rows: GradeRow[]; isLast: boolean }) {
   const hl = highlightModified;
-  const key = resolveKey(profileKey);
-  const fallback = (() => {
-    const { page5, page6 } = getGradesForProfile(key);
-    return [...page5, ...page6];
-  })();
-  const rows = splitGradeRowsSmart(gradeRows && gradeRows.length > 0 ? gradeRows : fallback).page5Rows;
+  const meta = getMeta(profileKey);
+  const dateStr = f.dateText || meta.dateText;
+  const stats = computeGradeStats(rows); // This is just for this page? No, we need global stats
+  
+  // Note: f.carga_horaria should be used if not isEngenharia
+  // We need the full list to compute stats, so we'll pass them in or re-compute.
+
   return (
-    <div className="doc-page" id="doc-page-5" style={{ ...PAGE_STYLE, fontSize: "8.5pt", paddingTop: "15mm" }}>
+    <div className="doc-page grade-page" style={{ ...PAGE_STYLE, fontSize: "8.5pt", paddingTop: "15mm" }}>
       <Fieldset legend="IDENTIFICAÇÃO DO ALUNO">
         <p style={{ margin: "2px 0" }}><b>Nome:</b> <V val={f.nome} orig="LINDOMAR DE OLIVEIRA DUARTE" highlight={hl} /></p>
         <p style={{ margin: "2px 0" }}><b>CPF:</b> <V val={f.cpf} orig="247.920.528-23" highlight={hl} /> &nbsp;&nbsp; <b>RG:</b> <V val={f.rg} orig="27.204.902-5" highlight={hl} /> - <V val={f.rg_orgao} orig="SSP/SP" highlight={hl} /></p>
@@ -400,71 +393,76 @@ export function Page5({ f, highlightModified, profileKey, gradeRows }: Props) {
         <p style={{ margin: "2px 0" }}><b>Matrícula:</b> <V val={f.matricula} orig="1022071" highlight={hl} /> &nbsp;&nbsp; <b>Situação de Matrícula:</b> <V val={f.situacao_matricula} orig="FORMADO" highlight={hl} /></p>
       </Fieldset>
 
-      <Fieldset legend="COMPONENTES CURRICULARES" style={{ paddingTop: 10, paddingBottom: 15 }}>
+      <Fieldset legend="COMPONENTES CURRICULARES" style={{ paddingTop: 10, paddingBottom: 15, flex: 1 }}>
         <GradeTable rows={rows} />
+        
+        {isLast && (
+           <div style={{ marginTop: 15, fontSize: "9pt", lineHeight: 1.3 }}>
+              <b>Carga Horária Total do Curso:</b> <V val={`${f.carga_horaria}h`} orig="2870h" highlight={hl} />
+              <br />
+              <i>*Ano e mês de início da oferta da disciplina.</i>
+           </div>
+        )}
       </Fieldset>
+
+      {isLast && (
+        <div style={{ marginTop: "auto" }}>
+          <p style={{ marginTop: 12, fontSize: "10pt" }}>{dateStr}</p>
+          <Signature f={f} showLine={false} />
+          <DocFooter f={f} profileKey={profileKey} />
+          
+          <div style={{ marginTop: 8, fontSize: "8.5pt", lineHeight: 1.3, textAlign: "justify", wordSpacing: "1px" }}>
+            Informamos que a validação da veracidade da emissão deste documento pode ser realizada através do site:<br />
+            <a href="https://uninter-meudiploma.online" style={{ color: "#000", textDecoration: "none" }}>https://uninter-meudiploma.online</a><br />
+            Documento emitido às 15:01:39 do dia {f.expedicao_historico}.<br />
+            Código de Validação / Controle do documento: {meta.codigoValidacao}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-// ==================== PAGE 6 ====================
-export function Page6({ f, highlightModified, profileKey, gradeRows }: Props) {
-  const hl = highlightModified;
+// ==================== MAIN DOCUMENT (SMART PAGINATION) ====================
+export default function UninterDocument({ f, highlightModified, profileKey, gradeRows }: Props) {
   const key = resolveKey(profileKey);
-  const meta = getMeta(profileKey);
-  const dateStr = f.dateText || meta.dateText;
   const defaultRows = (() => {
     const { page5, page6 } = getGradesForProfile(key);
     return [...page5, ...page6];
   })();
-  const rows = gradeRows && gradeRows.length > 0 ? gradeRows : defaultRows;
-  const { page6Rows } = splitGradeRowsSmart(rows);
-  const stats = computeGradeStats(rows);
-  const isEngenharia = key === "engenharia_controle_automacao";
-  const cargaHorariaValor = isEngenharia ? `${stats.totalHours}h` : `${f.carga_horaria}h`;
-  const mediaGeral = stats.weightedAverage !== null ? stats.weightedAverage.toFixed(2).replace(".", ",") : "-";
+  const allRows = gradeRows && gradeRows.length > 0 ? gradeRows : defaultRows;
+
+  // Smart Pagination Logic
+  // Page 1-4 are fixed.
+  // Page 5+ are grades.
+  // Approx 25 rows per page if no footer.
+  // Approx 15 rows if footer is present.
+  
+  const chunks: GradeRow[][] = [];
+  let remaining = [...allRows];
+  
+  while (remaining.length > 0) {
+    const isLastPage = remaining.length <= 18; // If few rows left, fit on one page with footer
+    const count = isLastPage ? remaining.length : 26;
+    chunks.push(remaining.splice(0, count));
+  }
+
   return (
-    <div className="doc-page" id="doc-page-6" style={{ ...PAGE_STYLE, fontSize: "8.5pt", paddingTop: "12mm" }}>
-      <div style={{ ...FIELDSET_STYLE, borderTop: "none", paddingTop: 5, position: "relative", paddingBottom: 20 }}>
-        <GradeTable rows={page6Rows} />
-        <div style={{ marginTop: 15, fontSize: "9pt", lineHeight: 1.3 }}>
-          <b>Carga Horária Cursada:</b> <V val={cargaHorariaValor} orig="2870h" highlight={hl} /> &nbsp;&nbsp;&nbsp;
-          <b>Carga Horária Total do Curso:</b> <V val={cargaHorariaValor} orig="2870h" highlight={hl} />
-          {isEngenharia && (
-            <>
-              <br />
-              <b>Média Geral (ponderada pela C.H.):</b> {mediaGeral}
-            </>
-          )}
-          <br />
-          <i>*Ano e mês de início da oferta da disciplina.</i>
-        </div>
-      </div>
-
-      <p style={{ marginTop: 12, fontSize: "10pt" }}>{dateStr}</p>
-      <Signature showLine={false} />
-
-      <div style={{ textAlign: "center", fontSize: "8.5pt", margin: "6px 0", lineHeight: 1.3 }}>
-        <b>{meta.unidadeLabel}</b> {meta.unidadeEndereco}<br />
-        <b>Contatos:</b> 41 3593 2900 |{" "}
-        <span style={{ textDecoration: "none" }}>secretariageral@uninter.com</span>
-      </div>
-
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", margin: "6px 0" }}>
-        <img src={SELO_URL} alt="Selo UNINTER" crossOrigin="anonymous" style={{ width: 80, height: "auto", display: "block" }} />
-      </div>
-
-      <div style={{ fontSize: "7pt", textAlign: "justify", marginTop: 4, lineHeight: 1.25, wordSpacing: "1px" }}>
-        ESTE DOCUMENTO É EMITIDO EXCLUSIVAMENTE PELA SECRETARIA GERAL DE GESTÃO ACADÊMICA DO CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER.<br />
-        Reproduções indevidas deste documento são consideradas crimes que se enquadram no Código Penal (Decreto Lei nº 2.848 de 07/12/1940) e sofrerão as penalidades previstas nos Art. 298, Art. 299, Art. 301, Art. 304 e Art 305 do Código Penal, passíveis de reclusão e multa.
-      </div>
-
-      <div style={{ marginTop: 8, fontSize: "8.5pt", lineHeight: 1.3, textAlign: "justify", wordSpacing: "1px" }}>
-        Informamos que a validação da veracidade da emissão deste documento pode ser realizada através do site:<br />
-        <a href="https://uninter-meudiploma.online" style={{ color: "#000", textDecoration: "none" }}>https://uninter-meudiploma.online</a><br />
-        Documento emitido às 15:01:39 do dia {f.expedicao_historico}.<br />
-        Código de Validação / Controle do documento: {meta.codigoValidacao}
-      </div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+      <Page1 f={f} highlightModified={highlightModified} profileKey={profileKey} />
+      <Page2 f={f} highlightModified={highlightModified} profileKey={profileKey} />
+      <Page3 f={f} highlightModified={highlightModified} profileKey={profileKey} />
+      <Page4 />
+      {chunks.map((chunk, idx) => (
+        <GradePage
+          key={idx}
+          f={f}
+          highlightModified={highlightModified}
+          profileKey={profileKey}
+          rows={chunk}
+          isLast={idx === chunks.length - 1}
+        />
+      ))}
     </div>
   );
 }
