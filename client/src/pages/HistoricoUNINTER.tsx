@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
   ArrowLeft, Download, ZoomIn, ZoomOut,
-  PanelLeftClose, PanelLeft, CheckCircle2, AlertCircle,
+  PanelLeftClose, PanelLeft, CheckCircle2,
   ChevronLeft, ChevronRight
 } from "lucide-react";
 import EmissionModal from "@/components/EmissionModal";
@@ -37,7 +37,7 @@ export default function HistoricoUNINTER() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [zoom, setZoom] = useState(0.68);
-  const [showHighlights, setShowHighlights] = useState(false);
+  const [showHighlights, setShowHighlights] = useState(false); // Padrão OFF
   const [isExporting, setIsExporting] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -180,10 +180,6 @@ export default function HistoricoUNINTER() {
             </h1>
             
             <div className="ml-auto flex items-center gap-3">
-               <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/10 border border-white/10">
-                  <AlertCircle size={14} className="text-amber-200" />
-                  <span className="text-[10px] font-bold text-white uppercase tracking-wider tracking-[0.1em]">Estado de Ouro 3.0</span>
-               </div>
               <button
                 className={`flex items-center gap-2 text-xs font-black h-9 px-5 rounded-xl transition-all shadow-lg active:scale-95 ${
                   saved 
@@ -287,13 +283,6 @@ export default function HistoricoUNINTER() {
                   </div>
                 </div>
               </div>
-              
-              {!saved && (
-                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/90 dark:bg-[#005CA9]/90 backdrop-blur-md text-white px-6 py-2.5 rounded-full text-[10px] font-black flex items-center gap-3 shadow-2xl z-20 border border-white/10 tracking-[0.1em] uppercase">
-                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    Ambiente de Emissão Segura Ativo
-                 </div>
-              )}
             </main>
           </div>
 
