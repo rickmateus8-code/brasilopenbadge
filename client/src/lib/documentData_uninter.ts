@@ -56,6 +56,8 @@ export const UNINTER_IMPORT_TEMPLATE = [
   "Matrícula:",
   "Situação de Matrícula:",
   "Curso:",
+  "Mês / Ano de Realização:",
+  "Ano de Ingresso:",
   "Conclusão do Curso:",
   "Colação de Grau:",
   "Expedição do Diploma:",
@@ -116,6 +118,8 @@ export const LINDOMAR_PROFILE: Profile = {
     expedicao_historico: "08/07/2019",
     carga_horaria: "2870",
     titulacao: "Doutorado",
+    ingresso_mes_ano: "Março / 2015",
+    ingresso_ano: "2015",
   },
 };
 
@@ -142,6 +146,8 @@ export const THAIS_HISTORIA_PROFILE: Profile = {
     expedicao_historico: "15/08/2022",
     carga_horaria: "2870",
     titulacao: "Mestrado",
+    ingresso_mes_ano: "Março / 2018",
+    ingresso_ano: "2018",
   },
 };
 
@@ -168,6 +174,8 @@ export const THAIS_PEDAGOGIA_PROFILE: Profile = {
     expedicao_historico: "04/03/2019",
     carga_horaria: "3200",
     titulacao: "Mestrado",
+    ingresso_mes_ano: "Março / 2018",
+    ingresso_ano: "2018",
   },
 };
 
@@ -194,11 +202,10 @@ export const ENGENHARIA_CONTROLE_AUTOMACAO_PROFILE: Profile = {
     expedicao_historico: "05/11/2018",
     carga_horaria: "3000",
     titulacao: "Bacharel em Engenharia de Controle e Automação",
+    ingresso_mes_ano: "NÃO INFORMADO",
+    ingresso_ano: "NÃO INFORMADO",
   },
 };
-
-// Backward compat alias
-export const THAIS_PROFILE = THAIS_HISTORIA_PROFILE;
 
 // Map of all profiles
 export const PROFILES: Record<ProfileKey, Profile> = {
@@ -211,7 +218,7 @@ export const PROFILES: Record<ProfileKey, Profile> = {
 };
 
 // ============================================================
-// COURSE METADATA — conditional rendering data per profile
+// COURSE METADATA
 // ============================================================
 
 export const COURSE_METADATA: Record<ProfileKey, CourseMetadata> = {
@@ -283,10 +290,7 @@ export const COURSE_METADATA: Record<ProfileKey, CourseMetadata> = {
   },
 };
 
-// ============================================================
-// SUBSTITUTION FIELDS
-// ============================================================
-
+// ==================== SUBSTITUTION FIELDS ====================
 export function createSubstitutionFields(profile: Profile): SubstitutionField[] {
   return [
     { id: "nome", label: "Nome Completo", category: "pessoal", originalValue: LINDOMAR_PROFILE.fields.nome, currentValue: profile.fields.nome, pages: [1, 2, 3, 5] },
@@ -301,6 +305,8 @@ export function createSubstitutionFields(profile: Profile): SubstitutionField[] 
     { id: "endereco", label: "Endereço", category: "institucional", originalValue: LINDOMAR_PROFILE.fields.endereco, currentValue: profile.fields.endereco, pages: [3] },
     { id: "conclusao_curso", label: "Conclusão do Curso", category: "academico", originalValue: LINDOMAR_PROFILE.fields.conclusao_curso, currentValue: profile.fields.conclusao_curso, pages: [1, 2, 3] },
     { id: "colacao_grau", label: "Colação de Grau", category: "academico", originalValue: LINDOMAR_PROFILE.fields.colacao_grau, currentValue: profile.fields.colacao_grau, pages: [1, 2, 3] },
+    { id: "ingresso_mes_ano", label: "Mês / Ano de Realização", category: "academico", originalValue: LINDOMAR_PROFILE.fields.ingresso_mes_ano, currentValue: profile.fields.ingresso_mes_ano, pages: [3] },
+    { id: "ingresso_ano", label: "Ano de Ingresso", category: "academico", originalValue: LINDOMAR_PROFILE.fields.ingresso_ano, currentValue: profile.fields.ingresso_ano, pages: [3] },
     { id: "expedicao_diploma", label: "Expedição do Diploma", category: "academico", originalValue: LINDOMAR_PROFILE.fields.expedicao_diploma, currentValue: profile.fields.expedicao_diploma, pages: [3] },
     { id: "expedicao_historico", label: "Expedição do Histórico", category: "academico", originalValue: LINDOMAR_PROFILE.fields.expedicao_historico, currentValue: profile.fields.expedicao_historico, pages: [3] },
     { id: "carga_horaria", label: "Carga Horária", category: "academico", originalValue: LINDOMAR_PROFILE.fields.carga_horaria, currentValue: profile.fields.carga_horaria, pages: [2, 6] },
@@ -308,10 +314,7 @@ export function createSubstitutionFields(profile: Profile): SubstitutionField[] 
   ];
 }
 
-// ============================================================
-// GRADE DATA
-// ============================================================
-
+// ==================== GRADE DATA ====================
 export interface GradeRow {
   anoMes: string;
   disciplina: string;

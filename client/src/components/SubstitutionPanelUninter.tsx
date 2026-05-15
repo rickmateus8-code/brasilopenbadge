@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { UserRoundPen, RotateCcw, ArrowRightLeft, ChevronDown, ChevronRight, Copy, FileText, WandSparkles } from "lucide-react";
+import { UserRoundPen, RotateCcw, ArrowRightLeft, ChevronDown, ChevronRight, Copy, FileText, WandSparkles, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { UNINTER_IMPORT_TEMPLATE } from "@/lib/documentData_uninter";
 
@@ -84,30 +84,35 @@ export default function SubstitutionPanel({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-white dark:bg-slate-950 border-r dark:border-slate-800">
       {/* Header do Painel */}
-      <div className="p-4 border-b border-gray-100 space-y-3 bg-gray-50/50">
+      <div className="p-5 border-b border-slate-100 dark:border-slate-800 space-y-4 bg-slate-50/50 dark:bg-slate-900/50">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
-             <div className="w-1.5 h-4 bg-amber-500 rounded-full" />
-             Edição de Conteúdo
+          <h3 className="text-[13px] font-black text-slate-800 dark:text-slate-100 flex items-center gap-2 uppercase tracking-tight">
+             <div className="w-1.5 h-4 bg-[#005CA9] rounded-full shadow-sm shadow-blue-500/50" />
+             Painel de Edição
           </h3>
-          <Button size="sm" variant="ghost" className="text-[10px] h-7 text-gray-400 hover:text-red-500 hover:bg-red-50 px-2" onClick={onReset}>
-            <RotateCcw size={12} className="mr-1" /> Resetar Tudo
+          <Button 
+            size="sm" 
+            variant="ghost" 
+            className="text-[10px] h-7 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 px-2 font-bold" 
+            onClick={onReset}
+          >
+            <RotateCcw size={12} className="mr-1" /> Resetar
           </Button>
         </div>
         {modifiedCount > 0 && (
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-amber-50 border border-amber-100 w-fit">
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-            <span className="text-[11px] font-bold text-amber-700">{modifiedCount} campos modificados</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 w-fit">
+            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse shadow-sm" />
+            <span className="text-[11px] font-bold text-blue-700 dark:text-blue-300">{modifiedCount} campos customizados</span>
           </div>
         )}
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-2">
         {/* Escolha do Curso */}
-        <div className="p-4 border-b border-gray-100 bg-white">
-          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-3">Selecione o Modelo Base</p>
+        <div className="p-3 mb-2 rounded-2xl bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+          <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] mb-4 ml-1">Modelo Acadêmico</p>
           <div className="space-y-2">
             {HISTORICO_BUTTONS.map((pb) => {
               const isActive = activeHistorico === pb.key;
@@ -115,16 +120,17 @@ export default function SubstitutionPanel({
                 <button
                   key={pb.key}
                   onClick={() => onApplyHistorico(pb.key)}
-                  className={`w-full text-left px-3 py-2.5 rounded-xl border text-[11px] font-bold transition-all flex items-center gap-2 ${
+                  className={`w-full text-left px-4 py-3 rounded-2xl border text-[11px] font-black transition-all flex items-center gap-3 group relative overflow-hidden ${
                     isActive
-                      ? "border-amber-500 bg-amber-50 text-amber-700 shadow-sm"
-                      : "border-gray-100 bg-white text-gray-600 hover:border-gray-200 hover:bg-gray-50"
+                      ? "border-[#005CA9] bg-blue-50/50 dark:bg-blue-900/10 text-[#005CA9] dark:text-blue-400 shadow-sm"
+                      : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400 hover:border-blue-200 dark:hover:border-blue-800"
                   }`}
                 >
-                  <div className={`p-1 rounded-md ${isActive ? "bg-amber-500 text-white" : "bg-gray-100 text-gray-400"}`}>
-                    <ArrowRightLeft size={12} />
+                  <div className={`p-2 rounded-xl transition-all ${isActive ? "bg-[#005CA9] text-white shadow-md shadow-blue-300/30" : "bg-slate-50 dark:bg-slate-900 text-slate-400 group-hover:text-blue-500"}`}>
+                    <ArrowRightLeft size={13} />
                   </div>
-                  <span className="flex-1 truncate">{pb.label}</span>
+                  <span className="flex-1 truncate uppercase">{pb.label}</span>
+                  {isActive && <Sparkles size={14} className="text-blue-400 animate-pulse" />}
                 </button>
               );
             })}
@@ -132,80 +138,80 @@ export default function SubstitutionPanel({
         </div>
 
         {/* Importação Rápida */}
-        <div className="p-4 border-b border-gray-100 space-y-4 bg-white">
-          <h4 className="text-[11px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
-            <FileText size={13} className="text-amber-600" /> Importação Rápida
+        <div className="p-4 mb-4 rounded-2xl bg-slate-50 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-800 space-y-4">
+          <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] flex items-center gap-2">
+            <FileText size={13} className="text-[#005CA9]" /> Importação Inteligente
           </h4>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-[10px] font-bold text-gray-400 uppercase">1. Modelo para Cliente</label>
+              <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase">Script do Cliente</label>
               <Button
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="h-6 px-2 text-[10px] text-amber-600 hover:bg-amber-50 font-bold"
+                className="h-6 px-2 text-[10px] text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/20 font-black"
                 onClick={handleCopyTemplate}
               >
                 <Copy size={11} className="mr-1" />
-                Copiar Modelo
+                Copiar
               </Button>
             </div>
-            <div className="p-2.5 rounded-lg border border-gray-100 bg-gray-50 text-[10px] leading-relaxed text-gray-600 font-mono h-24 overflow-y-auto whitespace-pre select-all">
+            <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-[10px] leading-relaxed text-slate-500 font-mono h-24 overflow-y-auto whitespace-pre select-all custom-scrollbar">
               {UNINTER_IMPORT_TEMPLATE}
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-gray-400 uppercase block">2. Colar Resposta</label>
+          <div className="space-y-3">
+            <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase block">Resposta Preenchida</label>
             <Textarea
               value={importText}
               onChange={(e) => onUpdateImportText(e.target.value)}
-              placeholder="Cole os dados preenchidos aqui para preencher automaticamente aluno e notas..."
-              className="min-h-24 text-[11px] bg-white border-gray-200 text-gray-800 resize-none focus-visible:ring-amber-500"
+              placeholder="Cole os dados aqui..."
+              className="min-h-24 text-[11px] bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 resize-none focus-visible:ring-[#005CA9] rounded-xl"
             />
             <Button
               type="button"
-              className="w-full h-9 text-xs bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-md shadow-amber-200"
+              className="w-full h-10 text-xs bg-[#005CA9] hover:bg-[#004a8a] text-white font-black shadow-lg shadow-blue-500/20 rounded-xl transition-all active:scale-95"
               onClick={onApplyImportText}
             >
-              ⚡ PROCESSAR E PREENCHER
+              <Sparkles size={14} className="mr-2" /> PROCESSAR E PREENCHER
             </Button>
           </div>
         </div>
 
         {/* Categorias */}
-        <div className="p-3 space-y-2 pb-10">
+        <div className="space-y-3 pb-12">
           {grouped.map((group) => {
             const isExpanded = expandedCategories[group.category];
-            const modifiedCount = group.items.filter((i) => i.currentValue !== i.originalValue).length;
+            const modifiedInGroup = group.items.filter((i) => i.currentValue !== i.originalValue).length;
 
             return (
-              <div key={group.category} className={`rounded-xl border transition-all ${isExpanded ? "border-amber-200 bg-amber-50/20 shadow-sm" : "border-gray-100 bg-white"}`}>
+              <div key={group.category} className={`rounded-2xl border transition-all ${isExpanded ? "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/10 shadow-sm" : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950"}`}>
                 <button
                   type="button"
-                  className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${isExpanded ? "bg-amber-50/50" : "hover:bg-gray-50"}`}
+                  className={`w-full flex items-center gap-3 px-4 py-4 text-left transition-colors rounded-t-2xl ${isExpanded ? "bg-slate-50/50 dark:bg-slate-900/50" : "hover:bg-slate-50 dark:hover:bg-slate-900/30"}`}
                   onClick={() => toggleCategory(group.category)}
                 >
-                  <div className={`p-1.5 rounded-lg ${isExpanded ? "bg-amber-500 text-white" : "bg-gray-100 text-gray-400"}`}>
+                  <div className={`p-2 rounded-xl ${isExpanded ? "bg-[#005CA9] text-white shadow-md shadow-blue-300/30" : "bg-slate-100 dark:bg-slate-800 text-slate-400"}`}>
                     <UserRoundPen size={14} className="shrink-0" />
                   </div>
-                  <span className={`text-xs font-bold flex-1 ${isExpanded ? "text-amber-900" : "text-gray-700"}`}>{group.label}</span>
+                  <span className={`text-[11px] font-black uppercase tracking-tight flex-1 ${isExpanded ? "text-slate-800 dark:text-slate-100" : "text-slate-500 dark:text-slate-400"}`}>{group.label}</span>
                   <div className="flex items-center gap-2">
-                     {modifiedCount > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-600">{modifiedCount} mod.</span>}
-                     {isExpanded ? <ChevronDown size={14} className="text-amber-500" /> : <ChevronRight size={14} className="text-gray-300" />}
+                     {modifiedInGroup > 0 && <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-blue-500 text-white shadow-sm">{modifiedInGroup}</span>}
+                     {isExpanded ? <ChevronDown size={14} className="text-blue-500" /> : <ChevronRight size={14} className="text-slate-300 dark:text-slate-700" />}
                   </div>
                 </button>
                 {isExpanded && (
-                  <div className="px-4 pb-4 pt-1 space-y-4">
+                  <div className="px-5 pb-5 pt-2 space-y-5">
                     {group.items.map((field) => {
                       const isModified = field.currentValue !== field.originalValue;
                       const isMatricula = field.id === "matricula";
                       return (
-                        <div key={field.id} className="space-y-1">
+                        <div key={field.id} className="space-y-1.5 group/field">
                           <div className="flex items-center justify-between">
-                            <label className="text-[10px] font-bold text-gray-500 uppercase">{field.label}</label>
-                            <span className="text-[9px] text-gray-400 font-mono">Págs: {field.pages.join(", ")}</span>
+                            <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wide group-hover/field:text-blue-500 transition-colors">{field.label}</label>
+                            <span className="text-[9px] text-slate-300 dark:text-slate-700 font-black">PÁG: {field.pages.join(", ")}</span>
                           </div>
 
                           {isMatricula ? (
@@ -213,34 +219,34 @@ export default function SubstitutionPanel({
                               <Input
                                 value={field.currentValue}
                                 onChange={(e) => onUpdateField(field.id, e.target.value)}
-                                className={`h-9 text-xs border-gray-200 focus-visible:ring-amber-500 transition-all ${
-                                  isModified ? "border-amber-500 bg-amber-50" : "bg-white"
+                                className={`h-10 text-xs border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus-visible:ring-[#005CA9] transition-all rounded-xl ${
+                                  isModified ? "border-blue-400 dark:border-blue-600 bg-blue-50/20 shadow-sm" : ""
                                 }`}
-                                placeholder="Formato: 1022071"
+                                placeholder="1022071"
                               />
                               <Button
                                 type="button"
                                 size="sm"
                                 variant="outline"
-                                className="h-9 px-3 text-[10px] border-amber-200 text-amber-700 font-bold hover:bg-amber-50"
+                                className="h-10 px-3 text-[10px] border-blue-200 dark:border-blue-900 text-blue-700 dark:text-blue-400 font-black hover:bg-blue-50 dark:hover:bg-blue-950/20 rounded-xl"
                                 onClick={onGenerateMatricula}
                               >
-                                <WandSparkles size={11} className="mr-1" />
-                                Gerar
+                                <WandSparkles size={12} />
                               </Button>
                             </div>
                           ) : (
                             <Input
                               value={field.currentValue}
                               onChange={(e) => onUpdateField(field.id, e.target.value)}
-                              className={`h-9 text-xs border-gray-200 focus-visible:ring-amber-500 transition-all ${
-                                isModified ? "border-amber-500 bg-amber-50" : "bg-white"
+                              className={`h-10 text-xs border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus-visible:ring-[#005CA9] transition-all rounded-xl ${
+                                isModified ? "border-blue-400 dark:border-blue-600 bg-blue-50/20 shadow-sm" : ""
                               }`}
                             />
                           )}
                           {isModified && (
-                            <div className="text-[9px] text-gray-400 italic flex items-center gap-1">
-                              Original: <span className="line-through">{field.originalValue || "(vazio)"}</span>
+                            <div className="text-[9px] text-slate-400 dark:text-slate-600 italic flex items-center gap-1.5 ml-1">
+                              <span className="font-black text-[8px] uppercase not-italic">Original:</span>
+                              <span className="line-through">{field.originalValue || "(vazio)"}</span>
                             </div>
                           )}
                         </div>

@@ -1,5 +1,5 @@
 /**
- * DocumentPages — Histórico UNINTER
+ * DocumentPages — Histórico UNINTER Elite
  * Todas as classes CSS foram convertidas para estilos inline para garantir
  * que o layout funcione sem depender de CSS global no DocMaster.
  */
@@ -8,6 +8,7 @@ import {
   COURSE_METADATA, getGradesForProfile,
   type GradeRow, type ProfileKey,
 } from "@/lib/documentData_uninter";
+import React from "react";
 
 interface Props {
   f: Record<string, string>;
@@ -86,28 +87,28 @@ function V({ val, orig, highlight }: { val: string; orig: string; highlight?: bo
 
 function GradeTable({ rows }: { rows: GradeRow[] }) {
   return (
-    <table style={TABLE_STYLE}>
+    <table style={{ ...TABLE_STYLE, tableLayout: "fixed" }}>
       <thead>
-        <tr>
-          <th style={{ ...TH_STYLE, width: 50 }}>Ano/Mês*</th>
-          <th style={TH_STYLE}>Disciplinas</th>
-          <th style={{ ...TH_STYLE, width: 30 }}>C.H.</th>
-          <th style={{ ...TH_STYLE, width: 30 }}>Média</th>
-          <th style={{ ...TH_STYLE, width: 70 }}>Resultado</th>
-          <th style={{ ...TH_STYLE, width: 120 }}>Docente</th>
-          <th style={{ ...TH_STYLE, width: 75 }}>Titulação</th>
+        <tr style={{ height: "24pt" }}>
+          <th style={{ ...TH_STYLE, width: "55px", verticalAlign: "bottom" }}>Ano/Mês*</th>
+          <th style={{ ...TH_STYLE, verticalAlign: "bottom" }}>Disciplinas</th>
+          <th style={{ ...TH_STYLE, width: "38px", textAlign: "center", verticalAlign: "bottom" }}>C.H.</th>
+          <th style={{ ...TH_STYLE, width: "38px", textAlign: "center", verticalAlign: "bottom" }}>Média</th>
+          <th style={{ ...TH_STYLE, width: "75px", textAlign: "center", verticalAlign: "bottom" }}>Resultado</th>
+          <th style={{ ...TH_STYLE, width: "135px", textAlign: "center", verticalAlign: "bottom" }}>Docente</th>
+          <th style={{ ...TH_STYLE, width: "85px", verticalAlign: "bottom" }}>Titulação</th>
         </tr>
       </thead>
       <tbody>
         {rows.map((r, i) => (
-          <tr key={i}>
-            <td style={TD_STYLE}>{r.anoMes}</td>
-            <td style={TD_STYLE}>{r.disciplina}</td>
+          <tr key={i} style={{ height: "15pt" }}>
+            <td style={{ ...TD_STYLE, whiteSpace: "nowrap" }}>{r.anoMes}</td>
+            <td style={{ ...TD_STYLE, lineHeight: "1.1", wordBreak: "break-word", overflow: "hidden" }}>{r.disciplina}</td>
             <td style={{ ...TD_STYLE, textAlign: "center" }}>{r.ch}</td>
             <td style={{ ...TD_STYLE, textAlign: "center" }}>{r.media}</td>
             <td style={{ ...TD_STYLE, textAlign: "center" }}>{r.resultado}</td>
-            <td style={{ ...TD_STYLE, textAlign: "center" }}>{r.docente}</td>
-            <td style={TD_STYLE}>{r.titulacao}</td>
+            <td style={{ ...TD_STYLE, textAlign: "center", fontSize: "7.5pt", whiteSpace: "nowrap", overflow: "hidden" }}>{r.docente}</td>
+            <td style={{ ...TD_STYLE, fontSize: "7.5pt" }}>{r.titulacao}</td>
           </tr>
         ))}
       </tbody>
@@ -116,13 +117,13 @@ function GradeTable({ rows }: { rows: GradeRow[] }) {
 }
 
 function splitGradeRowsSmart(rows: GradeRow[]) {
-  if (rows.length <= 24) {
+  if (rows.length <= 22) {
     return { page5Rows: rows, page6Rows: [] as GradeRow[] };
   }
-  const maxPage5 = 27;
-  const minPage6 = 8;
+  const maxPage5 = 24;
+  const minPage6 = 6;
   let page5Count = Math.min(maxPage5, rows.length - minPage6);
-  if (page5Count < 20) page5Count = Math.min(20, rows.length);
+  if (page5Count < 15) page5Count = Math.min(15, rows.length);
   return {
     page5Rows: rows.slice(0, page5Count),
     page6Rows: rows.slice(page5Count),
@@ -186,7 +187,7 @@ function DocFooter({ profileKey }: { profileKey?: ProfileKey }) {
         <span style={{ textDecoration: "underline" }}>secretariageral@uninter.com</span>
       </div>
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", margin: "6px 0" }}>
-        <img src={SELO_URL} alt="Selo UNINTER" style={{ width: 80, height: "auto", display: "block" }} />
+        <img src={SELO_URL} alt="Selo UNINTER" crossOrigin="anonymous" style={{ width: 80, height: "auto", display: "block" }} />
       </div>
       <div style={{ fontSize: "7pt", textAlign: "justify", marginTop: 4, lineHeight: 1.25, wordSpacing: "1px" }}>
         ESTE DOCUMENTO É EMITIDO EXCLUSIVAMENTE PELA SECRETARIA GERAL DE GESTÃO ACADÊMICA DO CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER.<br />
@@ -203,7 +204,7 @@ function Signature({ showLine = true }: { showLine?: boolean }) {
         <div style={{ borderTop: "1px solid #000", width: "100%", margin: "0 auto 12px auto" }} />
       )}
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-        <img src={ASSINATURA_URL} alt="Assinatura" style={{ width: 90, height: "auto", display: "block" }} />
+        <img src={ASSINATURA_URL} alt="Assinatura" crossOrigin="anonymous" style={{ width: 90, height: "auto", display: "block" }} />
       </div>
       <b style={{ fontSize: "10pt", letterSpacing: "0.3px", display: "block", marginTop: 2 }}>SIMONE RAMOS DE OLIVEIRA</b>
       <span style={{ fontSize: "9.5pt", display: "block", marginTop: 1 }}>Secretária Geral de Gestão Acadêmica</span>
@@ -214,7 +215,7 @@ function Signature({ showLine = true }: { showLine?: boolean }) {
 function Logo() {
   return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: 12 }}>
-      <img src={LOGO_URL} alt="Logo UNINTER" style={{ width: 160, height: "auto", display: "block" }} />
+      <img src={LOGO_URL} alt="Logo UNINTER" crossOrigin="anonymous" style={{ width: 160, height: "auto", display: "block" }} />
     </div>
   );
 }
@@ -234,6 +235,7 @@ export function Page1({ f, highlightModified, profileKey }: Props) {
   const hl = highlightModified;
   const O = "LINDOMAR DE OLIVEIRA DUARTE";
   const meta = getMeta(profileKey);
+  const dateStr = f.dateText || meta.dateText;
   return (
     <div className="doc-page" id="doc-page-1" style={PAGE_STYLE}>
       <Logo />
@@ -262,7 +264,7 @@ export function Page1({ f, highlightModified, profileKey }: Props) {
         -1ª via do <b>DIPLOMA</b>, o qual será emitido e enviado ao Polo de Apoio Presencial no qual está matriculado(a) no prazo de até 120 dias a contar da data da Colação de Grau. O processo de emissão do <b>DIPLOMA</b> pode ser acompanhado através do Portal do Aluno em <i>Serviços e Taxas</i>.
       </p>
 
-      <p style={{ marginTop: 12, fontSize: "10pt" }}>{meta.dateText}</p>
+      <p style={{ marginTop: 12, fontSize: "10pt" }}>{dateStr}</p>
       <Signature showLine={true} />
       <DocFooter profileKey={profileKey} />
     </div>
@@ -273,6 +275,7 @@ export function Page1({ f, highlightModified, profileKey }: Props) {
 export function Page2({ f, highlightModified, profileKey }: Props) {
   const hl = highlightModified;
   const meta = getMeta(profileKey);
+  const dateStr = f.dateText || meta.dateText;
   return (
     <div className="doc-page" id="doc-page-2" style={PAGE_STYLE}>
       <Logo />
@@ -284,7 +287,7 @@ export function Page2({ f, highlightModified, profileKey }: Props) {
         Certificamos que <b><V val={f.nome} orig="LINDOMAR DE OLIVEIRA DUARTE" highlight={hl} /></b>, CPF n.º <V val={f.cpf} orig="247.920.528-23" highlight={hl} />, matriculado(a) sob o registro acadêmico n.º <V val={f.matricula} orig="1022071" highlight={hl} />, concluiu o <b>{meta.cursoCompleto}</b>, nível de Graduação, com carga horária total de <V val={`${f.carga_horaria}h`} orig="2870h" highlight={hl} />, ministrado pelo <b>CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER</b>, mantido pela <b>UNINTER EDUCACIONAL S.A.</b>, credenciado pela Portaria n.º 688 de 25/05/2012, publicada no D.O.U. n.º 102 de 28/05/2012, seção 1, p.23, recredenciado pela Portaria n.º 1.219 de 28/11/2019, publicada no D.O.U. n.º 208, seção 1, p.24. {meta.reconhecimentoInline} tendo colado grau em <V val={f.colacao_grau} orig="08/07/2019" highlight={hl} />.
       </p>
 
-      <p style={{ marginTop: 20, fontSize: "10pt" }}>{meta.dateText}</p>
+      <p style={{ marginTop: 20, fontSize: "10pt" }}>{dateStr}</p>
       <Signature showLine={true} />
       <DocFooter profileKey={profileKey} />
     </div>
@@ -295,6 +298,8 @@ export function Page2({ f, highlightModified, profileKey }: Props) {
 export function Page3({ f, highlightModified, profileKey }: Props) {
   const hl = highlightModified;
   const meta = getMeta(profileKey);
+  const ingressoMesAno = f.ingresso_mes_ano || meta.ingressoMesAno;
+  const ingressoAno = f.ingresso_ano || meta.ingressoAno;
   return (
     <div className="doc-page" id="doc-page-3" style={{ ...PAGE_STYLE, fontSize: "9pt" }}>
       <Logo />
@@ -323,7 +328,7 @@ export function Page3({ f, highlightModified, profileKey }: Props) {
 
       <Fieldset legend="FORMA DE INGRESSO">
         <p style={{ margin: "2px 0" }}><b>Processo Seletivo:</b> VESTIBULAR</p>
-        <p style={{ margin: "2px 0" }}><b>Mês / Ano de Realização:</b> {meta.ingressoMesAno} &nbsp;&nbsp; <b>Ano de Ingresso:</b> {meta.ingressoAno}</p>
+        <p style={{ margin: "2px 0" }}><b>Mês / Ano de Realização:</b> {ingressoMesAno} &nbsp;&nbsp; <b>Ano de Ingresso:</b> {ingressoAno}</p>
       </Fieldset>
 
       <Fieldset legend="DADOS DE CONCLUSÃO">
@@ -360,12 +365,13 @@ export function Page3({ f, highlightModified, profileKey }: Props) {
 // ==================== PAGE 4 ====================
 export function Page4() {
   return (
-    <div className="doc-page" id="doc-page-4" style={{ ...PAGE_STYLE, padding: 0 }}>
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100%", height: "293.47mm" }}>
+    <div className="doc-page" id="doc-page-4" style={{ ...PAGE_STYLE, padding: 0, height: "293.47mm", overflow: "hidden" }}>
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100%", height: "100%" }}>
         <img
           src={SELO_URL}
           alt="Selo UNINTER"
-          style={{ width: 220, height: "auto", display: "block" }}
+          crossOrigin="anonymous"
+          style={{ width: "120mm", height: "auto", display: "block" }}
         />
       </div>
     </div>
@@ -390,7 +396,7 @@ export function Page5({ f, highlightModified, profileKey, gradeRows }: Props) {
         <p style={{ margin: "2px 0" }}><b>Matrícula:</b> <V val={f.matricula} orig="1022071" highlight={hl} /> &nbsp;&nbsp; <b>Situação de Matrícula:</b> <V val={f.situacao_matricula} orig="FORMADO" highlight={hl} /></p>
       </Fieldset>
 
-      <Fieldset legend="COMPONENTES CURRICULARES" style={{ paddingTop: 8 }}>
+      <Fieldset legend="COMPONENTES CURRICULARES" style={{ paddingTop: 10, paddingBottom: 15 }}>
         <GradeTable rows={rows} />
       </Fieldset>
     </div>
@@ -402,6 +408,7 @@ export function Page6({ f, highlightModified, profileKey, gradeRows }: Props) {
   const hl = highlightModified;
   const key = resolveKey(profileKey);
   const meta = getMeta(profileKey);
+  const dateStr = f.dateText || meta.dateText;
   const defaultRows = (() => {
     const { page5, page6 } = getGradesForProfile(key);
     return [...page5, ...page6];
@@ -414,9 +421,9 @@ export function Page6({ f, highlightModified, profileKey, gradeRows }: Props) {
   const mediaGeral = stats.weightedAverage !== null ? stats.weightedAverage.toFixed(2).replace(".", ",") : "-";
   return (
     <div className="doc-page" id="doc-page-6" style={{ ...PAGE_STYLE, fontSize: "8.5pt", paddingTop: "12mm" }}>
-      <div style={{ ...FIELDSET_STYLE, borderTop: "none", paddingTop: 3, position: "relative" }}>
+      <div style={{ ...FIELDSET_STYLE, borderTop: "none", paddingTop: 5, position: "relative", paddingBottom: 20 }}>
         <GradeTable rows={page6Rows} />
-        <div style={{ marginTop: 6, fontSize: "9pt", lineHeight: 1.3 }}>
+        <div style={{ marginTop: 15, fontSize: "9pt", lineHeight: 1.3 }}>
           <b>Carga Horária Cursada:</b> <V val={cargaHorariaValor} orig="2870h" highlight={hl} /> &nbsp;&nbsp;&nbsp;
           <b>Carga Horária Total do Curso:</b> <V val={cargaHorariaValor} orig="2870h" highlight={hl} />
           {isEngenharia && (
@@ -430,7 +437,7 @@ export function Page6({ f, highlightModified, profileKey, gradeRows }: Props) {
         </div>
       </div>
 
-      <p style={{ marginTop: 12, fontSize: "10pt" }}>{meta.dateText}</p>
+      <p style={{ marginTop: 12, fontSize: "10pt" }}>{dateStr}</p>
       <Signature showLine={false} />
 
       <div style={{ textAlign: "center", fontSize: "8.5pt", margin: "6px 0", lineHeight: 1.3 }}>
@@ -440,7 +447,7 @@ export function Page6({ f, highlightModified, profileKey, gradeRows }: Props) {
       </div>
 
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", margin: "6px 0" }}>
-        <img src={SELO_URL} alt="Selo UNINTER" style={{ width: 80, height: "auto", display: "block" }} />
+        <img src={SELO_URL} alt="Selo UNINTER" crossOrigin="anonymous" style={{ width: 80, height: "auto", display: "block" }} />
       </div>
 
       <div style={{ fontSize: "7pt", textAlign: "justify", marginTop: 4, lineHeight: 1.25, wordSpacing: "1px" }}>
