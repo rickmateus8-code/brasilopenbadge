@@ -10,9 +10,19 @@ import {
 } from "@/lib/documentData_uninter";
 
 const HISTORICO_TO_PROFILE: Record<HistoricoDisponivelKey, ProfileKey> = {
-  historia: "historia",
-  pedagogia: "pedagogia",
+  administracao: "administracao",
+  ciencias_contabeis: "ciencias_contabeis",
+  direito: "direito",
+  enfermagem: "enfermagem",
   engenharia_controle_automacao: "engenharia_controle_automacao",
+  gestao_recursos_humanos: "gestao_recursos_humanos",
+  historia: "historia",
+  letras: "letras",
+  marketing: "marketing",
+  pedagogia: "pedagogia",
+  psicologia: "psicologia",
+  servico_social: "servico_social",
+  teologia: "teologia",
 };
 
 const DEFAULT_HISTORICO: HistoricoDisponivelKey = "historia";

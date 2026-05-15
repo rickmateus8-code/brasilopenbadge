@@ -1,9 +1,9 @@
 /**
- * Histórico UNINTER — DocMaster Elite 3.0
+ * Histórico UNINTER — DocMaster Elite 3.0 (Universal)
  * Layout: UninterDocument (réplica visual do histórico UNINTER — Paginação Inteligente)
  * Fluxo: DocMaster (useAuth, fetch, EmissionModal, jsPDF + html2canvas)
  */
-import { useState, useCallback, useRef, useMemo } from "react";
+import { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -63,19 +63,48 @@ export default function HistoricoUNINTER() {
 
   const effectiveDateText = useMemo(() => formatDateExtenso(fieldMap.expedicao_diploma || ""), [fieldMap.expedicao_diploma]);
 
-  // Paginação dinâmica baseada nas notas
+  // Paginação dinâmica baseada nas notas e regras de curso
+  const showPage4 = activeHistorico !== "pedagogia";
+
   const gradeChunks = useMemo(() => {
     const remaining = [...gradeRows];
     const chunks: any[][] = [];
-    while (remaining.length > 0) {
-      const isLastPage = remaining.length <= 18;
-      const count = isLastPage ? remaining.length : 26;
-      chunks.push(remaining.splice(0, count));
+    if (remaining.length === 0) {
+       chunks.push([{ anoMes: "", disciplina: "Nenhuma disciplina informada", ch: "", media: "", resultado: "", docente: "", titulacao: "" }]);
+    } else {
+      while (remaining.length > 0) {
+        const isLastPage = remaining.length <= 18;
+        const count = isLastPage ? remaining.length : 26;
+        chunks.push(remaining.splice(0, count));
+      }
     }
     return chunks;
   }, [gradeRows]);
 
-  const totalPages = 4 + gradeChunks.length;
+  // Construir array de páginas reais para navegação
+  const pageList = useMemo(() => {
+    const list: { id: string; label: string; type: string; chunkIdx?: number }[] = [
+      { id: "p1", label: "Pág 1: Informativo", type: "fixed" },
+      { id: "p2", label: "Pág 2: Certificado", type: "fixed" },
+      { id: "p3", label: "Pág 3: Histórico", type: "fixed" },
+    ];
+    if (showPage4) {
+      list.push({ id: "p4", label: "Pág 4: Selo", type: "fixed" });
+    }
+    gradeChunks.forEach((_, i) => {
+      list.push({ id: `g${i}`, label: `Grade Pág ${i + 1}`, type: "grade", chunkIdx: i });
+    });
+    return list;
+  }, [showPage4, gradeChunks]);
+
+  const totalPages = pageList.length;
+
+  // Ajustar página atual se o total diminuir (ex: mudou pra pedagogia)
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
 
   const goToPage = useCallback((page: number) => {
     if (page >= 1 && page <= totalPages) setCurrentPage(page);
@@ -146,43 +175,37 @@ export default function HistoricoUNINTER() {
 
   const handleResetAll = useCallback(() => {
     resetToOriginal();
-    toast.success("Formulário resetado");
+    toast.success("Formulário resetado (Hard Reset)");
   }, [resetToOriginal]);
 
   const renderCurrentPage = () => {
+    const pageData = pageList[currentPage - 1];
+    if (!pageData) return null;
+
     const props = { 
       f: { ...fieldMap, dateText: effectiveDateText }, 
       highlightModified: showHighlights, 
       profileKey: activeProfile,
     };
     
-    if (currentPage <= 3) {
-      if (currentPage === 1) return <Page1 {...props} />;
-      if (currentPage === 2) return <Page2 {...props} />;
-      if (currentPage === 3) return <Page3 {...props} />;
+    if (pageData.type === "fixed") {
+      if (pageData.id === "p1") return <Page1 {...props} />;
+      if (pageData.id === "p2") return <Page2 {...props} />;
+      if (pageData.id === "p3") return <Page3 {...props} />;
+      if (pageData.id === "p4") return <Page4 />;
     }
-    if (currentPage === 4) return <Page4 />;
     
-    const chunkIdx = currentPage - 5;
-    if (gradeChunks[chunkIdx]) {
+    if (pageData.type === "grade" && pageData.chunkIdx !== undefined) {
       return (
         <GradePage
           {...props}
-          rows={gradeChunks[chunkIdx]}
-          isLast={chunkIdx === gradeChunks.length - 1}
+          rows={gradeChunks[pageData.chunkIdx]}
+          isLast={pageData.chunkIdx === gradeChunks.length - 1}
         />
       );
     }
     return <Page1 {...props} />;
   };
-
-  const pageLabels = useMemo(() => [
-    "Pág 1: Informativo",
-    "Pág 2: Certificado",
-    "Pág 3: Histórico",
-    "Pág 4: Selo",
-    ...gradeChunks.map((_, i) => `Grade Pág ${i + 1}`)
-  ], [gradeChunks]);
 
   return (
     <>
@@ -254,15 +277,15 @@ export default function HistoricoUNINTER() {
                     <ChevronLeft size={18} />
                   </button>
                   <div className="flex gap-1 overflow-x-auto max-w-[300px] scrollbar-hide">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                    {pageList.map((p, i) => (
                       <button
-                        key={p}
-                        onClick={() => goToPage(p)}
+                        key={p.id}
+                        onClick={() => goToPage(i + 1)}
                         className={`h-7 min-w-[28px] px-2 rounded-lg text-[10px] font-bold transition-all shrink-0 ${
-                          p === currentPage ? "bg-[#005CA9] text-white shadow-md shadow-blue-200" : "text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800"
+                          (i + 1) === currentPage ? "bg-[#005CA9] text-white shadow-md shadow-blue-200" : "text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800"
                         }`}
                       >
-                        {p}
+                        {i + 1}
                       </button>
                     ))}
                   </div>
@@ -276,7 +299,7 @@ export default function HistoricoUNINTER() {
                 </div>
 
                 <div className="h-6 w-px bg-gray-200 dark:bg-slate-800 ml-2" />
-                <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest truncate max-w-[150px]">{pageLabels[currentPage - 1]}</span>
+                <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest truncate max-w-[150px]">{pageList[currentPage - 1]?.label}</span>
 
                 <div className="ml-auto flex items-center gap-3">
                   <button
@@ -314,6 +337,7 @@ export default function HistoricoUNINTER() {
               data={{ ...fieldMap, dateText: effectiveDateText }}
               gradeRows={gradeRows}
               profileKey={activeProfile}
+              highlightModified={showHighlights}
             />
           </div>
       </div>

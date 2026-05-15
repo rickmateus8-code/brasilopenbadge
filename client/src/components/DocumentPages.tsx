@@ -1,5 +1,5 @@
 /**
- * DocumentPages — Histórico UNINTER Elite 3.0
+ * DocumentPages — Histórico UNINTER Elite 3.0 (Universal)
  * Todas as classes CSS foram convertidas para estilos inline para garantir
  * que o layout funcione sem depender de CSS global no DocMaster.
  */
@@ -148,7 +148,7 @@ function computeGradeStats(rows: GradeRow[]) {
 }
 
 function resolveKey(profileKey?: ProfileKey): ProfileKey {
-  return profileKey || "lindomar";
+  return profileKey || "historia";
 }
 
 function getMeta(profileKey?: ProfileKey) {
@@ -158,7 +158,7 @@ function getMeta(profileKey?: ProfileKey) {
 // ── Shared components ─────────────────────────────────────────────────────────
 function DocFooter({ f, profileKey }: { f: any; profileKey?: ProfileKey }) {
   const meta = getMeta(profileKey);
-  const secretaria = f.nome_secretaria || "SIMONE RAMOS DE OLIVEIRA";
+  const polo = f.instituicao_polo || "CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER | POLO CURITIBA (CENTRO) - PR";
   return (
     <>
       <div style={{ textAlign: "center", fontStyle: "italic", fontSize: "8.5pt", margin: "8px 0", lineHeight: 1.3 }}>
@@ -169,7 +169,7 @@ function DocFooter({ f, profileKey }: { f: any; profileKey?: ProfileKey }) {
         a partir dos dados contidos no rodapé deste documento.
       </div>
       <div style={{ textAlign: "center", fontSize: "8.5pt", margin: "6px 0", lineHeight: 1.3 }}>
-        <b>{meta.unidadeLabel}</b> {meta.unidadeEndereco}<br />
+        <b>{meta.unidadeLabel}</b> {f.endereco || meta.unidadeEndereco}<br />
         <b>Contatos:</b> 41 3593 2900 |{" "}
         <span style={{ textDecoration: "none" }}>secretariageral@uninter.com</span>
       </div>
@@ -221,10 +221,10 @@ function Fieldset({ legend, children, style }: { legend: string; children: React
 // ==================== PAGE 1 ====================
 export function Page1({ f, highlightModified, profileKey }: Props) {
   const hl = highlightModified;
-  const O = "LINDOMAR DE OLIVEIRA DUARTE";
   const meta = getMeta(profileKey);
   const dateStr = f.dateText || meta.dateText;
   const reitor = f.nome_reitor || "Professor Dr. Benhur Etelberto Gaio";
+  const secretaria = f.nome_secretaria || "SIMONE RAMOS DE OLIVEIRA";
   const reconhecimento = f.reconhecimento || meta.reconhecimento;
   return (
     <div className="doc-page" id="doc-page-1" style={PAGE_STYLE}>
@@ -236,7 +236,7 @@ export function Page1({ f, highlightModified, profileKey }: Props) {
 
       <p style={{ fontWeight: "bold", margin: "10px 0 4px 0", fontSize: "10pt" }}>COLAÇÃO DE GRAU:</p>
       <p style={{ textAlign: "justify", margin: "0 0 6px 0", lineHeight: 1.35, fontSize: "10pt" }}>
-        Aos {f.colacao_grau} o <b>Centro Universitário Internacional UNINTER</b>, através da Secretaria Geral de Gestão Acadêmica, <V val={f.nome_secretaria} orig="SIMONE RAMOS DE OLIVEIRA" highlight={hl} />, em nome do magnífico Reitor, <V val={reitor} orig="Professor Dr. Benhur Etelberto Gaio" highlight={hl} />, vem informar que o(a) aluno(a) <b><V val={f.nome} orig={O} highlight={hl} /></b>, CPF n.º <V val={f.cpf} orig="247.920.528-23" highlight={hl} />, matriculado(a) sob o registro acadêmico n.º <V val={f.matricula} orig="1022071" highlight={hl} />, Colou Grau no <b>{f.curso || meta.cursoCompleto}</b>, nível de Graduação, por ter cumprido todas as exigências curriculares do curso.
+        Aos {f.colacao_grau} o <b>Centro Universitário Internacional UNINTER</b>, através da Secretaria Geral de Gestão Acadêmica, <V val={secretaria} orig="SIMONE RAMOS DE OLIVEIRA" highlight={hl} />, em nome do magnífico Reitor, <V val={reitor} orig="Professor Dr. Benhur Etelberto Gaio" highlight={hl} />, vem informar que o(a) aluno(a) <b><V val={f.nome} orig="" highlight={hl} /></b>, CPF n.º <V val={f.cpf} orig="" highlight={hl} />, matriculado(a) sob o registro acadêmico n.º <V val={f.matricula} orig="" highlight={hl} />, Colou Grau no <b>{f.curso || meta.cursoCompleto}</b>, nível de Graduação, por ter cumprido todas as exigências curriculares do curso.
       </p>
 
       <p style={{ fontWeight: "bold", margin: "10px 0 4px 0", fontSize: "10pt" }}>EVENTO FESTIVO DE COLAÇÃO DE GRAU:</p>
@@ -275,7 +275,7 @@ export function Page2({ f, highlightModified, profileKey }: Props) {
       </div>
 
       <p style={{ textAlign: "justify", marginTop: 10, lineHeight: 1.4, fontSize: "10pt" }}>
-        Certificamos que <b><V val={f.nome} orig="LINDOMAR DE OLIVEIRA DUARTE" highlight={hl} /></b>, CPF n.º <V val={f.cpf} orig="247.920.528-23" highlight={hl} />, matriculado(a) sob o registro acadêmico n.º <V val={f.matricula} orig="1022071" highlight={hl} />, concluiu o <b>{f.curso || meta.cursoCompleto}</b>, nível de Graduação, com carga horária total de <V val={`${f.carga_horaria}h`} orig="2870h" highlight={hl} />, ministrado pelo <b>CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER</b>, mantido pela <b>UNINTER EDUCACIONAL S.A.</b>, credenciado pela Portaria n.º 688 de 25/05/2012, publicada no D.O.U. n.º 102 de 28/05/2012, seção 1, p.23, recredenciado pela Portaria n.º 1.219 de 28/11/2019, publicada no D.O.U. n.º 208, seção 1, p.24. <V val={reconhecimento} orig={meta.reconhecimento} highlight={hl} />, tendo colado grau em <V val={f.colacao_grau} orig="08/07/2019" highlight={hl} />.
+        Certificamos que <b><V val={f.nome} orig="" highlight={hl} /></b>, CPF n.º <V val={f.cpf} orig="" highlight={hl} />, matriculado(a) sob o registro acadêmico n.º <V val={f.matricula} orig="" highlight={hl} />, concluiu o <b>{f.curso || meta.cursoCompleto}</b>, nível de Graduação, com carga horária total de <V val={`${f.carga_horaria}h`} orig="0h" highlight={hl} />, ministrado pelo <b>CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER</b>, mantido pela <b>UNINTER EDUCACIONAL S.A.</b>, credenciado pela Portaria n.º 688 de 25/05/2012, publicada no D.O.U. n.º 102 de 28/05/2012, seção 1, p.23, recredenciado pela Portaria n.º 1.219 de 28/11/2019, publicada no D.O.U. n.º 208, seção 1, p.24. <V val={reconhecimento} orig={meta.reconhecimento} highlight={hl} />, tendo colado grau em <V val={f.colacao_grau} orig="" highlight={hl} />.
       </p>
 
       <p style={{ marginTop: 20, fontSize: "10pt" }}>{dateStr}</p>
@@ -294,7 +294,7 @@ export function Page3({ f, highlightModified, profileKey }: Props) {
   const processoEmec = f.processo_emec || "201605151";
   const reconhecimento = f.reconhecimento || meta.reconhecimento;
   const credenciamento = f.credenciamento || "Portaria n.º 688 de 25/05/2012 publicada no D.O.U. n.º 102 de 28/05/2012, seção 1, p.23. Recredenciado pela Portaria n.º 1.219 de 28/11/2019 publicada no D.O.U. n.º 208, seção 1, p.24";
-  const polo = f.instituicao_polo || "CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER | POLO TIRADENTES (CENTRO) - PR";
+  const polo = f.instituicao_polo || "CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER | POLO CURITIBA (CENTRO) - PR";
   const seletivo = f.processo_seletivo || "VESTIBULAR";
 
   return (
@@ -305,16 +305,16 @@ export function Page3({ f, highlightModified, profileKey }: Props) {
       </div>
 
       <Fieldset legend="IDENTIFICAÇÃO DO ALUNO">
-        <p style={{ margin: "2px 0" }}><b>Nome:</b> <V val={f.nome} orig="LINDOMAR DE OLIVEIRA DUARTE" highlight={hl} /></p>
-        <p style={{ margin: "2px 0" }}><b>CPF:</b> <V val={f.cpf} orig="247.920.528-23" highlight={hl} /> &nbsp;&nbsp; <b>RG:</b> <V val={f.rg} orig="27.204.902-5" highlight={hl} /> - <V val={f.rg_orgao} orig="SSP/SP" highlight={hl} /></p>
-        <p style={{ margin: "2px 0" }}><b>Data de Nascimento/UF:</b> <V val={f.data_nascimento} orig="12/09/1976" highlight={hl} /> / <V val={f.uf_nascimento} orig="PR" highlight={hl} /> &nbsp;&nbsp; <b>Nacionalidade:</b> <V val={f.nacionalidade} orig="BRASILEIRA" highlight={hl} /></p>
-        <p style={{ margin: "2px 0" }}><b>Matrícula:</b> <V val={f.matricula} orig="1022071" highlight={hl} /> &nbsp;&nbsp; <b>Situação de Matrícula:</b> <V val={f.situacao_matricula} orig="FORMADO" highlight={hl} /></p>
+        <p style={{ margin: "2px 0" }}><b>Nome:</b> <V val={f.nome} orig="" highlight={hl} /></p>
+        <p style={{ margin: "2px 0" }}><b>CPF:</b> <V val={f.cpf} orig="" highlight={hl} /> &nbsp;&nbsp; <b>RG:</b> <V val={f.rg} orig="" highlight={hl} /> - <V val={f.rg_orgao} orig="" highlight={hl} /></p>
+        <p style={{ margin: "2px 0" }}><b>Data de Nascimento/UF:</b> <V val={f.data_nascimento} orig="" highlight={hl} /> / <V val={f.uf_nascimento} orig="" highlight={hl} /> &nbsp;&nbsp; <b>Nacionalidade:</b> <V val={f.nacionalidade} orig="" highlight={hl} /></p>
+        <p style={{ margin: "2px 0" }}><b>Matrícula:</b> <V val={f.matricula} orig="" highlight={hl} /> &nbsp;&nbsp; <b>Situação de Matrícula:</b> <V val={f.situacao_matricula} orig="FORMADO" highlight={hl} /></p>
       </Fieldset>
 
       <Fieldset legend="IDENTIFICAÇÃO DA INSTITUIÇÃO">
-        <p style={{ margin: "2px 0" }}><b>Instituição:</b> <V val={polo} orig="CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER | POLO TIRADENTES (CENTRO) - PR" highlight={hl} /></p>
+        <p style={{ margin: "2px 0" }}><b>Instituição:</b> <V val={polo} orig="CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER | POLO CURITIBA (CENTRO) - PR" highlight={hl} /></p>
         <p style={{ margin: "2px 0" }}><b>Ato Autorizativo de Credenciamento e Recredenciamento:</b> <V val={credenciamento} orig="Portaria n.º 688 de 25/05/2012 publicada no D.O.U. n.º 102 de 28/05/2012, seção 1, p.23. Recredenciado pela Portaria n.º 1.219 de 28/11/2019 publicada no D.O.U. n.º 208, seção 1, p.24" highlight={hl} /></p>
-        <p style={{ margin: "2px 0" }}><b>Endereço:</b> <V val={f.endereco} orig="Rua do Rosário, 147 | Centro - Curitiba/PR | CEP 80020-110" highlight={hl} /></p>
+        <p style={{ margin: "2px 0" }}><b>Endereço:</b> <V val={f.endereco} orig="" highlight={hl} /></p>
       </Fieldset>
 
       <Fieldset legend="IDENTIFICAÇÃO DO CURSO">
@@ -325,12 +325,12 @@ export function Page3({ f, highlightModified, profileKey }: Props) {
 
       <Fieldset legend="FORMA DE INGRESSO">
         <p style={{ margin: "2px 0" }}><b>Processo Seletivo:</b> <V val={seletivo} orig="VESTIBULAR" highlight={hl} /></p>
-        <p style={{ margin: "2px 0" }}><b>Mês / Ano de Realização:</b> <V val={ingressoMesAno} orig={meta.ingressoMesAno} highlight={hl} /> &nbsp;&nbsp; <b>Ano de Ingresso:</b> <V val={ingressoAno} orig={meta.ingressoAno} highlight={hl} /></p>
+        <p style={{ margin: "2px 0" }}><b>Mês / Ano de Realização:</b> <V val={ingressoMesAno} orig="NÃO INFORMADO" highlight={hl} /> &nbsp;&nbsp; <b>Ano de Ingresso:</b> <V val={ingressoAno} orig="NÃO INFORMADO" highlight={hl} /></p>
       </Fieldset>
 
       <Fieldset legend="DADOS DE CONCLUSÃO">
-        <p style={{ margin: "2px 0" }}><b>Conclusão do Curso:</b> <V val={f.conclusao_curso} orig="08/07/2019" highlight={hl} /> &nbsp;&nbsp; <b>Colação de Grau:</b> <V val={f.colacao_grau} orig="08/07/2019" highlight={hl} /></p>
-        <p style={{ margin: "2px 0" }}><b>Expedição do Diploma:</b> <V val={f.expedicao_diploma} orig="08/07/2019" highlight={hl} /> &nbsp;&nbsp; <b>Expedição do Histórico de Conclusão:</b> <V val={f.expedicao_historico} orig="08/07/2019" highlight={hl} /></p>
+        <p style={{ margin: "2px 0" }}><b>Conclusão do Curso:</b> <V val={f.conclusao_curso} orig="" highlight={hl} /> &nbsp;&nbsp; <b>Colação de Grau:</b> <V val={f.colacao_grau} orig="" highlight={hl} /></p>
+        <p style={{ margin: "2px 0" }}><b>Expedição do Diploma:</b> <V val={f.expedicao_diploma} orig="" highlight={hl} /> &nbsp;&nbsp; <b>Expedição do Histórico de Conclusão:</b> <V val={f.expedicao_historico} orig="" highlight={hl} /></p>
       </Fieldset>
 
       <Fieldset legend="CRITÉRIOS DE AVALIAÇÃO">
@@ -379,18 +379,14 @@ export function GradePage({ f, highlightModified, profileKey, rows, isLast }: Pr
   const hl = highlightModified;
   const meta = getMeta(profileKey);
   const dateStr = f.dateText || meta.dateText;
-  const stats = computeGradeStats(rows); // This is just for this page? No, we need global stats
-  
-  // Note: f.carga_horaria should be used if not isEngenharia
-  // We need the full list to compute stats, so we'll pass them in or re-compute.
 
   return (
     <div className="doc-page grade-page" style={{ ...PAGE_STYLE, fontSize: "8.5pt", paddingTop: "15mm" }}>
       <Fieldset legend="IDENTIFICAÇÃO DO ALUNO">
-        <p style={{ margin: "2px 0" }}><b>Nome:</b> <V val={f.nome} orig="LINDOMAR DE OLIVEIRA DUARTE" highlight={hl} /></p>
-        <p style={{ margin: "2px 0" }}><b>CPF:</b> <V val={f.cpf} orig="247.920.528-23" highlight={hl} /> &nbsp;&nbsp; <b>RG:</b> <V val={f.rg} orig="27.204.902-5" highlight={hl} /> - <V val={f.rg_orgao} orig="SSP/SP" highlight={hl} /></p>
-        <p style={{ margin: "2px 0" }}><b>Data de Nascimento/UF:</b> <V val={f.data_nascimento} orig="12/09/1976" highlight={hl} /> / <V val={f.uf_nascimento} orig="PR" highlight={hl} /> &nbsp;&nbsp; <b>Nacionalidade:</b> <V val={f.nacionalidade} orig="BRASILEIRA" highlight={hl} /></p>
-        <p style={{ margin: "2px 0" }}><b>Matrícula:</b> <V val={f.matricula} orig="1022071" highlight={hl} /> &nbsp;&nbsp; <b>Situação de Matrícula:</b> <V val={f.situacao_matricula} orig="FORMADO" highlight={hl} /></p>
+        <p style={{ margin: "2px 0" }}><b>Nome:</b> <V val={f.nome} orig="" highlight={hl} /></p>
+        <p style={{ margin: "2px 0" }}><b>CPF:</b> <V val={f.cpf} orig="" highlight={hl} /> &nbsp;&nbsp; <b>RG:</b> <V val={f.rg} orig="" highlight={hl} /> - <V val={f.rg_orgao} orig="" highlight={hl} /></p>
+        <p style={{ margin: "2px 0" }}><b>Data de Nascimento/UF:</b> <V val={f.data_nascimento} orig="" highlight={hl} /> / <V val={f.uf_nascimento} orig="" highlight={hl} /> &nbsp;&nbsp; <b>Nacionalidade:</b> <V val={f.nacionalidade} orig="" highlight={hl} /></p>
+        <p style={{ margin: "2px 0" }}><b>Matrícula:</b> <V val={f.matricula} orig="" highlight={hl} /> &nbsp;&nbsp; <b>Situação de Matrícula:</b> <V val={f.situacao_matricula} orig="FORMADO" highlight={hl} /></p>
       </Fieldset>
 
       <Fieldset legend="COMPONENTES CURRICULARES" style={{ paddingTop: 10, paddingBottom: 15, flex: 1 }}>
@@ -398,7 +394,7 @@ export function GradePage({ f, highlightModified, profileKey, rows, isLast }: Pr
         
         {isLast && (
            <div style={{ marginTop: 15, fontSize: "9pt", lineHeight: 1.3 }}>
-              <b>Carga Horária Total do Curso:</b> <V val={`${f.carga_horaria}h`} orig="2870h" highlight={hl} />
+              <b>Carga Horária Total do Curso:</b> <V val={`${f.carga_horaria}h`} orig="0h" highlight={hl} />
               <br />
               <i>*Ano e mês de início da oferta da disciplina.</i>
            </div>
@@ -426,25 +422,23 @@ export function GradePage({ f, highlightModified, profileKey, rows, isLast }: Pr
 // ==================== MAIN DOCUMENT (SMART PAGINATION) ====================
 export default function UninterDocument({ f, highlightModified, profileKey, gradeRows }: Props) {
   const key = resolveKey(profileKey);
-  const defaultRows = (() => {
-    const { page5, page6 } = getGradesForProfile(key);
-    return [...page5, ...page6];
-  })();
-  const allRows = gradeRows && gradeRows.length > 0 ? gradeRows : defaultRows;
+  const allRows = gradeRows && gradeRows.length > 0 ? gradeRows : [];
 
-  // Smart Pagination Logic
-  // Page 1-4 are fixed.
-  // Page 5+ are grades.
-  // Approx 25 rows per page if no footer.
-  // Approx 15 rows if footer is present.
-  
+  // Rules: Pedagogia hides Page 4
+  const showPage4 = key !== "pedagogia";
+
   const chunks: GradeRow[][] = [];
   let remaining = [...allRows];
   
-  while (remaining.length > 0) {
-    const isLastPage = remaining.length <= 18; // If few rows left, fit on one page with footer
-    const count = isLastPage ? remaining.length : 26;
-    chunks.push(remaining.splice(0, count));
+  if (remaining.length === 0) {
+    // Show at least one empty grade page
+    chunks.push([{ anoMes: "", disciplina: "Nenhuma disciplina informada", ch: "", media: "", resultado: "", docente: "", titulacao: "" }]);
+  } else {
+    while (remaining.length > 0) {
+      const isLastPage = remaining.length <= 18;
+      const count = isLastPage ? remaining.length : 26;
+      chunks.push(remaining.splice(0, count));
+    }
   }
 
   return (
@@ -452,7 +446,7 @@ export default function UninterDocument({ f, highlightModified, profileKey, grad
       <Page1 f={f} highlightModified={highlightModified} profileKey={profileKey} />
       <Page2 f={f} highlightModified={highlightModified} profileKey={profileKey} />
       <Page3 f={f} highlightModified={highlightModified} profileKey={profileKey} />
-      <Page4 />
+      {showPage4 && <Page4 />}
       {chunks.map((chunk, idx) => (
         <GradePage
           key={idx}

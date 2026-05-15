@@ -3,9 +3,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { UserRoundPen, RotateCcw, ArrowRightLeft, ChevronDown, ChevronRight, Copy, FileText, WandSparkles, Sparkles, School, GraduationCap, FileSignature } from "lucide-react";
-import { useState } from "react";
+import { 
+  UserRoundPen, RotateCcw, ChevronDown, ChevronRight, 
+  Copy, FileText, WandSparkles, Sparkles, School, 
+  GraduationCap, LayoutGrid, Search, X
+} from "lucide-react";
+import { useState, useMemo } from "react";
 import { UNINTER_IMPORT_TEMPLATE, HISTORICOS_DISPONIVEIS } from "@/lib/documentData_uninter";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface Props {
   fields: SubstitutionField[];
@@ -51,6 +62,8 @@ export default function SubstitutionPanel({
     academico: true,
     institucional: true,
   });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const toggleCategory = (cat: string) => {
     setExpandedCategories((prev) => ({ ...prev, [cat]: !prev[cat] }));
@@ -62,6 +75,17 @@ export default function SubstitutionPanel({
     Icon: CATEGORY_ICONS[cat],
     items: fields.filter((f) => f.category === cat),
   }));
+
+  const filteredCursos = useMemo(() => {
+    return HISTORICOS_DISPONIVEIS.filter(c => 
+      c.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.shortLabel.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [searchTerm]);
+
+  const activeCursoLabel = useMemo(() => {
+    return HISTORICOS_DISPONIVEIS.find(c => c.key === activeHistorico)?.label || "SELECIONE O CURSO";
+  }, [activeHistorico]);
 
   const handleCopyTemplate = async () => {
     try {
@@ -82,6 +106,12 @@ export default function SubstitutionPanel({
     } catch {
       toast.error("Erro ao copiar modelo.");
     }
+  };
+
+  const handleSelectCurso = (key: HistoricoDisponivelKey) => {
+    onApplyHistorico(key);
+    setIsModalOpen(false);
+    toast.success(`Curso alterado para: ${HISTORICOS_DISPONIVEIS.find(c => c.key === key)?.label}`);
   };
 
   return (
@@ -105,37 +135,83 @@ export default function SubstitutionPanel({
         {modifiedCount > 0 && (
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 w-fit">
             <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse shadow-sm" />
-            <span className="text-[11px] font-bold text-blue-700 dark:text-blue-300">{modifiedCount} campos customizados</span>
+            <span className="text-[11px] font-bold text-blue-700 dark:text-blue-300">{modifiedCount} campos preenchidos</span>
           </div>
         )}
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-2">
-        {/* Escolha do Curso */}
+        {/* Escolha do Curso (Modal Expansivo) */}
         <div className="p-3 mb-2 rounded-2xl bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 shadow-sm">
-          <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] mb-4 ml-1">Modelo Acadêmico</p>
-          <div className="space-y-2">
-            {HISTORICOS_DISPONIVEIS.map((pb) => {
-              const isActive = activeHistorico === pb.key;
-              return (
-                <button
-                  key={pb.key}
-                  onClick={() => onApplyHistorico(pb.key)}
-                  className={`w-full text-left px-4 py-3 rounded-2xl border text-[10px] font-black transition-all flex items-center gap-3 group relative overflow-hidden ${
-                    isActive
-                      ? "border-[#005CA9] bg-blue-50/50 dark:bg-blue-900/10 text-[#005CA9] dark:text-blue-400 shadow-sm"
-                      : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400 hover:border-blue-200 dark:hover:border-blue-800"
-                  }`}
-                >
-                  <div className={`p-2 rounded-xl transition-all ${isActive ? "bg-[#005CA9] text-white shadow-md shadow-blue-300/30" : "bg-slate-50 dark:bg-slate-900 text-slate-400 group-hover:text-blue-500"}`}>
-                    <ArrowRightLeft size={13} />
-                  </div>
-                  <span className="flex-1 truncate uppercase">{pb.label}</span>
-                  {isActive && <Sparkles size={14} className="text-blue-400 animate-pulse" />}
-                </button>
-              );
-            })}
-          </div>
+          <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] mb-3 ml-1">Tipo de Curso</p>
+          
+          <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <DialogTrigger asChild>
+              <button className="w-full text-left px-4 py-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 hover:border-[#005CA9] transition-all flex items-center gap-3 group">
+                <div className="p-2 rounded-lg bg-white dark:bg-slate-800 text-[#005CA9] shadow-sm group-hover:bg-[#005CA9] group-hover:text-white transition-all">
+                  <LayoutGrid size={14} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-black text-slate-800 dark:text-slate-100 truncate uppercase">{activeCursoLabel}</p>
+                  <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Clique para alterar</p>
+                </div>
+                <ChevronRight size={16} className="text-slate-300 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col p-0 overflow-hidden border-none shadow-2xl">
+              <DialogHeader className="p-6 bg-[#005CA9] text-white shrink-0">
+                <DialogTitle className="text-lg font-black uppercase italic tracking-tighter flex items-center gap-2">
+                  <School className="w-5 h-5" /> Selecionar Tipo de Curso
+                </DialogTitle>
+                <div className="mt-4 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 w-4 h-4" />
+                  <Input 
+                    placeholder="Pesquisar curso..." 
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/40 h-10 pl-10 rounded-xl focus-visible:ring-white/30"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  {searchTerm && (
+                    <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              </DialogHeader>
+              <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50 dark:bg-slate-950">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {filteredCursos.map((curso) => {
+                    const isActive = curso.key === activeHistorico;
+                    return (
+                      <button
+                        key={curso.key}
+                        onClick={() => handleSelectCurso(curso.key)}
+                        className={`text-left p-4 rounded-2xl border transition-all flex items-start gap-3 group ${
+                          isActive 
+                            ? "bg-blue-50 dark:bg-blue-900/20 border-[#005CA9] shadow-md shadow-blue-500/10" 
+                            : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-lg"
+                        }`}
+                      >
+                        <div className={`p-2.5 rounded-xl shrink-0 ${isActive ? "bg-[#005CA9] text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:text-[#005CA9] group-hover:bg-blue-50"}`}>
+                          <GraduationCap size={18} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className={`text-xs font-black uppercase leading-tight ${isActive ? "text-[#005CA9] dark:text-blue-400" : "text-slate-700 dark:text-slate-200"}`}>{curso.label}</p>
+                          <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">{curso.shortLabel} MODEL</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                  {filteredCursos.length === 0 && (
+                    <div className="col-span-full py-12 text-center">
+                       <School className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+                       <p className="text-sm font-bold text-slate-400 uppercase">Nenhum curso encontrado</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Importação Rápida */}
