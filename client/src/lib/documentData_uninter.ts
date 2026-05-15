@@ -135,10 +135,10 @@ const BASE_FIELDS: Record<string, string> = {
   expedicao_historico: "",
   carga_horaria: "",
   titulacao: "",
-  ingresso_mes_ano: "NÃO INFORMADO",
-  ingresso_ano: "NÃO INFORMADO",
-  reconhecimento: "Reconhecido pela Portaria nº ______, DOU nº ______, Seção 1",
-  credenciamento: "Portaria n.º 688 de 25/05/2012 publicada no D.O.U. n.º 102 de 28/05/2012, seção 1, p.23. Recredenciado pela Portaria n.º 1.219 de 28/11/2019 publicada no D.O.U. n.º 208, seção 1, p.24",
+  ingresso_mes_ano: "",
+  ingresso_ano: "",
+  reconhecimento: "",
+  credenciamento: "",
   processo_emec: "201605151",
   processo_seletivo: "VESTIBULAR",
   instituicao_polo: "CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER | POLO CURITIBA (CENTRO) - PR",
@@ -153,10 +153,10 @@ export const PROFILES: Record<ProfileKey, Profile> = {
   enfermagem: { name: "", label: "Enfermagem", curso: "CURSO SUPERIOR DE BACHARELADO EM ENFERMAGEM", cursoAbreviado: "Enfermagem", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE BACHARELADO EM ENFERMAGEM" } },
   engenharia_controle_automacao: { name: "", label: "Eng. Controle e Automação", curso: "CURSO SUPERIOR DE BACHARELADO EM ENGENHARIA DE CONTROLE E AUTOMAÇÃO", cursoAbreviado: "Eng. Controle e Automação", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE BACHARELADO EM ENGENHARIA DE CONTROLE E AUTOMAÇÃO", titulacao: "Bacharel em Engenharia de Controle e Automação" } },
   gestao_recursos_humanos: { name: "", label: "Gestão de RH", curso: "CURSO SUPERIOR DE TECNOLOGIA EM GESTÃO DE RECURSOS HUMANOS", cursoAbreviado: "Gestão RH", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE TECNOLOGIA EM GESTÃO DE RECURSOS HUMANOS" } },
-  historia: { name: "", label: "História", curso: "CURSO SUPERIOR DE LICENCIATURA EM HISTÓRIA", cursoAbreviado: "História", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE LICENCIATURA EM HISTÓRIA", reconhecimento: "Reconhecido pela Portaria nº 357, de 24/05/2018, DOU nº 100, Seção 1, pág. 16, de 25/05/2018" } },
+  historia: { name: "", label: "História", curso: "CURSO SUPERIOR DE LICENCIATURA EM HISTÓRIA", cursoAbreviado: "História", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE LICENCIATURA EM HISTÓRIA" } },
   letras: { name: "", label: "Letras", curso: "CURSO SUPERIOR DE LICENCIATURA EM LETRAS", cursoAbreviado: "Letras", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE LICENCIATURA EM LETRAS" } },
   marketing: { name: "", label: "Marketing", curso: "CURSO SUPERIOR DE TECNOLOGIA EM MARKETING", cursoAbreviado: "Marketing", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE TECNOLOGIA EM MARKETING" } },
-  pedagogia: { name: "", label: "Pedagogia", curso: "CURSO SUPERIOR DE LICENCIATURA EM PEDAGOGIA", cursoAbreviado: "Pedagogia", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE LICENCIATURA EM PEDAGOGIA", reconhecimento: "Reconhecido pela Portaria nº 913, DOU nº 245, Seção 1" } },
+  pedagogia: { name: "", label: "Pedagogia", curso: "CURSO SUPERIOR DE LICENCIATURA EM PEDAGOGIA", cursoAbreviado: "Pedagogia", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE LICENCIATURA EM PEDAGOGIA" } },
   psicologia: { name: "", label: "Psicologia", curso: "CURSO SUPERIOR DE BACHARELADO EM PSICOLOGIA", cursoAbreviado: "Psicologia", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE BACHARELADO EM PSICOLOGIA" } },
   servico_social: { name: "", label: "Serviço Social", curso: "CURSO SUPERIOR DE BACHARELADO EM SERVIÇO SOCIAL", cursoAbreviado: "Serviço Social", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE BACHARELADO EM SERVIÇO SOCIAL" } },
   teologia: { name: "", label: "Teologia", curso: "CURSO SUPERIOR DE BACHARELADO EM TEOLOGIA", cursoAbreviado: "Teologia", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE BACHARELADO EM TEOLOGIA" } },
@@ -168,11 +168,11 @@ export const PROFILES: Record<ProfileKey, Profile> = {
 
 const BASE_META: CourseMetadata = {
   cursoCompleto: "CURSO SUPERIOR DE GRADUAÇÃO",
-  reconhecimento: "Reconhecido pela Portaria nº ______",
-  reconhecimentoInline: "Reconhecido pela Portaria nº ______,",
+  reconhecimento: "",
+  reconhecimentoInline: "",
   dateText: "Curitiba/PR, ____ de __________ de ____.",
-  ingressoMesAno: "NÃO INFORMADO",
-  ingressoAno: "NÃO INFORMADO",
+  ingressoMesAno: "",
+  ingressoAno: "",
   unidadeLabel: "Unidade Curitiba:",
   unidadeEndereco: "Rua do Rosário, 147 | Centro - Curitiba/PR | CEP 80020-110",
   codigoValidacao: "",
@@ -185,10 +185,10 @@ export const COURSE_METADATA: Record<ProfileKey, CourseMetadata> = {
   enfermagem: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE BACHARELADO EM ENFERMAGEM" },
   engenharia_controle_automacao: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE BACHARELADO EM ENGENHARIA DE CONTROLE E AUTOMAÇÃO" },
   gestao_recursos_humanos: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE TECNOLOGIA EM GESTÃO DE RECURSOS HUMANOS" },
-  historia: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE LICENCIATURA EM HISTÓRIA", reconhecimento: "Reconhecido pela Portaria nº 357, de 24/05/2018, DOU nº 100, Seção 1, pág. 16, de 25/05/2018" },
+  historia: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE LICENCIATURA EM HISTÓRIA" },
   letras: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE LICENCIATURA EM LETRAS" },
   marketing: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE TECNOLOGIA EM MARKETING" },
-  pedagogia: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE LICENCIATURA EM PEDAGOGIA", reconhecimento: "Reconhecido pela Portaria nº 913, DOU nº 245, Seção 1" },
+  pedagogia: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE LICENCIATURA EM PEDAGOGIA" },
   psicologia: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE BACHARELADO EM PSICOLOGIA" },
   servico_social: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE BACHARELADO EM SERVIÇO SOCIAL" },
   teologia: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE BACHARELADO EM TEOLOGIA" },
@@ -239,7 +239,7 @@ export interface GradeRow {
 export function getGradesForProfile(profileKey: ProfileKey): { page5: GradeRow[]; page6: GradeRow[] } {
   // Retornar grade vazia para novos cursos, incentivando a importação rápida
   return { 
-    page5: [{ anoMes: "", disciplina: "Clique em 'Importar Inteligente' para preencher automaticamente", ch: "", media: "", resultado: "", docente: "", titulacao: "" }], 
+    page5: [{ anoMes: "", disciplina: "Clique em 'GERAR GRADE' ou 'Importar Inteligente' para preencher", ch: "", media: "", resultado: "", docente: "", titulacao: "" }], 
     page6: [] 
   };
 }

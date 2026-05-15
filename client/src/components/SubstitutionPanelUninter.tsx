@@ -123,7 +123,7 @@ export default function SubstitutionPanel({
         <div className="flex items-center justify-between">
           <h3 className="text-[13px] font-black text-slate-800 dark:text-slate-100 flex items-center gap-2 uppercase tracking-tight">
              <div className="w-1.5 h-4 bg-[#005CA9] rounded-full shadow-sm shadow-blue-500/50" />
-             Painel de Edição Elite
+             Painel de Edição
           </h3>
           <Button 
             size="sm" 
@@ -216,26 +216,6 @@ export default function SubstitutionPanel({
           </Dialog>
         </div>
 
-        {/* Gerador de Grade */}
-        <div className="p-4 mb-2 rounded-2xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/30 flex items-center justify-between group hover:border-emerald-300 transition-all">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
-              <TableProperties size={14} />
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-emerald-800 dark:text-emerald-200 uppercase tracking-tighter">Componentes Curriculares</p>
-              <p className="text-[9px] text-emerald-600/70 dark:text-emerald-400/50 font-bold uppercase italic">Gerador Automático</p>
-            </div>
-          </div>
-          <Button
-            size="sm"
-            className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[9px] px-3 rounded-lg shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
-            onClick={onGenerateGrade}
-          >
-            <Sparkles size={11} className="mr-1.5" /> GERAR GRADE
-          </Button>
-        </div>
-
         {/* Importação Rápida */}
         <div className="p-4 mb-4 rounded-2xl bg-slate-50 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-800 space-y-4">
           <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] flex items-center gap-2">
@@ -280,7 +260,7 @@ export default function SubstitutionPanel({
         </div>
 
         {/* Categorias */}
-        <div className="space-y-3 pb-12 px-1">
+        <div className="space-y-3 pb-4 px-1">
           {grouped.map((group) => {
             const isExpanded = expandedCategories[group.category];
             const modifiedInGroup = group.items.filter((i) => i.currentValue !== i.originalValue && i.currentValue !== "").length;
@@ -353,12 +333,6 @@ export default function SubstitutionPanel({
                               }`}
                             />
                           )}
-                          {isModified && (
-                            <div className="text-[9px] text-slate-400 dark:text-slate-600 italic flex items-center gap-1.5 ml-1">
-                              <span className="font-black text-[8px] uppercase not-italic">Original:</span>
-                              <span className="line-through truncate max-w-[200px]">{field.originalValue || "(vazio)"}</span>
-                            </div>
-                          )}
                         </div>
                       );
                     })}
@@ -367,6 +341,26 @@ export default function SubstitutionPanel({
               </div>
             );
           })}
+        </div>
+
+        {/* Gerador de Grade (Mapeado ao final do formulário) */}
+        <div className="p-4 mb-12 rounded-2xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/30 flex items-center justify-between group hover:border-emerald-300 transition-all shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
+              <TableProperties size={14} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-emerald-800 dark:text-emerald-200 uppercase tracking-tighter">Componentes Curriculares</p>
+              <p className="text-[9px] text-emerald-600/70 dark:text-emerald-400/50 font-bold uppercase italic">Gerador Automático</p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[9px] px-3 rounded-lg shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+            onClick={onGenerateGrade}
+          >
+            <Sparkles size={11} className="mr-1.5" /> GERAR GRADE
+          </Button>
         </div>
       </div>
     </div>

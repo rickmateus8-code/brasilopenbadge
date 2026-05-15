@@ -1,5 +1,5 @@
 /**
- * Histórico UNINTER — DocMaster Elite 3.0 (Universal)
+ * Histórico UNINTER — DocMaster 3.0 (Universal)
  * Layout: UninterDocument (réplica visual do histórico UNINTER — Paginação Inteligente)
  * Fluxo: DocMaster (useAuth, fetch, EmissionModal, jsPDF + html2canvas)
  */
@@ -48,6 +48,7 @@ export default function HistoricoUNINTER() {
     setImportText,
     applyImportText,
     generateMatricula,
+    handleGenerateGrade, // Correção do ReferenceError
   } = useSubstitutionUninter();
 
   const formatDateExtenso = (dateStr: string) => {
@@ -210,7 +211,7 @@ export default function HistoricoUNINTER() {
   return (
     <>
       <div className="flex flex-col h-screen w-full overflow-hidden bg-slate-50 dark:bg-slate-900 font-sans">
-          {/* Header Elite */}
+          {/* Header */}
           <header className="h-14 bg-[#005CA9] flex items-center px-6 gap-4 shrink-0 shadow-md z-20">
             <button
               onClick={() => setLocation("/dashboard")}
@@ -220,7 +221,7 @@ export default function HistoricoUNINTER() {
             </button>
             <div className="h-8 w-px bg-white/20" />
             <h1 className="text-sm font-black tracking-tight text-white uppercase italic">
-              DocMaster <span className="font-light mx-1">|</span> Emissor UNINTER Elite
+              DocMaster <span className="font-light mx-1">|</span> Emissor UNINTER
             </h1>
             
             <div className="ml-auto flex items-center gap-3">
@@ -344,7 +345,7 @@ export default function HistoricoUNINTER() {
       </div>
 
       <EmissionModal
-        docLabel="Histórico UNINTER Elite"
+        docLabel="Histórico UNINTER"
         docEmoji="🎓"
         documentPrice={1500}
         userBalance={user?.balance ?? 0}
