@@ -87,11 +87,6 @@ export const UNINTER_IMPORT_TEMPLATE = [
   "Instituição / Polo:",
   "Nome do Reitor:",
   "Nome da Secretária:",
-  "",
-  "COMPONENTES CURRICULARES",
-  "Ano/Mês*\tDisciplinas\tC.H.\tMédia\tResultado\tDocente\tTitulação",
-  "2018/10\tDisciplina Exemplo 01\t80h\t10.0\tAPR.MÉDIA\tDocente Exemplo\tMestrado",
-  "2018/11\tDisciplina Exemplo 02\t40h\t9.5\tAPR.MÉDIA\tDocente Exemplo\tDoutorado",
 ].join("\n");
 
 export interface Profile {
@@ -115,7 +110,7 @@ export interface CourseMetadata {
 }
 
 // ------------------------------------------------------------
-// CLEAN PROFILES (HARD RESET)
+// CLEAN PROFILES (HARD RESET) - ALL EMPTY
 // ------------------------------------------------------------
 
 const BASE_FIELDS: Record<string, string> = {
@@ -139,35 +134,31 @@ const BASE_FIELDS: Record<string, string> = {
   ingresso_ano: "",
   reconhecimento: "",
   credenciamento: "",
-  processo_emec: "201605151",
-  processo_seletivo: "VESTIBULAR",
-  instituicao_polo: "CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER | POLO CURITIBA (CENTRO) - PR",
-  nome_reitor: "Professor Dr. Benhur Etelberto Gaio",
-  nome_secretaria: "SIMONE RAMOS DE OLIVEIRA",
+  processo_emec: "",
+  processo_seletivo: "",
+  instituicao_polo: "",
+  nome_reitor: "",
+  nome_secretaria: "",
 };
 
 export const PROFILES: Record<ProfileKey, Profile> = {
-  administracao: { name: "", label: "Administração", curso: "CURSO SUPERIOR DE BACHARELADO EM ADMINISTRAÇÃO", cursoAbreviado: "Administração", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE BACHARELADO EM ADMINISTRAÇÃO" } },
-  ciencias_contabeis: { name: "", label: "Ciências Contábeis", curso: "CURSO SUPERIOR DE BACHARELADO EM CIÊNCIAS CONTÁBEIS", cursoAbreviado: "Ciências Contábeis", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE BACHARELADO EM CIÊNCIAS CONTÁBEIS" } },
-  direito: { name: "", label: "Direito", curso: "CURSO SUPERIOR DE BACHARELADO EM DIREITO", cursoAbreviado: "Direito", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE BACHARELADO EM DIREITO" } },
-  enfermagem: { name: "", label: "Enfermagem", curso: "CURSO SUPERIOR DE BACHARELADO EM ENFERMAGEM", cursoAbreviado: "Enfermagem", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE BACHARELADO EM ENFERMAGEM" } },
-  engenharia_controle_automacao: { name: "", label: "Eng. Controle e Automação", curso: "CURSO SUPERIOR DE BACHARELADO EM ENGENHARIA DE CONTROLE E AUTOMAÇÃO", cursoAbreviado: "Eng. Controle e Automação", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE BACHARELADO EM ENGENHARIA DE CONTROLE E AUTOMAÇÃO", titulacao: "Bacharel em Engenharia de Controle e Automação" } },
-  gestao_recursos_humanos: { name: "", label: "Gestão de RH", curso: "CURSO SUPERIOR DE TECNOLOGIA EM GESTÃO DE RECURSOS HUMANOS", cursoAbreviado: "Gestão RH", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE TECNOLOGIA EM GESTÃO DE RECURSOS HUMANOS" } },
-  historia: { name: "", label: "História", curso: "CURSO SUPERIOR DE LICENCIATURA EM HISTÓRIA", cursoAbreviado: "História", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE LICENCIATURA EM HISTÓRIA" } },
-  letras: { name: "", label: "Letras", curso: "CURSO SUPERIOR DE LICENCIATURA EM LETRAS", cursoAbreviado: "Letras", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE LICENCIATURA EM LETRAS" } },
-  marketing: { name: "", label: "Marketing", curso: "CURSO SUPERIOR DE TECNOLOGIA EM MARKETING", cursoAbreviado: "Marketing", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE TECNOLOGIA EM MARKETING" } },
-  pedagogia: { name: "", label: "Pedagogia", curso: "CURSO SUPERIOR DE LICENCIATURA EM PEDAGOGIA", cursoAbreviado: "Pedagogia", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE LICENCIATURA EM PEDAGOGIA" } },
-  psicologia: { name: "", label: "Psicologia", curso: "CURSO SUPERIOR DE BACHARELADO EM PSICOLOGIA", cursoAbreviado: "Psicologia", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE BACHARELADO EM PSICOLOGIA" } },
-  servico_social: { name: "", label: "Serviço Social", curso: "CURSO SUPERIOR DE BACHARELADO EM SERVIÇO SOCIAL", cursoAbreviado: "Serviço Social", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE BACHARELADO EM SERVIÇO SOCIAL" } },
-  teologia: { name: "", label: "Teologia", curso: "CURSO SUPERIOR DE BACHARELADO EM TEOLOGIA", cursoAbreviado: "Teologia", fields: { ...BASE_FIELDS, curso: "CURSO SUPERIOR DE BACHARELADO EM TEOLOGIA" } },
+  administracao: { name: "", label: "Administração", curso: "", cursoAbreviado: "Administração", fields: { ...BASE_FIELDS } },
+  ciencias_contabeis: { name: "", label: "Ciências Contábeis", curso: "", cursoAbreviado: "Ciências Contábeis", fields: { ...BASE_FIELDS } },
+  direito: { name: "", label: "Direito", curso: "", cursoAbreviado: "Direito", fields: { ...BASE_FIELDS } },
+  enfermagem: { name: "", label: "Enfermagem", curso: "", cursoAbreviado: "Enfermagem", fields: { ...BASE_FIELDS } },
+  engenharia_controle_automacao: { name: "", label: "Eng. Controle e Automação", curso: "", cursoAbreviado: "Eng. Controle e Automação", fields: { ...BASE_FIELDS } },
+  gestao_recursos_humanos: { name: "", label: "Gestão de RH", curso: "", cursoAbreviado: "Gestão RH", fields: { ...BASE_FIELDS } },
+  historia: { name: "", label: "História", curso: "", cursoAbreviado: "História", fields: { ...BASE_FIELDS } },
+  letras: { name: "", label: "Letras", curso: "", cursoAbreviado: "Letras", fields: { ...BASE_FIELDS } },
+  marketing: { name: "", label: "Marketing", curso: "", cursoAbreviado: "Marketing", fields: { ...BASE_FIELDS } },
+  pedagogia: { name: "", label: "Pedagogia", curso: "", cursoAbreviado: "Pedagogia", fields: { ...BASE_FIELDS } },
+  psicologia: { name: "", label: "Psicologia", curso: "", cursoAbreviado: "Psicologia", fields: { ...BASE_FIELDS } },
+  servico_social: { name: "", label: "Serviço Social", curso: "", cursoAbreviado: "Serviço Social", fields: { ...BASE_FIELDS } },
+  teologia: { name: "", label: "Teologia", curso: "", cursoAbreviado: "Teologia", fields: { ...BASE_FIELDS } },
 };
 
-// ------------------------------------------------------------
-// COURSE METADATA (TEMPLATES)
-// ------------------------------------------------------------
-
 const BASE_META: CourseMetadata = {
-  cursoCompleto: "CURSO SUPERIOR DE GRADUAÇÃO",
+  cursoCompleto: "",
   reconhecimento: "",
   reconhecimentoInline: "",
   dateText: "Curitiba/PR, ____ de __________ de ____.",
@@ -179,53 +170,53 @@ const BASE_META: CourseMetadata = {
 };
 
 export const COURSE_METADATA: Record<ProfileKey, CourseMetadata> = {
-  administracao: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE BACHARELADO EM ADMINISTRAÇÃO" },
-  ciencias_contabeis: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE BACHARELADO EM CIÊNCIAS CONTÁBEIS" },
-  direito: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE BACHARELADO EM DIREITO" },
-  enfermagem: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE BACHARELADO EM ENFERMAGEM" },
-  engenharia_controle_automacao: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE BACHARELADO EM ENGENHARIA DE CONTROLE E AUTOMAÇÃO" },
-  gestao_recursos_humanos: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE TECNOLOGIA EM GESTÃO DE RECURSOS HUMANOS" },
-  historia: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE LICENCIATURA EM HISTÓRIA" },
-  letras: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE LICENCIATURA EM LETRAS" },
-  marketing: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE TECNOLOGIA EM MARKETING" },
-  pedagogia: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE LICENCIATURA EM PEDAGOGIA" },
-  psicologia: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE BACHARELADO EM PSICOLOGIA" },
-  servico_social: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE BACHARELADO EM SERVIÇO SOCIAL" },
-  teologia: { ...BASE_META, cursoCompleto: "CURSO SUPERIOR DE BACHARELADO EM TEOLOGIA" },
+  administracao: { ...BASE_META },
+  ciencias_contabeis: { ...BASE_META },
+  direito: { ...BASE_META },
+  enfermagem: { ...BASE_META },
+  engenharia_controle_automacao: { ...BASE_META },
+  gestao_recursos_humanos: { ...BASE_META },
+  historia: { ...BASE_META },
+  letras: { ...BASE_META },
+  marketing: { ...BASE_META },
+  pedagogia: { ...BASE_META },
+  psicologia: { ...BASE_META },
+  servico_social: { ...BASE_META },
+  teologia: { ...BASE_META },
 };
 
 // ==================== SUBSTITUTION FIELDS ====================
-export function createSubstitutionFields(profile: Profile): SubstitutionField[] {
+export function createSubstitutionFields(profile?: Profile): SubstitutionField[] {
+  const fields = profile ? profile.fields : BASE_FIELDS;
   return [
-    { id: "nome", label: "Nome Completo", category: "pessoal", originalValue: "", currentValue: profile.fields.nome, pages: [1, 2, 3, 5] },
-    { id: "cpf", label: "CPF", category: "pessoal", originalValue: "", currentValue: profile.fields.cpf, pages: [1, 2, 3, 5] },
-    { id: "rg", label: "RG", category: "pessoal", originalValue: "", currentValue: profile.fields.rg, pages: [3, 5] },
-    { id: "rg_orgao", label: "Órgão Emissor RG", category: "pessoal", originalValue: "", currentValue: profile.fields.rg_orgao, pages: [3, 5] },
-    { id: "data_nascimento", label: "Data de Nascimento", category: "pessoal", originalValue: "", currentValue: profile.fields.data_nascimento, pages: [3, 5] },
-    { id: "uf_nascimento", label: "UF Nascimento", category: "pessoal", originalValue: "", currentValue: profile.fields.uf_nascimento, pages: [3, 5] },
-    { id: "nacionalidade", label: "Nacionalidade", category: "pessoal", originalValue: "", currentValue: profile.fields.nacionalidade, pages: [3, 5] },
-    { id: "matricula", label: "Matrícula", category: "academico", originalValue: "", currentValue: profile.fields.matricula, pages: [1, 2, 3, 5] },
-    { id: "situacao_matricula", label: "Situação de Matrícula", category: "academico", originalValue: "", currentValue: profile.fields.situacao_matricula, pages: [3, 5] },
-    { id: "endereco", label: "Endereço", category: "institucional", originalValue: "", currentValue: profile.fields.endereco, pages: [3] },
-    { id: "conclusao_curso", label: "Conclusão do Curso", category: "academico", originalValue: "", currentValue: profile.fields.conclusao_curso, pages: [1, 2, 3] },
-    { id: "colacao_grau", label: "Colação de Grau", category: "academico", originalValue: "", currentValue: profile.fields.colacao_grau, pages: [1, 2, 3] },
-    { id: "ingresso_mes_ano", label: "Mês / Ano de Realização", category: "academico", originalValue: "", currentValue: profile.fields.ingresso_mes_ano, pages: [3] },
-    { id: "ingresso_ano", label: "Ano de Ingresso", category: "academico", originalValue: "", currentValue: profile.fields.ingresso_ano, pages: [3] },
-    { id: "reconhecimento", label: "Ato de Reconhecimento", category: "academico", originalValue: "", currentValue: profile.fields.reconhecimento, pages: [1, 2, 3] },
-    { id: "credenciamento", label: "Ato de Credenciamento", category: "academico", originalValue: "", currentValue: profile.fields.credenciamento, pages: [3] },
-    { id: "processo_emec", label: "Processo e-MEC*", category: "academico", originalValue: "", currentValue: profile.fields.processo_emec, pages: [3] },
-    { id: "processo_seletivo", label: "Processo Seletivo", category: "academico", originalValue: "", currentValue: profile.fields.processo_seletivo, pages: [3] },
-    { id: "expedicao_diploma", label: "Expedição do Diploma", category: "academico", originalValue: "", currentValue: profile.fields.expedicao_diploma, pages: [3] },
-    { id: "expedicao_historico", label: "Expedição do Histórico", category: "academico", originalValue: "", currentValue: profile.fields.expedicao_historico, pages: [3] },
-    { id: "carga_horaria", label: "Carga Horária", category: "academico", originalValue: "", currentValue: profile.fields.carga_horaria, pages: [2, 6] },
-    { id: "titulacao", label: "Titulação", category: "academico", originalValue: "", currentValue: profile.fields.titulacao, pages: [5, 6] },
-    { id: "instituicao_polo", label: "Instituição / Polo", category: "institucional", originalValue: "", currentValue: profile.fields.instituicao_polo, pages: [3] },
-    { id: "nome_reitor", label: "Nome do Reitor", category: "institucional", originalValue: "", currentValue: profile.fields.nome_reitor, pages: [1] },
-    { id: "nome_secretaria", label: "Nome da Secretária", category: "institucional", originalValue: "", currentValue: profile.fields.nome_secretaria, pages: [1, 2, 6] },
+    { id: "nome", label: "Nome Completo", category: "pessoal", originalValue: "", currentValue: fields.nome, pages: [1, 2, 3, 5] },
+    { id: "cpf", label: "CPF", category: "pessoal", originalValue: "", currentValue: fields.cpf, pages: [1, 2, 3, 5] },
+    { id: "rg", label: "RG", category: "pessoal", originalValue: "", currentValue: fields.rg, pages: [3, 5] },
+    { id: "rg_orgao", label: "Órgão Emissor RG", category: "pessoal", originalValue: "", currentValue: fields.rg_orgao, pages: [3, 5] },
+    { id: "data_nascimento", label: "Data de Nascimento", category: "pessoal", originalValue: "", currentValue: fields.data_nascimento, pages: [3, 5] },
+    { id: "uf_nascimento", label: "UF Nascimento", category: "pessoal", originalValue: "", currentValue: fields.uf_nascimento, pages: [3, 5] },
+    { id: "nacionalidade", label: "Nacionalidade", category: "pessoal", originalValue: "", currentValue: fields.nacionalidade, pages: [3, 5] },
+    { id: "matricula", label: "Matrícula", category: "academico", originalValue: "", currentValue: fields.matricula, pages: [1, 2, 3, 5] },
+    { id: "situacao_matricula", label: "Situação de Matrícula", category: "academico", originalValue: "", currentValue: fields.situacao_matricula, pages: [3, 5] },
+    { id: "endereco", label: "Endereço", category: "institucional", originalValue: "", currentValue: fields.endereco, pages: [3] },
+    { id: "conclusao_curso", label: "Conclusão do Curso", category: "academico", originalValue: "", currentValue: fields.conclusao_curso, pages: [1, 2, 3] },
+    { id: "colacao_grau", label: "Colação de Grau", category: "academico", originalValue: "", currentValue: fields.colacao_grau, pages: [1, 2, 3] },
+    { id: "ingresso_mes_ano", label: "Mês / Ano de Realização", category: "academico", originalValue: "", currentValue: fields.ingresso_mes_ano, pages: [3] },
+    { id: "ingresso_ano", label: "Ano de Ingresso", category: "academico", originalValue: "", currentValue: fields.ingresso_ano, pages: [3] },
+    { id: "reconhecimento", label: "Ato de Reconhecimento", category: "academico", originalValue: "", currentValue: fields.reconhecimento, pages: [1, 2, 3] },
+    { id: "credenciamento", label: "Ato de Credenciamento", category: "academico", originalValue: "", currentValue: fields.credenciamento, pages: [3] },
+    { id: "processo_emec", label: "Processo e-MEC*", category: "academico", originalValue: "", currentValue: fields.processo_emec, pages: [3] },
+    { id: "processo_seletivo", label: "Processo Seletivo", category: "academico", originalValue: "", currentValue: fields.processo_seletivo, pages: [3] },
+    { id: "expedicao_diploma", label: "Expedição do Diploma", category: "academico", originalValue: "", currentValue: fields.expedicao_diploma, pages: [3] },
+    { id: "expedicao_historico", label: "Expedição do Histórico", category: "academico", originalValue: "", currentValue: fields.expedicao_historico, pages: [3] },
+    { id: "carga_horaria", label: "Carga Horária", category: "academico", originalValue: "", currentValue: fields.carga_horaria, pages: [2, 6] },
+    { id: "titulacao", label: "Titulação", category: "academico", originalValue: "", currentValue: fields.titulacao, pages: [5, 6] },
+    { id: "instituicao_polo", label: "Instituição / Polo", category: "institucional", originalValue: "", currentValue: fields.instituicao_polo, pages: [3] },
+    { id: "nome_reitor", label: "Nome do Reitor", category: "institucional", originalValue: "", currentValue: fields.nome_reitor, pages: [1] },
+    { id: "nome_secretaria", label: "Nome da Secretária", category: "institucional", originalValue: "", currentValue: fields.nome_secretaria, pages: [1, 2, 6] },
   ];
 }
 
-// ==================== GRADE DATA ====================
 export interface GradeRow {
   anoMes: string;
   disciplina: string;
@@ -237,7 +228,6 @@ export interface GradeRow {
 }
 
 export function getGradesForProfile(profileKey: ProfileKey): { page5: GradeRow[]; page6: GradeRow[] } {
-  // Retornar grade vazia para novos cursos, incentivando a importação rápida
   return { 
     page5: [{ anoMes: "", disciplina: "Clique em 'GERAR GRADE' ou 'Importar Inteligente' para preencher", ch: "", media: "", resultado: "", docente: "", titulacao: "" }], 
     page6: [] 

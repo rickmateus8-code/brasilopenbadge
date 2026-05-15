@@ -6,7 +6,8 @@ import { toast } from "sonner";
 import { 
   UserRoundPen, RotateCcw, ChevronDown, ChevronRight, 
   Copy, FileText, WandSparkles, Sparkles, School, 
-  GraduationCap, LayoutGrid, Search, X, TableProperties
+  GraduationCap, LayoutGrid, Search, X, TableProperties, Lock,
+  Save, Download, Loader2, CheckCircle2
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { UNINTER_IMPORT_TEMPLATE, HISTORICOS_DISPONIVEIS } from "@/lib/documentData_uninter";
@@ -30,6 +31,11 @@ interface Props {
   onGenerateMatricula: () => void;
   onReset: () => void;
   onGenerateGrade: () => void;
+  onEmit?: () => void;
+  isExporting?: boolean;
+  isEditMode?: boolean;
+  saved?: boolean;
+  activeHistoricoReal?: HistoricoDisponivelKey | null;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -57,7 +63,12 @@ export default function SubstitutionPanel({
   onUpdateField,
   onGenerateMatricula,
   onReset,
-  onGenerateGrade
+  onGenerateGrade,
+  onEmit,
+  isExporting = false,
+  isEditMode = false,
+  saved = false,
+  activeHistoricoReal
 }: Props) {
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
     pessoal: true,
@@ -86,16 +97,18 @@ export default function SubstitutionPanel({
   }, [searchTerm]);
 
   const activeCursoLabel = useMemo(() => {
+    if (activeHistoricoReal === null) return "SELECIONE O TIPO DE CURSO";
     return HISTORICOS_DISPONIVEIS.find(c => c.key === activeHistorico)?.label || "SELECIONE O CURSO";
-  }, [activeHistorico]);
+  }, [activeHistorico, activeHistoricoReal]);
 
   const handleCopyTemplate = async () => {
     try {
+      const cleanTemplate = UNINTER_IMPORT_TEMPLATE.replace(/COMPONENTES CURRICULARES[\s\S]*/, "").trim();
       if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(UNINTER_IMPORT_TEMPLATE);
+        await navigator.clipboard.writeText(cleanTemplate);
       } else {
         const textarea = document.createElement("textarea");
-        textarea.value = UNINTER_IMPORT_TEMPLATE;
+        textarea.value = cleanTemplate;
         textarea.setAttribute("readonly", "true");
         textarea.style.position = "fixed";
         textarea.style.opacity = "0";
@@ -116,6 +129,8 @@ export default function SubstitutionPanel({
     toast.success(`Curso alterado para: ${HISTORICOS_DISPONIVEIS.find(c => c.key === key)?.label}`);
   };
 
+  const hasSelectedCourse = activeHistoricoReal !== null;
+
   return (
     <div className="flex flex-col h-full bg-white dark:bg-slate-950 border-r dark:border-slate-800">
       {/* Header do Painel */}
@@ -125,14 +140,16 @@ export default function SubstitutionPanel({
              <div className="w-1.5 h-4 bg-[#005CA9] rounded-full shadow-sm shadow-blue-500/50" />
              Painel de Edição
           </h3>
-          <Button 
-            size="sm" 
-            variant="ghost" 
-            className="text-[10px] h-7 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 px-2 font-bold" 
-            onClick={onReset}
-          >
-            <RotateCcw size={12} className="mr-1" /> Resetar Tudo
-          </Button>
+          {!isEditMode && (
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              className="text-[10px] h-7 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 px-2 font-bold" 
+              onClick={onReset}
+            >
+              <RotateCcw size={12} className="mr-1" /> Resetar Tudo
+            </Button>
+          )}
         </div>
         {modifiedCount > 0 && (
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 w-fit">
@@ -148,16 +165,18 @@ export default function SubstitutionPanel({
           <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] mb-3 ml-1">Tipo de Curso</p>
           
           <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-            <DialogTrigger asChild>
-              <button className="w-full text-left px-4 py-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 hover:border-[#005CA9] transition-all flex items-center gap-3 group">
-                <div className="p-2 rounded-lg bg-white dark:bg-slate-800 text-[#005CA9] shadow-sm group-hover:bg-[#005CA9] group-hover:text-white transition-all">
+            <DialogTrigger asChild disabled={isEditMode}>
+              <button className={`w-full text-left px-4 py-3 rounded-xl border transition-all flex items-center gap-3 group disabled:opacity-50 disabled:cursor-not-allowed ${!hasSelectedCourse ? "border-red-200 bg-red-50/30 dark:bg-red-900/10 hover:border-red-400" : "border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 hover:border-[#005CA9]"}`}>
+                <div className={`p-2 rounded-lg shadow-sm transition-all ${!hasSelectedCourse ? "bg-red-100 text-red-600" : "bg-white dark:bg-slate-800 text-[#005CA9] group-hover:bg-[#005CA9] group-hover:text-white"}`}>
                   <LayoutGrid size={14} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-black text-slate-800 dark:text-slate-100 truncate uppercase">{activeCursoLabel}</p>
-                  <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Clique para alterar</p>
+                  <p className={`text-[11px] font-black truncate uppercase ${!hasSelectedCourse ? "text-red-600 animate-pulse" : "text-slate-800 dark:text-slate-100"}`}>{activeCursoLabel}</p>
+                  <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+                    {isEditMode ? "Curso Travado na Edição" : !hasSelectedCourse ? "Seleção Obrigatória" : "Clique para alterar"}
+                  </p>
                 </div>
-                <ChevronRight size={16} className="text-slate-300 group-hover:translate-x-1 transition-transform" />
+                {!isEditMode && <ChevronRight size={16} className={`transition-transform ${!hasSelectedCourse ? "text-red-300" : "text-slate-300 group-hover:translate-x-1"}`} />}
               </button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col p-0 overflow-hidden border-none shadow-2xl">
@@ -183,7 +202,7 @@ export default function SubstitutionPanel({
               <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50 dark:bg-slate-950">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {filteredCursos.map((curso) => {
-                    const isActive = curso.key === activeHistorico;
+                    const isActive = curso.key === activeHistoricoReal;
                     return (
                       <button
                         key={curso.key}
@@ -204,60 +223,56 @@ export default function SubstitutionPanel({
                       </button>
                     );
                   })}
-                  {filteredCursos.length === 0 && (
-                    <div className="col-span-full py-12 text-center">
-                       <School className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-                       <p className="text-sm font-bold text-slate-400 uppercase">Nenhum curso encontrado</p>
-                    </div>
-                  )}
                 </div>
               </div>
             </DialogContent>
           </Dialog>
         </div>
 
-        {/* Importação Rápida */}
-        <div className="p-4 mb-4 rounded-2xl bg-slate-50 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-800 space-y-4">
-          <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] flex items-center gap-2">
-            <FileText size={13} className="text-[#005CA9]" /> Importação Inteligente
-          </h4>
+        {/* Importação Rápida (Oculta na Edição) */}
+        {!isEditMode && (
+          <div className="p-4 mb-4 rounded-2xl bg-slate-50 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-800 space-y-4">
+            <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] flex items-center gap-2">
+              <FileText size={13} className="text-[#005CA9]" /> Importação Inteligente
+            </h4>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase">1. Modelo para o Cliente</label>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase">1. Modelo para o Cliente</label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 px-2 text-[10px] text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/20 font-black"
+                  onClick={handleCopyTemplate}
+                >
+                  <Copy size={11} className="mr-1" />
+                  Copiar
+                </Button>
+              </div>
+              <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-[10px] leading-relaxed text-slate-500 font-mono h-24 overflow-y-auto whitespace-pre select-all custom-scrollbar">
+                {UNINTER_IMPORT_TEMPLATE}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase block">2. Resposta Preenchida</label>
+              <Textarea
+                value={importText}
+                onChange={(e) => onUpdateImportText(e.target.value)}
+                placeholder="Cole os dados aqui para preencher automaticamente aluno e informações acadêmicas..."
+                className="min-h-24 text-[11px] bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 resize-none focus-visible:ring-[#005CA9] rounded-xl"
+              />
               <Button
                 type="button"
-                size="sm"
-                variant="ghost"
-                className="h-6 px-2 text-[10px] text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/20 font-black"
-                onClick={handleCopyTemplate}
+                className="w-full h-10 text-xs bg-[#005CA9] hover:bg-[#004a8a] text-white font-black shadow-lg shadow-blue-500/20 rounded-xl transition-all active:scale-95"
+                onClick={onApplyImportText}
               >
-                <Copy size={11} className="mr-1" />
-                Copiar
+                <Sparkles size={14} className="mr-2" /> PROCESSAR E PREENCHER
               </Button>
             </div>
-            <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-[10px] leading-relaxed text-slate-500 font-mono h-24 overflow-y-auto whitespace-pre select-all custom-scrollbar">
-              {UNINTER_IMPORT_TEMPLATE}
-            </div>
           </div>
-
-          <div className="space-y-3">
-            <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase block">2. Resposta Preenchida</label>
-            <Textarea
-              value={importText}
-              onChange={(e) => onUpdateImportText(e.target.value)}
-              placeholder="Cole os dados aqui para preencher automaticamente aluno, notas e informações institucionais..."
-              className="min-h-24 text-[11px] bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 resize-none focus-visible:ring-[#005CA9] rounded-xl"
-            />
-            <Button
-              type="button"
-              className="w-full h-10 text-xs bg-[#005CA9] hover:bg-[#004a8a] text-white font-black shadow-lg shadow-blue-500/20 rounded-xl transition-all active:scale-95"
-              onClick={onApplyImportText}
-            >
-              <Sparkles size={14} className="mr-2" /> PROCESSAR E PREENCHER
-            </Button>
-          </div>
-        </div>
+        )}
 
         {/* Categorias */}
         <div className="space-y-3 pb-4 px-1">
@@ -287,12 +302,44 @@ export default function SubstitutionPanel({
                     {group.items.map((field) => {
                       const isModified = field.currentValue !== field.originalValue && field.currentValue !== "";
                       const isMatricula = field.id === "matricula";
-                      const isTextArea = ["reconhecimento", "credenciamento", "instituicao_polo", "endereco"].includes(field.id);
+                      const isCPF = field.id === "cpf";
+                      const isFixed = ["instituicao_polo", "endereco"].includes(field.id);
+                      const isTextArea = ["reconhecimento", "credenciamento"].includes(field.id);
+                      const isStatus = field.id === "situacao_matricula";
+                      
+                      // Bloqueio de segurança: CPF não pode ser alterado na edição
+                      const isLocked = (isEditMode && isCPF) || isFixed;
+
+                      if (isStatus) {
+                        return (
+                          <div key={field.id} className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wide">Situação de Matrícula</label>
+                            <div className="flex gap-2 p-1 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
+                              {["FORMADO", "CURSANDO"].map(opt => (
+                                <button
+                                  key={opt}
+                                  onClick={() => onUpdateField(field.id, opt)}
+                                  className={`flex-1 py-2 text-[10px] font-black rounded-lg transition-all ${
+                                    field.currentValue === opt 
+                                      ? "bg-[#005CA9] text-white shadow-md shadow-blue-300/30" 
+                                      : "text-slate-400 hover:text-slate-600"
+                                  }`}
+                                >
+                                  {opt}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      }
 
                       return (
                         <div key={field.id} className="space-y-1.5 group/field">
                           <div className="flex items-center justify-between">
-                            <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wide group-hover/field:text-blue-500 transition-colors">{field.label}</label>
+                            <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wide group-hover/field:text-blue-500 transition-colors flex items-center gap-1.5">
+                              {field.label}
+                              {isLocked && <Lock size={10} className={isFixed ? "text-slate-400" : "text-amber-500"} />}
+                            </label>
                             <span className="text-[9px] text-slate-300 dark:text-slate-700 font-black">PÁG: {field.pages.join(", ")}</span>
                           </div>
 
@@ -305,22 +352,25 @@ export default function SubstitutionPanel({
                                   isModified ? "border-blue-400 dark:border-blue-600 bg-blue-50/20 shadow-sm" : ""
                                 }`}
                                 placeholder="1022071"
+                                disabled={isEditMode}
                               />
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                className="h-10 px-3 text-[10px] border-blue-200 dark:border-blue-900 text-blue-700 dark:text-blue-400 font-black hover:bg-blue-50 dark:hover:bg-blue-950/20 rounded-xl"
-                                onClick={onGenerateMatricula}
-                              >
-                                <WandSparkles size={12} />
-                              </Button>
+                              {!isEditMode && (
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-10 px-3 text-[10px] border-blue-200 dark:border-blue-900 text-blue-700 dark:text-blue-400 font-black hover:bg-blue-50 dark:hover:bg-blue-950/20 rounded-xl"
+                                  onClick={onGenerateMatricula}
+                                >
+                                  <WandSparkles size={12} />
+                                </Button>
+                              )}
                             </div>
                           ) : isTextArea ? (
                             <Textarea
                               value={field.currentValue}
                               onChange={(e) => onUpdateField(field.id, e.target.value)}
-                              className={`min-h-[60px] text-xs border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus-visible:ring-[#005CA9] transition-all rounded-xl resize-none ${
+                              className={`min-h-[80px] text-xs border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus-visible:ring-[#005CA9] transition-all rounded-xl resize-none ${
                                 isModified ? "border-blue-400 dark:border-blue-600 bg-blue-50/20 shadow-sm" : ""
                               }`}
                             />
@@ -328,9 +378,10 @@ export default function SubstitutionPanel({
                             <Input
                               value={field.currentValue}
                               onChange={(e) => onUpdateField(field.id, e.target.value)}
+                              disabled={isLocked}
                               className={`h-10 text-xs border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus-visible:ring-[#005CA9] transition-all rounded-xl ${
                                 isModified ? "border-blue-400 dark:border-blue-600 bg-blue-50/20 shadow-sm" : ""
-                              }`}
+                              } ${isLocked ? "bg-slate-50 dark:bg-slate-900/50 cursor-not-allowed opacity-80" : ""}`}
                             />
                           )}
                         </div>
@@ -343,14 +394,14 @@ export default function SubstitutionPanel({
           })}
         </div>
 
-        {/* Gerador de Grade (Mapeado ao final do formulário) */}
-        <div className="p-4 mb-12 rounded-2xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/30 flex items-center justify-between group hover:border-emerald-300 transition-all shadow-sm">
+        {/* Gerador de Grade (Ferramenta de Suporte ao Final) */}
+        <div className="p-4 mb-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/30 flex items-center justify-between group hover:border-emerald-300 transition-all shadow-sm">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
               <TableProperties size={14} />
             </div>
             <div>
-              <p className="text-[10px] font-black text-emerald-800 dark:text-emerald-200 uppercase tracking-tighter">Componentes Curriculares</p>
+              <p className="text-[10px] font-black text-emerald-800 dark:text-emerald-200 uppercase tracking-tighter">Grade Curricular</p>
               <p className="text-[9px] text-emerald-600/70 dark:text-emerald-400/50 font-bold uppercase italic">Gerador Automático</p>
             </div>
           </div>
@@ -360,6 +411,36 @@ export default function SubstitutionPanel({
             onClick={onGenerateGrade}
           >
             <Sparkles size={11} className="mr-1.5" /> GERAR GRADE
+          </Button>
+        </div>
+
+        {/* Botão de Emissão / Salvar (Fim do Formulário) */}
+        <div className="p-2 mb-12">
+          <Button
+            className={`w-full h-12 text-xs font-black rounded-2xl transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2 ${
+              saved 
+                ? "bg-emerald-500 text-white cursor-default" 
+                : isEditMode
+                  ? "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20"
+                  : "bg-[#005CA9] hover:bg-[#004a8a] text-white shadow-blue-900/20"
+            }`}
+            onClick={onEmit}
+            disabled={isExporting || saved}
+          >
+            {isExporting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : saved ? (
+              <CheckCircle2 size={16} />
+            ) : (
+              isEditMode ? <Save size={16} /> : <Download size={16} />
+            )}
+            {saved 
+              ? "DOCUMENTO EMITIDO" 
+              : isExporting 
+                ? "PROCESSANDO..." 
+                : isEditMode 
+                  ? "SALVAR ALTERAÇÕES" 
+                  : "EMITIR E EXPORTAR PDF"}
           </Button>
         </div>
       </div>

@@ -27,15 +27,15 @@ const HISTORICO_TO_PROFILE: Record<HistoricoDisponivelKey, ProfileKey> = {
   teologia: "teologia",
 };
 
-const DEFAULT_HISTORICO: HistoricoDisponivelKey = "historia";
+// Alterado para null para forçar seleção obrigatória
+const DEFAULT_HISTORICO: HistoricoDisponivelKey | null = null;
 
-function createEmptyFields(key: HistoricoDisponivelKey = DEFAULT_HISTORICO) {
-  const profile = PROFILES[HISTORICO_TO_PROFILE[key]];
-  const blueprint = createSubstitutionFields(profile);
+function createEmptyFields() {
+  const blueprint = createSubstitutionFields(); // Retorna BASE_FIELDS (vazios)
   return blueprint.map((field) => ({
     ...field,
     originalValue: "",
-    currentValue: field.currentValue, // Mantém o valor padrão do curso
+    currentValue: "",
   }));
 }
 
@@ -91,7 +91,6 @@ function parseGradeLine(line: string): GradeRow | null {
 
   if (parts.length < 7) return null;
   
-  // Suporte a Ano/Mês (YYYY/MM) ou apenas Texto
   return {
     anoMes: parts[0],
     disciplina: parts[1],
@@ -183,13 +182,16 @@ function parseImportText(text: string): {
   return { updates, gradeRows, historicoKey };
 }
 
-function normalizeHistoricoKey(input?: string): HistoricoDisponivelKey {
-  const value = normalizeUpper(input || "");
+function normalizeHistoricoKey(input?: string): HistoricoDisponivelKey | null {
+  if (!input) return null;
+  const value = normalizeUpper(input);
   if (value.includes("ENG")) return "engenharia_controle_automacao";
   if (value.includes("PED")) return "pedagogia";
   if (value.includes("ADM")) return "administracao";
   if (value.includes("DIR")) return "direito";
-  return "historia";
+  // Tenta encontrar por chave exata
+  const keys = Object.keys(HISTORICO_TO_PROFILE) as HistoricoDisponivelKey[];
+  return keys.find(k => k.toUpperCase() === value) || null;
 }
 
 function applyFieldUpdates(fields: SubstitutionField[], updates: Record<string, string>) {
@@ -205,12 +207,12 @@ export function useSubstitutionUninter() {
 }
 
 export function useSubstitution() {
-  const [activeHistorico, setActiveHistorico] = useState<HistoricoDisponivelKey>(DEFAULT_HISTORICO);
-  const [fields, setFields] = useState<SubstitutionField[]>(() => createEmptyFields(DEFAULT_HISTORICO));
+  const [activeHistorico, setActiveHistorico] = useState<HistoricoDisponivelKey | null>(DEFAULT_HISTORICO);
+  const [fields, setFields] = useState<SubstitutionField[]>(() => createEmptyFields());
   const [importText, setImportText] = useState("");
   const [customGrades, setCustomGrades] = useState<GradeRow[]>([]);
 
-  const activeProfile = HISTORICO_TO_PROFILE[activeHistorico];
+  const activeProfile = activeHistorico ? HISTORICO_TO_PROFILE[activeHistorico] : null;
 
   const fieldMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -228,7 +230,9 @@ export function useSubstitution() {
 
   const applyHistorico = useCallback((historico: HistoricoDisponivelKey) => {
     setActiveHistorico(historico);
-    setFields(createEmptyFields(historico));
+    const profile = PROFILES[HISTORICO_TO_PROFILE[historico]];
+    const blueprint = createSubstitutionFields(profile);
+    setFields(blueprint);
     setCustomGrades([]);
   }, []);
 
@@ -243,6 +247,10 @@ export function useSubstitution() {
   }, []);
 
   const handleGenerateGrade = useCallback(() => {
+    if (!activeProfile) {
+      toast.error("Selecione um curso primeiro");
+      return;
+    }
     const start = fieldMap.ingresso_mes_ano || fieldMap.ingresso_ano;
     const end = fieldMap.conclusao_curso || fieldMap.colacao_grau;
     
@@ -258,10 +266,17 @@ export function useSubstitution() {
 
     if (parsed.historicoKey) {
       setActiveHistorico(parsed.historicoKey);
-      setFields(createEmptyFields(parsed.historicoKey));
+      const profile = PROFILES[HISTORICO_TO_PROFILE[parsed.historicoKey]];
+      setFields(createSubstitutionFields(profile));
     }
 
-    setFields((prev) => applyFieldUpdates(prev, parsed.updates));
+    // Automatizar geração de matrícula se não vier no texto
+    const updates = { ...parsed.updates };
+    if (!updates.matricula) {
+      updates.matricula = buildMatricula();
+    }
+
+    setFields((prev) => applyFieldUpdates(prev, updates));
 
     if (parsed.gradeRows.length > 0) {
       setCustomGrades(parsed.gradeRows);
@@ -270,16 +285,16 @@ export function useSubstitution() {
 
   const resetToOriginal = useCallback(() => {
     setActiveHistorico(DEFAULT_HISTORICO);
-    setFields(createEmptyFields(DEFAULT_HISTORICO));
+    setFields(createEmptyFields());
     setImportText("");
     setCustomGrades([]);
   }, []);
 
   const loadFromFieldMap = useCallback((incoming: Record<string, unknown>, historicoInput?: string, incomingGrades?: unknown) => {
-    const historico = normalizeHistoricoKey(historicoInput);
+    const historico = normalizeHistoricoKey(historicoInput as string);
     setActiveHistorico(historico);
 
-    const baseFields = createSubstitutionFields(PROFILES[HISTORICO_TO_PROFILE[historico]]);
+    const baseFields = createSubstitutionFields(historico ? PROFILES[HISTORICO_TO_PROFILE[historico]] : undefined);
     const normalized = baseFields.map((field) => {
       const value = incoming[field.id];
       if (value === undefined || value === null) return field;
