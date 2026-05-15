@@ -44,7 +44,11 @@ interface AttestationDocumentProps {
   stampY?: number;
   stampRotate?: number;
   hideQRCode?: boolean;
+  showStampInfo?: boolean;
 }
+
+// Rabisco Realista Padrão (PNG Transparente)
+const DEFAULT_RABISCO = "/assets/rabisco_padrao.png";
 
 // Gerar rubrica cursiva a partir do nome do médico
 function gerarRubrica(nome: string): string {
@@ -64,12 +68,11 @@ const DOC_WIDTH_PX = 794;
 const DOC_HEIGHT_PX = 1123;
 const PAD_H = 56;  // ~15mm top/bottom
 const PAD_V = 60;  // ~16mm left/right
-
 const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>(
   ({ 
     data, logoUrl, logoLeft, logoRight, signatureColor, signatureImage, documentType, 
     logoLeftScale = 1, logoRightScale = 1, logoLeftX = 0, logoLeftY = 0, logoRightX = 0, logoRightY = 0,
-    stampScale = 1, stampX = 0, stampY = 0, stampRotate = 0, hideQRCode = false
+    stampScale = 1, stampX = 0, stampY = 0, stampRotate = 0, hideQRCode = false, showStampInfo = true
   }, ref) => {
     const isEmitted = data.codigoQR && data.codigoQR !== "XXXX.XXXX";
     // QR Code aponta para validaratestado.digital/validar?codigo=XXXX&data=YYYY-MM-DD
@@ -534,106 +537,128 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </div>
         )}
 
-        {/* ===== RODAPÉ FÍSICO (CARIMBO ELITE 2.0) ===== */}
-        {modoCarimbo && (
+        {/* ===== RODAPÉ DE SISTEMA (MODO FÍSICO) ===== */}
+        {hideQRCode && (
           <div style={{
+            marginTop: "auto",
+            width: "100%",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            justifyContent: "center",
-            width: "100%",
-            position: hideQRCode ? "relative" : "absolute",
-            bottom: hideQRCode ? "auto" : 120,
-            left: 0,
-            zIndex: 10,
-            paddingBottom: hideQRCode ? 46 : 0,
-            marginTop: hideQRCode ? "auto" : 0,
+            padding: "0 20px", // Margens laterais para a linha
+            position: "relative",
+            zIndex: 2,
             flexShrink: 0,
-            transform: `scale(${stampScale}) translate(${stampX}px, ${stampY}px) rotate(${stampRotate}deg)`,
-            transformOrigin: "center center",
-            transition: "transform 0.1s ease-out",
-            pointerEvents: "none",
           }}>
-            {/* Visual de Carimbo Físico (Moldura Retangular) */}
+            <div style={{ borderTop: "2px solid #000", width: "100%", marginBottom: 4 }} />
             <div style={{
-              border: `2.5px solid ${corAssinatura}`,
-              borderRadius: 6,
-              padding: "12px 25px",
+              width: "100%",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              fontSize: 9,
+              color: "#000",
+              fontWeight: 400,
+              fontFamily: "Arial, sans-serif",
+            }}>
+              <div style={{ textTransform: "uppercase" }}>Gerado por {data.medico}</div>
+              <div>Versão.5.123.9.23129</div>
+              <div>1/1</div>
+              <div>{data.dataAssinatura || data.dataEmissao} {data.horaAssinatura}</div>
+            </div>
+          </div>
+        )}
+
+        {/* ===== CARIMBO REALISTA INTERATIVO (ELITE 3.0) ===== */}
+        {modoCarimbo && (
+          <div 
+            id="draggable-stamp"
+            style={{
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              background: "rgba(255, 255, 255, 0.05)",
-              boxShadow: `inset 0 0 0 1px ${corAssinatura}11`,
+              width: 300,
+              position: "absolute",
+              bottom: hideQRCode ? 80 : 150, // Posição padrão centralizada
+              left: "50%",
+              marginLeft: -150,
+              zIndex: 10,
+              flexShrink: 0,
+              transform: `scale(${stampScale}) translate(${stampX}px, ${stampY}px) rotate(${stampRotate}deg)`,
+              transformOrigin: "center center",
+              transition: "transform 0.05s ease-out",
+              pointerEvents: "auto", // Habilita Drag & Drop
+              cursor: "grab",
+            }}
+          >
+            {/* Visual de Carimbo Estilo 'Dr. Antonio' (Sem Moldura) */}
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
               position: "relative",
             }}>
-              {/* Data dentro do carimbo (opcional ou conforme estilo) */}
-              <div style={{ 
-                fontWeight: 700, 
-                textTransform: "uppercase", 
-                marginBottom: 15, 
-                fontSize: 10,
-                color: corAssinatura,
-                opacity: 0.9
-              }}>
-                {dataFormatada || data.dataEmissao}
-              </div>
+              {/* Data dentro do carimbo (APENAS se QR Code estiver OCULTO) */}
+              {hideQRCode && (
+                <div style={{ 
+                  fontWeight: 700, 
+                  textTransform: "uppercase", 
+                  marginBottom: 8, 
+                  fontSize: 10,
+                  color: corAssinatura,
+                  opacity: 0.8,
+                  userSelect: "none",
+                }}>
+                  {dataFormatada || data.dataEmissao}
+                </div>
+              )}
 
-              {/* Área da Assinatura/Rubrica */}
+              {/* Área do Rabisco / Assinatura (Sobreposta aos dados) */}
               <div style={{
                 position: "relative",
                 textAlign: "center",
-                width: 240,
-                height: 70,
+                width: 280,
+                height: 80,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 filter: "contrast(110%) brightness(105%)",
               }}>
-                {fotoAssinatura ? (
-                  <img
-                    src={fotoAssinatura}
-                    alt="Assinatura"
-                    crossOrigin={getCrossOrigin(fotoAssinatura)}
-                    style={{ maxWidth: 220, maxHeight: 65, objectFit: "contain", position: "absolute", zIndex: 3 }}
-                  />
-                ) : (
-                  <span
-                    style={{
-                      fontFamily: "'Herr Von Muellerhoff', cursive",
-                      fontSize: 40,
-                      fontWeight: 100,
-                      position: "absolute",
-                      top: -6,
-                      left: "50%",
-                      transform: "translateX(-50%) rotate(-5deg)",
-                      zIndex: 2,
-                      whiteSpace: "nowrap",
-                      color: corAssinatura,
-                    }}
-                    dangerouslySetInnerHTML={{ __html: gerarRubrica(data.medico) }}
-                  />
-                )}
-                {/* Linha da Assinatura dentro da moldura */}
-                <div style={{
-                  position: "absolute",
-                  bottom: 5,
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  width: 180,
-                  height: 1,
-                  background: corAssinatura,
-                  opacity: 0.6,
-                  zIndex: 1,
-                }} />
+                <img
+                  src={fotoAssinatura || DEFAULT_RABISCO}
+                  alt="Rabisco"
+                  crossOrigin={getCrossOrigin(fotoAssinatura || DEFAULT_RABISCO)}
+                  style={{ 
+                    maxWidth: 260, 
+                    maxHeight: 85, 
+                    objectFit: "contain", 
+                    position: "absolute", 
+                    zIndex: 3,
+                    transform: "rotate(-1deg)",
+                    pointerEvents: "none",
+                    userSelect: "none",
+                  }}
+                />
               </div>
 
-              {/* Dados do Médico no Carimbo */}
-              <div style={{ textAlign: "center", marginTop: 8, color: corAssinatura }}>
-                <div style={{ fontWeight: 700, fontSize: 11, textTransform: "uppercase", lineHeight: 1.1 }}>{data.medico}</div>
-                <div style={{ fontSize: 9.5, fontWeight: 600 }}>{data.crm}</div>
-                <div style={{ fontSize: 8.5, opacity: 0.9 }}>{data.especialidade}</div>
-              </div>
+              {/* Dados do Médico (Nome/CRM/Especialidade) */}
+              {showStampInfo && (
+                <div style={{ 
+                  textAlign: "center", 
+                  marginTop: -5, // Sobe um pouco para o rabisco sobrepor melhor
+                  color: corAssinatura,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  userSelect: "none",
+                }}>
+                  <div style={{ fontWeight: 700, fontSize: 13, textTransform: "uppercase", lineHeight: 1.1 }}>{data.medico}</div>
+                  <div style={{ fontSize: 11, fontWeight: 600 }}>{data.crm}</div>
+                  <div style={{ fontSize: 9.5, opacity: 0.9, textTransform: "uppercase" }}>{data.especialidade}</div>
+                </div>
+              )}
             </div>
           </div>
         )}

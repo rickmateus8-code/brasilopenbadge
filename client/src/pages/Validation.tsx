@@ -24,10 +24,12 @@ import AttestationDocument from "@/components/AttestationDocument";
 import PrescricaoDocument from "@/components/PrescricaoDocument";
 import CNHDocument from "@/components/CNHDocument";
 import PetitionSTJDocument from "@/components/PetitionSTJDocument";
+import HistoricoUNINTERDocument from "@/components/HistoricoUNINTERDocument";
+import { SPPage1 } from "@/components/SPDocumentPage";
 import { useParams } from "wouter";
 import { exportElementToPDF, exportElementToPDFBlob, generatePDFFilename } from "@/lib/pdfExport";
 
-type DocType = "atestado" | "receita" | "cnh" | "laudo" | "peticao" | "unknown";
+type DocType = "atestado" | "receita" | "cnh" | "laudo" | "peticao" | "historico-uninter" | "historico-sp" | "unknown";
 
 function detectDocType(data: any): DocType {
   const typeStr = (data.tipo || data.type || data.document_type || "").toLowerCase();
@@ -36,6 +38,8 @@ function detectDocType(data: any): DocType {
   if (typeStr === "laudo") return "laudo";
   if (typeStr === "atestado") return "atestado";
   if (typeStr === "peticaocria" || typeStr === "peticao-stj") return "peticao";
+  if (typeStr === "historico-uninter") return "historico-uninter";
+  if (typeStr === "historico-sp") return "historico-sp";
   
   // Fallback por campos
   if (data.document_type === "laudo") return "laudo";
@@ -43,6 +47,8 @@ function detectDocType(data: any): DocType {
   if (data.prescricao) return "receita";
   if (data.categoria || data.registro) return "cnh";
   if (data.credor || data.processo) return "peticao";
+  if (data.historicoKey || data.profileKey) return "historico-uninter";
+  if (data.gdae || data.codGdae) return "historico-sp";
   return "unknown";
 }
 
@@ -102,6 +108,8 @@ export default function Validation() {
   const attestationRef = useRef<HTMLDivElement>(null);
   const prescricaoRef = useRef<HTMLDivElement>(null);
   const peticaoRef = useRef<HTMLDivElement>(null);
+  const uninterRef = useRef<HTMLDivElement>(null);
+  const spRef = useRef<HTMLDivElement>(null);
   const cnhRef = useRef<any>(null);
 
   // ── Smart Preview Logic ──────────────────────────────────────────────────
@@ -194,6 +202,12 @@ export default function Validation() {
           setPdfBlobUrl(url);
         } else if (docType === "peticao" && peticaoRef.current) {
           const url = await exportElementToPDFBlob(peticaoRef.current, { scale: 2 });
+          setPdfBlobUrl(url);
+        } else if (docType === "historico-uninter" && uninterRef.current) {
+          const url = await exportElementToPDFBlob(uninterRef.current, { scale: 2, multiPage: true });
+          setPdfBlobUrl(url);
+        } else if (docType === "historico-sp" && spRef.current) {
+          const url = await exportElementToPDFBlob(spRef.current, { scale: 2 });
           setPdfBlobUrl(url);
         }
       } catch (err) {
@@ -335,11 +349,17 @@ export default function Validation() {
         a.download = generatePDFFilename(nome, docType as any, "VALIDADO");
         a.click();
       } else {
-        const ref = docType === "receita" ? prescricaoRef.current : attestationRef.current;
+        let ref = attestationRef.current;
+        if (docType === "receita") ref = prescricaoRef.current;
+        if (docType === "peticao") ref = peticaoRef.current;
+        if (docType === "historico-uninter") ref = uninterRef.current;
+        if (docType === "historico-sp") ref = spRef.current;
+
         if (ref) {
           await exportElementToPDF(ref, {
             filename: generatePDFFilename(nome, docType as any, "VALIDADO"),
             scale: 2,
+            multiPage: docType === "historico-uninter",
           });
         }
       }
@@ -356,6 +376,8 @@ export default function Validation() {
       case "receita": return "Receita Médica";
       case "cnh": return "Carteira Nacional de Habilitação";
       case "peticao": return "Petição Judicial";
+      case "historico-uninter": return "Histórico UNINTER";
+      case "historico-sp": return "Histórico SP";
       default: return "Documento";
     }
   };
@@ -587,6 +609,32 @@ export default function Validation() {
             <PetitionSTJDocument
               ref={peticaoRef}
               data={validDoc}
+            />
+          </div>
+        );
+      case "historico-uninter":
+        return (
+          <div style={style}>
+            <HistoricoUNINTERDocument
+              ref={uninterRef}
+              data={validDoc}
+              gradeRows={validDoc.gradeRows || (validDoc.data && validDoc.data.gradeRows)}
+            />
+          </div>
+        );
+      case "historico-sp":
+        return (
+          <div style={style}>
+            <SPPage1
+              ref={spRef}
+              f={validDoc.data || validDoc}
+              grades={validDoc.grades || (validDoc.data && validDoc.data.grades)}
+              brasaoUrl={fixUrl(validDoc.brasaoUrl || (validDoc.data && validDoc.data.brasaoUrl))}
+              assinaturaGerenteUrl={fixUrl(validDoc.assinaturaGerenteUrl || (validDoc.data && validDoc.data.assinaturaGerenteUrl))}
+              assinaturaDiretorUrl={fixUrl(validDoc.assinaturaDiretorUrl || (validDoc.data && validDoc.data.assinaturaDiretorUrl))}
+              logoScale={validDoc.logoScale ?? (validDoc.data && validDoc.data.logoScale)}
+              logoX={validDoc.logoX ?? (validDoc.data && validDoc.data.logoX)}
+              logoY={validDoc.logoY ?? (validDoc.data && validDoc.data.logoY)}
             />
           </div>
         );

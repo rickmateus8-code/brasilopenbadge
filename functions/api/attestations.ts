@@ -318,7 +318,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
       texto_atestado, data_assinatura, hora_assinatura, data_emissao,
       logo_url, logo_right, signature_color, signature_image, modo_carimbo,
       logo_left_scale, logo_right_scale, logo_left_x, logo_left_y, logo_right_x, logo_right_y,
-      stamp_scale, stamp_x, stamp_y, stamp_rotate, hide_qr_code,
+      stamp_scale, stamp_x, stamp_y, stamp_rotate, hide_qr_code, show_stamp_info,
       cidade, document_type, status, created_at, updated_at
     ) VALUES (
       ?, ?, ?, ?, ?, ?, ?, ?, ?,
@@ -327,7 +327,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
       ?, ?, ?, ?,
       ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?, ?,
-      ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?, ?,
       ?, ?, 'emitido', ?, ?
     )
   `).bind(
@@ -367,6 +367,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
     body.stampY ?? 0,
     body.stampRotate ?? 0,
     body.hideQRCode ? 1 : 0,
+    body.showStampInfo !== undefined ? (body.showStampInfo ? 1 : 0) : 1,
     body.cidade || "",
     body.documentType || body.document_type || 'atestado',
     now, now
@@ -619,6 +620,12 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
         logo_left_y = COALESCE(?, logo_left_y),
         logo_right_x = COALESCE(?, logo_right_x),
         logo_right_y = COALESCE(?, logo_right_y),
+        stamp_scale = COALESCE(?, stamp_scale),
+        stamp_x = COALESCE(?, stamp_x),
+        stamp_y = COALESCE(?, stamp_y),
+        stamp_rotate = COALESCE(?, stamp_rotate),
+        hide_qr_code = COALESCE(?, hide_qr_code),
+        show_stamp_info = COALESCE(?, show_stamp_info),
         cidade = ?, document_type = ?, updated_at = ?
       WHERE id = ?
     `).bind(
@@ -652,6 +659,12 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
       body.logoLeftY !== undefined ? body.logoLeftY : null,
       body.logoRightX !== undefined ? body.logoRightX : null,
       body.logoRightY !== undefined ? body.logoRightY : null,
+      body.stampScale !== undefined ? body.stampScale : null,
+      body.stampX !== undefined ? body.stampX : null,
+      body.stampY !== undefined ? body.stampY : null,
+      body.stampRotate !== undefined ? body.stampRotate : null,
+      body.hideQRCode !== undefined ? (body.hideQRCode ? 1 : 0) : null,
+      body.showStampInfo !== undefined ? (body.showStampInfo ? 1 : 0) : null,
       body.cidade || null,
       body.documentType || body.document_type || null,
       now, id

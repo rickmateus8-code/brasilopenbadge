@@ -18,6 +18,7 @@ import { useSubstitutionUninter } from "@/hooks/useSubstitutionUninter";
 import SubstitutionPanelUninter from "@/components/SubstitutionPanelUninter";
 import { Page1, Page2, Page3, Page4, Page5, Page6 } from "@/components/DocumentPages";
 import { usePDFExport, generatePDFFilename } from "@/lib/pdfExport";
+import HistoricoUNINTERDocument from "@/components/HistoricoUNINTERDocument";
 
 const TOTAL_PAGES = 6;
 const PAGE_LABELS = [
@@ -51,6 +52,7 @@ export default function HistoricoUNINTER() {
     activeProfile,
     modifiedCount,
     importText,
+    gradeRows,
     applyHistorico,
     updateField,
     resetToOriginal,
@@ -88,6 +90,7 @@ export default function HistoricoUNINTER() {
         dataConclusao: fieldMap.conclusao_curso || "",
         historicoKey: activeHistorico,
         profileKey: activeProfile,
+        gradeRows, // Corrigido: Incluir notas no payload
         ...fieldMap,
       };
       const res = await fetch("/api/documents/historico-uninter", {
@@ -108,7 +111,7 @@ export default function HistoricoUNINTER() {
       }
     } catch { toast.error("Erro de conexão"); setShowConfirmModal(false); }
     finally { setIsExporting(false); }
-  }, [fieldMap, activeHistorico, activeProfile, updateBalance]);
+  }, [fieldMap, activeHistorico, activeProfile, gradeRows, updateBalance]);
 
   const handleExportPDF = useCallback(async () => {
     if (!printRef.current) return;
@@ -126,7 +129,12 @@ export default function HistoricoUNINTER() {
   }, [exportPDF, fieldMap]);
 
   const renderCurrentPage = () => {
-    const props = { f: fieldMap, highlightModified: showHighlights, profileKey: activeProfile };
+    const props = { 
+      f: fieldMap, 
+      highlightModified: showHighlights, 
+      profileKey: activeProfile,
+      gradeRows // Corrigido: Repassar notas para os componentes de página
+    };
     switch (currentPage) {
       case 1: return <Page1 {...props} />;
       case 2: return <Page2 {...props} />;
@@ -285,17 +293,13 @@ export default function HistoricoUNINTER() {
         </div>
 
         {/* Container oculto com TODAS as páginas para exportação PDF */}
-        <div
-          ref={printRef}
-          aria-hidden
-          style={{ position: "fixed", left: "-9999px", top: 0, width: `794px`, background: "white", color: "#000", display: "flex", flexDirection: "column", gap: 0 }}
-        >
-          <Page1 f={fieldMap} profileKey={activeProfile} />
-          <Page2 f={fieldMap} profileKey={activeProfile} />
-          <Page3 f={fieldMap} profileKey={activeProfile} />
-          <Page4 />
-          <Page5 f={fieldMap} profileKey={activeProfile} />
-          <Page6 f={fieldMap} profileKey={activeProfile} />
+        <div style={{ position: "fixed", left: "-9999px", top: 0 }}>
+          <HistoricoUNINTERDocument
+            ref={printRef}
+            data={fieldMap}
+            gradeRows={gradeRows}
+            profileKey={activeProfile}
+          />
         </div>
       </div>
 

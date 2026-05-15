@@ -132,6 +132,7 @@ export default function HistoricoSP() {
         document_type: "historico-sp",
         data: {
           ...fieldMap,
+          grades: currentGrades, // Corrigido: Incluir notas no payload
           brasaoUrl,
           assinaturaGerenteUrl,
           assinaturaDiretorUrl,
