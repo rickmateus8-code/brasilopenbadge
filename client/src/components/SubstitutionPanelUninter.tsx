@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { 
   UserRoundPen, RotateCcw, ChevronDown, ChevronRight, 
   Copy, FileText, WandSparkles, Sparkles, School, 
-  GraduationCap, LayoutGrid, Search, X
+  GraduationCap, LayoutGrid, Search, X, TableProperties
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { UNINTER_IMPORT_TEMPLATE, HISTORICOS_DISPONIVEIS } from "@/lib/documentData_uninter";
@@ -29,6 +29,7 @@ interface Props {
   onUpdateField: (fieldId: string, value: string) => void;
   onGenerateMatricula: () => void;
   onReset: () => void;
+  onGenerateGrade: () => void;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -56,6 +57,7 @@ export default function SubstitutionPanel({
   onUpdateField,
   onGenerateMatricula,
   onReset,
+  onGenerateGrade
 }: Props) {
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
     pessoal: true,
@@ -129,7 +131,7 @@ export default function SubstitutionPanel({
             className="text-[10px] h-7 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 px-2 font-bold" 
             onClick={onReset}
           >
-            <RotateCcw size={12} className="mr-1" /> Resetar
+            <RotateCcw size={12} className="mr-1" /> Resetar Tudo
           </Button>
         </div>
         {modifiedCount > 0 && (
@@ -212,6 +214,26 @@ export default function SubstitutionPanel({
               </div>
             </DialogContent>
           </Dialog>
+        </div>
+
+        {/* Gerador de Grade */}
+        <div className="p-4 mb-2 rounded-2xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/30 flex items-center justify-between group hover:border-emerald-300 transition-all">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
+              <TableProperties size={14} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-emerald-800 dark:text-emerald-200 uppercase tracking-tighter">Componentes Curriculares</p>
+              <p className="text-[9px] text-emerald-600/70 dark:text-emerald-400/50 font-bold uppercase italic">Gerador Automático</p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[9px] px-3 rounded-lg shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+            onClick={onGenerateGrade}
+          >
+            <Sparkles size={11} className="mr-1.5" /> GERAR GRADE
+          </Button>
         </div>
 
         {/* Importação Rápida */}

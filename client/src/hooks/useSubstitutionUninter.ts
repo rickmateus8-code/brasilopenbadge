@@ -8,6 +8,8 @@ import {
   type ProfileKey,
   type SubstitutionField,
 } from "@/lib/documentData_uninter";
+import { generateAcademicGrades } from "@/lib/curriculumGenerator";
+import { toast } from "sonner";
 
 const HISTORICO_TO_PROFILE: Record<HistoricoDisponivelKey, ProfileKey> = {
   administracao: "administracao",
@@ -27,12 +29,13 @@ const HISTORICO_TO_PROFILE: Record<HistoricoDisponivelKey, ProfileKey> = {
 
 const DEFAULT_HISTORICO: HistoricoDisponivelKey = "historia";
 
-function createEmptyFields() {
-  const blueprint = createSubstitutionFields(PROFILES.historia);
+function createEmptyFields(key: HistoricoDisponivelKey = DEFAULT_HISTORICO) {
+  const profile = PROFILES[HISTORICO_TO_PROFILE[key]];
+  const blueprint = createSubstitutionFields(profile);
   return blueprint.map((field) => ({
     ...field,
     originalValue: "",
-    currentValue: "",
+    currentValue: field.currentValue, // Mantém o valor padrão do curso
   }));
 }
 
@@ -57,11 +60,19 @@ function normalizeDate(value: string) {
 function detectHistoricoByCurso(curso: string): HistoricoDisponivelKey | null {
   const text = normalizeUpper(curso);
   if (!text) return null;
-  if (text.includes("ENGENHARIA DE CONTROLE") || text.includes("AUTOMA")) {
-    return "engenharia_controle_automacao";
-  }
-  if (text.includes("PEDAGOGIA")) return "pedagogia";
+  if (text.includes("ADMINISTRA")) return "administracao";
+  if (text.includes("CONT") && text.includes("CIEN")) return "ciencias_contabeis";
+  if (text.includes("DIREITO")) return "direito";
+  if (text.includes("ENFERM")) return "enfermagem";
+  if (text.includes("ENGENHARIA DE CONTROLE") || text.includes("AUTOMA")) return "engenharia_controle_automacao";
+  if (text.includes("RH") || text.includes("HUMANO")) return "gestao_recursos_humanos";
   if (text.includes("HIST")) return "historia";
+  if (text.includes("LETRAS")) return "letras";
+  if (text.includes("MARKET")) return "marketing";
+  if (text.includes("PEDAGOGIA")) return "pedagogia";
+  if (text.includes("PSICOL")) return "psicologia";
+  if (text.includes("SOCIAL")) return "servico_social";
+  if (text.includes("TEOL")) return "teologia";
   return null;
 }
 
@@ -79,8 +90,8 @@ function parseGradeLine(line: string): GradeRow | null {
   }
 
   if (parts.length < 7) return null;
-  if (!/^\d{4}\/\d{2}$/.test(parts[0])) return null;
-
+  
+  // Suporte a Ano/Mês (YYYY/MM) ou apenas Texto
   return {
     anoMes: parts[0],
     disciplina: parts[1],
@@ -176,6 +187,8 @@ function normalizeHistoricoKey(input?: string): HistoricoDisponivelKey {
   const value = normalizeUpper(input || "");
   if (value.includes("ENG")) return "engenharia_controle_automacao";
   if (value.includes("PED")) return "pedagogia";
+  if (value.includes("ADM")) return "administracao";
+  if (value.includes("DIR")) return "direito";
   return "historia";
 }
 
@@ -193,7 +206,7 @@ export function useSubstitutionUninter() {
 
 export function useSubstitution() {
   const [activeHistorico, setActiveHistorico] = useState<HistoricoDisponivelKey>(DEFAULT_HISTORICO);
-  const [fields, setFields] = useState<SubstitutionField[]>(() => createEmptyFields());
+  const [fields, setFields] = useState<SubstitutionField[]>(() => createEmptyFields(DEFAULT_HISTORICO));
   const [importText, setImportText] = useState("");
   const [customGrades, setCustomGrades] = useState<GradeRow[]>([]);
 
@@ -206,22 +219,16 @@ export function useSubstitution() {
   }, [fields]);
 
   const modifiedCount = useMemo(() => {
-    return fields.filter((f) => f.currentValue.trim() !== "").length;
+    return fields.filter((f) => f.currentValue.trim() !== "" && f.currentValue !== f.originalValue).length;
   }, [fields]);
 
-  const defaultGrades = useMemo(() => {
-    const { page5, page6 } = getGradesForProfile(activeProfile);
-    return [...page5, ...page6];
-  }, [activeProfile]);
-
   const gradeRows = useMemo(() => {
-    return customGrades.length > 0 ? customGrades : defaultGrades;
-  }, [customGrades, defaultGrades]);
+    return customGrades;
+  }, [customGrades]);
 
   const applyHistorico = useCallback((historico: HistoricoDisponivelKey) => {
     setActiveHistorico(historico);
-    const blueprint = createSubstitutionFields(PROFILES[HISTORICO_TO_PROFILE[historico]]);
-    setFields(blueprint);
+    setFields(createEmptyFields(historico));
     setCustomGrades([]);
   }, []);
 
@@ -235,6 +242,15 @@ export function useSubstitution() {
     setFields((prev) => applyFieldUpdates(prev, { matricula: buildMatricula() }));
   }, []);
 
+  const handleGenerateGrade = useCallback(() => {
+    const start = fieldMap.ingresso_mes_ano || fieldMap.ingresso_ano;
+    const end = fieldMap.conclusao_curso || fieldMap.colacao_grau;
+    
+    const newGrades = generateAcademicGrades(activeProfile, start, end);
+    setCustomGrades(newGrades);
+    toast.success(`Grade de ${PROFILES[activeProfile].label} gerada com sucesso!`);
+  }, [activeProfile, fieldMap]);
+
   const applyImportText = useCallback(() => {
     if (!importText.trim()) return;
 
@@ -242,6 +258,7 @@ export function useSubstitution() {
 
     if (parsed.historicoKey) {
       setActiveHistorico(parsed.historicoKey);
+      setFields(createEmptyFields(parsed.historicoKey));
     }
 
     setFields((prev) => applyFieldUpdates(prev, parsed.updates));
@@ -253,7 +270,7 @@ export function useSubstitution() {
 
   const resetToOriginal = useCallback(() => {
     setActiveHistorico(DEFAULT_HISTORICO);
-    setFields(createEmptyFields());
+    setFields(createEmptyFields(DEFAULT_HISTORICO));
     setImportText("");
     setCustomGrades([]);
   }, []);
@@ -303,5 +320,6 @@ export function useSubstitution() {
     setImportText,
     applyImportText,
     generateMatricula,
+    handleGenerateGrade
   };
 }

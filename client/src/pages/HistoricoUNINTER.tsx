@@ -253,6 +253,7 @@ export default function HistoricoUNINTER() {
                   onUpdateField={updateField}
                   onGenerateMatricula={generateMatricula}
                   onReset={handleResetAll}
+                  onGenerateGrade={handleGenerateGrade}
                 />
             </aside>
 
