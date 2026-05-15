@@ -4,7 +4,8 @@
 // Supports multiple course profiles (História, Pedagogia, Engenharia, etc.)
 // ============================================================
 
-export const LOGO_URL = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663380726083/LSKlJlDWSFXTKSLM.png";
+// URLs Restauradas (Estado de Ouro)
+export const LOGO_URL = "https://uninter.com/wp-content/uploads/2021/04/uninter-logo-2.png"; // Fallback estável
 export const ASSINATURA_URL = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663380914608/sWeWwfmzoBJtdiXv.png";
 export const SELO_URL = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663380914608/NxEAVgNOkxUCbVre.png";
 
@@ -56,6 +57,8 @@ export const UNINTER_IMPORT_TEMPLATE = [
   "Matrícula:",
   "Situação de Matrícula:",
   "Curso:",
+  "Ato Autorizativo de Reconhecimento:",
+  "Processo e-MEC:",
   "Mês / Ano de Realização:",
   "Ano de Ingresso:",
   "Conclusão do Curso:",
@@ -91,10 +94,7 @@ export interface CourseMetadata {
   codigoValidacao: string;
 }
 
-// ============================================================
-// PROFILES
-// ============================================================
-
+// ==================== PROFILES ====================
 export const LINDOMAR_PROFILE: Profile = {
   name: "LINDOMAR DE OLIVEIRA DUARTE",
   label: "LINDOMAR",
@@ -120,6 +120,8 @@ export const LINDOMAR_PROFILE: Profile = {
     titulacao: "Doutorado",
     ingresso_mes_ano: "Março / 2015",
     ingresso_ano: "2015",
+    reconhecimento: "Reconhecido pela Portaria nº 357, de 24/05/2018, DOU nº 100, Seção 1, pág. 16, de 25/05/2018",
+    processo_emec: "201605151",
   },
 };
 
@@ -148,6 +150,8 @@ export const THAIS_HISTORIA_PROFILE: Profile = {
     titulacao: "Mestrado",
     ingresso_mes_ano: "Março / 2018",
     ingresso_ano: "2018",
+    reconhecimento: "Reconhecido pela Portaria nº 913, de 27/12/2018, DOU nº 245, Seção 1, pág. 35-40",
+    processo_emec: "201605151",
   },
 };
 
@@ -176,6 +180,8 @@ export const THAIS_PEDAGOGIA_PROFILE: Profile = {
     titulacao: "Mestrado",
     ingresso_mes_ano: "Março / 2018",
     ingresso_ano: "2018",
+    reconhecimento: "Reconhecido pela Portaria nº 913, DOU nº 245, Seção 1",
+    processo_emec: "201605151",
   },
 };
 
@@ -204,6 +210,8 @@ export const ENGENHARIA_CONTROLE_AUTOMACAO_PROFILE: Profile = {
     titulacao: "Bacharel em Engenharia de Controle e Automação",
     ingresso_mes_ano: "NÃO INFORMADO",
     ingresso_ano: "NÃO INFORMADO",
+    reconhecimento: "Diploma registrado conforme Lei nº 9.394/1996 (LDB), Decreto nº 9.235/2017 e Portaria MEC nº 554/2019.",
+    processo_emec: "201605151",
   },
 };
 
@@ -217,10 +225,7 @@ export const PROFILES: Record<ProfileKey, Profile> = {
   engenharia_controle_automacao: ENGENHARIA_CONTROLE_AUTOMACAO_PROFILE,
 };
 
-// ============================================================
-// COURSE METADATA
-// ============================================================
-
+// ==================== COURSE METADATA ====================
 export const COURSE_METADATA: Record<ProfileKey, CourseMetadata> = {
   historia: {
     cursoCompleto: "CURSO SUPERIOR DE LICENCIATURA EM HISTÓRIA",
@@ -307,6 +312,8 @@ export function createSubstitutionFields(profile: Profile): SubstitutionField[] 
     { id: "colacao_grau", label: "Colação de Grau", category: "academico", originalValue: LINDOMAR_PROFILE.fields.colacao_grau, currentValue: profile.fields.colacao_grau, pages: [1, 2, 3] },
     { id: "ingresso_mes_ano", label: "Mês / Ano de Realização", category: "academico", originalValue: LINDOMAR_PROFILE.fields.ingresso_mes_ano, currentValue: profile.fields.ingresso_mes_ano, pages: [3] },
     { id: "ingresso_ano", label: "Ano de Ingresso", category: "academico", originalValue: LINDOMAR_PROFILE.fields.ingresso_ano, currentValue: profile.fields.ingresso_ano, pages: [3] },
+    { id: "reconhecimento", label: "Ato de Reconhecimento", category: "academico", originalValue: LINDOMAR_PROFILE.fields.reconhecimento, currentValue: profile.fields.reconhecimento, pages: [1, 2, 3] },
+    { id: "processo_emec", label: "Processo e-MEC*", category: "academico", originalValue: LINDOMAR_PROFILE.fields.processo_emec, currentValue: profile.fields.processo_emec, pages: [3] },
     { id: "expedicao_diploma", label: "Expedição do Diploma", category: "academico", originalValue: LINDOMAR_PROFILE.fields.expedicao_diploma, currentValue: profile.fields.expedicao_diploma, pages: [3] },
     { id: "expedicao_historico", label: "Expedição do Histórico", category: "academico", originalValue: LINDOMAR_PROFILE.fields.expedicao_historico, currentValue: profile.fields.expedicao_historico, pages: [3] },
     { id: "carga_horaria", label: "Carga Horária", category: "academico", originalValue: LINDOMAR_PROFILE.fields.carga_horaria, currentValue: profile.fields.carga_horaria, pages: [2, 6] },

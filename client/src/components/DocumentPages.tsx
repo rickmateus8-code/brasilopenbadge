@@ -178,13 +178,13 @@ function DocFooter({ profileKey }: { profileKey?: ProfileKey }) {
         O presente documento foi emitido digitalmente amparado pelo Ofício n.º 38/CES/CNE/MEC de 04/03/2011 e pelo Ofício n.º
         {" "}387/2016/CES/SAO/CNE/CNE-MEC.<br />
         A validação da veracidade é dada por meio do endereço eletrônico{" "}
-        <span style={{ textDecoration: "underline" }}>https://uninter-meudiploma.online</span>{" "}
+        <span style={{ textDecoration: "none" }}>https://uninter-meudiploma.online</span>{" "}
         a partir dos dados contidos no rodapé deste documento.
       </div>
       <div style={{ textAlign: "center", fontSize: "8.5pt", margin: "6px 0", lineHeight: 1.3 }}>
         <b>{meta.unidadeLabel}</b> {meta.unidadeEndereco}<br />
         <b>Contatos:</b> 41 3593 2900 |{" "}
-        <span style={{ textDecoration: "underline" }}>secretariageral@uninter.com</span>
+        <span style={{ textDecoration: "none" }}>secretariageral@uninter.com</span>
       </div>
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", margin: "6px 0" }}>
         <img src={SELO_URL} alt="Selo UNINTER" crossOrigin="anonymous" style={{ width: 80, height: "auto", display: "block" }} />
@@ -236,6 +236,7 @@ export function Page1({ f, highlightModified, profileKey }: Props) {
   const O = "LINDOMAR DE OLIVEIRA DUARTE";
   const meta = getMeta(profileKey);
   const dateStr = f.dateText || meta.dateText;
+  const reconhecimento = f.reconhecimento || meta.reconhecimento;
   return (
     <div className="doc-page" id="doc-page-1" style={PAGE_STYLE}>
       <Logo />
@@ -276,6 +277,7 @@ export function Page2({ f, highlightModified, profileKey }: Props) {
   const hl = highlightModified;
   const meta = getMeta(profileKey);
   const dateStr = f.dateText || meta.dateText;
+  const reconhecimento = f.reconhecimento || meta.reconhecimento;
   return (
     <div className="doc-page" id="doc-page-2" style={PAGE_STYLE}>
       <Logo />
@@ -284,7 +286,7 @@ export function Page2({ f, highlightModified, profileKey }: Props) {
       </div>
 
       <p style={{ textAlign: "justify", marginTop: 10, lineHeight: 1.4, fontSize: "10pt" }}>
-        Certificamos que <b><V val={f.nome} orig="LINDOMAR DE OLIVEIRA DUARTE" highlight={hl} /></b>, CPF n.º <V val={f.cpf} orig="247.920.528-23" highlight={hl} />, matriculado(a) sob o registro acadêmico n.º <V val={f.matricula} orig="1022071" highlight={hl} />, concluiu o <b>{meta.cursoCompleto}</b>, nível de Graduação, com carga horária total de <V val={`${f.carga_horaria}h`} orig="2870h" highlight={hl} />, ministrado pelo <b>CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER</b>, mantido pela <b>UNINTER EDUCACIONAL S.A.</b>, credenciado pela Portaria n.º 688 de 25/05/2012, publicada no D.O.U. n.º 102 de 28/05/2012, seção 1, p.23, recredenciado pela Portaria n.º 1.219 de 28/11/2019, publicada no D.O.U. n.º 208, seção 1, p.24. {meta.reconhecimentoInline} tendo colado grau em <V val={f.colacao_grau} orig="08/07/2019" highlight={hl} />.
+        Certificamos que <b><V val={f.nome} orig="LINDOMAR DE OLIVEIRA DUARTE" highlight={hl} /></b>, CPF n.º <V val={f.cpf} orig="247.920.528-23" highlight={hl} />, matriculado(a) sob o registro acadêmico n.º <V val={f.matricula} orig="1022071" highlight={hl} />, concluiu o <b>{meta.cursoCompleto}</b>, nível de Graduação, com carga horária total de <V val={`${f.carga_horaria}h`} orig="2870h" highlight={hl} />, ministrado pelo <b>CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER</b>, mantido pela <b>UNINTER EDUCACIONAL S.A.</b>, credenciado pela Portaria n.º 688 de 25/05/2012, publicada no D.O.U. n.º 102 de 28/05/2012, seção 1, p.23, recredenciado pela Portaria n.º 1.219 de 28/11/2019, publicada no D.O.U. n.º 208, seção 1, p.24. <V val={reconhecimento} orig={meta.reconhecimento} highlight={hl} />, tendo colado grau em <V val={f.colacao_grau} orig="08/07/2019" highlight={hl} />.
       </p>
 
       <p style={{ marginTop: 20, fontSize: "10pt" }}>{dateStr}</p>
@@ -300,6 +302,8 @@ export function Page3({ f, highlightModified, profileKey }: Props) {
   const meta = getMeta(profileKey);
   const ingressoMesAno = f.ingresso_mes_ano || meta.ingressoMesAno;
   const ingressoAno = f.ingresso_ano || meta.ingressoAno;
+  const processoEmec = f.processo_emec || "201605151";
+  const reconhecimento = f.reconhecimento || meta.reconhecimento;
   return (
     <div className="doc-page" id="doc-page-3" style={{ ...PAGE_STYLE, fontSize: "9pt" }}>
       <Logo />
@@ -322,13 +326,13 @@ export function Page3({ f, highlightModified, profileKey }: Props) {
 
       <Fieldset legend="IDENTIFICAÇÃO DO CURSO">
         <p style={{ margin: "2px 0" }}><b>Curso:</b> {meta.cursoCompleto}</p>
-        <p style={{ margin: "2px 0" }}><b>Ato Autorizativo de Reconhecimento:</b> {meta.reconhecimento}</p>
-        <p style={{ margin: "2px 0" }}><b>Número do Processo e-MEC*:</b> 201605151</p>
+        <p style={{ margin: "2px 0" }}><b>Ato Autorizativo de Reconhecimento:</b> <V val={reconhecimento} orig={meta.reconhecimento} highlight={hl} /></p>
+        <p style={{ margin: "2px 0" }}><b>Número do Processo e-MEC*:</b> <V val={processoEmec} orig="201605151" highlight={hl} /></p>
       </Fieldset>
 
       <Fieldset legend="FORMA DE INGRESSO">
         <p style={{ margin: "2px 0" }}><b>Processo Seletivo:</b> VESTIBULAR</p>
-        <p style={{ margin: "2px 0" }}><b>Mês / Ano de Realização:</b> {ingressoMesAno} &nbsp;&nbsp; <b>Ano de Ingresso:</b> {ingressoAno}</p>
+        <p style={{ margin: "2px 0" }}><b>Mês / Ano de Realização:</b> <V val={ingressoMesAno} orig={meta.ingressoMesAno} highlight={hl} /> &nbsp;&nbsp; <b>Ano de Ingresso:</b> <V val={ingressoAno} orig={meta.ingressoAno} highlight={hl} /></p>
       </Fieldset>
 
       <Fieldset legend="DADOS DE CONCLUSÃO">
@@ -356,7 +360,7 @@ export function Page3({ f, highlightModified, profileKey }: Props) {
       <Fieldset legend="OBSERVAÇÕES COMPLEMENTARES">
         <p style={{ margin: "1px 0" }}>* Informação válida para cursos em processo de reconhecimento ou renovação de reconhecimento de acordo com o Art. 17 IX da Portaria n.º 1.095/2018.</p>
         <p style={{ margin: "1px 0" }}>Histórico Escolar emitido digitalmente amparado pelo Ofício n.º 38/CES/CNE/MEC de 04/03/2011 e pelo Ofício n.º 387/2016/CES/SAO/CNE/CNE-MEC.</p>
-        <p style={{ margin: "1px 0" }}>A validação da veracidade é dada por meio do endereço eletrônico <span style={{ textDecoration: "underline" }}>https://uninter-meudiploma.online</span> a partir dos dados contidos no rodapé deste documento.</p>
+        <p style={{ margin: "1px 0" }}>A validação da veracidade é dada por meio do endereço eletrônico <span style={{ textDecoration: "none" }}>https://uninter-meudiploma.online</span> a partir dos dados contidos no rodapé deste documento.</p>
       </Fieldset>
     </div>
   );
@@ -443,7 +447,7 @@ export function Page6({ f, highlightModified, profileKey, gradeRows }: Props) {
       <div style={{ textAlign: "center", fontSize: "8.5pt", margin: "6px 0", lineHeight: 1.3 }}>
         <b>{meta.unidadeLabel}</b> {meta.unidadeEndereco}<br />
         <b>Contatos:</b> 41 3593 2900 |{" "}
-        <span style={{ textDecoration: "underline" }}>secretariageral@uninter.com</span>
+        <span style={{ textDecoration: "none" }}>secretariageral@uninter.com</span>
       </div>
 
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", margin: "6px 0" }}>
@@ -457,7 +461,7 @@ export function Page6({ f, highlightModified, profileKey, gradeRows }: Props) {
 
       <div style={{ marginTop: 8, fontSize: "8.5pt", lineHeight: 1.3, textAlign: "justify", wordSpacing: "1px" }}>
         Informamos que a validação da veracidade da emissão deste documento pode ser realizada através do site:<br />
-        <a href="https://uninter-meudiploma.online" style={{ color: "#000" }}>https://uninter-meudiploma.online</a><br />
+        <a href="https://uninter-meudiploma.online" style={{ color: "#000", textDecoration: "none" }}>https://uninter-meudiploma.online</a><br />
         Documento emitido às 15:01:39 do dia {f.expedicao_historico}.<br />
         Código de Validação / Controle do documento: {meta.codigoValidacao}
       </div>
