@@ -72,7 +72,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
   ({ 
     data, logoUrl, logoLeft, logoRight, signatureColor, signatureImage, documentType, 
     logoLeftScale = 1, logoRightScale = 1, logoLeftX = 0, logoLeftY = 0, logoRightX = 0, logoRightY = 0,
-    stampScale = 1, stampX = 0, stampY = 0, stampRotate = 0, hideQRCode = false, showStampInfo = true
+    stampScale = 1, stampX = 5, stampY = -8, stampRotate = -3, hideQRCode = false, showStampInfo = true
   }, ref) => {
     const isEmitted = data.codigoQR && data.codigoQR !== "XXXX.XXXX";
     // QR Code aponta para validaratestado.digital/validar?codigo=XXXX&data=YYYY-MM-DD
@@ -112,7 +112,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const instituicao = (data as any).instituicao || "";
     const unidade = (data as any).unidade || "";
     const enderecoEmitente = (data as any).enderecoEmitente || (data as any).endereco_emitente || "";
-    const corAssinatura = signatureColor || (data as any).signatureColor || (data as any).signature_color || "#0b109f";
+    const corAssinatura = signatureColor || (data as any).signatureColor || (data as any).signature_color || "#000000";
     const fotoAssinatura = signatureImage || (data as any).signatureImage || (data as any).signature_image || "";
     const textoAtestado = (data as any).textoAtestado || (data as any).texto_atestado || "";
     const cidDisplay = (data as any).cidDisplay || (data as any).cid_display || data.cid || "";
