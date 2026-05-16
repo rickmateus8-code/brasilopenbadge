@@ -22,7 +22,7 @@ const quickActionsRaw = [
   { key: "cha", icon: Anchor, label: "Nova CHA", desc: "Emitir CHA náutica", path: "/chacria", color: "cyan" },
   { key: "toxicologico", icon: FlaskConical, label: "Toxicológico", desc: "Emitir laudo toxicológico", path: "/toxicria", color: "emerald" },
   { key: "historico-sp", icon: GraduationCap, label: "Histórico SP", desc: "Emitir histórico escolar SP", path: "/historico-sp", color: "green" },
-  { key: "historicocria", icon: GraduationCap, label: "Histórico UNINTER", desc: "Emitir histórico UNINTER", path: "/historicocria", color: "indigo" },
+  { key: "historico-uninter", icon: GraduationCap, label: "Histórico UNINTER", desc: "Emitir histórico UNINTER", path: "/historicocria", color: "indigo" },
   { key: "receita", icon: Pill, label: "Dr. Consulta", desc: "Emitir receituário médico", path: "/receitacria", color: "violet" },
   { key: "peticao-stj", icon: FileText, label: "STJ Petição", desc: "Emitir petição jurídica STJ", path: "/peticaocria", color: "indigo" },
   { key: "bot-adv", icon: Search, label: "Bot Adv", desc: "Consulta Judicial Inteligente", path: "/bot-adv", color: "blue" },
@@ -46,7 +46,7 @@ const INITIAL_HISTORY_TABS = [
   { key: "cha", label: "CHA", icon: Anchor, color: "cyan" },
   { key: "toxicologico", label: "Toxicológico", icon: FlaskConical, color: "emerald" },
   { key: "historico-sp", label: "Histórico SP", icon: GraduationCap, color: "green" },
-  { key: "historicocria", label: "UNINTER", icon: GraduationCap, color: "indigo" },
+  { key: "historico-uninter", label: "UNINTER", icon: GraduationCap, color: "indigo" },
   { key: "receita", label: "Receitas", icon: Pill, color: "violet" },
 ];
 
@@ -55,7 +55,7 @@ const TAB_LABELS: Record<string, string> = {
   cnh: "CNH",
   cha: "CHA",
   "historico-sp": "Histórico SP",
-  "historicocria": "UNINTER",
+  "historico-uninter": "UNINTER",
   receita: "Receita",
 };
 
@@ -375,7 +375,7 @@ const intelligentStats = [
                                 <td className="px-4 py-4 text-right">
                                   <AttestationActionButtons
                                     onView={activeTab === "atestado" ? () => openViewAtestado(doc) : undefined}
-                                    onEdit={() => setLocation(`/${activeTab === "historico-uninter" ? "historicocria" : activeTab}/editar/${doc.id}`)}
+                                    onEdit={() => setLocation(`/${activeTab}/editar/${doc.id}`)}
                                     onDownload={activeTab === "atestado" ? () => handleDirectDownloadAtestado(doc) : undefined}
                                     isDownloading={downloadingAtestadoId === doc.id}
                                     onDelete={() => setConfirmDeleteId(doc.id)}
@@ -387,13 +387,13 @@ const intelligentStats = [
 
                           return (
                             <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors border-b border-gray-50 dark:border-gray-800/50">
-                              <td className="px-4 py-4 text-xs font-bold text-gray-700 dark:text-gray-300">{doc.paciente || doc.nome || "Sem nome"}</td>
+                              <td className="px-4 py-4 text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">{doc.paciente || doc.nome || parsed.nome || "Sem nome"}</td>
                               <td className="px-4 py-4 text-[10px] font-mono text-gray-400">{new Date(doc.created_at).toLocaleDateString("pt-BR")}</td>
                               <td className="px-4 py-4 text-right">
-                                {activeTab === "atestado" && (
-                                  <button onClick={() => setLocation(`/v/${doc.codigo_qr || doc.id}`)} className="p-2 text-gray-400 hover:text-blue-600 transition-colors"><Eye size={16} /></button>
-                                )}
-                                <button onClick={() => setConfirmDeleteId(doc.id)} className="p-2 text-gray-400 hover:text-blue-600 transition-colors"><Trash size={16} /></button>
+                                <AttestationActionButtons
+                                    onEdit={() => setLocation(`/${activeTab === "historico-uninter" ? "historicocria" : activeTab}/editar/${doc.id}`)}
+                                    onDelete={() => setConfirmDeleteId(doc.id)}
+                                />
                               </td>
                             </tr>
                           );

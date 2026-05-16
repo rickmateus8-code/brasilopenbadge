@@ -59,24 +59,48 @@ export default function HistoricoCria() {
     const months = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
     const mIdx = parseInt(month) - 1;
     if (isNaN(mIdx) || mIdx < 0 || mIdx > 11) return undefined;
-    return `Curitiba/PR, ${parseInt(day)} de ${months[mIdx]} de ${year}.`;
+    
+    // Automação de Localidade: Prioriza campos dedicados extraídos via CEP
+    let location = "Curitiba/PR";
+    if (fieldMap.unidade_cidade && fieldMap.unidade_uf) {
+      location = `${fieldMap.unidade_cidade}/${fieldMap.unidade_uf}`;
+    } else {
+      // Fallback via Regex se os campos dedicados estiverem vazios (ex: importação legada)
+      const addr = fieldMap.endereco || "";
+      const locMatch = addr.match(/,\s*([^,]+)\/([A-Z]{2})\s+/i);
+      if (locMatch) {
+        location = `${locMatch[1].trim()}/${locMatch[2].toUpperCase()}`;
+      } else if (fieldMap.unidade_uf) {
+        location = `Cidade/${fieldMap.unidade_uf}`;
+      }
+    }
+
+    return `${location}, ${parseInt(day)} de ${months[mIdx]} de ${year}.`;
   };
 
-  const effectiveDateText = useMemo(() => formatDateExtenso(fieldMap.expedicao_diploma || ""), [fieldMap.expedicao_diploma]);
+  const effectiveDateText = useMemo(() => formatDateExtenso(fieldMap.expedicao_diploma || ""), [fieldMap.expedicao_diploma, fieldMap.endereco, fieldMap.unidade_uf, fieldMap.unidade_cidade]);
 
-  // Paginação dinâmica baseada nas notas e regras de curso
+  // Paginação dinâmica balanceada (Sincronizada com DocumentPages.tsx)
   const showPage4 = activeHistorico !== "pedagogia";
 
   const gradeChunks = useMemo(() => {
     const remaining = [...gradeRows];
     const chunks: any[][] = [];
+    const MAX_ROWS_LAST = 36;
+    const MAX_ROWS_INT = 62;
+
     if (remaining.length === 0) {
        chunks.push([{ anoMes: "", disciplina: "Nenhuma disciplina informada", ch: "", media: "", resultado: "", docente: "", titulacao: "" }]);
     } else {
       while (remaining.length > 0) {
-        const isLastPage = remaining.length <= 18;
-        const count = isLastPage ? remaining.length : 26;
-        chunks.push(remaining.splice(0, count));
+        if (remaining.length <= MAX_ROWS_LAST) {
+          chunks.push(remaining.splice(0, remaining.length));
+        } else if (remaining.length <= MAX_ROWS_INT) {
+           // Zona de Perigo: balanceamento proporcional
+           chunks.push(remaining.splice(0, Math.floor(remaining.length / 2)));
+        } else {
+          chunks.push(remaining.splice(0, MAX_ROWS_INT));
+        }
       }
     }
     return chunks;

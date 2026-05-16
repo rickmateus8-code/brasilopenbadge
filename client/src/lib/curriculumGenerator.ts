@@ -88,12 +88,16 @@ const SUBJECTS_DATABASE: Record<string, string[]> = {
     "Matemática para Marketing", "Estatística Aplicada", "Projeto Integrador em Marketing I", "Projeto Integrador em Marketing II", "TCC"
   ],
   pedagogia: [
-    "Fundamentos Históricos da Educação", "Fundamentos Filosóficos da Educação", "Psicologia da Educação", "Sociologia da Educação", "Didática I",
-    "Didática II", "Currículo Escolar", "Políticas e Organização da Educação Básica", "Educação Inclusiva", "Alfabetização e Letramento I",
-    "Alfabetização e Letramento II", "Educação Infantil: Teorias e Práticas", "Metodologia do Ensino da Língua Portuguesa", "Metodologia do Ensino da Matemática", "Metodologia do Ensino de Ciências",
-    "Metodologia do Ensino de História e Geografia", "Gestão Escolar I", "Gestão Escolar II", "Avaliação da Aprendizagem", "LIBRAS",
-    "Tecnologias na Educação", "Pesquisa em Educação", "Educação de Jovens e Adultos", "Educação Especial", "Psicopedagogia",
-    "Literatura Infantil", "Arte e Educação", "Corpo e Movimento", "Estágio em Educação Infantil", "Estágio em Anos Iniciais", "Estágio em Gestão", "TCC I", "TCC II"
+    "Fundamentos Históricos da Educação", "Fundamentos Filosóficos da Educação", "Psicologia da Educação", "Sociologia da Educação", "Didática: Organização do Trabalho Pedagógico",
+    "Políticas Educacionais e Organização da Educação Básica", "Educação e Sociedade", "Psicologia do Desenvolvimento e da Aprendizagem", "Currículo e Avaliação", "Alfabetização e Letramento: Fundamentos e Metodologia",
+    "Educação Infantil: Teorias e Práticas", "Metodologia do Ensino de Língua Portuguesa", "Metodologia do Ensino de Matemática", "Metodologia do Ensino de Ciências", "Metodologia do Ensino de História e Geografia",
+    "Gestão Escolar e Organização do Trabalho Pedagógico", "Educação de Jovens e Adultos: Fundamentos e Metodologia", "Educação Inclusiva", "Educação Especial", "Libras - Língua Brasileira de Sinais",
+    "Tecnologias na Educação", "Pesquisa e Prática Pedagógica I", "Pesquisa e Prática Pedagógica II", "Arte e Ludicidade na Educação", "Literatura Infantil e Juvenil",
+    "Filosofia da Educação", "Antropologia da Educação", "Ética e Cidadania", "Linguagem e Argumentação", "Saúde e Primeiros Socorros na Escola",
+    "Planejamento Estratégico e Gestão Educacional", "Psicopedagogia Institucional", "Neurociência e Aprendizagem", "Fundamentos da Educação Especial e Inclusiva", "Relações Étnico-Raciais e Educação para a Diversidade",
+    "Direitos Humanos e Mediação de Conflitos", "Educação Ambiental e Sustentabilidade", "Jogos, Brinquedos e Brincadeiras no Contexto Escolar", "Ensino Religioso: Fundamentos e Práticas", "Orientação e Supervisão Escolar",
+    "Atividades Acadêmicas Complementares (AAC)", "Estágio Supervisionado: Educação Infantil", "Estágio Supervisionado: Anos Iniciais do Ensino Fundamental", "Estágio Supervisionado: Gestão Escolar e Espaços não Escolares",
+    "Trabalho de Conclusão de Curso (TCC) I", "Trabalho de Conclusão de Curso (TCC) II"
   ],
   psicologia: [
     "Psicologia Geral", "Teorias e Sistemas em Psicologia", "Anatomia e Fisiologia do Sistema Nervoso", "Processos Psicológicos Básicos I", "Processos Psicológicos Básicos II",
@@ -137,12 +141,8 @@ const TITLES = ["Especialização", "Mestrado", "Mestrado", "Doutorado", "Doutor
 // AUXILIARES
 // ------------------------------------------------------------
 
-function getRandomItem<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
 function getRandomGrade(): string {
-  const grade = (Math.random() * 3 + 7.0).toFixed(1); // 7.0 a 10.0
+  const grade = (Math.random() * 2.5 + 7.5).toFixed(1); // 7.5 a 10.0
   return grade.replace(".", ",");
 }
 
@@ -159,53 +159,58 @@ function getResultFromGrade(grade: string): string {
 
 export function generateAcademicGrades(
   courseKey: ProfileKey,
-  startMonthYear?: string, // Formato "Mês / Ano" ou "MM/AAAA"
-  endMonthYear?: string    // Formato "MM/AAAA"
+  startMonthYear?: string, 
+  endMonthYear?: string    
 ): GradeRow[] {
   const subjects = SUBJECTS_DATABASE[courseKey] || SUBJECTS_DATABASE.historia;
   const rows: GradeRow[] = [];
 
-  // Tenta extrair o ano de início e fim das datas fornecidas
-  const getYear = (d?: string, fallback = 2018) => {
-    if (!d) return fallback;
-    const match = d.match(/\d{4}/);
-    return match ? parseInt(match[0]) : fallback;
+  // Parsing de datas
+  const parseMY = (d?: string, fallbackYear = 2021, fallbackMonth = 1) => {
+    if (!d) return { y: fallbackYear, m: fallbackMonth };
+    const match = d.match(/(\d{2})[\/\s](\d{4})|(\d{4})/);
+    if (!match) return { y: fallbackYear, m: fallbackMonth };
+    if (match[2]) return { y: parseInt(match[2]), m: parseInt(match[1]) };
+    return { y: parseInt(match[3]), m: fallbackMonth };
   };
 
-  const startYear = getYear(startMonthYear, 2018);
-  const endYear = getYear(endMonthYear, startYear + 4);
-  const durationYears = Math.max(2, endYear - startYear);
+  const start = parseMY(startMonthYear, 2021, 2);
+  const end = parseMY(endMonthYear, start.y + 4, 12);
   
-  // Distribuir disciplinas ao longo do tempo (aprox 5 por semestre)
-  const subjectsPerYear = Math.ceil(subjects.length / durationYears);
+  const totalMonths = (end.y - start.y) * 12 + (end.m - start.m);
+  const numSubjects = subjects.length;
   
-  subjects.forEach((subj, idx) => {
-    const yearOffset = Math.floor(idx / subjectsPerYear);
-    // Distribuição de meses realista (ex: Fev a Jun, Ago a Dez)
-    const subIdxInYear = idx % subjectsPerYear;
-    const isFirstSemester = subIdxInYear < (subjectsPerYear / 2);
-    const month = isFirstSemester 
-       ? (Math.floor(Math.random() * 5) + 2) // Fev-Jun
-       : (Math.floor(Math.random() * 5) + 8); // Ago-Dez
-       
-    const currentYear = startYear + yearOffset;
-    if (currentYear > endYear) return;
+  // Cálculo de intervalo entre disciplinas para preencher o período
+  const monthInterval = Math.max(1, Math.floor(totalMonths / numSubjects));
 
-    const anoMes = `${currentYear}/${String(month).padStart(2, "0")}`;
+  subjects.forEach((subj, idx) => {
+    // Cálculo do mês e ano absoluto para esta disciplina
+    const currentTotalMonths = idx * monthInterval;
+    const currentYear = start.y + Math.floor((start.m - 1 + currentTotalMonths) / 12);
+    const currentMonth = ((start.m - 1 + currentTotalMonths) % 12) + 1;
+    
+    // Trava para não ultrapassar a data de conclusão
+    if (currentYear > end.y || (currentYear === end.y && currentMonth > end.m)) return;
+
+    const anoMes = `${currentYear}/${String(currentMonth).padStart(2, "0")}`;
     const grade = getRandomGrade();
-    const isActivity = subj.toLowerCase().includes("atividades") || subj.toLowerCase().includes("orientação");
+    const isActivity = subj.toLowerCase().includes("atividades") || subj.toLowerCase().includes("estágio") || subj.toLowerCase().includes("tcc");
+
+    let ch = "80h";
+    if (subj.includes("Complementares")) ch = "200h";
+    else if (subj.includes("Estágio")) ch = "100h";
+    else if (subj.includes("TCC")) ch = "60h";
 
     rows.push({
       anoMes,
-      disciplina: subj,
-      ch: getRandomItem(["40h", "80h", "80h", "100h"]),
+      disciplina: subj.toUpperCase(),
+      ch,
       media: isActivity ? "-" : grade,
       resultado: isActivity ? "CONCLUÍDA" : getResultFromGrade(grade),
-      docente: getRandomItem(PROFESSORS),
-      titulacao: getRandomItem(TITLES)
+      docente: PROFESSORS[idx % PROFESSORS.length],
+      titulacao: TITLES[idx % TITLES.length]
     });
   });
 
-  // Ordenar cronologicamente
-  return rows.sort((a, b) => a.anoMes.localeCompare(b.anoMes));
+  return rows;
 }

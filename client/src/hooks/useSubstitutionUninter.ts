@@ -48,31 +48,24 @@ function normalizeUpper(value: string) {
   return (value || "").trim().toUpperCase();
 }
 
-/**
- * Normaliza datas com base no tipo de campo
- * @param value String de entrada
- * @param fieldId Identificador do campo para determinar o formato
- */
 function normalizeDateByField(value: string, fieldId: string) {
-  const digits = value.replace(/\D/g, "");
+  const clean = value.trim();
+  if (!clean) return "";
   
-  // Tipo: AAAA (Apenas Ano)
   if (fieldId === "ingresso_ano") {
-    return digits.slice(0, 4);
+    return clean.replace(/\D/g, "").slice(0, 4);
   }
 
-  // Tipo: MM/AAAA (Mês e Ano)
   if (["ingresso_mes_ano", "conclusao_curso"].includes(fieldId)) {
-    const d = digits.slice(0, 6);
-    if (d.length <= 2) return d;
-    return `${d.slice(0, 2)}/${d.slice(2)}`;
+    const digits = clean.replace(/\D/g, "").slice(0, 6);
+    if (digits.length <= 2) return digits;
+    return `${digits.slice(0, 2)}/${digits.slice(2)}`;
   }
 
-  // Tipo: DD/MM/AAAA (Data Completa)
-  const d = digits.slice(0, 8);
-  if (d.length <= 2) return d;
-  if (d.length <= 4) return `${d.slice(0, 2)}/${d.slice(2)}`;
-  return `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`;
+  const digits = clean.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
 }
 
 function detectHistoricoByCurso(curso: string): HistoricoDisponivelKey | null {
@@ -129,110 +122,170 @@ function parseImportText(text: string): {
   const gradeRows: GradeRow[] = [];
   let historicoKey: HistoricoDisponivelKey | null = null;
   let inGrades = false;
+  let currentBlock = "";
+  const addr: any = { logradouro: "", numero: "", bairro: "", municipio: "", uf: "", cep: "" };
 
-  const lines = text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
+  const rawLines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+  const lines: string[] = [];
 
-  for (const line of lines) {
-    const upper = normalizeUpper(line);
-
-    if (upper.includes("COMPONENTES CURRICULARES")) {
-      inGrades = true;
+  for (let i = 0; i < rawLines.length; i++) {
+    const line = rawLines[i];
+    const upper = line.toUpperCase();
+    if (upper.startsWith("PÁG:") || upper.includes("DADOS DO ALUNO") || upper.includes("DADOS ACADÊMICOS") || upper.includes("DADOS INSTITUCIONAIS")) {
       continue;
     }
+    lines.push(line);
+  }
+
+  const knownLabels = [
+     "NOME COMPLETO", "NOME", "CPF", "RG", "ÓRGÃO EMISSOR RG", "NACIONALIDADE", "DATA DE NASCIMENTO", "UF NASCIMENTO", "UF DE NASCIMENTO", "ENDEREÇO",
+     "MATRÍCULA", "SITUAÇÃO DE MATRÍCULA", "SITUAÇÃO", "CURSO", "PROCESSO E-MEC", "PROCESSO SELETIVO", 
+     "MÊS / ANO DE REALIZAÇÃO", "ANO DE INGRESSO", "CONCLUSÃO DO CURSO", "DATA CONCLUSÃO", "COLAÇÃO DE GRAU", "DATA COLAÇÃO",
+     "EXPEDIÇÃO DO DIPLOMA", "EXPEDIÇÃO DO HISTÓRICO", "CARGA HORÁRIA", "TITULAÇÃO", "TÍTULO CONFERIDO",
+     "CREDENCIAMENTO: PORTARIA N.º", "CREDENCIAMENTO: DATA PORTARIA", "CREDENCIAMENTO: DATA D.O.U.",
+     "RECREDENC.: PORTARIA N.º", "RECREDENC.: DATA PORTARIA", "RECONHEC.: PORTARIA N.º", 
+     "RECONHEC.: DATA PORTARIA", "RECONHEC.: DATA D.O.U.", "CÓDIGO DE VALIDAÇÃO", "HORA DE EMISSÃO",
+     "INSTITUIÇÃO / POLO", "INSTITUIÇÃO", "POLO", "CEP", "ÓRGÃO EXPE", "NATURALIDADE", "CIDADE DA UNIDADE", "UF DA UNIDADE"
+  ].sort((a, b) => b.length - a.length);
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const upper = line.toUpperCase();
+
+    if (upper.includes("COMPONENTES CURRICULARES")) { inGrades = true; continue; }
+    if (upper.includes("1. DADOS DO DIPLOMADO")) { currentBlock = "diplomado"; continue; }
+    if (upper.includes("2. CURSO, AUTORIZAÇÃO E RECONHECIMENTO")) { currentBlock = "curso"; continue; }
+    if (upper.includes("4. INSTITUIÇÃO E MANTENEDORA")) { currentBlock = "instituicao"; continue; }
 
     if (inGrades) {
       const grade = parseGradeLine(line);
-      if (grade) {
-        gradeRows.push(grade);
-        continue;
-      }
+      if (grade) { gradeRows.push(grade); continue; }
     }
 
-    const idx = line.indexOf(":");
-    if (idx === -1) continue;
+    let label = "";
+    let val = "";
+    let found = false;
 
-    const rawLabel = normalizeUpper(line.slice(0, idx));
-    const rawValue = line.slice(idx + 1).trim();
-    if (!rawValue) continue;
-
-    // --- Pessoal ---
-    if (rawLabel === "NOME COMPLETO" || rawLabel === "NOME") updates.nome = rawValue;
-    if (rawLabel === "CPF") updates.cpf = rawValue;
-    if (rawLabel === "RG") updates.rg = rawValue;
-    if (rawLabel.includes("ORGAO") || rawLabel.includes("ÓRGÃO")) updates.rg_orgao = normalizeUpper(rawValue);
-    if (rawLabel.includes("NACIONALIDADE")) updates.nacionalidade = normalizeUpper(rawValue);
-    if (rawLabel.includes("DATA DE NASCIMENTO") || (rawLabel.includes("DATA") && rawLabel.includes("NASC"))) updates.data_nascimento = normalizeDateByField(rawValue, "data_nascimento");
-    if (rawLabel.includes("UF NASCIMENTO") || (rawLabel.includes("UF") && rawLabel.includes("NASC"))) updates.uf_nascimento = normalizeUpper(rawValue);
-    if (rawLabel.includes("ENDERE")) updates.endereco = rawValue;
-
-    // --- Acadêmico ---
-    if (rawLabel.includes("MATR")) updates.matricula = rawValue;
-    if (rawLabel.includes("SITUA")) updates.situacao_matricula = normalizeUpper(rawValue);
-    if (rawLabel.includes("CURSO")) {
-      const cleanCurso = rawValue.replace(/CURSO SUPERIOR DE LICENCIATURA EM\s+/i, "");
-      historicoKey = detectHistoricoByCurso(cleanCurso) || historicoKey;
-      updates.curso = `CURSO SUPERIOR DE LICENCIATURA EM ${cleanCurso.toUpperCase()}`;
+    for (const kl of knownLabels) {
+       if (upper.startsWith(kl)) {
+          label = kl;
+          const remaining = line.slice(kl.length).trim();
+          val = remaining.startsWith(":") ? remaining.slice(1).trim() : remaining;
+          
+          if ((!val || val.toUpperCase().startsWith("PÁG:")) && i + 1 < lines.length) {
+             let nextVal = lines[i+1];
+             if (nextVal.toUpperCase().startsWith("PÁG:")) {
+                if (i + 2 < lines.length) { val = lines[i+2]; i += 2; }
+             } else if (!nextVal.includes(":")) {
+                val = nextVal;
+                i++;
+             }
+          }
+          found = true;
+          break;
+       }
     }
-    if (rawLabel.includes("CONCLUSAO") || rawLabel.includes("CONCLUSÃO")) updates.conclusao_curso = normalizeDateByField(rawValue, "conclusao_curso");
-    if (rawLabel.includes("COLACAO") || rawLabel.includes("COLAÇÃO")) updates.colacao_grau = normalizeDateByField(rawValue, "colacao_grau");
-    if (rawLabel.includes("EXPED") && rawLabel.includes("DIPLOMA")) updates.expedicao_diploma = normalizeDateByField(rawValue, "expedicao_diploma");
-    if (rawLabel.includes("EXPED") && rawLabel.includes("HIST")) updates.expedicao_historico = normalizeDateByField(rawValue, "expedicao_historico");
-    if (rawLabel.includes("CARGA") && rawLabel.includes("HOR")) updates.carga_horaria = rawValue.replace(/[^\d]/g, "");
-    if (rawLabel.includes("TITULA")) updates.titulacao = rawValue;
+
+    if (!found) {
+       const idx = line.indexOf(":");
+       if (idx !== -1) {
+          label = line.slice(0, idx).trim().toUpperCase();
+          val = line.slice(idx + 1).trim();
+          if (!val && i + 1 < lines.length && !lines[i+1].includes(":")) {
+             val = lines[i+1];
+             i++;
+          }
+       } else { continue; }
+    }
+
+    if (!val) continue;
+
+    // --- Mapeamento ---
+    if (label.includes("NOME")) updates.nome = val;
+    if (label === "CPF") updates.cpf = val;
+    if (label.includes("RG") && !label.includes("ORGAO") && !label.includes("EMISSOR") && !label.includes("EXPE")) updates.rg = val.split(/[-\/\s]/)[0];
+    if (label.includes("ÓRGÃO EMISSOR") || label.includes("RG_ORGAO") || label.includes("ÓRGÃO EXPE") || label.includes("EMISSOR")) updates.rg_orgao = val.toUpperCase();
+    if (label.includes("NACIONALIDADE")) updates.nacionalidade = val.toUpperCase();
+    if (label.includes("DATA") && label.includes("NASCIMENTO")) updates.data_nascimento = normalizeDateByField(val, "data_nascimento");
+    if (label.includes("UF") && label.includes("NASCIMENTO")) updates.uf_nascimento = val.toUpperCase();
+    if (label.includes("NATURALIDADE")) {
+       const parts = val.split(/[\/\s-]/);
+       updates.uf_nascimento = parts[parts.length - 1].toUpperCase();
+    }
+
+    if (label.includes("MATRÍCULA") || label === "MATR") updates.matricula = val;
+    if (label.includes("SITUAÇÃO")) updates.situacao_matricula = val.toUpperCase();
     
-    // --- Portarias e Atos ---
-    if (rawLabel.includes("RECONHECIMENTO") || rawLabel.includes("RECONHEC.")) {
-      updates.reconhecimento = rawValue; 
-      const pMatch = rawValue.match(/n\.º\s*([\d.]+)/i);
-      if (pMatch) updates.reconhecimento_portaria = pMatch[1];
-      const dates = rawValue.match(/(\d{2}\/\d{2}\/\d{4})/g);
-      if (dates && dates[0]) updates.reconhecimento_portaria_dt = dates[0];
-      if (dates && dates[1]) updates.reconhecimento_dou_dt = dates[1];
+    if (label.includes("CURSO")) {
+       const clean = val.replace(/CURSO SUPERIOR DE LICENCIATURA EM\s+/i, "")
+                        .replace(/LICENCIATURA EM\s+/i, "");
+       historicoKey = detectHistoricoByCurso(clean) || historicoKey;
+       updates.curso = clean.toUpperCase();
     }
-    if (rawLabel.includes("CREDENCIAMENTO")) {
-       const pMatch = rawValue.match(/Portaria n\.º\s*([\d.]+)/i);
-       if (pMatch) updates.cred_portaria = pMatch[1];
-       const dates = rawValue.match(/(\d{2}\/\d{2}\/\d{4})/g);
-       if (dates && dates[0]) updates.cred_portaria_dt = dates[0];
-       if (dates && dates[1]) updates.cred_dou_dt = dates[1];
+
+    if (label.includes("CONCLUSÃO")) updates.conclusao_curso = normalizeDateByField(val, "conclusao_curso");
+    if (label.includes("COLAÇÃO")) updates.colacao_grau = normalizeDateByField(val, "colacao_grau");
+    if (label.includes("REALIZAÇÃO")) updates.ingresso_mes_ano = normalizeDateByField(val, "ingresso_mes_ano");
+    if (label.includes("ANO DE INGRESSO")) updates.ingresso_ano = normalizeDateByField(val, "ingresso_ano");
+    if (label.includes("EXPEDIÇÃO DO DIPLOMA")) updates.expedicao_diploma = normalizeDateByField(val, "expedicao_diploma");
+    if (label.includes("EXPEDIÇÃO DO HISTÓRICO")) updates.expedicao_historico = normalizeDateByField(val, "expedicao_historico");
+    if (label.includes("CARGA HORÁRIA")) updates.carga_horaria = val.replace(/[^\d]/g, "");
+    if (label.includes("TITULAÇÃO") || label.includes("TÍTULO CONFERIDO")) updates.titulacao = val.toUpperCase();
+    if (label.includes("E-MEC")) updates.processo_emec = val;
+    if (label.includes("PROCESSO SELETIVO")) updates.processo_seletivo = val.toUpperCase();
+
+    // Portarias
+    if (label.includes("CREDENCIAMENTO")) {
+       if (label.includes("N.º") || label.includes("NUMERO") || (label === "CREDENCIAMENTO" && /^\d+$/.test(val))) updates.cred_portaria = val;
+       if (label.includes("DATA PORTARIA")) updates.cred_portaria_dt = normalizeDateByField(val, "cred_portaria_dt");
+       if (label.includes("DATA D.O.U.")) updates.cred_dou_dt = normalizeDateByField(val, "cred_dou_dt");
     }
-    if (rawLabel.includes("RECREDENC")) {
-       const pMatch = rawValue.match(/Portaria n\.º\s*([\d.]+)/i);
-       if (pMatch) updates.recred_portaria = pMatch[1];
-       const dates = rawValue.match(/(\d{2}\/\d{2}\/\d{4})/g);
-       if (dates && dates[0]) updates.recred_portaria_dt = dates[0];
+    if (label.includes("RECREDENC")) {
+       if (label.includes("N.º") || label.includes("NUMERO")) updates.recred_portaria = val;
+       if (label.includes("DATA PORTARIA")) updates.recred_portaria_dt = normalizeDateByField(val, "recred_portaria_dt");
+    }
+    if (label.includes("RECONHEC")) {
+       if (label.includes("N.º") || label.includes("NUMERO")) updates.reconhecimento_portaria = val;
+       if (label.includes("DATA PORTARIA")) updates.reconhecimento_portaria_dt = normalizeDateByField(val, "reconhecimento_portaria_dt");
+       if (label.includes("DATA D.O.U.")) updates.reconhecimento_dou_dt = normalizeDateByField(val, "reconhecimento_dou_dt");
+    }
+
+    // Endereço e CEP
+    if (label === "CEP") { addr.cep = val; updates.cep = val; }
+    if (label === "ENDEREÇO" || label === "LOGRADOURO") {
+       if (val.length > 10) {
+          updates.endereco = val.toUpperCase();
+          const cepMatch = val.match(/(\d{5}-\d{3})|(\d{8})/);
+          if (cepMatch) updates.cep = cepMatch[0];
+       } else { addr.logradouro = val; }
+    }
+    if (label === "NÚMERO" || label === "NÚMERO ENDEREÇO") addr.numero = val;
+    if (label === "BAIRRO") addr.bairro = val;
+    if (label === "MUNICÍPIO" || label === "CIDADE") addr.municipio = val;
+    if (label === "UF") addr.uf = val;
+    
+    // Captura de Cidade/UF via Polo (Forte Fallback)
+    if (label.includes("INSTITUIÇÃO") || label.includes("POLO")) {
+       updates.instituicao_polo = val;
+       const poloMatch = val.match(/POLO\s+([^-|]+)(?:\([^)]+\))?\s*-\s*([A-Z]{2})/i);
+       if (poloMatch) {
+          updates.unidade_cidade = poloMatch[1].trim().toUpperCase();
+          updates.unidade_uf = poloMatch[2].toUpperCase();
+       }
     }
     
-    // --- Novos Mapeamentos Específicos ---
-    if (rawLabel.includes("PORTARIA N.º")) {
-       if (rawLabel.includes("CREDENCIAMENTO")) updates.cred_portaria = rawValue;
-       if (rawLabel.includes("RECREDENC")) updates.recred_portaria = rawValue;
-       if (rawLabel.includes("RECONHEC")) updates.reconhecimento_portaria = rawValue;
-    }
-    if (rawLabel.includes("DATA PORTARIA")) {
-       if (rawLabel.includes("CREDENCIAMENTO")) updates.cred_portaria_dt = normalizeDateByField(rawValue, "cred_portaria_dt");
-       if (rawLabel.includes("RECREDENC")) updates.recred_portaria_dt = normalizeDateByField(rawValue, "recred_portaria_dt");
-       if (rawLabel.includes("RECONHEC")) updates.reconhecimento_portaria_dt = normalizeDateByField(rawValue, "reconhecimento_portaria_dt");
-    }
-    if (rawLabel.includes("DATA D.O.U.")) {
-       if (rawLabel.includes("CREDENCIAMENTO")) updates.cred_dou_dt = normalizeDateByField(rawValue, "cred_dou_dt");
-       if (rawLabel.includes("RECONHEC")) updates.reconhecimento_dou_dt = normalizeDateByField(rawValue, "reconhecimento_dou_dt");
-    }
-
-    if (rawLabel.includes("EMEC") || rawLabel.includes("E-MEC")) updates.processo_emec = rawValue;
-    if (rawLabel.includes("SELETIVO")) updates.processo_seletivo = normalizeUpper(rawValue);
-    if (rawLabel.includes("MES") && rawLabel.includes("REALIZA")) updates.ingresso_mes_ano = normalizeDateByField(rawValue, "ingresso_mes_ano");
-    if (rawLabel.includes("ANO") && rawLabel.includes("INGRES")) updates.ingresso_ano = normalizeDateByField(rawValue, "ingresso_ano");
-
-    // --- Institucionais ---
-    if (rawLabel.includes("CEP")) updates.cep = rawValue;
-    if (rawLabel.includes("INSTITU")) updates.instituicao_polo = rawValue;
-    if (rawLabel.includes("VALIDA")) updates.codigo_validacao = rawValue;
-    if (rawLabel.includes("HORA")) updates.emissao_hora = rawValue;
+    if (label.includes("CIDADE DA UNIDADE")) updates.unidade_cidade = val.toUpperCase();
+    if (label.includes("UF DA UNIDADE")) updates.unidade_uf = val.toUpperCase();
+    if (label.includes("VALIDAÇÃO")) updates.codigo_validacao = val;
+    if (label.includes("HORA")) updates.emissao_hora = val;
   }
+
+  if (!updates.endereco && addr.logradouro) {
+    updates.endereco = `${addr.logradouro.toUpperCase()}, ${addr.numero || "S/N"} - ${addr.bairro.toUpperCase()}, ${addr.municipio.toUpperCase()}/${addr.uf.toUpperCase()} ${addr.cep || ""}`.trim();
+  }
+  if (addr.uf) updates.unidade_uf = addr.uf.toUpperCase();
+  if (addr.municipio && !updates.unidade_cidade) updates.unidade_cidade = addr.municipio.toUpperCase();
+  if (addr.cep) updates.cep = addr.cep;
 
   return { updates, gradeRows, historicoKey };
 }
@@ -285,10 +338,11 @@ export function useSubstitution() {
   const applyHistorico = useCallback((historico: HistoricoDisponivelKey) => {
     setActiveHistorico(historico);
     const label = HISTORICOS_DISPONIVEIS.find(c => c.key === historico)?.label || "";
-    const cursoFinal = `CURSO SUPERIOR DE LICENCIATURA EM ${label}`;
+    const cleanCurso = label.replace(/CURSO SUPERIOR DE LICENCIATURA EM\s+/i, "")
+                             .replace(/LICENCIATURA EM\s+/i, "");
     
     setFields(prev => prev.map(f => {
-      if (f.id === "curso") return { ...f, currentValue: cursoFinal };
+      if (f.id === "curso") return { ...f, currentValue: cleanCurso.toUpperCase() };
       return f;
     }));
     
@@ -299,7 +353,6 @@ export function useSubstitution() {
     if (["nome_reitor", "nome_secretaria"].includes(fieldId)) return;
     
     let val = newValue;
-    // Aplicar máscara de data em tempo real se for um campo de data
     if (fieldId.includes("data") || fieldId.includes("_dt") || ["conclusao_curso", "colacao_grau", "expedicao_diploma", "expedicao_historico", "ingresso_mes_ano", "ingresso_ano"].includes(fieldId)) {
        val = normalizeDateByField(newValue, fieldId);
     }
@@ -307,6 +360,27 @@ export function useSubstitution() {
     setFields((prev) =>
       prev.map((f) => (f.id === fieldId ? { ...f, currentValue: val } : f))
     );
+  }, []);
+
+  const handleCEPLookup = useCallback(async (cepVal: string, numVal: string = "") => {
+    const cleanCEP = cepVal.replace(/\D/g, "");
+    if (cleanCEP.length !== 8) return;
+
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cleanCEP}/json/`);
+      const data = await res.json();
+      if (data.erro) return;
+
+      const formattedEndereco = `${data.logradouro.toUpperCase()}, ${numVal || "S/N"} - ${data.bairro.toUpperCase()}, ${data.localidade.toUpperCase()}/${data.uf.toUpperCase()} ${data.cep}`;
+
+      setFields(prev => prev.map(f => {
+         if (f.id === "endereco") return { ...f, currentValue: formattedEndereco };
+         if (f.id === "unidade_uf") return { ...f, currentValue: data.uf.toUpperCase() };
+         if (f.id === "unidade_cidade") return { ...f, currentValue: data.localidade.toUpperCase() };
+         if (f.id === "cep") return { ...f, currentValue: data.cep };
+         return f;
+      }));
+    } catch {}
   }, []);
 
   const generateMatricula = useCallback(() => {
@@ -326,7 +400,7 @@ export function useSubstitution() {
     toast.success(`Grade de ${PROFILES[activeProfile].label} gerada com sucesso!`);
   }, [activeProfile, fieldMap]);
 
-  const applyImportText = useCallback(() => {
+  const applyImportText = useCallback(async () => {
     if (!importText.trim()) return;
 
     const parsed = parseImportText(importText);
@@ -348,7 +422,13 @@ export function useSubstitution() {
     if (parsed.gradeRows.length > 0) {
       setCustomGrades(parsed.gradeRows);
     }
-  }, [importText]);
+
+    if (updates.cep) {
+       await handleCEPLookup(updates.cep);
+    }
+
+    toast.success("Importação concluída com sucesso!");
+  }, [importText, handleCEPLookup]);
 
   const resetToOriginal = useCallback(() => {
     setActiveHistorico(DEFAULT_HISTORICO);
@@ -402,6 +482,7 @@ export function useSubstitution() {
     setImportText,
     applyImportText,
     generateMatricula,
-    handleGenerateGrade
+    handleGenerateGrade,
+    handleCEPLookup
   };
 }

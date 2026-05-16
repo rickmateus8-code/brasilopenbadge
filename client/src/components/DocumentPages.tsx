@@ -1,12 +1,16 @@
 /**
  * DocumentPages — Histórico UNINTER Elite 3.0 (Universal)
- * Otimizado com Algoritmo de Balanço de Carga para ocupação máxima da folha A4.
+ * Otimizado com Algoritmo de Balanço de Carga e ativos Base64 permanentes.
  */
 import {
-  LOGO_URL, ASSINATURA_URL, SELO_URL,
   COURSE_METADATA, getGradesForProfile,
   type GradeRow, type ProfileKey,
 } from "@/lib/documentData_uninter";
+import {
+  UNINTER_LOGO_B64,
+  UNINTER_ASSINATURA_B64,
+  UNINTER_SELO_B64
+} from "@/lib/uninterAssets";
 import React, { useMemo } from "react";
 
 interface Props {
@@ -21,7 +25,7 @@ const PAGE_STYLE: React.CSSProperties = {
   width: "207.53mm",
   minHeight: "293.47mm",
   background: "white",
-  padding: "15mm 20mm 15mm 20mm", 
+  padding: "12mm 18mm 12mm 18mm", 
   fontFamily: "'Times New Roman', Times, serif",
   fontSize: "10.5pt", 
   lineHeight: 1.25,
@@ -34,7 +38,7 @@ const PAGE_STYLE: React.CSSProperties = {
 const FIELDSET_STYLE: React.CSSProperties = {
   border: "1px solid #000",
   padding: "6px 10px",
-  margin: "6px 0",
+  margin: "5px 0",
   position: "relative",
 };
 
@@ -51,7 +55,7 @@ const LEGEND_STYLE: React.CSSProperties = {
 const TABLE_STYLE: React.CSSProperties = {
   width: "100%",
   borderCollapse: "collapse",
-  fontSize: "8pt", 
+  fontSize: "8.2pt", 
   marginTop: 2,
 };
 
@@ -60,14 +64,14 @@ const TH_STYLE: React.CSSProperties = {
   fontWeight: "bold",
   borderBottom: "1px solid #000",
   padding: "2px 4px",
-  fontSize: "8pt",
+  fontSize: "8.2pt",
 };
 
 const TD_STYLE: React.CSSProperties = {
   padding: "1px 4px", 
   borderBottom: "0.5px solid #ccc",
   verticalAlign: "top",
-  fontSize: "8pt",
+  fontSize: "8.2pt",
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -147,7 +151,7 @@ function DocFooter({ f, profileKey }: { f: any; profileKey?: ProfileKey }) {
       </div>
       
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", margin: "4px 0" }}>
-        <img src={SELO_URL} alt="Selo UNINTER" style={{ width: 70, height: "auto", display: "block" }} />
+        <img src={UNINTER_SELO_B64} alt="Selo UNINTER" style={{ width: 70, height: "auto", display: "block" }} />
         <div style={{ fontSize: "6.5pt", textAlign: "center", color: "#666", marginTop: 2, fontStyle: "italic" }}>
           Uninter PAP - Polo de apoio presencial*<br />
           *Local credenciado no MEC para apoio ao candidato/aluno e para o desenvolvimento das atividades pedagógicas e administrativas.
@@ -176,10 +180,11 @@ function Signature({ f, showLine = true }: { f: any; showLine?: boolean }) {
         <div style={{ borderTop: "1px solid #000", width: "100%", margin: "0 auto 8px auto" }} />
       )}
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-        <img src={ASSINATURA_URL} alt="Assinatura" style={{ width: 85, height: "auto", display: "block" }} />
+        <img src={UNINTER_ASSINATURA_B64} alt="Assinatura" style={{ width: 85, height: "auto", display: "block" }} />
       </div>
       <b style={{ fontSize: "9.5pt", letterSpacing: "0.2px", display: "block", marginTop: 1 }}>{secretaria}</b>
       <span style={{ fontSize: "9pt", display: "block" }}>Secretária Geral de Gestão Acadêmica</span>
+      <span style={{ fontSize: "8.5pt", display: "block", marginTop: 1, color: "#444" }}>PORT. Nº 169/2021</span>
     </div>
   );
 }
@@ -187,7 +192,7 @@ function Signature({ f, showLine = true }: { f: any; showLine?: boolean }) {
 function Logo() {
   return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: 10 }}>
-      <img src={LOGO_URL} alt="Logo UNINTER" style={{ width: 140, height: "auto", display: "block" }} />
+      <img src={UNINTER_LOGO_B64} alt="Logo UNINTER" style={{ width: 140, height: "auto", display: "block" }} />
     </div>
   );
 }
@@ -219,7 +224,7 @@ export function Page1({ f, highlightModified, profileKey }: Props) {
 
       <p style={{ fontWeight: "bold", margin: "8px 0 3px 0", fontSize: "9.5pt" }}>COLAÇÃO DE GRAU:</p>
       <p style={{ textAlign: "justify", margin: "0 0 5px 0", lineHeight: 1.3, fontSize: "9.5pt" }}>
-        Aos {f.colacao_grau} o <b>Centro Universitário Internacional UNINTER</b>, através da Secretaria Geral de Gestão Acadêmica, {secretaria}, em nome do magnífico Reitor, Professor Dr. {reitor}, vem informar que o(a) aluno(a) <b><V val={f.nome} orig="" highlight={hl} /></b>, CPF n.º <V val={f.cpf} orig="" highlight={hl} />, matriculado(a) sob o registro acadêmico n.º <V val={f.matricula} orig="" highlight={hl} />, Colou Grau no <b><V val={f.curso || meta.cursoCompleto} orig="" highlight={hl} /></b>, nível de Graduação, por ter cumprido todas as exigências curriculares do curso.
+        Aos {f.colacao_grau} o <b>Centro Universitário Internacional UNINTER</b>, através da Secretaria Geral de Gestão Acadêmica, {secretaria}, em nome do magnífico Reitor, Professor Dr. {reitor}, vem informar que o(a) aluno(a) <b><V val={f.nome} orig="" highlight={hl} /></b>, CPF n.º <V val={f.cpf} orig="" highlight={hl} />, matriculado(a) sob o registro acadêmico n.º <V val={f.matricula} orig="" highlight={hl} />, Colou Grau no <b>CURSO SUPERIOR DE LICENCIATURA EM <V val={f.curso || meta.cursoCompleto} orig="" highlight={hl} /></b>, nível de Graduação, por ter cumprido todas as exigências curriculares do curso.
       </p>
 
       <p style={{ fontWeight: "bold", margin: "8px 0 3px 0", fontSize: "9.5pt" }}>EVENTO FESTIVO DE COLAÇÃO DE GRAU:</p>
@@ -258,7 +263,7 @@ export function Page2({ f, highlightModified, profileKey }: Props) {
       </div>
 
       <p style={{ textAlign: "justify", marginTop: 10, lineHeight: 1.35, fontSize: "10pt" }}>
-        Certificamos que <b><V val={f.nome} orig="" highlight={hl} /></b>, CPF n.º <V val={f.cpf} orig="" highlight={hl} />, matriculado(a) sob o registro acadêmico n.º <V val={f.matricula} orig="" highlight={hl} />, concluiu o <b><V val={f.curso || meta.cursoCompleto} orig="" highlight={hl} /></b>, nível de Graduação, com carga horária total de <V val={`${f.carga_horaria}h`} orig="0h" highlight={hl} />, ministrado pelo <b>CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER</b>, mantido pela <b>UNINTER EDUCACIONAL S.A.</b>, credenciado pela Portaria n.º <V val={f.cred_portaria} orig="688" highlight={hl} /> de <V val={f.cred_portaria_dt} orig="25/05/2012" highlight={hl} />, publicada no D.O.U. n.º <V val={f.cred_dou} orig="102" highlight={hl} /> de <V val={f.cred_dou_dt} orig="28/05/2012" highlight={hl} />, seção 1, p.23, recredenciado pela Portaria n.º <V val={f.recred_portaria} orig="1.219" highlight={hl} /> de <V val={f.recred_portaria_dt} orig="28/11/2019" highlight={hl} />, publicada no D.O.U. n.º <V val={f.recred_dou} orig="208" highlight={hl} />, seção 1, p.24. Reconhecido pela Portaria n.º <V val={f.reconhecimento_portaria} orig="357" highlight={hl} />, de <V val={f.reconhecimento_portaria_dt} orig="24/05/2018" highlight={hl} />, DOU n.º <V val={f.reconhecimento_dou} orig="100" highlight={hl} />, Seção 1, pág. 16, de <V val={f.reconhecimento_dou_dt} orig="25/05/2018" highlight={hl} />, tendo colado grau em <V val={f.colacao_grau} orig="" highlight={hl} />.
+        Certificamos que <b><V val={f.nome} orig="" highlight={hl} /></b>, CPF n.º <V val={f.cpf} orig="" highlight={hl} />, matriculado(a) sob o registro acadêmico n.º <V val={f.matricula} orig="" highlight={hl} />, concluiu o <b>CURSO SUPERIOR DE LICENCIATURA EM <V val={f.curso || meta.cursoCompleto} orig="" highlight={hl} /></b>, nível de Graduação, com carga horária total de <V val={`${f.carga_horaria}h`} orig="0h" highlight={hl} />, ministrado pelo <b>CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER</b>, mantido pela <b>UNINTER EDUCACIONAL S.A.</b>, credenciado pela Portaria n.º <V val={f.cred_portaria} orig="688" highlight={hl} /> de <V val={f.cred_portaria_dt} orig="25/05/2012" highlight={hl} />, publicada no D.O.U. n.º <V val={f.cred_dou} orig="102" highlight={hl} /> de <V val={f.cred_dou_dt} orig="28/05/2012" highlight={hl} />, seção 1, p.23, recredenciado pela Portaria n.º <V val={f.recred_portaria} orig="1.219" highlight={hl} /> de <V val={f.recred_portaria_dt} orig="28/11/2019" highlight={hl} />, publicada no D.O.U. n.º <V val={f.recred_dou} orig="208" highlight={hl} />, seção 1, p.24. Reconhecido pela Portaria n.º <V val={f.reconhecimento_portaria} orig="357" highlight={hl} />, de <V val={f.reconhecimento_portaria_dt} orig="24/05/2018" highlight={hl} />, DOU n.º <V val={f.reconhecimento_dou} orig="100" highlight={hl} />, Seção 1, pág. 16, de <V val={f.reconhecimento_dou_dt} orig="25/05/2018" highlight={hl} />, tendo colado grau em <V val={f.colacao_grau} orig="" highlight={hl} />.
       </p>
 
       <p style={{ marginTop: 15, fontSize: "10pt" }}>{dateStr}</p>
@@ -314,7 +319,7 @@ export function Page3({ f, highlightModified, profileKey }: Props) {
       </Fieldset>
 
       <Fieldset legend="IDENTIFICAÇÃO DO CURSO">
-        <p style={{ margin: "1.5px 0" }}><b>Curso:</b> <V val={f.curso || meta.cursoCompleto} orig="" highlight={hl} /></p>
+        <p style={{ margin: "1.5px 0" }}><b>Curso:</b> CURSO SUPERIOR DE LICENCIATURA EM <V val={f.curso || meta.cursoCompleto} orig="" highlight={hl} /></p>
         <p style={{ margin: "1.5px 0" }}><b>Ato Autorizativo de Reconhecimento:</b> Portaria n.º <V val={f.reconhecimento_portaria} orig="357" highlight={hl} />, de <V val={f.reconhecimento_portaria_dt} orig="24/05/2018" highlight={hl} />, DOU de 25/05/2018</p>
         <p style={{ margin: "1.5px 0" }}><b>Número do Processo e-MEC*:</b> <V val={processoEmec} orig="201605151" highlight={hl} /></p>
       </Fieldset>
@@ -351,7 +356,7 @@ export function Page4() {
   return (
     <div className="doc-page" id="doc-page-4" style={{ ...PAGE_STYLE, padding: 0, height: "293.47mm", overflow: "hidden" }}>
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100%", height: "100%" }}>
-        <img src={SELO_URL} alt="Selo UNINTER" style={{ width: "120mm", height: "auto", display: "block" }} />
+        <img src={UNINTER_SELO_B64} alt="Selo UNINTER" style={{ width: "120mm", height: "auto", display: "block" }} />
       </div>
     </div>
   );
@@ -362,13 +367,15 @@ export function GradePage({ f, highlightModified, profileKey, rows, isLast }: Pr
   const hl = highlightModified;
 
   return (
-    <div className="doc-page grade-page" style={{ ...PAGE_STYLE, fontSize: "8pt", paddingTop: "12mm" }}>
+    <div className="doc-page grade-page" style={{ ...PAGE_STYLE, fontSize: "8.5pt", paddingTop: "12mm" }}>
       <Fieldset legend="IDENTIFICAÇÃO DO ALUNO">
-        <p style={{ margin: "1px 0" }}><b>Nome:</b> <V val={f.nome} orig="" highlight={hl} /> &nbsp;&nbsp; <b>CPF:</b> <V val={f.cpf} orig="" highlight={hl} /></p>
-        <p style={{ margin: "1px 0" }}><b>Matrícula:</b> <V val={f.matricula} orig="" highlight={hl} /> &nbsp;&nbsp; <b>Situação:</b> <V val={f.situacao_matricula} orig="FORMADO" highlight={hl} /></p>
+        <p style={{ margin: "1.5px 0" }}><b>Nome:</b> <V val={f.nome} orig="" highlight={hl} /></p>
+        <p style={{ margin: "1.5px 0" }}><b>CPF:</b> <V val={f.cpf} orig="" highlight={hl} /> &nbsp;&nbsp; <b>RG:</b> <V val={f.rg} orig="" highlight={hl} /> - <V val={f.rg_orgao} orig="" highlight={hl} /></p>
+        <p style={{ margin: "1.5px 0" }}><b>Data de Nascimento/UF:</b> <V val={f.data_nascimento} orig="" highlight={hl} /> / <V val={f.uf_nascimento} orig="" highlight={hl} /> &nbsp;&nbsp; <b>Nacionalidade:</b> <V val={f.nacionalidade} orig="" highlight={hl} /></p>
+        <p style={{ margin: "1.5px 0" }}><b>Matrícula:</b> <V val={f.matricula} orig="" highlight={hl} /> &nbsp;&nbsp; <b>Situação de Matrícula:</b> <V val={f.situacao_matricula} orig="FORMADO" highlight={hl} /></p>
       </Fieldset>
 
-      <Fieldset legend="COMPONENTES CURRICULARES" style={{ paddingTop: 8, paddingBottom: 10, flex: 1 }}>
+      <Fieldset legend="COMPONENTES CURRICULARES" style={{ paddingTop: 8, paddingBottom: 10, flex: 1, minHeight: "180mm" }}>
         <GradeTable rows={rows} />
         
         {isLast && (
@@ -381,7 +388,7 @@ export function GradePage({ f, highlightModified, profileKey, rows, isLast }: Pr
       </Fieldset>
 
       {isLast && (
-        <div style={{ marginTop: "auto" }}>
+        <div style={{ marginTop: "auto", paddingBottom: "5mm" }}>
           <Signature f={f} showLine={false} />
           <DocFooter f={f} profileKey={profileKey} />
         </div>
@@ -417,7 +424,7 @@ export default function UninterDocument({ f, highlightModified, profileKey, grad
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+    <div id="uninter-document-root" style={{ display: "flex", flexDirection: "column", gap: 0, width: "207.53mm" }}>
       <Page1 f={f} highlightModified={highlightModified} profileKey={profileKey} />
       <Page2 f={f} highlightModified={highlightModified} profileKey={profileKey} />
       <Page3 f={f} highlightModified={highlightModified} profileKey={profileKey} />
