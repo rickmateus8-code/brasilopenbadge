@@ -48,16 +48,31 @@ function normalizeUpper(value: string) {
   return (value || "").trim().toUpperCase();
 }
 
-function normalizeDate(value: string) {
-  const raw = (value || "").trim();
-  if (!raw) return "";
-  if (/^\d{2}\/\d{4}$/.test(raw)) return raw;
-  if (/^\d{4}$/.test(raw)) return raw;
+/**
+ * Normaliza datas com base no tipo de campo
+ * @param value String de entrada
+ * @param fieldId Identificador do campo para determinar o formato
+ */
+function normalizeDateByField(value: string, fieldId: string) {
+  const digits = value.replace(/\D/g, "");
+  
+  // Tipo: AAAA (Apenas Ano)
+  if (fieldId === "ingresso_ano") {
+    return digits.slice(0, 4);
+  }
 
-  const digits = raw.replace(/\D/g, "").slice(0, 8);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+  // Tipo: MM/AAAA (Mês e Ano)
+  if (["ingresso_mes_ano", "conclusao_curso"].includes(fieldId)) {
+    const d = digits.slice(0, 6);
+    if (d.length <= 2) return d;
+    return `${d.slice(0, 2)}/${d.slice(2)}`;
+  }
+
+  // Tipo: DD/MM/AAAA (Data Completa)
+  const d = digits.slice(0, 8);
+  if (d.length <= 2) return d;
+  if (d.length <= 4) return `${d.slice(0, 2)}/${d.slice(2)}`;
+  return `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`;
 }
 
 function detectHistoricoByCurso(curso: string): HistoricoDisponivelKey | null {
@@ -143,60 +158,80 @@ function parseImportText(text: string): {
     const rawValue = line.slice(idx + 1).trim();
     if (!rawValue) continue;
 
-    // Pessoal
-    if (rawLabel.includes("NOME") && rawLabel.includes("ALUNO")) updates.nome = rawValue;
-    if (rawLabel === "NOME") updates.nome = rawValue;
+    // --- Pessoal ---
+    if (rawLabel === "NOME COMPLETO" || rawLabel === "NOME") updates.nome = rawValue;
     if (rawLabel === "CPF") updates.cpf = rawValue;
     if (rawLabel === "RG") updates.rg = rawValue;
     if (rawLabel.includes("ORGAO") || rawLabel.includes("ÓRGÃO")) updates.rg_orgao = normalizeUpper(rawValue);
     if (rawLabel.includes("NACIONALIDADE")) updates.nacionalidade = normalizeUpper(rawValue);
-    if (rawLabel.includes("DATA") && rawLabel.includes("NASC")) updates.data_nascimento = normalizeDate(rawValue);
-    if (rawLabel.includes("UF") && rawLabel.includes("NASC")) updates.uf_nascimento = normalizeUpper(rawValue);
+    if (rawLabel.includes("DATA DE NASCIMENTO") || (rawLabel.includes("DATA") && rawLabel.includes("NASC"))) updates.data_nascimento = normalizeDateByField(rawValue, "data_nascimento");
+    if (rawLabel.includes("UF NASCIMENTO") || (rawLabel.includes("UF") && rawLabel.includes("NASC"))) updates.uf_nascimento = normalizeUpper(rawValue);
     if (rawLabel.includes("ENDERE")) updates.endereco = rawValue;
 
-    // Acadêmico
+    // --- Acadêmico ---
     if (rawLabel.includes("MATR")) updates.matricula = rawValue;
     if (rawLabel.includes("SITUA")) updates.situacao_matricula = normalizeUpper(rawValue);
     if (rawLabel.includes("CURSO")) {
-      // Remover prefixo se existir para detecção limpa
       const cleanCurso = rawValue.replace(/CURSO SUPERIOR DE LICENCIATURA EM\s+/i, "");
       historicoKey = detectHistoricoByCurso(cleanCurso) || historicoKey;
       updates.curso = `CURSO SUPERIOR DE LICENCIATURA EM ${cleanCurso.toUpperCase()}`;
     }
-    if (rawLabel.includes("CONCLUSAO") || rawLabel.includes("CONCLUSÃO")) updates.conclusao_curso = normalizeDate(rawValue);
-    if (rawLabel.includes("COLACAO") || rawLabel.includes("COLAÇÃO")) updates.colacao_grau = normalizeDate(rawValue);
-    if (rawLabel.includes("EXPED") && rawLabel.includes("DIPLOMA")) updates.expedicao_diploma = normalizeDate(rawValue);
-    if (rawLabel.includes("EXPED") && rawLabel.includes("HIST")) updates.expedicao_historico = normalizeDate(rawValue);
+    if (rawLabel.includes("CONCLUSAO") || rawLabel.includes("CONCLUSÃO")) updates.conclusao_curso = normalizeDateByField(rawValue, "conclusao_curso");
+    if (rawLabel.includes("COLACAO") || rawLabel.includes("COLAÇÃO")) updates.colacao_grau = normalizeDateByField(rawValue, "colacao_grau");
+    if (rawLabel.includes("EXPED") && rawLabel.includes("DIPLOMA")) updates.expedicao_diploma = normalizeDateByField(rawValue, "expedicao_diploma");
+    if (rawLabel.includes("EXPED") && rawLabel.includes("HIST")) updates.expedicao_historico = normalizeDateByField(rawValue, "expedicao_historico");
     if (rawLabel.includes("CARGA") && rawLabel.includes("HOR")) updates.carga_horaria = rawValue.replace(/[^\d]/g, "");
     if (rawLabel.includes("TITULA")) updates.titulacao = rawValue;
     
-    if (rawLabel.includes("RECONHECIMENTO")) {
-      updates.reconhecimento = rawValue;
-      const pMatch = rawValue.match(/Portaria n\.º\s*([\d.]+)/i);
+    // --- Portarias e Atos ---
+    if (rawLabel.includes("RECONHECIMENTO") || rawLabel.includes("RECONHEC.")) {
+      updates.reconhecimento = rawValue; 
+      const pMatch = rawValue.match(/n\.º\s*([\d.]+)/i);
       if (pMatch) updates.reconhecimento_portaria = pMatch[1];
       const dates = rawValue.match(/(\d{2}\/\d{2}\/\d{4})/g);
       if (dates && dates[0]) updates.reconhecimento_portaria_dt = dates[0];
       if (dates && dates[1]) updates.reconhecimento_dou_dt = dates[1];
     }
-    
     if (rawLabel.includes("CREDENCIAMENTO")) {
-      updates.credenciamento = rawValue;
-      const d1 = rawValue.match(/688 de (\d{2}\/\d{2}\/\d{4})/);
-      if (d1) updates.cred_portaria_dt = d1[1];
-      const dou1 = rawValue.match(/102 de (\d{2}\/\d{2}\/\d{4})/);
-      if (dou1) updates.cred_dou_dt = dou1[1];
-      const d2 = rawValue.match(/1\.219 de (\d{2}\/\d{2}\/\d{4})/);
-      if (d2) updates.recred_portaria_dt = d2[1];
+       const pMatch = rawValue.match(/Portaria n\.º\s*([\d.]+)/i);
+       if (pMatch) updates.cred_portaria = pMatch[1];
+       const dates = rawValue.match(/(\d{2}\/\d{2}\/\d{4})/g);
+       if (dates && dates[0]) updates.cred_portaria_dt = dates[0];
+       if (dates && dates[1]) updates.cred_dou_dt = dates[1];
+    }
+    if (rawLabel.includes("RECREDENC")) {
+       const pMatch = rawValue.match(/Portaria n\.º\s*([\d.]+)/i);
+       if (pMatch) updates.recred_portaria = pMatch[1];
+       const dates = rawValue.match(/(\d{2}\/\d{2}\/\d{4})/g);
+       if (dates && dates[0]) updates.recred_portaria_dt = dates[0];
+    }
+    
+    // --- Novos Mapeamentos Específicos ---
+    if (rawLabel.includes("PORTARIA N.º")) {
+       if (rawLabel.includes("CREDENCIAMENTO")) updates.cred_portaria = rawValue;
+       if (rawLabel.includes("RECREDENC")) updates.recred_portaria = rawValue;
+       if (rawLabel.includes("RECONHEC")) updates.reconhecimento_portaria = rawValue;
+    }
+    if (rawLabel.includes("DATA PORTARIA")) {
+       if (rawLabel.includes("CREDENCIAMENTO")) updates.cred_portaria_dt = normalizeDateByField(rawValue, "cred_portaria_dt");
+       if (rawLabel.includes("RECREDENC")) updates.recred_portaria_dt = normalizeDateByField(rawValue, "recred_portaria_dt");
+       if (rawLabel.includes("RECONHEC")) updates.reconhecimento_portaria_dt = normalizeDateByField(rawValue, "reconhecimento_portaria_dt");
+    }
+    if (rawLabel.includes("DATA D.O.U.")) {
+       if (rawLabel.includes("CREDENCIAMENTO")) updates.cred_dou_dt = normalizeDateByField(rawValue, "cred_dou_dt");
+       if (rawLabel.includes("RECONHEC")) updates.reconhecimento_dou_dt = normalizeDateByField(rawValue, "reconhecimento_dou_dt");
     }
 
     if (rawLabel.includes("EMEC") || rawLabel.includes("E-MEC")) updates.processo_emec = rawValue;
     if (rawLabel.includes("SELETIVO")) updates.processo_seletivo = normalizeUpper(rawValue);
-    if (rawLabel.includes("MES") && rawLabel.includes("REALIZA")) updates.ingresso_mes_ano = normalizeDate(rawValue);
-    if (rawLabel.includes("ANO") && rawLabel.includes("INGRES")) updates.ingresso_ano = normalizeDate(rawValue);
+    if (rawLabel.includes("MES") && rawLabel.includes("REALIZA")) updates.ingresso_mes_ano = normalizeDateByField(rawValue, "ingresso_mes_ano");
+    if (rawLabel.includes("ANO") && rawLabel.includes("INGRES")) updates.ingresso_ano = normalizeDateByField(rawValue, "ingresso_ano");
 
-    // Institucionais
+    // --- Institucionais ---
     if (rawLabel.includes("CEP")) updates.cep = rawValue;
     if (rawLabel.includes("INSTITU")) updates.instituicao_polo = rawValue;
+    if (rawLabel.includes("VALIDA")) updates.codigo_validacao = rawValue;
+    if (rawLabel.includes("HORA")) updates.emissao_hora = rawValue;
   }
 
   return { updates, gradeRows, historicoKey };
@@ -261,8 +296,16 @@ export function useSubstitution() {
   }, []);
 
   const updateField = useCallback((fieldId: string, newValue: string) => {
+    if (["nome_reitor", "nome_secretaria"].includes(fieldId)) return;
+    
+    let val = newValue;
+    // Aplicar máscara de data em tempo real se for um campo de data
+    if (fieldId.includes("data") || fieldId.includes("_dt") || ["conclusao_curso", "colacao_grau", "expedicao_diploma", "expedicao_historico", "ingresso_mes_ano", "ingresso_ano"].includes(fieldId)) {
+       val = normalizeDateByField(newValue, fieldId);
+    }
+
     setFields((prev) =>
-      prev.map((f) => (f.id === fieldId ? { ...f, currentValue: newValue } : f))
+      prev.map((f) => (f.id === fieldId ? { ...f, currentValue: val } : f))
     );
   }, []);
 
