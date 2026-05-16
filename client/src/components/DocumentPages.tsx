@@ -1,12 +1,16 @@
 /**
  * DocumentPages — Histórico UNINTER Elite 3.0 (Universal)
- * Otimizado com Algoritmo de Balanço de Carga e ativos Base64 permanentes.
+ * Otimizado com Estrutura Flexbox para Exportação PDF Impecável.
  */
 import {
-  UNINTER_LOGO_B64, UNINTER_ASSINATURA_B64, UNINTER_SELO_B64,
   COURSE_METADATA, getGradesForProfile,
   type GradeRow, type ProfileKey,
 } from "@/lib/documentData_uninter";
+import {
+  UNINTER_LOGO_B64,
+  UNINTER_ASSINATURA_B64,
+  UNINTER_SELO_B64
+} from "@/lib/uninterAssets";
 import React, { useMemo } from "react";
 
 interface Props {
@@ -48,28 +52,36 @@ const LEGEND_STYLE: React.CSSProperties = {
   fontSize: "9pt",
 };
 
-const TABLE_STYLE: React.CSSProperties = {
+// ── Estilos da Grade (Flexbox para evitar quebras no PDF) ──────────────────────
+const GRID_CONTAINER: React.CSSProperties = {
   width: "100%",
-  borderCollapse: "collapse",
-  fontSize: "8.2pt", 
-  marginTop: 2,
+  display: "flex",
+  flexDirection: "column",
+  marginTop: 4,
 };
 
-const TH_STYLE: React.CSSProperties = {
-  textAlign: "left",
+const GRID_HEADER: React.CSSProperties = {
+  display: "flex",
+  borderBottom: "1.2px solid #000",
+  paddingBottom: 4,
   fontWeight: "bold",
-  borderBottom: "1px solid #000",
-  padding: "4px 4px", 
   fontSize: "8.2pt",
-  verticalAlign: "middle",
+  textAlign: "left",
 };
 
-const TD_STYLE: React.CSSProperties = {
-  padding: "2.5px 4px", 
+const GRID_ROW: React.CSSProperties = {
+  display: "flex",
   borderBottom: "0.5px solid #ccc",
-  verticalAlign: "middle",
+  padding: "4px 0", // Espaçamento aumentado (+1%)
+  minHeight: "14pt",
   fontSize: "8.2pt",
-  lineHeight: 1.15,
+  alignItems: "flex-start",
+  overflow: "visible",
+};
+
+const CELL_STYLE: React.CSSProperties = {
+  padding: "0 4px",
+  lineHeight: 1.4, // Aumentado para clareza e evitar ruptura
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -86,34 +98,33 @@ function V({ val, orig, highlight }: { val: string; orig: string; highlight?: bo
   );
 }
 
-function GradeTable({ rows }: { rows: GradeRow[] }) {
+function GradeGrid({ rows }: { rows: GradeRow[] }) {
   return (
-    <table style={{ ...TABLE_STYLE, tableLayout: "fixed" }}>
-      <thead>
-        <tr style={{ minHeight: "20pt" }}>
-          <th style={{ ...TH_STYLE, width: "55px" }}>Ano/Mês*</th>
-          <th style={{ ...TH_STYLE }}>Disciplinas</th>
-          <th style={{ ...TH_STYLE, width: "38px", textAlign: "center" }}>C.H.</th>
-          <th style={{ ...TH_STYLE, width: "38px", textAlign: "center" }}>Média</th>
-          <th style={{ ...TH_STYLE, width: "75px", textAlign: "center" }}>Resultado</th>
-          <th style={{ ...TH_STYLE, width: "135px", textAlign: "center" }}>Docente</th>
-          <th style={{ ...TH_STYLE, width: "85px" }}>Titulação</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((r, i) => (
-          <tr key={i} style={{ minHeight: "13pt" }}>
-            <td style={{ ...TD_STYLE, whiteSpace: "nowrap" }}>{r.anoMes}</td>
-            <td style={{ ...TD_STYLE, fontSize: "8.1pt", wordBreak: "break-word", overflow: "hidden" }}>{r.disciplina}</td>
-            <td style={{ ...TD_STYLE, textAlign: "center" }}>{r.ch}</td>
-            <td style={{ ...TD_STYLE, textAlign: "center" }}>{r.media}</td>
-            <td style={{ ...TD_STYLE, textAlign: "center" }}>{r.resultado}</td>
-            <td style={{ ...TD_STYLE, textAlign: "center", fontSize: "7pt", whiteSpace: "nowrap", overflow: "hidden" }}>{r.docente}</td>
-            <td style={{ ...TD_STYLE, fontSize: "7pt" }}>{r.titulacao}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div style={GRID_CONTAINER}>
+      {/* Header */}
+      <div style={GRID_HEADER}>
+        <div style={{ ...CELL_STYLE, width: "55px" }}>Ano/Mês*</div>
+        <div style={{ ...CELL_STYLE, flex: 1 }}>Disciplinas</div>
+        <div style={{ ...CELL_STYLE, width: "38px", textAlign: "center" }}>C.H.</div>
+        <div style={{ ...CELL_STYLE, width: "38px", textAlign: "center" }}>Média</div>
+        <div style={{ ...CELL_STYLE, width: "75px", textAlign: "center" }}>Resultado</div>
+        <div style={{ ...CELL_STYLE, width: "125px", textAlign: "center" }}>Docente</div>
+        <div style={{ ...CELL_STYLE, width: "85px" }}>Titulação</div>
+      </div>
+
+      {/* Body */}
+      {rows.map((r, i) => (
+        <div key={i} style={GRID_ROW}>
+          <div style={{ ...CELL_STYLE, width: "55px", whiteSpace: "nowrap" }}>{r.anoMes}</div>
+          <div style={{ ...CELL_STYLE, flex: 1, fontSize: "7.8pt", paddingRight: 8 }}>{r.disciplina}</div>
+          <div style={{ ...CELL_STYLE, width: "38px", textAlign: "center" }}>{r.ch}</div>
+          <div style={{ ...CELL_STYLE, width: "38px", textAlign: "center" }}>{r.media}</div>
+          <div style={{ ...CELL_STYLE, width: "75px", textAlign: "center" }}>{r.resultado}</div>
+          <div style={{ ...CELL_STYLE, width: "125px", textAlign: "center", fontSize: "7pt", overflow: "hidden" }}>{r.docente}</div>
+          <div style={{ ...CELL_STYLE, width: "85px", fontSize: "7pt" }}>{r.titulacao}</div>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -134,7 +145,7 @@ function DocFooter({ f, profileKey }: { f: any; profileKey?: ProfileKey }) {
   const unidadeUF = f.unidade_uf || "PR";
 
   return (
-    <>
+    <div style={{ position: "relative", zIndex: 10 }}>
       <div style={{ textAlign: "center", fontStyle: "italic", fontSize: "8pt", margin: "4px 0", lineHeight: 1.2 }}>
         O presente documento foi emitido digitalmente amparado pelo Ofício n.º 38/CES/CNE/MEC de 04/03/2011 e pelo Ofício n.º
         {" "}387/2016/CES/SAO/CNE/CNE-MEC.<br />
@@ -149,7 +160,7 @@ function DocFooter({ f, profileKey }: { f: any; profileKey?: ProfileKey }) {
       </div>
       
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", margin: "4px 0" }}>
-        <img src={UNINTER_SELO_B64} alt="Selo UNINTER" style={{ width: 70, height: "auto", display: "block" }} />
+        <img src={UNINTER_SELO_B64} alt="Selo UNINTER" style={{ width: 70, height: "auto", display: "block" }} crossOrigin="anonymous" />
         <div style={{ fontSize: "6.5pt", textAlign: "center", color: "#666", marginTop: 2, fontStyle: "italic" }}>
           Uninter PAP - Polo de apoio presencial*<br />
           *Local credenciado no MEC para apoio ao candidato/aluno e para o desenvolvimento das atividades pedagógicas e administrativas.
@@ -166,7 +177,7 @@ function DocFooter({ f, profileKey }: { f: any; profileKey?: ProfileKey }) {
         Documento emitido às {emissaoHora} do dia {dataEmissao}.<br />
         Código de Validação / Controle do documento: {validationCode}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -178,7 +189,7 @@ function Signature({ f, showLine = true }: { f: any; showLine?: boolean }) {
         <div style={{ borderTop: "1px solid #000", width: "100%", margin: "0 auto 8px auto" }} />
       )}
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-        <img src={UNINTER_ASSINATURA_B64} alt="Assinatura" style={{ width: 85, height: "auto", display: "block" }} />
+        <img src={UNINTER_ASSINATURA_B64} alt="Assinatura" style={{ width: 85, height: "auto", display: "block" }} crossOrigin="anonymous" />
       </div>
       <b style={{ fontSize: "9.5pt", letterSpacing: "0.2px", display: "block", marginTop: 1 }}>{secretaria}</b>
       <span style={{ fontSize: "9pt", display: "block" }}>Secretária Geral de Gestão Acadêmica</span>
@@ -190,7 +201,7 @@ function Signature({ f, showLine = true }: { f: any; showLine?: boolean }) {
 function Logo() {
   return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: 10 }}>
-      <img src={UNINTER_LOGO_B64} alt="Logo UNINTER" style={{ width: 140, height: "auto", display: "block" }} />
+      <img src={UNINTER_LOGO_B64} alt="Logo UNINTER" style={{ width: 140, height: "auto", display: "block" }} crossOrigin="anonymous" />
     </div>
   );
 }
@@ -354,7 +365,7 @@ export function Page4() {
   return (
     <div className="doc-page" id="doc-page-4" style={{ ...PAGE_STYLE, padding: 0, height: "293.47mm", overflow: "hidden" }}>
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100%", height: "100%" }}>
-        <img src={UNINTER_SELO_B64} alt="Selo UNINTER" style={{ width: "120mm", height: "auto", display: "block" }} />
+        <img src={UNINTER_SELO_B64} alt="Selo UNINTER" style={{ width: "120mm", height: "auto", display: "block" }} crossOrigin="anonymous" />
       </div>
     </div>
   );
@@ -373,11 +384,11 @@ export function GradePage({ f, highlightModified, profileKey, rows, isLast }: Pr
         <p style={{ margin: "1.5px 0" }}><b>Matrícula:</b> <V val={f.matricula} orig="" highlight={hl} /> &nbsp;&nbsp; <b>Situação de Matrícula:</b> <V val={f.situacao_matricula} orig="FORMADO" highlight={hl} /></p>
       </Fieldset>
 
-      <Fieldset legend="COMPONENTES CURRICULARES" style={{ paddingTop: 8, paddingBottom: 10, flex: 1, minHeight: "180mm" }}>
-        <GradeTable rows={rows} />
+      <Fieldset legend="COMPONENTES CURRICULARES" style={{ paddingTop: 8, paddingBottom: 10, flex: 1, minHeight: "180mm", overflow: "visible" }}>
+        <GradeGrid rows={rows} />
         
         {isLast && (
-           <div style={{ marginTop: 10, fontSize: "8.5pt", lineHeight: 1.25 }}>
+           <div style={{ marginTop: 12, fontSize: "8.5pt", lineHeight: 1.4 }}>
               <b>Carga Horária Total do Curso:</b> <V val={`${f.carga_horaria}h`} orig="0h" highlight={hl} />
               <br />
               <i style={{ fontSize: "7.5pt" }}>*Ano e mês de início da oferta da disciplina.</i>
@@ -404,8 +415,9 @@ export default function UninterDocument({ f, highlightModified, profileKey, grad
   const chunks: GradeRow[][] = [];
   let remaining = [...allRows];
   
-  const MAX_ROWS_LAST = 36;
-  const MAX_ROWS_INT = 58; // Reduzido de 62 para 58 devido ao aumento de padding
+  // Recalibrado para flexbox com maior espaçamento
+  const MAX_ROWS_LAST = 24;
+  const MAX_ROWS_INT = 38;
 
   if (remaining.length === 0) {
     chunks.push([{ anoMes: "", disciplina: "Nenhuma disciplina informada", ch: "", media: "", resultado: "", docente: "", titulacao: "" }]);
