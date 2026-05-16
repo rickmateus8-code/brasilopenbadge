@@ -477,7 +477,7 @@ export default function AtestadoCria() {
   };
 
   // ── Assinatura ─────────────────────────────────────────────────────────────
-  const [signatureColor, setSignatureColor] = useState<string>("#0b109f");
+  const [signatureColor, setSignatureColor] = useState<string>("#000000");
   const [signatureImage, setSignatureImage] = useState<string>("");
   const signatureRef = useRef<HTMLInputElement>(null);
 
@@ -2077,6 +2077,14 @@ export default function AtestadoCria() {
                             🎮 AJUSTE DO CARIMBO
                           </p>
 
+                          {/* Identificador de Coordenadas Fixo */}
+                          <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 6, padding: "6px 8px", marginBottom: 10, display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 10px" }}>
+                            <div style={{ fontSize: 10, color: "#1e40af", fontWeight: 700 }}>X: <span style={{ color: "#000" }}>{stampX}px</span></div>
+                            <div style={{ fontSize: 10, color: "#1e40af", fontWeight: 700 }}>Y: <span style={{ color: "#000" }}>{stampY}px</span></div>
+                            <div style={{ fontSize: 10, color: "#1e40af", fontWeight: 700 }}>ESCALA: <span style={{ color: "#000" }}>{Math.round(stampScale * 100)}%</span></div>
+                            <div style={{ fontSize: 10, color: "#1e40af", fontWeight: 700 }}>GIRO: <span style={{ color: "#000" }}>{stampRotate}°</span></div>
+                          </div>
+
                           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                             {/* Toggle Ocultar QR Code */}
                             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -2094,8 +2102,8 @@ export default function AtestadoCria() {
 
                             {/* Controles de Escala */}
                             <div style={{ display: "flex", gap: 6 }}>
-                              <button type="button" onClick={() => setStampScale(v => Math.max(0.1, v + 0.05))} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>🔍+ ZOOM</button>
-                              <button type="button" onClick={() => setStampScale(v => Math.max(0.1, v - 0.05))} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>🔍- ZOOM</button>
+                              <button type="button" onClick={() => setStampScale(v => Math.max(0.1, v + 0.1))} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>🔍+ ZOOM</button>
+                              <button type="button" onClick={() => setStampScale(v => Math.max(0.1, v - 0.1))} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>🔍- ZOOM</button>
                             </div>
 
                             {/* Controles de Rotação */}
@@ -2104,18 +2112,18 @@ export default function AtestadoCria() {
                               <button type="button" onClick={() => setStampRotate(v => v + 1)} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>↻ GIRAR</button>
                             </div>
 
-                            {/* Controles de Posição (Setas) */}
+                            {/* Controles de Posição (Setas Rápidas) */}
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, width: "100%", maxWidth: 180, margin: "0 auto" }}>
                               <div />
-                              <button type="button" onClick={() => setStampY(v => v - 2)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▲</button>
+                              <button type="button" onClick={() => setStampY(v => v - 8)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▲</button>
                               <div />
                               
-                              <button type="button" onClick={() => setStampX(v => v - 2)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>◀</button>
-                              <button type="button" onClick={() => { setStampScale(1); setStampX(0); setStampY(0); setStampRotate(0); }} style={{ ...btnGray, padding: "6px 0", fontSize: 9, display: "flex", alignItems: "center", justifyContent: "center" }}>RESET</button>
-                              <button type="button" onClick={() => setStampX(v => v + 2)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▶</button>
+                              <button type="button" onClick={() => setStampX(v => v - 8)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>◀</button>
+                              <button type="button" onClick={resetStampTransform} style={{ ...btnGray, padding: "6px 0", fontSize: 9, display: "flex", alignItems: "center", justifyContent: "center" }}>RESET</button>
+                              <button type="button" onClick={() => setStampX(v => v + 8)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▶</button>
                               
                               <div />
-                              <button type="button" onClick={() => setStampY(v => v + 2)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▼</button>
+                              <button type="button" onClick={() => setStampY(v => v + 8)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▼</button>
                               <div />
                             </div>
                           </div>
