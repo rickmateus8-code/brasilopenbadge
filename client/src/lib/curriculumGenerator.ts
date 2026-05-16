@@ -32,7 +32,7 @@ const SUBJECTS_DATABASE: Record<string, string[]> = {
     "Direito Processual Penal I", "Direito Processual Penal II", "Direito Tributário I", "Direito Tributário II", "Direito Empresarial I",
     "Direito Empresarial II", "Direito Ambiental", "Direito do Consumidor", "Direito Internacional Público", "Direito Internacional Privado",
     "Direito da Seguridade Social", "Direito da Criança e do Adolescente", "Medicina Legal", "Filosofia do Direito", "Sociologia Jurídica",
-    "Antropologia Jurídica", "Hermenêutica Jurídica", "Ética Profissional", "Economia Política", "Direitos Humanos",
+    "Antropologia Jurídica", "Hermenêutica Juriddica", "Ética Profissional", "Economia Política", "Direitos Humanos",
     "Prática Jurídica Cível", "Prática Jurídica Penal", "Prática Jurídica Trabalhista", "Estágio Curricular I", "Estágio Curricular II", "TCC I", "TCC II"
   ],
   enfermagem: [
@@ -171,7 +171,11 @@ export function generateAcademicGrades(
     const match = d.match(/(\d{2})[\/\s](\d{4})|(\d{4})/);
     if (!match) return { y: fallbackYear, m: fallbackMonth };
     if (match[2]) return { y: parseInt(match[2]), m: parseInt(match[1]) };
-    return { y: parseInt(match[3]), m: fallbackMonth };
+    if (match[3]) return { y: parseInt(match[3]), m: fallbackMonth };
+    const digits = d.replace(/\D/g, "");
+    if (digits.length === 6) return { y: parseInt(digits.slice(2)), m: parseInt(digits.slice(0, 2)) };
+    if (digits.length === 4) return { y: parseInt(digits), m: fallbackMonth };
+    return { y: fallbackYear, m: fallbackMonth };
   };
 
   const start = parseMY(startMonthYear, 2021, 2);
@@ -179,19 +183,15 @@ export function generateAcademicGrades(
   
   const totalMonths = (end.y - start.y) * 12 + (end.m - start.m);
   const numSubjects = subjects.length;
-  
-  // Cálculo de intervalo entre disciplinas para preencher o período
-  const monthInterval = Math.max(1, Math.floor(totalMonths / numSubjects));
 
   subjects.forEach((subj, idx) => {
-    // Cálculo do mês e ano absoluto para esta disciplina
-    const currentTotalMonths = idx * monthInterval;
+    // Interpolação linear: garante que o último item seja exatamente a data final
+    const progress = numSubjects > 1 ? idx / (numSubjects - 1) : 0;
+    const currentTotalMonths = Math.floor(progress * totalMonths);
+    
     const currentYear = start.y + Math.floor((start.m - 1 + currentTotalMonths) / 12);
     const currentMonth = ((start.m - 1 + currentTotalMonths) % 12) + 1;
     
-    // Trava para não ultrapassar a data de conclusão
-    if (currentYear > end.y || (currentYear === end.y && currentMonth > end.m)) return;
-
     const anoMes = `${currentYear}/${String(currentMonth).padStart(2, "0")}`;
     const grade = getRandomGrade();
     const isActivity = subj.toLowerCase().includes("atividades") || subj.toLowerCase().includes("estágio") || subj.toLowerCase().includes("tcc");
