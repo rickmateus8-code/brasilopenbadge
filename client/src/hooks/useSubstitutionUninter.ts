@@ -220,7 +220,7 @@ function parseImportText(text: string): {
        const clean = val.replace(/CURSO SUPERIOR DE LICENCIATURA EM\s+/i, "")
                         .replace(/LICENCIATURA EM\s+/i, "");
        historicoKey = detectHistoricoByCurso(clean) || historicoKey;
-       updates.curso = clean.toUpperCase();
+       // Desativado: updates.curso = clean.toUpperCase(); para evitar datas corrompendo o nome
     }
 
     if (label.includes("CONCLUSÃO")) updates.conclusao_curso = normalizeDateByField(val, "conclusao_curso");
