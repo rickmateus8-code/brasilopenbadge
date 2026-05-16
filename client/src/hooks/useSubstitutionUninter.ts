@@ -337,7 +337,6 @@ export function useSubstitution() {
       const data = await res.json();
       
       if (data.erro) {
-        // Apenas notifica erro se o usuário estiver digitando manualmente
         return;
       }
 
@@ -357,7 +356,6 @@ export function useSubstitution() {
   useEffect(() => {
     const cepField = fields.find(f => f.id === "cep");
     if (cepField?.currentValue && cepField.currentValue.replace(/\D/g, "").length === 8) {
-       // Apenas dispara se o valor atual for diferente do original ou se for importação
        handleCEPLookup(cepField.currentValue);
     }
   }, [fieldMap.cep, handleCEPLookup]);
@@ -411,15 +409,21 @@ export function useSubstitution() {
 
     const parsed = parseImportText(importText);
 
+    // Se detectou um curso, aplica a lógica de seleção de curso (incluindo o prefixo correto)
     if (parsed.historicoKey) {
-      setActiveHistorico(parsed.historicoKey);
+      const historico = parsed.historicoKey;
+      setActiveHistorico(historico);
+      const label = HISTORICOS_DISPONIVEIS.find(c => c.key === historico)?.label || "";
+      const cleanCurso = label.replace(/CURSO SUPERIOR DE LICENCIATURA EM\s+/i, "")
+                               .replace(/LICENCIATURA EM\s+/i, "");
+      
+      parsed.updates.curso = cleanCurso.toUpperCase();
     }
 
     const updates = { ...parsed.updates };
     if (!updates.matricula) {
       updates.matricula = buildMatricula();
     }
-    // Trava 'FORMADO' na importação
     if (!updates.situacao_matricula) {
       updates.situacao_matricula = "FORMADO";
     }
@@ -430,7 +434,6 @@ export function useSubstitution() {
       setCustomGrades(parsed.gradeRows);
     }
 
-    // Se houver CEP importado, o useEffect disparará o handleCEPLookup automaticamente
     toast.success("Importação concluída com sucesso!");
   }, [importText]);
 
