@@ -7,9 +7,9 @@ import {
   UserRoundPen, RotateCcw, ChevronDown, ChevronRight, 
   Copy, FileText, WandSparkles, Sparkles, School, 
   GraduationCap, LayoutGrid, Search, X, TableProperties, Lock,
-  Save, Download, Loader2, CheckCircle2
+  Save, Download, Loader2, CheckCircle2, MapPin, Clock
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { UNINTER_IMPORT_TEMPLATE, HISTORICOS_DISPONIVEIS } from "@/lib/documentData_uninter";
 import {
   Dialog,
@@ -77,6 +77,9 @@ export default function SubstitutionPanel({
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loadingCEP, setLoadingCEP] = useState(false);
+  const [cepValue, setCepValue] = useState("");
+  const [numeroResidencial, setNumeroResidencial] = useState("");
 
   const toggleCategory = (cat: string) => {
     setExpandedCategories((prev) => ({ ...prev, [cat]: !prev[cat] }));
@@ -100,6 +103,47 @@ export default function SubstitutionPanel({
     if (activeHistoricoReal === null) return "SELECIONE O TIPO DE CURSO";
     return HISTORICOS_DISPONIVEIS.find(c => c.key === activeHistorico)?.label || "SELECIONE O CURSO";
   }, [activeHistorico, activeHistoricoReal]);
+
+  const handleCEPLookup = useCallback(async () => {
+    const cleanCEP = cepValue.replace(/\D/g, "");
+    if (cleanCEP.length !== 8) {
+      toast.error("CEP inválido. Digite 8 números.");
+      return;
+    }
+
+    setLoadingCEP(true);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cleanCEP}/json/`);
+      const data = await res.json();
+      
+      if (data.erro) {
+        toast.error("CEP não encontrado.");
+        return;
+      }
+
+      // Formato solicitado: "{RUA}, {NUMERO} - {BAIRRO}, {CIDADE}/{UF} {CEP}"
+      const formattedEndereco = `${data.logradouro.toUpperCase()}, ${numeroResidencial || "S/N"} - ${data.bairro.toUpperCase()}, ${data.localidade.toUpperCase()}/${data.uf.toUpperCase()} ${data.cep}`;
+
+      onUpdateField("endereco", formattedEndereco);
+      onUpdateField("unidade_uf", data.uf.toUpperCase());
+      onUpdateField("cep", data.cep);
+      
+      toast.success("Endereço institucional atualizado via CEP!");
+    } catch (err) {
+      toast.error("Erro ao buscar CEP.");
+    } finally {
+      setLoadingCEP(false);
+    }
+  }, [cepValue, numeroResidencial, onUpdateField]);
+
+  const handleGenerateCommercialTime = useCallback(() => {
+    const hour = Math.floor(Math.random() * (18 - 8 + 1)) + 8;
+    const min = Math.floor(Math.random() * 60);
+    const sec = Math.floor(Math.random() * 60);
+    const formatted = `${String(hour).padStart(2, "0")}:${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+    onUpdateField("emissao_hora", formatted);
+    toast.success("Horário comercial gerado!");
+  }, [onUpdateField]);
 
   const handleCopyTemplate = async () => {
     try {
@@ -250,7 +294,7 @@ export default function SubstitutionPanel({
                   Copiar
                 </Button>
               </div>
-              <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-[10px] leading-relaxed text-slate-500 font-mono h-24 overflow-y-auto whitespace-pre select-all custom-scrollbar">
+              <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-[10px] leading-relaxed text-slate-500 font-mono h-32 overflow-y-auto whitespace-pre select-all custom-scrollbar">
                 {UNINTER_IMPORT_TEMPLATE}
               </div>
             </div>
@@ -299,15 +343,46 @@ export default function SubstitutionPanel({
                 </button>
                 {isExpanded && (
                   <div className="px-5 pb-5 pt-2 space-y-5">
+                    {/* Automação de CEP em Institucional */}
+                    {group.category === "institucional" && (
+                       <div className="p-4 rounded-2xl bg-blue-50/30 dark:bg-blue-900/5 border border-blue-100 dark:border-blue-800/30 space-y-3">
+                          <label className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase flex items-center gap-2">
+                             <MapPin size={12} /> Localizador de Unidade (CEP)
+                          </label>
+                          <div className="flex gap-2">
+                            <Input 
+                              placeholder="CEP (Ex: 81200-170)" 
+                              className="h-10 text-xs bg-white dark:bg-slate-950 border-blue-200 dark:border-blue-900 rounded-xl"
+                              value={cepValue}
+                              onChange={(e) => setCepValue(e.target.value)}
+                            />
+                            <Input 
+                              placeholder="N.º" 
+                              className="h-10 w-20 text-xs bg-white dark:bg-slate-950 border-blue-200 dark:border-blue-900 rounded-xl text-center"
+                              value={numeroResidencial}
+                              onChange={(e) => setNumeroResidencial(e.target.value)}
+                            />
+                            <Button
+                              className="h-10 bg-blue-600 hover:bg-blue-700 text-white font-black text-[10px] px-4 rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
+                              onClick={handleCEPLookup}
+                              disabled={loadingCEP}
+                            >
+                              {loadingCEP ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search size={14} />}
+                            </Button>
+                          </div>
+                          <p className="text-[9px] text-blue-500/70 font-bold uppercase italic">* Preenche o endereço e a UF automaticamente.</p>
+                       </div>
+                    )}
+
                     {group.items.map((field) => {
                       const isModified = field.currentValue !== field.originalValue && field.currentValue !== "";
                       const isMatricula = field.id === "matricula";
                       const isCPF = field.id === "cpf";
-                      const isFixed = ["instituicao_polo", "endereco"].includes(field.id);
-                      const isTextArea = ["reconhecimento", "credenciamento"].includes(field.id);
+                      const isFixed = ["instituicao_polo", "nome_reitor", "nome_secretaria"].includes(field.id);
+                      const isTextArea = ["reconhecimento", "credenciamento", "endereco"].includes(field.id);
                       const isStatus = field.id === "situacao_matricula";
+                      const isTime = field.id === "emissao_hora";
                       
-                      // Bloqueio de segurança: CPF não pode ser alterado na edição
                       const isLocked = (isEditMode && isCPF) || isFixed;
 
                       if (isStatus) {
@@ -351,7 +426,7 @@ export default function SubstitutionPanel({
                                 className={`h-10 text-xs border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus-visible:ring-[#005CA9] transition-all rounded-xl ${
                                   isModified ? "border-blue-400 dark:border-blue-600 bg-blue-50/20 shadow-sm" : ""
                                 }`}
-                                placeholder="1022071"
+                                placeholder={field.placeholder}
                                 disabled={isEditMode}
                               />
                               {!isEditMode && (
@@ -366,19 +441,42 @@ export default function SubstitutionPanel({
                                 </Button>
                               )}
                             </div>
+                          ) : isTime ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={field.currentValue}
+                                onChange={(e) => onUpdateField(field.id, e.target.value)}
+                                className={`h-10 text-xs border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus-visible:ring-[#005CA9] transition-all rounded-xl ${
+                                  isModified ? "border-blue-400 dark:border-blue-600 bg-blue-50/20 shadow-sm" : ""
+                                }`}
+                                placeholder={field.placeholder}
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="h-10 px-3 text-[10px] border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-400 font-black hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-xl"
+                                onClick={handleGenerateCommercialTime}
+                              >
+                                <Clock size={12} className="mr-1.5" /> COMERCIAL
+                              </Button>
+                            </div>
                           ) : isTextArea ? (
                             <Textarea
                               value={field.currentValue}
                               onChange={(e) => onUpdateField(field.id, e.target.value)}
-                              className={`min-h-[80px] text-xs border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus-visible:ring-[#005CA9] transition-all rounded-xl resize-none ${
+                              placeholder={field.placeholder}
+                              disabled={isLocked}
+                              className={`min-h-[100px] text-xs border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus-visible:ring-[#005CA9] transition-all rounded-xl resize-none ${
                                 isModified ? "border-blue-400 dark:border-blue-600 bg-blue-50/20 shadow-sm" : ""
-                              }`}
+                              } ${field.id === 'endereco' ? 'font-mono text-[10px]' : ''} ${isLocked ? "bg-slate-50 dark:bg-slate-900/50 cursor-not-allowed opacity-80" : ""}`}
                             />
                           ) : (
                             <Input
                               value={field.currentValue}
                               onChange={(e) => onUpdateField(field.id, e.target.value)}
                               disabled={isLocked}
+                              placeholder={field.placeholder}
                               className={`h-10 text-xs border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus-visible:ring-[#005CA9] transition-all rounded-xl ${
                                 isModified ? "border-blue-400 dark:border-blue-600 bg-blue-50/20 shadow-sm" : ""
                               } ${isLocked ? "bg-slate-50 dark:bg-slate-900/50 cursor-not-allowed opacity-80" : ""}`}

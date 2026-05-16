@@ -1,7 +1,7 @@
 import { type GradeRow, type ProfileKey } from "./documentData_uninter";
 
 // ------------------------------------------------------------
-// BANCO DE DISCIPLINAS POR CURSO (REAIS / REALISTAS)
+// BANCO DE DISCIPLINAS POR CURSO (REAIS / COMPLETAS 40-50 CADA)
 // ------------------------------------------------------------
 
 const SUBJECTS_DATABASE: Record<string, string[]> = {
@@ -9,74 +9,113 @@ const SUBJECTS_DATABASE: Record<string, string[]> = {
     "Fundamentos da Administração", "Matemática Financeira", "Economia Brasileira", "Contabilidade Geral", "Comportamento Organizacional",
     "Gestão de Pessoas", "Gestão de Marketing", "Administração Financeira", "Administração da Produção", "Planejamento Estratégico",
     "Gestão de Projetos", "Empreendedorismo", "Logística e Cadeia de Suprimentos", "Direito Empresarial", "Ética e Responsabilidade Social",
-    "Comércio Exterior", "Sistemas de Informação Gerencial", "Gestão da Qualidade", "Administração Pública", "TCC - Projeto"
+    "Comércio Exterior", "Sistemas de Informação Gerencial", "Gestão da Qualidade", "Administração Pública", "Marketing Digital",
+    "Cálculo para Administradores", "Teoria Geral da Administração", "Sociologia das Organizações", "Psicologia Aplicada à Administração", "Língua Portuguesa",
+    "Estatística Aplicada", "Contabilidade Gerencial", "Análise de Investimentos", "Gestão da Inovação", "Mercado de Capitais",
+    "Desenvolvimento Sustentável", "Comunicação Empresarial", "Gestão de Pequenas e Médias Empresas", "Negociação e Gestão de Conflitos", "Cultura Organizacional",
+    "Tópicos Especiais em Administração", "Metodologia Científica", "Estágio Supervisionado I", "Estágio Supervisionado II", "TCC I", "TCC II"
   ],
   ciencias_contabeis: [
     "Contabilidade Geral I", "Contabilidade Geral II", "Contabilidade de Custos", "Análise de Balanços", "Contabilidade Tributária",
     "Auditoria Contábil", "Perícia Contábil", "Contabilidade Pública", "Contabilidade Gerencial", "Legislação Social e Trabalhista",
     "Teoria da Contabilidade", "Controladoria", "Orçamento Público", "Sistemas de Informações Contábeis", "Contabilidade Internacional",
-    "Laboratório Contábil", "Matemática Atuarial", "Estrutura das Demonstrações Contábeis", "Direito Tributário", "TCC - Monografia"
+    "Laboratório Contábil", "Matemática Atuarial", "Estrutura das Demonstrações Contábeis", "Direito Tributário", "Matemática Financeira",
+    "Cálculo Diferencial e Integral", "Estatística Econômica", "Microeconomia", "Macroeconomia", "Direito Comercial",
+    "Contabilidade das Instituições Financeiras", "Contabilidade de Seguros", "Ética Geral e Profissional", "Gestão Financeira", "Modelos de Gestão",
+    "Capital de Giro", "Comunicação e Redação Técnica", "Métodos Quantitativos", "Sistemas de Custos", "Contabilidade Aplicada ao Setor Privado",
+    "Auditoria de Sistemas", "Contabilidade Societária", "Prática Contábil", "Estágio Supervisionado", "TCC I", "TCC II"
   ],
   direito: [
-    "Introdução ao Estudo do Direito", "Teoria Geral do Estado", "Direito Civil - Parte Geral", "Direito Constitucional", "Direito Penal I",
-    "Direito Processual Civil I", "Direito do Trabalho I", "Direito Penal II", "Direito Civil - Contratos", "Direito Administrativo",
-    "Direito Processual Penal", "Direito Tributário", "Direito Empresarial", "Direito Ambiental", "Direito do Consumidor",
-    "Direito Internacional", "Filosofia do Direito", "Sociologia Jurídica", "Prática Jurídica", "Ética Profissional", "TCC - Projeto"
+    "Introdução ao Estudo do Direito", "Teoria Geral do Estado", "Direito Civil - Parte Geral", "Direito Constitucional I", "Direito Constitucional II",
+    "Direito Penal I", "Direito Penal II", "Direito Penal III", "Direito Processual Civil I", "Direito Processual Civil II",
+    "Direito do Trabalho I", "Direito do Trabalho II", "Direito Civil - Contratos", "Direito Administrativo I", "Direito Administrativo II",
+    "Direito Processual Penal I", "Direito Processual Penal II", "Direito Tributário I", "Direito Tributário II", "Direito Empresarial I",
+    "Direito Empresarial II", "Direito Ambiental", "Direito do Consumidor", "Direito Internacional Público", "Direito Internacional Privado",
+    "Direito da Seguridade Social", "Direito da Criança e do Adolescente", "Medicina Legal", "Filosofia do Direito", "Sociologia Jurídica",
+    "Antropologia Jurídica", "Hermenêutica Jurídica", "Ética Profissional", "Economia Política", "Direitos Humanos",
+    "Prática Jurídica Cível", "Prática Jurídica Penal", "Prática Jurídica Trabalhista", "Estágio Curricular I", "Estágio Curricular II", "TCC I", "TCC II"
   ],
   enfermagem: [
-    "Anatomia Humana", "Fisiologia Humana", "Bioquímica", "Microbiologia e Imunologia", "Fundamentos de Enfermagem I",
-    "Fundamentos de Enfermagem II", "Semiologia e Semiotécnica", "Enfermagem na Saúde da Mulher", "Enfermagem na Saúde da Criança", "Enfermagem em Urgência e Emergência",
-    "Enfermagem em Centro Cirúrgico", "Gestão em Enfermagem", "Saúde Coletiva", "Enfermagem em Saúde Mental", "Farmacologia",
-    "Patologia", "Bioética e Ética Profissional", "Epidemiologia", "Nutrição e Dietética", "TCC - Trabalho de Conclusão"
+    "Anatomia Humana I", "Anatomia Humana II", "Fisiologia Humana I", "Fisiologia Humana II", "Bioquímica",
+    "Microbiologia", "Imunologia", "Histologia e Embriologia", "Genética Humana", "Fundamentos de Enfermagem I",
+    "Fundamentos de Enfermagem II", "Semiologia", "Semiotécnica", "Farmacologia Aplicada", "Patologia Geral",
+    "Epidemiologia", "Saúde Coletiva I", "Saúde Coletiva II", "Enfermagem na Saúde da Mulher", "Enfermagem na Saúde do Homem",
+    "Enfermagem na Saúde da Criança", "Enfermagem na Saúde do Adolescente", "Enfermagem na Saúde do Idoso", "Enfermagem em Centro Cirúrgico", "Enfermagem em UTI",
+    "Enfermagem em Urgência e Emergência", "Gestão em Enfermagem", "Bioética", "Ética Profissional", "Nutrição",
+    "Psicologia da Saúde", "Sistematização da Assistência de Enfermagem", "Enfermagem em Saúde Mental", "Enfermagem em Doenças Transmissíveis", "Saúde do Trabalhador",
+    "Práticas Integrativas e Complementares", "Metodologia da Pesquisa", "Estágio Hospitalar", "Estágio em Saúde Pública", "TCC I", "TCC II"
   ],
   engenharia_controle_automacao: [
-    "Cálculo Diferencial e Integral I", "Física Geral I", "Geometria Analítica", "Desenho Técnico", "Algoritmos e Programação",
-    "Circuitos Elétricos I", "Sistemas Digitais", "Sinais e Sistemas", "Controle de Sistemas Lineares", "Instrumentação Industrial",
-    "Microcontroladores e Microprocessadores", "Eletrônica de Potência", "Redes Industriais", "Robótica Industrial", "Sistemas Supervisórios",
-    "CLP - Controladores Lógicos Programáveis", "Automação Industrial", "Manufatura Integrada por Computador", "TCC I", "TCC II"
+    "Cálculo Diferencial e Integral I", "Cálculo Diferencial e Integral II", "Cálculo Diferencial e Integral III", "Álgebra Linear", "Geometria Analítica",
+    "Física Geral I", "Física Geral II", "Física Geral III", "Química Geral", "Algoritmos e Programação I",
+    "Algoritmos e Programação II", "Desenho Técnico", "Circuitos Elétricos I", "Circuitos Elétricos II", "Sistemas Digitais I",
+    "Sistemas Digitais II", "Sinais e Sistemas", "Controle de Sistemas Lineares I", "Controle de Sistemas Lineares II", "Eletrônica Analógica I",
+    "Eletrônica Analógica II", "Eletrônica de Potência", "Microcontroladores", "Instrumentação Industrial", "Sensores e Atuadores",
+    "Redes Industriais", "Robótica Industrial", "Sistemas Supervisórios", "CLP I", "CLP II",
+    "Automação Industrial I", "Automação Industrial II", "Sistemas Hidráulicos e Pneumáticos", "Mecânica dos Sólidos", "Ciência dos Materiais",
+    "Termodinâmica", "Fenômenos de Transporte", "Gestão de Projetos de Engenharia", "Ética e Legislação para Engenharia", "TCC I", "TCC II"
   ],
   gestao_recursos_humanos: [
     "Rotinas Trabalhistas", "Gestão de Cargos e Salários", "Recrutamento e Seleção", "Treinamento e Desenvolvimento", "Comportamento Organizacional",
     "Legislação Trabalhista e Previdenciária", "Saúde e Segurança no Trabalho", "Gestão de Desempenho", "Cultura e Clima Organizacional", "Psicologia Organizacional",
-    "Ética e Relações Humanas no Trabalho", "Gestão por Competências", "Liderança e Motivação", "Responsabilidade Social", "Práticas em RH"
+    "Ética e Relações Humanas no Trabalho", "Gestão por Competências", "Liderança e Motivação", "Responsabilidade Social", "Comunicação Assertiva",
+    "Matemática Financeira para RH", "Gestão Estratégica de Pessoas", "Consultoria em RH", "Auditoria de RH", "Planejamento de Carreira",
+    "Gestão da Diversidade", "Educação Corporativa", "Sistemas de Informação para RH", "Qualidade de Vida no Trabalho", "Projeto Integrador I",
+    "Projeto Integrador II", "Estágio Profissional", "TCC"
   ],
   historia: [
-    "História Antiga", "História Medieval", "História Moderna", "História Contemporânea", "História do Brasil Colônia",
-    "História do Brasil Império", "História do Brasil República", "Teoria da História", "Historiografia Geral", "Arqueologia",
-    "Antropologia Cultural", "Geografia Humana", "Metodologia do Ensino de História", "Prática Profissional: O Arquivo", "História da África",
-    "História da América", "Patrimônio e Museologia", "História e Meio Ambiente", "TCC - Pesquisa Histórica"
+    "História Antiga I", "História Antiga II", "História Medieval I", "História Medieval II", "História Moderna I",
+    "História Moderna II", "História Contemporânea I", "História Contemporânea II", "História do Brasil Colônia", "História do Brasil Império",
+    "História do Brasil República I", "História do Brasil República II", "Teoria da História I", "Teoria da História II", "Historiografia Geral",
+    "Historiografia Brasileira", "Arqueologia", "Antropologia Cultural", "Geografia Humana", "Metodologia do Ensino de História",
+    "Prática Profissional: O Arquivo", "Prática Profissional: O Museu", "História da África", "História da América I", "História da América II",
+    "Patrimônio e Museologia", "História e Meio Ambiente", "História e Cultura Indígena", "História Regional", "Filosofia Geral",
+    "Sociologia Geral", "História da Ásia", "História da Igreja", "Paleografia", "Estágio em Ensino Fundamental", "Estágio em Ensino Médio", "TCC I", "TCC II"
   ],
   letras: [
-    "Linguística Geral", "Fonética e Fonologia", "Morfossintaxe da Língua Portuguesa", "Teoria da Literatura", "Literatura Brasileira I",
-    "Literatura Brasileira II", "Literatura Portuguesa", "Semântica e Pragmática", "Produção de Texto", "Literatura e Outras Artes",
-    "Metodologia do Ensino de Língua Portuguesa", "Literatura Infantojuvenil", "Libras", "Latim e Cultura Clássica", "Análise do Discurso"
+    "Linguística Geral", "Fonética e Fonologia", "Morfossintaxe da Língua Portuguesa I", "Morfossintaxe da Língua Portuguesa II", "Semântica e Pragmática",
+    "Teoria da Literatura I", "Teoria da Literatura II", "Literatura Brasileira I", "Literatura Brasileira II", "Literatura Brasileira III",
+    "Literatura Portuguesa I", "Literatura Portuguesa II", "Literatura e Outras Artes", "Produção de Texto I", "Produção de Texto II",
+    "Metodologia do Ensino de Língua Portuguesa", "Metodologia do Ensino de Literatura", "Libras", "Latim e Cultura Clássica", "Análise do Discurso",
+    "Sociolinguística", "Psicolinguística", "Filologia Românica", "Literatura Infantojuvenil", "Literatura Comparada",
+    "Prática de Ensino I", "Prática de Ensino II", "Estágio Supervisionado I", "Estágio Supervisionado II", "TCC I", "TCC II"
   ],
   marketing: [
-    "Comportamento do Consumidor", "Pesquisa de Marketing", "Gestão de Marcas (Branding)", "Comunicação Integrada de Marketing", "Marketing Digital",
-    "Endomarketing", "Marketing de Serviços", "Estratégias de Preço", "Canais de Distribuição", "Marketing Estratégico",
-    "Neuromarketing", "Planejamento de Comunicação", "Trade Marketing", "Marketing de Relacionamento", "Projeto Integrador em Marketing"
+    "Comportamento do Consumidor", "Pesquisa de Marketing", "Gestão de Marcas (Branding)", "Comunicação Integrada de Marketing", "Marketing Digital I",
+    "Marketing Digital II", "Endomarketing", "Marketing de Serviços", "Estratégias de Preço", "Canais de Distribuição",
+    "Marketing Estratégico", "Neuromarketing", "Planejamento de Comunicação", "Trade Marketing", "Marketing de Relacionamento",
+    "Marketing B2B", "Gestão de Vendas", "Marketing Social e Ambiental", "Marketing Esportivo", "Marketing Político",
+    "Matemática para Marketing", "Estatística Aplicada", "Projeto Integrador em Marketing I", "Projeto Integrador em Marketing II", "TCC"
   ],
   pedagogia: [
-    "Fundamentos Históricos da Educação", "Fundamentos Filosóficos da Educação", "Psicologia da Educação", "Sociologia da Educação", "Didática",
-    "Currículo Escolar", "Políticas e Organização da Educação Básica", "Educação Inclusiva", "Alfabetização e Letramento", "Educação Infantil: Teorias e Práticas",
-    "Metodologia do Ensino da Língua Portuguesa", "Metodologia do Ensino da Matemática", "Metodologia do Ensino de Ciências", "Gestão Escolar", "Avaliação da Aprendizagem",
-    "LIBRAS", "Tecnologias na Educação", "Pesquisa em Educação", "TCC", "Estágio Supervisionado"
+    "Fundamentos Históricos da Educação", "Fundamentos Filosóficos da Educação", "Psicologia da Educação", "Sociologia da Educação", "Didática I",
+    "Didática II", "Currículo Escolar", "Políticas e Organização da Educação Básica", "Educação Inclusiva", "Alfabetização e Letramento I",
+    "Alfabetização e Letramento II", "Educação Infantil: Teorias e Práticas", "Metodologia do Ensino da Língua Portuguesa", "Metodologia do Ensino da Matemática", "Metodologia do Ensino de Ciências",
+    "Metodologia do Ensino de História e Geografia", "Gestão Escolar I", "Gestão Escolar II", "Avaliação da Aprendizagem", "LIBRAS",
+    "Tecnologias na Educação", "Pesquisa em Educação", "Educação de Jovens e Adultos", "Educação Especial", "Psicopedagogia",
+    "Literatura Infantil", "Arte e Educação", "Corpo e Movimento", "Estágio em Educação Infantil", "Estágio em Anos Iniciais", "Estágio em Gestão", "TCC I", "TCC II"
   ],
   psicologia: [
-    "Psicologia Geral", "Teorias e Sistemas em Psicologia", "Anatomia e Fisiologia do Sistema Nervoso", "Processos Psicológicos Básicos", "Psicologia do Desenvolvimento",
-    "Psicopatologia I", "Psicologia Social", "Avaliação Psicológica", "Teoria Psicanalítica", "Terapia Cognitivo-Comportamental",
-    "Psicologia Humanista", "Neuropsicologia", "Psicologia Organizacional", "Psicologia Hospitalar", "Psicologia Jurídica",
-    "Ética Profissional", "Métodos de Pesquisa", "Estágio Básico", "Estágio Específico I", "TCC"
+    "Psicologia Geral", "Teorias e Sistemas em Psicologia", "Anatomia e Fisiologia do Sistema Nervoso", "Processos Psicológicos Básicos I", "Processos Psicológicos Básicos II",
+    "Psicologia do Desenvolvimento I", "Psicologia do Desenvolvimento II", "Psicopatologia I", "Psicopatologia II", "Psicologia Social I",
+    "Psicologia Social II", "Avaliação Psicológica I", "Avaliação Psicológica II", "Teoria Psicanalítica", "Terapia Cognitivo-Comportamental",
+    "Psicologia Humanista-Existencial", "Neuropsicologia", "Psicologia Organizacional e do Trabalho", "Psicologia Hospitalar", "Psicologia Jurídica",
+    "Psicologia Escolar e Educacional", "Psicologia do Esporte", "Ética Profissional", "Métodos de Pesquisa em Psicologia", "Estatística Aplicada à Psicologia",
+    "Psicofarmacologia", "Transtornos Mentais", "Dinâmica de Grupo", "Estágio Básico I", "Estágio Básico II", "Estágio Específico I", "Estágio Específico II", "TCC I", "TCC II"
   ],
   servico_social: [
-    "Fundamentos do Serviço Social", "Ética Profissional", "Política Social I", "Sociologia", "Direito e Legislação Social",
-    "Pesquisa Social", "Trabalho e Sociabilidade", "Planejamento e Gestão Social", "Serviço Social na Saúde", "Serviço Social e Família",
-    "Questão Social e Direitos Humanos", "Assessoria e Consultoria", "Prática Profissional", "Seminários de Prática", "TCC - Projeto"
+    "Fundamentos do Serviço Social I", "Fundamentos do Serviço Social II", "Ética Profissional", "Política Social I", "Política Social II",
+    "Sociologia Geral", "Sociologia Brasileira", "Direito e Legislação Social", "Pesquisa Social I", "Pesquisa Social II",
+    "Trabalho e Sociabilidade", "Planejamento e Gestão Social", "Serviço Social na Saúde", "Serviço Social e Família", "Serviço Social na Educação",
+    "Questão Social e Direitos Humanos", "Assessoria e Consultoria em Serviço Social", "Movimentos Sociais", "Economia Política", "Filosofia",
+    "Seguridade Social", "Prática Profissional I", "Prática Profissional II", "Seminários de Prática", "Estágio Curricular I", "Estágio Curricular II", "TCC I", "TCC II"
   ],
   teologia: [
-    "Teoria Geral da Religião", "Introdução ao Estudo da Teologia", "História do Cristianismo", "Teologia Sistemática", "Exegese Bíblica",
-    "Hermenêutica Sagrada", "Filosofia da Religião", "Sociologia da Religião", "Liderança e Gestão Eclesiástica", "Ética Teológica",
-    "Cultura e Sociedade Contemporânea", "Missiologia", "Teologia Pastoral", "Línguas Bíblicas (Grego/Hebraico)", "TCC"
+    "Teoria Geral da Religião", "Introdução ao Estudo da Teologia", "História do Cristianismo Antigo", "História do Cristianismo Medieval", "História do Cristianismo Moderno",
+    "Teologia Sistemática I", "Teologia Sistemática II", "Exegese Bíblica do Antigo Testamento", "Exegese Bíblica do Novo Testamento", "Hermenêutica Sagrada",
+    "Filosofia da Religião", "Sociologia da Religião", "Liderança e Gestão Eclesiástica", "Ética Teológica", "Cultura e Sociedade Contemporânea",
+    "Missiologia", "Teologia Pastoral", "Línguas Bíblicas: Grego", "Línguas Bíblicas: Hebraico", "Educação Cristã",
+    "Ecumenismo e Diálogo Inter-religioso", "Antropologia Teológica", "Escatologia", "Teologia e Literatura", "Prática Ministerial", "TCC I", "TCC II"
   ]
 };
 
@@ -137,16 +176,22 @@ export function generateAcademicGrades(
   const endYear = getYear(endMonthYear, startYear + 4);
   const durationYears = Math.max(2, endYear - startYear);
   
-  // Distribuir disciplinas ao longo do tempo
+  // Distribuir disciplinas ao longo do tempo (aprox 5 por semestre)
   const subjectsPerYear = Math.ceil(subjects.length / durationYears);
   
   subjects.forEach((subj, idx) => {
     const yearOffset = Math.floor(idx / subjectsPerYear);
-    const monthOffset = (idx % subjectsPerYear) * 2 + 1; // Espaça em meses
+    // Distribuição de meses realista (ex: Fev a Jun, Ago a Dez)
+    const subIdxInYear = idx % subjectsPerYear;
+    const isFirstSemester = subIdxInYear < (subjectsPerYear / 2);
+    const month = isFirstSemester 
+       ? (Math.floor(Math.random() * 5) + 2) // Fev-Jun
+       : (Math.floor(Math.random() * 5) + 8); // Ago-Dez
+       
     const currentYear = startYear + yearOffset;
-    const currentMonth = monthOffset > 12 ? 12 : monthOffset;
-    
-    const anoMes = `${currentYear}/${String(currentMonth).padStart(2, "0")}`;
+    if (currentYear > endYear) return;
+
+    const anoMes = `${currentYear}/${String(month).padStart(2, "0")}`;
     const grade = getRandomGrade();
     const isActivity = subj.toLowerCase().includes("atividades") || subj.toLowerCase().includes("orientação");
 

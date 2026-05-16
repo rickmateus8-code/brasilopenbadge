@@ -147,7 +147,7 @@ const PAGE_LABELS: Record<string, string> = {
   "/receita": "Emitindo Receita",
   "/receitacria": "Emitindo Receita",
   "/historico-sp": "Emitindo Histórico SP",
-  "/historico-uninter": "Emitindo Histórico UNINTER",
+  "/historicocria": "Emitindo Histórico UNINTER",
   "/admin": "Painel Admin",
   "/configuracoes": "Configurações",
   "/extrato": "Extrato",
@@ -958,10 +958,10 @@ export default function AdminDashboard() {
       receita: `/receita/editar/${e.id}?admin=1`,
       cnh: `/cnh/editar/${e.id}?admin=1`,
       cha: `/cha/editar/${e.id}?admin=1`,
-      toxicologico: `/toxicologico/editar/${e.id}?admin=1`,
+      "toxicologico": `/toxicologico/editar/${e.id}?admin=1`,
       "historico-sp": `/historico-sp`,
-      "historico-uninter": `/historico-uninter`,
-    };
+      "historico-uninter": `/historicocria/editar/${e.id}?admin=1`,
+      };
     const route = editRoutes[e.type];
     if (route) {
       setLocation(route);

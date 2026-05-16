@@ -14,6 +14,7 @@ export interface SubstitutionField {
   originalValue: string;
   currentValue: string;
   pages: number[];
+  placeholder?: string;
 }
 
 export type ProfileKey =
@@ -70,8 +71,8 @@ export const UNINTER_IMPORT_TEMPLATE = [
   "Matrícula:",
   "Situação de Matrícula:",
   "Curso:",
-  "Ato Autorizativo de Reconhecimento:",
-  "Ato Autorizativo de Credenciamento:",
+  "Ato de Reconhecimento (Texto Completo):",
+  "Ato de Credenciamento (Texto Completo):",
   "Processo e-MEC:",
   "Processo Seletivo:",
   "Mês / Ano de Realização:",
@@ -85,8 +86,7 @@ export const UNINTER_IMPORT_TEMPLATE = [
   "",
   "DADOS INSTITUCIONAIS",
   "Instituição / Polo:",
-  "Nome do Reitor:",
-  "Nome da Secretária:",
+  "CEP:",
 ].join("\n");
 
 export interface Profile {
@@ -132,13 +132,27 @@ const BASE_FIELDS: Record<string, string> = {
   titulacao: "",
   ingresso_mes_ano: "",
   ingresso_ano: "",
-  reconhecimento: "",
-  credenciamento: "",
-  processo_emec: "",
-  processo_seletivo: "",
-  instituicao_polo: "",
-  nome_reitor: "",
-  nome_secretaria: "",
+  cred_portaria: "688",
+  cred_portaria_dt: "25/05/2012",
+  cred_dou: "102",
+  cred_dou_dt: "28/05/2012",
+  recred_portaria: "1.219",
+  recred_portaria_dt: "28/11/2019",
+  recred_dou: "208",
+  recred_dou_dt: "29/11/2019",
+  reconhecimento_portaria: "357",
+  reconhecimento_portaria_dt: "24/05/2018",
+  reconhecimento_dou: "100",
+  reconhecimento_dou_dt: "25/05/2018",
+  processo_emec: "201605151",
+  processo_seletivo: "VESTIBULAR",
+  instituicao_polo: "CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER | POLO CURITIBA (CENTRO) - PR",
+  nome_reitor: "BENHUR ETELBERTO GAIO",
+  nome_secretaria: "SIMONE RAMOS DE OLIVEIRA",
+  cep: "",
+  unidade_uf: "",
+  codigo_validacao: "",
+  emissao_hora: "15:01:39",
 };
 
 export const PROFILES: Record<ProfileKey, Profile> = {
@@ -164,8 +178,8 @@ const BASE_META: CourseMetadata = {
   dateText: "Curitiba/PR, ____ de __________ de ____.",
   ingressoMesAno: "",
   ingressoAno: "",
-  unidadeLabel: "Unidade Curitiba:",
-  unidadeEndereco: "Rua do Rosário, 147 | Centro - Curitiba/PR | CEP 80020-110",
+  unidadeLabel: "UNIDADE:",
+  unidadeEndereco: "",
   codigoValidacao: "",
 };
 
@@ -189,31 +203,41 @@ export const COURSE_METADATA: Record<ProfileKey, CourseMetadata> = {
 export function createSubstitutionFields(profile?: Profile): SubstitutionField[] {
   const fields = profile ? profile.fields : BASE_FIELDS;
   return [
-    { id: "nome", label: "Nome Completo", category: "pessoal", originalValue: "", currentValue: fields.nome, pages: [1, 2, 3, 5] },
-    { id: "cpf", label: "CPF", category: "pessoal", originalValue: "", currentValue: fields.cpf, pages: [1, 2, 3, 5] },
-    { id: "rg", label: "RG", category: "pessoal", originalValue: "", currentValue: fields.rg, pages: [3, 5] },
-    { id: "rg_orgao", label: "Órgão Emissor RG", category: "pessoal", originalValue: "", currentValue: fields.rg_orgao, pages: [3, 5] },
-    { id: "data_nascimento", label: "Data de Nascimento", category: "pessoal", originalValue: "", currentValue: fields.data_nascimento, pages: [3, 5] },
-    { id: "uf_nascimento", label: "UF Nascimento", category: "pessoal", originalValue: "", currentValue: fields.uf_nascimento, pages: [3, 5] },
-    { id: "nacionalidade", label: "Nacionalidade", category: "pessoal", originalValue: "", currentValue: fields.nacionalidade, pages: [3, 5] },
-    { id: "matricula", label: "Matrícula", category: "academico", originalValue: "", currentValue: fields.matricula, pages: [1, 2, 3, 5] },
-    { id: "situacao_matricula", label: "Situação de Matrícula", category: "academico", originalValue: "", currentValue: fields.situacao_matricula, pages: [3, 5] },
-    { id: "endereco", label: "Endereço", category: "institucional", originalValue: "", currentValue: fields.endereco, pages: [3] },
-    { id: "conclusao_curso", label: "Conclusão do Curso", category: "academico", originalValue: "", currentValue: fields.conclusao_curso, pages: [1, 2, 3] },
-    { id: "colacao_grau", label: "Colação de Grau", category: "academico", originalValue: "", currentValue: fields.colacao_grau, pages: [1, 2, 3] },
-    { id: "ingresso_mes_ano", label: "Mês / Ano de Realização", category: "academico", originalValue: "", currentValue: fields.ingresso_mes_ano, pages: [3] },
-    { id: "ingresso_ano", label: "Ano de Ingresso", category: "academico", originalValue: "", currentValue: fields.ingresso_ano, pages: [3] },
-    { id: "reconhecimento", label: "Ato de Reconhecimento", category: "academico", originalValue: "", currentValue: fields.reconhecimento, pages: [1, 2, 3] },
-    { id: "credenciamento", label: "Ato de Credenciamento", category: "academico", originalValue: "", currentValue: fields.credenciamento, pages: [3] },
-    { id: "processo_emec", label: "Processo e-MEC*", category: "academico", originalValue: "", currentValue: fields.processo_emec, pages: [3] },
-    { id: "processo_seletivo", label: "Processo Seletivo", category: "academico", originalValue: "", currentValue: fields.processo_seletivo, pages: [3] },
-    { id: "expedicao_diploma", label: "Expedição do Diploma", category: "academico", originalValue: "", currentValue: fields.expedicao_diploma, pages: [3] },
-    { id: "expedicao_historico", label: "Expedição do Histórico", category: "academico", originalValue: "", currentValue: fields.expedicao_historico, pages: [3] },
-    { id: "carga_horaria", label: "Carga Horária", category: "academico", originalValue: "", currentValue: fields.carga_horaria, pages: [2, 6] },
-    { id: "titulacao", label: "Titulação", category: "academico", originalValue: "", currentValue: fields.titulacao, pages: [5, 6] },
-    { id: "instituicao_polo", label: "Instituição / Polo", category: "institucional", originalValue: "", currentValue: fields.instituicao_polo, pages: [3] },
-    { id: "nome_reitor", label: "Nome do Reitor", category: "institucional", originalValue: "", currentValue: fields.nome_reitor, pages: [1] },
-    { id: "nome_secretaria", label: "Nome da Secretária", category: "institucional", originalValue: "", currentValue: fields.nome_secretaria, pages: [1, 2, 6] },
+    { id: "nome", label: "Nome Completo", category: "pessoal", originalValue: "", currentValue: fields.nome, pages: [1, 2, 3, 5], placeholder: "JOÃO DA SILVA" },
+    { id: "cpf", label: "CPF", category: "pessoal", originalValue: "", currentValue: fields.cpf, pages: [1, 2, 3, 5], placeholder: "000.000.000-00" },
+    { id: "rg", label: "RG", category: "pessoal", originalValue: "", currentValue: fields.rg, pages: [3, 5], placeholder: "00.000.000-0" },
+    { id: "rg_orgao", label: "Órgão Emissor RG", category: "pessoal", originalValue: "", currentValue: fields.rg_orgao, pages: [3, 5], placeholder: "SSP/PR" },
+    { id: "data_nascimento", label: "Data de Nascimento", category: "pessoal", originalValue: "", currentValue: fields.data_nascimento, pages: [3, 5], placeholder: "01/01/1990" },
+    { id: "uf_nascimento", label: "UF Nascimento", category: "pessoal", originalValue: "", currentValue: fields.uf_nascimento, pages: [3, 5], placeholder: "PR" },
+    { id: "nacionalidade", label: "Nacionalidade", category: "pessoal", originalValue: "", currentValue: fields.nacionalidade, pages: [3, 5], placeholder: "BRASILEIRA" },
+    { id: "matricula", label: "Matrícula", category: "academico", originalValue: "", currentValue: fields.matricula, pages: [1, 2, 3, 5], placeholder: "1022071" },
+    { id: "situacao_matricula", label: "Situação de Matrícula", category: "academico", originalValue: "FORMADO", currentValue: fields.situacao_matricula, pages: [3, 5] },
+    { id: "curso", label: "Nome do Curso", category: "academico", originalValue: "", currentValue: fields.curso, pages: [1, 2, 3], placeholder: "CURSO SUPERIOR DE LICENCIATURA EM ..." },
+    { id: "conclusao_curso", label: "Conclusão do Curso", category: "academico", originalValue: "", currentValue: fields.conclusao_curso, pages: [1, 2, 3], placeholder: "12/2025" },
+    { id: "colacao_grau", label: "Colação de Grau", category: "academico", originalValue: "", currentValue: fields.colacao_grau, pages: [1, 2, 3], placeholder: "22/12/2025" },
+    { id: "ingresso_mes_ano", label: "Mês / Ano de Realização", category: "academico", originalValue: "", currentValue: fields.ingresso_mes_ano, pages: [3], placeholder: "01/2021" },
+    { id: "ingresso_ano", label: "Ano de Ingresso", category: "academico", originalValue: "", currentValue: fields.ingresso_ano, pages: [3], placeholder: "2021" },
+    { id: "expedicao_diploma", label: "Expedição do Diploma", category: "academico", originalValue: "", currentValue: fields.expedicao_diploma, pages: [3, 4], placeholder: "22/12/2025" },
+    { id: "expedicao_historico", label: "Expedição do Histórico", category: "academico", originalValue: "", currentValue: fields.expedicao_historico, pages: [3], placeholder: "22/12/2025" },
+    { id: "carga_horaria", label: "Carga Horária", category: "academico", originalValue: "", currentValue: fields.carga_horaria, pages: [2, 6], placeholder: "3200" },
+    { id: "titulacao", label: "Titulação", category: "academico", originalValue: "", currentValue: fields.titulacao, pages: [5, 6], placeholder: "BACHAREL EM DIREITO" },
+    { id: "processo_emec", label: "Processo e-MEC*", category: "academico", originalValue: "201605151", currentValue: fields.processo_emec, pages: [3], placeholder: "201605151" },
+    { id: "processo_seletivo", label: "Processo Seletivo", category: "academico", originalValue: "VESTIBULAR", currentValue: fields.processo_seletivo, pages: [3], placeholder: "VESTIBULAR" },
+    { id: "cred_portaria", label: "Credenciamento: Portaria n.º", category: "academico", originalValue: "688", currentValue: fields.cred_portaria, pages: [2, 3], placeholder: "688" },
+    { id: "cred_portaria_dt", label: "Credenciamento: Data Portaria", category: "academico", originalValue: "25/05/2012", currentValue: fields.cred_portaria_dt, pages: [2, 3], placeholder: "25/05/2012" },
+    { id: "cred_dou_dt", label: "Credenciamento: Data D.O.U.", category: "academico", originalValue: "28/05/2012", currentValue: fields.cred_dou_dt, pages: [2, 3], placeholder: "28/05/2012" },
+    { id: "recred_portaria", label: "Recredenc.: Portaria n.º", category: "academico", originalValue: "1.219", currentValue: fields.recred_portaria, pages: [2, 3], placeholder: "1.219" },
+    { id: "recred_portaria_dt", label: "Recredenc.: Data Portaria", category: "academico", originalValue: "28/11/2019", currentValue: fields.recred_portaria_dt, pages: [2, 3], placeholder: "28/11/2019" },
+    { id: "reconhecimento_portaria", label: "Reconhec.: Portaria n.º", category: "academico", originalValue: "357", currentValue: fields.reconhecimento_portaria, pages: [1, 2, 3], placeholder: "357" },
+    { id: "reconhecimento_portaria_dt", label: "Reconhec.: Data Portaria", category: "academico", originalValue: "24/05/2018", currentValue: fields.reconhecimento_portaria_dt, pages: [1, 2, 3], placeholder: "24/05/2018" },
+    { id: "reconhecimento_dou_dt", label: "Reconhec.: Data D.O.U.", category: "academico", originalValue: "25/05/2018", currentValue: fields.reconhecimento_dou_dt, pages: [1, 2, 3], placeholder: "25/05/2018" },
+    // Institucional
+    { id: "instituicao_polo", label: "Instituição / Polo", category: "institucional", originalValue: "CENTRO UNIVERSITÁRIO INTERNACIONAL UNINTER | POLO CURITIBA (CENTRO) - PR", currentValue: fields.instituicao_polo, pages: [3] },
+    { id: "cep", label: "CEP Busca", category: "institucional", originalValue: "", currentValue: fields.cep, pages: [], placeholder: "81200-170" },
+    { id: "endereco", label: "Endereço Completo", category: "institucional", originalValue: "", currentValue: fields.endereco, pages: [3], placeholder: "RUA CLARA VENDRAMIN, 58..." },
+    { id: "unidade_uf", label: "UF da Unidade", category: "institucional", originalValue: "", currentValue: fields.unidade_uf, pages: [], placeholder: "PR" },
+    { id: "codigo_validacao", label: "Código de Validação", category: "institucional", originalValue: "", currentValue: fields.codigo_validacao, pages: [4], placeholder: "732.551/822.441" },
+    { id: "emissao_hora", label: "Hora de Emissão", category: "institucional", originalValue: "15:01:39", currentValue: fields.emissao_hora, pages: [4], placeholder: "15:01:39" },
   ];
 }
 

@@ -7,6 +7,7 @@ import {
   type HistoricoDisponivelKey,
   type ProfileKey,
   type SubstitutionField,
+  HISTORICOS_DISPONIVEIS
 } from "@/lib/documentData_uninter";
 import { generateAcademicGrades } from "@/lib/curriculumGenerator";
 import { toast } from "sonner";
@@ -27,15 +28,14 @@ const HISTORICO_TO_PROFILE: Record<HistoricoDisponivelKey, ProfileKey> = {
   teologia: "teologia",
 };
 
-// Alterado para null para forçar seleção obrigatória
 const DEFAULT_HISTORICO: HistoricoDisponivelKey | null = null;
 
 function createEmptyFields() {
-  const blueprint = createSubstitutionFields(); // Retorna BASE_FIELDS (vazios)
+  const blueprint = createSubstitutionFields();
   return blueprint.map((field) => ({
     ...field,
-    originalValue: "",
-    currentValue: "",
+    originalValue: field.originalValue,
+    currentValue: field.id === "situacao_matricula" ? "FORMADO" : "",
   }));
 }
 
@@ -51,6 +51,9 @@ function normalizeUpper(value: string) {
 function normalizeDate(value: string) {
   const raw = (value || "").trim();
   if (!raw) return "";
+  if (/^\d{2}\/\d{4}$/.test(raw)) return raw;
+  if (/^\d{4}$/.test(raw)) return raw;
+
   const digits = raw.replace(/\D/g, "").slice(0, 8);
   if (digits.length <= 2) return digits;
   if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
@@ -155,8 +158,10 @@ function parseImportText(text: string): {
     if (rawLabel.includes("MATR")) updates.matricula = rawValue;
     if (rawLabel.includes("SITUA")) updates.situacao_matricula = normalizeUpper(rawValue);
     if (rawLabel.includes("CURSO")) {
-      updates.curso = rawValue;
-      historicoKey = detectHistoricoByCurso(rawValue) || historicoKey;
+      // Remover prefixo se existir para detecção limpa
+      const cleanCurso = rawValue.replace(/CURSO SUPERIOR DE LICENCIATURA EM\s+/i, "");
+      historicoKey = detectHistoricoByCurso(cleanCurso) || historicoKey;
+      updates.curso = `CURSO SUPERIOR DE LICENCIATURA EM ${cleanCurso.toUpperCase()}`;
     }
     if (rawLabel.includes("CONCLUSAO") || rawLabel.includes("CONCLUSÃO")) updates.conclusao_curso = normalizeDate(rawValue);
     if (rawLabel.includes("COLACAO") || rawLabel.includes("COLAÇÃO")) updates.colacao_grau = normalizeDate(rawValue);
@@ -165,18 +170,33 @@ function parseImportText(text: string): {
     if (rawLabel.includes("CARGA") && rawLabel.includes("HOR")) updates.carga_horaria = rawValue.replace(/[^\d]/g, "");
     if (rawLabel.includes("TITULA")) updates.titulacao = rawValue;
     
-    // Novos campos Acadêmicos
-    if (rawLabel.includes("RECONHECIMENTO")) updates.reconhecimento = rawValue;
-    if (rawLabel.includes("CREDENCIAMENTO")) updates.credenciamento = rawValue;
+    if (rawLabel.includes("RECONHECIMENTO")) {
+      updates.reconhecimento = rawValue;
+      const pMatch = rawValue.match(/Portaria n\.º\s*([\d.]+)/i);
+      if (pMatch) updates.reconhecimento_portaria = pMatch[1];
+      const dates = rawValue.match(/(\d{2}\/\d{2}\/\d{4})/g);
+      if (dates && dates[0]) updates.reconhecimento_portaria_dt = dates[0];
+      if (dates && dates[1]) updates.reconhecimento_dou_dt = dates[1];
+    }
+    
+    if (rawLabel.includes("CREDENCIAMENTO")) {
+      updates.credenciamento = rawValue;
+      const d1 = rawValue.match(/688 de (\d{2}\/\d{2}\/\d{4})/);
+      if (d1) updates.cred_portaria_dt = d1[1];
+      const dou1 = rawValue.match(/102 de (\d{2}\/\d{2}\/\d{4})/);
+      if (dou1) updates.cred_dou_dt = dou1[1];
+      const d2 = rawValue.match(/1\.219 de (\d{2}\/\d{2}\/\d{4})/);
+      if (d2) updates.recred_portaria_dt = d2[1];
+    }
+
     if (rawLabel.includes("EMEC") || rawLabel.includes("E-MEC")) updates.processo_emec = rawValue;
     if (rawLabel.includes("SELETIVO")) updates.processo_seletivo = normalizeUpper(rawValue);
-    if (rawLabel.includes("MES") && rawLabel.includes("REALIZA")) updates.ingresso_mes_ano = rawValue;
-    if (rawLabel.includes("ANO") && rawLabel.includes("INGRES")) updates.ingresso_ano = rawValue;
+    if (rawLabel.includes("MES") && rawLabel.includes("REALIZA")) updates.ingresso_mes_ano = normalizeDate(rawValue);
+    if (rawLabel.includes("ANO") && rawLabel.includes("INGRES")) updates.ingresso_ano = normalizeDate(rawValue);
 
     // Institucionais
-    if (rawLabel.includes("POLO") || rawLabel.includes("INSTITU")) updates.instituicao_polo = rawValue;
-    if (rawLabel.includes("REITOR")) updates.nome_reitor = rawValue;
-    if (rawLabel.includes("SECRET")) updates.nome_secretaria = normalizeUpper(rawValue);
+    if (rawLabel.includes("CEP")) updates.cep = rawValue;
+    if (rawLabel.includes("INSTITU")) updates.instituicao_polo = rawValue;
   }
 
   return { updates, gradeRows, historicoKey };
@@ -189,7 +209,6 @@ function normalizeHistoricoKey(input?: string): HistoricoDisponivelKey | null {
   if (value.includes("PED")) return "pedagogia";
   if (value.includes("ADM")) return "administracao";
   if (value.includes("DIR")) return "direito";
-  // Tenta encontrar por chave exata
   const keys = Object.keys(HISTORICO_TO_PROFILE) as HistoricoDisponivelKey[];
   return keys.find(k => k.toUpperCase() === value) || null;
 }
@@ -230,9 +249,14 @@ export function useSubstitution() {
 
   const applyHistorico = useCallback((historico: HistoricoDisponivelKey) => {
     setActiveHistorico(historico);
-    const profile = PROFILES[HISTORICO_TO_PROFILE[historico]];
-    const blueprint = createSubstitutionFields(profile);
-    setFields(blueprint);
+    const label = HISTORICOS_DISPONIVEIS.find(c => c.key === historico)?.label || "";
+    const cursoFinal = `CURSO SUPERIOR DE LICENCIATURA EM ${label}`;
+    
+    setFields(prev => prev.map(f => {
+      if (f.id === "curso") return { ...f, currentValue: cursoFinal };
+      return f;
+    }));
+    
     setCustomGrades([]);
   }, []);
 
@@ -266,14 +290,14 @@ export function useSubstitution() {
 
     if (parsed.historicoKey) {
       setActiveHistorico(parsed.historicoKey);
-      const profile = PROFILES[HISTORICO_TO_PROFILE[parsed.historicoKey]];
-      setFields(createSubstitutionFields(profile));
     }
 
-    // Automatizar geração de matrícula se não vier no texto
     const updates = { ...parsed.updates };
     if (!updates.matricula) {
       updates.matricula = buildMatricula();
+    }
+    if (!updates.situacao_matricula) {
+      updates.situacao_matricula = "FORMADO";
     }
 
     setFields((prev) => applyFieldUpdates(prev, updates));
