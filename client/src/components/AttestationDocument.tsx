@@ -655,10 +655,11 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                   flexDirection: "column",
                   alignItems: "center",
                   userSelect: "none",
+                  gap: 1.5, // Distância uniforme entre todas as linhas
                 }}>
                   <div style={{ fontWeight: 700, fontSize: 12.23, textTransform: "uppercase", lineHeight: 1.0 }}>{data.medico}</div>
-                  <div style={{ fontSize: 11, fontWeight: 600 }}>{data.crm}</div>
-                  <div style={{ fontSize: 9.5, opacity: 0.9, textTransform: "uppercase" }}>{data.especialidade}</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, lineHeight: 1.0 }}>{data.crm}</div>
+                  <div style={{ fontSize: 9.5, opacity: 0.9, textTransform: "uppercase", lineHeight: 1.0 }}>{data.especialidade}</div>
                 </div>
               )}
             </div>
