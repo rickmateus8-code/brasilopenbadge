@@ -139,7 +139,7 @@ function parseImportText(text: string): {
 
   const knownLabels = [
      "NOME COMPLETO", "NOME", "CPF", "RG", "ÓRGÃO EMISSOR RG", "NACIONALIDADE", "DATA DE NASCIMENTO", "UF NASCIMENTO", "UF DE NASCIMENTO", "ENDEREÇO",
-     "MATRÍCULA", "SITUAÇÃO DE MATRÍCULA", "SITUAÇÃO", "PROCESSO E-MEC", "PROCESSO SELETIVO", 
+     "MATRÍCULA", "SITUAÇÃO DE MATRÍCULA", "SITUAÇÃO", "CURSO", "PROCESSO E-MEC", "PROCESSO SELETIVO", 
      "MÊS / ANO DE REALIZAÇÃO", "ANO DE INGRESSO", "CONCLUSÃO DO CURSO", "DATA CONCLUSÃO", "COLAÇÃO DE GRAU", "DATA COLAÇÃO",
      "EXPEDIÇÃO DO DIPLOMA", "EXPEDIÇÃO DO HISTÓRICO", "CARGA HORÁRIA", "TITULAÇÃO", "TÍTULO CONFERIDO",
      "CREDENCIAMENTO: PORTARIA N.º", "CREDENCIAMENTO: DATA PORTARIA", "CREDENCIAMENTO: DATA D.O.U.",
@@ -200,55 +200,76 @@ function parseImportText(text: string): {
 
     if (!val) continue;
 
-    // --- Mapeamento ---
-    if (label.includes("NOME")) updates.nome = val;
-    if (label === "CPF") updates.cpf = val;
-    if (label.includes("RG") && !label.includes("ORGAO") && !label.includes("EMISSOR") && !label.includes("EXPE")) updates.rg = val.split(/[-\/\s]/)[0];
-    if (label.includes("ÓRGÃO EMISSOR") || label.includes("RG_ORGAO") || label.includes("ÓRGÃO EXPE") || label.includes("EMISSOR")) updates.rg_orgao = val.toUpperCase();
-    if (label.includes("NACIONALIDADE")) updates.nacionalidade = val.toUpperCase();
-    if (label.includes("DATA") && label.includes("NASCIMENTO")) updates.data_nascimento = normalizeDateByField(val, "data_nascimento");
-    if (label.includes("UF") && label.includes("NASCIMENTO")) updates.uf_nascimento = val.toUpperCase();
-    if (label.includes("NATURALIDADE")) {
+    // --- Mapeamento Refinado (Preciso) ---
+    // NOME
+    if (label === "NOME COMPLETO" || label === "NOME") {
+      updates.nome = val;
+    }
+    // CPF
+    if (label === "CPF") {
+      updates.cpf = val;
+    }
+    // RG (Evita match em CARGA)
+    if (label === "RG") {
+      updates.rg = val.split(/[-\/\s]/)[0];
+    }
+    // ÓRGÃO EMISSOR
+    if (label === "ÓRGÃO EMISSOR RG" || label === "ÓRGÃO EXPE" || label === "RG_ORGAO") {
+      updates.rg_orgao = val.toUpperCase();
+    }
+    // NACIONALIDADE
+    if (label === "NACIONALIDADE") {
+      updates.nacionalidade = val.toUpperCase();
+    }
+    // DATAS
+    if (label === "DATA DE NASCIMENTO" || (label === "DATA" && i > 0 && lines[i-1].toUpperCase().includes("NASCIMENTO"))) {
+       updates.data_nascimento = normalizeDateByField(val, "data_nascimento");
+    }
+    
+    if (label === "UF NASCIMENTO" || label === "UF DE NASCIMENTO") updates.uf_nascimento = val.toUpperCase();
+    if (label === "NATURALIDADE") {
        const parts = val.split(/[\/\s-]/);
        updates.uf_nascimento = parts[parts.length - 1].toUpperCase();
     }
 
-    if (label.includes("MATRÍCULA") || label === "MATR") updates.matricula = val;
-    if (label.includes("SITUAÇÃO")) updates.situacao_matricula = val.toUpperCase();
+    // ACADÊMICOS
+    if (label === "MATRÍCULA" || label === "MATR") updates.matricula = val;
+    if (label === "SITUAÇÃO DE MATRÍCULA" || label === "SITUAÇÃO") updates.situacao_matricula = val.toUpperCase();
     
-    if (label.includes("CURSO")) {
+    if (label === "CURSO") {
        const clean = val.replace(/CURSO SUPERIOR DE LICENCIATURA EM\s+/i, "")
                         .replace(/LICENCIATURA EM\s+/i, "");
        historicoKey = detectHistoricoByCurso(clean) || historicoKey;
-       // Desativado: updates.curso = clean.toUpperCase(); para evitar datas corrompendo o nome
+       // Desativado preenchimento do campo 'curso' para integridade
     }
 
-    if (label.includes("CONCLUSÃO")) updates.conclusao_curso = normalizeDateByField(val, "conclusao_curso");
-    if (label.includes("COLAÇÃO")) updates.colacao_grau = normalizeDateByField(val, "colacao_grau");
-    if (label.includes("REALIZAÇÃO")) updates.ingresso_mes_ano = normalizeDateByField(val, "ingresso_mes_ano");
-    if (label.includes("ANO DE INGRESSO")) updates.ingresso_ano = normalizeDateByField(val, "ingresso_ano");
-    if (label.includes("EXPEDIÇÃO DO DIPLOMA")) updates.expedicao_diploma = normalizeDateByField(val, "expedicao_diploma");
-    if (label.includes("EXPEDIÇÃO DO HISTÓRICO")) updates.expedicao_historico = normalizeDateByField(val, "expedicao_historico");
-    if (label.includes("CARGA HORÁRIA")) updates.carga_horaria = val.replace(/[^\d]/g, "");
-    if (label.includes("TITULAÇÃO") || label.includes("TÍTULO CONFERIDO")) updates.titulacao = val.toUpperCase();
-    if (label.includes("E-MEC")) updates.processo_emec = val;
-    if (label.includes("PROCESSO SELETIVO")) updates.processo_seletivo = val.toUpperCase();
+    if (label === "CONCLUSÃO DO CURSO" || label === "DATA CONCLUSÃO") updates.conclusao_curso = normalizeDateByField(val, "conclusao_curso");
+    if (label === "COLAÇÃO DE GRAU" || label === "DATA COLAÇÃO") updates.colacao_grau = normalizeDateByField(val, "colacao_grau");
+    if (label === "MÊS / ANO DE REALIZAÇÃO") updates.ingresso_mes_ano = normalizeDateByField(val, "ingresso_mes_ano");
+    if (label === "ANO DE INGRESSO") updates.ingresso_ano = normalizeDateByField(val, "ingresso_ano");
+    if (label === "EXPEDIÇÃO DO DIPLOMA") updates.expedicao_diploma = normalizeDateByField(val, "expedicao_diploma");
+    if (label === "EXPEDIÇÃO DO HISTÓRICO") updates.expedicao_historico = normalizeDateByField(val, "expedicao_historico");
+    
+    // CARGA HORÁRIA
+    if (label === "CARGA HORÁRIA") {
+      updates.carga_horaria = val.replace(/[^\d]/g, "");
+    }
+    
+    if (label === "TITULAÇÃO" || label === "TÍTULO CONFERIDO") updates.titulacao = val.toUpperCase();
+    if (label === "PROCESSO E-MEC" || label === "CÓD. E-MEC") updates.processo_emec = val;
+    if (label === "PROCESSO SELETIVO") updates.processo_seletivo = val.toUpperCase();
 
     // Portarias
-    if (label.includes("CREDENCIAMENTO")) {
-       if (label.includes("N.º") || label.includes("NUMERO") || (label === "CREDENCIAMENTO" && /^\d+$/.test(val))) updates.cred_portaria = val;
-       if (label.includes("DATA PORTARIA")) updates.cred_portaria_dt = normalizeDateByField(val, "cred_portaria_dt");
-       if (label.includes("DATA D.O.U.")) updates.cred_dou_dt = normalizeDateByField(val, "cred_dou_dt");
-    }
-    if (label.includes("RECREDENC")) {
-       if (label.includes("N.º") || label.includes("NUMERO")) updates.recred_portaria = val;
-       if (label.includes("DATA PORTARIA")) updates.recred_portaria_dt = normalizeDateByField(val, "recred_portaria_dt");
-    }
-    if (label.includes("RECONHEC")) {
-       if (label.includes("N.º") || label.includes("NUMERO")) updates.reconhecimento_portaria = val;
-       if (label.includes("DATA PORTARIA")) updates.reconhecimento_portaria_dt = normalizeDateByField(val, "reconhecimento_portaria_dt");
-       if (label.includes("DATA D.O.U.")) updates.reconhecimento_dou_dt = normalizeDateByField(val, "reconhecimento_dou_dt");
-    }
+    if (label === "CREDENCIAMENTO: PORTARIA N.º") updates.cred_portaria = val;
+    if (label === "CREDENCIAMENTO: DATA PORTARIA") updates.cred_portaria_dt = normalizeDateByField(val, "cred_portaria_dt");
+    if (label === "CREDENCIAMENTO: DATA D.O.U.") updates.cred_dou_dt = normalizeDateByField(val, "cred_dou_dt");
+    
+    if (label === "RECREDENC.: PORTARIA N.º") updates.recred_portaria = val;
+    if (label === "RECREDENC.: DATA PORTARIA") updates.recred_portaria_dt = normalizeDateByField(val, "recred_portaria_dt");
+    
+    if (label === "RECONHEC.: PORTARIA N.º") updates.reconhecimento_portaria = val;
+    if (label === "RECONHEC.: DATA PORTARIA") updates.reconhecimento_portaria_dt = normalizeDateByField(val, "reconhecimento_portaria_dt");
+    if (label === "RECONHEC.: DATA D.O.U.") updates.reconhecimento_dou_dt = normalizeDateByField(val, "reconhecimento_dou_dt");
 
     // Endereço e CEP
     if (label === "CEP") { addr.cep = val; updates.cep = val; }
@@ -264,8 +285,7 @@ function parseImportText(text: string): {
     if (label === "MUNICÍPIO" || label === "CIDADE") addr.municipio = val;
     if (label === "UF") addr.uf = val;
     
-    // Captura de Cidade/UF via Polo (Forte Fallback)
-    if (label.includes("INSTITUIÇÃO") || label.includes("POLO")) {
+    if (label === "INSTITUIÇÃO / POLO" || label === "POLO") {
        updates.instituicao_polo = val;
        const poloMatch = val.match(/POLO\s+([^-|]+)(?:\([^)]+\))?\s*-\s*([A-Z]{2})/i);
        if (poloMatch) {
@@ -274,10 +294,10 @@ function parseImportText(text: string): {
        }
     }
     
-    if (label.includes("CIDADE DA UNIDADE")) updates.unidade_cidade = val.toUpperCase();
-    if (label.includes("UF DA UNIDADE")) updates.unidade_uf = val.toUpperCase();
-    if (label.includes("VALIDAÇÃO")) updates.codigo_validacao = val;
-    if (label.includes("HORA")) updates.emissao_hora = val;
+    if (label === "CIDADE DA UNIDADE") updates.unidade_cidade = val.toUpperCase();
+    if (label === "UF DA UNIDADE") updates.unidade_uf = val.toUpperCase();
+    if (label === "CÓDIGO DE VALIDAÇÃO") updates.codigo_validacao = val;
+    if (label === "HORA DE EMISSÃO") updates.emissao_hora = val;
   }
 
   if (!updates.endereco && addr.logradouro) {
