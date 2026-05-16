@@ -3,14 +3,10 @@
  * Otimizado com Algoritmo de Balanço de Carga e ativos Base64 permanentes.
  */
 import {
+  UNINTER_LOGO_B64, UNINTER_ASSINATURA_B64, UNINTER_SELO_B64,
   COURSE_METADATA, getGradesForProfile,
   type GradeRow, type ProfileKey,
 } from "@/lib/documentData_uninter";
-import {
-  UNINTER_LOGO_B64,
-  UNINTER_ASSINATURA_B64,
-  UNINTER_SELO_B64
-} from "@/lib/uninterAssets";
 import React, { useMemo } from "react";
 
 interface Props {
@@ -63,15 +59,17 @@ const TH_STYLE: React.CSSProperties = {
   textAlign: "left",
   fontWeight: "bold",
   borderBottom: "1px solid #000",
-  padding: "2px 4px",
+  padding: "4px 4px", 
   fontSize: "8.2pt",
+  verticalAlign: "middle",
 };
 
 const TD_STYLE: React.CSSProperties = {
-  padding: "1px 4px", 
+  padding: "2.5px 4px", 
   borderBottom: "0.5px solid #ccc",
-  verticalAlign: "top",
+  verticalAlign: "middle",
   fontSize: "8.2pt",
+  lineHeight: 1.15,
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -92,21 +90,21 @@ function GradeTable({ rows }: { rows: GradeRow[] }) {
   return (
     <table style={{ ...TABLE_STYLE, tableLayout: "fixed" }}>
       <thead>
-        <tr style={{ height: "18pt" }}>
-          <th style={{ ...TH_STYLE, width: "55px", verticalAlign: "bottom" }}>Ano/Mês*</th>
-          <th style={{ ...TH_STYLE, verticalAlign: "bottom" }}>Disciplinas</th>
-          <th style={{ ...TH_STYLE, width: "38px", textAlign: "center", verticalAlign: "bottom" }}>C.H.</th>
-          <th style={{ ...TH_STYLE, width: "38px", textAlign: "center", verticalAlign: "bottom" }}>Média</th>
-          <th style={{ ...TH_STYLE, width: "75px", textAlign: "center", verticalAlign: "bottom" }}>Resultado</th>
-          <th style={{ ...TH_STYLE, width: "135px", textAlign: "center", verticalAlign: "bottom" }}>Docente</th>
-          <th style={{ ...TH_STYLE, width: "85px", verticalAlign: "bottom" }}>Titulação</th>
+        <tr style={{ minHeight: "20pt" }}>
+          <th style={{ ...TH_STYLE, width: "55px" }}>Ano/Mês*</th>
+          <th style={{ ...TH_STYLE }}>Disciplinas</th>
+          <th style={{ ...TH_STYLE, width: "38px", textAlign: "center" }}>C.H.</th>
+          <th style={{ ...TH_STYLE, width: "38px", textAlign: "center" }}>Média</th>
+          <th style={{ ...TH_STYLE, width: "75px", textAlign: "center" }}>Resultado</th>
+          <th style={{ ...TH_STYLE, width: "135px", textAlign: "center" }}>Docente</th>
+          <th style={{ ...TH_STYLE, width: "85px" }}>Titulação</th>
         </tr>
       </thead>
       <tbody>
         {rows.map((r, i) => (
-          <tr key={i} style={{ height: "11.5pt" }}>
+          <tr key={i} style={{ minHeight: "13pt" }}>
             <td style={{ ...TD_STYLE, whiteSpace: "nowrap" }}>{r.anoMes}</td>
-            <td style={{ ...TD_STYLE, lineHeight: "1.0", wordBreak: "break-word", overflow: "hidden" }}>{r.disciplina}</td>
+            <td style={{ ...TD_STYLE, fontSize: "8.1pt", wordBreak: "break-word", overflow: "hidden" }}>{r.disciplina}</td>
             <td style={{ ...TD_STYLE, textAlign: "center" }}>{r.ch}</td>
             <td style={{ ...TD_STYLE, textAlign: "center" }}>{r.media}</td>
             <td style={{ ...TD_STYLE, textAlign: "center" }}>{r.resultado}</td>
@@ -407,7 +405,7 @@ export default function UninterDocument({ f, highlightModified, profileKey, grad
   let remaining = [...allRows];
   
   const MAX_ROWS_LAST = 36;
-  const MAX_ROWS_INT = 62;
+  const MAX_ROWS_INT = 58; // Reduzido de 62 para 58 devido ao aumento de padding
 
   if (remaining.length === 0) {
     chunks.push([{ anoMes: "", disciplina: "Nenhuma disciplina informada", ch: "", media: "", resultado: "", docente: "", titulacao: "" }]);
