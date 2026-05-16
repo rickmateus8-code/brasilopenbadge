@@ -32,7 +32,7 @@ const SUBJECTS_DATABASE: Record<string, string[]> = {
     "Direito Processual Penal I", "Direito Processual Penal II", "Direito Tributário I", "Direito Tributário II", "Direito Empresarial I",
     "Direito Empresarial II", "Direito Ambiental", "Direito do Consumidor", "Direito Internacional Público", "Direito Internacional Privado",
     "Direito da Seguridade Social", "Direito da Criança e do Adolescente", "Medicina Legal", "Filosofia do Direito", "Sociologia Jurídica",
-    "Antropologia Jurídica", "Hermenêutica Juriddica", "Ética Profissional", "Economia Política", "Direitos Humanos",
+    "Antropologia Jurídica", "Hermenêutica Jurídica", "Ética Profissional", "Economia Política", "Direitos Humanos",
     "Prática Jurídica Cível", "Prática Jurídica Penal", "Prática Jurídica Trabalhista", "Estágio Curricular I", "Estágio Curricular II", "TCC I", "TCC II"
   ],
   enfermagem: [
@@ -165,16 +165,22 @@ export function generateAcademicGrades(
   const subjects = SUBJECTS_DATABASE[courseKey] || SUBJECTS_DATABASE.historia;
   const rows: GradeRow[] = [];
 
-  // Parsing de datas
+  // Parsing de datas aprimorado
   const parseMY = (d?: string, fallbackYear = 2021, fallbackMonth = 1) => {
     if (!d) return { y: fallbackYear, m: fallbackMonth };
+    
+    // Tenta match DD/MM/AAAA ou MM/AAAA
     const match = d.match(/(\d{2})[\/\s](\d{4})|(\d{4})/);
-    if (!match) return { y: fallbackYear, m: fallbackMonth };
-    if (match[2]) return { y: parseInt(match[2]), m: parseInt(match[1]) };
-    if (match[3]) return { y: parseInt(match[3]), m: fallbackMonth };
+    if (match) {
+      if (match[2]) return { y: parseInt(match[2]), m: parseInt(match[1]) };
+      if (match[3]) return { y: parseInt(match[3]), m: fallbackMonth };
+    }
+
+    // Tenta apenas dígitos
     const digits = d.replace(/\D/g, "");
     if (digits.length === 6) return { y: parseInt(digits.slice(2)), m: parseInt(digits.slice(0, 2)) };
     if (digits.length === 4) return { y: parseInt(digits), m: fallbackMonth };
+
     return { y: fallbackYear, m: fallbackMonth };
   };
 
@@ -185,7 +191,8 @@ export function generateAcademicGrades(
   const numSubjects = subjects.length;
 
   subjects.forEach((subj, idx) => {
-    // Interpolação linear: garante que o último item seja exatamente a data final
+    // Interpolação linear: garante progressão rigorosa
+    // O último item (idx = numSubjects - 1) terá progress = 1.0, logo currentTotalMonths = totalMonths
     const progress = numSubjects > 1 ? idx / (numSubjects - 1) : 0;
     const currentTotalMonths = Math.floor(progress * totalMonths);
     
