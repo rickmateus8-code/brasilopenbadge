@@ -451,7 +451,7 @@ export default function AtestadoCria() {
 
   // ── Ajuste do Carimbo ──────────────────────────────────────────────────────
   const [stampScale, setStampScale] = useState<number>(1);
-  const [stampX, setStampX] = useState<number>(5);
+  const [stampX, setStampX] = useState<number>(173);
   const [stampY, setStampY] = useState<number>(-8);
   const [stampRotate, setStampRotate] = useState<number>(-3);
   const [hideQRCode, setHideQRCode] = useState<boolean>(false);
@@ -480,7 +480,7 @@ export default function AtestadoCria() {
 
   const resetStampTransform = () => {
     setStampScale(1);
-    setStampX(5);
+    setStampX(173);
     setStampY(-8);
     setStampRotate(-3);
   };
