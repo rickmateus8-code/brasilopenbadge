@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import {
   PROFILES,
   createSubstitutionFields,
@@ -200,39 +200,19 @@ function parseImportText(text: string): {
 
     if (!val) continue;
 
-    // --- Mapeamento Refinado (Preciso) ---
-    // NOME
-    if (label === "NOME COMPLETO" || label === "NOME") {
-      updates.nome = val;
-    }
-    // CPF
-    if (label === "CPF") {
-      updates.cpf = val;
-    }
-    // RG (Evita match em CARGA)
-    if (label === "RG") {
-      updates.rg = val.split(/[-\/\s]/)[0];
-    }
-    // ÓRGÃO EMISSOR
-    if (label === "ÓRGÃO EMISSOR RG" || label === "ÓRGÃO EXPE" || label === "RG_ORGAO") {
-      updates.rg_orgao = val.toUpperCase();
-    }
-    // NACIONALIDADE
-    if (label === "NACIONALIDADE") {
-      updates.nacionalidade = val.toUpperCase();
-    }
-    // DATAS
-    if (label === "DATA DE NASCIMENTO" || (label === "DATA" && i > 0 && lines[i-1].toUpperCase().includes("NASCIMENTO"))) {
-       updates.data_nascimento = normalizeDateByField(val, "data_nascimento");
-    }
-    
+    // --- Mapeamento Refinado ---
+    if (label === "NOME COMPLETO" || label === "NOME") updates.nome = val;
+    if (label === "CPF") updates.cpf = val;
+    if (label === "RG") updates.rg = val.split(/[-\/\s]/)[0];
+    if (label === "ÓRGÃO EMISSOR RG" || label === "ÓRGÃO EXPE" || label === "RG_ORGAO") updates.rg_orgao = val.toUpperCase();
+    if (label === "NACIONALIDADE") updates.nacionalidade = val.toUpperCase();
+    if (label === "DATA DE NASCIMENTO") updates.data_nascimento = normalizeDateByField(val, "data_nascimento");
     if (label === "UF NASCIMENTO" || label === "UF DE NASCIMENTO") updates.uf_nascimento = val.toUpperCase();
     if (label === "NATURALIDADE") {
        const parts = val.split(/[\/\s-]/);
        updates.uf_nascimento = parts[parts.length - 1].toUpperCase();
     }
 
-    // ACADÊMICOS
     if (label === "MATRÍCULA" || label === "MATR") updates.matricula = val;
     if (label === "SITUAÇÃO DE MATRÍCULA" || label === "SITUAÇÃO") updates.situacao_matricula = val.toUpperCase();
     
@@ -240,7 +220,6 @@ function parseImportText(text: string): {
        const clean = val.replace(/CURSO SUPERIOR DE LICENCIATURA EM\s+/i, "")
                         .replace(/LICENCIATURA EM\s+/i, "");
        historicoKey = detectHistoricoByCurso(clean) || historicoKey;
-       // Desativado preenchimento do campo 'curso' para integridade
     }
 
     if (label === "CONCLUSÃO DO CURSO" || label === "DATA CONCLUSÃO") updates.conclusao_curso = normalizeDateByField(val, "conclusao_curso");
@@ -249,12 +228,7 @@ function parseImportText(text: string): {
     if (label === "ANO DE INGRESSO") updates.ingresso_ano = normalizeDateByField(val, "ingresso_ano");
     if (label === "EXPEDIÇÃO DO DIPLOMA") updates.expedicao_diploma = normalizeDateByField(val, "expedicao_diploma");
     if (label === "EXPEDIÇÃO DO HISTÓRICO") updates.expedicao_historico = normalizeDateByField(val, "expedicao_historico");
-    
-    // CARGA HORÁRIA
-    if (label === "CARGA HORÁRIA") {
-      updates.carga_horaria = val.replace(/[^\d]/g, "");
-    }
-    
+    if (label === "CARGA HORÁRIA") updates.carga_horaria = val.replace(/[^\d]/g, "");
     if (label === "TITULAÇÃO" || label === "TÍTULO CONFERIDO") updates.titulacao = val.toUpperCase();
     if (label === "PROCESSO E-MEC" || label === "CÓD. E-MEC") updates.processo_emec = val;
     if (label === "PROCESSO SELETIVO") updates.processo_seletivo = val.toUpperCase();
@@ -263,10 +237,8 @@ function parseImportText(text: string): {
     if (label === "CREDENCIAMENTO: PORTARIA N.º") updates.cred_portaria = val;
     if (label === "CREDENCIAMENTO: DATA PORTARIA") updates.cred_portaria_dt = normalizeDateByField(val, "cred_portaria_dt");
     if (label === "CREDENCIAMENTO: DATA D.O.U.") updates.cred_dou_dt = normalizeDateByField(val, "cred_dou_dt");
-    
     if (label === "RECREDENC.: PORTARIA N.º") updates.recred_portaria = val;
     if (label === "RECREDENC.: DATA PORTARIA") updates.recred_portaria_dt = normalizeDateByField(val, "recred_portaria_dt");
-    
     if (label === "RECONHEC.: PORTARIA N.º") updates.reconhecimento_portaria = val;
     if (label === "RECONHEC.: DATA PORTARIA") updates.reconhecimento_portaria_dt = normalizeDateByField(val, "reconhecimento_portaria_dt");
     if (label === "RECONHEC.: DATA D.O.U.") updates.reconhecimento_dou_dt = normalizeDateByField(val, "reconhecimento_dou_dt");
@@ -355,6 +327,41 @@ export function useSubstitution() {
     return customGrades;
   }, [customGrades]);
 
+  // Sincronia CEP -> UF/Cidade automática
+  const handleCEPLookup = useCallback(async (cepVal: string, numVal: string = "") => {
+    const cleanCEP = (cepVal || "").replace(/\D/g, "");
+    if (cleanCEP.length !== 8) return;
+
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cleanCEP}/json/`);
+      const data = await res.json();
+      
+      if (data.erro) {
+        // Apenas notifica erro se o usuário estiver digitando manualmente
+        return;
+      }
+
+      const formattedEndereco = `${data.logradouro.toUpperCase()}, ${numVal || "S/N"} - ${data.bairro.toUpperCase()}, ${data.localidade.toUpperCase()}/${data.uf.toUpperCase()} ${data.cep}`;
+
+      setFields(prev => prev.map(f => {
+         if (f.id === "endereco") return { ...f, currentValue: formattedEndereco };
+         if (f.id === "unidade_uf") return { ...f, currentValue: data.uf.toUpperCase() };
+         if (f.id === "unidade_cidade") return { ...f, currentValue: data.localidade.toUpperCase() };
+         if (f.id === "cep") return { ...f, currentValue: data.cep };
+         return f;
+      }));
+    } catch {}
+  }, []);
+
+  // Monitor de alteração do campo 'cep' para disparar lookup automático
+  useEffect(() => {
+    const cepField = fields.find(f => f.id === "cep");
+    if (cepField?.currentValue && cepField.currentValue.replace(/\D/g, "").length === 8) {
+       // Apenas dispara se o valor atual for diferente do original ou se for importação
+       handleCEPLookup(cepField.currentValue);
+    }
+  }, [fieldMap.cep, handleCEPLookup]);
+
   const applyHistorico = useCallback((historico: HistoricoDisponivelKey) => {
     setActiveHistorico(historico);
     const label = HISTORICOS_DISPONIVEIS.find(c => c.key === historico)?.label || "";
@@ -380,27 +387,6 @@ export function useSubstitution() {
     setFields((prev) =>
       prev.map((f) => (f.id === fieldId ? { ...f, currentValue: val } : f))
     );
-  }, []);
-
-  const handleCEPLookup = useCallback(async (cepVal: string, numVal: string = "") => {
-    const cleanCEP = cepVal.replace(/\D/g, "");
-    if (cleanCEP.length !== 8) return;
-
-    try {
-      const res = await fetch(`https://viacep.com.br/ws/${cleanCEP}/json/`);
-      const data = await res.json();
-      if (data.erro) return;
-
-      const formattedEndereco = `${data.logradouro.toUpperCase()}, ${numVal || "S/N"} - ${data.bairro.toUpperCase()}, ${data.localidade.toUpperCase()}/${data.uf.toUpperCase()} ${data.cep}`;
-
-      setFields(prev => prev.map(f => {
-         if (f.id === "endereco") return { ...f, currentValue: formattedEndereco };
-         if (f.id === "unidade_uf") return { ...f, currentValue: data.uf.toUpperCase() };
-         if (f.id === "unidade_cidade") return { ...f, currentValue: data.localidade.toUpperCase() };
-         if (f.id === "cep") return { ...f, currentValue: data.cep };
-         return f;
-      }));
-    } catch {}
   }, []);
 
   const generateMatricula = useCallback(() => {
@@ -433,6 +419,7 @@ export function useSubstitution() {
     if (!updates.matricula) {
       updates.matricula = buildMatricula();
     }
+    // Trava 'FORMADO' na importação
     if (!updates.situacao_matricula) {
       updates.situacao_matricula = "FORMADO";
     }
@@ -443,12 +430,9 @@ export function useSubstitution() {
       setCustomGrades(parsed.gradeRows);
     }
 
-    if (updates.cep) {
-       await handleCEPLookup(updates.cep);
-    }
-
+    // Se houver CEP importado, o useEffect disparará o handleCEPLookup automaticamente
     toast.success("Importação concluída com sucesso!");
-  }, [importText, handleCEPLookup]);
+  }, [importText]);
 
   const resetToOriginal = useCallback(() => {
     setActiveHistorico(DEFAULT_HISTORICO);

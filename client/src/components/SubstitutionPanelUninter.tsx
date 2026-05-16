@@ -81,6 +81,14 @@ export default function SubstitutionPanel({
   const [cepValue, setCepValue] = useState("");
   const [numeroResidencial, setNumeroResidencial] = useState("");
 
+  // Sincroniza o CEP da importação com o campo de busca local
+  useEffect(() => {
+    const fieldCEP = fields.find(f => f.id === "cep")?.currentValue || "";
+    if (fieldCEP && fieldCEP !== cepValue) {
+      setCepValue(fieldCEP);
+    }
+  }, [fields, cepValue]);
+
   const toggleCategory = (cat: string) => {
     setExpandedCategories((prev) => ({ ...prev, [cat]: !prev[cat] }));
   };
@@ -111,30 +119,11 @@ export default function SubstitutionPanel({
       return;
     }
 
-    setLoadingCEP(true);
-    try {
-      const res = await fetch(`https://viacep.com.br/ws/${cleanCEP}/json/`);
-      const data = await res.json();
-      
-      if (data.erro) {
-        toast.error("CEP não encontrado.");
-        return;
-      }
-
-      // Formato solicitado: "{RUA}, {NUMERO} - {BAIRRO}, {CIDADE}/{UF} {CEP}"
-      const formattedEndereco = `${data.logradouro.toUpperCase()}, ${numeroResidencial || "S/N"} - ${data.bairro.toUpperCase()}, ${data.localidade.toUpperCase()}/${data.uf.toUpperCase()} ${data.cep}`;
-
-      onUpdateField("endereco", formattedEndereco);
-      onUpdateField("unidade_uf", data.uf.toUpperCase());
-      onUpdateField("cep", data.cep);
-      
-      toast.success("Endereço institucional atualizado via CEP!");
-    } catch (err) {
-      toast.error("Erro ao buscar CEP.");
-    } finally {
-      setLoadingCEP(false);
-    }
-  }, [cepValue, numeroResidencial, onUpdateField]);
+    // Apenas atualiza o campo 'cep'. O hook useSubstitutionUninter possui um 
+    // useEffect que monitora esse campo e faz a busca na API ViaCEP automaticamente.
+    onUpdateField("cep", cleanCEP);
+    toast.info("Buscando dados do CEP...");
+  }, [cepValue, onUpdateField]);
 
   const handleGenerateCommercialTime = useCallback(() => {
     const hour = Math.floor(Math.random() * (18 - 8 + 1)) + 8;
