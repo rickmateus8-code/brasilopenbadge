@@ -451,14 +451,16 @@ export default function AtestadoCria() {
 
   // ── Ajuste do Carimbo ──────────────────────────────────────────────────────
   const [stampScale, setStampScale] = useState<number>(1);
-  const [stampX, setStampX] = useState<number>(0);
-  const [stampY, setStampY] = useState<number>(0);
-  const [stampRotate, setStampRotate] = useState<number>(0);
+  const [stampX, setStampX] = useState<number>(5);
+  const [stampY, setStampY] = useState<number>(-8);
+  const [stampRotate, setStampRotate] = useState<number>(-3);
   const [hideQRCode, setHideQRCode] = useState<boolean>(false);
 
   // helpers de ajuste
   const SCALE_STEP = 0.05;
-  const POS_STEP = 2;
+  const POS_STEP = 8; // Aumentado para mover mais rápido
+  const ROTATE_STEP = 1;
+
   const adjustScale = (side: "left" | "right", delta: number) => {
     if (side === "left") setLogoLeftScale(v => Math.max(0.1, Math.min(3, parseFloat((v + delta).toFixed(2)))));
     else setLogoRightScale(v => Math.max(0.1, Math.min(3, parseFloat((v + delta).toFixed(2)))));
@@ -474,6 +476,13 @@ export default function AtestadoCria() {
   const resetLogoTransform = (side: "left" | "right") => {
     if (side === "left") { setLogoLeftScale(1); setLogoLeftX(0); setLogoLeftY(0); }
     else { setLogoRightScale(1); setLogoRightX(0); setLogoRightY(0); }
+  };
+
+  const resetStampTransform = () => {
+    setStampScale(1);
+    setStampX(5);
+    setStampY(-8);
+    setStampRotate(-3);
   };
 
   // ── Assinatura ─────────────────────────────────────────────────────────────
