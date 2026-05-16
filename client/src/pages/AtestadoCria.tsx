@@ -434,9 +434,27 @@ export default function AtestadoCria() {
   };
 
   // ── Assinatura ─────────────────────────────────────────────────────────────
-  const [signatureColor, setSignatureColor] = useState<string>("#0b109f");
+  const [signatureColor, setSignatureColor] = useState<string>("#000000");
   const [signatureImage, setSignatureImage] = useState<string>("");
   const signatureRef = useRef<HTMLInputElement>(null);
+
+  // ── Carimbo Interativo ──────────────────────────────────────────────────────
+  const [stampScale, setStampScale] = useState<number>(1);
+  const [stampX, setStampX] = useState<number>(5);
+  const [stampY, setStampY] = useState<number>(-8);
+  const [stampRotate, setStampRotate] = useState<number>(-3);
+  const [hideQRCode, setHideQRCode] = useState<boolean>(false);
+  const [showStampInfo, setShowStampInfo] = useState<boolean>(true);
+
+  // helpers de ajuste carimbo
+  const STAMP_SCALE_STEP = 0.05;
+  const STAMP_POS_STEP = 2;
+  const STAMP_ROTATE_STEP = 1;
+  const adjustStampScale = (delta: number) => setStampScale(v => Math.max(0.1, Math.min(3, parseFloat((v + delta).toFixed(2)))));
+  const adjustStampX = (delta: number) => setStampX(v => v + delta);
+  const adjustStampY = (delta: number) => setStampY(v => v + delta);
+  const adjustStampRotate = (delta: number) => setStampRotate(v => v + delta);
+  const resetStampTransform = () => { setStampScale(1); setStampX(5); setStampY(-8); setStampRotate(-3); };
 
   // ── Tipo de documento do paciente ──────────────────────────────────────────
   const [tipoDoc, setTipoDoc] = useState<"CPF" | "CNS">("CPF");
@@ -1078,6 +1096,12 @@ export default function AtestadoCria() {
         logoLeftY,
         logoRightX,
         logoRightY,
+        stampScale,
+        stampX,
+        stampY,
+        stampRotate,
+        hideQRCode,
+        showStampInfo,
         documentType,
       };
 
@@ -1162,6 +1186,12 @@ export default function AtestadoCria() {
     logoLeftY,
     logoRightX,
     logoRightY,
+    stampScale,
+    stampX,
+    stampY,
+    stampRotate,
+    hideQRCode,
+    showStampInfo,
   };
 
   // ── Estilos ─────────────────────────────────────────────────────────────────
@@ -1621,6 +1651,59 @@ export default function AtestadoCria() {
                   </div>
                 </div>
               </details>
+
+              {/* Ajustar Carimbo */}
+              {form.modoCarimbo && (
+                <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "10px 12px", marginTop: 12 }}>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: "#166534", margin: "0 0 8px", textTransform: "uppercase" as const }}>
+                    🎨 Ajustar Carimbo Elite
+                  </p>
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {/* Tamanho */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 11, color: "#374151", width: 70 }}>Tamanho:</span>
+                      <button type="button" onClick={() => adjustStampScale(-STAMP_SCALE_STEP)} style={{ width: 28, height: 28, borderRadius: 6, border: "1px solid #22c55e", background: "#fff", cursor: "pointer", fontWeight: 700 }}>−</button>
+                      <span style={{ fontSize: 12, fontWeight: 700, minWidth: 40, textAlign: "center" }}>{Math.round(stampScale * 100)}%</span>
+                      <button type="button" onClick={() => adjustStampScale(STAMP_SCALE_STEP)} style={{ width: 28, height: 28, borderRadius: 6, border: "1px solid #22c55e", background: "#fff", cursor: "pointer", fontWeight: 700 }}>+</button>
+                    </div>
+                    {/* Giro */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 11, color: "#374151", width: 70 }}>Giro:</span>
+                      <button type="button" onClick={() => adjustStampRotate(-STAMP_ROTATE_STEP)} style={{ width: 28, height: 28, borderRadius: 6, border: "1px solid #22c55e", background: "#fff", cursor: "pointer", fontWeight: 700 }}>↺</button>
+                      <span style={{ fontSize: 12, fontWeight: 700, minWidth: 40, textAlign: "center" }}>{stampRotate}°</span>
+                      <button type="button" onClick={() => adjustStampRotate(STAMP_ROTATE_STEP)} style={{ width: 28, height: 28, borderRadius: 6, border: "1px solid #22c55e", background: "#fff", cursor: "pointer", fontWeight: 700 }}>↻</button>
+                    </div>
+                    {/* X */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 11, color: "#374151", width: 70 }}>Horiz. (X):</span>
+                      <button type="button" onClick={() => adjustStampX(-STAMP_POS_STEP)} style={{ width: 28, height: 28, borderRadius: 6, border: "1px solid #22c55e", background: "#fff", cursor: "pointer", fontWeight: 700 }}>←</button>
+                      <span style={{ fontSize: 12, fontWeight: 700, minWidth: 40, textAlign: "center" }}>{stampX}px</span>
+                      <button type="button" onClick={() => adjustStampX(STAMP_POS_STEP)} style={{ width: 28, height: 28, borderRadius: 6, border: "1px solid #22c55e", background: "#fff", cursor: "pointer", fontWeight: 700 }}>→</button>
+                    </div>
+                    {/* Y */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 11, color: "#374151", width: 70 }}>Vert. (Y):</span>
+                      <button type="button" onClick={() => adjustStampY(-STAMP_POS_STEP)} style={{ width: 28, height: 28, borderRadius: 6, border: "1px solid #22c55e", background: "#fff", cursor: "pointer", fontWeight: 700 }}>↑</button>
+                      <span style={{ fontSize: 12, fontWeight: 700, minWidth: 40, textAlign: "center" }}>{stampY}px</span>
+                      <button type="button" onClick={() => adjustStampY(STAMP_POS_STEP)} style={{ width: 28, height: 28, borderRadius: 6, border: "1px solid #22c55e", background: "#fff", cursor: "pointer", fontWeight: 700 }}>↓</button>
+                    </div>
+                    {/* Visibilidade */}
+                    <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
+                      <label style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                        <input type="checkbox" checked={hideQRCode} onChange={e => setHideQRCode(e.target.checked)} />
+                        Ocultar QR Code
+                      </label>
+                      <label style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                        <input type="checkbox" checked={showStampInfo} onChange={e => setShowStampInfo(e.target.checked)} />
+                        Exibir Dados Médico
+                      </label>
+                    </div>
+                    <button type="button" onClick={resetStampTransform} style={{ fontSize: 10, color: "#166534", background: "none", border: "none", cursor: "pointer", textDecoration: "underline", textAlign: "left", padding: 0 }}>
+                      ↺ Resetar Ajustes do Carimbo
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* ── 2. Dados do Paciente ── */}
@@ -2158,6 +2241,12 @@ export default function AtestadoCria() {
                 logoLeftY={logoLeftY}
                 logoRightX={logoRightX}
                 logoRightY={logoRightY}
+                stampScale={stampScale}
+                stampX={stampX}
+                stampY={stampY}
+                stampRotate={stampRotate}
+                hideQRCode={hideQRCode}
+                showStampInfo={showStampInfo}
               />
             </div>
           </div>

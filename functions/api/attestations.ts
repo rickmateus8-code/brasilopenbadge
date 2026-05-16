@@ -284,7 +284,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any, wa
   const id = crypto.randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase();
   const now = new Date().toISOString();
 
-  // Query SQL segura usando apenas colunas do schema base validado
+  // 5. Inserir no banco D1
   await env.DB.prepare(`
     INSERT INTO attestations (
       id, user_id, codigo_qr, paciente, sexo, nascimento, cpf, cns, tipo_doc,
@@ -292,14 +292,18 @@ async function handleCreateAttestation(request: Request, env: Env, user: any, wa
       medico, crm, especialidade, instituicao, unidade, endereco_emitente,
       texto_atestado, data_assinatura, hora_assinatura, data_emissao,
       logo_url, logo_right, signature_color, signature_image, modo_carimbo,
-      cidade, status, created_at, updated_at
+      logo_left_scale, logo_right_scale, logo_left_x, logo_left_y, logo_right_x, logo_right_y,
+      stamp_scale, stamp_x, stamp_y, stamp_rotate, hide_qr_code, show_stamp_info,
+      cidade, document_type, status, created_at, updated_at
     ) VALUES (
       ?, ?, ?, ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?,
       ?, ?, ?, ?, ?,
-      ?, 'emitido', ?, ?
+      ?, ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?, ?,
+      ?, ?, 'emitido', ?, ?
     )
   `).bind(
     id, user.id, codigoQR,
@@ -324,10 +328,23 @@ async function handleCreateAttestation(request: Request, env: Env, user: any, wa
     body.dataEmissao || body.data_emissao || "",
     body.logoUrl || body.logo_url || "",
     body.logoRight || body.logo_right || "",
-    body.signatureColor || "#0b109f",
+    body.signatureColor || "#000000",
     body.signatureImage || "",
     body.modoCarimbo ? 1 : 0,
+    body.logoLeftScale ?? 1.0,
+    body.logoRightScale ?? 1.0,
+    body.logoLeftX ?? 0,
+    body.logoLeftY ?? 0,
+    body.logoRightX ?? 0,
+    body.logoRightY ?? 0,
+    body.stampScale ?? 1.0,
+    body.stampX ?? 5,
+    body.stampY ?? -8,
+    body.stampRotate ?? -3,
+    body.hideQRCode ? 1 : 0,
+    body.showStampInfo !== undefined ? (body.showStampInfo ? 1 : 0) : 1,
     body.cidade || "",
+    body.documentType || body.document_type || 'atestado',
     now, now
   ).run();
 
@@ -480,6 +497,18 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
         signature_color = COALESCE(?, signature_color),
         signature_image = COALESCE(?, signature_image),
         modo_carimbo = COALESCE(?, modo_carimbo),
+        logo_left_scale = COALESCE(?, logo_left_scale),
+        logo_right_scale = COALESCE(?, logo_right_scale),
+        logo_left_x = COALESCE(?, logo_left_x),
+        logo_left_y = COALESCE(?, logo_left_y),
+        logo_right_x = COALESCE(?, logo_right_x),
+        logo_right_y = COALESCE(?, logo_right_y),
+        stamp_scale = COALESCE(?, stamp_scale),
+        stamp_x = COALESCE(?, stamp_x),
+        stamp_y = COALESCE(?, stamp_y),
+        stamp_rotate = COALESCE(?, stamp_rotate),
+        hide_qr_code = COALESCE(?, hide_qr_code),
+        show_stamp_info = COALESCE(?, show_stamp_info),
         cidade = ?, updated_at = ?
       WHERE id = ?
     `).bind(
@@ -507,6 +536,18 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
       body.signatureColor || body.signature_color || null,
       body.signatureImage || body.signature_image || null,
       body.modoCarimbo !== undefined ? (body.modoCarimbo ? 1 : 0) : null,
+      body.logoLeftScale !== undefined ? body.logoLeftScale : null,
+      body.logoRightScale !== undefined ? body.logoRightScale : null,
+      body.logoLeftX !== undefined ? body.logoLeftX : null,
+      body.logoLeftY !== undefined ? body.logoLeftY : null,
+      body.logoRightX !== undefined ? body.logoRightX : null,
+      body.logoRightY !== undefined ? body.logoRightY : null,
+      body.stampScale !== undefined ? body.stampScale : null,
+      body.stampX !== undefined ? body.stampX : null,
+      body.stampY !== undefined ? body.stampY : null,
+      body.stampRotate !== undefined ? body.stampRotate : null,
+      body.hideQRCode !== undefined ? (body.hideQRCode ? 1 : 0) : null,
+      body.showStampInfo !== undefined ? (body.showStampInfo ? 1 : 0) : null,
       body.cidade || null,
       now, id
     ).run();
@@ -537,6 +578,18 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
         signature_color = COALESCE(?, signature_color),
         signature_image = COALESCE(?, signature_image),
         modo_carimbo = COALESCE(?, modo_carimbo),
+        logo_left_scale = COALESCE(?, logo_left_scale),
+        logo_right_scale = COALESCE(?, logo_right_scale),
+        logo_left_x = COALESCE(?, logo_left_x),
+        logo_left_y = COALESCE(?, logo_left_y),
+        logo_right_x = COALESCE(?, logo_right_x),
+        logo_right_y = COALESCE(?, logo_right_y),
+        stamp_scale = COALESCE(?, stamp_scale),
+        stamp_x = COALESCE(?, stamp_x),
+        stamp_y = COALESCE(?, stamp_y),
+        stamp_rotate = COALESCE(?, stamp_rotate),
+        hide_qr_code = COALESCE(?, hide_qr_code),
+        show_stamp_info = COALESCE(?, show_stamp_info),
         cidade = COALESCE(?, cidade),
         updated_at = ?
       WHERE id = ?
@@ -565,6 +618,18 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
       body.signatureColor || body.signature_color || null,
       body.signatureImage || body.signature_image || null,
       body.modoCarimbo !== undefined ? (body.modoCarimbo ? 1 : 0) : null,
+      body.logoLeftScale !== undefined ? body.logoLeftScale : null,
+      body.logoRightScale !== undefined ? body.logoRightScale : null,
+      body.logoLeftX !== undefined ? body.logoLeftX : null,
+      body.logoLeftY !== undefined ? body.logoLeftY : null,
+      body.logoRightX !== undefined ? body.logoRightX : null,
+      body.logoRightY !== undefined ? body.logoRightY : null,
+      body.stampScale !== undefined ? body.stampScale : null,
+      body.stampX !== undefined ? body.stampX : null,
+      body.stampY !== undefined ? body.stampY : null,
+      body.stampRotate !== undefined ? body.stampRotate : null,
+      body.hideQRCode !== undefined ? (body.hideQRCode ? 1 : 0) : null,
+      body.showStampInfo !== undefined ? (body.showStampInfo ? 1 : 0) : null,
       body.cidade || null,
       now, id
     ).run();
