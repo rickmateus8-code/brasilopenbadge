@@ -122,3 +122,6 @@ pdf_layout_reference.txt
 # Wrangler
 .wrangler/
 wrangler-dist/
+
+# Separate Projects
+cnh-do-brasil/
