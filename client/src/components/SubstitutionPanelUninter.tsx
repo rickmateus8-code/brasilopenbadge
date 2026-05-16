@@ -9,7 +9,7 @@ import {
   GraduationCap, LayoutGrid, Search, X, TableProperties, Lock,
   Save, Download, Loader2, CheckCircle2, MapPin, Clock
 } from "lucide-react";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { UNINTER_IMPORT_TEMPLATE, HISTORICOS_DISPONIVEIS } from "@/lib/documentData_uninter";
 import {
   Dialog,
