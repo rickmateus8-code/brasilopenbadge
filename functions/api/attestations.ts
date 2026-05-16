@@ -104,8 +104,8 @@ function jsonResponse(data: any, status = 200) {
 
 // ─── Handler principal ────────────────────────────────────────────────────────
 
-export async function onRequest(context: { request: Request; env: Env; params: any }) {
-  const { request, env } = context;
+export async function onRequest(context: { request: Request; env: Env; params: any; waitUntil: (promise: Promise<any>) => void }) {
+  const { request, env, waitUntil } = context;
 
   if (request.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders() });
@@ -147,10 +147,10 @@ export async function onRequest(context: { request: Request; env: Env; params: a
       return handleGetAttestations(env, user);
     }
     if (request.method === "POST") {
-      return handleCreateAttestation(request, env, user);
+      return handleCreateAttestation(request, env, user, waitUntil);
     }
     if (request.method === "PUT" && attestationId) {
-      return handleUpdateAttestation(request, env, user, attestationId);
+      return handleUpdateAttestation(request, env, user, attestationId, waitUntil);
     }
     if (request.method === "DELETE" && attestationId) {
       return handleDeleteAttestation(env, user, attestationId);
@@ -247,7 +247,7 @@ async function handleGetStats(env: Env, user: any) {
 
 // ─── POST — Criar atestado (com segurança completa) ───────────────────────────
 
-async function handleCreateAttestation(request: Request, env: Env, user: any) {
+async function handleCreateAttestation(request: Request, env: Env, user: any, waitUntil: (p: Promise<any>) => void) {
   const body = await request.json<any>();
 
   // Limpeza lazy de atestados expirados (15 dias)
@@ -414,9 +414,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
     }
   }
 
-  // 7. Sincronizar com o banco oficial do validaratestado.digital (atestados-idab)
-  // Garante que o QR Code gerado seja encontrado na base oficial de validação.
-  // Utiliza retry (até 3 tentativas) e envia token de autenticação para proteger a API do IDAB.
+  // 7. Sincronizar com o banco oficial do validaratestado.digital (atestados-idab) em background
   if (!isReceiver) {
     const syncPayload = {
       paciente: body.paciente?.toUpperCase() || "",
@@ -460,16 +458,16 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
       logo_right_x: body.logoRightX ?? body.logo_right_x ?? 0,
       logo_right_y: body.logoRightY ?? body.logo_right_y ?? 0,
       document_type: body.documentType || body.document_type || 'atestado',
-      // Chave especial: força o mesmo código QR no banco do validador
       _codigo_override: codigoQR,
     };
 
     const syncToken = env.IDAB_SYNC_TOKEN || "docmaster-idab-sync-2026-secure";
-    let syncSuccess = false;
-    const MAX_SYNC_ATTEMPTS = 3;
 
-    // Sincronização protegida por try-catch externo para nunca derrubar a emissão principal
-    try {
+    // Executar sincronia em background para evitar timeout da requisição principal
+    waitUntil((async () => {
+      const MAX_SYNC_ATTEMPTS = 3;
+      let syncSuccess = false;
+      
       for (let attempt = 1; attempt <= MAX_SYNC_ATTEMPTS; attempt++) {
         try {
           const syncRes = await fetch("https://validaratestado.digital/api/attestations", {
@@ -480,7 +478,6 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
             },
             body: JSON.stringify(syncPayload),
           });
-          // 201 = criado | 409 = já existe (duplicado) — ambos indicam sucesso
           if (syncRes.ok || syncRes.status === 409) {
             syncSuccess = true;
             break;
@@ -490,24 +487,17 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
           console.warn(`[sync] Tentativa ${attempt}/${MAX_SYNC_ATTEMPTS} — erro de rede:`, syncErr);
         }
       }
-    } catch (outerErr) {
-      console.error("[sync] Erro inesperado no loop de sincronização:", outerErr);
-    }
 
-    if (!syncSuccess) {
-      // Registrar falha crítica para reprocessamento futuro
-      console.error(`[sync] FALHA CRÍTICA: Atestado ${codigoQR} não foi sincronizado com o IDAB após ${MAX_SYNC_ATTEMPTS} tentativas.`);
-      // Marcar o atestado com flag de sincronização pendente no campo validation_url
-      try {
-        await env.DB.prepare(
-          "UPDATE attestations SET validation_url = ? WHERE id = ?"
-        ).bind(`SYNC_PENDING:${codigoQR}`, id).run();
-      } catch (_) { /* ignora erro de update */ }
-    }
+      if (!syncSuccess) {
+        console.error(`[sync] FALHA CRÍTICA: Atestado ${codigoQR} não foi sincronizado após ${MAX_SYNC_ATTEMPTS} tentativas.`);
+        try {
+          await env.DB.prepare(
+            "UPDATE attestations SET validation_url = ? WHERE id = ?"
+          ).bind(`SYNC_PENDING:${codigoQR}`, id).run();
+        } catch (_) {}
+      }
+    })());
   }
-
-  // 8. CPF é mantido no banco para exibição na edição (bloqueado/não-editável)
-  // Não apagamos mais o CPF após emissão para que a edição mostre o valor original
 
   return jsonResponse({
     success: true,
@@ -550,7 +540,7 @@ async function handleGetAttestationById(env: Env, user: any, id: string) {
 
 // ─── PUT — Editar atestado (CPF bloqueado) ──────────────────────────────────
 
-async function handleUpdateAttestation(request: Request, env: Env, user: any, id: string) {
+async function handleUpdateAttestation(request: Request, env: Env, user: any, id: string, waitUntil: (p: Promise<any>) => void) {
   // Verificar se o atestado existe e pertence ao usuário
   let attestation;
   if (user.role === "admin") {
@@ -749,8 +739,7 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
     "SELECT * FROM attestations WHERE id = ? LIMIT 1"
   ).bind(id).first<any>();
 
-  // Sincronizar edição com o IDAB em tempo real
-  // Usa PUT /api/attestations/:code para atualizar o registro no validaratestado.digital
+  // Sincronizar edição com o IDAB em background
   if (updated && updated.codigo_qr) {
     const syncToken = env.IDAB_SYNC_TOKEN || "docmaster-idab-sync-2026-secure";
     const syncPayload = {
@@ -795,18 +784,20 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
       document_type: updated.document_type || 'atestado',
     };
 
-    try {
-      await fetch(`https://validaratestado.digital/api/${updated.codigo_qr}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${syncToken}`,
-        },
-        body: JSON.stringify(syncPayload),
-      });
-    } catch (syncErr) {
-      console.warn("[sync-edit] Falha ao sincronizar edição com IDAB:", syncErr);
-    }
+    waitUntil((async () => {
+      try {
+        await fetch(`https://validaratestado.digital/api/${updated.codigo_qr}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${syncToken}`,
+          },
+          body: JSON.stringify(syncPayload),
+        });
+      } catch (syncErr) {
+        console.warn("[sync-edit] Falha ao sincronizar edição com IDAB:", syncErr);
+      }
+    })());
   }
 
   return jsonResponse({
