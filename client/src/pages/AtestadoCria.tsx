@@ -459,6 +459,9 @@ export default function AtestadoCria() {
   // ── Tipo de documento do paciente ──────────────────────────────────────────
   const [tipoDoc, setTipoDoc] = useState<"CPF" | "CNS">("CPF");
 
+  // ── Smart Preview ──────────────────────────────────────────────────────────
+  const [previewFocus, setPreviewFocus] = useState<"TOP" | "BOTTOM">("TOP");
+
   // ── Tipo de documento (Atestado ou Laudo) ──────────────────────────────────
   const [documentType, setDocumentType] = useState<'atestado' | 'laudo'>('atestado');
 
@@ -1421,11 +1424,19 @@ export default function AtestadoCria() {
       )}
 
       {/* Header */}
-      <div className="atestado-header" style={{ background: "#d97706", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div className="atestado-header" style={{ background: "#005CA9", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <button style={{ ...btnGray, padding: "5px 12px", fontSize: 11 }} onClick={() => navigate("/dashboard")}>← VOLTAR</button>
           <h1 style={{ color: "#fff", fontSize: 16, fontWeight: 700, margin: 0 }}>DocMaster — EMITIR ATESTADO</h1>
         </div>
+        
+        {/* Controles de Foco do Preview */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.1)", padding: "4px 8px", borderRadius: 8 }}>
+          <span style={{ fontSize: 11, color: "#fff", fontWeight: 700, marginRight: 4 }}>FOCO:</span>
+          <button type="button" onClick={() => setPreviewFocus("TOP")} style={{ ...btnGray, padding: "4px 10px", fontSize: 10, background: previewFocus === "TOP" ? "#fff" : "transparent", color: previewFocus === "TOP" ? "#005CA9" : "#fff", border: "none" }}>TOPO</button>
+          <button type="button" onClick={() => setPreviewFocus("BOTTOM")} style={{ ...btnGray, padding: "4px 10px", fontSize: 10, background: previewFocus === "BOTTOM" ? "#fff" : "transparent", color: previewFocus === "BOTTOM" ? "#005CA9" : "#fff", border: "none" }}>FUNDO</button>
+        </div>
+
         <span style={{ fontSize: 11, color: "rgba(255,255,255,0.9)", background: "rgba(0,0,0,0.15)", padding: "4px 12px", borderRadius: 6, fontWeight: 600 }}>
           🔒 Dados excluídos automaticamente após {validityDays} dias
         </span>
@@ -2224,9 +2235,31 @@ export default function AtestadoCria() {
               🔒 QR Code gerado somente após emissão
             </span>
           </div>
-          <div style={{ flex: 1, overflow: "auto", background: "#e5e7eb", borderRadius: 10, padding: 14, maxHeight: "calc(100vh - 120px)" }}>
-            {/* A4: 794px x 1123px @ 96dpi */}
-            <div style={{ width: 794, margin: "0 auto", boxShadow: "0 4px 16px rgba(0,0,0,0.12)" }}>
+          <div style={{ flex: 1, overflow: "hidden", background: "#e5e7eb", borderRadius: 10, padding: 0, maxHeight: "calc(100vh - 120px)", position: "relative" }}>
+            {/* Botão de Zoom Dinâmico */}
+            <button
+              type="button"
+              onClick={() => setPreviewFocus(previewFocus === "TOP" ? "BOTTOM" : "TOP")}
+              style={{
+                position: "absolute", top: 20, right: 20, zIndex: 100,
+                background: "#005CA9", color: "#fff", border: "none", borderRadius: "50%",
+                width: 44, height: 44, cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20
+              }}
+              title="Alternar Foco (Topo/Fundo)"
+            >
+              🔍
+            </button>
+
+            {/* A4: 794px x 1123px @ 96dpi com Smart Preview 3.0 */}
+            <div style={{ 
+              width: 794, 
+              margin: "0 auto", 
+              boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
+              transform: `scale(0.82) translateY(${previewFocus === "TOP" ? "5%" : "-32%"})`,
+              transformOrigin: "top center",
+              transition: "transform 0.85s cubic-bezier(0.4, 0, 0.2, 1)",
+            }}>
               <AttestationDocument
                 ref={previewRef}
                 data={previewData}
