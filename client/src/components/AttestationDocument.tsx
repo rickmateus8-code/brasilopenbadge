@@ -626,21 +626,23 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 justifyContent: "center",
                 filter: "contrast(110%) brightness(105%)",
               }}>
-                <img
-                  src={fotoAssinatura || DEFAULT_RABISCO}
-                  alt="Rabisco"
-                  crossOrigin={getCrossOrigin(fotoAssinatura || DEFAULT_RABISCO)}
-                  style={{ 
-                    maxWidth: 260, 
-                    maxHeight: 85, 
-                    objectFit: "contain", 
-                    position: "absolute", 
-                    zIndex: 3,
-                    transform: "rotate(-1deg)",
-                    pointerEvents: "none",
-                    userSelect: "none",
-                  }}
-                />
+                {fotoAssinatura && (
+                  <img
+                    src={fotoAssinatura}
+                    alt="Rabisco"
+                    crossOrigin={getCrossOrigin(fotoAssinatura)}
+                    style={{ 
+                      maxWidth: 260, 
+                      maxHeight: 85, 
+                      objectFit: "contain", 
+                      position: "absolute", 
+                      zIndex: 3,
+                      transform: "rotate(-1deg)",
+                      pointerEvents: "none",
+                      userSelect: "none",
+                    }}
+                  />
+                )}
               </div>
 
               {/* Dados do Médico (Nome/CRM/Especialidade) */}
@@ -654,7 +656,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                   alignItems: "center",
                   userSelect: "none",
                 }}>
-                  <div style={{ fontWeight: 700, fontSize: 13, textTransform: "uppercase", lineHeight: 1.1 }}>{data.medico}</div>
+                  <div style={{ fontWeight: 700, fontSize: 12.48, textTransform: "uppercase", lineHeight: 1.1 }}>{data.medico}</div>
                   <div style={{ fontSize: 11, fontWeight: 600 }}>{data.crm}</div>
                   <div style={{ fontSize: 9.5, opacity: 0.9, textTransform: "uppercase" }}>{data.especialidade}</div>
                 </div>
