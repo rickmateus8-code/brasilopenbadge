@@ -111,6 +111,7 @@ const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "logs", label: "Logs", icon: Activity },
   { key: "emissions", label: "Emissões", icon: FileText },
   { key: "referral", label: "Indicações", icon: Gift },
+  { key: "database", label: "Banco de Dados", icon: Database },
   { key: "settings", label: "Configurações", icon: Settings },
 ];
 
@@ -193,7 +194,7 @@ export default function AdminDashboard() {
 
   const savePermissions = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       const res = await fetch("/api/admin/users", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -221,11 +222,89 @@ export default function AdminDashboard() {
     } catch {
       toast.error("Erro de conexão ao salvar.");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
+  const [hardDeleteUser, setHardDeleteUser] = useState<UserRow | null>(null);
+  const [hardDeleteConfirmChecked, setHardDeleteConfirmChecked] = useState(false);
+  const [hardDeleteConfirmText, setHardDeleteConfirmText] = useState("");
 
-... [TRUNCATED] ...
+  // Pricing
+  const [pricing, setPricing] = useState<PricingRow[]>([]);
+  const [editingPrice, setEditingPrice] = useState<Record<string, string>>({});
+  const [editingDisplayName, setEditingDisplayName] = useState<Record<string, string>>({});
+  const [editingIsActive, setEditingIsActive] = useState<Record<string, boolean>>({});
+
+  // Notices
+  const [notices, setNotices] = useState<NoticeRow[]>([]);
+  const [newNotice, setNewNotice] = useState<NoticeRow>({
+    title: "", message: "", type: "info", is_active: 1
+  });
+
+  // Logs
+  const [logs, setLogs] = useState<LogRow[]>([]);
+  const [logFilter, setLogFilter] = useState("");
+  const [logCategory, setLogCategory] = useState("all");
+  const [logCategories, setLogCategories] = useState<Record<string, number>>({});
+
+  // Emissions
+  const [emissions, setEmissions] = useState<EmissionRow[]>([]);
+  const [emissionsFilter, setEmissionsFilter] = useState("");
+  const [emissionsTypeFilter, setEmissionsTypeFilter] = useState("all");
+  const [emissionsDateFrom, setEmissionsDateFrom] = useState("");
+  const [emissionsDateTo, setEmissionsDateTo] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmDeleteSource, setConfirmDeleteSource] = useState<string>("");
+  const [emissionPreview, setEmissionPreview] = useState<any>(null);
+  const [emissionPreviewLoading, setEmissionPreviewLoading] = useState(false);
+
+  // Monitoring / Presence
+  const [presence, setPresence] = useState<PresenceRow[]>([]);
+  const [onlineCount, setOnlineCount] = useState(0);
+  const [offlineCount, setOfflineCount] = useState(0);
+  const [totalTracked, setTotalTracked] = useState(0);
+
+  // Referral
+  const [referralData, setReferralData] = useState<any>({});
+  const [referralTab, setReferralTab] = useState<"overview" | "referrals" | "earnings" | "cashback" | "users">("overview");
+  const [referralSettings, setReferralSettings] = useState({
+    referral_percentage: 10, cashback_percentage: 5, referral_enabled: true, cashback_enabled: true
+  });
+  const [editUserRefId, setEditUserRefId] = useState<string | null>(null);
+  const [editUserRefPct, setEditUserRefPct] = useState("");
+  const [editUserCbPct, setEditUserCbPct] = useState("");
+  // Cashback na aba de usuários
+  const [cashbackEditId, setCashbackEditId] = useState<string | null>(null);
+  const [cashbackEditValue, setCashbackEditValue] = useState("");
+
+  // Log date filters
+  const [logDateFrom, setLogDateFrom] = useState("");
+  const [logDateTo, setLogDateTo] = useState("");
+
+  // Pricing save all
+  const [pricingSaving, setPricingSaving] = useState(false);
+
+  // Database
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deleteUserConfirm, setDeleteUserConfirm] = useState("");
+  const [deleteTargetUserId, setDeleteTargetUserId] = useState<string | null>(null);
+  const [deleteTargetUsername, setDeleteTargetUsername] = useState("");
+
+  // Create user
+  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [newUsername, setNewUsername] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newDisplayName, setNewDisplayName] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newRole, setNewRole] = useState("user");
+  const [newBalance, setNewBalance] = useState("");
+  const [creatingUser, setCreatingUser] = useState(false);
+
+  // Change password
+  const [changePwUserId, setChangePwUserId] = useState<string | null>(null);
+  const [changePwUsername, setChangePwUsername] = useState("");
+  const [changePwValue, setChangePwValue] = useState("");
+  const [changingPw, setChangingPw] = useState(false);
 
   // Settings
   const [settings, setSettings] = useState<Record<string, any>>({
@@ -245,13 +324,36 @@ export default function AdminDashboard() {
   const [cleanupPreview, setCleanupPreview] = useState<any>(null);
   const [cleanupRunning, setCleanupRunning] = useState(false);
 
+  // Show passwords toggle
+  const [showPasswords, setShowPasswords] = useState(false);
+
   // Manual Referral Link
   const [showLinkModal, setShowLinkModal] = useState(false);
-... [TRUNCATED] ...
-  const loadUsers = useCallback(async (silent = false) => {
+  const [linkReferrerId, setLinkReferrerId] = useState("");
+  const [linkReferredId, setLinkReferredId] = useState("");
+  const [linking, setLinking] = useState(false);
+
+  const [loading, setLoading] = useState(false);
+
+  // Financial (Gateway)
+  const [gatewayFinancial, setGatewayFinancial] = useState<{ saldo_disponivel?: number; limite_diario?: number } | null>(null);
+  const [loadingFinancial, setLoadingFinancial] = useState(false);
+
+  // Confirmation modal
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type: "danger" | "warning" | "info";
+  }>({ open: false, title: "", message: "", onConfirm: () => {}, type: "info" });
+
+   // ── Data Loaders ──────────────────────────────────────────────────────────
+  const loadUsers = useCallback(async (withPasswords = false, silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const res = await fetch("/api/admin/users", { credentials: "include" });
+      const url = withPasswords ? "/api/admin/users?show_passwords=1" : "/api/admin/users";
+      const res = await fetch(url, { credentials: "include" });
       const data = await res.json();
       if (data.success) {
         setUsers(data.users || []);
@@ -264,10 +366,238 @@ export default function AdminDashboard() {
     finally { if (!silent) setLoading(false); }
   }, []);
 
-... [TRUNCATED] ...
+  const loadSettings = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/settings", { credentials: "include" });
+      const data = await res.json();
+      if (data.success && data.settings) {
+        setSettings(s => ({ ...s, ...data.settings }));
+      }
+    } catch { /* silently fail */ }
+  }, []);
+
+  const loadCleanupPreview = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/cleanup", { credentials: "include" });
+      const data = await res.json();
+      if (data.success) {
+        setCleanupPreview(data);
+      }
+    } catch {}
+  }, []);
+
+  const loadPricing = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/pricing", { credentials: "include" });
+      const data = await res.json();
+      if (data.success) {
+        setPricing(data.pricing || []);
+        const ep: Record<string, string> = {};
+        const edn: Record<string, string> = {};
+        const eia: Record<string, boolean> = {};
+        (data.pricing || []).forEach((p: PricingRow) => {
+          ep[p.document_type] = (p.price / 100).toFixed(2);
+          edn[p.document_type] = p.display_name;
+          eia[p.document_type] = p.is_active !== false;
+        });
+        setEditingPrice(ep);
+        setEditingDisplayName(edn);
+        setEditingIsActive(eia);
+      }
+    } catch { /* Silent fail in background */ }
+  }, []);
+
+  const loadFinancial = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/financial", { credentials: "include" });
+      const data = await res.json();
+      if (data.success) {
+        setGatewayFinancial(data.data);
+      }
+    } catch { /* Silent fail in background */ }
+  }, []);
+
+  const loadNotices = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/notifications", { credentials: "include" });
+      const data = await res.json();
+      if (data.success) setNotices(data.notifications || []);
+    } catch {}
+  }, []);
+
+  const loadLogs = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      let url = `/api/admin/system-logs?category=${logCategory}&limit=200`;
+      if (logDateFrom) url += `&from=${logDateFrom}`;
+      if (logDateTo) url += `&to=${logDateTo}`;
+      const res = await fetch(url, { credentials: "include" });
+      const data = await res.json();
+      if (data.success) {
+        setLogs(data.logs || []);
+        setLogCategories(data.categories || {});
+      }
+    } catch {
+      try {
+        const res = await fetch("/api/admin/logs", { credentials: "include" });
+        const data = await res.json();
+        if (data.success) setLogs(data.logs || []);
+      } catch { toast.error("Erro ao carregar logs"); }
+    }
+    finally { if (!silent) setLoading(false); }
+  }, [logCategory, logDateFrom, logDateTo]);
+
+  const clearLogs = (clearType: string = "all") => {
+    setConfirmModal({
+      open: true,
+      title: "Limpar Logs",
+      message: `Tem certeza que deseja limpar os logs (${clearType})? Esta acao nao pode ser desfeita.`,
+      type: "danger",
+      onConfirm: async () => {
+        setConfirmModal(m => ({ ...m, open: false }));
+        try {
+          const res = await fetch(`/api/admin/system-logs?clear=${clearType}`, { method: "DELETE", credentials: "include" });
+          const data = await res.json();
+          if (data.success) { 
+            toast.success("Logs limpos com sucesso!"); 
+            if (tab === "logs") loadLogs();
+            if (tab === "monitoring") loadPresence();
+          }
+          else toast.error(data.error || "Erro ao limpar logs");
+        } catch { toast.error("Erro de conexão"); }
+      },
+    });
+  };
+
+  const loadReferral = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/referral?tab=${referralTab}`, { credentials: "include" });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        toast.error(`Erro ${res.status}: ${errData.error || "Falha ao carregar indicações"}`);
+        return;
+      }
+      const data = await res.json();
+      setReferralData(data);
+      if (referralTab === "overview" && data.settings) {
+        const s: any = {};
+        for (const item of data.settings) s[item.key] = item.value;
+        setReferralSettings({
+          referral_percentage: parseFloat(s.referral_percentage || "10"),
+          cashback_percentage: parseFloat(s.cashback_percentage || "5"),
+          referral_enabled: s.referral_enabled === "true",
+          cashback_enabled: s.cashback_enabled === "true",
+        });
+      }
+    } catch (err: any) { toast.error(`Erro ao carregar indicações: ${err?.message || "Erro desconhecido"}`); }
+    finally { setLoading(false); }
+  }, [referralTab]);
+
+  const saveReferralSettings = async () => {
+    try {
+      const res = await fetch("/api/admin/referral", {
+        method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
+        body: JSON.stringify({ action: "update_global_settings", ...referralSettings }),
+      });
+      const data = await res.json();
+      if (data.success) toast.success("Configurações de indicação salvas!");
+      else toast.error(data.error || "Erro");
+    } catch { toast.error("Erro de conexão"); }
+  };
+
+  const saveCashbackForUser = async (userId: string) => {
+    try {
+      const res = await fetch("/api/admin/referral", {
+        method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
+        body: JSON.stringify({
+          action: "update_user_settings", userId: String(userId),
+          cashback_percentage: cashbackEditValue !== "" ? parseFloat(cashbackEditValue) : null,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("% Cashback atualizado!");
+        setCashbackEditId(null);
+        setCashbackEditValue("");
+        loadUsers(showPasswords);
+      } else toast.error(data.error || "Erro");
+    } catch { toast.error("Erro de conexão"); }
+  };
+
+  const saveUserRefSettings = async (userId: string) => {
+    try {
+      const res = await fetch("/api/admin/referral", {
+        method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
+        body: JSON.stringify({
+          action: "update_user_settings", userId,
+          referral_percentage: editUserRefPct ? parseFloat(editUserRefPct) : null,
+          cashback_percentage: editUserCbPct ? parseFloat(editUserCbPct) : null,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) { toast.success("% do usuário atualizado!"); setEditUserRefId(null); loadReferral(); }
+      else toast.error(data.error || "Erro");
+    } catch { toast.error("Erro de conexão"); }
+  };
+
+  const saveAllPrices = async () => {
+    setPricingSaving(true);
+    try {
+      const prices = pricing.map(p => ({
+        document_type: p.document_type,
+        display_name: editingDisplayName[p.document_type] ?? p.display_name,
+        price: Math.round(parseFloat(editingPrice[p.document_type] || "0") * 100),
+        is_active: editingIsActive[p.document_type] !== false,
+      }));
+      const res = await fetch("/api/admin/pricing", {
+        method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
+        body: JSON.stringify({ prices }),
+      });
+      const data = await res.json();
+      if (data.success) { toast.success("Todos os preços atualizados com sucesso!"); loadPricing(); }
+      else toast.error(data.error || "Erro ao salvar preços");
+    } catch { toast.error("Erro de conexão"); }
+    finally { setPricingSaving(false); }
+  };
+
+  const loadEmissions = useCallback(async () => {
+    setLoading(true);
+    try {
+      const typeParam = emissionsTypeFilter !== "all" ? `&type=${emissionsTypeFilter}` : "";
+      const res = await fetch(`/api/admin/emissions?limit=500${typeParam}`, { credentials: "include" });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        toast.error(`Erro ${res.status}: ${errData.error || "Falha ao carregar emissões"}`);
+        return;
+      }
+      const data = await res.json();
+      if (data.success) {
+        setEmissions(data.emissions || []);
+      } else {
+        toast.error(data.error || "Erro ao carregar emissões");
+      }
+    } catch (err: any) {
+      toast.error(`Erro ao carregar emissões: ${err?.message || "Erro desconhecido"}`);
+    }
+    finally { setLoading(false); }
+  }, [emissionsTypeFilter]);
+
+  const loadPresence = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/presence", { credentials: "include" });
+      const data = await res.json();
+      if (data.success) {
+        setPresence(data.presence || []);
+        setOnlineCount(data.online_count || 0);
+        setOfflineCount(data.offline_count || (data.presence || []).filter((p: any) => !p.is_online).length);
+        setTotalTracked(data.total_users || (data.presence || []).length);
+      }
+    } catch { /* silently fail */ }
+  }, []);
 
   useEffect(() => {
-    if (tab === "users") loadUsers();
+    if (tab === "users") loadUsers(showPasswords);
     if (tab === "pricing") loadPricing();
     if (tab === "notices") loadNotices();
     if (tab === "logs") loadLogs();
@@ -279,7 +609,7 @@ export default function AdminDashboard() {
       loadCleanupPreview();
     }
     loadFinancial();
-  }, [tab, logCategory, logDateFrom, logDateTo, emissionsTypeFilter, referralTab, loadCleanupPreview, loadSettings, loadFinancial]);
+  }, [tab, logCategory, logDateFrom, logDateTo, emissionsTypeFilter, referralTab, showPasswords, loadCleanupPreview, loadSettings, loadFinancial]);
 
   // Load presence count on mount and periodically
   useEffect(() => {
@@ -294,11 +624,50 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (tab !== "users") return;
-    const interval = setInterval(() => loadUsers(true), 10000);
+    const interval = setInterval(() => loadUsers(showPasswords, true), 10000);
     return () => clearInterval(interval);
-  }, [tab, loadUsers]);
+  }, [tab, loadUsers, showPasswords]);
 
-... [TRUNCATED] ...
+  // ── Users ──────────────────────────────────────────────────────────────────
+  const adjustBalance = async (userId: string, amount: number) => {
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/balance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ delta: amount }),
+        credentials: "include"
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Saldo ${amount > 0 ? "adicionado" : "removido"} com sucesso`);
+        loadUsers(showPasswords);
+      } else {
+        toast.error(data.error || "Erro ao ajustar saldo");
+      }
+    } catch (err: any) {
+      toast.error("Erro ao conectar ao servidor");
+    }
+  };
+
+  const submitBalanceAdjustment = async () => {
+    if (!balanceModalUser) return;
+    const parsedValue = parseFloat(balanceModalValue || "0");
+    if (!(parsedValue > 0)) {
+      toast.error("Informe um valor válido");
+      return;
+    }
+
+    setSavingBalance(true);
+    try {
+      const delta = Math.round(parsedValue * 100) * (balanceModalType === "debit" ? -1 : 1);
+      await adjustBalance(balanceModalUser.id, delta);
+      setBalanceModalUser(null);
+      setBalanceModalValue("");
+      setBalanceModalType("credit");
+    } finally {
+      setSavingBalance(false);
+    }
+  };
 
   const toggleUserRole = async (u: UserRow) => {
     const nextRole = u.role === "admin" ? "user" : "admin";
@@ -312,7 +681,7 @@ export default function AdminDashboard() {
       const data = await res.json();
       if (data.success) {
         toast.success(`Perfil alterado para ${nextRole === "admin" ? "Administrador" : "Usuário"}`);
-        loadUsers();
+        loadUsers(showPasswords);
       } else {
         toast.error(data.error || "Erro ao alterar perfil");
       }
@@ -321,8 +690,77 @@ export default function AdminDashboard() {
     }
   };
 
-... [TRUNCATED] ...
+  const linkManualReferral = async () => {
+    if (!linkReferrerId || !linkReferredId) {
+      toast.error("Selecione o indicador e o indicado");
+      return;
+    }
+    setLinking(true);
+    try {
+      const res = await fetch("/api/admin/referral", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          action: "link_manual", 
+          referrer_id: linkReferrerId, 
+          referred_id: linkReferredId 
+        }),
+        credentials: "include"
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Vínculo de indicação criado com sucesso");
+        setShowLinkModal(false);
+        setLinkReferrerId("");
+        setLinkReferredId("");
+        if (tab === "referral") loadReferral();
+      } else {
+        toast.error(data.error || "Erro ao criar vínculo");
+      }
+    } catch (err: any) {
+      toast.error("Erro ao conectar ao servidor");
+    } finally {
+      setLinking(false);
+    }
+  };
 
+  const toggleUserActive = async (userId: string, current: boolean) => {
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/toggle`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(current ? "Usuário desativado" : "Usuário ativado");
+        loadUsers();
+      }
+    } catch { toast.error("Erro de conexão"); }
+  };
+
+  const deleteUser = async (user: UserRow) => {
+    setHardDeleteUser(user);
+    setHardDeleteConfirmChecked(false);
+    setHardDeleteConfirmText("");
+  };
+
+  const openUserDetail = async (u: UserRow) => {
+    setSelectedUser(u);
+    setUserDetailOpen(true);
+    try {
+      const res = await fetch(`/api/admin/users/${u.id}/history`, { credentials: "include" });
+      const data = await res.json();
+      if (data.success) {
+        setUserHistory(data.history || []);
+        setUserDetails(data.details || null);
+      }
+    } catch {
+      setUserHistory([]);
+      setUserDetails(null);
+    }
+  };
+
+  // ── Create User ───────────────────────────────────────────────────────────────────────
   const createUser = async () => {
     if (!newUsername || !newPassword) { toast.error("Username e senha são obrigatórios"); return; }
     if (newPassword.length < 4) { toast.error("Senha deve ter no mínimo 4 caracteres"); return; }
@@ -368,7 +806,8 @@ export default function AdminDashboard() {
       if (data.success) {
         toast.success(`Senha de ${changePwUsername} alterada com sucesso!`);
         setChangePwUserId(null); setChangePwUsername(""); setChangePwValue("");
-        loadUsers();
+        // Reload users to reflect new plain_password if passwords are visible
+        loadUsers(showPasswords);
       } else {
         toast.error(data.error || "Erro ao alterar senha");
       }
@@ -765,7 +1204,8 @@ export default function AdminDashboard() {
     return textMatch && dateMatch;
   });
 
-  const totalBalance = users.reduce((sum, u) => sum + (u.balance || 0), 0);
+   const totalBalance = users.reduce((sum, u) => sum + (u.balance || 0), 0);
+  const activeUsers = users.filter(u => u.is_active).length;
 
   // Verificar permissão admin (após todos os hooks)
   if (!isAdmin) {
@@ -776,7 +1216,7 @@ export default function AdminDashboard() {
   return (
     <DashboardLayout>
       <div className="p-7 max-w-7xl mx-auto">
-        {/* Header Elite */}
+        {/* Header */}
         <div className="flex flex-wrap items-center gap-5 mb-8 animate-in fade-in duration-700">
           <div className="w-16 h-16 rounded-2xl bg-white dark:bg-gray-900 shadow-xl flex items-center justify-center overflow-hidden border border-gray-100 dark:border-gray-800 group hover:scale-105 transition-transform duration-500">
             <img src="/assets/logo-elite-dm.png" alt="DocMaster Elite" className="w-12 h-12 object-contain" />
@@ -815,7 +1255,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Tabs Modernas */}
+        {/* Tabs */}
         <div className="flex gap-2 flex-nowrap overflow-x-auto pb-2 mb-8 bg-gray-100/50 dark:bg-gray-800/50 p-1.5 rounded-2xl backdrop-blur-sm border border-gray-100 dark:border-gray-800 no-scrollbar">
           {TABS.map(t => {
             const Icon = t.icon;
@@ -832,219 +1272,59 @@ export default function AdminDashboard() {
               >
                 <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-gray-400"}`} />
                 <span className="whitespace-nowrap">{t.label}</span>
+                {t.key === "monitoring" && onlineCount > 0 && (
+                  <span className={`ml-1 w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-bold ${isActive ? "bg-white text-red-600" : "bg-red-600 text-white"}`}>
+                    {onlineCount}
+                  </span>
+                )}
               </button>
             );
           })}
         </div>
 
-        {/* Tab Content with Fluid Navigation */}
-        <div className="relative min-h-[500px]">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={tab}
-              initial={{ opacity: 0, x: 20, filter: "blur(4px)" }}
-              animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, x: -20, filter: "blur(4px)" }}
-              transition={{ duration: 0.25, ease: "easeInOut" }}
-            >
-              {/* ── USERS TAB ── */}
-              {tab === "users" && (
-                <div>
-                  <div className="flex items-center gap-3 mb-6 flex-wrap">
-                    <div className="relative flex-1 min-w-[300px]">
-                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input
-                        type="text"
-                        placeholder="Pesquisar por username, email ou ID..."
-                        value={userSearch}
-                        onChange={e => setUserSearch(e.target.value)}
-                        className="w-full pl-11 pr-4 py-3 text-sm rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all shadow-sm"
-                      />
-                    </div>
-                    <select
-                      value={userRoleFilter}
-                      onChange={e => setUserRoleFilter(e.target.value)}
-                      className="px-4 py-3 text-sm rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-all shadow-sm cursor-pointer"
-                    >
-                      <option value="all">Todos os perfis</option>
-                      <option value="user">Apenas Usuários</option>
-                      <option value="admin">Administradores</option>
-                    </select>
-                    <button onClick={() => setShowCreateUser(!showCreateUser)} className="flex items-center gap-2 px-6 py-3 text-sm font-black uppercase tracking-widest rounded-2xl bg-red-600 hover:bg-red-700 text-white transition-all shadow-lg shadow-red-900/20 active:scale-95">
-                      <UserPlus className="w-4 h-4" /> Novo Usuário
-                    </button>
-                  </div>
-
-                  {loading ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="animate-spin w-6 h-6 border-2 border-red-500 border-t-transparent rounded-full" />
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {filteredUsers.map(u => (
-                        <div key={u.id} className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 p-5 hover:shadow-lg hover:border-red-100 dark:hover:border-red-900/30 transition-all duration-300 group">
-                          <div className="flex flex-wrap items-center justify-between gap-5">
-                            <div className="flex items-center gap-4">
-                              <div className="relative">
-                                <div className="w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center overflow-hidden border-2 border-white dark:border-gray-800 shadow-sm flex-shrink-0 group-hover:scale-105 transition-transform duration-500">
-                                  {u.profile_photo ? (
-                                    <img src={u.profile_photo} alt={u.username} className="w-full h-full object-cover" />
-                                  ) : (
-                                    <span className="text-xl font-black text-red-600 dark:text-red-500">
-                                      {u.username.charAt(0).toUpperCase()}
-                                    </span>
-                                  )}
-                                </div>
-                                {presence.find(p => String(p.user_id) === String(u.id) && p.is_online) && (
-                                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-2 border-white dark:border-gray-900 animate-pulse shadow-sm" />
-                                )}
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-2 flex-wrap mb-1">
-                                  <p className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight group-hover:text-red-600 transition-colors">{u.username}</p>
-                                  <span className={`text-[9px] px-2 py-0.5 rounded-lg font-black uppercase tracking-widest ${
-                                    u.role === "admin"
-                                      ? "bg-red-600 text-white shadow-md shadow-red-900/20"
-                                      : "bg-gray-100 dark:bg-gray-800 text-gray-500"
-                                  }`}>
-                                    {u.role === "admin" ? "Master" : "Operador"}
-                                  </span>
-                                  <span className={`text-[9px] px-2 py-0.5 rounded-lg font-black uppercase tracking-widest border ${
-                                    u.is_active
-                                      ? "bg-emerald-50 border-emerald-100 text-emerald-600"
-                                      : "bg-red-50 border-red-100 text-red-600"
-                                  }`}>
-                                    {u.is_active ? "Ativo" : "Bloqueado"}
-                                  </span>
-                                </div>
-                                <p className="text-xs font-medium text-gray-400 dark:text-gray-500">{u.email || "Sem email cadastrado"}</p>
-                              </div>
-                            </div>
-
-                            <div className="flex flex-col items-end gap-3 ml-auto">
-                              <div className="text-right">
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Saldo Disponível</p>
-                                <p className="text-2xl font-black text-emerald-600 dark:text-emerald-500 tabular-nums">
-                                  R$ {(u.balance / 100).toFixed(2).replace(".", ",")}
-                                </p>
-                              </div>
-                              <div className="flex flex-wrap items-center justify-end gap-1.5">
-                                <button
-                                  onClick={() => { setBalanceModalUser(u); setBalanceModalValue(""); setBalanceModalType("credit"); }}
-                                  className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all active:scale-95 border border-emerald-100 dark:border-emerald-900/30 shadow-sm"
-                                  title="Ajustar saldo"
-                                >
-                                  <Wallet className="w-3.5 h-3.5" />
-                                  Saldo
-                                </button>
-                                
-                                <div className="flex items-center gap-1 bg-gray-50 dark:bg-gray-800/50 p-1 rounded-xl border border-gray-100 dark:border-gray-800">
-                                  <button
-                                    onClick={() => openUserDetail(u)}
-                                    className="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all active:scale-90"
-                                    title="Ver detalhes"
-                                  >
-                                    <Eye className="w-4 h-4" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleOpenPermissions(u)}
-                                    className="p-2 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all active:scale-90"
-                                    title="Permissões ACL"
-                                  >
-                                    <Shield className="w-4 h-4" />
-                                  </button>
-                                  <button
-                                    onClick={() => { setChangePwUserId(String(u.id)); setChangePwUsername(u.username); setChangePwValue(""); }}
-                                    className="p-2 rounded-lg text-gray-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-all active:scale-90"
-                                    title="Resetar Senha"
-                                  >
-                                    <RefreshCw className="w-4 h-4" />
-                                  </button>
-                                  <button
-                                    onClick={() => toggleUserActive(u.id, !!u.is_active)}
-                                    className={`p-2 rounded-lg transition-all active:scale-90 ${u.is_active ? "text-emerald-500 hover:bg-emerald-50" : "text-gray-400 hover:text-red-600 hover:bg-red-50"}`}
-                                    title={u.is_active ? "Bloquear" : "Ativar"}
-                                  >
-                                    {u.is_active ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
-                                  </button>
-                                </div>
-                                <button
-                                  onClick={() => deleteUser(u)}
-                                  className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all active:scale-90 border border-red-100"
-                                  title="Remover Operador"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* ── MONITORING TAB ── */}
-              {tab === "monitoring" && (
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-                      <Monitor className="w-5 h-5" />
-                      Monitoramento em Tempo Real
-                    </h2>
-                    <button onClick={loadPresence} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors">
-                      <RefreshCw className="w-4 h-4" />
-                    </button>
-                  </div>
-                  {/* ... Monitoring Content ... */}
-                </div>
-              )}
-
-              {/* ── PRICING TAB ── */}
-              {tab === "pricing" && (
-                <div>
-                  {/* ... Pricing Content ... */}
-                </div>
-              )}
-
-              {/* ── NOTICES TAB ── */}
-              {tab === "notices" && (
-                <div>
-                  {/* ... Notices Content ... */}
-                </div>
-              )}
-
-              {/* ── LOGS TAB ── */}
-              {tab === "logs" && (
-                <div>
-                  {/* ... Logs Content ... */}
-                </div>
-              )}
-
-              {/* ── EMISSIONS TAB ── */}
-              {tab === "emissions" && (
-                <div>
-                  {/* ... Emissions Content ... */}
-                </div>
-              )}
-
-              {/* ── REFERRAL TAB ── */}
-              {tab === "referral" && (
-                <div>
-                  {/* ... Referral Content ... */}
-                </div>
-              )}
-
-              {/* ── SETTINGS TAB ── */}
-              {tab === "settings" && (
-                <div>
-                  {/* ... Settings Content ... */}
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
+        {/* ── USERS TAB ── */}
+        {tab === "users" && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+	            <div className="flex items-center gap-3 mb-6 flex-wrap">
+	              <div className="relative flex-1 min-w-[300px]">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Pesquisar por username, email ou ID..."
+                  value={userSearch}
+                  onChange={e => setUserSearch(e.target.value)}
+	                  className="w-full pl-11 pr-4 py-3 text-sm rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all shadow-sm"
+	                />
+	              </div>
+	              <select
+	                value={userRoleFilter}
+	                onChange={e => setUserRoleFilter(e.target.value)}
+	                className="px-4 py-3 text-sm rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-all shadow-sm cursor-pointer"
+	              >
+	                <option value="all">Todos os perfis</option>
+	                <option value="user">Apenas Usuários</option>
+	                <option value="admin">Administradores</option>
+	              </select>
+              <button
+                onClick={() => {
+                const next = !showPasswords;
+                setShowPasswords(next);
+                loadUsers(next);
+              }}
+                className={`flex items-center gap-2 px-5 py-3 text-sm font-black uppercase tracking-widest rounded-2xl transition-all shadow-sm active:scale-95 ${
+                  showPasswords
+                    ? "bg-purple-600 text-white shadow-purple-900/20"
+                    : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-100 dark:border-gray-800 hover:bg-gray-50"
+                }`}
+                title={showPasswords ? "Ocultar senhas" : "Ver senhas"}
+              >
+                {showPasswords ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                <span className="hidden lg:inline">{showPasswords ? "Privacidade" : "Ver Senhas"}</span>
+              </button>
+              <button onClick={() => setShowCreateUser(!showCreateUser)} className="flex items-center gap-2 px-6 py-3 text-sm font-black uppercase tracking-widest rounded-2xl bg-red-600 hover:bg-red-700 text-white transition-all shadow-lg shadow-red-900/20 active:scale-95">
+                <UserPlus className="w-4 h-4" /> Novo Usuário
+              </button>
+            </div>
 
             {/* Formulário Criar Usuário */}
             {showCreateUser && (
