@@ -111,7 +111,6 @@ const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "logs", label: "Logs", icon: Activity },
   { key: "emissions", label: "Emissões", icon: FileText },
   { key: "referral", label: "Indicações", icon: Gift },
-  { key: "database", label: "Banco de Dados", icon: Database },
   { key: "settings", label: "Configurações", icon: Settings },
 ];
 
@@ -194,7 +193,7 @@ export default function AdminDashboard() {
 
   const savePermissions = async () => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       const res = await fetch("/api/admin/users", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -206,8 +205,14 @@ export default function AdminDashboard() {
         }),
       });
 
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("Save permissions error:", errorText);
+        throw new Error(`Erro HTTP ${res.status}`);
+      }
+
       const data = await res.json();
-      if (res.ok && data.success) {
+      if (data.success) {
         toast.success("Acessos liberados com sucesso!");
         // Atualizar estado local
         setUsers(prev => prev.map(u => u.id === aclSelectedUser.id ? { 
@@ -219,11 +224,22 @@ export default function AdminDashboard() {
       } else {
         toast.error(data.error || "Erro ao salvar permissões.");
       }
-    } catch {
-      toast.error("Erro de conexão ao salvar.");
+    } catch (err: any) {
+      console.error("Save permissions exception:", err);
+      toast.error(`Falha ao salvar: ${err.message || "Erro de conexão"}`);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
+  };
+
+  const selectAllDocs = (selected: boolean) => {
+    const all = ["atestado", "cnh", "cha", "toxicologico", "toxicria", "laudocria", "receita", "historico-sp", "historicocria", "diploma-uninter"];
+    setUserPermissions({ ...userPermissions, editaveis: selected ? all : [] });
+  };
+
+  const selectAllTools = (selected: boolean) => {
+    const all = ["bot-adv", "peticao-stj"];
+    setUserPermissions({ ...userPermissions, ferramentas: selected ? all : [] });
   };
   const [hardDeleteUser, setHardDeleteUser] = useState<UserRow | null>(null);
   const [hardDeleteConfirmChecked, setHardDeleteConfirmChecked] = useState(false);
@@ -3116,7 +3132,13 @@ export default function AdminDashboard() {
 
 	            <div className="space-y-6">
 	              <div>
-	                <h4 className="text-[10px] font-black text-indigo-900 dark:text-indigo-400 uppercase tracking-widest mb-3">EDITÁVEIS (Documentos Gerais)</h4>
+                  <div className="flex items-center justify-between mb-3">
+	                  <h4 className="text-[10px] font-black text-indigo-900 dark:text-indigo-400 uppercase tracking-widest">EDITÁVEIS (Documentos Gerais)</h4>
+                    <div className="flex gap-2">
+                      <button onClick={() => selectAllDocs(true)} className="text-[9px] font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-tighter bg-indigo-50 px-2 py-0.5 rounded-md">Selecionar Todos</button>
+                      <button onClick={() => selectAllDocs(false)} className="text-[9px] font-black text-gray-400 hover:text-gray-600 uppercase tracking-tighter bg-gray-50 px-2 py-0.5 rounded-md">Limpar</button>
+                    </div>
+                  </div>
 	                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
 	                  {["atestado", "cnh", "cha", "toxicologico", "toxicria", "laudocria", "receita", "historico-sp", "historicocria", "diploma-uninter"].map(doc => (
 	                    <label key={doc} className="flex items-center gap-2 p-3 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 cursor-pointer hover:border-indigo-300 transition-all">
@@ -3138,7 +3160,13 @@ export default function AdminDashboard() {
 	              </div>
 
 	              <div>
-	                <h4 className="text-[10px] font-black text-emerald-900 dark:text-emerald-400 uppercase tracking-widest mb-3">FERRAMENTAS (Módulos)</h4>
+                  <div className="flex items-center justify-between mb-3">
+	                  <h4 className="text-[10px] font-black text-emerald-900 dark:text-emerald-400 uppercase tracking-widest">FERRAMENTAS (Módulos)</h4>
+                    <div className="flex gap-2">
+                      <button onClick={() => selectAllTools(true)} className="text-[9px] font-black text-emerald-600 hover:text-emerald-800 uppercase tracking-tighter bg-emerald-50 px-2 py-0.5 rounded-md">Selecionar Todos</button>
+                      <button onClick={() => selectAllTools(false)} className="text-[9px] font-black text-gray-400 hover:text-gray-600 uppercase tracking-tighter bg-gray-50 px-2 py-0.5 rounded-md">Limpar</button>
+                    </div>
+                  </div>
 	                <div className="grid grid-cols-2 gap-2">
 	                  {["bot-adv", "peticao-stj"].map(tool => (
 	                    <label key={tool} className="flex items-center gap-2 p-3 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 cursor-pointer hover:border-emerald-300 transition-all">
