@@ -152,7 +152,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
 
         <div style={{ 
           ...textStyle, 
-          top: MARGIN_TOP + 323.2, 
+          top: MARGIN_TOP + 346.8, 
           left: MARGIN_LEFT_BODY, 
           borderBottom: "1px solid #000", 
           paddingBottom: "3.78px", // 1mm de espaçamento conforme solicitado
@@ -164,12 +164,12 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={valueStyle}>{data.contra?.toUpperCase() || ""}</span>
         </div>
 
-        {/* Bloco de Decisão (SUBIDO 3 ESPAÇAMENTOS ≈ -36px) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 380.2, left: MARGIN_LEFT_BODY }}>
+        {/* Bloco de Decisão (DESCIDO 2% ≈ +23.6px) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 403.8, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Assunto:</span>
           <span style={valueStyle}>Decisão Favorável</span>
         </div>
-        <div style={{ ...textStyle, top: MARGIN_TOP + 405.2, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 428.8, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Situação:</span>
           <span style={{ ...valueStyle, color: "#000" }}>AUTORIZADO</span>
         </div>
@@ -199,7 +199,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
 
         {/* Data Formatada (SUBIDO 1 LINHA ≈ -24px e REDUZIDO 2%) */}
         <div style={{ ...textStyle, top: MARGIN_TOP + 715.4, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "13.72pt" }}>
-          {formatLongDate(data.data)}
+          {formatLongDate(data.data)}.
         </div>
 
         {/* ─── Rodapé (SUBIDO 1% ≈ +11.8px bottom) ─── */}
