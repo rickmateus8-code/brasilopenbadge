@@ -439,13 +439,6 @@ export default function AtestadoEditar() {
   const [logoRightX, setLogoRightX] = useState<number>(0);
   const [logoRightY, setLogoRightY] = useState<number>(0);
 
-  // ── Ajuste do Carimbo ──────────────────────────────────────────────────────
-  const [stampScale, setStampScale] = useState<number>(1);
-  const [stampX, setStampX] = useState<number>(0);
-  const [stampY, setStampY] = useState<number>(0);
-  const [stampRotate, setStampRotate] = useState<number>(0);
-  const [hideQRCode, setHideQRCode] = useState<boolean>(false);
-
   // helpers de ajuste
   const SCALE_STEP = 0.05;
   const POS_STEP = 2;
@@ -467,9 +460,27 @@ export default function AtestadoEditar() {
   };
 
   // ── Assinatura ─────────────────────────────────────────────────────────────
-  const [signatureColor, setSignatureColor] = useState<string>("#0b109f");
+  const [signatureColor, setSignatureColor] = useState<string>("#000000");
   const [signatureImage, setSignatureImage] = useState<string>("");
   const signatureRef = useRef<HTMLInputElement>(null);
+
+  // ── Carimbo Interativo Elite 2.0 ───────────────────────────────────────────
+  const [stampScale, setStampScale] = useState<number>(1);
+  const [stampX, setStampX] = useState<number>(173); // Fixo Padrão
+  const [stampY, setStampY] = useState<number>(-120); // Fixo Padrão
+  const [stampRotate, setStampRotate] = useState<number>(-3);
+  const [hideQRCode, setHideQRCode] = useState<boolean>(false);
+  const [showStampInfo, setShowStampInfo] = useState<boolean>(true);
+
+  const resetStampTransform = () => {
+    setStampScale(1);
+    setStampX(173);
+    setStampY(-120);
+    setStampRotate(-3);
+  };
+
+  const STAMP_POS_STEP = 8;
+  const STAMP_ROTATE_STEP = 1;
 
   // ── Tipo de documento do paciente ──────────────────────────────────────────
   const [tipoDoc, setTipoDoc] = useState<"CPF" | "CNS">("CPF");
@@ -623,14 +634,15 @@ export default function AtestadoEditar() {
         setLogoLeftY(typeof d.logo_left_y === "number" ? d.logo_left_y : 0);
         setLogoRightX(typeof d.logo_right_x === "number" ? d.logo_right_x : 0);
         setLogoRightY(typeof d.logo_right_y === "number" ? d.logo_right_y : 0);
-        setSignatureColor(d.signature_color || d.signatureColor || "#0b109f");
+        setSignatureColor(d.signature_color || d.signatureColor || "#000000");
         setSignatureImage(d.signature_image || d.signatureImage || "");
-        setDocumentType(loadedDocumentType);
-        setStampScale(typeof d.stamp_scale === "number" ? d.stamp_scale : (typeof d.stampScale === "number" ? d.stampScale : 1));
-        setStampX(typeof d.stamp_x === "number" ? d.stamp_x : (typeof d.stampX === "number" ? d.stampX : 0));
-        setStampY(typeof d.stamp_y === "number" ? d.stamp_y : (typeof d.stampY === "number" ? d.stampY : 0));
-        setStampRotate(typeof d.stamp_rotate === "number" ? d.stamp_rotate : (typeof d.stampRotate === "number" ? d.stampRotate : 0));
+        setStampScale(typeof d.stamp_scale === "number" ? d.stamp_scale : 1);
+        setStampX(typeof d.stamp_x === "number" ? d.stamp_x : 173);
+        setStampY(typeof d.stamp_y === "number" ? d.stamp_y : -120);
+        setStampRotate(typeof d.stamp_rotate === "number" ? d.stamp_rotate : -3);
         setHideQRCode(d.hide_qr_code === 1 || d.hideQRCode === true);
+        setShowStampInfo(d.show_stamp_info !== 0 && d.showStampInfo !== false);
+        setDocumentType(loadedDocumentType);
         setShowEditar(true);
         setForm({
           instituicao: d.instituicao || "",
@@ -1312,6 +1324,12 @@ export default function AtestadoEditar() {
         logoLeftY,
         logoRightX,
         logoRightY,
+        stampScale,
+        stampX,
+        stampY,
+        stampRotate,
+        hideQRCode,
+        showStampInfo,
         documentType,
       };
 
@@ -1392,6 +1410,12 @@ export default function AtestadoEditar() {
         logoLeftY,
         logoRightX,
         logoRightY,
+        stampScale,
+        stampX,
+        stampY,
+        stampRotate,
+        hideQRCode,
+        showStampInfo,
         documentType,
       };
 
@@ -2380,7 +2404,7 @@ export default function AtestadoEditar() {
                 </div>
 
                 {/* Modo Carimbo */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "8px 0" }} onClick={() => handleFocusSection("footer")}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0" }} onClick={() => handleFocusSection("footer")}>
                   <label style={{ ...lbl, margin: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
                     <input
                       type="checkbox"
@@ -2388,59 +2412,8 @@ export default function AtestadoEditar() {
                       onChange={(e) => setForm(p => ({ ...p, modoCarimbo: e.target.checked }))}
                       style={{ width: 16, height: 16 }}
                     />
-                    Modo Carimbo (Elite 2.0)
+                    Modo Carimbo (rodapé com assinatura cursiva)
                   </label>
-
-                  {form.modoCarimbo && (
-                    <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 12, background: "#f8fafc" }}>
-                      <p style={{ fontSize: 11, fontWeight: 700, color: "#005CA9", marginBottom: 10, display: "flex", alignItems: "center", gap: 4 }}>
-                        🎮 AJUSTE DO CARIMBO
-                      </p>
-
-                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                        {/* Toggle Ocultar QR Code */}
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <input
-                            type="checkbox"
-                            id="hide-qrcode"
-                            checked={hideQRCode}
-                            onChange={(e) => setHideQRCode(e.target.checked)}
-                            style={{ width: 14, height: 14 }}
-                          />
-                          <label htmlFor="hide-qrcode" style={{ fontSize: 11, fontWeight: 600, color: "#374151", cursor: "pointer" }}>
-                            Ocultar QR Code (Rodapé Digital)
-                          </label>
-                        </div>
-
-                        {/* Controles de Escala */}
-                        <div style={{ display: "flex", gap: 6 }}>
-                          <button type="button" onClick={() => setStampScale(v => Math.max(0.1, v + 0.05))} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>🔍+ ZOOM</button>
-                          <button type="button" onClick={() => setStampScale(v => Math.max(0.1, v - 0.05))} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>🔍- ZOOM</button>
-                        </div>
-
-                        {/* Controles de Rotação */}
-                        <div style={{ display: "flex", gap: 6 }}>
-                          <button type="button" onClick={() => setStampRotate(v => v - 1)} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>↺ GIRAR</button>
-                          <button type="button" onClick={() => setStampRotate(v => v + 1)} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>↻ GIRAR</button>
-                        </div>
-
-                        {/* Controles de Posição (Setas) */}
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, width: "100%", maxWidth: 180, margin: "0 auto" }}>
-                          <div />
-                          <button type="button" onClick={() => setStampY(v => v - 2)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▲</button>
-                          <div />
-                          
-                          <button type="button" onClick={() => setStampX(v => v - 2)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>◀</button>
-                          <button type="button" onClick={() => { setStampScale(1); setStampX(0); setStampY(0); setStampRotate(0); }} style={{ ...btnGray, padding: "6px 0", fontSize: 9, display: "flex", alignItems: "center", justifyContent: "center" }}>RESET</button>
-                          <button type="button" onClick={() => setStampX(v => v + 2)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▶</button>
-                          
-                          <div />
-                          <button type="button" onClick={() => setStampY(v => v + 2)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▼</button>
-                          <div />
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -2755,6 +2728,7 @@ export default function AtestadoEditar() {
                 stampY={stampY}
                 stampRotate={stampRotate}
                 hideQRCode={hideQRCode}
+                showStampInfo={showStampInfo}
               />
             </div>
           </div>

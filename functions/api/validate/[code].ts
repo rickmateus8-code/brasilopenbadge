@@ -51,7 +51,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         a.cidade, a.instituicao, a.unidade, a.endereco_emitente,
         a.logo_url, a.logo_right, a.signature_color, a.signature_image, a.modo_carimbo,
         a.logo_left_scale, a.logo_right_scale, a.logo_left_x, a.logo_left_y, a.logo_right_x, a.logo_right_y,
-        a.stamp_scale, a.stamp_x, a.stamp_y, a.stamp_rotate, a.hide_qr_code, a.show_stamp_info,
         a.document_type, a.status, a.created_at,
         u.username as emitido_por
        FROM attestations a
@@ -109,12 +108,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         logoLeftY: attestation.logo_left_y ?? 0,
         logoRightX: attestation.logo_right_x ?? 0,
         logoRightY: attestation.logo_right_y ?? 0,
-        stampScale: attestation.stamp_scale ?? 1.0,
-        stampX: attestation.stamp_x ?? 0,
-        stampY: attestation.stamp_y ?? 0,
-        stampRotate: attestation.stamp_rotate ?? 0,
-        hideQRCode: attestation.hide_qr_code === 1,
-        showStampInfo: attestation.show_stamp_info !== 0,
         status: attestation.status,
         emitidoPor: attestation.emitido_por,
         createdAt: attestation.created_at,

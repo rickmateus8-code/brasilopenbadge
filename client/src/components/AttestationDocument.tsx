@@ -39,16 +39,7 @@ interface AttestationDocumentProps {
   logoLeftY?: number;
   logoRightX?: number;
   logoRightY?: number;
-  stampScale?: number;
-  stampX?: number;
-  stampY?: number;
-  stampRotate?: number;
-  hideQRCode?: boolean;
-  showStampInfo?: boolean;
 }
-
-// Rabisco Realista Padrão (PNG Transparente)
-const DEFAULT_RABISCO = "/assets/rabisco_padrao.png";
 
 // Gerar rubrica cursiva a partir do nome do médico
 function gerarRubrica(nome: string): string {
@@ -68,12 +59,9 @@ const DOC_WIDTH_PX = 794;
 const DOC_HEIGHT_PX = 1123;
 const PAD_H = 56;  // ~15mm top/bottom
 const PAD_V = 60;  // ~16mm left/right
+
 const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>(
-  ({ 
-    data, logoUrl, logoLeft, logoRight, signatureColor, signatureImage, documentType, 
-    logoLeftScale = 1, logoRightScale = 1, logoLeftX = 0, logoLeftY = 0, logoRightX = 0, logoRightY = 0,
-    stampScale = 1, stampX = 5, stampY = -8, stampRotate = -3, hideQRCode = false, showStampInfo = true
-  }, ref) => {
+  ({ data, logoUrl, logoLeft, logoRight, signatureColor, signatureImage, documentType, logoLeftScale = 1, logoRightScale = 1, logoLeftX = 0, logoLeftY = 0, logoRightX = 0, logoRightY = 0 }, ref) => {
     const isEmitted = data.codigoQR && data.codigoQR !== "XXXX.XXXX";
     // QR Code aponta para validaratestado.digital/validar?codigo=XXXX&data=YYYY-MM-DD
     // A data no banco está em DD/MM/YYYY — converte para YYYY-MM-DD para o parâmetro da URL
@@ -112,7 +100,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const instituicao = (data as any).instituicao || "";
     const unidade = (data as any).unidade || "";
     const enderecoEmitente = (data as any).enderecoEmitente || (data as any).endereco_emitente || "";
-    const corAssinatura = signatureColor || (data as any).signatureColor || (data as any).signature_color || "#000000";
+    const corAssinatura = signatureColor || (data as any).signatureColor || (data as any).signature_color || "#0b109f";
     const fotoAssinatura = signatureImage || (data as any).signatureImage || (data as any).signature_image || "";
     const textoAtestado = (data as any).textoAtestado || (data as any).texto_atestado || "";
     const cidDisplay = (data as any).cidDisplay || (data as any).cid_display || data.cid || "";
@@ -122,8 +110,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
     // Extrair parâmetros de layout do objeto data (para sincronia com validador)
     const sScale = stampScale ?? (data as any).stampScale ?? (data as any).stamp_scale ?? 1;
-    const sX = stampX ?? (data as any).stampX ?? (data as any).stamp_x ?? 5;
-    const sY = stampY ?? (data as any).stampY ?? (data as any).stamp_y ?? -8;
+    const sX = stampX ?? (data as any).stampX ?? (data as any).stamp_x ?? 173; // Fixo Padrão
+    const sY = stampY ?? (data as any).stampY ?? (data as any).stamp_y ?? -120; // Fixo Padrão (Acima do rodapé)
     const sRotate = stampRotate ?? (data as any).stampRotate ?? (data as any).stamp_rotate ?? -3;
     const hQRCode = hideQRCode || (data as any).hideQRCode || (data as any).hide_qr_code === 1;
     const sStampInfo = showStampInfo && ((data as any).showStampInfo !== false && (data as any).show_stamp_info !== 0);
@@ -430,7 +418,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         </div>
 
         {/* ===== RODAPÉ DIGITAL ===== */}
-        {(!hideQRCode) && (
+        {!hQRCode && (
           <div id="preview-footer" style={{
             marginTop: modoCarimbo ? 20 : "auto",
             position: "relative",
@@ -457,7 +445,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               paddingLeft: 0,
               paddingRight: 0,
             }}>
-              {/* Esquerda: cidade/data + URL validação */}
+              {/* Esquerda: cidade/data + URL validação — AJUSTADO PARA ALINHAMENTO NA BASE DA MOLDURA */}
               <div style={{ 
                 color: "#000", 
                 lineHeight: 1.2, 
@@ -465,13 +453,13 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 flexShrink: 0, 
                 display: "flex", 
                 flexDirection: "column", 
-                justifyContent: "flex-end", 
+                justifyContent: "flex-end", // Alinhado ao limite inferior (base da moldura)
                 marginRight: "auto", 
                 height: 111, 
                 boxSizing: "border-box", 
                 paddingLeft: 2,
-                paddingBottom: 4, 
-                overflow: "visible", 
+                paddingBottom: 4, // Modificado de 2 para 4 para não cortar letras como 'g'
+                overflow: "visible", // Permitir que descendentes fiquem perfeitamente legíveis
                 gap: 3, 
               }}>
                 <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.21, marginBottom: 0 }}>
@@ -501,7 +489,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 marginLeft: "auto",
                 marginRight: 0,
               }}>
-                {/* Coluna esquerda: QR centralizado */}
+                {/* Coluna esquerda: QR centralizado | padding 6px left/right, 19px top/bottom */}
                 <div style={{ width: 108, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "19px 6px" }}>
                   {isEmitted ? (
                     <QRCode
@@ -529,7 +517,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                     </div>
                   )}
                 </div>
-                {/* Coluna direita: texto médico alinhado à DIREITA */}
+                {/* Coluna direita: texto médico alinhado à DIREITA, centralizado verticalmente */}
                 <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "center", textAlign: "right", lineHeight: 1.2, color: "#000", paddingRight: 10 }}>
                   <div style={{ fontSize: 9.5, fontWeight: 400, whiteSpace: "nowrap" }}>Documento assinado digitalmente conforme MP nº 2.200-2</div>
                   <strong style={{ fontWeight: 700, fontSize: 11.2, textTransform: "uppercase", display: "block" }}>
@@ -546,34 +534,65 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </div>
         )}
 
-        {/* ===== RODAPÉ DE SISTEMA (MODO FÍSICO) ===== */}
-        {hideQRCode && (
+        {/* ===== RODAPÉ DE SISTEMA (MODO FÍSICO / QR OCULTO) ===== */}
+        {hQRCode && (
           <div style={{
             marginTop: "auto",
             width: "100%",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            padding: "0 20px", // Margens laterais para a linha
             position: "relative",
             zIndex: 2,
             flexShrink: 0,
+            paddingBottom: 0,
           }}>
-            <div style={{ borderTop: "2px solid #000", width: "100%", marginBottom: 4 }} />
+            {/* Data FIXA no lado inferior DIREITO (X: 253px, Y: -128px) */}
+            {/* O X:253 e Y:-128 parecem ser coordenadas em relação à área total ou rodapé. 
+                Vou posicionar conforme solicitado pelo usuário. */}
             <div style={{
+              position: "absolute",
+              bottom: 128, 
+              right: 253,
+              fontSize: 12.5,
+              fontWeight: 700,
+              textTransform: "uppercase",
+              color: "#000",
+              fontFamily: "Arial, sans-serif",
+              cursor: "default",
+              zIndex: 5,
+            }}>
+              {dataFormatada || data.dataEmissao}
+            </div>
+
+            {/* Linha de Assinatura Centralizada (Aprox. 6 linhas acima das info de sistema) */}
+            <div style={{
+              textAlign: "center",
               width: "100%",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              fontSize: 9,
+              marginBottom: 48,
+              fontSize: 14,
               color: "#000",
               fontWeight: 400,
-              fontFamily: "Arial, sans-serif",
+              userSelect: "none",
             }}>
-              <div style={{ textTransform: "uppercase" }}>Gerado por {data.medico}</div>
+              ___________________________
+            </div>
+
+            {/* Informações de Sistema (Rodapé Estrito) */}
+            <div style={{ 
+              width: "100%", 
+              textAlign: "left", 
+              fontSize: 8.5, 
+              color: "#666", 
+              fontFamily: "monospace", 
+              lineHeight: 1.2,
+              opacity: 0.8,
+              paddingBottom: 10
+            }}>
+              <div>Gerado por {data.medico?.toUpperCase()}</div>
               <div>Versão.5.123.9.23129</div>
               <div>1/1</div>
-              <div>{data.dataAssinatura || data.dataEmissao} {data.horaAssinatura}</div>
+              <div>{data.dataAssinatura || data.dataEmissao} {data.horaAssinatura || "17:51"}</div>
             </div>
           </div>
         )}
@@ -589,16 +608,16 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               justifyContent: "center",
               width: 300,
               position: "absolute",
-              bottom: hQRCode ? 80 : 150, // Posição padrão centralizada
+              bottom: hQRCode ? 100 : 150, // Posição padrão acima do rodapé
               left: "50%",
               marginLeft: -150,
-              zIndex: 99, // Prioridade visual máxima conforme solicitado
+              zIndex: 99, 
               flexShrink: 0,
               transform: `scale(${sScale}) translate(${sX}px, ${sY}px) rotate(${sRotate}deg)`,
               transformOrigin: "center center",
               transition: "transform 0.05s ease-out",
-              pointerEvents: "auto", // Habilita Drag & Drop
-              cursor: "grab",
+              pointerEvents: "auto", 
+              cursor: "default", // Remover maozinha conforme solicitado
             }}
           >
             {/* Visual de Carimbo Estilo 'Dr. Antonio' (Sem Moldura) */}
@@ -609,21 +628,6 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               justifyContent: "center",
               position: "relative",
             }}>
-              {/* Data dentro do carimbo (APENAS se QR Code estiver OCULTO) */}
-              {hQRCode && (
-                <div style={{ 
-                  fontWeight: 700, 
-                  textTransform: "uppercase", 
-                  marginBottom: 8, 
-                  fontSize: 10,
-                  color: corAssinatura,
-                  opacity: 0.8,
-                  userSelect: "none",
-                }}>
-                  {dataFormatada || data.dataEmissao}
-                </div>
-              )}
-
               {/* Área do Rabisco / Assinatura (Sobreposta aos dados) */}
               <div style={{
                 position: "relative",
@@ -641,8 +645,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                     alt="Rabisco"
                     crossOrigin={getCrossOrigin(fotoAssinatura)}
                     style={{ 
-                      maxWidth: 273, // Aumentado em 5% (260 * 1.05)
-                      maxHeight: 89, // Aumentado em 5% (85 * 1.05)
+                      maxWidth: 273, 
+                      maxHeight: 89, 
                       objectFit: "contain", 
                       position: "absolute", 
                       zIndex: 3,
@@ -658,13 +662,13 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               {sStampInfo && (
                 <div style={{ 
                   textAlign: "center", 
-                  marginTop: -5, // Sobe um pouco para o rabisco sobrepor melhor
+                  marginTop: -5, 
                   color: corAssinatura,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   userSelect: "none",
-                  gap: 1.5, // Distância uniforme entre todas as linhas
+                  gap: 1.5, 
                 }}>
                   <div style={{ fontWeight: 700, fontSize: 12.23, textTransform: "uppercase", lineHeight: 1.0 }}>{data.medico}</div>
                   <div style={{ fontSize: 11, fontWeight: 600, lineHeight: 1.0 }}>{data.crm}</div>

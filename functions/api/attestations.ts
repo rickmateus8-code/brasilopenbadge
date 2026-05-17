@@ -30,22 +30,15 @@ async function getAuthUser(env: Env, token: string | null): Promise<any | null> 
   ).bind(token, now).first<{ user_id: string }>();
   if (!session) return null;
   const user = await env.DB.prepare(
-    "SELECT id, username, role, balance, is_active, free_documents FROM users WHERE id = ? AND is_active = 1 LIMIT 1"
+    "SELECT id, username, role, balance, is_active FROM users WHERE id = ? AND is_active = 1 LIMIT 1"
   ).bind(session.user_id).first<any>();
-  if (user && typeof user.free_documents === 'string') {
-    try {
-      user.free_documents = JSON.parse(user.free_documents);
-    } catch (_) {
-      user.free_documents = [];
-    }
-  }
   return user || null;
 }
 
 // ─── Gerador de código QR único ───────────────────────────────────────────────
 
 function generateCode(): string {
-  const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const chars = "0123456789";
   let code = "";
   const arr = new Uint8Array(8);
   crypto.getRandomValues(arr);
@@ -58,6 +51,7 @@ function generateCode(): string {
 async function generateUniqueCode(env: Env): Promise<string> {
   for (let attempt = 0; attempt < 10; attempt++) {
     const code = generateCode();
+    // Verifica em attestations E documents para garantir unicidade global
     const existsAtt = await env.DB.prepare(
       "SELECT id FROM attestations WHERE codigo_qr = ? LIMIT 1"
     ).bind(code).first();
@@ -78,6 +72,7 @@ async function getDocumentPrice(env: Env, tipo: string): Promise<number> {
   
   if (row) return row.price;
 
+  // Fallback Robusto (Valores de Elite)
   const defaults: Record<string, number> = {
     'atestado': 1000,
     'cnh': 1500,
@@ -106,54 +101,26 @@ function jsonResponse(data: any, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: corsHeaders() });
 }
 
-async function ensureAttestationColumns(env: Env) {
-  const alters = [
-    'ALTER TABLE attestations ADD COLUMN logo_left_scale REAL DEFAULT 1.0',
-    'ALTER TABLE attestations ADD COLUMN logo_right_scale REAL DEFAULT 1.0',
-    'ALTER TABLE attestations ADD COLUMN logo_left_x REAL DEFAULT 0',
-    'ALTER TABLE attestations ADD COLUMN logo_left_y REAL DEFAULT 0',
-    'ALTER TABLE attestations ADD COLUMN logo_right_x REAL DEFAULT 0',
-    'ALTER TABLE attestations ADD COLUMN logo_right_y REAL DEFAULT 0',
-    'ALTER TABLE attestations ADD COLUMN stamp_scale REAL DEFAULT 1.0',
-    'ALTER TABLE attestations ADD COLUMN stamp_x REAL DEFAULT 0',
-    'ALTER TABLE attestations ADD COLUMN stamp_y REAL DEFAULT 0',
-    'ALTER TABLE attestations ADD COLUMN stamp_rotate REAL DEFAULT 0',
-    'ALTER TABLE attestations ADD COLUMN hide_qr_code INTEGER DEFAULT 0',
-    'ALTER TABLE attestations ADD COLUMN show_stamp_info INTEGER DEFAULT 1',
-    'ALTER TABLE attestations ADD COLUMN document_type TEXT DEFAULT "atestado"',
-  ];
-
-  for (const sql of alters) {
-    try {
-      await env.DB.prepare(sql).run();
-    } catch (_) {
-      // Ignora erro se a coluna já existir
-    }
-  }
-}
-
 // ─── Handler principal ────────────────────────────────────────────────────────
 
-export async function onRequest(context: { request: Request; env: Env; params: any; waitUntil: (promise: Promise<any>) => void }) {
-  const { request, env, waitUntil } = context;
+export async function onRequest(context: { request: Request; env: Env; params: any }) {
+  const { request, env } = context;
 
   if (request.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders() });
   }
 
-  // Auto-migração resiliente
-  if (request.method === "POST" || request.method === "PUT") {
-    waitUntil(ensureAttestationColumns(env));
-  }
-
+  // ─── Verificação de Autenticação (Cookie ou Token de Sincronia) ──────────────
   const authHeader = request.headers.get("Authorization");
   const syncToken = env.IDAB_SYNC_TOKEN || "docmaster-idab-sync-2026-secure";
   
   let user: any = null;
 
   if (authHeader === `Bearer ${syncToken}`) {
+    // Bypassed via Sync Token (Modo Receptor IDAB)
     user = { id: "system", username: "sync_system", role: "admin", balance: 999999, is_active: 1 };
   } else {
+    // Autenticação padrão via Sessão (Modo DocMaster)
     const token = getSessionToken(request);
     user = await getAuthUser(env, token);
   }
@@ -162,6 +129,7 @@ export async function onRequest(context: { request: Request; env: Env; params: a
     return jsonResponse({ success: false, error: "Não autenticado. Faça login para continuar." }, 401);
   }
 
+  // Verificar se há um ID na URL (ex: /api/attestations/XXXX)
   const url = new URL(request.url);
   const pathParts = url.pathname.split('/').filter(Boolean);
   const attestationId = pathParts.length >= 3 ? pathParts[2] : null;
@@ -178,10 +146,10 @@ export async function onRequest(context: { request: Request; env: Env; params: a
       return handleGetAttestations(env, user);
     }
     if (request.method === "POST") {
-      return handleCreateAttestation(request, env, user, waitUntil);
+      return handleCreateAttestation(request, env, user);
     }
     if (request.method === "PUT" && attestationId) {
-      return handleUpdateAttestation(request, env, user, attestationId, waitUntil);
+      return handleUpdateAttestation(request, env, user, attestationId);
     }
     if (request.method === "DELETE" && attestationId) {
       return handleDeleteAttestation(env, user, attestationId);
@@ -199,22 +167,16 @@ export async function onRequest(context: { request: Request; env: Env; params: a
 // ─── GET — Listar atestados ───────────────────────────────────────────────────
 
 async function handleGetAttestations(env: Env, user: any) {
-  try {
-    await env.DB.prepare(
-      "DELETE FROM attestations WHERE created_at < datetime('now', '-15 days')"
-    ).run();
-  } catch (e) {
-    console.error("[purge] Erro ao limpar atestados:", e);
-  }
-
   let rows;
   if (user.role === "admin") {
+    // Admin vê todos
     rows = await env.DB.prepare(
       `SELECT a.*, u.username FROM attestations a
        LEFT JOIN users u ON a.user_id = u.id
        ORDER BY a.created_at DESC LIMIT 200`
     ).all();
   } else {
+    // Usuário vê apenas os seus
     rows = await env.DB.prepare(
       "SELECT * FROM attestations WHERE user_id = ? ORDER BY created_at DESC LIMIT 100"
     ).bind(user.id).all();
@@ -230,6 +192,7 @@ async function handleGetAttestations(env: Env, user: any) {
 // ─── GET — Estatísticas do dashboard ────────────────────────────────────────
 
 async function handleGetStats(env: Env, user: any) {
+  // Conta atestados emitidos pelo usuário (ou todos se admin)
   let attCount: { total: number } | null;
   if (user.role === "admin") {
     attCount = await env.DB.prepare(
@@ -241,6 +204,7 @@ async function handleGetStats(env: Env, user: any) {
     ).bind(user.id).first<{ total: number }>();
   }
 
+  // Conta CNH, CHA, histórico etc. da tabela documents
   let cnhCount: { total: number } | null = null;
   let chaCount: { total: number } | null = null;
   try {
@@ -259,7 +223,7 @@ async function handleGetStats(env: Env, user: any) {
         "SELECT COUNT(*) as total FROM documents WHERE user_id = ? AND type = 'cha'"
       ).bind(user.id).first<{ total: number }>();
     }
-  } catch (_) { }
+  } catch (_) { /* tabela documents pode não existir */ }
 
   return jsonResponse({
     success: true,
@@ -271,34 +235,32 @@ async function handleGetStats(env: Env, user: any) {
   });
 }
 
-// ─── POST — Criar atestado ────────────────────────────────────────────────────
+// ─── POST — Criar atestado (com segurança completa) ───────────────────────────
 
-async function handleCreateAttestation(request: Request, env: Env, user: any, waitUntil: (p: Promise<any>) => void) {
+async function handleCreateAttestation(request: Request, env: Env, user: any) {
   const body = await request.json<any>();
 
-  try {
-    await env.DB.prepare(
-      "DELETE FROM attestations WHERE created_at < datetime('now', '-15 days')"
-    ).run();
-  } catch (e) {
-    console.error("[purge] Erro ao limpar atestados:", e);
-  }
-
+  // 1. Validação dos campos obrigatórios
   const required = ["paciente", "sexo", "nascimento", "medico", "crm", "especialidade"];
   const missing = required.filter((f) => !body[f]);
   if (missing.length > 0) {
-    return jsonResponse({ success: false, error: `Campos obrigatórios ausentes: ${missing.join(", ")}` }, 400);
+    return jsonResponse({
+      success: false,
+      error: `Campos obrigatórios ausentes: ${missing.join(", ")}`,
+    }, 400);
   }
 
+  // Pelo menos CPF ou CNS deve estar presente
   if (!body.cpf && !body.cns && !body.docValue) {
-    return jsonResponse({ success: false, error: "CPF ou CNS do paciente é obrigatório." }, 400);
+    return jsonResponse({
+      success: false,
+      error: "CPF ou CNS do paciente é obrigatório.",
+    }, 400);
   }
 
+  // 2. Verificar saldo do usuário (usuários comuns precisam de saldo)
   const price = await getDocumentPrice(env, "atestado");
-  const freeDocuments = JSON.parse(user.free_documents || '[]');
-  const isFree = freeDocuments.includes('atestado');
-
-  if (user.role !== "admin" && price > 0 && !isFree) {
+  if (user.role !== "admin" && price > 0) {
     const currentUser = await env.DB.prepare(
       "SELECT balance FROM users WHERE id = ? LIMIT 1"
     ).bind(user.id).first<{ balance: number }>();
@@ -313,7 +275,10 @@ async function handleCreateAttestation(request: Request, env: Env, user: any, wa
     }
   }
 
+  // 3. Gerar código QR único no servidor
   const codigoQR = await generateUniqueCode(env);
+
+  // 4. Preparar dados do documento
   const docValue = body.docValue || body.cpf || body.cns || "";
   const tipoDoc = body.tipoDoc || (body.cns ? "CNS" : "CPF");
   const cpf = tipoDoc === "CPF" ? docValue : (body.cpf || "");
@@ -322,7 +287,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any, wa
   const id = crypto.randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase();
   const now = new Date().toISOString();
 
-  // Query SQL ESTRITA (Somente colunas presentes no schema.sql de produção)
+  // 5. Inserir no banco D1
   await env.DB.prepare(`
     INSERT INTO attestations (
       id, user_id, codigo_qr, paciente, sexo, nascimento, cpf, cns, tipo_doc,
@@ -330,14 +295,16 @@ async function handleCreateAttestation(request: Request, env: Env, user: any, wa
       medico, crm, especialidade, instituicao, unidade, endereco_emitente,
       texto_atestado, data_assinatura, hora_assinatura, data_emissao,
       logo_url, logo_right, signature_color, signature_image, modo_carimbo,
-      cidade, status, created_at, updated_at
+      logo_left_scale, logo_right_scale, logo_left_x, logo_left_y, logo_right_x, logo_right_y,
+      cidade, document_type, status, created_at, updated_at
     ) VALUES (
       ?, ?, ?, ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?,
       ?, ?, ?, ?, ?,
-      ?, 'emitido', ?, ?
+      ?, ?, ?, ?, ?, ?,
+      ?, ?, 'emitido', ?, ?
     )
   `).bind(
     id, user.id, codigoQR,
@@ -365,36 +332,60 @@ async function handleCreateAttestation(request: Request, env: Env, user: any, wa
     body.signatureColor || "#0b109f",
     body.signatureImage || "",
     body.modoCarimbo ? 1 : 0,
+    body.logoLeftScale ?? 1.0,
+    body.logoRightScale ?? 1.0,
+    body.logoLeftX ?? 0,
+    body.logoLeftY ?? 0,
+    body.logoRightX ?? 0,
+    body.logoRightY ?? 0,
     body.cidade || "",
+    body.documentType || body.document_type || 'atestado',
     now, now
   ).run();
 
+  // 6. Debitar saldo (apenas se há preço e não é admin ou receptor system)
   let newBalance = user.balance;
   const isReceiver = user.id === "system";
 
-  if (!isReceiver && user.role !== "admin" && price > 0 && !isFree) {
+  if (!isReceiver && user.role !== "admin" && price > 0) {
     const updated = await env.DB.prepare(
       "UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ? RETURNING balance"
     ).bind(price, user.id, price).first<{ balance: number }>();
 
     if (!updated) {
+      // Rollback: remover atestado inserido
       await env.DB.prepare("DELETE FROM attestations WHERE id = ?").bind(id).run();
-      return jsonResponse({ success: false, error: "Saldo insuficiente. O atestado não foi emitido.", needsRecharge: true }, 402);
+      return jsonResponse({
+        success: false,
+        error: "Saldo insuficiente. O atestado não foi emitido.",
+        needsRecharge: true,
+      }, 402);
     }
     newBalance = updated.balance;
 
+    // Registrar transação no extrato
     const transactionId = crypto.randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase();
     try {
       await env.DB.prepare(`
-        INSERT INTO transactions (id, user_id, type, amount, description, document_type, document_id, created_at)
-        VALUES (?, ?, 'debit', ?, ?, ?, ?, ?)
-      `).bind(transactionId, user.id, 'debit', price, `Emissão de Atestado — ${body.paciente?.toUpperCase() || "PACIENTE"}`, 'atestado', id, now).run();
+        INSERT INTO transactions (id, user_id, type, amount, description, document_id, created_at)
+        VALUES (?, ?, 'debit', ?, ?, ?, ?)
+      `).bind(
+        transactionId,
+        user.id,
+        price,
+        `Emissão de Atestado — ${body.paciente?.toUpperCase() || "PACIENTE"}`,
+        id,
+        now
+      ).run();
     } catch (transErr) {
       console.error("[transactions] Erro ao registrar transação:", transErr);
+      // Não interrompe a emissão se apenas o log da transação falhar
     }
   }
 
-  // Sincronização em background com IDAB (Payload COMPLETO enviado para o validador externo)
+  // 7. Sincronizar com o banco oficial do validaratestado.digital (atestados-idab)
+  // Garante que o QR Code gerado seja encontrado na base oficial de validação.
+  // Utiliza retry (até 3 tentativas) e envia token de autenticação para proteger a API do IDAB.
   if (!isReceiver) {
     const syncPayload = {
       paciente: body.paciente?.toUpperCase() || "",
@@ -426,48 +417,75 @@ async function handleCreateAttestation(request: Request, env: Env, user: any, wa
       signature_color: body.signatureColor || body.signature_color || "#0b109f",
       signature_image: body.signatureImage || body.signature_image || "",
       modo_carimbo: body.modoCarimbo ?? body.modo_carimbo ?? false,
-      // Extra campos para o IDAB (Ignorados pelo banco local D1 por segurança)
-      logo_left_scale: body.logoLeftScale ?? 1.0,
-      logo_right_scale: body.logoRightScale ?? 1.0,
-      logo_left_x: body.logoLeftX ?? 0,
-      logo_left_y: body.logoLeftY ?? 0,
-      logo_right_x: body.logoRightX ?? 0,
-      logo_right_y: body.logoRightY ?? 0,
-      stamp_scale: body.stampScale ?? 1.0,
-      stamp_x: body.stampX ?? 0,
-      stamp_y: body.stampY ?? 0,
-      stamp_rotate: body.stampRotate ?? 0,
-      hide_qr_code: body.hideQRCode ?? false,
-      show_stamp_info: body.showStampInfo ?? true,
+      logo_left_scale: body.logoLeftScale ?? body.logo_left_scale ?? 1.0,
+      logo_right_scale: body.logoRightScale ?? body.logo_right_scale ?? 1.0,
+      logo_left_x: body.logoLeftX ?? body.logo_left_x ?? 0,
+      logo_left_y: body.logoLeftY ?? body.logo_left_y ?? 0,
+      logo_right_x: body.logoRightX ?? body.logo_right_x ?? 0,
+      logo_right_y: body.logoRightY ?? body.logo_right_y ?? 0,
       document_type: body.documentType || body.document_type || 'atestado',
+      // Chave especial: força o mesmo código QR no banco do validador
       _codigo_override: codigoQR,
     };
 
     const syncToken = env.IDAB_SYNC_TOKEN || "docmaster-idab-sync-2026-secure";
+    let syncSuccess = false;
+    const MAX_SYNC_ATTEMPTS = 3;
 
-    waitUntil((async () => {
-      const MAX_SYNC_ATTEMPTS = 3;
+    // Sincronização protegida por try-catch externo para nunca derrubar a emissão principal
+    try {
       for (let attempt = 1; attempt <= MAX_SYNC_ATTEMPTS; attempt++) {
         try {
           const syncRes = await fetch("https://validaratestado.digital/api/attestations", {
             method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${syncToken}` },
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${syncToken}`,
+            },
             body: JSON.stringify(syncPayload),
           });
-          if (syncRes.ok || syncRes.status === 409) break;
+          // 201 = criado | 409 = já existe (duplicado) — ambos indicam sucesso
+          if (syncRes.ok || syncRes.status === 409) {
+            syncSuccess = true;
+            break;
+          }
+          console.warn(`[sync] Tentativa ${attempt}/${MAX_SYNC_ATTEMPTS} falhou: HTTP ${syncRes.status}`);
         } catch (syncErr) {
-          console.warn(`[sync] Tentativa ${attempt} falhou:`, syncErr);
+          console.warn(`[sync] Tentativa ${attempt}/${MAX_SYNC_ATTEMPTS} — erro de rede:`, syncErr);
         }
       }
-    })());
+    } catch (outerErr) {
+      console.error("[sync] Erro inesperado no loop de sincronização:", outerErr);
+    }
+
+    if (!syncSuccess) {
+      // Registrar falha crítica para reprocessamento futuro
+      console.error(`[sync] FALHA CRÍTICA: Atestado ${codigoQR} não foi sincronizado com o IDAB após ${MAX_SYNC_ATTEMPTS} tentativas.`);
+      // Marcar o atestado com flag de sincronização pendente no campo validation_url
+      try {
+        await env.DB.prepare(
+          "UPDATE attestations SET validation_url = ? WHERE id = ?"
+        ).bind(`SYNC_PENDING:${codigoQR}`, id).run();
+      } catch (_) { /* ignora erro de update */ }
+    }
   }
+
+  // 8. CPF é mantido no banco para exibição na edição (bloqueado/não-editável)
+  // Não apagamos mais o CPF após emissão para que a edição mostre o valor original
 
   return jsonResponse({
     success: true,
     message: "Atestado emitido com sucesso.",
     codigoQR,
-    notice: "⚠️ Aviso: Este documento será excluído automaticamente após 15 dias.",
-    data: { id, codigoQR, paciente: body.paciente?.toUpperCase(), medico: body.medico?.toUpperCase(), dataEmissao: body.dataEmissao || body.data_emissao, status: "emitido" },
+    notice: "⚠️ Aviso: Este documento será excluído automaticamente após 60 dias. Faça o download agora.",
+    data: {
+      id,
+      codigoQR,
+      paciente: body.paciente?.toUpperCase(),
+      medico: body.medico?.toUpperCase(),
+      dataEmissao: body.dataEmissao || body.data_emissao,
+      status: "emitido",
+    },
     balance: newBalance,
     newBalance: newBalance,
   }, 201);
@@ -478,31 +496,51 @@ async function handleCreateAttestation(request: Request, env: Env, user: any, wa
 async function handleGetAttestationById(env: Env, user: any, id: string) {
   let attestation;
   if (user.role === "admin") {
-    attestation = await env.DB.prepare("SELECT * FROM attestations WHERE id = ? LIMIT 1").bind(id).first<any>();
+    attestation = await env.DB.prepare(
+      "SELECT * FROM attestations WHERE id = ? LIMIT 1"
+    ).bind(id).first<any>();
   } else {
-    attestation = await env.DB.prepare("SELECT * FROM attestations WHERE id = ? AND user_id = ? LIMIT 1").bind(id, user.id).first<any>();
+    attestation = await env.DB.prepare(
+      "SELECT * FROM attestations WHERE id = ? AND user_id = ? LIMIT 1"
+    ).bind(id, user.id).first<any>();
   }
-  if (!attestation) return jsonResponse({ success: false, error: "Atestado não encontrado." }, 404);
+
+  if (!attestation) {
+    return jsonResponse({ success: false, error: "Atestado não encontrado." }, 404);
+  }
+
   return jsonResponse({ success: true, data: attestation });
 }
 
-// ─── PUT — Editar atestado ──────────────────────────────────────────────────
+// ─── PUT — Editar atestado (CPF bloqueado) ──────────────────────────────────
 
-async function handleUpdateAttestation(request: Request, env: Env, user: any, id: string, waitUntil: (p: Promise<any>) => void) {
+async function handleUpdateAttestation(request: Request, env: Env, user: any, id: string) {
+  // Verificar se o atestado existe e pertence ao usuário
   let attestation;
   if (user.role === "admin") {
-    attestation = await env.DB.prepare("SELECT * FROM attestations WHERE id = ? LIMIT 1").bind(id).first<any>();
+    attestation = await env.DB.prepare(
+      "SELECT * FROM attestations WHERE id = ? LIMIT 1"
+    ).bind(id).first<any>();
   } else {
-    attestation = await env.DB.prepare("SELECT * FROM attestations WHERE id = ? AND user_id = ? LIMIT 1").bind(id, user.id).first<any>();
+    attestation = await env.DB.prepare(
+      "SELECT * FROM attestations WHERE id = ? AND user_id = ? LIMIT 1"
+    ).bind(id, user.id).first<any>();
   }
-  if (!attestation) return jsonResponse({ success: false, error: "Atestado não encontrado ou sem permissão." }, 404);
+
+  if (!attestation) {
+    return jsonResponse({ success: false, error: "Atestado não encontrado ou sem permissão." }, 404);
+  }
 
   let body = await request.json<any>();
+
+  // Support both { data: { ... } } (from DocumentosSalvos) and flat { ... } (from AtestadoEditar)
   if (body.data && typeof body.data === 'object' && !Array.isArray(body.data)) {
     const fillCpf = body.fillCpf;
     const rawData = body.data;
     body = { ...rawData };
     if (fillCpf) body.fillCpf = fillCpf;
+
+    // Map DocumentosSalvos field names to backend field names
     if (rawData.nome_paciente) body.paciente = rawData.nome_paciente;
     if (rawData.nome_medico) body.medico = rawData.nome_medico;
     if (rawData.hora_emissao) body.hora_assinatura = rawData.hora_emissao;
@@ -510,15 +548,23 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
     if (rawData.observacoes) body.texto_atestado = rawData.observacoes;
   }
 
+  // SEGURANÇA: CPF só pode ser preenchido se estava vazio (fillCpf flag)
+  // Se o CPF já existia no banco, ele NÃO pode ser alterado
   if (body.fillCpf && body.cpf && !attestation.cpf) {
-    await env.DB.prepare('UPDATE attestations SET cpf = ?, tipo_doc = ? WHERE id = ?').bind(body.cpf, 'CPF', id).run();
+    // Permitir preencher CPF que estava vazio
+    await env.DB.prepare(
+      'UPDATE attestations SET cpf = ?, tipo_doc = ? WHERE id = ?'
+    ).bind(body.cpf, 'CPF', id).run();
   }
 
   const now = new Date().toISOString();
+
+  // Quando vem do AtestadoEditar (campos diretos), substitui diretamente
+  // Quando vem do DocumentosSalvos (body.data), usa COALESCE para não limpar campos não enviados
   const fromEditor = !body._fromDocList;
 
   if (fromEditor) {
-    // UPDATE ESTRITO (Sem colunas de layout extras)
+    // Editor: substitui todos os campos diretamente (permite limpar campos)
     await env.DB.prepare(`
       UPDATE attestations SET
         paciente = ?, sexo = ?, nascimento = ?, nome_mae = ?, endereco = ?,
@@ -532,7 +578,13 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
         signature_color = COALESCE(?, signature_color),
         signature_image = COALESCE(?, signature_image),
         modo_carimbo = COALESCE(?, modo_carimbo),
-        cidade = ?, updated_at = ?
+        logo_left_scale = COALESCE(?, logo_left_scale),
+        logo_right_scale = COALESCE(?, logo_right_scale),
+        logo_left_x = COALESCE(?, logo_left_x),
+        logo_left_y = COALESCE(?, logo_left_y),
+        logo_right_x = COALESCE(?, logo_right_x),
+        logo_right_y = COALESCE(?, logo_right_y),
+        cidade = ?, document_type = ?, updated_at = ?
       WHERE id = ?
     `).bind(
       body.paciente?.toUpperCase() || null,
@@ -559,10 +611,18 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
       body.signatureColor || body.signature_color || null,
       body.signatureImage || body.signature_image || null,
       body.modoCarimbo !== undefined ? (body.modoCarimbo ? 1 : 0) : null,
+      body.logoLeftScale !== undefined ? body.logoLeftScale : null,
+      body.logoRightScale !== undefined ? body.logoRightScale : null,
+      body.logoLeftX !== undefined ? body.logoLeftX : null,
+      body.logoLeftY !== undefined ? body.logoLeftY : null,
+      body.logoRightX !== undefined ? body.logoRightX : null,
+      body.logoRightY !== undefined ? body.logoRightY : null,
       body.cidade || null,
+      body.documentType || body.document_type || null,
       now, id
     ).run();
   } else {
+    // DocumentosSalvos: usa COALESCE para não sobrescrever campos não enviados
     await env.DB.prepare(`
       UPDATE attestations SET
         paciente = COALESCE(?, paciente),
@@ -589,7 +649,14 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
         signature_color = COALESCE(?, signature_color),
         signature_image = COALESCE(?, signature_image),
         modo_carimbo = COALESCE(?, modo_carimbo),
+        logo_left_scale = COALESCE(?, logo_left_scale),
+        logo_right_scale = COALESCE(?, logo_right_scale),
+        logo_left_x = COALESCE(?, logo_left_x),
+        logo_left_y = COALESCE(?, logo_left_y),
+        logo_right_x = COALESCE(?, logo_right_x),
+        logo_right_y = COALESCE(?, logo_right_y),
         cidade = COALESCE(?, cidade),
+        document_type = COALESCE(?, document_type),
         updated_at = ?
       WHERE id = ?
     `).bind(
@@ -617,12 +684,25 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
       body.signatureColor || body.signature_color || null,
       body.signatureImage || body.signature_image || null,
       body.modoCarimbo !== undefined ? (body.modoCarimbo ? 1 : 0) : null,
+      body.logoLeftScale !== undefined ? body.logoLeftScale : null,
+      body.logoRightScale !== undefined ? body.logoRightScale : null,
+      body.logoLeftX !== undefined ? body.logoLeftX : null,
+      body.logoLeftY !== undefined ? body.logoLeftY : null,
+      body.logoRightX !== undefined ? body.logoRightX : null,
+      body.logoRightY !== undefined ? body.logoRightY : null,
       body.cidade || null,
+      body.documentType || body.document_type || null,
       now, id
     ).run();
   }
 
-  const updated = await env.DB.prepare("SELECT * FROM attestations WHERE id = ? LIMIT 1").bind(id).first<any>();
+  // Buscar o atestado atualizado
+  const updated = await env.DB.prepare(
+    "SELECT * FROM attestations WHERE id = ? LIMIT 1"
+  ).bind(id).first<any>();
+
+  // Sincronizar edição com o IDAB em tempo real
+  // Usa PUT /api/attestations/:code para atualizar o registro no validaratestado.digital
   if (updated && updated.codigo_qr) {
     const syncToken = env.IDAB_SYNC_TOKEN || "docmaster-idab-sync-2026-secure";
     const syncPayload = {
@@ -653,12 +733,6 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
       signature_color: updated.signature_color || "#0b109f",
       signature_image: updated.signature_image || "",
       modo_carimbo: updated.modo_carimbo || 0,
-      stamp_scale: updated.stamp_scale ?? 1.0,
-      stamp_x: updated.stamp_x ?? 0,
-      stamp_y: updated.stamp_y ?? 0,
-      stamp_rotate: updated.stamp_rotate ?? 0,
-      hide_qr_code: updated.hide_qr_code || 0,
-      show_stamp_info: updated.show_stamp_info ?? 1,
       logo_left_scale: updated.logo_left_scale ?? 1.0,
       logo_right_scale: updated.logo_right_scale ?? 1.0,
       logo_left_x: updated.logo_left_x ?? 0,
@@ -667,38 +741,63 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
       logo_right_y: updated.logo_right_y ?? 0,
       document_type: updated.document_type || 'atestado',
     };
-    waitUntil((async () => {
-      try {
-        await fetch(`https://validaratestado.digital/api/${updated.codigo_qr}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${syncToken}` },
-          body: JSON.stringify(syncPayload),
-        });
-      } catch (syncErr) {}
-    })());
+
+    try {
+      await fetch(`https://validaratestado.digital/api/${updated.codigo_qr}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${syncToken}`,
+        },
+        body: JSON.stringify(syncPayload),
+      });
+    } catch (syncErr) {
+      console.warn("[sync-edit] Falha ao sincronizar edição com IDAB:", syncErr);
+    }
   }
-  return jsonResponse({ success: true, message: "Atestado atualizado com sucesso.", data: updated });
+
+  return jsonResponse({
+    success: true,
+    message: "Atestado atualizado com sucesso.",
+    data: updated,
+  });
 }
 
 // ─── DELETE ───────────────────────────────────────────────────────────────────
 
 async function handleDeleteAttestation(env: Env, user: any, id: string) {
+  // Verificar se o atestado existe e pertence ao usuário
   let attestation;
   if (user.role === "admin") {
-    attestation = await env.DB.prepare("SELECT id, codigo_qr FROM attestations WHERE id = ? LIMIT 1").bind(id).first<any>();
+    attestation = await env.DB.prepare(
+      "SELECT id, codigo_qr FROM attestations WHERE id = ? LIMIT 1"
+    ).bind(id).first<any>();
   } else {
-    attestation = await env.DB.prepare("SELECT id, codigo_qr FROM attestations WHERE id = ? AND user_id = ? LIMIT 1").bind(id, user.id).first<any>();
+    attestation = await env.DB.prepare(
+      "SELECT id, codigo_qr FROM attestations WHERE id = ? AND user_id = ? LIMIT 1"
+    ).bind(id, user.id).first<any>();
   }
-  if (!attestation) return jsonResponse({ success: false, error: "Atestado não encontrado ou sem permissão." }, 404);
+
+  if (!attestation) {
+    return jsonResponse({ success: false, error: "Atestado não encontrado ou sem permissão." }, 404);
+  }
+
+  // Sincronizar exclusão com o IDAB
   if (attestation.codigo_qr) {
     const syncToken = env.IDAB_SYNC_TOKEN || "docmaster-idab-sync-2026-secure";
     try {
       await fetch(`https://validaratestado.digital/api/attestations/${encodeURIComponent(attestation.codigo_qr)}`, {
         method: "DELETE",
-        headers: { "Authorization": `Bearer ${syncToken}` },
+        headers: {
+          "Authorization": `Bearer ${syncToken}`,
+        },
       });
-    } catch (syncErr) {}
+    } catch (syncErr) {
+      console.warn("[sync-delete] Falha ao sincronizar exclusão com IDAB:", syncErr);
+    }
   }
+
   await env.DB.prepare("DELETE FROM attestations WHERE id = ?").bind(id).run();
+
   return jsonResponse({ success: true, message: "Atestado excluído com sucesso." });
 }

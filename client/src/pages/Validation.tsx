@@ -23,13 +23,10 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import AttestationDocument from "@/components/AttestationDocument";
 import PrescricaoDocument from "@/components/PrescricaoDocument";
 import CNHDocument from "@/components/CNHDocument";
-import PetitionSTJDocument from "@/components/PetitionSTJDocument";
-import HistoricoUNINTERDocument from "@/components/HistoricoUNINTERDocument";
-import { SPPage1 } from "@/components/SPDocumentPage";
 import { useParams } from "wouter";
 import { exportElementToPDF, exportElementToPDFBlob, generatePDFFilename } from "@/lib/pdfExport";
 
-type DocType = "atestado" | "receita" | "cnh" | "laudo" | "peticao" | "historico-uninter" | "historico-sp" | "unknown";
+type DocType = "atestado" | "receita" | "cnh" | "laudo" | "unknown";
 
 function detectDocType(data: any): DocType {
   const typeStr = (data.tipo || data.type || data.document_type || "").toLowerCase();
@@ -37,54 +34,17 @@ function detectDocType(data: any): DocType {
   if (typeStr === "cnh") return "cnh";
   if (typeStr === "laudo") return "laudo";
   if (typeStr === "atestado") return "atestado";
-  if (typeStr === "peticaocria" || typeStr === "peticao-stj") return "peticao";
-  if (typeStr === "historico-uninter") return "historico-uninter";
-  if (typeStr === "historico-sp") return "historico-sp";
   
   // Fallback por campos
   if (data.document_type === "laudo") return "laudo";
   if (data.textoAtestado || data.afastamento) return "atestado";
   if (data.prescricao) return "receita";
   if (data.categoria || data.registro) return "cnh";
-  if (data.credor || data.processo) return "peticao";
-  if (data.historicoKey || data.profileKey) return "historico-uninter";
-  if (data.gdae || data.codGdae) return "historico-sp";
   return "unknown";
 }
 
 export default function Validation() {
   const params = useParams();
-
-  // ── Efeito para remover Favicon em domínios de validação ──────────────────
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const isValidation = window.location.hostname !== "docmaster.store" && 
-                         window.location.hostname !== "localhost";
-    
-    if (isValidation) {
-      // 1. Remover todos os links de ícone existentes
-      const icons = document.querySelectorAll("link[rel*='icon']");
-      icons.forEach(el => el.parentNode?.removeChild(el));
-
-      // 2. Injetar o favicon com o emoji 🛡️ via SVG Data URL
-      const link = document.createElement('link');
-      link.rel = 'icon';
-      link.href = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>";
-      document.getElementsByTagName('head')[0].appendChild(link);
-
-      // 3. Remover apple-touch-icon e injetar versão emoji
-      const appleIcons = document.querySelectorAll("link[rel*='apple-touch-icon']");
-      appleIcons.forEach(el => el.parentNode?.removeChild(el));
-      
-      const appleLink = document.createElement('link');
-      appleLink.rel = 'apple-touch-icon';
-      appleLink.href = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>";
-      document.getElementsByTagName('head')[0].appendChild(appleLink);
-
-      // 4. Mudar título para algo neutro
-      document.title = "Validador Oficial";
-    }
-  }, []);
 
   // ── Estados ──────────────────────────────────────────────────────────────
   const [codigo, setCodigo] = useState("");
@@ -107,9 +67,6 @@ export default function Validation() {
   // Refs para os documentos (usado para gerar PDF)
   const attestationRef = useRef<HTMLDivElement>(null);
   const prescricaoRef = useRef<HTMLDivElement>(null);
-  const peticaoRef = useRef<HTMLDivElement>(null);
-  const uninterRef = useRef<HTMLDivElement>(null);
-  const spRef = useRef<HTMLDivElement>(null);
   const cnhRef = useRef<any>(null);
 
   // ── Smart Preview Logic ──────────────────────────────────────────────────
@@ -200,15 +157,6 @@ export default function Validation() {
         } else if (docType === "receita" && prescricaoRef.current) {
           const url = await exportElementToPDFBlob(prescricaoRef.current, { scale: 2 });
           setPdfBlobUrl(url);
-        } else if (docType === "peticao" && peticaoRef.current) {
-          const url = await exportElementToPDFBlob(peticaoRef.current, { scale: 2 });
-          setPdfBlobUrl(url);
-        } else if (docType === "historico-uninter" && uninterRef.current) {
-          const url = await exportElementToPDFBlob(uninterRef.current, { scale: 2, multiPage: true });
-          setPdfBlobUrl(url);
-        } else if (docType === "historico-sp" && spRef.current) {
-          const url = await exportElementToPDFBlob(spRef.current, { scale: 2 });
-          setPdfBlobUrl(url);
         }
       } catch (err) {
         console.error("Erro ao gerar preview:", err);
@@ -250,45 +198,42 @@ export default function Validation() {
 
         // 🛡️ VALIDAÇÃO ESTRITA DE DATA (CRÍTICO)
         // Só libera o preview se a data informada corresponder à data original
-        // Mandato: Aplicar SOMENTE para Atestados (atestadocria)
-        const type = detectDocType(json.data);
-        if (type === "atestado") {
-          if (dateInputRaw) {
-            const toISO = (d: string) => {
-              if (!d) return "";
-              const nums = d.replace(/\D/g, "");
-              if (nums.length === 8) {
-                // Se for DD/MM/AAAA ou DDMMYYYY -> YYYY-MM-DD
-                if (d.includes("/")) {
-                  const [dd, mm, yyyy] = d.split("/");
-                  return `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
-                }
-                // Se for YYYY-MM-DD vindo do banco (createdAt)
-                if (d.includes("-") && d.indexOf("-") === 4) {
-                  return d.split("T")[0].split(" ")[0];
-                }
-                // Fallback para string pura de números DDMMYYYY
-                return `${nums.slice(4, 8)}-${nums.slice(2, 4)}-${nums.slice(0, 2)}`;
+        if (dateInputRaw) {
+          const toISO = (d: string) => {
+            if (!d) return "";
+            const nums = d.replace(/\D/g, "");
+            if (nums.length === 8) {
+              // Se for DD/MM/AAAA ou DDMMYYYY -> YYYY-MM-DD
+              if (d.includes("/")) {
+                const [dd, mm, yyyy] = d.split("/");
+                return `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
               }
-              return d.split("T")[0].split(" ")[0];
-            };
-
-            const inputISO = toISO(dateInputRaw);
-            const docISO = toISO(docDate);
-
-            if (inputISO !== docISO && inputISO && docISO) {
-              setErrorMessage(`Data de emissão incorreta para este documento.`);
-              setIsValidating(false);
-              return;
+              // Se for YYYY-MM-DD vindo do banco (createdAt)
+              if (d.includes("-") && d.indexOf("-") === 4) {
+                return d.split("T")[0].split(" ")[0];
+              }
+              // Fallback para string pura de números DDMMYYYY
+              return `${nums.slice(4, 8)}-${nums.slice(2, 4)}-${nums.slice(0, 2)}`;
             }
-          } else {
-            setErrorMessage("Data de emissão obrigatória para consulta.");
+            return d.split("T")[0].split(" ")[0];
+          };
+
+          const inputISO = toISO(dateInputRaw);
+          const docISO = toISO(docDate);
+
+          if (inputISO !== docISO && inputISO && docISO) {
+            setErrorMessage(`Data de emissão incorreta para este documento.`);
             setIsValidating(false);
             return;
           }
+        } else {
+          setErrorMessage("Data de emissão obrigatória para consulta.");
+          setIsValidating(false);
+          return;
         }
         
         // Injetar dataEmissao formatada se necessário para o componente
+        const type = detectDocType(json.data);
         setDocType(type);
         setValidDoc({
           ...json.data,
@@ -349,17 +294,11 @@ export default function Validation() {
         a.download = generatePDFFilename(nome, docType as any, "VALIDADO");
         a.click();
       } else {
-        let ref = attestationRef.current;
-        if (docType === "receita") ref = prescricaoRef.current;
-        if (docType === "peticao") ref = peticaoRef.current;
-        if (docType === "historico-uninter") ref = uninterRef.current;
-        if (docType === "historico-sp") ref = spRef.current;
-
+        const ref = docType === "receita" ? prescricaoRef.current : attestationRef.current;
         if (ref) {
           await exportElementToPDF(ref, {
             filename: generatePDFFilename(nome, docType as any, "VALIDADO"),
             scale: 2,
-            multiPage: docType === "historico-uninter",
           });
         }
       }
@@ -375,9 +314,6 @@ export default function Validation() {
       case "laudo": return "Laudo Médico";
       case "receita": return "Receita Médica";
       case "cnh": return "Carteira Nacional de Habilitação";
-      case "peticao": return "Petição Judicial";
-      case "historico-uninter": return "Histórico UNINTER";
-      case "historico-sp": return "Histórico SP";
       default: return "Documento";
     }
   };
@@ -572,13 +508,8 @@ export default function Validation() {
               logoRightX={validDoc.logoRightX ?? validDoc.logo_right_x}
               logoRightY={validDoc.logoRightY ?? validDoc.logo_right_y}
               modoCarimbo={validDoc.modoCarimbo || validDoc.modo_carimbo}
-              stampScale={validDoc.stampScale ?? validDoc.stamp_scale}
-              stampX={validDoc.stampX ?? validDoc.stamp_x}
-              stampY={validDoc.stampY ?? validDoc.stamp_y}
-              stampRotate={validDoc.stampRotate ?? validDoc.stamp_rotate}
-              hideQRCode={validDoc.hideQRCode || validDoc.hide_qr_code === 1}
-              showStampInfo={validDoc.showStampInfo !== false && validDoc.show_stamp_info !== 0}
-              />          </div>
+            />
+          </div>
         );
       case "receita":
         return (
@@ -604,41 +535,6 @@ export default function Validation() {
             />
           </div>
         );
-      case "peticao":
-        return (
-          <div style={style}>
-            <PetitionSTJDocument
-              ref={peticaoRef}
-              data={validDoc}
-            />
-          </div>
-        );
-      case "historico-uninter":
-        return (
-          <div style={style}>
-            <HistoricoUNINTERDocument
-              ref={uninterRef}
-              data={validDoc}
-              gradeRows={validDoc.gradeRows || (validDoc.data && validDoc.data.gradeRows)}
-            />
-          </div>
-        );
-      case "historico-sp":
-        return (
-          <div style={style}>
-            <SPPage1
-              ref={spRef}
-              f={validDoc.data || validDoc}
-              grades={validDoc.grades || (validDoc.data && validDoc.data.grades)}
-              brasaoUrl={fixUrl(validDoc.brasaoUrl || (validDoc.data && validDoc.data.brasaoUrl))}
-              assinaturaGerenteUrl={fixUrl(validDoc.assinaturaGerenteUrl || (validDoc.data && validDoc.data.assinaturaGerenteUrl))}
-              assinaturaDiretorUrl={fixUrl(validDoc.assinaturaDiretorUrl || (validDoc.data && validDoc.data.assinaturaDiretorUrl))}
-              logoScale={validDoc.logoScale ?? (validDoc.data && validDoc.data.logoScale)}
-              logoX={validDoc.logoX ?? (validDoc.data && validDoc.data.logoX)}
-              logoY={validDoc.logoY ?? (validDoc.data && validDoc.data.logoY)}
-            />
-          </div>
-        );
       default:
         return (
           <div style={{ ...style, padding: 32, maxWidth: 640 }}>
@@ -660,11 +556,13 @@ export default function Validation() {
 
   return (
     <div style={S.page}>
-      {/* ── Header azul ── */}
-      <div style={S.header}>
+    {/* ── Header azul ── */}
+    <div style={S.header}>
+      {window.location.hostname.includes("validaratestado.digital") && (
         <span style={{ fontSize: 24, lineHeight: "1", display: "flex", alignItems: "center" }}>🛡️</span>
-        <span style={S.headerText}>Validador Oficial</span>
-      </div>
+      )}
+      <span style={S.headerText}>Validador Oficial</span>
+    </div>
 
       {/* ── Card central ── */}
       <div style={{ padding: "0 16px" }}>

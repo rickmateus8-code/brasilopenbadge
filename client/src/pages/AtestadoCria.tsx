@@ -449,18 +449,9 @@ export default function AtestadoCria() {
   const [logoRightX, setLogoRightX] = useState<number>(0);
   const [logoRightY, setLogoRightY] = useState<number>(0);
 
-  // ── Ajuste do Carimbo ──────────────────────────────────────────────────────
-  const [stampScale, setStampScale] = useState<number>(1);
-  const [stampX, setStampX] = useState<number>(173);
-  const [stampY, setStampY] = useState<number>(-8);
-  const [stampRotate, setStampRotate] = useState<number>(-3);
-  const [hideQRCode, setHideQRCode] = useState<boolean>(false);
-
   // helpers de ajuste
   const SCALE_STEP = 0.05;
-  const POS_STEP = 8; // Aumentado para mover mais rápido
-  const ROTATE_STEP = 1;
-
+  const POS_STEP = 2;
   const adjustScale = (side: "left" | "right", delta: number) => {
     if (side === "left") setLogoLeftScale(v => Math.max(0.1, Math.min(3, parseFloat((v + delta).toFixed(2)))));
     else setLogoRightScale(v => Math.max(0.1, Math.min(3, parseFloat((v + delta).toFixed(2)))));
@@ -478,17 +469,34 @@ export default function AtestadoCria() {
     else { setLogoRightScale(1); setLogoRightX(0); setLogoRightY(0); }
   };
 
+  // ── Assinatura ─────────────────────────────────────────────────────────────
+  const [signatureColor, setSignatureColor] = useState<string>("#000000"); // PRETA fixa por padrão
+  const [signatureImage, setSignatureImage] = useState<string>("");
+  const signatureRef = useRef<HTMLInputElement>(null);
+
+  // ── Carimbo Interativo Elite 2.0 ───────────────────────────────────────────
+  const [stampScale, setStampScale] = useState<number>(1);
+  const [stampX, setStampX] = useState<number>(173); // Fixo Padrão
+  const [stampY, setStampY] = useState<number>(-120); // Fixo Padrão (Acima do rodapé)
+  const [stampRotate, setStampRotate] = useState<number>(-3);
+  const [hideQRCode, setHideQRCode] = useState<boolean>(false);
+  const [showStampInfo, setShowStampInfo] = useState<boolean>(true);
+
+  // Giro aleatório a cada emissão para realismo
+  const generateRandomGiro = () => {
+    // Retorna um valor entre -4 e -2 graus
+    return parseFloat((Math.random() * ((-2) - (-4)) + (-4)).toFixed(1));
+  };
+
   const resetStampTransform = () => {
     setStampScale(1);
     setStampX(173);
-    setStampY(-8);
+    setStampY(-120);
     setStampRotate(-3);
   };
 
-  // ── Assinatura ─────────────────────────────────────────────────────────────
-  const [signatureColor, setSignatureColor] = useState<string>("#000000");
-  const [signatureImage, setSignatureImage] = useState<string>("");
-  const signatureRef = useRef<HTMLInputElement>(null);
+  const STAMP_POS_STEP = 8; // Rápido
+  const STAMP_ROTATE_STEP = 1;
 
   // ── Tipo de documento do paciente ──────────────────────────────────────────
   const [tipoDoc, setTipoDoc] = useState<"CPF" | "CNS">("CPF");
@@ -1191,6 +1199,12 @@ export default function AtestadoCria() {
         logoLeftY,
         logoRightX,
         logoRightY,
+        stampScale,
+        stampX,
+        stampY,
+        stampRotate: generateRandomGiro(), // Giro aleatório a cada emissão
+        hideQRCode,
+        showStampInfo,
         documentType,
       };
 
@@ -1793,6 +1807,64 @@ export default function AtestadoCria() {
                         )}
                       </div>
                     </div>
+
+                    {/* Ajuste de Carimbo Elite 2.0 */}
+                    {form.modoCarimbo && (
+                      <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 12, background: "#f8fafc", marginTop: 8 }}>
+                        <p style={{ fontSize: 11, fontWeight: 700, color: "#005CA9", marginBottom: 10, display: "flex", alignItems: "center", gap: 4 }}>
+                          🎮 AJUSTE DO CARIMBO ELITE
+                        </p>
+
+                        {/* Identificador de Coordenadas Elite */}
+                        <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 6, padding: "6px 8px", marginBottom: 10, display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 10px" }}>
+                          <div style={{ fontSize: 10, color: "#1e40af", fontWeight: 700 }}>X: <span style={{ color: "#000" }}>{stampX}px</span></div>
+                          <div style={{ fontSize: 10, color: "#1e40af", fontWeight: 700 }}>Y: <span style={{ color: "#000" }}>{stampY}px</span></div>
+                          <div style={{ fontSize: 10, color: "#1e40af", fontWeight: 700 }}>ESCALA: <span style={{ color: "#000" }}>{Math.round(stampScale * 100)}%</span></div>
+                          <div style={{ fontSize: 10, color: "#1e40af", fontWeight: 700 }}>GIRO: <span style={{ color: "#000" }}>{stampRotate}°</span></div>
+                        </div>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                          {/* Toggles */}
+                          <div style={{ display: "flex", gap: 12 }}>
+                            <label style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                              <input type="checkbox" checked={hideQRCode} onChange={e => setHideQRCode(e.target.checked)} />
+                              Ocultar QR
+                            </label>
+                            <label style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                              <input type="checkbox" checked={showStampInfo} onChange={e => setShowStampInfo(e.target.checked)} />
+                              Dados Médico
+                            </label>
+                          </div>
+
+                          {/* Controles de Escala */}
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <button type="button" onClick={() => setStampScale(v => Math.max(0.1, v + 0.1))} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>🔍+ ZOOM</button>
+                            <button type="button" onClick={() => setStampScale(v => Math.max(0.1, v - 0.1))} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>🔍- ZOOM</button>
+                          </div>
+
+                          {/* Controles de Rotação */}
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <button type="button" onClick={() => setStampRotate(v => v - 1)} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>↺ GIRAR</button>
+                            <button type="button" onClick={() => setStampRotate(v => v + 1)} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>↻ GIRAR</button>
+                          </div>
+
+                          {/* Controles de Posição (Setas Rápidas) */}
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, width: "100%", maxWidth: 180, margin: "0 auto" }}>
+                            <div />
+                            <button type="button" onClick={() => setStampY(v => v - STAMP_POS_STEP)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▲</button>
+                            <div />
+                            
+                            <button type="button" onClick={() => setStampX(v => v - STAMP_POS_STEP)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>◀</button>
+                            <button type="button" onClick={resetStampTransform} style={{ ...btnGray, padding: "6px 0", fontSize: 9, display: "flex", alignItems: "center", justifyContent: "center" }}>RESET</button>
+                            <button type="button" onClick={() => setStampX(v => v + STAMP_POS_STEP)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▶</button>
+                            
+                            <div />
+                            <button type="button" onClick={() => setStampY(v => v + STAMP_POS_STEP)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▼</button>
+                            <div />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     </div>
                     </details>
                     </div>
@@ -2067,77 +2139,16 @@ export default function AtestadoCria() {
                     </div>
 
                     {/* Modo Carimbo */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "8px 0" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }} onClick={() => scrollToPreviewSection("bottom")}>
-                        <label style={{ ...lbl, margin: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-                          <input
-                            type="checkbox"
-                            checked={form.modoCarimbo}
-                            onChange={(e) => setForm(p => ({ ...p, modoCarimbo: e.target.checked }))}
-                            style={{ width: 16, height: 16 }}
-                          />
-                          Modo Carimbo (Elite 2.0)
-                        </label>
-                      </div>
-
-                      {form.modoCarimbo && (
-                        <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 12, background: "#f8fafc" }}>
-                          <p style={{ fontSize: 11, fontWeight: 700, color: "#005CA9", marginBottom: 10, display: "flex", alignItems: "center", gap: 4 }}>
-                            🎮 AJUSTE DO CARIMBO
-                          </p>
-
-                          {/* Identificador de Coordenadas Fixo */}
-                          <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 6, padding: "6px 8px", marginBottom: 10, display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 10px" }}>
-                            <div style={{ fontSize: 10, color: "#1e40af", fontWeight: 700 }}>X: <span style={{ color: "#000" }}>{stampX}px</span></div>
-                            <div style={{ fontSize: 10, color: "#1e40af", fontWeight: 700 }}>Y: <span style={{ color: "#000" }}>{stampY}px</span></div>
-                            <div style={{ fontSize: 10, color: "#1e40af", fontWeight: 700 }}>ESCALA: <span style={{ color: "#000" }}>{Math.round(stampScale * 100)}%</span></div>
-                            <div style={{ fontSize: 10, color: "#1e40af", fontWeight: 700 }}>GIRO: <span style={{ color: "#000" }}>{stampRotate}°</span></div>
-                          </div>
-
-                          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                            {/* Toggle Ocultar QR Code */}
-                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                              <input
-                                type="checkbox"
-                                id="hide-qrcode"
-                                checked={hideQRCode}
-                                onChange={(e) => setHideQRCode(e.target.checked)}
-                                style={{ width: 14, height: 14 }}
-                              />
-                              <label htmlFor="hide-qrcode" style={{ fontSize: 11, fontWeight: 600, color: "#374151", cursor: "pointer" }}>
-                                Ocultar QR Code (Rodapé Digital)
-                              </label>
-                            </div>
-
-                            {/* Controles de Escala */}
-                            <div style={{ display: "flex", gap: 6 }}>
-                              <button type="button" onClick={() => setStampScale(v => Math.max(0.1, v + 0.1))} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>🔍+ ZOOM</button>
-                              <button type="button" onClick={() => setStampScale(v => Math.max(0.1, v - 0.1))} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>🔍- ZOOM</button>
-                            </div>
-
-                            {/* Controles de Rotação */}
-                            <div style={{ display: "flex", gap: 6 }}>
-                              <button type="button" onClick={() => setStampRotate(v => v - 1)} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>↺ GIRAR</button>
-                              <button type="button" onClick={() => setStampRotate(v => v + 1)} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>↻ GIRAR</button>
-                            </div>
-
-                            {/* Controles de Posição (Setas Rápidas) */}
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, width: "100%", maxWidth: 180, margin: "0 auto" }}>
-                              <div />
-                              <button type="button" onClick={() => setStampY(v => v - 8)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▲</button>
-                              <div />
-                              
-                              <button type="button" onClick={() => setStampX(v => v - 8)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>◀</button>
-                              <button type="button" onClick={resetStampTransform} style={{ ...btnGray, padding: "6px 0", fontSize: 9, display: "flex", alignItems: "center", justifyContent: "center" }}>RESET</button>
-                              <button type="button" onClick={() => setStampX(v => v + 8)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▶</button>
-                              
-                              <div />
-                              <button type="button" onClick={() => setStampY(v => v + 8)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▼</button>
-                              <div />
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0" }} onClick={() => scrollToPreviewSection("bottom")}>
+                    <label style={{ ...lbl, margin: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                      <input
+                        type="checkbox"
+                        checked={form.modoCarimbo}
+                        onChange={(e) => setForm(p => ({ ...p, modoCarimbo: e.target.checked }))}
+                        style={{ width: 16, height: 16 }}
+                      />
+                      Modo Carimbo (rodapé com assinatura cursiva)
+                    </label>
                     </div>
                     </div>
                     </div>
@@ -2391,14 +2402,20 @@ export default function AtestadoCria() {
             </button>
           </div>
 
-          <div id="preview-container" className="flex-1 overflow-hidden bg-white rounded-xl p-2 md:p-0 md:max-h-[calc(100vh-84px)] flex items-start justify-center relative touch-none">
+          <div id="preview-container" style={{ 
+            flex: 1, overflow: "hidden", background: "#ffffff", borderRadius: 10, 
+            padding: "0", maxHeight: "calc(100vh - 84px)", // Altura maximizada
+            display: "flex", alignItems: "flex-start", justifyContent: "center",
+            position: "relative"
+          }}>
+            {/* A4: 794px x 1123px @ 96dpi */}
             <div style={{ 
               width: 794, 
               flexShrink: 0,
-              boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.08)", // Sombra mais elegante
               transform: `scale(${zoomScale}) translateY(${zoomTranslateY}px)`,
               transformOrigin: "top center",
-              transition: "transform 0.3s cubic-bezier(0.2, 0, 0, 1)",
+              transition: "transform 0.85s cubic-bezier(0.22, 1, 0.36, 1)",
             }}>
               <AttestationDocument
                 ref={previewRef}
@@ -2419,6 +2436,7 @@ export default function AtestadoCria() {
                 stampY={stampY}
                 stampRotate={stampRotate}
                 hideQRCode={hideQRCode}
+                showStampInfo={showStampInfo}
               />
             </div>
           </div>
