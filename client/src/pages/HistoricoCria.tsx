@@ -80,6 +80,21 @@ export default function HistoricoCria() {
 
   const effectiveDateText = useMemo(() => formatDateExtenso(fieldMap.expedicao_diploma || ""), [fieldMap.expedicao_diploma, fieldMap.endereco, fieldMap.unidade_uf, fieldMap.unidade_cidade]);
 
+  // Cálculo Automático da Carga Horária Total
+  const totalCH = useMemo(() => {
+    return gradeRows.reduce((sum, row) => {
+      const val = parseInt(String(row.ch || "0").replace(/\D/g, ""));
+      return sum + (isNaN(val) ? 0 : val);
+    }, 0);
+  }, [gradeRows]);
+
+  // Injetar totalCH no fieldMap para o componente visual
+  const enrichedFieldMap = useMemo(() => ({
+    ...fieldMap,
+    carga_horaria: String(totalCH || fieldMap.carga_horaria || "0"),
+    dateText: effectiveDateText
+  }), [fieldMap, totalCH, effectiveDateText]);
+
   // Paginação dinâmica balanceada (Sincronizada com DocumentPages.tsx)
   const showPage4 = activeHistorico !== "pedagogia";
 
@@ -165,7 +180,7 @@ export default function HistoricoCria() {
         historicoKey: activeHistorico,
         profileKey: activeProfile,
         gradeRows,
-        data: { ...fieldMap, gradeRows },
+        data: { ...enrichedFieldMap, gradeRows },
       };
       const res = await fetch("/api/documents/historico-uninter", {
         method: "POST",
@@ -212,7 +227,7 @@ export default function HistoricoCria() {
     if (!pageData) return null;
 
     const props = { 
-      f: { ...fieldMap, dateText: effectiveDateText }, 
+      f: enrichedFieldMap, 
       highlightModified: showHighlights, 
       profileKey: activeProfile || undefined,
     };
@@ -357,7 +372,7 @@ export default function HistoricoCria() {
           <div style={{ position: "fixed", left: "-9999px", top: 0 }}>
             <HistoricoUNINTERDocument
               ref={printRef}
-              data={{ ...fieldMap, dateText: effectiveDateText }}
+              data={enrichedFieldMap}
               gradeRows={gradeRows}
               profileKey={activeProfile || "historia"}
               highlightModified={showHighlights}
