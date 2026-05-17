@@ -39,6 +39,12 @@ interface AttestationDocumentProps {
   logoLeftY?: number;
   logoRightX?: number;
   logoRightY?: number;
+  stampScale?: number;
+  stampX?: number;
+  stampY?: number;
+  stampRotate?: number;
+  hideQRCode?: boolean;
+  showStampInfo?: boolean;
 }
 
 // Gerar rubrica cursiva a partir do nome do médico
@@ -61,7 +67,11 @@ const PAD_H = 56;  // ~15mm top/bottom
 const PAD_V = 60;  // ~16mm left/right
 
 const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>(
-  ({ data, logoUrl, logoLeft, logoRight, signatureColor, signatureImage, documentType, logoLeftScale = 1, logoRightScale = 1, logoLeftX = 0, logoLeftY = 0, logoRightX = 0, logoRightY = 0 }, ref) => {
+  ({ 
+    data, logoUrl, logoLeft, logoRight, signatureColor, signatureImage, documentType, 
+    logoLeftScale = 1, logoRightScale = 1, logoLeftX = 0, logoLeftY = 0, logoRightX = 0, logoRightY = 0,
+    stampScale, stampX, stampY, stampRotate, hideQRCode, showStampInfo
+  }, ref) => {
     const isEmitted = data.codigoQR && data.codigoQR !== "XXXX.XXXX";
     // QR Code aponta para validaratestado.digital/validar?codigo=XXXX&data=YYYY-MM-DD
     // A data no banco está em DD/MM/YYYY — converte para YYYY-MM-DD para o parâmetro da URL
@@ -548,12 +558,14 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             paddingBottom: 0,
           }}>
             {/* Data FIXA no lado inferior DIREITO (X: 253px, Y: -128px) */}
-            {/* O X:253 e Y:-128 parecem ser coordenadas em relação à área total ou rodapé. 
-                Vou posicionar conforme solicitado pelo usuário. */}
             <div style={{
               position: "absolute",
-              bottom: 128, 
-              right: 253,
+              bottom: 100, // Mesma base Y do carimbo (quando hQRCode)
+              left: "50%", // Mesma base X do carimbo
+              marginLeft: -150, // Mesma margem do carimbo
+              transform: "translate(253px, -128px)", // Coordenadas exatas solicitadas
+              width: 300, // Mesma largura base para manter referência de centro
+              textAlign: "center",
               fontSize: 12.5,
               fontWeight: 700,
               textTransform: "uppercase",

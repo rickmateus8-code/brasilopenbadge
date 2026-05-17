@@ -2113,6 +2113,64 @@ export default function AtestadoEditar() {
                       )}
                     </div>
                     </div>
+
+                    {/* Ajuste de Carimbo Elite 2.0 */}
+                    {form.modoCarimbo && (
+                      <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 12, background: "#f8fafc", marginTop: 8 }}>
+                        <p style={{ fontSize: 11, fontWeight: 700, color: "#005CA9", marginBottom: 10, display: "flex", alignItems: "center", gap: 4 }}>
+                          🎮 AJUSTE DO CARIMBO ELITE
+                        </p>
+
+                        {/* Identificador de Coordenadas Elite */}
+                        <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 6, padding: "6px 8px", marginBottom: 10, display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 10px" }}>
+                          <div style={{ fontSize: 10, color: "#1e40af", fontWeight: 700 }}>X: <span style={{ color: "#000" }}>{stampX}px</span></div>
+                          <div style={{ fontSize: 10, color: "#1e40af", fontWeight: 700 }}>Y: <span style={{ color: "#000" }}>{stampY}px</span></div>
+                          <div style={{ fontSize: 10, color: "#1e40af", fontWeight: 700 }}>ESCALA: <span style={{ color: "#000" }}>{Math.round(stampScale * 100)}%</span></div>
+                          <div style={{ fontSize: 10, color: "#1e40af", fontWeight: 700 }}>GIRO: <span style={{ color: "#000" }}>{stampRotate}°</span></div>
+                        </div>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                          {/* Toggles */}
+                          <div style={{ display: "flex", gap: 12 }}>
+                            <label style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                              <input type="checkbox" checked={hideQRCode} onChange={e => setHideQRCode(e.target.checked)} />
+                              Ocultar QR
+                            </label>
+                            <label style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                              <input type="checkbox" checked={showStampInfo} onChange={e => setShowStampInfo(e.target.checked)} />
+                              Dados Médico
+                            </label>
+                          </div>
+
+                          {/* Controles de Escala */}
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <button type="button" onClick={() => setStampScale(v => Math.max(0.1, v + 0.1))} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>🔍+ ZOOM</button>
+                            <button type="button" onClick={() => setStampScale(v => Math.max(0.1, v - 0.1))} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>🔍- ZOOM</button>
+                          </div>
+
+                          {/* Controles de Rotação */}
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <button type="button" onClick={() => setStampRotate(v => v - 1)} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>↺ GIRAR</button>
+                            <button type="button" onClick={() => setStampRotate(v => v + 1)} style={{ ...btnGray, flex: 1, padding: "5px 0", fontSize: 10 }}>↻ GIRAR</button>
+                          </div>
+
+                          {/* Controles de Posição (Setas Rápidas) */}
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, width: "100%", maxWidth: 180, margin: "0 auto" }}>
+                            <div />
+                            <button type="button" onClick={() => setStampY(v => v - STAMP_POS_STEP)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▲</button>
+                            <div />
+
+                            <button type="button" onClick={() => setStampX(v => v - STAMP_POS_STEP)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>◀</button>
+                            <button type="button" onClick={resetStampTransform} style={{ ...btnGray, padding: "6px 0", fontSize: 9, display: "flex", alignItems: "center", justifyContent: "center" }}>RESET</button>
+                            <button type="button" onClick={() => setStampX(v => v + STAMP_POS_STEP)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▶</button>
+
+                            <div />
+                            <button type="button" onClick={() => setStampY(v => v + STAMP_POS_STEP)} style={{ ...btnGray, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>▼</button>
+                            <div />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                 </div>
               </details>
             </div>
