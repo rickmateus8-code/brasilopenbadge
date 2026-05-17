@@ -1,4 +1,4 @@
-/* CORS Headers para permitir que o validador acesse logos do DocMaster */
+# CORS Headers para permitir que o validador acesse logos do DocMaster
 /logos/*
   Access-Control-Allow-Origin: *
   Access-Control-Allow-Methods: GET, OPTIONS
