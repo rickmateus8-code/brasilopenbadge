@@ -145,7 +145,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={valueStyle}>{data.advogado?.toUpperCase() || ""}</span>
         </div>
 
-        <div style={{ ...textStyle, top: MARGIN_TOP + 245.2, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 268.8, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Processo N°:</span>
           <span style={valueStyle}>{data.processo || ""}</span>
         </div>
