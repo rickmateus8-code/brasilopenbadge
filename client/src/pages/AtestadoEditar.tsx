@@ -2470,7 +2470,7 @@ export default function AtestadoEditar() {
                       onChange={(e) => setForm(p => ({ ...p, modoCarimbo: e.target.checked }))}
                       style={{ width: 16, height: 16 }}
                     />
-                    Modo Carimbo (rodapé com assinatura cursiva)
+                    Modo Carimbo (Elite 2.0)
                   </label>
                 </div>
               </div>

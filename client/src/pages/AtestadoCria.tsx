@@ -1136,6 +1136,17 @@ export default function AtestadoCria() {
       alert("CPF inválido! Verifique os dígitos informados.");
       return;
     }
+
+    if (hideQRCode) {
+      // MODO OFFLINE / SEM QR CODE: Apenas gera PDF local sem bater no banco
+      setIsLoading(true);
+      await handleDownloadPdf();
+      setIsLoading(false);
+      setAutoDownloadTriggered(true); // Evita loop
+      setShowSuccessModal(true);
+      return;
+    }
+
     // Buscar preço antes de mostrar o modal
     setPriceLoading(true);
     try {
@@ -1828,7 +1839,7 @@ export default function AtestadoCria() {
                           <div style={{ display: "flex", gap: 12 }}>
                             <label style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
                               <input type="checkbox" checked={hideQRCode} onChange={e => setHideQRCode(e.target.checked)} />
-                              Ocultar QR
+                              Ocultar QR Code (Rodapé Digital)
                             </label>
                             <label style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
                               <input type="checkbox" checked={showStampInfo} onChange={e => setShowStampInfo(e.target.checked)} />
@@ -2147,7 +2158,7 @@ export default function AtestadoCria() {
                         onChange={(e) => setForm(p => ({ ...p, modoCarimbo: e.target.checked }))}
                         style={{ width: 16, height: 16 }}
                       />
-                      Modo Carimbo (rodapé com assinatura cursiva)
+                      Modo Carimbo (Elite 2.0)
                     </label>
                     </div>
                     </div>
