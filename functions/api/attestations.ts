@@ -30,8 +30,15 @@ async function getAuthUser(env: Env, token: string | null): Promise<any | null> 
   ).bind(token, now).first<{ user_id: string }>();
   if (!session) return null;
   const user = await env.DB.prepare(
-    "SELECT id, username, role, balance, is_active FROM users WHERE id = ? AND is_active = 1 LIMIT 1"
+    "SELECT id, username, role, balance, is_active, free_documents FROM users WHERE id = ? AND is_active = 1 LIMIT 1"
   ).bind(session.user_id).first<any>();
+  if (user && typeof user.free_documents === 'string') {
+    try {
+      user.free_documents = JSON.parse(user.free_documents);
+    } catch (_) {
+      user.free_documents = [];
+    }
+  }
   return user || null;
 }
 
