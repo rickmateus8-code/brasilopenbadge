@@ -27,6 +27,15 @@ export const onRequestOptions: PagesFunction = async () => {
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   try {
+    const url = new URL(request.url);
+    const providedSecret = url.searchParams.get('secret');
+    const expectedSecret = (env as any).PAYMENTS_BLACK_WEBHOOK_SECRET || 'webhook_secret_key';
+
+    if (!providedSecret || providedSecret !== expectedSecret) {
+      console.error('PIX webhook error: Invalid or missing secret');
+      return toJson({ received: true, processed: false, error: 'Unauthorized' }, 401);
+    }
+
     const body = await request.json() as any;
 
     const transactionId = String(body.transaction_id || body.payment_id || '').trim();

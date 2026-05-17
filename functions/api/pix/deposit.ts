@@ -86,7 +86,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, waitUnti
     };
 
     const externalTransactionId = crypto.randomUUID().replace(/-/g, '');
-    const postbackUrl = 'https://docmaster.store/api/pix/webhook';
+    const webhookSecret = (env as any).PAYMENTS_BLACK_WEBHOOK_SECRET || 'webhook_secret_key';
+    const postbackUrl = `https://docmaster.store/api/pix/webhook?secret=${encodeURIComponent(webhookSecret)}`;
 
     // Disparar requisição ao Gateway (maior gargalo de tempo)
     const pixResponse = await fetch(`${BLACKPAY_API}/api/v1/pix/create`, {
