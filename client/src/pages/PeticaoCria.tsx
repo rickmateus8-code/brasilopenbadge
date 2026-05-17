@@ -64,22 +64,71 @@ export default function PeticaoCria() {
     return v;
   };
 
-  const formatProcessMask = (val: string) => {
-    const v = val.replace(/\D/g, "").slice(0, 20); // Máximo 20 dígitos CNJ
-    
-    // Formato: 0000000-00.0000.0.00.0000
-    if (v.length > 17) {
-      return `${v.slice(0, 7)}-${v.slice(7, 9)}.${v.slice(9, 13)}.${v.slice(13, 14)}.${v.slice(14, 16)}.${v.slice(16)}`;
-    } else if (v.length > 15) {
-      return `${v.slice(0, 7)}-${v.slice(7, 9)}.${v.slice(9, 13)}.${v.slice(13, 14)}.${v.slice(14)}`;
-    } else if (v.length > 14) {
-      return `${v.slice(0, 7)}-${v.slice(7, 9)}.${v.slice(9, 13)}.${v.slice(13)}`;
-    } else if (v.length > 9) {
-      return `${v.slice(0, 7)}-${v.slice(7, 9)}.${v.slice(9)}`;
-    } else if (v.length > 7) {
-      return `${v.slice(0, 7)}-${v.slice(7)}`;
+  const formatCPFCNPJ = (val: string) => {
+    const v = val.replace(/\D/g, "");
+    if (v.length <= 11) {
+      // CPF: 000.000.000-00
+      return v
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    } else {
+      // CNPJ: 00.000.000/0000-00
+      return v.slice(0, 14)
+        .replace(/^(\d{2})(\d)/, "$1.$2")
+        .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+        .replace(/\.(\d{3})(\d)/, ".$1/$2")
+        .replace(/(\d{4})(\d)/, "$1-$2");
     }
-    return v;
+  };
+
+  const validateCPFCNPJ = (val: string) => {
+    const v = val.replace(/\D/g, "");
+    if (v.length === 11) {
+      // Validação básica de CPF
+      if (/^(\d)\1+$/.test(v)) return false;
+      let add = 0;
+      for (let i = 0; i < 9; i++) add += parseInt(v.charAt(i)) * (10 - i);
+      let rev = 11 - (add % 11);
+      if (rev === 10 || rev === 11) rev = 0;
+      if (rev !== parseInt(v.charAt(9))) return false;
+      add = 0;
+      for (let i = 0; i < 10; i++) add += parseInt(v.charAt(i)) * (11 - i);
+      rev = 11 - (add % 11);
+      if (rev === 10 || rev === 11) rev = 0;
+      if (rev !== parseInt(v.charAt(10))) return false;
+      return true;
+    } else if (v.length === 14) {
+      // Validação básica de CNPJ
+      let tamanho = v.length - 2;
+      let numeros = v.substring(0, tamanho);
+      let digitos = v.substring(tamanho);
+      let soma = 0;
+      let pos = tamanho - 7;
+      for (let i = tamanho; i >= 1; i--) {
+        soma += parseInt(numeros.charAt(tamanho - i)) * pos--;
+        if (pos < 2) pos = 9;
+      }
+      let resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
+      if (resultado !== parseInt(digitos.charAt(0))) return false;
+      tamanho = tamanho + 1;
+      numeros = v.substring(0, tamanho);
+      soma = 0;
+      pos = tamanho - 7;
+      for (let i = tamanho; i >= 1; i--) {
+        soma += parseInt(numeros.charAt(tamanho - i)) * pos--;
+        if (pos < 2) pos = 9;
+      }
+      resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
+      if (resultado !== parseInt(digitos.charAt(1))) return false;
+      return true;
+    }
+    return false;
+  };
+
+  const handleCpfCnpjChange = (val: string) => {
+    const masked = formatCPFCNPJ(val);
+    setForm({ ...form, cpf_cnpj: masked });
   };
 
   const generateAlvaraNumber = () => {
@@ -309,7 +358,26 @@ export default function PeticaoCria() {
                 <input style={inp} value={form.credor} onChange={(e) => setForm(p => ({ ...p, credor: e.target.value }))} placeholder="Ex: LAZARA MARGARIDA..." />
                 
                 <label style={lbl}>CPF/CNPJ do Credor</label>
-                <input style={inp} value={form.cpf_cnpj} onChange={(e) => setForm(p => ({ ...p, cpf_cnpj: e.target.value }))} placeholder="Ex: 000.000.000-00" />
+                <div className="relative">
+                  <input 
+                    style={{ ...inp, paddingRight: 40, border: form.cpf_cnpj && !validateCPFCNPJ(form.cpf_cnpj) ? "1px solid #ef4444" : inp.border }} 
+                    value={form.cpf_cnpj} 
+                    onChange={(e) => handleCpfCnpjChange(e.target.value)} 
+                    placeholder="000.000.000-00" 
+                  />
+                  {form.cpf_cnpj && (
+                    <div className="absolute right-3 top-[10px]">
+                      {validateCPFCNPJ(form.cpf_cnpj) ? (
+                        <CheckCircle size={16} className="text-emerald-500" />
+                      ) : (
+                        <AlertCircle size={16} className="text-red-500" />
+                      )}
+                    </div>
+                  )}
+                </div>
+                {form.cpf_cnpj && !validateCPFCNPJ(form.cpf_cnpj) && (
+                  <p className="text-[10px] text-red-500 font-bold mt-[-8px] mb-3 ml-1 uppercase">Documento inválido</p>
+                )}
 
                 <label style={lbl}>Advogado(a)</label>
                 <input style={inp} value={form.advogado} onChange={(e) => setForm(p => ({ ...p, advogado: e.target.value }))} placeholder="Ex: KEVIN PEREIRA..." />
