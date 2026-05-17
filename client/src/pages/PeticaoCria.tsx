@@ -249,9 +249,35 @@ export default function PeticaoCria() {
       if (result.success) {
         if (result.newBalance !== undefined) updateBalance(result.newBalance);
         setSaved(true);
-        setForm(p => ({ ...p, id: result.data.id }));
+        const finalId = result.data.id;
+        setForm(p => ({ ...p, id: finalId }));
+        
         setShowConfirmModal(false);
-        setShowSuccessModal(true);
+        toast.success("Emissão realizada! Gerando download...");
+
+        // Aguardar atualização do estado do ID no componente antes de exportar
+        setTimeout(async () => {
+          if (previewRef.current) {
+            try {
+              await exportPDF(previewRef.current, {
+                filename: generatePDFFilename(form.credor || "PETICAO", "peticaocria"),
+                docType: "peticaocria",
+                customWidth: 826,
+                customHeight: 1180,
+              });
+              toast.success("Download iniciado!");
+              // Redirecionar após o download
+              setTimeout(() => {
+                setLocation("/peticaocria-salvos");
+              }, 1500);
+            } catch (err) {
+              toast.error("Erro ao gerar download automático.");
+              setShowSuccessModal(true); // Fallback para modal manual
+            }
+          } else {
+            setShowSuccessModal(true);
+          }
+        }, 500);
       } else {
         toast.error(result.error || "Erro ao gerar petição");
         setShowConfirmModal(false);

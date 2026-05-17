@@ -117,9 +117,9 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400, margin: 0, padding: 0, lineHeight: "1" }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
         </div>
 
-        {/* Logo OAB (TOPO ABSOLUTO E +2% TAMANHO) */}
+        {/* Logo OAB (TOPO ABSOLUTO E -1% TAMANHO) */}
         <div style={{ position: "absolute", top: "-3px", left: "4pt", zIndex: 11 }}>
-           <img src="/assets/peticao/oab_logo.png" style={{ width: "101.1pt" }} alt="OAB" />
+           <img src="/assets/peticao/oab_logo.png" style={{ width: "100.1pt" }} alt="OAB" />
         </div>
 
         {/* Título do Documento (SUBIDO +2 LINHAS ≈ -48px) */}
@@ -145,14 +145,14 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={valueStyle}>{data.advogado?.toUpperCase() || ""}</span>
         </div>
 
-        <div style={{ ...textStyle, top: MARGIN_TOP + 293.2, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 245.2, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Processo N°:</span>
           <span style={valueStyle}>{data.processo || ""}</span>
         </div>
 
         <div style={{ 
           ...textStyle, 
-          top: MARGIN_TOP + 371.2, 
+          top: MARGIN_TOP + 323.2, 
           left: MARGIN_LEFT_BODY, 
           borderBottom: "1px solid #000", 
           paddingBottom: "3.78px", // 1mm de espaçamento conforme solicitado
