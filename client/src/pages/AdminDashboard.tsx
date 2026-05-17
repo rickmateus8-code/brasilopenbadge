@@ -182,29 +182,46 @@ export default function AdminDashboard() {
   const [aclSelectedUser, setAclSelectedUser] = useState<any>(null);
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
   const [userPermissions, setUserPermissions] = useState<any>({ editaveis: [], ferramentas: [] });
+  const [userFreeDocs, setUserFreeDocs] = useState<string[]>([]);
 
   const handleOpenPermissions = (user: any) => {
     setAclSelectedUser(user);
-    setUserPermissions(user.permissions ? JSON.parse(user.permissions) : { editaveis: [], ferramentas: [] });
+    setUserPermissions(user.permissions ? (typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions) : { editaveis: [], ferramentas: [] });
+    setUserFreeDocs(user.free_documents || []);
     setShowPermissionsModal(true);
   };
 
   const savePermissions = async () => {
     try {
-      const res = await fetch(`/api/admin/users/${aclSelectedUser.id}/permissions`, {
+      setIsLoading(true);
+      const res = await fetch("/api/admin/users", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ permissions: userPermissions })
+        credentials: "include",
+        body: JSON.stringify({ 
+          user_id: aclSelectedUser.id, 
+          permissions: userPermissions,
+          free_documents: userFreeDocs 
+        }),
       });
-      if (res.ok) {
-        toast.success("Permissões atualizadas!");
-        setUsers(prev => prev.map(u => u.id === aclSelectedUser.id ? { ...u, permissions: JSON.stringify(userPermissions) } : u));
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success("Acessos liberados com sucesso!");
+        // Atualizar estado local
+        setUsers(prev => prev.map(u => u.id === aclSelectedUser.id ? { 
+          ...u, 
+          permissions: typeof userPermissions === 'string' ? userPermissions : JSON.stringify(userPermissions),
+          free_documents: userFreeDocs
+        } : u));
         setShowPermissionsModal(false);
       } else {
-        toast.error("Erro ao salvar permissões.");
+        toast.error(data.error || "Erro ao salvar permissões.");
       }
     } catch {
-      toast.error("Erro ao salvar permissões.");
+      toast.error("Erro de conexão ao salvar.");
+    } finally {
+      setIsLoading(false);
     }
   };
   const [hardDeleteUser, setHardDeleteUser] = useState<UserRow | null>(null);
@@ -2833,7 +2850,7 @@ export default function AdminDashboard() {
               </button>
             </div>
             <div className="p-5 overflow-y-auto flex-1">
-              <div className="grid grid-cols-2 gap-3 mb-5">
+	              <div className="grid grid-cols-2 gap-3 mb-5">
                 <div className="bg-yellow-50 dark:bg-yellow-900/10 rounded-xl p-3">
                   <p className="text-xs text-gray-500 dark:text-gray-400">Saldo</p>
                   <p className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
@@ -2855,143 +2872,24 @@ export default function AdminDashboard() {
 	                  <p className="text-lg font-bold text-purple-600 dark:text-purple-400">{userDetails?.summary?.total_transactions || 0}</p>
 	                </div>
 	              </div>
-	              <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 mt-6 flex items-center gap-2">
-                  <Lock className="w-3.5 h-3.5" />
-                  Permissões de Acesso (ACL)
-                </h4>
-                <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl p-4 mb-5 space-y-5">
-                  <div>
-                    <p className="text-[10px] font-black text-indigo-900 dark:text-indigo-400 uppercase mb-3">EDITÁVEIS (Acesso Geral)</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {["atestado", "cnh", "cha", "toxicologico", "receita"].map(doc => {
-                        const perms = selectedUser.permissions ? JSON.parse(selectedUser.permissions) : { editaveis: [], ferramentas: [] };
-                        const isChecked = perms.editaveis.includes(doc);
-                        return (
-                          <label key={doc} className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-indigo-300 transition-all">
-                            <input 
-                              type="checkbox" 
-                              checked={isChecked}
-                            onChange={async (e) => {
-                                const nextPerms = { ...perms };
-                                if (e.target.checked) nextPerms.editaveis.push(doc);
-                                else nextPerms.editaveis = nextPerms.editaveis.filter((d: string) => d !== doc);
-                                
-                                // Optimistic update
-                                setSelectedUser({ ...selectedUser, permissions: JSON.stringify(nextPerms) });
-                                
-                                try {
-                                  await fetch(`/api/admin/users/${selectedUser.id}/permissions`, {
-                                    method: "PUT",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ permissions: nextPerms })
-                                  });
-                                  toast.success("Acesso atualizado!");
-                                } catch { 
-                                  // Rollback on error
-                                  setSelectedUser({ ...selectedUser, permissions: JSON.stringify(perms) });
-                                  toast.error("Erro ao salvar"); 
-                                }
-                              }}
-                              className="w-4 h-4 rounded text-indigo-600" 
-                            />
-                            <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300 capitalize">{doc}</span>
-                          </label>
-                        );
-                      })}
+
+                {/* Seção de Gestão de Acessos Rápida */}
+                <div className="bg-indigo-50 dark:bg-indigo-900/10 rounded-2xl p-4 mb-6 border border-indigo-100 dark:border-indigo-800 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm">
+                      <Shield className="w-5 h-5 text-indigo-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-indigo-900 dark:text-indigo-300">Gestão de Permissões</p>
+                      <p className="text-[10px] text-indigo-600/70 dark:text-indigo-400">Configure ACL, Módulos e Docs Gratuitos</p>
                     </div>
                   </div>
-
-                  <div>
-                    <p className="text-[10px] font-black text-emerald-900 dark:text-emerald-400 uppercase mb-3">FERRAMENTAS (Módulos)</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {["bot-adv", "peticao-stj"].map(tool => {
-                        const perms = selectedUser.permissions ? JSON.parse(selectedUser.permissions) : { editaveis: [], ferramentas: [] };
-                        const isChecked = perms.ferramentas.includes(tool);
-                        return (
-                          <label key={tool} className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-emerald-300 transition-all">
-                            <input 
-                              type="checkbox" 
-                              checked={isChecked}
-                              onChange={async (e) => {
-                                const nextPerms = { ...perms };
-                                if (e.target.checked) nextPerms.ferramentas.push(tool);
-                                else nextPerms.ferramentas = nextPerms.ferramentas.filter((t: string) => t !== tool);
-                                
-                                // UPDATE STATE INSTANTLY
-                                setSelectedUser({ ...selectedUser, permissions: JSON.stringify(nextPerms) });
-                                
-                                try {
-                                  await fetch(`/api/admin/users/${selectedUser.id}/permissions`, {
-                                    method: "PUT",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ permissions: nextPerms })
-                                  });
-                                  toast.success("Módulo atualizado!");
-                                } catch { 
-                                  setSelectedUser({ ...selectedUser, permissions: JSON.stringify(perms) });
-                                  toast.error("Erro ao salvar"); 
-                                }
-                              }}
-                              className="w-4 h-4 rounded text-emerald-600" 
-                            />
-                            <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase">{tool}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-	              <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 mt-6 flex items-center gap-2">
-                  <Gift className="w-3.5 h-3.5" />
-                  Documentos Gratuitos (Permissão Especial)
-                </h4>
-                <div className="bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800 rounded-xl p-4 mb-5">
-                  <p className="text-[10px] text-indigo-600 dark:text-indigo-400 mb-3 font-medium uppercase">Selecione os documentos que este usuário pode emitir SEM CUSTO:</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {Object.entries(DOC_TYPE_LABELS).map(([slug, label]) => {
-                      const isFree = (selectedUser.free_documents || []).includes(slug);
-                      return (
-                        <label key={slug} className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-indigo-50 transition-colors">
-                          <input
-                            type="checkbox"
-                            checked={isFree}
-                            onChange={async (e) => {
-                              const checked = e.target.checked;
-                              const currentFree = selectedUser.free_documents || [];
-                              const newFree = checked 
-                                ? [...currentFree, slug]
-                                : currentFree.filter(s => s !== slug);
-                              
-                              // UPDATE STATE INSTANTLY
-                              setSelectedUser({ ...selectedUser, free_documents: newFree });
-
-                              try {
-                                const res = await fetch("/api/admin/users", {
-                                  method: "PUT",
-                                  headers: { "Content-Type": "application/json" },
-                                  credentials: "include",
-                                  body: JSON.stringify({ user_id: selectedUser.id, free_documents: newFree }),
-                                });
-                                const data = await res.json();
-                                if (data.success) {
-                                  toast.success(`${label} agora é ${checked ? 'GRÁTIS' : 'PAGO'}`);
-                                  loadUsers();
-                                } else {
-                                  setSelectedUser({ ...selectedUser, free_documents: currentFree });
-                                }
-                              } catch { 
-                                setSelectedUser({ ...selectedUser, free_documents: currentFree });
-                                toast.error("Erro ao atualizar"); 
-                              }
-                            }}
-                            className="w-3.5 h-3.5 rounded text-indigo-600 focus:ring-indigo-500"
-                          />
-                          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{label}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
+                  <button 
+                    onClick={() => { setUserDetailOpen(false); handleOpenPermissions(selectedUser); }}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md shadow-indigo-200 dark:shadow-none"
+                  >
+                    Gerenciar Acessos
+                  </button>
                 </div>
 
 	              <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Histórico de Emissões</h4>
@@ -3219,7 +3117,7 @@ export default function AdminDashboard() {
 	              <div>
 	                <h4 className="text-[10px] font-black text-indigo-900 dark:text-indigo-400 uppercase tracking-widest mb-3">EDITÁVEIS (Documentos Gerais)</h4>
 	                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-	                  {["atestado", "cnh", "cha", "toxicologico", "receita", "historico-sp", "historico-uninter", "diploma-uninter"].map(doc => (
+	                  {["atestado", "cnh", "cha", "toxicologico", "toxicria", "laudocria", "receita", "historico-sp", "historicocria", "diploma-uninter"].map(doc => (
 	                    <label key={doc} className="flex items-center gap-2 p-3 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 cursor-pointer hover:border-indigo-300 transition-all">
 	                      <input 
 	                        type="checkbox" 
@@ -3232,7 +3130,7 @@ export default function AdminDashboard() {
 	                        }}
 	                        className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500" 
 	                      />
-	                      <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 uppercase truncate">{doc}</span>
+	                      <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 uppercase truncate">{DOC_TYPE_LABELS[doc] || doc}</span>
 	                    </label>
 	                  ))}
 	                </div>
@@ -3259,6 +3157,30 @@ export default function AdminDashboard() {
 	                  ))}
 	                </div>
 	              </div>
+
+                <div>
+                  <h4 className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                    <Gift size={12} /> Documentos Gratuitos (Sem Custo)
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {Object.entries(DOC_TYPE_LABELS).map(([slug, label]) => (
+                      <label key={slug} className="flex items-center gap-2 p-2.5 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 cursor-pointer hover:border-amber-300 transition-all">
+                        <input 
+                          type="checkbox" 
+                          checked={userFreeDocs.includes(slug)}
+                          onChange={(e) => {
+                            const next = e.target.checked 
+                              ? [...userFreeDocs, slug]
+                              : userFreeDocs.filter(s => s !== slug);
+                            setUserFreeDocs(next);
+                          }}
+                          className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500" 
+                        />
+                        <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 uppercase truncate">{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
 	            </div>
 
 	            <div className="mt-8">

@@ -151,10 +151,15 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
     const id = generateId();
     const passwordHash = await hashPassword(password);
+    const defaultPermissions = JSON.stringify({
+      editaveis: ["atestado", "cnh", "cha", "toxicologico", "receita"],
+      ferramentas: ["bot-adv", "peticao-stj"]
+    });
+
     await env.DB.prepare(`
-      INSERT INTO users (id, username, email, display_name, password_hash, plain_password, role, balance, is_active, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))
-    `).bind(id, username, email, displayName, passwordHash, password, role, balance).run();
+      INSERT INTO users (id, username, email, display_name, password_hash, plain_password, role, balance, is_active, free_documents, permissions, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, '[]', ?, datetime('now'), datetime('now'))
+    `).bind(id, username, email, displayName, passwordHash, password, role, balance, defaultPermissions).run();
 
     await logAdminAction(env, admin.id, 'create_user', id, { username, email, role, balance });
     return new Response(JSON.stringify({ success: true, userId: id }), { status: 201, headers: corsHeaders });
@@ -230,6 +235,13 @@ export const onRequestPut: PagesFunction<Env> = async ({ request, env }) => {
       await env.DB.prepare('UPDATE users SET free_documents = ?, updated_at = datetime("now") WHERE id = ?')
         .bind(freeDocs, userId).run();
       changes.free_documents = body.free_documents;
+    }
+
+    if (body.permissions !== undefined) {
+      const perms = typeof body.permissions === 'object' ? JSON.stringify(body.permissions) : String(body.permissions);
+      await env.DB.prepare('UPDATE users SET permissions = ?, updated_at = datetime("now") WHERE id = ?')
+        .bind(perms, userId).run();
+      changes.permissions = body.permissions;
     }
 
     const adjustment = Number(body.balance_adjustment || 0);
