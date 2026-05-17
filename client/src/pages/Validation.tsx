@@ -577,6 +577,7 @@ export default function Validation() {
               stampY={validDoc.stampY ?? validDoc.stamp_y}
               stampRotate={validDoc.stampRotate ?? validDoc.stamp_rotate}
               hideQRCode={validDoc.hideQRCode || validDoc.hide_qr_code === 1}
+              showStampInfo={validDoc.showStampInfo !== false && validDoc.show_stamp_info !== 0}
               />          </div>
         );
       case "receita":

@@ -106,6 +106,32 @@ function jsonResponse(data: any, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: corsHeaders() });
 }
 
+async function ensureAttestationColumns(env: Env) {
+  const alters = [
+    'ALTER TABLE attestations ADD COLUMN logo_left_scale REAL DEFAULT 1.0',
+    'ALTER TABLE attestations ADD COLUMN logo_right_scale REAL DEFAULT 1.0',
+    'ALTER TABLE attestations ADD COLUMN logo_left_x REAL DEFAULT 0',
+    'ALTER TABLE attestations ADD COLUMN logo_left_y REAL DEFAULT 0',
+    'ALTER TABLE attestations ADD COLUMN logo_right_x REAL DEFAULT 0',
+    'ALTER TABLE attestations ADD COLUMN logo_right_y REAL DEFAULT 0',
+    'ALTER TABLE attestations ADD COLUMN stamp_scale REAL DEFAULT 1.0',
+    'ALTER TABLE attestations ADD COLUMN stamp_x REAL DEFAULT 0',
+    'ALTER TABLE attestations ADD COLUMN stamp_y REAL DEFAULT 0',
+    'ALTER TABLE attestations ADD COLUMN stamp_rotate REAL DEFAULT 0',
+    'ALTER TABLE attestations ADD COLUMN hide_qr_code INTEGER DEFAULT 0',
+    'ALTER TABLE attestations ADD COLUMN show_stamp_info INTEGER DEFAULT 1',
+    'ALTER TABLE attestations ADD COLUMN document_type TEXT DEFAULT "atestado"',
+  ];
+
+  for (const sql of alters) {
+    try {
+      await env.DB.prepare(sql).run();
+    } catch (_) {
+      // Ignora erro se a coluna já existir
+    }
+  }
+}
+
 // ─── Handler principal ────────────────────────────────────────────────────────
 
 export async function onRequest(context: { request: Request; env: Env; params: any; waitUntil: (promise: Promise<any>) => void }) {
@@ -113,6 +139,11 @@ export async function onRequest(context: { request: Request; env: Env; params: a
 
   if (request.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders() });
+  }
+
+  // Auto-migração resiliente
+  if (request.method === "POST" || request.method === "PUT") {
+    waitUntil(ensureAttestationColumns(env));
   }
 
   const authHeader = request.headers.get("Authorization");
@@ -407,6 +438,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any, wa
       stamp_y: body.stampY ?? 0,
       stamp_rotate: body.stampRotate ?? 0,
       hide_qr_code: body.hideQRCode ?? false,
+      show_stamp_info: body.showStampInfo ?? true,
       document_type: body.documentType || body.document_type || 'atestado',
       _codigo_override: codigoQR,
     };
@@ -621,18 +653,19 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
       signature_color: updated.signature_color || "#0b109f",
       signature_image: updated.signature_image || "",
       modo_carimbo: updated.modo_carimbo || 0,
-      // Fallbacks para paridade no IDAB
-      logo_left_scale: 1.0,
-      logo_right_scale: 1.0,
-      logo_left_x: 0,
-      logo_left_y: 0,
-      logo_right_x: 0,
-      logo_right_y: 0,
-      stamp_scale: 1.0,
-      stamp_x: 0,
-      stamp_y: 0,
-      stamp_rotate: 0,
-      hide_qr_code: false,
+      stamp_scale: updated.stamp_scale ?? 1.0,
+      stamp_x: updated.stamp_x ?? 0,
+      stamp_y: updated.stamp_y ?? 0,
+      stamp_rotate: updated.stamp_rotate ?? 0,
+      hide_qr_code: updated.hide_qr_code || 0,
+      show_stamp_info: updated.show_stamp_info ?? 1,
+      logo_left_scale: updated.logo_left_scale ?? 1.0,
+      logo_right_scale: updated.logo_right_scale ?? 1.0,
+      logo_left_x: updated.logo_left_x ?? 0,
+      logo_left_y: updated.logo_left_y ?? 0,
+      logo_right_x: updated.logo_right_x ?? 0,
+      logo_right_y: updated.logo_right_y ?? 0,
+      document_type: updated.document_type || 'atestado',
     };
     waitUntil((async () => {
       try {

@@ -119,6 +119,15 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const cidNome = (data as any).cidNome || (data as any).cid_nome || "";
     const cidade = (data as any).cidade || "";
     const modoCarimbo = (data as any).modoCarimbo || (data as any).modo_carimbo || false;
+
+    // Extrair parâmetros de layout do objeto data (para sincronia com validador)
+    const sScale = stampScale ?? (data as any).stampScale ?? (data as any).stamp_scale ?? 1;
+    const sX = stampX ?? (data as any).stampX ?? (data as any).stamp_x ?? 5;
+    const sY = stampY ?? (data as any).stampY ?? (data as any).stamp_y ?? -8;
+    const sRotate = stampRotate ?? (data as any).stampRotate ?? (data as any).stamp_rotate ?? -3;
+    const hQRCode = hideQRCode || (data as any).hideQRCode || (data as any).hide_qr_code === 1;
+    const sStampInfo = showStampInfo && ((data as any).showStampInfo !== false && (data as any).show_stamp_info !== 0);
+
     const docType = (documentType || (data as any).documentType || (data as any).document_type || (data as any).tipo || 'atestado').toLowerCase();
     
     const dataAssinatura = data.dataAssinatura || (data as any).data_assinatura || "";
@@ -580,12 +589,12 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               justifyContent: "center",
               width: 300,
               position: "absolute",
-              bottom: hideQRCode ? 80 : 150, // Posição padrão centralizada
+              bottom: hQRCode ? 80 : 150, // Posição padrão centralizada
               left: "50%",
               marginLeft: -150,
-              zIndex: 10,
+              zIndex: 99, // Prioridade visual máxima conforme solicitado
               flexShrink: 0,
-              transform: `scale(${stampScale}) translate(${stampX}px, ${stampY}px) rotate(${stampRotate}deg)`,
+              transform: `scale(${sScale}) translate(${sX}px, ${sY}px) rotate(${sRotate}deg)`,
               transformOrigin: "center center",
               transition: "transform 0.05s ease-out",
               pointerEvents: "auto", // Habilita Drag & Drop
@@ -601,7 +610,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               position: "relative",
             }}>
               {/* Data dentro do carimbo (APENAS se QR Code estiver OCULTO) */}
-              {hideQRCode && (
+              {hQRCode && (
                 <div style={{ 
                   fontWeight: 700, 
                   textTransform: "uppercase", 
@@ -632,8 +641,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                     alt="Rabisco"
                     crossOrigin={getCrossOrigin(fotoAssinatura)}
                     style={{ 
-                      maxWidth: 260, 
-                      maxHeight: 85, 
+                      maxWidth: 273, // Aumentado em 5% (260 * 1.05)
+                      maxHeight: 89, // Aumentado em 5% (85 * 1.05)
                       objectFit: "contain", 
                       position: "absolute", 
                       zIndex: 3,
@@ -646,7 +655,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               </div>
 
               {/* Dados do Médico (Nome/CRM/Especialidade) */}
-              {showStampInfo && (
+              {sStampInfo && (
                 <div style={{ 
                   textAlign: "center", 
                   marginTop: -5, // Sobe um pouco para o rabisco sobrepor melhor

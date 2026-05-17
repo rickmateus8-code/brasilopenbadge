@@ -50,7 +50,7 @@ export default function ReceitaEditar() {
   const [savedMsg, setSavedMsg] = useState("");
 
   // Assinatura
-  const [signatureColor, setSignatureColor] = useState("#0b109f");
+  const [signatureColor, setSignatureColor] = useState("#000000");
   const [signatureImage, setSignatureImage] = useState("");
   const signatureRef = useRef<HTMLInputElement>(null);
 

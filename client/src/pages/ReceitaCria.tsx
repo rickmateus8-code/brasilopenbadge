@@ -91,7 +91,7 @@ export default function ReceitaCria() {
   const [documentPrice, setDocumentPrice] = useState(0);
 
   // Assinatura
-  const [signatureColor, setSignatureColor] = useState("#0b109f");
+  const [signatureColor, setSignatureColor] = useState("#000000");
   const [signatureImage, setSignatureImage] = useState("");
   const signatureRef = useRef<HTMLInputElement>(null);
 
