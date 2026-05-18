@@ -1,4 +1,8 @@
-import { Download, Pencil, Loader2, X } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { 
+  Download, Pencil, Loader2, X, 
+  ZoomIn, ZoomOut, Maximize, Move, RotateCcw 
+} from "lucide-react";
 import AttestationDocument from "@/components/AttestationDocument";
 import { buildAttestationData, type AttestationDocRecord } from "@/lib/attestationActions";
 
@@ -18,37 +22,142 @@ export default function AttestationViewerModal({
   isDownloading = false,
 }: AttestationViewerModalProps) {
   const attData = buildAttestationData(doc);
+  const [scale, setScale] = useState(0.65);
+  const [position, setPos] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-fit inicial baseado na altura da tela
+  useEffect(() => {
+    const vh = window.innerHeight;
+    if (vh < 800) setScale(0.55);
+    else if (vh < 1000) setScale(0.65);
+    else setScale(0.75);
+  }, []);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (scale <= 0.75) return; // Só arrasta se tiver zoom
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setPos({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y
+    });
+  };
+
+  const handleMouseUp = () => setIsDragging(false);
+
+  const resetView = () => {
+    setScale(0.65);
+    setPos({ x: 0, y: 0 });
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-start justify-center z-50 p-4 overflow-y-auto" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full mt-4 mb-4" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h3 className="text-lg font-bold text-gray-900">Visualizar Documento</h3>
+    <div 
+      className="fixed inset-0 bg-[#0f172a]/90 backdrop-blur-sm flex items-center justify-center z-[100] p-4 sm:p-8"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-[#f8fafc] rounded-3xl shadow-2xl w-full max-w-5xl h-full max-h-[95vh] flex flex-col overflow-hidden border border-white/20 animate-in fade-in zoom-in duration-300"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header Elite */}
+        <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+              <Maximize className="w-5 h-5 text-[#005CA9]" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-gray-900 leading-tight">Visualização Premium</h3>
+              <p className="text-[11px] text-gray-500 font-medium uppercase tracking-wider">Documento ID: {doc.codigo_qr || doc.id}</p>
+            </div>
+          </div>
+
           <div className="flex items-center gap-2">
             <button
-              type="button"
-              onClick={onDownload}
-              disabled={isDownloading}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-colors disabled:opacity-60"
+              onClick={onEdit}
+              className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-xl transition-all active:scale-95 shadow-sm shadow-amber-200"
             >
-              {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-              {isDownloading ? "Gerando..." : "Baixar PDF"}
+              <Pencil className="w-3.5 h-3.5" /> EDITAR
             </button>
             <button
-              type="button"
-              onClick={onEdit}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl transition-colors"
+              onClick={onDownload}
+              disabled={isDownloading}
+              className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-[#005CA9] hover:bg-[#004a8a] text-white rounded-xl transition-all active:scale-95 shadow-sm shadow-blue-200 disabled:opacity-60"
             >
-              <Pencil className="w-4 h-4" /> Editar
+              {isDownloading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+              {isDownloading ? "GERANDO..." : "DOWNLOAD PDF"}
             </button>
-            <button type="button" onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
-              <X className="w-5 h-5 text-gray-500" />
+            <div className="w-px h-6 bg-gray-200 mx-1" />
+            <button 
+              onClick={onClose}
+              className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-900 transition-colors"
+            >
+              <X className="w-6 h-6" />
             </button>
           </div>
         </div>
 
-        <div className="bg-white p-4 overflow-x-auto">
-          <div style={{ transform: "scale(0.75)", transformOrigin: "top center", width: "794px", margin: "0 auto" }}>
+        {/* Toolbar de Interação */}
+        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white/90 backdrop-blur-md p-2 rounded-2xl shadow-2xl border border-gray-100 z-[110]">
+          <button 
+            onClick={() => setScale(s => Math.max(0.4, s - 0.1))}
+            className="p-2.5 rounded-xl hover:bg-gray-100 text-gray-600 transition-all active:scale-90"
+            title="Diminuir"
+          >
+            <ZoomOut className="w-5 h-5" />
+          </button>
+          
+          <div className="px-3 min-w-[60px] text-center font-bold text-sm text-[#005CA9] font-mono">
+            {Math.round(scale * 100)}%
+          </div>
+
+          <button 
+            onClick={() => setScale(s => Math.min(1.5, s + 0.1))}
+            className="p-2.5 rounded-xl hover:bg-gray-100 text-gray-600 transition-all active:scale-90"
+            title="Aumentar"
+          >
+            <ZoomIn className="w-5 h-5" />
+          </button>
+
+          <div className="w-px h-6 bg-gray-200 mx-1" />
+
+          <button 
+            onClick={resetView}
+            className="p-2.5 rounded-xl hover:bg-gray-100 text-gray-600 transition-all active:scale-90"
+            title="Resetar"
+          >
+            <RotateCcw className="w-5 h-5" />
+          </button>
+
+          <div className={`p-2.5 rounded-xl ${scale > 0.75 ? 'text-blue-500' : 'text-gray-300'}`} title="Modo Arrastar Ativo">
+            <Move className="w-5 h-5" />
+          </div>
+        </div>
+
+        {/* Viewport do Documento */}
+        <div 
+          ref={containerRef}
+          className={`flex-1 overflow-hidden relative flex items-start justify-center p-8 transition-colors ${isDragging ? 'cursor-grabbing' : (scale > 0.75 ? 'cursor-grab' : 'cursor-default')}`}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+        >
+          <div 
+            style={{ 
+              transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+              transformOrigin: "top center",
+              transition: isDragging ? 'none' : 'transform 0.2s cubic-bezier(0.2, 0, 0.2, 1)',
+              filter: "drop-shadow(0 20px 50px rgba(0,0,0,0.15))"
+            }}
+          >
             <AttestationDocument
               data={attData}
               logoLeft={attData.logoUrl as string}
