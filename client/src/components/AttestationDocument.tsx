@@ -323,8 +323,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         {/* ===== DADOS DO PACIENTE ===== */}
         <div id="preview-patient" style={{
           border: "1px solid #000",
-          padding: "5px 12px 15px 12px", // Subindo o texto ~3px (Top reduzido de 8 para 5, Bottom aumentado de 12 para 15) para perfeita fidelidade na exportação
-          boxSizing: "border-box", // Adicionado para garantir o enquadramento estrito
+          padding: "7px 12px 13px 12px", // Ponto de equilíbrio (Sweet Spot) para paridade entre Preview e Exportação
+          boxSizing: "border-box", // Garantia de enquadramento estrito
           fontSize: 10.815,
           marginBottom: 10,
           lineHeight: 1.3,
@@ -383,8 +383,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             position: "relative",
             zIndex: 2,
             flexShrink: 0,
-            marginTop: -4.5, // Movido 2mm para baixo (de -12 para -4.5)
-            marginBottom: 24.5, // Compensa o deslocamento para manter o corpo do texto estável
+            marginTop: 18, // Movido mais 2mm para baixo (ajuste cumulativo final)
+            marginBottom: 2, // Compensa o deslocamento para manter o corpo do texto estável
             color: "#000",
             textTransform: "uppercase"
           }}>
