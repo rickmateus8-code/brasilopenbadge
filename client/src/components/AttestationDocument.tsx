@@ -316,11 +316,13 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         {/* ===== DADOS DO PACIENTE ===== */}
         <div id="preview-patient" style={{
           border: "1px solid #000",
-          padding: isExporting ? "5px 12px 15px 12px" : "8px 12px 12px 12px", // Separação de estilos: Perfeito em Exportação e Simétrico em Preview
-          boxSizing: "border-box", // Garantia de enquadramento estrito
+          // No Preview: Usa o padding original de 14.25px simétrico (Perfeição original)
+          // Na Exportação: Usa o ajuste compensatório para html2canvas
+          padding: isExporting ? "5px 12px 15px 12px" : "14.25px 15px", 
+          boxSizing: "border-box",
           fontSize: 10.815,
           marginBottom: 10,
-          lineHeight: 1.3,
+          lineHeight: 1.2, // Retornado para o original para centralização vertical perfeita
           gap: 4,
           position: "relative",
           zIndex: 2,
