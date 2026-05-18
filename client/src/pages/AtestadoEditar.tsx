@@ -479,6 +479,13 @@ export default function AtestadoEditar() {
     return parseFloat((Math.random() * (10 - (-10)) + (-10)).toFixed(1));
   };
 
+  // Gerador de posições randômicas para o botão RESET (conforme solicitado)
+  const generateRandomPos = () => {
+    const rx = Math.floor(Math.random() * (141 - (-131) + 1)) + (-131);
+    const ry = Math.floor(Math.random() * ((-120) - (-208) + 1)) + (-208);
+    return { x: rx, y: ry };
+  };
+
   // Alternância automática de coordenadas baseada no modo Ocultar QR
   useEffect(() => {
     // Só aplica a automação se o usuário estiver alterando manualmente no front, 
@@ -490,8 +497,9 @@ export default function AtestadoEditar() {
       setStampScale(1.10);
       setStampRotate(-3);
     } else {
-      setStampX(141);
-      setStampY(-120);
+      const pos = generateRandomPos();
+      setStampX(pos.x);
+      setStampY(pos.y);
       setStampScale(1.20);
       setStampRotate(generateRandomGiro());
     }
@@ -504,9 +512,10 @@ export default function AtestadoEditar() {
       setStampY(-64);
       setStampRotate(-3);
     } else {
+      const pos = generateRandomPos();
       setStampScale(1.20);
-      setStampX(141);
-      setStampY(-120);
+      setStampX(pos.x);
+      setStampY(pos.y);
       setStampRotate(generateRandomGiro());
     }
   };
@@ -2114,6 +2123,20 @@ export default function AtestadoEditar() {
                     />
                     </div>
                     <p style={{ ...secTitle, fontSize: 10 }}>ASSINATURA & CARIMBO</p>
+                    
+                    {/* Modo Carimbo (Movido para cima de COR DA TINTA) */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 0 8px 0" }} onClick={() => handleFocusSection("footer")}>
+                    <label style={{ ...lbl, margin: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                      <input
+                        type="checkbox"
+                        checked={form.modoCarimbo}
+                        onChange={(e) => setForm(p => ({ ...p, modoCarimbo: e.target.checked }))}
+                        style={{ width: 16, height: 16 }}
+                      />
+                      Modo Carimbo (Elite 2.0)
+                    </label>
+                    </div>
+
                     <div>
                       <label style={lbl}>COR DA TINTA</label>
                       <select
@@ -2125,38 +2148,6 @@ export default function AtestadoEditar() {
                         <option value="#0b109f">🔵 Azul Caneta (Padrão)</option>
                         <option value="#000000">⚫ Preto (Xerox)</option>
                       </select>
-                    </div>
-                    <div>
-                      <label style={lbl}>USAR FOTO DA ASSINATURA (OPCIONAL)</label>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }} onClick={() => handleFocusSection("footer")}>
-                        {signatureImage ? (
-                          <div style={{ position: "relative" }}>
-                            <img src={signatureImage} alt="Assinatura" style={{ maxHeight: 65, maxWidth: 208, objectFit: "contain", border: "1px solid #e5e7eb", borderRadius: 6 }} />
-                            <button type="button" onClick={() => { setSignatureImage(""); if (signatureRef.current) signatureRef.current.value = ""; }}
-                              style={{ position: "absolute", top: -6, right: -6, background: "#ef4444", color: "#fff", border: "none", borderRadius: "50%", width: 18, height: 18, fontSize: 10, cursor: "pointer" }}>
-                              ✕
-                            </button>
-                          </div>
-                        ) : (
-                          <label style={{ ...btnBlue, padding: "6px 12px", cursor: "pointer", fontSize: 11 }}>
-                            📷 ENVIAR FOTO
-                            <input ref={signatureRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleSignatureUpload} />
-                          </label>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Modo Carimbo */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0" }} onClick={() => handleFocusSection("footer")}>
-                    <label style={{ ...lbl, margin: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-                      <input
-                        type="checkbox"
-                        checked={form.modoCarimbo}
-                        onChange={(e) => setForm(p => ({ ...p, modoCarimbo: e.target.checked }))}
-                        style={{ width: 16, height: 16 }}
-                      />
-                      Modo Carimbo (Elite 2.0)
-                    </label>
                     </div>
                     {/* Ajuste de Carimbo Elite 2.0 */}
                     {form.modoCarimbo && (

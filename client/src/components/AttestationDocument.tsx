@@ -378,8 +378,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             position: "relative",
             zIndex: 2,
             flexShrink: 0,
-            marginTop: 4, // Subido ~1mm (de 8px para 4px), mantendo distância elegante da moldura
-            marginBottom: 16, // Mantendo equilíbrio do gap inferior
+            marginTop: -2, // Subido ~0.5% adicional (de 4px para -2px)
+            marginBottom: 22, // Compensa o deslocamento para manter o corpo do texto estável
             color: "#000",
             textTransform: "uppercase"
           }}>
@@ -675,7 +675,12 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                   flexDirection: "column",
                   alignItems: "center",
                   userSelect: "none",
-                  gap: 1.5, 
+                  gap: 1.5,
+                  // EFEITO REALISMO: Falhas de tinta e textura de carimbo
+                  opacity: 0.94,
+                  filter: "contrast(1.2) brightness(0.95) blur(0.15px)",
+                  maskImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+                  WebkitMaskImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
                 }}>
                   <div style={{ fontWeight: 700, fontSize: 12.23, textTransform: "uppercase", lineHeight: 1.0 }}>{data.medico}</div>
                   <div style={{ fontSize: 11, fontWeight: 600, lineHeight: 1.0 }}>{data.crm}</div>
