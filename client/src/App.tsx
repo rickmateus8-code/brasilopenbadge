@@ -365,6 +365,20 @@ function DocMasterRouter() {
 }
 
 function App() {
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (isValidationDomain) {
+        document.title = "Validação Oficial";
+      } else if (isVerificaMedDomain) {
+        document.title = "VerificaMed";
+      } else if (isCNHValidationDomain) {
+        document.title = "Carteira Digital";
+      } else {
+        document.title = "DocMaster";
+      }
+    }
+  }, []);
+
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light" switchable={true}>
