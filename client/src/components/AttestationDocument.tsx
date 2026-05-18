@@ -378,8 +378,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             position: "relative",
             zIndex: 2,
             flexShrink: 0,
-            marginTop: 8, // Subindo 1 linha (de 18 para 8), ficando próximo à moldura
-            marginBottom: 12, // Mantendo equilíbrio
+            marginTop: 4, // Subido ~1mm (de 8px para 4px), mantendo distância elegante da moldura
+            marginBottom: 16, // Mantendo equilíbrio do gap inferior
             color: "#000",
             textTransform: "uppercase"
           }}>
