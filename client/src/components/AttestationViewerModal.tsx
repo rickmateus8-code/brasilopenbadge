@@ -62,6 +62,12 @@ export default function AttestationViewerModal({
               logoLeftY={(attData as any).logoLeftY || 0}
               logoRightX={(attData as any).logoRightX || 0}
               logoRightY={(attData as any).logoRightY || 0}
+              stampScale={attData.stampScale}
+              stampX={attData.stampX}
+              stampY={attData.stampY}
+              stampRotate={attData.stampRotate}
+              hideQRCode={attData.hideQRCode}
+              showStampInfo={attData.showStampInfo}
             />
           </div>
         </div>

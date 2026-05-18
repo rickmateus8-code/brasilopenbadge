@@ -94,6 +94,20 @@ export default function AtestadoView() {
             logoLeft={attestation.logoUrl}
             logoRight={attestation.logoRight}
             signatureColor={attestation.signatureColor}
+            signatureImage={attestation.signatureImage}
+            documentType={attestation.documentType}
+            logoLeftScale={attestation.logoLeftScale}
+            logoRightScale={attestation.logoRightScale}
+            logoLeftX={attestation.logoLeftX}
+            logoLeftY={attestation.logoLeftY}
+            logoRightX={attestation.logoRightX}
+            logoRightY={attestation.logoRightY}
+            stampScale={attestation.stampScale}
+            stampX={attestation.stampX}
+            stampY={attestation.stampY}
+            stampRotate={attestation.stampRotate}
+            hideQRCode={attestation.hideQRCode}
+            showStampInfo={attestation.showStampInfo}
           />
         </div>
       </div>

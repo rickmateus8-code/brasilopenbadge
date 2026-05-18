@@ -68,6 +68,12 @@ export function buildAttestationData(doc: AttestationDocRecord): AttestationData
     logoLeftY: d.logo_left_y ?? d.logoLeftY ?? 0,
     logoRightX: d.logo_right_x ?? d.logoRightX ?? 0,
     logoRightY: d.logo_right_y ?? d.logoRightY ?? 0,
+    stampScale: d.stamp_scale ?? d.stampScale ?? 1,
+    stampX: d.stamp_x ?? d.stampX ?? 173,
+    stampY: d.stamp_y ?? d.stampY ?? -120,
+    stampRotate: d.stamp_rotate ?? d.stampRotate ?? -3,
+    hideQRCode: d.hide_qr_code === 1 || d.hideQRCode === true,
+    showStampInfo: d.show_stamp_info !== 0 && d.showStampInfo !== false,
   } as AttestationData & Record<string, any>;
 }
 
@@ -121,9 +127,14 @@ export async function downloadAttestationPdf<T extends AttestationDocRecord>(doc
           logoLeftY: attData.logoLeftY,
           logoRightX: attData.logoRightX,
           logoRightY: attData.logoRightY,
-        })
-      );
-      setTimeout(resolve, 1200);
+          stampScale: attData.stampScale,
+          stampX: attData.stampX,
+          stampY: attData.stampY,
+          stampRotate: attData.stampRotate,
+          hideQRCode: attData.hideQRCode,
+          showStampInfo: attData.showStampInfo,
+          })
+          );      setTimeout(resolve, 1200);
     });
 
     await exportElementToPDF(container.firstElementChild as HTMLElement, {
