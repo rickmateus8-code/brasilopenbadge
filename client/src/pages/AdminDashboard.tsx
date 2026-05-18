@@ -2218,7 +2218,14 @@ export default function AdminDashboard() {
 	                </td>
 	                <td className="px-4 py-2.5 hidden md:table-cell">
 	                {e.codigo_qr ? (
-	                <span className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-1 rounded-md font-bold border border-blue-100 dark:border-blue-800 font-mono text-[11px]">
+	                <span 
+                    onClick={() => {
+                      navigator.clipboard.writeText(e.codigo_qr!);
+                      toast.success("Código copiado!");
+                    }}
+                    className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-1 rounded-md font-bold border border-blue-100 dark:border-blue-800 font-mono text-[11px] cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all active:scale-95 block w-fit"
+                    title="Clique para copiar"
+                  >
 	                {e.codigo_qr}
 	                </span>
 	                ) : (

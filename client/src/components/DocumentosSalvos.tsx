@@ -277,7 +277,14 @@ export default function DocumentosSalvos({
                     <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                       <td className="px-4 py-3 font-mono text-gray-600 dark:text-gray-400 text-xs">
                         {idField === "codigo_qr" ? (
-                          <span className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-1 rounded-md font-bold border border-blue-100 dark:border-blue-800">
+                          <span 
+                            onClick={() => {
+                              navigator.clipboard.writeText(String(idValue));
+                              toast.success("Código copiado!");
+                            }}
+                            className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-1 rounded-md font-bold border border-blue-100 dark:border-blue-800 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all active:scale-95 block w-fit"
+                            title="Clique para copiar"
+                          >
                             {String(idValue)}
                           </span>
                         ) : (

@@ -349,7 +349,14 @@ const intelligentStats = [
                             return (
                               <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
                                 <td className="px-4 py-4">
-                                  <span className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 px-3 py-1.5 rounded-md font-bold border border-blue-100 dark:border-blue-800 font-mono text-xs uppercase tracking-tighter shadow-sm">
+                                  <span 
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(codigoQR);
+                                      toast.success("Código copiado!");
+                                    }}
+                                    className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 px-3 py-1.5 rounded-md font-bold border border-blue-100 dark:border-blue-800 font-mono text-xs uppercase tracking-tighter shadow-sm cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all active:scale-95 block w-fit"
+                                    title="Clique para copiar"
+                                  >
                                     {codigoQR}
                                   </span>
                                 </td>
