@@ -383,7 +383,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             position: "relative",
             zIndex: 2,
             flexShrink: 0,
-            marginBottom: 20, 
+            marginTop: -12, // Move 1 linha para cima (próximo à moldura do paciente)
+            marginBottom: 32, // Compensa o deslocamento para não subir o corpo do texto
             color: "#000",
             textTransform: "uppercase"
           }}>
