@@ -422,6 +422,7 @@ export default function AtestadoEditar() {
   const [createdCode, setCreatedCode] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [autoDownloadTriggered, setAutoDownloadTriggered] = useState(false);
 
   // ── Logos ──────────────────────────────────────────────────────────────────
@@ -2830,6 +2831,7 @@ export default function AtestadoEditar() {
                 stampRotate={stampRotate}
                 hideQRCode={hideQRCode}
                 showStampInfo={showStampInfo}
+                isExporting={isExporting}
               />
             </div>
           </div>

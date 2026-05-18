@@ -1107,14 +1107,22 @@ export default function AtestadoCria() {
     }
   };
 
+  const [isExporting, setIsExporting] = useState(false);
+
   //  // ── Download PDF ────────────────────────────────────────────────────────
   const handleDownloadPdf = async () => {
     if (!previewRef.current) return;
     try {
+      setIsExporting(true);
+      await new Promise(r => setTimeout(r, 100));
+
       const docType = documentType === 'laudo' ? 'laudo' : 'atestado';
       const filename = generatePDFFilename(form.paciente || "PACIENTE", docType);
       await exportElementToPDF(previewRef.current, { filename, docType, scale: 2, quality: 0.92 });
+      
+      setIsExporting(false);
     } catch (err) {
+      setIsExporting(false);
       alert(`Erro ao gerar PDF: ${err instanceof Error ? err.message : "Erro desconhecido"}`);
     }
   };
@@ -2483,6 +2491,7 @@ export default function AtestadoCria() {
                 stampRotate={stampRotate}
                 hideQRCode={hideQRCode}
                 showStampInfo={showStampInfo}
+                isExporting={isExporting}
               />
             </div>
           </div>
