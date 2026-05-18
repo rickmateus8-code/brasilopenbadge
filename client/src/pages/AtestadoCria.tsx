@@ -1726,32 +1726,59 @@ export default function AtestadoCria() {
                 </p>
               )}
               {showResultados && resultados.length > 0 && (
-                <div style={{ marginTop: 8, maxHeight: 220, overflowY: "auto", border: "1px solid #e5e7eb", borderRadius: 8 }}>
-                  {resultados.map((m, i) => (
-                    <div
-                      key={m.id}
-                      onClick={() => selecionarMedico(m)}
-                      style={{
-                        padding: "8px 12px",
-                        borderBottom: "1px solid #f3f4f6",
-                        cursor: "pointer",
-                        fontSize: 12,
-                        background: i % 2 === 0 ? "#fff" : "#f9fafb",
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "#eff6ff")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = i % 2 === 0 ? "#fff" : "#f9fafb")}
-                    >
-                      <strong style={{ color: "#005CA9", fontSize: 13 }}>{m.nome_medico}</strong>
-                      <span style={{ color: "#333", marginLeft: 8 }}>CRM/{m.uf_crm} {m.crm}</span>
-                      <br />
-                      <span style={{ color: "#059669", fontSize: 11 }}>{m.especialidade}</span>
-                      {m.local_trabalho && <span style={{ color: "#333", fontSize: 11, marginLeft: 8 }}>• {m.local_trabalho}</span>}
-                      {m.cidade && <span style={{ color: "#333", fontSize: 11, marginLeft: 8 }}>📍 {m.cidade}/{m.uf_local}</span>}
-                    </div>
-                  ))}
+                <div style={{ marginTop: 8 }}>
+                  <p style={{ fontSize: 10, fontWeight: 700, color: "#005CA9", textAlign: "center", marginBottom: 4, textTransform: "uppercase" }}>
+                    Médicos encontrados ({resultados.length})
+                  </p>
+                  <div style={{ maxHeight: 250, overflowY: "auto", border: "1px solid #005CA9", borderRadius: 8, background: "#fff" }}>
+                    {resultados.map((m, i) => (
+                      <div
+                        key={m.id}
+                        onClick={() => selecionarMedico(m)}
+                        style={{
+                          padding: "6px 12px",
+                          borderBottom: "1px solid #eff6ff",
+                          cursor: "pointer",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          background: i % 2 === 0 ? "#fff" : "#f8fafc",
+                          transition: "background 0.2s"
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "#eff6ff")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = i % 2 === 0 ? "#fff" : "#f8fafc")}
+                      >
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                            <strong style={{ color: "#005CA9", fontSize: 12.5, textTransform: "uppercase" }}>{m.nome_medico}</strong>
+                            <span style={{ color: "#666", fontSize: 11, fontWeight: 600 }}>CRM/{m.uf_crm || m.uf_local} {m.crm}</span>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 1.5 }}>
+                            <span style={{ color: "#059669", fontSize: 10.5, fontWeight: 600 }}>{(m.especialidade || "CLINICO GERAL").toUpperCase()}</span>
+                            {m.local_trabalho && <span style={{ color: "#64748b", fontSize: 10.5 }}>• {m.local_trabalho.toUpperCase()}</span>}
+                          </div>
+                        </div>
+                        <button 
+                          type="button" 
+                          style={{ 
+                            background: "#005CA9", 
+                            color: "#fff", 
+                            border: "none", 
+                            borderRadius: 6, 
+                            padding: "4px 10px", 
+                            fontSize: 10, 
+                            fontWeight: 700,
+                            marginLeft: 12,
+                            cursor: "pointer"
+                          }}
+                        >
+                          SELECIONAR
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
-
               {/* Editar Médico */}
               <details open={showEditar} style={{ marginTop: 10 }}>
                 <summary

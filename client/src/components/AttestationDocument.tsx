@@ -227,7 +227,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 crossOrigin={getCrossOrigin(effectiveLogoLeft)}
                 style={{
                   maxHeight: "100%",
-                  maxWidth: 154,
+                  maxWidth: 149.38, // Reduzido em 3% (154 * 0.97)
                   objectFit: "contain",
                   transform: `scale(${logoLeftScale}) translate(${logoLeftX}px, ${logoLeftY}px)`,
                   transformOrigin: "left center",
@@ -257,7 +257,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </div>
 
           {/* Logo Direita */}
-          <div style={{ width: 154, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, overflow: "visible" }}>
+          <div style={{ width: 149.38, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, overflow: "visible" }}>
             {effectiveLogoRight && (
               <img
                 src={effectiveLogoRight}
@@ -265,7 +265,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 crossOrigin={getCrossOrigin(effectiveLogoRight)}
                 style={{
                   maxHeight: "100%",
-                  maxWidth: 154,
+                  maxWidth: 149.38, // Reduzido em 3%
                   objectFit: "contain",
                   transform: `scale(${logoRightScale}) translate(${logoRightX}px, ${logoRightY}px)`,
                   transformOrigin: "right center",
@@ -413,7 +413,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           {cidDisplay && (
             <div style={{
               fontWeight: 700,
-              fontSize: 13.56, // Reduzido em 1% do tamanho atual
+              fontSize: 13.42, // Reduzido em 1% adicional (13.56 * 0.99)
               marginTop: 28,
               color: "#000",
               textTransform: "uppercase",
