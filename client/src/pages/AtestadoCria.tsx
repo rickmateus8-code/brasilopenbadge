@@ -475,24 +475,46 @@ export default function AtestadoCria() {
   const signatureRef = useRef<HTMLInputElement>(null);
 
   // ── Carimbo Interativo Elite 2.0 ───────────────────────────────────────────
-  const [stampScale, setStampScale] = useState<number>(1);
-  const [stampX, setStampX] = useState<number>(173); // Fixo Padrão
-  const [stampY, setStampY] = useState<number>(-120); // Fixo Padrão (Acima do rodapé)
+  const [stampScale, setStampScale] = useState<number>(1.2);
+  const [stampX, setStampX] = useState<number>(141); 
+  const [stampY, setStampY] = useState<number>(-120); 
   const [stampRotate, setStampRotate] = useState<number>(-3);
   const [hideQRCode, setHideQRCode] = useState<boolean>(false);
   const [showStampInfo, setShowStampInfo] = useState<boolean>(true);
 
   // Giro aleatório a cada emissão para realismo
   const generateRandomGiro = () => {
-    // Retorna um valor entre -4 e -2 graus
-    return parseFloat((Math.random() * ((-2) - (-4)) + (-4)).toFixed(1));
+    // Retorna um valor entre -10 e 10 graus
+    return parseFloat((Math.random() * (10 - (-10)) + (-10)).toFixed(1));
   };
 
+  // Alternância automática de coordenadas baseada no modo Ocultar QR
+  useEffect(() => {
+    if (hideQRCode) {
+      setStampX(-3);
+      setStampY(-64);
+      setStampScale(1.10);
+      setStampRotate(-3);
+    } else {
+      setStampX(141);
+      setStampY(-120);
+      setStampScale(1.20);
+      setStampRotate(generateRandomGiro());
+    }
+  }, [hideQRCode]);
+
   const resetStampTransform = () => {
-    setStampScale(1);
-    setStampX(173);
-    setStampY(-120);
-    setStampRotate(-3);
+    if (hideQRCode) {
+      setStampScale(1.10);
+      setStampX(-3);
+      setStampY(-64);
+      setStampRotate(-3);
+    } else {
+      setStampScale(1.20);
+      setStampX(141);
+      setStampY(-120);
+      setStampRotate(generateRandomGiro());
+    }
   };
 
   const STAMP_POS_STEP = 8; // Rápido
@@ -1817,6 +1839,19 @@ export default function AtestadoCria() {
                           </label>
                         )}
                       </div>
+                    </div>
+
+                    {/* Modo Carimbo */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0" }} onClick={() => scrollToPreviewSection("bottom")}>
+                    <label style={{ ...lbl, margin: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                      <input
+                        type="checkbox"
+                        checked={form.modoCarimbo}
+                        onChange={(e) => setForm(p => ({ ...p, modoCarimbo: e.target.checked }))}
+                        style={{ width: 16, height: 16 }}
+                      />
+                      Modo Carimbo (Elite 2.0)
+                    </label>
                     </div>
 
                     {/* Ajuste de Carimbo Elite 2.0 */}

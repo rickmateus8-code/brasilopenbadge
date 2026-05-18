@@ -555,7 +555,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             position: "relative",
             zIndex: 2,
             flexShrink: 0,
-            paddingBottom: 0,
+            paddingBottom: 10,
           }}>
             {/* Data FIXA no lado inferior DIREITO (X: 253px, Y: -128px) */}
             <div style={{
@@ -577,18 +577,13 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               {dataFormatada || data.dataEmissao}
             </div>
 
-            {/* Linha de Assinatura Centralizada (Aprox. 6 linhas acima das info de sistema) */}
+            {/* Linha de Assinatura Centralizada (Carimbo acima) */}
             <div style={{
-              textAlign: "center",
-              width: "100%",
-              marginBottom: 48,
-              fontSize: 14,
-              color: "#000",
-              fontWeight: 400,
-              userSelect: "none",
-            }}>
-              ___________________________
-            </div>
+              width: 280,
+              height: 1,
+              background: "#000",
+              marginBottom: 48, // Espaço para as informações de sistema (~6 linhas)
+            }} />
 
             {/* Informações de Sistema (Rodapé Estrito) */}
             <div style={{ 
@@ -598,8 +593,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               color: "#666", 
               fontFamily: "monospace", 
               lineHeight: 1.2,
-              opacity: 0.8,
-              paddingBottom: 10
+              opacity: 0.8
             }}>
               <div>Gerado por {data.medico?.toUpperCase()}</div>
               <div>Versão.5.123.9.23129</div>
