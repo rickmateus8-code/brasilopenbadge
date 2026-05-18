@@ -417,7 +417,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           {cidDisplay && (
             <div style={{
               fontWeight: 700,
-              fontSize: 13.7, // Reduzido de 14.13 para 13.7 conforme plano
+              fontSize: 13.56, // Reduzido em 1% do tamanho atual
               marginTop: 28,
               color: "#000",
               textTransform: "uppercase",
@@ -577,13 +577,18 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               {dataFormatada || data.dataEmissao}
             </div>
 
-            {/* Linha de Assinatura Centralizada (Carimbo acima) */}
+            {/* Linha de Assinatura Centralizada (Aprox. 6 linhas acima das info de sistema) */}
             <div style={{
-              width: 280,
-              height: 1,
-              background: "#000",
-              marginBottom: 48, // Espaço para as informações de sistema (~6 linhas)
-            }} />
+              textAlign: "center",
+              width: "100%",
+              marginBottom: 48,
+              fontSize: 14,
+              color: "#000",
+              fontWeight: 400,
+              userSelect: "none",
+            }}>
+              ___________________________
+            </div>
 
             {/* Informações de Sistema (Rodapé Estrito) */}
             <div style={{ 
