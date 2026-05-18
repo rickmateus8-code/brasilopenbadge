@@ -131,6 +131,17 @@ export default function PeticaoCria() {
     setForm({ ...form, cpf_cnpj: masked });
   };
 
+  const formatProcessMask = (val: string) => {
+    const v = val.replace(/\D/g, "").slice(0, 20);
+    let masked = v;
+    if (v.length > 7) masked = `${v.slice(0, 7)}-${v.slice(7)}`;
+    if (v.length > 9) masked = `${v.slice(0, 7)}-${v.slice(7, 9)}.${v.slice(9)}`;
+    if (v.length > 13) masked = `${v.slice(0, 7)}-${v.slice(7, 9)}.${v.slice(9, 13)}.${v.slice(13)}`;
+    if (v.length > 14) masked = `${v.slice(0, 7)}-${v.slice(7, 9)}.${v.slice(9, 13)}.${v.slice(13, 14)}.${v.slice(14)}`;
+    if (v.length > 16) masked = `${v.slice(0, 7)}-${v.slice(7, 9)}.${v.slice(9, 13)}.${v.slice(13, 14)}.${v.slice(14, 16)}.${v.slice(16)}`;
+    return masked;
+  };
+
   const generateAlvaraNumber = () => {
     return Math.floor(1000000 + Math.random() * 9000000).toString();
   };
