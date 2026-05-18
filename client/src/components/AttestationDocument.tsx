@@ -323,20 +323,20 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         {/* ===== DADOS DO PACIENTE ===== */}
         <div id="preview-patient" style={{
           border: "1px solid #000",
-          padding: "10px 12px", // Aumentado para 10px 12px para centralização vertical perfeita
-          fontSize: 10.815, // Aumentado em 3% (10.5 * 1.03)
+          padding: "8px 12px 12px 12px", // Ajustado (top 8px, bottom 12px) para compensar o deslocamento do html2canvas na exportação
+          boxSizing: "border-box", // Adicionado para garantir o enquadramento estrito
+          fontSize: 10.815,
           marginBottom: 10,
-          lineHeight: 1.3, // Reduzido para 1.3 conforme plano
-          gap: 4, // Adicionado gap: 4 conforme plano
+          lineHeight: 1.3,
+          gap: 4,
           position: "relative",
           zIndex: 2,
           background: "#fff",
           flexShrink: 0,
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center", 
-        }}>
-          {/* Linha 1: Paciente | Sexo | Nasc */}
+          justifyContent: "center",
+        }}>          {/* Linha 1: Paciente | Sexo | Nasc */}
           <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
             <div style={{ flex: 3 }}>
               <span style={{ fontWeight: 700, color: "#000" }}>Paciente: </span>
