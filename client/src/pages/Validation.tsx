@@ -46,6 +46,23 @@ function detectDocType(data: any): DocType {
 export default function Validation() {
   const params = useParams();
 
+  // ── Sincronia de Background Global ───────────────────────────────────────
+  useEffect(() => {
+    // Forçar fundo cinza no body para evitar bordas brancas em qualquer resolução
+    const originalBg = document.body.style.backgroundColor;
+    const originalMargin = document.body.style.margin;
+    
+    document.body.style.backgroundColor = "#f0f2f5";
+    document.body.style.margin = "0";
+    document.documentElement.style.backgroundColor = "#f0f2f5";
+
+    return () => {
+      document.body.style.backgroundColor = originalBg;
+      document.body.style.margin = originalMargin;
+      document.documentElement.style.backgroundColor = "";
+    };
+  }, []);
+
   // ── Estados ──────────────────────────────────────────────────────────────
   const [codigo, setCodigo] = useState("");
   const [dataEmissao, setDataEmissao] = useState("");

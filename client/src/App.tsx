@@ -367,13 +367,13 @@ function DocMasterRouter() {
 function App() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      if (isValidationDomain) {
-        document.title = "Validação Oficial";
-      } else if (isVerificaMedDomain) {
-        document.title = "VerificaMed";
-      } else if (isCNHValidationDomain) {
-        document.title = "Carteira Digital";
+      const isVal = isValidationDomain || isVerificaMedDomain || isCNHValidationDomain;
+      
+      if (isVal) {
+        document.body.classList.add('is-validation-page');
+        document.title = isValidationDomain ? "Validação Oficial" : isVerificaMedDomain ? "VerificaMed" : "Carteira Digital";
       } else {
+        document.body.classList.remove('is-validation-page');
         document.title = "DocMaster";
       }
     }
