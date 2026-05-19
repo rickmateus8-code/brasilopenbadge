@@ -344,10 +344,10 @@ export default function Validation() {
       boxSizing: "border-box" as const,
       flexShrink: 0,
     } as React.CSSProperties,
-    ...
-      {/* ── Card central ── */}
-      <div style={{ padding: "0 16px", width: "100%", display: "flex", justifyContent: "center" }}>
-        <div style={S.card}>
+    headerText: {
+      color: "#fff",
+      fontSize: 17,
+      fontWeight: 700,
       margin: 0,
       letterSpacing: 0.5,
     } as React.CSSProperties,
@@ -580,7 +580,7 @@ export default function Validation() {
     </div>
 
       {/* ── Card central ── */}
-      <div style={{ padding: "0 16px" }}>
+      <div style={{ padding: "0 16px", width: "100%", display: "flex", justifyContent: "center" }}>
         <div style={S.card}>
           <h2 style={S.cardTitle}>Consultar Documento</h2>
 
