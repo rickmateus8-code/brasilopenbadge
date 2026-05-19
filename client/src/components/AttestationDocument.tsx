@@ -1,6 +1,7 @@
 import { QRCodeSVG as QRCode } from "qrcode.react";
 import { forwardRef } from "react";
 import { getQRCodeValue } from "@/config.qrcode";
+import { ATTESTATION_LAYOUT } from "@/config/attestationLayout";
 
 interface AttestationData {
   id: string;
