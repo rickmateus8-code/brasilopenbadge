@@ -322,24 +322,32 @@ export default function Validation() {
   const S = {
     page: {
       minHeight: "100vh",
+      width: "100%",
       background: "#f0f2f5",
       fontFamily: "Roboto, Arial, sans-serif",
       margin: 0,
       padding: 0,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center", // Centralizar conteúdo horizontalmente
+      overflowX: "hidden",
     } as React.CSSProperties,
     header: {
       background: "#005CA9",
+      width: "100%",
       padding: "16px 20px",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       gap: 8,
       boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+      boxSizing: "border-box" as const,
+      flexShrink: 0,
     } as React.CSSProperties,
-    headerText: {
-      color: "#fff",
-      fontSize: 17,
-      fontWeight: 700,
+    ...
+      {/* ── Card central ── */}
+      <div style={{ padding: "0 16px", width: "100%", display: "flex", justifyContent: "center" }}>
+        <div style={S.card}>
       margin: 0,
       letterSpacing: 0.5,
     } as React.CSSProperties,
