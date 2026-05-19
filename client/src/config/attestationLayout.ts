@@ -23,8 +23,9 @@ export const ATTESTATION_LAYOUT = {
     patientPadding: "2px 15px 26px 15px",
     
     // Address position: Sincronizado com o sucesso do Validador IDAB
-    addressMarginTop: -42, // Voltar para -42px conforme o estado de perfeição do IDAB
-    addressMarginBottom: 62, // Compensa o deslocamento para manter o corpo do texto estável
+    // Ajustado: Descido 2 linhas (~24px) a pedido do usuário (-42 + 24 = -18)
+    addressMarginTop: -18, 
+    addressMarginBottom: 38, // Ajustado para manter o equilíbrio vertical
   },
 
   // Global document dimensions (A4 @ 96dpi)
