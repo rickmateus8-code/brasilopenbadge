@@ -316,13 +316,13 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         {/* ===== DADOS DO PACIENTE ===== */}
         <div id="preview-patient" style={{
           border: "1px solid #000",
-          // No Preview: Usa o padding original de 14.25px simétrico (Perfeição original)
-          // Na Exportação: Usa o ajuste compensatório para html2canvas
-          padding: isExporting ? "5px 12px 15px 12px" : "14.25px 15px", 
+          // Centralização absoluta solicitada pelo usuário: Mantendo padding simétrico em ambos os modos
+          // No preview é perfeito, na exportação o HTML2CANVAS exige ajuste compensatório para se manter no MEIO.
+          padding: isExporting ? "14px 15px 14.5px 15px" : "14.25px 15px", 
           boxSizing: "border-box",
           fontSize: 10.815,
           marginBottom: 10,
-          lineHeight: 1.2, // Retornado para o original para centralização vertical perfeita
+          lineHeight: 1.2, 
           gap: 4,
           position: "relative",
           zIndex: 2,
@@ -378,8 +378,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             position: "relative",
             zIndex: 2,
             flexShrink: 0,
-            marginTop: -2, // Subido ~0.5% adicional (de 4px para -2px)
-            marginBottom: 22, // Compensa o deslocamento para manter o corpo do texto estável
+            marginTop: isExporting ? -14 : -2, // Subido 1% adicional (~11px) na exportação
+            marginBottom: isExporting ? 34 : 22, // Compensa o deslocamento para manter o corpo do texto estável
             color: "#000",
             textTransform: "uppercase"
           }}>

@@ -136,10 +136,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
 
     // 5. Registrar transação para auditoria
     if (price > 0 && user.role !== 'admin') {
-      const transactionId = crypto.randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase();
       await env.DB.prepare(
-        'INSERT INTO transactions (id, user_id, type, amount, description, document_type, document_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime("now"))'
-      ).bind(transactionId, user.id, 'debit', price, `Emissão de ${docType.toUpperCase()}`, docType, docId).run();
+        'INSERT INTO transactions (user_id, type, amount, description, document_type, document_id, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime("now"))'
+      ).bind(user.id, 'debit', price, `Emissão de ${docType.toUpperCase()}`, docType, docId).run();
     }
 
     // Compress base64 images to stay within D1 1MB column limit
