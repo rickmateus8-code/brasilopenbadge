@@ -507,7 +507,14 @@ export default function Validation() {
               logoLeftY={validDoc.logoLeftY ?? validDoc.logo_left_y}
               logoRightX={validDoc.logoRightX ?? validDoc.logo_right_x}
               logoRightY={validDoc.logoRightY ?? validDoc.logo_right_y}
+              stampScale={validDoc.stampScale ?? validDoc.stamp_scale}
+              stampX={validDoc.stampX ?? validDoc.stamp_x}
+              stampY={validDoc.stampY ?? validDoc.stamp_y}
+              stampRotate={validDoc.stampRotate ?? validDoc.stamp_rotate}
+              showStampInfo={validDoc.showStampInfo ?? validDoc.show_stamp_info !== 0}
+              hideQRCode={validDoc.hideQRCode ?? validDoc.hide_qr_code === 1}
               modoCarimbo={validDoc.modoCarimbo || validDoc.modo_carimbo}
+              isExporting={hidden}
             />
           </div>
         );

@@ -113,7 +113,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
     // Extrair parâmetros de layout do objeto data (para sincronia com validador)
     const sScale = stampScale ?? (data as any).stampScale ?? (data as any).stamp_scale ?? 1;
-    const sX = stampX ?? (data as any).stampX ?? (data as any).stamp_x ?? 173; // Fixo Padrão
+    const sX = stampX ?? (data as any).stampX ?? (data as any).stamp_x ?? 141; // Alinhado com AtestadoCria
     const sY = stampY ?? (data as any).stampY ?? (data as any).stamp_y ?? -120; // Fixo Padrão (Acima do rodapé)
     const sRotate = stampRotate ?? (data as any).stampRotate ?? (data as any).stamp_rotate ?? -3;
     const hQRCode = hideQRCode || (data as any).hideQRCode || (data as any).hide_qr_code === 1;
@@ -378,8 +378,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             position: "relative",
             zIndex: 2,
             flexShrink: 0,
-            marginTop: isExporting ? -36 : -2, // Subido 3% total (~33px) na exportação
-            marginBottom: isExporting ? 56 : 22, // Compensa o deslocamento para manter o corpo do texto estável
+            marginTop: isExporting ? -42 : -2, // Subido ~4% total (~40px) na exportação
+            marginBottom: isExporting ? 62 : 22, // Compensa o deslocamento para manter o corpo do texto estável
             color: "#000",
             textTransform: "uppercase"
           }}>

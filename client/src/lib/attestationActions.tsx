@@ -133,6 +133,7 @@ export async function downloadAttestationPdf<T extends AttestationDocRecord>(doc
           stampRotate: attData.stampRotate,
           hideQRCode: attData.hideQRCode,
           showStampInfo: attData.showStampInfo,
+          isExporting: true, // Habilitar ajustes estritos de exportação
           })
           );      setTimeout(resolve, 1200);
     });
