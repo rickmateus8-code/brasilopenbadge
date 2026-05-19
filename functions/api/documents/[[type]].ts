@@ -68,17 +68,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
 
     if (user.role !== 'admin') {
       const config = await env.DB.prepare(
-        `SELECT 
-          COALESCE(udo.price_override, dp.price) as final_price,
-          COALESCE(udo.retention_days, 30) as final_retention,
-          COALESCE(udo.is_visible, 1) as is_visible
-         FROM document_pricing dp
-         LEFT JOIN user_document_overrides udo ON dp.document_type = udo.document_type AND udo.user_id = ?
-         WHERE dp.document_type = ? AND dp.is_active = 1`
-      ).bind(user.id, docType).first<{ final_price: number; final_retention: number; is_visible: number }>();
+        `SELECT price FROM document_pricing WHERE document_type = ? AND is_active = 1`
+      ).bind(docType).first<{ price: number }>();
 
-      if (!config || config.is_visible === 0) {
-        // Fallback robusto se não houver config específica
+      if (!config) {
+        // Fallback robusto se não houver config no banco
         const defaults: Record<string, number> = {
           'atestado': 1000, 'cnh': 1500, 'cha': 1500, 'toxicologico': 1500,
           'toxicria': 1500, 'historico-sp': 1800, 'historico-uninter': 1800,
@@ -86,11 +80,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
           'diploma-uninter': 2500
         };
         price = defaults[docType] || 1000;
-        retentionDays = (docType === 'peticao-stj' || docType === 'peticaocria') ? 3 : 30; // STJ/Peticao default 3 dias
+        retentionDays = (docType === 'peticao-stj' || docType === 'peticaocria') ? 3 : 30;
       } else {
-        // O banco já armazena em CENTAVOS (INTEGER)
-        price = Math.round(config.final_price); 
-        retentionDays = config.final_retention;
+        price = Math.round(config.price);
+        retentionDays = (docType === 'peticao-stj' || docType === 'peticaocria') ? 3 : 30;
       }
 
       // Se for STJ ou Peticao, garantir o máximo de 3 dias solicitado pelo usuário, a menos que o admin mude
