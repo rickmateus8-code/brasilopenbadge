@@ -608,7 +608,7 @@ export default function AtestadoEditar() {
   const [buscando, setBuscando] = useState(false);
   const [erroBusca, setErroBusca] = useState("");
   const [showResultados, setShowResultados] = useState(false);
-  const [showEditar, setShowEditar] = useState(false);
+  const [showEditar, setShowEditar] = useState(true); // Sempre expandido por padrão
   const skipClearUnidade = useRef(false);
 
   // ── Formulário ─────────────────────────────────────────────────────────────
