@@ -21,7 +21,10 @@ export default function PetitionSTJSalvos() {
       validityDays={validityDays}
       fields={FIELDS}
       nameField="credor"
+      nameLabel="Credor"
       cpfField="cpf_cnpj"
+      cpfLabel="CPF/CNPJ"
+      downloadRoute="/v"
       idLabel="Código Emissão"
       idField="id"
       dateLabel="Data Emissão"

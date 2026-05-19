@@ -32,10 +32,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const id = crypto.randomUUID();
     const passwordHash = await hashPassword(password);
     const now = new Date().toISOString();
+    const defaultPermissions = JSON.stringify({
+      editaveis: ["atestado", "cnh", "cha", "toxicologico", "receita"],
+      ferramentas: ["bot-adv", "peticao-stj"]
+    });
 
     await env.DB.prepare(
-      'INSERT INTO users (id, username, password_hash, email, display_name, role, balance, is_active, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
-    ).bind(id, username.trim(), passwordHash, email || '', displayName || username, 'user', 0, 1, now).run();
+      'INSERT INTO users (id, username, password_hash, email, display_name, role, balance, is_active, permissions, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).bind(id, username.trim(), passwordHash, email || '', displayName || username, 'user', 0, 1, defaultPermissions, now).run();
 
     const sessionToken = generateToken();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -53,7 +57,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         displayName: displayName || username,
         role: 'user',
         balance: 0,
-        permissions: '{"ferramentas":[]}',
+        permissions: defaultPermissions,
       }
     };
 

@@ -35,7 +35,9 @@ interface DocumentosSalvosProps {
   validityDays?: number;
   fields: FieldDef[];
   nameField?: string;
+  nameLabel?: string;
   cpfField?: string;
+  cpfLabel?: string;
   idLabel?: string;
   dateLabel?: string;
   idField?: keyof DocRecord | string;
@@ -54,7 +56,9 @@ export default function DocumentosSalvos({
   validityDays = 30,
   fields,
   nameField = "nome",
+  nameLabel = "Paciente",
   cpfField = "cpf",
+  cpfLabel = "CPF",
   idLabel = "ID",
   dateLabel = "Data",
   idField = "id",
@@ -259,8 +263,8 @@ export default function DocumentosSalvos({
               <thead>
                 <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">{idLabel}</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Paciente</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider hidden sm:table-cell">CPF</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">{nameLabel}</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider hidden sm:table-cell">{cpfLabel}</th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider hidden sm:table-cell">{dateLabel}</th>
                   {extraColumns.map(col => (
                     <th key={col.key} className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider hidden md:table-cell">{col.label}</th>
