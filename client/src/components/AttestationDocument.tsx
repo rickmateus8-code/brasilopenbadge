@@ -112,11 +112,14 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const cidade = (data as any).cidade || "";
     const modoCarimbo = (data as any).modoCarimbo || (data as any).modo_carimbo || false;
 
-    // Extrair parâmetros de layout do objeto data (para sincronia com validador)
-    const sScale = stampScale ?? (data as any).stampScale ?? (data as any).stamp_scale ?? 1;
-    const sX = stampX ?? (data as any).stampX ?? (data as any).stamp_x ?? 141; // Alinhado com AtestadoCria
-    const sY = stampY ?? (data as any).stampY ?? (data as any).stamp_y ?? -120; // Fixo Padrão (Acima do rodapé)
-    const sRotate = stampRotate ?? (data as any).stampRotate ?? (data as any).stamp_rotate ?? -3;
+    // --- CONFIGURAÇÃO CENTRALIZADA (CÉREBRO ÚNICO) ---
+    const layout = ATTESTATION_LAYOUT;
+
+    // Extrair parâmetros de layout com fallbacks da config global
+    const sScale = stampScale ?? (data as any).stampScale ?? (data as any).stamp_scale ?? layout.stamp.defaultScale;
+    const sX = stampX ?? (data as any).stampX ?? (data as any).stamp_x ?? layout.stamp.defaultX;
+    const sY = stampY ?? (data as any).stampY ?? (data as any).stamp_y ?? layout.stamp.defaultY;
+    const sRotate = stampRotate ?? (data as any).stampRotate ?? (data as any).stamp_rotate ?? layout.stamp.defaultRotate;
     const hQRCode = hideQRCode || (data as any).hideQRCode || (data as any).hide_qr_code === 1;
     const sStampInfo = showStampInfo && ((data as any).showStampInfo !== false && (data as any).show_stamp_info !== 0);
 
