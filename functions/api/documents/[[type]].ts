@@ -174,8 +174,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
     // Include cpf, senha, nome, categoria as separate columns for cnh-do-brasil auth lookup
     try {
       await env.DB.prepare(
-        'INSERT INTO documents (id, user_id, type, data, codigo_qr, status, cpf, senha, nome, categoria, codigo_validacao, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"))'
-      ).bind(docId, user.id, docType, jsonData, codigoValidacao, 'emitido', cpfValue, senhaValue, nomeValue, categoriaValue, codigoValidacao).run();
+        'INSERT INTO documents (id, user_id, type, data, codigo_qr, status, cpf, senha, nome, categoria, codigo_validacao, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"))'
+      ).bind(docId, user.id, docType, jsonData, codigoValidacao, 'emitido', cpfValue, senhaValue, nomeValue, categoriaValue, codigoValidacao, expiresAt).run();
     } catch (docErr: any) {
       // Se falhar a inserção do documento APÓS cobrar, precisamos estornar o saldo
       if (user.role !== 'admin' && price > 0) {
