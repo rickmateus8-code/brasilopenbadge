@@ -588,6 +588,17 @@ export default function Validation() {
 
   return (
     <div style={S.page}>
+      {/* 🛡️ FORCE BRUTE CSS PARA ELIMINAR BORDAS BRANCAS */}
+      <style>{`
+        html, body, #root {
+          background-color: #f0f2f5 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          overflow-x: hidden !important;
+        }
+      `}</style>
     {/* ── Header azul ── */}
     <div style={S.header}>
       {window.location.hostname.includes("validaratestado.digital") && (
