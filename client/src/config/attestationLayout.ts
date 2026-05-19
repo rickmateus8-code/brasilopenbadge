@@ -22,9 +22,10 @@ export const ATTESTATION_LAYOUT = {
     // Force absolute vertical centering for patient info frame
     patientPadding: "2px 15px 26px 15px",
     
-    // Address position (Lowered by 2% from previous -42px ≈ -20px total rise)
-    addressMarginTop: -20, // -42px was ~4% rise, -20px is ~2% rise
-    addressMarginBottom: 40, // Compensatory margin to keep body text stable
+    // Address position: Agora ABAIXO da moldura com distância de segurança
+    // Ajustado para garantir que não sobreponha a linha inferior da moldura
+    addressMarginTop: 15, // Positivo para garantir distância da moldura acima
+    addressMarginBottom: 15, // Espaçamento em relação ao corpo do texto
   },
 
   // Global document dimensions (A4 @ 96dpi)
