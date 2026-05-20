@@ -501,7 +501,7 @@ export default function Validation() {
   const renderDocument = (hidden = false) => {
     if (!validDoc) return null;
     const style: React.CSSProperties = hidden
-      ? { position: "fixed", left: -9999, top: 0, visibility: "hidden", pointerEvents: "none" }
+      ? { position: "fixed", left: -9999, top: 0, visibility: "hidden", pointerEvents: "none", width: 794, background: "white" }
       : { background: "#fff", boxShadow: "0 10px 30px rgba(0,0,0,0.08)" };
 
     // Helper para garantir que as logos carreguem no validador
