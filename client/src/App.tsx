@@ -374,7 +374,8 @@ function App() {
         document.title = isValidationDomain ? "Validação Oficial" : isVerificaMedDomain ? "VerificaMed" : "Carteira Digital";
       } else {
         document.body.classList.remove('is-validation-page');
-        document.title = "DocMaster";
+        // Apenas setar DocMaster se NÃO for um domínio de validação
+        if (!isVal) document.title = "DocMaster";
       }
     }
   }, []);

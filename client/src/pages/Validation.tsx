@@ -536,9 +536,9 @@ export default function Validation() {
               stampX={validDoc.stampX ?? validDoc.stamp_x}
               stampY={validDoc.stampY ?? validDoc.stamp_y}
               stampRotate={validDoc.stampRotate ?? validDoc.stamp_rotate}
-              showStampInfo={validDoc.showStampInfo ?? validDoc.show_stamp_info !== 0}
+              showStampInfo={false} // Ocultar no validador conforme pedido
               hideQRCode={validDoc.hideQRCode ?? validDoc.hide_qr_code === 1}
-              modoCarimbo={validDoc.modoCarimbo || validDoc.modo_carimbo}
+              modoCarimbo={false} // Ocultar no validador conforme pedido
               isExporting={hidden}
             />
           </div>

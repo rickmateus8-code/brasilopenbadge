@@ -22,10 +22,10 @@ export const ATTESTATION_LAYOUT = {
     // Force absolute vertical centering for patient info frame
     patientPadding: "2px 15px 26px 15px",
     
-    // Address position: Sincronizado com o sucesso do Validador IDAB
-    // Ajustado: Descido 2 linhas (~24px) a pedido do usuário (-42 + 24 = -18)
-    addressMarginTop: -18, 
-    addressMarginBottom: 38, // Ajustado para manter o equilíbrio vertical
+    // Address position: Agora ABAIXO da moldura (Distância positiva)
+    // Ajustado para garantir que não sobreponha a linha inferior da moldura no DocMaster
+    addressMarginTop: 12, 
+    addressMarginBottom: 15, 
   },
 
   // Global document dimensions (A4 @ 96dpi)
