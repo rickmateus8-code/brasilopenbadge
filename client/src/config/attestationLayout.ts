@@ -22,9 +22,9 @@ export const ATTESTATION_LAYOUT = {
     // Restaurado para o ajuste de elite que o usuário aprovou (Subida Máxima)
     patientPadding: "2px 15px 26px 15px",
     
-    // Address position: Agora usamos um SPACER físico para garantir a descida
-    // Ajustado para ficar 'colado' (distância de 2 agulhas ≈ 8px) conforme solicitado
-    addressSpacerHeight: 8, 
+    // Address position: Agora ABAIXO da moldura (Distância positiva)
+    // Ajustado: Subido 0.80% (~9px) a pedido do usuário (total 27px)
+    addressMarginTop: 27, 
     addressMarginBottom: 15, 
   },
 
