@@ -19,12 +19,11 @@ export const ATTESTATION_LAYOUT = {
 
   // Export-specific compensatory adjustments for html2canvas/PDF
   export: {
-    // Force absolute vertical centering for patient info frame
-    patientPadding: "2px 15px 26px 15px",
+    // Restaurado para o equilíbrio original perfeito (Sincronia DocMaster/IDAB)
+    patientPadding: "14.25px 15px",
     
-    // Address position: Agora ABAIXO da moldura (Distância positiva)
-    // Ajustado: Descido mais 2 linhas conforme solicitado pelo usuário (total 36px)
-    addressMarginTop: 36, 
+    // Address position: Sempre ABAIXO da moldura com distância limpa
+    addressMarginTop: 15, 
     addressMarginBottom: 15, 
   },
 
