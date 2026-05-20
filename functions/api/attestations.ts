@@ -38,7 +38,7 @@ async function getAuthUser(env: Env, token: string | null): Promise<any | null> 
 // ─── Gerador de código QR único ───────────────────────────────────────────────
 
 function generateCode(): string {
-  const chars = "0123456789";
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let code = "";
   const arr = new Uint8Array(8);
   crypto.getRandomValues(arr);
@@ -49,15 +49,16 @@ function generateCode(): string {
 }
 
 async function generateUniqueCode(env: Env): Promise<string> {
-  for (let attempt = 0; attempt < 10; attempt++) {
+  for (let attempt = 0; attempt < 20; attempt++) {
     const code = generateCode();
-    // Verifica em attestations E documents para garantir unicidade global
+    // 🛡️ FILTRO DE UNICIDADE ABSOLUTA: Checa em ambas as tabelas (DocMaster + Genéricos)
     const existsAtt = await env.DB.prepare(
       "SELECT id FROM attestations WHERE codigo_qr = ? LIMIT 1"
     ).bind(code).first();
     const existsDoc = await env.DB.prepare(
-      "SELECT id FROM documents WHERE codigo_qr = ? LIMIT 1"
-    ).bind(code).first().catch(() => null);
+      "SELECT id FROM documents WHERE codigo_qr = ? OR codigo_validacao = ? LIMIT 1"
+    ).bind(code, code).first().catch(() => null);
+    
     if (!existsAtt && !existsDoc) return code;
   }
   throw new Error("Não foi possível gerar um código único. Tente novamente.");
