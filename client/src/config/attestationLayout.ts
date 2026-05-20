@@ -19,12 +19,11 @@ export const ATTESTATION_LAYOUT = {
 
   // Export-specific compensatory adjustments for html2canvas/PDF
   export: {
-    // Restaurado para o ajuste de elite que o usuário aprovou (Subida Máxima)
-    patientPadding: "2px 15px 26px 15px",
+    // Ajuste ULTRA-AGRESSIVO para forçar a subida e centralização no PDF
+    patientPadding: "0px 15px 30px 15px",
     
-    // Address position: Agora ABAIXO da moldura (Distância positiva)
-    // Ajustado: Subido 0.80% (~9px) a pedido do usuário (total 27px)
-    addressMarginTop: 27, 
+    // Address position: Spacer físico calibrado para '2 agulhas'
+    addressSpacerHeight: 15, 
     addressMarginBottom: 15, 
   },
 
