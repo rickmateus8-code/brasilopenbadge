@@ -22,8 +22,8 @@ export const ATTESTATION_LAYOUT = {
     // Ajuste ULTRA-AGRESSIVO para forçar a subida e centralização no PDF
     patientPadding: "0px 15px 30px 15px",
     
-    // Address position: Spacer físico calibrado para '2 agulhas'
-    addressSpacerHeight: 15, 
+    // Address position: Ajustado para ficar 'colado' (subido 1% ≈ 4px de distância)
+    addressMarginTop: 4, 
     addressMarginBottom: 15, 
   },
 
