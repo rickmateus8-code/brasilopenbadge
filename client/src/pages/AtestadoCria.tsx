@@ -1,16 +1,12 @@
 import AttestationDocument from "@/components/AttestationDocument";
 import { downloadAttestationPdf } from "@/lib/attestationActions";
-import { generatePDFFilename } from "@/lib/pdfExport";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import { validarCPF } from "@/lib/utils";
 import { useSettings } from "@/hooks/useSettings";
 import { 
-  Plus, Search, FileText, Trash, ChevronUp, ChevronDown, CheckCircle2, AlertCircle, 
-  ArrowLeft, Download, ZoomIn, ZoomOut, Maximize2, Settings2, Trash2, MapPin, 
-  User, Clipboard, Calendar, Clock, Stethoscope, Building, Image as ImageIcon,
-  Check, X, Sparkles, Filter, MoreHorizontal, History, RefreshCcw, Save, Move
+  CheckCircle2, 
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -178,22 +174,6 @@ async function apiFetch(path: string) {
 }
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
-const ESTADOS_SIGLAS: Record<string, string> = {
-  "ACRE": "AC", "ALAGOAS": "AL", "AMAPA": "AP", "AMAZONAS": "AM", "BAHIA": "BA",
-  "CEARA": "CE", "DISTRITO FEDERAL": "DF", "ESPIRITO SANTO": "ES", "GOIAS": "GO",
-  "MARANHAO": "MA", "MATO GROSSO": "MT", "MATO GROSSO DO SUL": "MS", "MINAS GERAIS": "MG",
-  "PARA": "PA", "PARAIBA": "PB", "PARANA": "PR", "PERNAMBUCO": "PE", "PIAUI": "PI",
-  "RIO DE JANEIRO": "RJ", "RIO GRANDE DO NORTE": "RN", "RIO GRANDE DO SUL": "RS",
-  "RONDONIA": "RO", "RORAIMA": "RR", "SANTA CATARINA": "SC", "SAO PAULO": "SP",
-  "SERGIPE": "SE", "TOCANTINS": "TO"
-};
-
-function converterEstadoParaSigla(nomeEstado: string): string {
-  if (!nomeEstado) return "";
-  const nomeNorm = nomeEstado.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toUpperCase();
-  return ESTADOS_SIGLAS[nomeNorm] || nomeNorm;
-}
-
 const UFS = [
   "AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT",
   "PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO",
@@ -210,62 +190,6 @@ const ESPECIALIDADES = [
   { value: "PSIQUIATRIA", label: "Psiquiatria" },
   { value: "DERMATOLOGIA", label: "Dermatologia" },
   { value: "CIRURGIA GERAL", label: "Cirurgia Geral" },
-];
-
-const CIDS_CATEGORIZADOS = [
-  {
-    grupo: "Infecciosos (3-7 dias)",
-    itens: [
-      { code: "A09", desc: "Diarreia / Gastroenterite" },
-      { code: "A90", desc: "Dengue" },
-      { code: "B34.9", desc: "Virose não especificada" },
-      { code: "H10", desc: "Conjuntivite" },
-      { code: "J11", desc: "Gripe (Influenza)" },
-    ],
-  },
-  {
-    grupo: "Respiratórios (2-5 dias)",
-    itens: [
-      { code: "J00", desc: "Resfriado comum" },
-      { code: "J01", desc: "Sinusite aguda" },
-      { code: "J03", desc: "Amigdalite" },
-      { code: "J06", desc: "Infecção Vias Aéreas" },
-      { code: "J30", desc: "Rinite Alérgica" },
-    ],
-  },
-  {
-    grupo: "Dores e Ortopedia",
-    itens: [
-      { code: "M54.2", desc: "Dor no Pescoço" },
-      { code: "M54.5", desc: "Dor Lombar" },
-      { code: "S93", desc: "Entorse Tornozelo" },
-      { code: "R51", desc: "Dor de Cabeça" },
-      { code: "G43", desc: "Enxaqueca" },
-    ],
-  },
-  {
-    grupo: "Outros",
-    itens: [
-      { code: "K29", desc: "Gastrite" },
-      { code: "R10", desc: "Dor Abdominal" },
-      { code: "N39.0", desc: "Infecção Urinária" },
-      { code: "Z76.3", desc: "Acompanhante" },
-      { code: "T78.0", desc: "Reação Anafilática (Ovo)" },
-      { code: "L50", desc: "Urticária" },
-      { code: "J45", desc: "Asma" },
-    ],
-  },
-];
-
-const LOGOS_PADRAO = [
-  { id: "logo1", label: "Logo 1", src: "/logos/logo1.png" },
-  { id: "logo2", label: "Logo 2", src: "/logos/logo2.png" },
-  { id: "logo3", label: "Logo 3", src: "/logos/logo3.jpg" },
-  { id: "amil", label: "Amil", src: "/logos/amil.png" },
-  { id: "hapvida", label: "Hapvida", src: "/logos/hapvida.png" },
-  { id: "notredame", label: "Notre Dame", src: "/logos/notredame.png" },
-  { id: "sulamerica", label: "Sul América", src: "/logos/sulamerica.png" },
-  { id: "unimed", label: "Unimed", src: "/logos/unimed.png" },
 ];
 
 const DIAS_EXTENSO: Record<number, { num: string; ext: string }> = {
@@ -286,13 +210,6 @@ const DIAS_EXTENSO: Record<number, { num: string; ext: string }> = {
   15: { num: "15", ext: "quinze" },
 };
 
-function gerarTextoAfastamento(dias: number): string {
-  const d = DIAS_EXTENSO[dias];
-  if (!d) return "";
-  const unidade = dias === 1 ? "dia" : "dias";
-  return `Necessita de ${d.num} (${d.ext}) ${unidade} de afastamento de suas atividades laborais para repouso e tratamento de saúde.`;
-}
-
 const TEXTO_PADRAO = `Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico. Necessita de 03 (três) dia(s) de afastamento de suas atividades laborais para repouso e tratamento de saúde.`;
 
 const TEXTO_LAUDO = `Declaro, para os devidos fins, que a paciente acima mencionada apresenta limitações físicas decorrentes de procedimento cirúrgico na coluna vertebral. Atualmente, a mesma não possui condições de exercer atividades laborativas.`;
@@ -304,30 +221,6 @@ function todayBR() {
 function nowTime() {
   const d = new Date();
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-}
-
-async function optimizeImageForUpload(file: File) {
-  return new Promise<string>((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        const max = 1200;
-        let w = img.width, h = img.height;
-        if (w > max || h > max) {
-          if (w > h) { h *= max / w; w = max; }
-          else { w *= max / h; h = max; }
-        }
-        canvas.width = w; canvas.height = h;
-        ctx?.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL("image/jpeg", 0.8));
-      };
-      img.src = e.target?.result as string;
-    };
-    reader.readAsDataURL(file);
-  });
 }
 
 function handleDateInput(v: string) {
@@ -342,10 +235,6 @@ async function parseJsonResponseSafely(res: Response) {
   try { return JSON.parse(t); } catch { throw new Error("Erro no servidor"); }
 }
 
-const POS_STEP = 1;
-const SCALE_STEP = 0.05;
-const STAMP_POS_STEP = 5;
-
 interface MedicoDB {
   id: number; nome_medico: string; crm: string; uf_crm: string; especialidade: string;
   local_trabalho: string; cidade: string; uf_local: string; endereco: string; bairro: string;
@@ -354,7 +243,6 @@ interface MedicoDB {
 export default function AtestadoCria() {
   const { user, updateBalance } = useAuth();
   const [, navigate] = useLocation();
-  const { validityDays } = useSettings();
   const previewRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -402,7 +290,16 @@ export default function AtestadoCria() {
   const [isFocused, setIsFocused] = useState(false);
   const [currentSection, setCurrentSection] = useState<"top" | "bottom">("top");
 
-  const previewData = { ...form, id: "XXXX.XXXX", codigoQR: "XXXX.XXXX" };
+  const previewData = { 
+    ...form, 
+    id: "XXXX.XXXX", 
+    codigoQR: "XXXX.XXXX",
+    signatureColor,
+    signatureImage,
+    logoUrl: logoLeft,
+    logoRight: logoRight,
+    logoLeftScale, logoRightScale, logoLeftX, logoLeftY, logoRightX, logoRightY,
+  };
 
   useEffect(() => {
     if (filtroUF) apiFetch(`/cidades?uf=${filtroUF}`).then(setCidades).catch(() => {});
@@ -524,7 +421,22 @@ export default function AtestadoCria() {
 
         <div style={{ flex: 1, background: "#fff", borderRadius: 12, overflow: "hidden", display: "flex", justifyContent: "center", alignItems: "flex-start", padding: 20 }}>
           <div style={{ width: 794, transform: "scale(0.7)", transformOrigin: "top center", boxShadow: "0 10px 30px rgba(0,0,0,0.1)" }}>
-            <AttestationDocument data={previewData} logoLeft={logoLeft} logoRight={logoRight} signatureColor={signatureColor} signatureImage={signatureImage} documentType={documentType} stampScale={stampScale} stampX={stampX} stampY={stampY} stampRotate={stampRotate} hideQRCode={hideQRCode} showStampInfo={showStampInfo} modoCarimbo={form.modoCarimbo} isExporting={false} />
+            <AttestationDocument
+              data={previewData}
+              logoLeft={logoLeft}
+              logoRight={logoRight}
+              signatureColor={signatureColor}
+              signatureImage={signatureImage}
+              documentType={documentType}
+              stampScale={stampScale}
+              stampX={stampX}
+              stampY={stampY}
+              stampRotate={stampRotate}
+              hideQRCode={hideQRCode}
+              showStampInfo={showStampInfo}
+              modoCarimbo={form.modoCarimbo}
+              isExporting={false}
+            />
           </div>
         </div>
       </div>

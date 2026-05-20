@@ -19,11 +19,12 @@ export const ATTESTATION_LAYOUT = {
 
   // Export-specific compensatory adjustments for html2canvas/PDF
   export: {
-    // Restaurado para o equilíbrio original perfeito (Sincronia DocMaster/IDAB)
-    patientPadding: "14.25px 15px",
+    // Restaurado para o ajuste de elite que o usuário aprovou (Subida Máxima)
+    patientPadding: "2px 15px 26px 15px",
     
     // Address position: Agora usamos um SPACER físico para garantir a descida
-    addressSpacerHeight: 48, // Equivalente a ~4 linhas para garantir descida total
+    // Ajustado para ficar 'colado' (distância de 2 agulhas ≈ 8px) conforme solicitado
+    addressSpacerHeight: 8, 
     addressMarginBottom: 15, 
   },
 
