@@ -178,8 +178,25 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         </div>
         <div style={{ borderTop: "2.04px solid #000", width: "100%", marginBottom: 23, flexShrink: 0 }} />
 
-        {/* DADOS PACIENTE */}
-        <div id="preview-patient" style={{ border: "1px solid #000", padding: "14.25px 15px", boxSizing: "border-box", fontSize: 10.815, marginBottom: 10, lineHeight: 1.2, gap: 4, position: "relative", background: "#fff", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        {/* ===== DADOS DO PACIENTE ===== */}
+        <div id="preview-patient" style={{
+          border: "1px solid #000",
+          // Ajuste de centralização vertical estrita para EXPORTAÇÃO (html2canvas offset)
+          // Forçando a subida com padding top mínimo e bottom grande para centralizar.
+          padding: isExporting ? "2px 15px 26px 15px" : "14.25px 15px", 
+          boxSizing: "border-box",
+          fontSize: 10.815,
+          marginBottom: 10,
+          lineHeight: 1.2, 
+          gap: 4,
+          position: "relative",
+          zIndex: 2,
+          background: "#fff",
+          flexShrink: 0,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+        }}>
           <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
             <div style={{ flex: 3 }}><strong>Paciente: </strong><span style={{ textTransform: "uppercase" }}>{data.paciente}</span></div>
             <div><strong>Sexo: </strong>{sexoLabel}</div>
