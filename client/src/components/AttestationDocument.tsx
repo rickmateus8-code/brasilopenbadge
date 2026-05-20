@@ -55,9 +55,9 @@ const PAD_H = 56;
 const PAD_V = 60;  
 
 const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>(
-  ({ 
-    data, logoUrl, logoLeft, logoRight, signatureColor, signatureImage, documentType, 
-    logoLeftScale = 1, logoRightScale = 1, logoLeftX = 0, logoLeftY = 0, logoRightX = 0, logoRightY = 0,
+  ({
+    data, logoUrl, logoLeft, logoRight, signatureColor, signatureImage, documentType,
+    logoLeftScale = 1, logoRightScale = 1, logoLeftX = 0, logoLeftY = 0, logoRightX = 0, logoRightY = 0,        
     stampScale, stampX, stampY, stampRotate, hideQRCode, showStampInfo,
     isExporting = false
   }, ref) => {
@@ -88,7 +88,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
       return "anonymous";
     };
 
-    const effectiveLogoLeft = logoLeft || logoUrl || (data as any).logoUrl || (data as any).logo_url || "";
+    const effectiveLogoLeft = logoLeft || logoUrl || (data as any).logoUrl || (data as any).logo_url || "";     
     const effectiveLogoRight = logoRight || (data as any).logoRight || (data as any).logo_right || "";
 
     const instituicao = (data as any).instituicao || "";
@@ -112,7 +112,14 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const sStampInfo = showStampInfo && ((data as any).showStampInfo !== false && (data as any).show_stamp_info !== 0);
 
     const docType = (documentType || (data as any).documentType || (data as any).document_type || (data as any).tipo || 'atestado').toLowerCase();
-    
+
+    const dataAssinatura = data.dataAssinatura || (data as any).data_assinatura || "";
+    const horaAssinatura = data.horaAssinatura || (data as any).hora_assinatura || "";
+
+    const tipoDoc = (data as any).tipoDoc || "CPF";
+    const docLabel = tipoDoc === "CNS" ? "Cartão Nacional:" : "CPF:";
+    const docValue = tipoDoc === "CNS" ? (data.cns || data.cpf || "___________") : (data.cpf || data.cns || "___________");
+
     const dataFormatada = (data as any).dataEmissaoFormatada || (() => {
       const d = data.dataEmissao || "";
       if (!d || d.length < 10) return d;
@@ -157,12 +164,15 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           }}>DOCUMENTO INVALIDO - NÃO EMITIDO - PRÉVIA</div>
         )}
 
-        {/* HEADER */}
-        <div id="preview-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: 80, position: "relative", zIndex: 2, flexShrink: 0 }}>
+        {/* ===== HEADER (LOGOS) ===== */}
+        <div id="preview-header" style={{
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+          height: 80, position: "relative", zIndex: 2, flexShrink: 0,
+        }}>
           <div style={{ width: 154, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start", overflow: "visible" }}>
             {effectiveLogoLeft && <img src={effectiveLogoLeft} crossOrigin={getCrossOrigin(effectiveLogoLeft)} style={{ maxHeight: "100%", maxWidth: 149.38, objectFit: "contain", transform: `scale(${logoLeftScale}) translate(${logoLeftX}px, ${logoLeftY}px)`, transformOrigin: "left center" }} />}
           </div>
-          <div style={{ flex: 1, padding: "0 12px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <div style={{ flex: 1, padding: "0 12px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
             {instituicao && <div style={{ fontSize: 14.7, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", lineHeight: 1.3 }}>{instituicao}</div>}
             {unidade && unidade !== instituicao && <div style={{ fontSize: 12.6, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", lineHeight: 1.3 }}>{unidade}</div>}
             {enderecoEmitente && <div style={{ fontSize: 10.5, fontWeight: 400, textTransform: "uppercase", color: "#000", lineHeight: 1.3 }}>{enderecoEmitente}</div>}
@@ -172,18 +182,16 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </div>
         </div>
 
-        {/* TÍTULO */}
+        {/* ===== TÍTULO ===== */}
         <div style={{ fontWeight: 900, fontSize: 23.15, textTransform: "uppercase", textAlign: "center", marginTop: 15, marginBottom: 11, color: "#000", flexShrink: 0 }}>
           {docType === 'laudo' ? "LAUDO MÉDICO" : "ATESTADO MÉDICO"}
         </div>
         <div style={{ borderTop: "2.04px solid #000", width: "100%", marginBottom: 23, flexShrink: 0 }} />
 
-        {/* ===== DADOS DO PACIENTE ===== */}
+        {/* ===== DADOS DO PACIENTE (FORÇAR PRETO ABSOLUTO) ===== */}
         <div id="preview-patient" style={{
           border: "1px solid #000",
-          // Ajuste de centralização vertical estrita para EXPORTAÇÃO (html2canvas offset)
-          // Forçando a subida com padding top mínimo e bottom grande para centralizar.
-          padding: isExporting ? "2px 15px 26px 15px" : "14.25px 15px", 
+          padding: isExporting ? layout.export.patientPadding : "14.25px 15px", 
           boxSizing: "border-box",
           fontSize: 10.815,
           marginBottom: 10,
@@ -196,60 +204,81 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
+          color: "#000 !important", // Forçar preto
         }}>
-          <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-            <div style={{ flex: 3 }}><strong>Paciente: </strong><span style={{ textTransform: "uppercase" }}>{data.paciente}</span></div>
-            <div><strong>Sexo: </strong>{sexoLabel}</div>
-            <div><strong>Nasc.: </strong>{data.nascimento}</div>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center", color: "#000" }}>
+            <div style={{ flex: 3 }}><strong style={{ color: "#000" }}>Paciente: </strong><span style={{ color: "#000", textTransform: "uppercase" }}>{data.paciente}</span></div>
+            <div style={{ color: "#000" }}><strong style={{ color: "#000" }}>Sexo: </strong><span style={{ color: "#000" }}>{sexoLabel}</span></div>
+            <div style={{ color: "#000" }}><strong style={{ color: "#000" }}>Nasc.: </strong><span style={{ color: "#000" }}>{data.nascimento}</span></div>
           </div>
-          <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-            <div style={{ flex: 1 }}><strong>{((data as any).tipoDoc || "CPF") === "CNS" ? "Cartão Nacional:" : "CPF:"} </strong><span style={{ textTransform: "uppercase" }}>{((data as any).tipoDoc || "CPF") === "CNS" ? (data.cns || data.cpf || "___________") : (data.cpf || data.cns || "___________")}</span></div>
-            <div style={{ flex: 2 }}><strong>Nome da Mãe: </strong><span style={{ textTransform: "uppercase" }}>{data.nomeMae}</span></div>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center", color: "#000" }}>
+            <div style={{ flex: 1 }}><strong style={{ color: "#000" }}>{docLabel} </strong><span style={{ color: "#000", textTransform: "uppercase" }}>{docValue}</span></div>
+            <div style={{ flex: 2 }}><strong style={{ color: "#000" }}>Nome da Mãe: </strong><span style={{ color: "#000", textTransform: "uppercase" }}>{data.nomeMae}</span></div>
           </div>
-          <div style={{ display: "flex" }}><div style={{ width: "100%" }}><strong>Endereço: </strong><span style={{ textTransform: "uppercase" }}>{data.endereco}</span></div></div>
+          <div style={{ display: "flex", color: "#000" }}><div style={{ width: "100%", color: "#000" }}><strong style={{ color: "#000" }}>Endereço: </strong><span style={{ color: "#000", textTransform: "uppercase" }}>{data.endereco}</span></div></div>
         </div>
 
-        {/* SPACER PARA ENDEREÇO EMITENTE (ABAIXO DA MOLDURA) */}
+        {/* SPACER FÍSICO PARA ENDEREÇO */}
         {enderecoEmitente && <div style={{ height: layout.export.addressSpacerHeight }} />}
 
-        {/* ENDEREÇO EMITENTE */}
+        {/* Endereço Emitente (Opcional) */}
         {enderecoEmitente && (
-          <div style={{ fontSize: 10.5, lineHeight: 1.2, fontFamily: "Arial, sans-serif", textAlign: "left", position: "relative", zIndex: 2, flexShrink: 0, marginTop: 0, marginBottom: 22, color: "#000", textTransform: "uppercase" }}>
-            <strong>ENDEREÇO EMITENTE:</strong> <span style={{ fontWeight: 400 }}>{enderecoEmitente}</span>
+          <div style={{
+            fontSize: 10.5, lineHeight: 1.2, fontFamily: "Arial, sans-serif",
+            textAlign: "left", position: "relative", zIndex: 2, flexShrink: 0,
+            marginTop: isExporting ? 0 : -2,
+            marginBottom: 22, color: "#000", textTransform: "uppercase"
+          }}>
+            <strong style={{ color: "#000" }}>ENDEREÇO EMITENTE:</strong> <span style={{ fontWeight: 400, color: "#000" }}>{enderecoEmitente}</span>
           </div>
         )}
 
-        {/* CORPO DO TEXTO */}
-        <div id="preview-body" style={{ flex: "1 1 auto", fontSize: 15.18, lineHeight: 1.9, textAlign: "justify", position: "relative", paddingTop: 48, paddingBottom: 8, color: "#000" }}>
-          <p style={{ margin: 0, textIndent: "4em", whiteSpace: "pre-wrap" }}>
+        {/* CORPO DO TEXTO (FORÇAR PRETO) */}
+        <div id="preview-body" style={{ flex: "1 1 auto", fontSize: 15.18, lineHeight: 1.9, textAlign: "justify", position: "relative", paddingTop: 48, paddingBottom: 8, color: "#000 !important" }}>
+          <p style={{ margin: 0, textIndent: "4em", whiteSpace: "pre-wrap", color: "#000" }}>
             {"  "}{textoAtestado || "Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico."}
           </p>
-          {cidDisplay && <div style={{ fontWeight: 700, fontSize: 13.42, marginTop: 28, textTransform: "uppercase" }}>CID: {cidDisplay}{cidNome ? ` — ${cidNome}` : ""}</div>}
+          {cidDisplay && <div style={{ fontWeight: 700, fontSize: 13.42, marginTop: 28, textTransform: "uppercase", color: "#000" }}>CID: {cidDisplay}{cidNome ? ` — ${cidNome}` : ""}</div>}
         </div>
 
-        {/* RODAPÉ DIGITAL */}
+        {/* RODAPÉ DIGITAL (FORÇAR PRETO) */}
         {!hQRCode && (
-          <div id="preview-footer" style={{ marginTop: modoCarimbo ? 20 : "auto", position: "relative", zIndex: 2, width: "100%" }}>
+          <div id="preview-footer" style={{ marginTop: modoCarimbo ? 20 : "auto", position: "relative", zIndex: 2, width: "100%", color: "#000" }}>
             <div style={{ borderTop: "2px solid #000", marginBottom: 6 }} />
-            <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "flex-end", width: "100%" }}>
+            <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "flex-end", width: "100%", color: "#000" }}>
               <div style={{ color: "#000", lineHeight: 1.2, display: "flex", flexDirection: "column", justifyContent: "flex-end", height: 111, paddingBottom: 4, gap: 3 }}>
-                <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.21 }}>{dataFormatada}</div>
-                <div style={{ fontSize: 9.65 }}>Valide este documento acessando o endereço:</div>
-                <strong style={{ fontSize: 10.21 }}>https://validaratestado.digital</strong>
-                <div style={{ fontSize: 9.65 }}>Código: <strong style={{ fontSize: 10.21 }}>{isEmitted ? data.codigoQR : "****.****"}</strong></div>
+                <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.21, color: "#000" }}>{dataFormatada}</div>
+                <div style={{ fontSize: 9.65, color: "#000" }}>Valide este documento acessando o endereço:</div>
+                <strong style={{ fontSize: 10.21, color: "#000" }}>https://validaratestado.digital</strong>
+                <div style={{ fontSize: 9.65, color: "#000" }}>Código: <strong style={{ fontSize: 10.21, color: "#000" }}>{isEmitted ? data.codigoQR : "****.****"}</strong></div>
               </div>
               <div style={{ border: "1px solid #000", width: 385, height: 111, display: "flex", background: "white", marginLeft: "auto" }}>
                 <div style={{ width: 108, display: "flex", alignItems: "center", justifyContent: "center", padding: "19px 6px" }}>
                   <QRCode value={qrValue} size={96} level="H" includeMargin={false} />
                 </div>
-                <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "center", textAlign: "right", paddingRight: 10 }}>
-                  <div style={{ fontSize: 9.5 }}>Documento assinado digitalmente conforme MP nº 2.200-2</div>
-                  <strong style={{ fontSize: 11.2, textTransform: "uppercase" }}>{data.medico}</strong>
-                  <span style={{ fontSize: 10.1 }}>{data.crm}</span>
-                  <span style={{ fontSize: 10.1, textTransform: "uppercase" }}>{data.especialidade}</span>
-                  <span style={{ fontSize: 10.1 }}>Assinado em {data.dataAssinatura} {data.horaAssinatura}</span>
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "center", textAlign: "right", paddingRight: 10, color: "#000" }}>
+                  <div style={{ fontSize: 9.5, color: "#000" }}>Documento assinado digitalmente conforme MP nº 2.200-2</div>
+                  <strong style={{ fontSize: 11.2, textTransform: "uppercase", color: "#000" }}>{data.medico}</strong>
+                  <span style={{ fontSize: 10.1, color: "#000" }}>{data.crm}</span>
+                  <span style={{ fontSize: 10.1, textTransform: "uppercase", color: "#000" }}>{data.especialidade}</span>
+                  <span style={{ fontSize: 10.1, color: "#000" }}>Assinado em {data.dataAssinatura} {data.horaAssinatura}</span>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* RODAPÉ DE SISTEMA */}
+        {hQRCode && (
+          <div style={{ marginTop: "auto", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", paddingBottom: 10, color: "#000" }}>
+            <div style={{ position: "absolute", bottom: 100, transform: "translate(253px, -128px)", width: 300, textAlign: "center", fontSize: 12.5, fontWeight: 700, textTransform: "uppercase", color: "#000" }}>
+              {dataFormatada}
+            </div>
+            <div style={{ textAlign: "center", width: "100%", marginBottom: 48, fontSize: 14, color: "#000" }}>___________________________</div>
+            <div style={{ width: "100%", fontSize: 8.5, color: "#000", fontFamily: "monospace", opacity: 0.8 }}>
+              <div>Gerado por {data.medico?.toUpperCase()}</div>
+              <div>Versão.5.123.9.23129</div>
+              <div>{data.dataAssinatura} {data.horaAssinatura}</div>
             </div>
           </div>
         )}
