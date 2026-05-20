@@ -1,15 +1,20 @@
 # DocMaster - Diretrizes Fundamentais de Engenharia
 
 Este arquivo contém mandatos inegociáveis para qualquer agente de IA ou desenvolvedor que atuar neste projeto.
-
 ## 1. Fluxo de Deploy e Sincronia
 *   **REGRA DE OURO:** O fluxo é sempre **Ambiente Local > GitHub > Cloudflare**.
 *   Nunca realize alterações apenas localmente ou direto no Cloudflare sem realizar o `git push origin main`.
-*   **PONTO DE OURO 3 (CONSOLIDAÇÃO ELITE):** O estado de paridade e UI/UX Premium está consolidado no commit `7aea5e7`. O módulo `/atestadocria` foi oficialmente FINALIZADO com paridade 1:1 e validação estrita.
+*   **PROTOCOLO BIPARTIDO (DocMaster + IDAB):** Alterações visuais em componentes compartilhados (ex: `AttestationDocument.tsx`) exigem build e deploy simultâneo para ambos os domínios:
+    *   `npx wrangler pages deploy dist --project-name=docmaster`
+    *   `npx wrangler pages deploy dist --project-name=atestados-idab`
+*   **DIRETÓRIO DE DEPLOY:** Sempre use a pasta `/dist` (bundle buildado). **JAMAIS** deploye a pasta `/client` em produção.
 
-## 2. Identidade Visual (Estado de Ouro 2)
-*   **Layout A4:** Fundo Branco Absoluto (#ffffff).
-*   **Validador (IDAB):** Fundo dos inputs de busca em **BRANCO (#fff)** com fonte **PRETA ABSOLUTA (#000)**. Validação de data **ESTRITA** (bloqueio de preview se a data não coincidir 1:1 com o banco).
+## 2. Identidade Visual e Cérebro Único
+*   **CÉREBRO ÚNICO (SSOT):** A configuração de layout, coordenadas de carimbo e paddings de exportação é centralizada em `client/src/config/attestationLayout.ts`. Mudanças aqui refletem em todo o ecossistema.
+*   **Layout A4:** Fundo Branco Absoluto (#ffffff). Texto **PRETO ABSOLUTO (#000)** para máxima fidelidade forense.
+*   **Validador (IDAB):** Fundo dos inputs de busca em **BRANCO (#fff)** com fonte **PRETA ABSOLUTA (#000)**. Validação de data **ESTRITA**.
+*   **Bordas IDAB:** Background global deve ser forçado via CSS `!important` para evitar bordas brancas laterais.
+...
 *   **Preview Inteligente:** Preservar Zoom Dinâmico e Navegação por Foco (TOP/BOTTOM) com botões ▲, ▼ e 🔍.
 *   **Mandato de Tela Cheia:** Formulários de criação abrem em `h-screen w-full`, ocultando a sidebar.
 *   **Cores:** Modais de Novo Documento e Recarga devem ser VERDES (#059669). Headers de emissão devem ser AZUL DOCMASTER (#005CA9).
