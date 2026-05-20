@@ -21,6 +21,10 @@
     }
   ],
   
+  "browser": {
+    "binding": "BROWSER"
+  },
+  
   "vars": {
     "ENVIRONMENT": "production",
     "APP_DOMAIN": "docmaster.store",
