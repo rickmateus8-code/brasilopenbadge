@@ -127,6 +127,7 @@ export async function downloadAttestationPdf<T extends AttestationDocRecord>(doc
           logoLeftY: attData.logoLeftY,
           logoRightX: attData.logoRightX,
           logoRightY: attData.logoRightY,
+          stampScale: attData.stampScale,
           stampX: attData.stampX,
           stampY: attData.stampY,
           stampRotate: attData.stampRotate,

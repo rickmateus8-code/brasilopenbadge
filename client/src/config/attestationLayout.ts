@@ -23,8 +23,8 @@ export const ATTESTATION_LAYOUT = {
     patientPadding: "2px 15px 26px 15px",
     
     // Address position: Agora ABAIXO da moldura (Distância positiva)
-    // Ajustado para garantir que não sobreponha a linha inferior da moldura no DocMaster
-    addressMarginTop: 12, 
+    // Ajustado: Descido mais 2 linhas conforme solicitado pelo usuário (total 36px)
+    addressMarginTop: 36, 
     addressMarginBottom: 15, 
   },
 
