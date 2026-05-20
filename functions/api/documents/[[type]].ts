@@ -20,14 +20,25 @@ async function getAuthUser(request: Request, env: Env): Promise<any | null> {
   ).bind(session.user_id).first<any>();
 }
 
-function generateCode(): string {
+async function generateUniqueCode(env: Env): Promise<string> {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let code = '';
-  for (let i = 0; i < 8; i++) {
-    if (i === 4) code += '.';
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  for (let attempt = 0; attempt < 10; attempt++) {
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+      if (i === 4) code += '.';
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    // Verificar se já existe em documents OU attestations
+    const existsDoc = await env.DB.prepare(
+      'SELECT id FROM documents WHERE codigo_validacao = ? OR codigo_qr = ? LIMIT 1'
+    ).bind(code, code).first();
+    const existsAtt = await env.DB.prepare(
+      'SELECT id FROM attestations WHERE codigo_qr = ? LIMIT 1'
+    ).bind(code).first().catch(() => null);
+    
+    if (!existsDoc && !existsAtt) return code;
   }
-  return code;
+  throw new Error("Não foi possível gerar um código único.");
 }
 
 const CORS_HEADERS = {
@@ -107,8 +118,13 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
     }
 
     const body = await request.json() as any;
-    const codigoValidacao = body.codigo_validacao || body.codigo_qr || generateCode();
-    const docId = body.id || codigoValidacao;
+    
+    // Ignorar placeholders "XXXX.XXXX" para evitar violação de UNIQUE constraint no banco
+    const bodyCode = (body.codigo_validacao || body.codigo_qr || "");
+    const codigoValidacao = (bodyCode && bodyCode !== "XXXX.XXXX") ? bodyCode : await generateUniqueCode(env);
+    
+    const docId = (body.id && body.id !== "XXXX.XXXX") ? body.id : crypto.randomUUID();
+    
     const expiresAt = new Date(Date.now() + retentionDays * 24 * 60 * 60 * 1000).toISOString();
 
     // Limpeza "Lazy" de documentos expirados do usuário atual antes de emitir novo
@@ -181,11 +197,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
         await env.DB.prepare(
           'UPDATE users SET balance = balance + ? WHERE id = ?'
         ).bind(price, user.id).run();
-        // Log do estorno
-        const refundId = crypto.randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase();
+        // Log do estorno - Removida coluna manual ID (integer mismatch)
         await env.DB.prepare(
-          'INSERT INTO transactions (id, user_id, type, amount, description, document_type, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime("now"))'
-        ).bind(refundId, user.id, 'credit', price, `Estorno: Falha na emissão de ${docType.toUpperCase()}`, docType).run();
+          'INSERT INTO transactions (user_id, type, amount, description, document_type, created_at) VALUES (?, ?, ?, ?, ?, datetime("now"))'
+        ).bind(user.id, 'credit', price, `Estorno: Falha na emissão de ${docType.toUpperCase()}`, docType).run();
       }
       throw docErr;
     }

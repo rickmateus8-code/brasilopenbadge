@@ -34,13 +34,10 @@ async function logAdminAction(env: Env, adminId: string, action: string, targetI
 
 async function insertTransaction(env: Env, userId: string, type: 'credit' | 'debit', amount: number, description: string) {
   try {
-    await env.DB.prepare(
-      `INSERT INTO transactions (id, user_id, type, amount, description, created_at)
-       VALUES (?, ?, ?, ?, ?, datetime('now'))`
-    ).bind(crypto.randomUUID(), userId, type, amount, description).run();
-  } catch {
     await env.DB.prepare('INSERT INTO transactions (user_id, type, amount, description, created_at) VALUES (?, ?, ?, ?, datetime("now"))')
       .bind(userId, type, amount, description).run();
+  } catch (err) {
+    console.error('Error inserting transaction:', err);
   }
 }
 

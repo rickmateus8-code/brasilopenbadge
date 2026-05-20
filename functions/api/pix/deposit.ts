@@ -140,13 +140,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, waitUnti
 
     // OTIMIZAÇÃO CRÍTICA: Não espera o DB registrar a transação pendente para responder ao usuário.
     // O QR Code é exibido imediatamente, e o log no banco ocorre em "background".
-    const insertId = crypto.randomUUID();
     waitUntil(
       env.DB.prepare(`
-        INSERT INTO transactions (id, user_id, type, amount, description, status, external_id, created_at)
-        VALUES (?, ?, 'credit', ?, ?, 'pending', ?, datetime('now'))
+        INSERT INTO transactions (user_id, type, amount, description, status, external_id, created_at)
+        VALUES (?, 'credit', ?, ?, 'pending', ?, datetime('now'))
       `).bind(
-        insertId,
         user.id,
         amountCents,
         `Recarga PIX R$ ${amount.toFixed(2).replace('.', ',')}`,

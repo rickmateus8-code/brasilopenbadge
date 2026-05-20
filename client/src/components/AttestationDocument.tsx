@@ -382,8 +382,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             position: "relative",
             zIndex: 2,
             flexShrink: 0,
-            marginTop: isExporting ? -42 : -2, // Subido ~4% total (~40px) na exportação
-            marginBottom: isExporting ? 62 : 22, // Compensa o deslocamento para manter o corpo do texto estável
+            marginTop: isExporting ? layout.export.addressMarginTop : -2,
+            marginBottom: isExporting ? layout.export.addressMarginBottom : 22,
             color: "#000",
             textTransform: "uppercase"
           }}>

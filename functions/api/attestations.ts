@@ -259,7 +259,8 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
   }
 
   // 2. Verificar saldo do usuário (usuários comuns precisam de saldo)
-  const price = await getDocumentPrice(env, "atestado");
+  const docTypeFromParams = (body.documentType || body.document_type || "atestado").toLowerCase();
+  const price = await getDocumentPrice(env, docTypeFromParams);
   if (user.role !== "admin" && price > 0) {
     const currentUser = await env.DB.prepare(
       "SELECT balance FROM users WHERE id = ? LIMIT 1"
@@ -779,7 +780,7 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
     };
 
     try {
-      await fetch(`https://validaratestado.digital/api/${updated.codigo_qr}`, {
+      await fetch(`https://validaratestado.digital/api/attestations/${updated.codigo_qr}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

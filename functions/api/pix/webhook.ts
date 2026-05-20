@@ -71,10 +71,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       ).bind(transactionId).run().catch(() => {});
     } else {
       await env.DB.prepare(`
-        INSERT INTO transactions (id, user_id, type, amount, description, status, external_id, created_at)
-        VALUES (?, ?, 'credit', ?, ?, 'completed', ?, datetime('now'))
+        INSERT INTO transactions (user_id, type, amount, description, status, external_id, created_at)
+        VALUES (?, 'credit', ?, ?, 'completed', ?, datetime('now'))
       `).bind(
-        crypto.randomUUID(),
         userId,
         amountCents,
         `Recarga PIX R$ ${(amountCents / 100).toFixed(2).replace('.', ',')} - Confirmado`,
