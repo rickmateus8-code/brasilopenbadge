@@ -12,8 +12,8 @@ export const ATTESTATION_LAYOUT = {
     defaultRotate: -3,
     realism: {
       previewOpacity: 0.94,
-      exportOpacity: 0.88,
-      exportMixBlendMode: "multiply" as const,
+      exportOpacity: 0.82, // Opacidade mais baixa para PDF simular tinta
+      exportMixBlendMode: "normal" as const, // html2canvas ignora multiply
     }
   },
 
@@ -22,8 +22,8 @@ export const ATTESTATION_LAYOUT = {
     // Restaurado para o equilíbrio original perfeito (Sincronia DocMaster/IDAB)
     patientPadding: "14.25px 15px",
     
-    // Address position: Sempre ABAIXO da moldura com distância limpa
-    addressMarginTop: 15, 
+    // Address position: Agora usamos um SPACER físico para garantir a descida
+    addressSpacerHeight: 48, // Equivalente a ~4 linhas para garantir descida total
     addressMarginBottom: 15, 
   },
 
