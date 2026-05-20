@@ -84,6 +84,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@cloudflare/puppeteer": "^1.1.0",
     "@cloudflare/vitest-pool-workers": "^0.14.8",
     "@cloudflare/workers-types": "^4.20260420.1",
     "@tailwindcss/typography": "^0.5.15",
