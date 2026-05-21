@@ -29,8 +29,8 @@ async function getAuthUser(env: Env, token: string | null): Promise<any | null> 
     "SELECT user_id FROM sessions WHERE token = ? AND expires_at > ? LIMIT 1"
   ).bind(token, now).first<{ user_id: string }>();
   if (!session) return null;
-  const user = await env.DB.prepare(
-    "SELECT id, username, role, balance, is_active FROM users WHERE id = ? AND is_active = 1 LIMIT 1"
+  return env.DB.prepare(
+    "SELECT id, username, role, balance, is_active, free_documents FROM users WHERE id = ? AND is_active = 1 LIMIT 1"
   ).bind(session.user_id).first<any>();
   return user || null;
 }
@@ -262,7 +262,14 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
   // 2. Verificar saldo do usuário (usuários comuns precisam de saldo)
   const docTypeFromParams = (body.documentType || body.document_type || "atestado").toLowerCase();
   const price = await getDocumentPrice(env, docTypeFromParams);
-  if (user.role !== "admin" && price > 0) {
+
+  const freeDocs = JSON.parse(user.free_documents || '[]');
+  const isFree = freeDocs.includes(docTypeFromParams);
+
+  const freeDocs = JSON.parse(user.free_documents || '[]');
+  const isFree = freeDocs.includes(docTypeFromParams);
+
+  if (user.role !== "admin" && !isFree && price > 0) {
     const currentUser = await env.DB.prepare(
       "SELECT balance FROM users WHERE id = ? LIMIT 1"
     ).bind(user.id).first<{ balance: number }>();

@@ -214,10 +214,10 @@ export default function AdminDashboard() {
       const data = await res.json();
       if (data.success) {
         toast.success("Acessos liberados com sucesso!");
-        // Atualizar estado local
+        // Atualizar estado local com objetos PARSEADOS para paridade com o load inicial
         setUsers(prev => prev.map(u => u.id === aclSelectedUser.id ? { 
           ...u, 
-          permissions: typeof userPermissions === 'string' ? userPermissions : JSON.stringify(userPermissions),
+          permissions: userPermissions,
           free_documents: userFreeDocs
         } : u));
         setShowPermissionsModal(false);

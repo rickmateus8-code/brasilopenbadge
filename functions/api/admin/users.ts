@@ -101,6 +101,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     'u.referral_percentage',
     'u.cashback_percentage',
     'u.free_documents',
+    'u.permissions',
   ];
   if (showPasswords) fields.push('u.plain_password');
 
@@ -115,6 +116,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     balance: Number(user.balance || 0),
     is_active: Number(user.is_active || 0),
     free_documents: JSON.parse(user.free_documents || '[]'),
+    permissions: user.permissions ? (typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions) : { editaveis: [], ferramentas: [] },
   }));
 
   return new Response(JSON.stringify({ success: true, users }), { headers: corsHeaders });
