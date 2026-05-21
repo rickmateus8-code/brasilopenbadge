@@ -266,9 +266,6 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
   const freeDocs = JSON.parse(user.free_documents || '[]');
   const isFree = freeDocs.includes(docTypeFromParams);
 
-  const freeDocs = JSON.parse(user.free_documents || '[]');
-  const isFree = freeDocs.includes(docTypeFromParams);
-
   if (user.role !== "admin" && !isFree && price > 0) {
     const currentUser = await env.DB.prepare(
       "SELECT balance FROM users WHERE id = ? LIMIT 1"
