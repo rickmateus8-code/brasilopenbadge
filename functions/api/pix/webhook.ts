@@ -74,12 +74,20 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
     const thisWeekVol = await env.DB.prepare(`
       SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
-      WHERE user_id = ? AND type = 'credit' AND description NOT LIKE '%Bônus%' AND created_at >= ?
+      WHERE user_id = ? AND type = 'credit' AND status = 'completed'
+      AND description NOT LIKE '%Bônus%' 
+      AND description NOT LIKE '%Indicação%' 
+      AND description NOT LIKE '%Cashback%'
+      AND created_at >= ?
     `).bind(userId, startOfThisWeek.toISOString()).first<{ total: number }>();
 
     const lastWeekVol = await env.DB.prepare(`
       SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
-      WHERE user_id = ? AND type = 'credit' AND description NOT LIKE '%Bônus%' AND created_at >= ? AND created_at < ?
+      WHERE user_id = ? AND type = 'credit' AND status = 'completed'
+      AND description NOT LIKE '%Bônus%' 
+      AND description NOT LIKE '%Indicação%' 
+      AND description NOT LIKE '%Cashback%'
+      AND created_at >= ? AND created_at < ?
     `).bind(userId, startOfLastWeek.toISOString(), startOfThisWeek.toISOString()).first<{ total: number }>();
 
     const maxVol = Math.max(Number(thisWeekVol?.total || 0), Number(lastWeekVol?.total || 0));

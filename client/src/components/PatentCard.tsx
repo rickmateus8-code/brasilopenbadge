@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Crown, Rocket, Hourglass, HelpCircle, CheckCircle2, ChevronRight, X } from "lucide-react";
+import { Crown, Rocket, Hourglass, HelpCircle, CheckCircle2, ChevronRight, X, AlertTriangle } from "lucide-react";
 
 interface PatentCardProps {
   loyalty: {
@@ -18,8 +18,13 @@ function PatentRulesModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
   return (
     <div className="fixed inset-0 z-[10000] bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300" onClick={onClose}>
       <div className="bg-[#0f172a] border border-white/10 rounded-[2.5rem] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
-        <div className="p-8 border-b border-white/5 flex items-center justify-between">
-          <h2 className="text-xl font-black text-white tracking-tight m-0 uppercase italic">Clube de recarga semanal</h2>
+        <div className="p-8 border-b border-white/5 flex items-center justify-between bg-blue-600/10">
+          <div className="flex items-center gap-4">
+             <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white">
+                <Rocket size={24} />
+             </div>
+             <h2 className="text-xl font-black text-white tracking-tight m-0 uppercase italic">Clube de recarga semanal</h2>
+          </div>
           <button onClick={onClose} className="w-10 h-10 rounded-full border-none bg-white/5 cursor-pointer flex items-center justify-center text-gray-400 hover:text-white transition-all">
             <X size={20} />
           </button>
@@ -61,7 +66,7 @@ function PatentRulesModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
           </div>
         </div>
         <div className="p-6 bg-white/[0.02] text-center border-t border-white/5">
-           <button onClick={onClose} className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95">Entendido, bora subir!</button>
+           <button onClick={onClose} className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95 border-none cursor-pointer uppercase">Entendido, bora subir!</button>
         </div>
       </div>
     </div>
@@ -94,6 +99,15 @@ export default function PatentCard({ loyalty }: PatentCardProps) {
 
   const maxVol = Math.max(loyalty.thisWeekVolume, loyalty.lastWeekVolume);
   const progress = Math.min(100, (maxVol / 25000) * 100);
+  
+  // Status para semana que vem: baseia-se apenas no volume DESTA SEMANA
+  const isGuaranteed = loyalty.thisWeekVolume >= 10000; // Bronze ou +
+  const earnedRankThisWeek = (() => {
+    if (loyalty.thisWeekVolume >= 25000) return "OURO";
+    if (loyalty.thisWeekVolume >= 18000) return "PRATA";
+    if (loyalty.thisWeekVolume >= 10000) return "BRONZE";
+    return "RECRUTA";
+  })();
 
   const getRankColor = (rank: string) => {
     switch (rank) {
@@ -149,10 +163,17 @@ export default function PatentCard({ loyalty }: PatentCardProps) {
 
         <div className="hidden md:flex flex-col items-end text-right">
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Status para semana que vem</p>
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/50">
-              <CheckCircle2 size={12} className="text-emerald-500" />
-              <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">GARANTIDO</span>
-            </div>
+            {isGuaranteed ? (
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/50">
+                <CheckCircle2 size={12} className="text-emerald-500" />
+                <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">GARANTIDO: {earnedRankThisWeek}</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10">
+                <AlertTriangle size={12} className="text-gray-400" />
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">PENDENTE</span>
+              </div>
+            )}
         </div>
       </div>
 
@@ -192,7 +213,7 @@ export default function PatentCard({ loyalty }: PatentCardProps) {
 
         <div className="flex justify-between mt-4">
           <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">
-            INVESTIDO: <span className="text-blue-600 dark:text-blue-400">R$ {(maxVol / 100).toFixed(2).replace('.', ',')}</span>
+            INVESTIDO: <span className="text-blue-600 dark:text-blue-400 font-black">R$ {(loyalty.thisWeekVolume / 100).toFixed(2).replace('.', ',')}</span>
           </p>
           <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">
             OBJETIVO: <span className="text-gray-900 dark:text-white">R$ 250,00</span>
@@ -211,15 +232,16 @@ export default function PatentCard({ loyalty }: PatentCardProps) {
               Próximo Nível: <span className={getRankColor(loyalty.nextRank)}>{loyalty.nextRank}</span>
             </h3>
             <p className="text-xs text-gray-500 font-medium">
-              Faltam <span className="font-bold text-gray-800 dark:text-gray-200">R$ {((loyalty.nextGoal - maxVol) / 100).toFixed(2).replace('.', ',')}</span> para você subir sua lucratividade.
+              Faltam <span className="font-bold text-gray-800 dark:text-gray-200">R$ {((loyalty.nextGoal - loyalty.thisWeekVolume) / 100).toFixed(2).replace('.', ',')}</span> para você subir sua lucratividade.
             </p>
           </div>
           <div className="flex flex-col items-center md:items-end gap-2 shrink-0">
              <div className="px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-900/30 text-rose-500 text-[10px] font-black uppercase tracking-widest">
                RESETA EM: {timeLeft}
              </div>
-             <p className="text-[9px] font-bold text-emerald-500 flex items-center gap-1">
-               <CheckCircle2 size={10} /> STATUS PARA SEMANA QUE VEM: GARANTIDO
+             <p className={`text-[9px] font-bold flex items-center gap-1 ${isGuaranteed ? "text-emerald-500" : "text-gray-400"}`}>
+               {isGuaranteed ? <CheckCircle2 size={10} /> : <AlertTriangle size={10} />} 
+               STATUS PARA SEMANA QUE VEM: {isGuaranteed ? `GARANTIDO (${earnedRankThisWeek})` : "PENDENTE"}
              </p>
           </div>
         </div>
