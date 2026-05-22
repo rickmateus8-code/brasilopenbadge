@@ -5,6 +5,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import NovoDocumentoModal from "@/components/NovoDocumentoModal";
 import RecarregaModal from "@/components/RecarregaModal";
 import ExtratoModal from "@/components/ExtratoModal";
+import ReferralModal from "@/components/ReferralModal";
+import PatentCard from "@/components/PatentCard";
 import {
   FileText, Car, Anchor, FlaskConical, GraduationCap,
   Wallet, TrendingUp, BarChart3, ChevronRight, Plus,
@@ -85,6 +87,8 @@ export default function Dashboard() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showRecarregaModal, setShowRecarregaModal] = useState(false);
   const [showExtratoModal, setShowExtratoModal] = useState(false);
+  const [showReferralModal, setShowReferralModal] = useState(false);
+  const [loyaltyData, setLoyaltyData] = useState<any>(null);
 
   // Additional states for history management
   const [viewAtestado, setViewAtestado] = useState<DocRecord | null>(null);
@@ -96,6 +100,7 @@ export default function Dashboard() {
     refresh();
     loadStats();
     loadNotifications();
+    loadLoyalty();
   }, [refresh]);
 
   const getGreeting = () => {
@@ -131,6 +136,16 @@ export default function Dashboard() {
       if (res.ok) {
         const data = await res.json();
         if (data.stats) setStats(data.stats);
+      }
+    } catch {}
+  };
+
+  const loadLoyalty = async () => {
+    try {
+      const res = await fetch("/api/referral", { credentials: "include" });
+      const json = await res.json();
+      if (json.success) {
+        setLoyaltyData(json.loyalty);
       }
     } catch {}
   };
@@ -258,6 +273,9 @@ const intelligentStats = [
                 <button onClick={() => setShowNovoDocModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20 active:scale-95 flex items-center gap-2">
                   <Plus className="w-4 h-4" /> Novo Documento
                 </button>
+                <button onClick={() => setShowReferralModal(true)} className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 active:scale-95">
+                  <Gift className="w-4 h-4" /> Indique e Ganhe
+                </button>
               </div>
             )}
             {!hasAnyPermission && user?.role !== "admin" && (
@@ -270,6 +288,9 @@ const intelligentStats = [
             )}
           </div>
         </div>
+
+        {/* Patent Card */}
+        {loyaltyData && <PatentCard loyalty={loyaltyData} />}
 
         {/* Resumo Financeiro Rapido */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -314,7 +335,7 @@ const intelligentStats = [
             <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest mb-1">Indique e Ganhe</h3>
             <p className="text-xs text-gray-500 font-medium mb-5 px-4">Ganhe comissões por cada recarga de seus indicados.</p>
             <button 
-              onClick={() => setLocation("/indicacoes")}
+              onClick={() => setShowReferralModal(true)}
               className="text-[10px] font-black text-emerald-600 hover:text-emerald-700 uppercase tracking-[0.2em] flex items-center gap-2 group/btn"
             >
               Começar agora <ChevronRight className="w-3 h-3 group-hover/btn:translate-x-1 transition-transform" />
@@ -492,6 +513,7 @@ const intelligentStats = [
       <NovoDocumentoModal open={showNovoDocModal} onClose={() => setShowNovoDocModal(false)} userBalance={user?.balance || 0} username={user?.username || ""} />
       <RecarregaModal isOpen={showRecarregaModal} onClose={() => setShowRecarregaModal(false)} userName={user?.displayName || user?.username || ""} />
       <ExtratoModal isOpen={showExtratoModal} onClose={() => setShowExtratoModal(false)} />
+      <ReferralModal isOpen={showReferralModal} onClose={() => setShowReferralModal(false)} />
 
       {/* ── VIEWER & DELETE MODALS ── */}
       {viewAtestado && (

@@ -6,6 +6,7 @@ import { usePresenceTracker } from "@/hooks/usePresenceTracker";
 import NovoDocumentoModal from "@/components/NovoDocumentoModal";
 import RecarregaModal, { RECARREGA_MODAL_EVENT, RECARREGA_MODAL_PENDING_KEY } from "@/components/RecarregaModal";
 import ExtratoModal from "@/components/ExtratoModal";
+import ReferralModal from "@/components/ReferralModal";
 import {
   LayoutDashboard, FileText, CreditCard, Receipt, LogOut,
   ChevronDown, ChevronRight, Menu, X, Sun, Moon,
@@ -171,12 +172,14 @@ function UserDropdown({
   collapsed,
   onOpenRecarregaModal,
   onOpenExtratoModal,
+  onOpenReferralModal,
 }: {
   user: AuthUser;
   logout: () => void;
   collapsed: boolean;
   onOpenRecarregaModal: () => void;
   onOpenExtratoModal: () => void;
+  onOpenReferralModal: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [, setLocation] = useLocation();
@@ -237,7 +240,7 @@ function UserDropdown({
               Configurações
             </button>
             <button
-              onClick={() => { setLocation("/indicacoes"); setOpen(false); }}
+              onClick={() => { onOpenReferralModal(); setOpen(false); }}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-emerald-600 dark:text-emerald-400 font-black hover:bg-emerald-50 dark:hover:bg-emerald-900/10 transition-colors"
             >
               <Gift className="w-4 h-4" />
@@ -295,6 +298,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [showHistoricoModal, setShowHistoricoModal] = useState(false);
   const [showRecarregaModal, setShowRecarregaModal] = useState(false);
   const [showExtratoModal, setShowExtratoModal] = useState(false);
+  const [showReferralModal, setShowReferralModal] = useState(false);
 
   useEffect(() => {
     const handler = () => {
@@ -474,7 +478,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </button>
           </div>
         )}
-        <UserDropdown user={user} logout={logout} collapsed={!mobile && collapsed} onOpenRecarregaModal={() => handleOpenRecarregaModal(mobile)} onOpenExtratoModal={() => setShowExtratoModal(true)} />
+        <UserDropdown user={user} logout={logout} collapsed={!mobile && collapsed} onOpenRecarregaModal={() => handleOpenRecarregaModal(mobile)} onOpenExtratoModal={() => setShowExtratoModal(true)} onOpenReferralModal={() => setShowReferralModal(true)} />
         <div className={`flex gap-1 ${collapsed && !mobile ? "flex-col items-center" : ""}`}>
           <button onClick={toggleTheme} className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
             {theme === "dark" ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
@@ -517,6 +521,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <NovoDocumentoModal open={showNovoDocModal} onClose={() => setShowNovoDocModal(false)} userBalance={userBalanceSafe} username={user.username} />
       <RecarregaModal isOpen={showRecarregaModal} onClose={() => setShowRecarregaModal(false)} userName={user.displayName || user.username} userCpf={userCpf} />
       <ExtratoModal isOpen={showExtratoModal} onClose={() => setShowExtratoModal(false)} />
+      <ReferralModal isOpen={showReferralModal} onClose={() => setShowReferralModal(false)} />
       {showHistoricoModal && (
         <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowHistoricoModal(false)}>
           <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-lg flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300" onClick={e => e.stopPropagation()}>
@@ -583,7 +588,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       )}
       {showInsufficientBalance && (
-        <div style={{position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px"}} onClick={() => setShowInsufficientBalance(false)}>
+        <div style={{position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyCenter: "center", padding: "16px"}} onClick={() => setShowInsufficientBalance(false)}>
           <div style={{background: "#fff", borderRadius: 20, padding: "36px 32px", maxWidth: 380, width: "100%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.25)"}} onClick={e => e.stopPropagation()}>
             <div style={{width: 72, height: 72, borderRadius: "50%", border: "3px solid #f97316", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px"}}><svg viewBox="0 0 24 24" style={{ width: 36, height: 36, color: "#f97316" }} fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg></div>
             <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111827", marginBottom: 12 }}>Saldo Insuficiente</h2>

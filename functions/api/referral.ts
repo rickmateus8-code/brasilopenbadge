@@ -22,52 +22,111 @@ export const onRequestGet: PagesFunction<{ DB: D1Database }> = async ({ request,
 
   const userId = session.user_id;
 
+  // 1. Lógica de Patentes (Cálculo de Volume Semanal)
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0 is Sunday, 1 is Monday...
+  const diffToMonday = (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
+  
+  const startOfThisWeek = new Date(now);
+  startOfThisWeek.setHours(0, 0, 0, 0);
+  startOfThisWeek.setDate(now.getDate() - diffToMonday);
+  
+  const startOfLastWeek = new Date(startOfThisWeek);
+  startOfLastWeek.setDate(startOfThisWeek.getDate() - 7);
+  
+  const isoThisWeek = startOfThisWeek.toISOString();
+  const isoLastWeek = startOfLastWeek.toISOString();
+
+  // Volume Desta Semana (Apenas depósitos reais, não bônus)
+  const thisWeekVolResult = await db.prepare(`
+    SELECT COALESCE(SUM(amount), 0) as total 
+    FROM transactions 
+    WHERE user_id = ? AND type = 'credit' AND description NOT LIKE '%Bônus%' AND created_at >= ?
+  `).bind(userId, isoThisWeek).first<{ total: number }>();
+  
+  // Volume Semana Passada
+  const lastWeekVolResult = await db.prepare(`
+    SELECT COALESCE(SUM(amount), 0) as total 
+    FROM transactions 
+    WHERE user_id = ? AND type = 'credit' AND description NOT LIKE '%Bônus%' AND created_at >= ? AND created_at < ?
+  `).bind(userId, isoLastWeek, isoThisWeek).first<{ total: number }>();
+
+  const thisWeekVol = Number(thisWeekVolResult?.total || 0);
+  const lastWeekVol = Number(lastWeekVolResult?.total || 0);
+  
+  // A patente é baseada no maior volume entre as duas semanas (Trava de Segunda-feira)
+  const maxVol = Math.max(thisWeekVol, lastWeekVol);
+  
+  let rank = "RECRUTA";
+  let bonus = 20;
+  let nextRank = "BRONZE";
+  let nextGoal = 10000; // Centavos
+
+  if (maxVol >= 25000) {
+    rank = "OURO";
+    bonus = 40;
+    nextRank = "MAX";
+    nextGoal = 0;
+  } else if (maxVol >= 18000) {
+    rank = "PRATA";
+    bonus = 30;
+    nextRank = "OURO";
+    nextGoal = 25000;
+  } else if (maxVol >= 10000) {
+    rank = "BRONZE";
+    bonus = 25;
+    nextRank = "PRATA";
+    nextGoal = 18000;
+  }
+
   // Get or create referral code
   let refCode = await db.prepare("SELECT code FROM referral_codes WHERE user_id = ?").bind(userId).first<{ code: string }>();
   if (!refCode) {
     const code = generateReferralCode();
-    await db.prepare("INSERT INTO referral_codes (user_id, code) VALUES (?, ?)").bind(userId, code).run();
+    await db.prepare("INSERT INTO referral_codes (id, user_id, code) VALUES (?, ?, ?)").bind(crypto.randomUUID(), userId, code).run();
     refCode = { code };
     // Also update user record
     await db.prepare("UPDATE users SET referral_code = ? WHERE id = ?").bind(code, userId).run();
   }
 
-  // Get referral stats
-  const totalReferred = await db.prepare("SELECT COUNT(*) as count FROM referrals WHERE referrer_id = ?").bind(userId).first<{ count: number }>();
-  const totalEarnings = await db.prepare("SELECT COALESCE(SUM(earned_amount), 0) as total FROM referral_earnings WHERE referrer_id = ?").bind(userId).first<{ total: number }>();
-  const totalCashback = await db.prepare("SELECT COALESCE(SUM(cashback_amount), 0) as total FROM cashback_earnings WHERE user_id = ?").bind(userId).first<{ total: number }>();
-
-  // Get referred users list
+  // Get referred users list (Network)
   const referredUsers = await db.prepare(`
-    SELECT r.referred_id, r.created_at, COALESCE(u.display_name, u.username) as name, u.email,
-           COALESCE(SUM(re.earned_amount), 0) as total_earned
+    SELECT u.id, u.username, u.created_at, u.is_active
     FROM referrals r
     JOIN users u ON r.referred_id = u.id
-    LEFT JOIN referral_earnings re ON re.referred_id = r.referred_id AND re.referrer_id = r.referrer_id
     WHERE r.referrer_id = ?
-    GROUP BY r.referred_id
-    ORDER BY r.created_at DESC
+    ORDER BY u.created_at DESC
+  `).bind(userId).all();
+
+  // Get earnings history
+  const earningsHistory = await db.prepare(`
+    SELECT re.earned_amount, re.created_at, u.username as referred_username
+    FROM referral_earnings re
+    JOIN users u ON re.referred_id = u.id
+    WHERE re.referrer_id = ?
+    ORDER BY re.created_at DESC
     LIMIT 50
   `).bind(userId).all();
 
-  // Get settings
-  const refPct = await db.prepare("SELECT value FROM system_settings WHERE key = 'referral_percentage'").first<{ value: string }>();
-  const cbPct = await db.prepare("SELECT value FROM system_settings WHERE key = 'cashback_percentage'").first<{ value: string }>();
-
-  // Get user-specific overrides
-  const user = await db.prepare("SELECT referral_percentage, cashback_percentage FROM users WHERE id = ?").bind(userId).first<any>();
-
   return new Response(JSON.stringify({
+    success: true,
     code: refCode.code,
     referralLink: `https://docmaster.store/register?ref=${refCode.code}`,
-    totalReferred: totalReferred?.count || 0,
-    totalEarnings: totalEarnings?.total || 0,
-    totalCashback: totalCashback?.total || 0,
-    referredUsers: referredUsers?.results || [],
-    globalReferralPercentage: parseFloat(refPct?.value || "10"),
-    globalCashbackPercentage: parseFloat(cbPct?.value || "5"),
-    userReferralPercentage: user?.referral_percentage,
-    userCashbackPercentage: user?.cashback_percentage
+    stats: {
+      totalReferred: (referredUsers.results || []).length,
+      totalEarnings: (earningsHistory.results || []).reduce((acc: number, curr: any) => acc + Number(curr.earned_amount), 0),
+    },
+    loyalty: {
+      thisWeekVolume: thisWeekVol,
+      lastWeekVolume: lastWeekVol,
+      currentRank: rank,
+      currentBonus: bonus,
+      nextRank,
+      nextGoal,
+      resetDate: startOfThisWeek.getTime() + (7 * 24 * 60 * 60 * 1000), // Próxima Segunda
+    },
+    network: referredUsers.results || [],
+    earnings: earningsHistory.results || [],
   }), {
     headers: { "Content-Type": "application/json" }
   });

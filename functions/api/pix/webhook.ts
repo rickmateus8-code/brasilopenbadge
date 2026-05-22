@@ -61,14 +61,45 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       return toJson({ received: true, processed: false, reason: 'already_processed' });
     }
 
-    await env.DB.prepare(
-      'UPDATE users SET balance = balance + ? WHERE id = ?'
-    ).bind(amountCents, userId).run();
+    // ── CALCULAR BÔNUS DINÂMICO (PATENTE) ──────────────────────────────
+    // Pega volume semanal (Segunda a Segunda)
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const diffToMonday = (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
+    const startOfThisWeek = new Date(now);
+    startOfThisWeek.setHours(0, 0, 0, 0);
+    startOfThisWeek.setDate(now.getDate() - diffToMonday);
+    const startOfLastWeek = new Date(startOfThisWeek);
+    startOfLastWeek.setDate(startOfThisWeek.getDate() - 7);
+
+    const thisWeekVol = await env.DB.prepare(`
+      SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+      WHERE user_id = ? AND type = 'credit' AND description NOT LIKE '%Bônus%' AND created_at >= ?
+    `).bind(userId, startOfThisWeek.toISOString()).first<{ total: number }>();
+
+    const lastWeekVol = await env.DB.prepare(`
+      SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+      WHERE user_id = ? AND type = 'credit' AND description NOT LIKE '%Bônus%' AND created_at >= ? AND created_at < ?
+    `).bind(userId, startOfLastWeek.toISOString(), startOfThisWeek.toISOString()).first<{ total: number }>();
+
+    const maxVol = Math.max(Number(thisWeekVol?.total || 0), Number(lastWeekVol?.total || 0));
+    
+    let bonusPct = 0.20; // Recruta 20%
+    let rankName = "RECRUTA";
+    if (maxVol >= 25000) { bonusPct = 0.40; rankName = "OURO"; }
+    else if (maxVol >= 18000) { bonusPct = 0.30; rankName = "PRATA"; }
+    else if (maxVol >= 10000) { bonusPct = 0.25; rankName = "BRONZE"; }
+
+    const bonusAmount = Math.round(amountCents * bonusPct);
+    const totalCredit = amountCents + bonusAmount;
+
+    // ── CREDITAR USUÁRIO ─────────────────────────────────────────────
+    await env.DB.prepare('UPDATE users SET balance = balance + ? WHERE id = ?')
+      .bind(totalCredit, userId).run();
 
     if (existing) {
-      await env.DB.prepare(
-        "UPDATE transactions SET status = 'completed' WHERE external_id = ?"
-      ).bind(transactionId).run().catch(() => {});
+      await env.DB.prepare("UPDATE transactions SET status = 'completed', amount = ? WHERE external_id = ?")
+        .bind(amountCents, transactionId).run().catch(() => {});
     } else {
       await env.DB.prepare(`
         INSERT INTO transactions (user_id, type, amount, description, status, external_id, created_at)
@@ -76,9 +107,48 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       `).bind(
         userId,
         amountCents,
-        `Recarga PIX R$ ${(amountCents / 100).toFixed(2).replace('.', ',')} - Confirmado`,
+        `Recarga PIX R$ ${(amountCents / 100).toFixed(2).replace('.', ',')}`,
         transactionId,
       ).run().catch(() => {});
+    }
+
+    // Registrar o bônus como transação separada para o extrato
+    await env.DB.prepare(`
+      INSERT INTO transactions (user_id, type, amount, description, status, created_at)
+      VALUES (?, 'credit', ?, ?, 'completed', datetime('now'))
+    `).bind(
+      userId,
+      bonusAmount,
+      `Bônus ${rankName} (+${Math.round(bonusPct * 100)}%)`,
+    ).run().catch(() => {});
+
+    // ── LÓGICA DE INDICAÇÃO (REFERRAL) ───────────────────────────────
+    const userData = await env.DB.prepare('SELECT referred_by FROM users WHERE id = ?').bind(userId).first<{ referred_by: string }>();
+    if (userData?.referred_by) {
+      const referrerId = userData.referred_by;
+      const commissionAmount = Math.round(amountCents * 0.10); // 10% Fixo
+
+      if (commissionAmount > 0) {
+        // Creditar referrer
+        await env.DB.prepare('UPDATE users SET balance = balance + ? WHERE id = ?')
+          .bind(commissionAmount, referrerId).run();
+
+        // Log de ganho
+        await env.DB.prepare(`
+          INSERT INTO referral_earnings (id, referrer_id, referred_id, deposit_amount, percentage, earned_amount, deposit_transaction_id, created_at)
+          VALUES (?, ?, ?, ?, 10, ?, ?, datetime('now'))
+        `).bind(crypto.randomUUID(), referrerId, userId, amountCents / 100, (commissionAmount / 100), transactionId).run();
+
+        // Registrar no extrato do referrer
+        await env.DB.prepare(`
+          INSERT INTO transactions (user_id, type, amount, description, status, created_at)
+          VALUES (?, 'credit', ?, ?, 'completed', datetime('now'))
+        `).bind(
+          referrerId,
+          commissionAmount,
+          `Comissão de Indicação: ${body.metadata?.username || 'Usuário'}`,
+        ).run();
+      }
     }
 
     return toJson({ received: true, processed: true });
