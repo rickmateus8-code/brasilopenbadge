@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Gift, Network, HandHoldingUsd, Copy, Check, Users, ArrowUp, RefreshCw, Loader2 } from "lucide-react";
+import { X, Gift, Network, Banknote, Copy, Check, Users, ArrowUp, RefreshCw, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface ReferredUser {
@@ -168,7 +168,7 @@ export default function ReferralModal({ isOpen, onClose }: ReferralModalProps) {
               {/* Últimos Ganhos */}
               <div className="pt-4 border-t border-gray-100 dark:border-white/5">
                 <h3 className="text-xs font-black text-gray-800 dark:text-gray-200 uppercase tracking-widest flex items-center gap-2 mb-4">
-                  <HandHoldingUsd size={14} className="text-emerald-500" /> Últimos Ganhos
+                  <Banknote size={14} className="text-emerald-500" /> Últimos Ganhos
                 </h3>
                 <div className="bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5 overflow-hidden">
                   <div className="max-h-[160px] overflow-y-auto custom-scrollbar">
