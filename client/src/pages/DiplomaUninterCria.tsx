@@ -367,6 +367,7 @@ export default function DiplomaUninterCria() {
         onConfirm={handleSave} onCancel={() => setShowConfirmModal(false)}
         onDownload={handleExportPdf}
         onClose={() => setShowSuccessModal(false)} historyPath="/dashboard"
+        isFree={user?.free_documents?.includes('diploma-uninter')}
       />
     </DashboardLayout>
   );

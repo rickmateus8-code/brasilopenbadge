@@ -239,7 +239,9 @@ export default function PeticaoCria() {
     if (!form.credor) { toast.error("Preencha o Nome do Credor"); return; }
     if (!form.advogado) { toast.error("Preencha o Nome do Advogado"); return; }
     const balance = user?.balance || 0;
-    if (user?.role !== 'admin' && balance < documentPrice) {
+    const isFree = user?.free_documents?.includes('peticaocria');
+
+    if (user?.role !== 'admin' && !isFree && balance < documentPrice) {
       toast.error(`Saldo insuficiente. Necessário R$ ${(documentPrice/100).toFixed(2)}`);
       return;
     }

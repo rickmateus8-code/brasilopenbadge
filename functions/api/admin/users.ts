@@ -171,8 +171,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const id = generateId();
     const passwordHash = await hashPassword(password);
     const defaultPermissions = JSON.stringify({
-      editaveis: ["atestado", "cnh", "cha", "toxicologico", "receita"],
-      ferramentas: ["bot-adv", "peticao-stj"]
+      editaveis: [],
+      ferramentas: []
     });
 
     await env.DB.prepare(`

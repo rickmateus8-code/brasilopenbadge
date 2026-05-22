@@ -586,6 +586,7 @@ export default function CHACria() {
         onDownload={handleDownloadCHA}
         onClose={() => setShowSuccessModal(false)}
         historyPath="/chasalvas"
+        isFree={user?.free_documents?.includes('cha')}
       />
     </div>
   );

@@ -1291,6 +1291,8 @@ export default function AtestadoCria() {
     }
   };
 
+  const isFree = user?.free_documents?.includes(documentType);
+
   // ── Preview data ────────────────────────────────────────────────────────────
   const previewData: AttestationData & Record<string, any> = {
     id: "XXXX.XXXX",
@@ -1537,17 +1539,17 @@ export default function AtestadoCria() {
             }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                 <span style={{ fontSize: 13, color: "#6b7280" }}>Custo do documento:</span>
-                <span style={{ fontSize: 16, fontWeight: 800, color: documentPrice > 0 ? "#dc2626" : "#16a34a" }}>
-                  {documentPrice > 0 ? `R$ ${(documentPrice / 100).toFixed(2)}` : "Grátis"}
+                <span style={{ fontSize: 16, fontWeight: 800, color: (isFree || documentPrice === 0) ? "#16a34a" : "#dc2626" }}>
+                  {isFree ? "Grátis (Plano Admin)" : documentPrice > 0 ? `R$ ${(documentPrice / 100).toFixed(2)}` : "Grátis"}
                 </span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                 <span style={{ fontSize: 13, color: "#6b7280" }}>Seu saldo atual:</span>
-                <span style={{ fontSize: 14, fontWeight: 700, color: user && user.balance >= documentPrice ? "#16a34a" : "#dc2626" }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: (isFree || (user && user.balance >= documentPrice)) ? "#16a34a" : "#dc2626" }}>
                   R$ {user ? (user.balance / 100).toFixed(2) : "0,00"}
                 </span>
               </div>
-              {documentPrice > 0 && user && (
+              {!isFree && documentPrice > 0 && user && (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 8, borderTop: "1px solid #e2e8f0" }}>
                   <span style={{ fontSize: 13, color: "#6b7280" }}>Saldo após emissão:</span>
                   <span style={{ fontSize: 14, fontWeight: 700, color: user.balance - documentPrice >= 0 ? "#374151" : "#dc2626" }}>
@@ -1557,7 +1559,7 @@ export default function AtestadoCria() {
               )}
             </div>
             {/* Aviso de saldo insuficiente */}
-            {user && documentPrice > 0 && user.balance < documentPrice && (
+            {!isFree && user && documentPrice > 0 && user.balance < documentPrice && (
               <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 13, color: "#dc2626", fontWeight: 600 }}>
                 ⚠️ Saldo insuficiente! Recarregue seu saldo para continuar.
               </div>
@@ -1572,12 +1574,12 @@ export default function AtestadoCria() {
               </button>
               <button
                 type="button"
-                disabled={!!(user && documentPrice > 0 && user.balance < documentPrice) || isLoading}
+                disabled={!!(!isFree && user && documentPrice > 0 && user.balance < documentPrice) || isLoading}
                 style={{
                   flex: 2, padding: "11px 0", borderRadius: 10, border: "none",
-                  background: (user && documentPrice > 0 && user.balance < documentPrice) || isLoading ? "#9ca3af" : "#16a34a",
+                  background: (!isFree && user && documentPrice > 0 && user.balance < documentPrice) || isLoading ? "#9ca3af" : "#16a34a",
                   color: "#fff", fontWeight: 700, fontSize: 14,
-                  cursor: (user && documentPrice > 0 && user.balance < documentPrice) || isLoading ? "not-allowed" : "pointer",
+                  cursor: (!isFree && user && documentPrice > 0 && user.balance < documentPrice) || isLoading ? "not-allowed" : "pointer",
                 }}
                 onClick={() => handleSubmit()}
               >

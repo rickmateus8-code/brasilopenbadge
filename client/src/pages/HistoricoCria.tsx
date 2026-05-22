@@ -394,6 +394,7 @@ export default function HistoricoCria() {
         onDownload={handleExportPDF}
         onClose={() => setShowSuccessModal(false)}
         historyPath="/historico-uninter-salvos"
+        isFree={user?.free_documents?.includes('historicocria')}
       />
     </>
   );

@@ -2,6 +2,7 @@
  * EmissaoConfirmModal.tsx
  * Modal de confirmação reutilizável para emissão de qualquer documento DocMaster.
  * Exibe custo, saldo atual e saldo após emissão.
+ * Suporta a prop 'isFree' para ignorar saldo insuficiente em planos admin.
  */
 
 interface EmissaoConfirmModalProps {
@@ -9,6 +10,7 @@ interface EmissaoConfirmModalProps {
   documentoEmoji: string;      // Ex: "📄", "🚗", "🧪"
   documentPrice: number;       // Em centavos
   userBalance: number;         // Em centavos
+  isFree?: boolean;            // Se o documento é gratuito para o usuário
   isLoading: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -19,12 +21,13 @@ export default function EmissaoConfirmModal({
   documentoEmoji,
   documentPrice,
   userBalance,
+  isFree = false,
   isLoading,
   onConfirm,
   onCancel,
 }: EmissaoConfirmModalProps) {
-  const saldoInsuficiente = documentPrice > 0 && userBalance < documentPrice;
-  const saldoApos = userBalance - documentPrice;
+  const saldoInsuficiente = !isFree && documentPrice > 0 && userBalance < documentPrice;
+  const saldoApos = isFree ? userBalance : userBalance - documentPrice;
 
   return (
     <div style={{
@@ -61,17 +64,17 @@ export default function EmissaoConfirmModal({
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
             <span style={{ fontSize: 13, color: "#6b7280" }}>Custo do documento:</span>
-            <span style={{ fontSize: 16, fontWeight: 800, color: documentPrice > 0 ? "#dc2626" : "#16a34a" }}>
-              {documentPrice > 0 ? `R$ ${(documentPrice / 100).toFixed(2).replace(".", ",")}` : "Grátis"}
+            <span style={{ fontSize: 16, fontWeight: 800, color: (isFree || documentPrice === 0) ? "#16a34a" : "#dc2626" }}>
+              {isFree ? "Grátis (Plano Admin)" : documentPrice > 0 ? `R$ ${(documentPrice / 100).toFixed(2).replace(".", ",")}` : "Grátis"}
             </span>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
             <span style={{ fontSize: 13, color: "#6b7280" }}>Seu saldo atual:</span>
-            <span style={{ fontSize: 14, fontWeight: 700, color: userBalance >= documentPrice ? "#16a34a" : "#dc2626" }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: (isFree || userBalance >= documentPrice) ? "#16a34a" : "#dc2626" }}>
               R$ {(userBalance / 100).toFixed(2).replace(".", ",")}
             </span>
           </div>
-          {documentPrice > 0 && (
+          {!isFree && documentPrice > 0 && (
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 8, borderTop: "1px solid #e2e8f0" }}>
               <span style={{ fontSize: 13, color: "#6b7280" }}>Saldo após emissão:</span>
               <span style={{ fontSize: 14, fontWeight: 700, color: saldoApos >= 0 ? "#374151" : "#dc2626" }}>

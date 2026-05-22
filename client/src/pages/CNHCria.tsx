@@ -769,6 +769,7 @@ export default function CNHCria() {
         onConfirm={handleSave} onCancel={() => setShowConfirmModal(false)}
         onDownload={async () => { setIsDownloading(true); await handleExportPdf(); setIsDownloading(false); }}
         onClose={() => setShowSuccessModal(false)} historyPath="/cnhsalvas"
+        isFree={user?.free_documents?.includes('cnh')}
       />
     </DashboardLayout>
   );

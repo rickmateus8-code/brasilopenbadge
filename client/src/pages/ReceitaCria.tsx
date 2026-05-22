@@ -648,6 +648,7 @@ export default function ReceitaCria() {
           documentoEmoji="💊"
           documentPrice={documentPrice}
           userBalance={user?.balance ?? 0}
+          isFree={user?.free_documents?.includes('receita')}
           isLoading={isLoading}
           onConfirm={handleSubmit}
           onCancel={() => setShowConfirmModal(false)}

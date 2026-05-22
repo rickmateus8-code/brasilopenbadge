@@ -132,6 +132,8 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   "historico-sp": "Histórico SP",
   "historico-uninter": "Histórico UNINTER",
   "peticao-stj": "Petição STJ",
+  "peticaocria": "Petição Jurídica",
+  "diploma-uninter": "Diploma UNINTER",
 };
 
 const PAGE_LABELS: Record<string, string> = {
@@ -3147,7 +3149,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 	                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-	                  {["atestado", "cnh", "cha", "toxicologico", "toxicria", "laudocria", "receita", "historico-sp", "historicocria", "diploma-uninter"].map(doc => (
+	                  {["atestado", "cnh", "cha", "toxicologico", "toxicria", "laudocria", "receita", "historico-sp", "historicocria", "diploma-uninter", "peticaocria"].map(doc => (
 	                    <label key={doc} className="flex items-center gap-2 p-3 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 cursor-pointer hover:border-indigo-300 transition-all">
 	                      <input 
 	                        type="checkbox" 

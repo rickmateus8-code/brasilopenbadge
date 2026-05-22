@@ -438,21 +438,27 @@ export default function UniversalEmissor({ overrideSlug }: { overrideSlug?: stri
           </main>
       </div>
 
-      <EmissionModal open={showConfirmModal} onClose={() => setShowConfirmModal(false)} onConfirm={handleSave} isExporting={isExporting} price={template.price * 100} />
+      <EmissionModal 
+        docLabel={template.name}
+        docEmoji="📄"
+        documentPrice={template.price * 100}
+        userBalance={user?.balance ?? 0}
+        isFree={user?.free_documents?.includes(template.slug)}
+        showConfirm={showConfirmModal}
+        showSuccess={showSuccessModal}
+        isEmitting={isExporting}
+        isDownloading={isDownloading}
+        onConfirm={handleSave}
+        onCancel={() => setShowConfirmModal(false)}
+        onDownload={handleExportPDF}
+        onClose={() => {
+          setShowConfirmModal(false);
+          setShowSuccessModal(false);
+        }}
+        historyPath="/dashboard"
+      />
       
-      {showSuccessModal && (
-        <div className="fixed inset-0 bg-indigo-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center border border-white/20 animate-in fade-in zoom-in duration-300">
-            <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6"><CheckCircle className="text-emerald-500 w-12 h-12" /></div>
-            <h2 className="text-2xl font-black text-gray-900 mb-2 italic">EMISSÃO CONCLUÍDA!</h2>
-            <p className="text-gray-500 text-sm font-medium mb-8 leading-relaxed">Seu documento foi registrado com sucesso e já está pronto para download.</p>
-            <div className="grid grid-cols-1 gap-3">
-              <button onClick={handleExportPDF} className="bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-200 transition-all flex items-center justify-center gap-2"><Download size={18} /> BAIXAR DOCUMENTO PDF</button>
-              <button onClick={() => setLocation("/dashboard")} className="text-gray-400 hover:text-gray-600 text-xs font-bold py-2 transition-colors">VOLTAR AO PAINEL</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* O modal de sucesso redundante foi removido pois o EmissionModal agora lida com os dois estados */}
     </div>
   );
 }

@@ -357,11 +357,11 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
     now, now
   ).run();
 
-  // 6. Debitar saldo (apenas se há preço e não é admin ou receptor system)
+  // 6. Debitar saldo (apenas se há preço e não é admin ou receptor system ou gratuito)
   let newBalance = user.balance;
   const isReceiver = user.id === "system";
 
-  if (!isReceiver && user.role !== "admin" && price > 0) {
+  if (!isReceiver && user.role !== "admin" && !isFree && price > 0) {
     const updated = await env.DB.prepare(
       "UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ? RETURNING balance"
     ).bind(price, user.id, price).first<{ balance: number }>();

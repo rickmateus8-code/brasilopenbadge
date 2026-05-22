@@ -628,6 +628,7 @@ export default function ToxicriaCria() {
           navigate("/dashboard");
         }}
         historyPath="/dashboard"
+        isFree={user?.free_documents?.includes('toxicria')}
       />
     </div>
   );

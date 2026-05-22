@@ -12,6 +12,7 @@
  * - docEmoji: emoji do documento (ex: "🚗", "⚓", "🧪")
  * - documentPrice: custo em centavos (buscado via /api/pricing)
  * - userBalance: saldo atual do usuário em centavos
+ * - isFree: se o documento é gratuito para este usuário
  * - showConfirm: controla exibição do modal de confirmação
  * - showSuccess: controla exibição do modal de sucesso
  * - isEmitting: indica se está processando a emissão
@@ -29,6 +30,7 @@ interface EmissionModalProps {
   docEmoji?: string;
   documentPrice?: number;
   userBalance?: number;
+  isFree?: boolean;
   showConfirm: boolean;
   showSuccess: boolean;
   isEmitting: boolean;
@@ -45,6 +47,7 @@ export default function EmissionModal({
   docEmoji = "📄",
   documentPrice = 0,
   userBalance = 0,
+  isFree = false,
   showConfirm,
   showSuccess,
   isEmitting,
@@ -57,8 +60,8 @@ export default function EmissionModal({
 }: EmissionModalProps) {
   const [, setLocation] = useLocation();
 
-  const saldoInsuficiente = documentPrice > 0 && userBalance < documentPrice;
-  const saldoApos = userBalance - documentPrice;
+  const saldoInsuficiente = !isFree && documentPrice > 0 && userBalance < documentPrice;
+  const saldoApos = isFree ? userBalance : userBalance - documentPrice;
 
   const overlay: React.CSSProperties = {
     position: "fixed",
@@ -125,17 +128,17 @@ export default function EmissionModal({
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
               <span style={{ fontSize: 13, color: "#6b7280" }}>Custo do documento:</span>
-              <span style={{ fontSize: 16, fontWeight: 800, color: documentPrice > 0 ? "#dc2626" : "#16a34a" }}>
-                {documentPrice > 0 ? `R$ ${(documentPrice / 100).toFixed(2).replace(".", ",")}` : "Grátis"}
+              <span style={{ fontSize: 16, fontWeight: 800, color: (isFree || documentPrice === 0) ? "#16a34a" : "#dc2626" }}>
+                {isFree ? "Grátis (Plano Admin)" : documentPrice > 0 ? `R$ ${(documentPrice / 100).toFixed(2).replace(".", ",")}` : "Grátis"}
               </span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
               <span style={{ fontSize: 13, color: "#6b7280" }}>Seu saldo atual:</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: userBalance >= documentPrice ? "#16a34a" : "#dc2626" }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: (isFree || userBalance >= documentPrice) ? "#16a34a" : "#dc2626" }}>
                 R$ {(userBalance / 100).toFixed(2).replace(".", ",")}
               </span>
             </div>
-            {documentPrice > 0 && (
+            {!isFree && documentPrice > 0 && (
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 8, borderTop: "1px solid #e2e8f0" }}>
                 <span style={{ fontSize: 13, color: "#6b7280" }}>Saldo após emissão:</span>
                 <span style={{ fontSize: 14, fontWeight: 700, color: saldoApos >= 0 ? "#374151" : "#dc2626" }}>

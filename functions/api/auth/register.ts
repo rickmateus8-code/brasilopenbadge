@@ -33,8 +33,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const passwordHash = await hashPassword(password);
     const now = new Date().toISOString();
     const defaultPermissions = JSON.stringify({
-      editaveis: ["atestado", "cnh", "cha", "toxicologico", "receita"],
-      ferramentas: ["bot-adv", "peticao-stj"]
+      editaveis: [],
+      ferramentas: []
     });
 
     await env.DB.prepare(
