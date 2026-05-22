@@ -111,13 +111,33 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     ORDER BY u.created_at DESC
   `).all<any>();
 
-  const users = (result.results || []).map((user: any) => ({
-    ...user,
-    balance: Number(user.balance || 0),
-    is_active: Number(user.is_active || 0),
-    free_documents: JSON.parse(user.free_documents || '[]'),
-    permissions: user.permissions ? (typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions) : { editaveis: [], ferramentas: [] },
-  }));
+  const users = (result.results || []).map((user: any) => {
+    let permissions = { editaveis: [], ferramentas: [] };
+    try {
+      if (user.permissions) {
+        permissions = typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions;
+      }
+    } catch (e) {
+      console.error(`[AdminUsers] Erro ao parsear permissões para ${user.username}:`, e);
+    }
+
+    let freeDocs = [];
+    try {
+      if (user.free_documents) {
+        freeDocs = typeof user.free_documents === 'string' ? JSON.parse(user.free_documents) : user.free_documents;
+      }
+    } catch (e) {
+      console.error(`[AdminUsers] Erro ao parsear free_documents para ${user.username}:`, e);
+    }
+
+    return {
+      ...user,
+      balance: Number(user.balance || 0),
+      is_active: Number(user.is_active || 0),
+      free_documents: freeDocs,
+      permissions: permissions,
+    };
+  });
 
   return new Response(JSON.stringify({ success: true, users }), { headers: corsHeaders });
 };
