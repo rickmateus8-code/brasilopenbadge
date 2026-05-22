@@ -111,11 +111,11 @@ export default function RecarregaModal({
 
   return (
     <div
-      className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto custom-scrollbar"
       onClick={handleClose}
     >
       <div
-        className="bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-white/10 rounded-[32px] p-6 md:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200"
+        className="bg-white dark:bg-[#0f0f0f] border border-gray-200 dark:border-white/10 rounded-[40px] p-8 md:p-10 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200 my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

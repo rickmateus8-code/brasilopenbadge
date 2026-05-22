@@ -4,12 +4,13 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import NovoDocumentoModal from "@/components/NovoDocumentoModal";
 import RecarregaModal from "@/components/RecarregaModal";
+import ExtratoModal from "@/components/ExtratoModal";
 import {
   FileText, Car, Anchor, FlaskConical, GraduationCap,
   Wallet, TrendingUp, BarChart3, ChevronRight, Plus,
   Clock, CheckCircle, Bell, Download, Trash2, Pill, Pencil, QrCode,
   Copy, X, Send, RefreshCw, Search, Save, Smartphone, AlertTriangle, Gift, Users, Loader2, Settings,
-  Eye, Trash
+  Eye, Trash, Receipt
 } from "lucide-react";
 import AttestationActionButtons from "@/components/AttestationActionButtons";
 import AttestationViewerModal from "@/components/AttestationViewerModal";
@@ -83,6 +84,7 @@ export default function Dashboard() {
   const [showNovoDocModal, setShowNovoDocModal] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showRecarregaModal, setShowRecarregaModal] = useState(false);
+  const [showExtratoModal, setShowExtratoModal] = useState(false);
 
   // Additional states for history management
   const [viewAtestado, setViewAtestado] = useState<DocRecord | null>(null);
@@ -269,6 +271,57 @@ const intelligentStats = [
           </div>
         </div>
 
+        {/* Resumo Financeiro Rapido */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="md:col-span-2 bg-gradient-to-br from-indigo-600 to-blue-700 rounded-[2.5rem] p-8 text-white shadow-xl shadow-blue-900/20 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700">
+               <Wallet size={120} />
+            </div>
+            <div className="relative z-10">
+              <p className="text-blue-100 text-xs font-black uppercase tracking-[0.2em] mb-2 opacity-80">Saldo Disponível</p>
+              <h2 className="text-4xl md:text-5xl font-black tracking-tighter tabular-nums mb-1">
+                R$ {((user?.balance || 0) / 100).toFixed(2).replace('.', ',')}
+              </h2>
+              <div className="flex items-center gap-2 mt-4">
+                <div className="px-3 py-1 rounded-full bg-white/10 border border-white/10 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Conta Ativa
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto relative z-10">
+              <button 
+                onClick={() => {
+                  const event = new CustomEvent("docmaster:open-recarrega-modal");
+                  window.dispatchEvent(event);
+                }}
+                className="bg-white text-blue-700 hover:bg-blue-50 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95"
+              >
+                <Plus className="w-4 h-4" /> Recarregar
+              </button>
+              <button 
+                onClick={() => setShowExtratoModal(true)}
+                className="bg-blue-800/40 hover:bg-blue-800/60 backdrop-blur-md text-white border border-white/10 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 active:scale-95"
+              >
+                <Receipt className="w-4 h-4" /> Ver Extrato
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] p-8 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col justify-center items-center text-center group hover:border-emerald-200 dark:hover:border-emerald-900/30 transition-all">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Gift size={28} />
+            </div>
+            <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest mb-1">Indique e Ganhe</h3>
+            <p className="text-xs text-gray-500 font-medium mb-5 px-4">Ganhe comissões por cada recarga de seus indicados.</p>
+            <button 
+              onClick={() => setLocation("/indicacoes")}
+              className="text-[10px] font-black text-emerald-600 hover:text-emerald-700 uppercase tracking-[0.2em] flex items-center gap-2 group/btn"
+            >
+              Começar agora <ChevronRight className="w-3 h-3 group-hover/btn:translate-x-1 transition-transform" />
+            </button>
+          </div>
+        </div>
+
         {/* Stats */}
         {hasEmissions && (
           <div className="mb-8 animate-in fade-in duration-500">
@@ -438,6 +491,7 @@ const intelligentStats = [
 
       <NovoDocumentoModal open={showNovoDocModal} onClose={() => setShowNovoDocModal(false)} userBalance={user?.balance || 0} username={user?.username || ""} />
       <RecarregaModal isOpen={showRecarregaModal} onClose={() => setShowRecarregaModal(false)} userName={user?.displayName || user?.username || ""} />
+      <ExtratoModal isOpen={showExtratoModal} onClose={() => setShowExtratoModal(false)} />
 
       {/* ── VIEWER & DELETE MODALS ── */}
       {viewAtestado && (
