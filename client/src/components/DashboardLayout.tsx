@@ -7,6 +7,7 @@ import NovoDocumentoModal from "@/components/NovoDocumentoModal";
 import RecarregaModal, { RECARREGA_MODAL_EVENT, RECARREGA_MODAL_PENDING_KEY } from "@/components/RecarregaModal";
 import ExtratoModal from "@/components/ExtratoModal";
 import ReferralModal from "@/components/ReferralModal";
+import UserProfileModal from "@/components/UserProfileModal";
 import {
   LayoutDashboard, FileText, CreditCard, Receipt, LogOut,
   ChevronDown, ChevronRight, Menu, X, Sun, Moon,
@@ -166,123 +167,41 @@ function SidebarItem({
   );
 }
 
-function UserDropdown({
+function UserProfileHeader({
   user,
-  logout,
   collapsed,
-  onOpenRecarregaModal,
-  onOpenExtratoModal,
-  onOpenReferralModal,
+  onOpenProfile,
 }: {
   user: AuthUser;
-  logout: () => void;
   collapsed: boolean;
-  onOpenRecarregaModal: () => void;
-  onOpenExtratoModal: () => void;
-  onOpenReferralModal: () => void;
+  onOpenProfile: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const [, setLocation] = useLocation();
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  const avatarSrc = user.profilePhoto;
-
   return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen(o => !o)}
-        className={`flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors w-full ${collapsed ? "justify-center" : ""}`}
-      >
-        <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-red-300 dark:border-red-700">
-          {avatarSrc ? (
-            <img src={avatarSrc} alt="Avatar" className="w-full h-full object-cover" />
-          ) : (
-            <User className="w-4 h-4 text-red-600 dark:text-red-400" />
-          )}
-        </div>
-        {!collapsed && (
-          <>
-            <div className="flex-1 min-w-0 text-left">
-              <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
-                {user.displayName || user.username}
-              </p>
-              <p className="text-[10px] text-gray-400 dark:text-gray-500 capitalize">
-                {user.role === "admin" ? "Administrador" : "Usuário"}
-              </p>
-            </div>
-            <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform flex-shrink-0 ${open ? "rotate-180" : ""}`} />
-          </>
+    <button
+      onClick={onOpenProfile}
+      className={`flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors w-full ${collapsed ? "justify-center" : ""}`}
+    >
+      <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-red-300 dark:border-red-700">
+        {user.profilePhoto ? (
+          <img src={user.profilePhoto} alt="Avatar" className="w-full h-full object-cover" />
+        ) : (
+          <User className="w-4 h-4 text-red-600 dark:text-red-400" />
         )}
-      </button>
-
-      {open && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl z-50 overflow-hidden min-w-[200px]">
-          <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800">
-            <p className="text-xs font-bold text-gray-800 dark:text-gray-200">{user.displayName || user.username}</p>
-            <p className="text-[10px] text-gray-500">{user.email}</p>
+      </div>
+      {!collapsed && (
+        <>
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">
+              {user.displayName || user.username}
+            </p>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 capitalize">
+              {user.role === "admin" ? "Administrador" : "Usuário"}
+            </p>
           </div>
-          <div className="py-1">
-            <button
-              onClick={() => { setLocation("/configuracoes"); setOpen(false); }}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            >
-              <Settings className="w-4 h-4" />
-              Configurações
-            </button>
-            <button
-              onClick={() => { onOpenReferralModal(); setOpen(false); }}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-emerald-600 dark:text-emerald-400 font-black hover:bg-emerald-50 dark:hover:bg-emerald-900/10 transition-colors"
-            >
-              <Gift className="w-4 h-4" />
-              Indique e Ganhe
-            </button>
-            <button
-              onClick={() => { onOpenExtratoModal(); setOpen(false); }}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            >
-              <Receipt className="w-4 h-4" />
-              Extrato
-            </button>
-            <button
-              onClick={() => { onOpenRecarregaModal(); setOpen(false); }}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            >
-              <CreditCard className="w-4 h-4" />
-              Recarregar Saldo
-            </button>
-          </div>
-          
-          <div className="border-t border-gray-100 dark:border-gray-800 py-1">
-            <a
-              href="https://wa.me/5511965355468?text=Preciso+de+suporte"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            >
-              <HelpCircle className="w-4 h-4" />
-              Ajuda / Suporte
-            </a>
-            <button
-              onClick={() => { logout(); setOpen(false); }}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              Sair
-            </button>
-          </div>
-        </div>
+          <ChevronRight className="w-3 h-3 text-gray-400 opacity-50" />
+        </>
       )}
-    </div>
+    </button>
   );
 }
 
@@ -299,6 +218,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [showRecarregaModal, setShowRecarregaModal] = useState(false);
   const [showExtratoModal, setShowExtratoModal] = useState(false);
   const [showReferralModal, setShowReferralModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   useEffect(() => {
     const handler = () => {
@@ -405,7 +325,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </div>
 
       <div className="px-2 py-3 space-y-3">
-        <UserDropdown user={user} logout={logout} collapsed={!mobile && collapsed} onOpenRecarregaModal={() => handleOpenRecarregaModal(mobile)} onOpenExtratoModal={() => setShowExtratoModal(true)} onOpenReferralModal={() => setShowReferralModal(true)} />
+        {/* User Profile Header (Top) */}
+        <UserProfileHeader 
+          user={user} 
+          collapsed={!mobile && collapsed} 
+          onOpenProfile={() => { setShowProfileModal(true); if (mobile) setMobileOpen(false); }} 
+        />
         
         <div className="space-y-2">
           <div className={`${collapsed && !mobile ? "flex justify-center" : ""}`}>
@@ -443,7 +368,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all ${collapsed && !mobile ? "justify-center w-full" : ""}`}
           >
             <LogOut className="w-4 h-4" />
-            {(!collapsed || mobile) && <span>SAIR</span>}
+            {(!collapsed || mobile) && <span>SAIR DA CONTA</span>}
           </button>
         </div>
       </div>
@@ -527,6 +452,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <RecarregaModal isOpen={showRecarregaModal} onClose={() => setShowRecarregaModal(false)} userName={user.displayName || user.username} userCpf={userCpf} />
       <ExtratoModal isOpen={showExtratoModal} onClose={() => setShowExtratoModal(false)} />
       <ReferralModal isOpen={showReferralModal} onClose={() => setShowReferralModal(false)} />
+      <UserProfileModal 
+        isOpen={showProfileModal} 
+        onClose={() => setShowProfileModal(false)} 
+        user={user} 
+        logout={logout}
+        onOpenRecarregaModal={() => handleOpenRecarregaModal()}
+        onOpenExtratoModal={() => setShowExtratoModal(true)}
+        onOpenReferralModal={() => setShowReferralModal(true)}
+      />
       {showHistoricoModal && (
         <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowHistoricoModal(false)}>
           <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-lg flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300" onClick={e => e.stopPropagation()}>
