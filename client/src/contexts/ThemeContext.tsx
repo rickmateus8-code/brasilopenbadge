@@ -19,30 +19,27 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({
   children,
-  defaultTheme = "light",
-  switchable = true,
 }: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("docmaster-theme") as Theme | null;
-      if (stored === "light" || stored === "dark") return stored;
-      if (window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
-    }
-    return defaultTheme;
-  });
+  // O sistema é agora estritamente DARK
+  const [theme] = useState<Theme>("dark");
 
   useEffect(() => {
     const root = document.documentElement;
     root.classList.remove("light", "dark");
-    root.classList.add(theme);
-    localStorage.setItem("docmaster-theme", theme);
-  }, [theme]);
+    root.classList.add("dark");
+    localStorage.setItem("docmaster-theme", "dark");
+  }, []);
 
-  const toggleTheme = () => setThemeState(prev => prev === "light" ? "dark" : "light");
-  const setTheme = (t: Theme) => setThemeState(t);
+  const toggleTheme = () => {
+    console.log("O sistema DocMaster agora é exclusivamente Dark Mode.");
+  };
+  
+  const setTheme = (t: Theme) => {
+    console.log("Alteração manual de tema desativada.");
+  };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme, switchable }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme, switchable: false }}>
       {children}
     </ThemeContext.Provider>
   );

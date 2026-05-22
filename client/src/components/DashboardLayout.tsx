@@ -404,14 +404,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         )}
       </div>
 
-      <div className={`px-2 pt-3 pb-1 ${collapsed && !mobile ? "flex justify-center" : ""}`}>
-        <button
-          onClick={() => { setShowNovoDocModal(true); if (mobile) setMobileOpen(false); }}
-          className={`flex items-center gap-2 rounded-xl font-bold text-sm transition-all shadow-sm bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white active:scale-95 ${collapsed && !mobile ? "w-10 h-10 justify-center p-0" : "w-full px-4 py-2.5 justify-center"}`}
-        >
-          <FilePlus className="w-4 h-4 flex-shrink-0" />
-          {(!collapsed || mobile) && <span>Novo Documento</span>}
-        </button>
+      <div className="px-2 py-3 space-y-3">
+        <UserDropdown user={user} logout={logout} collapsed={!mobile && collapsed} onOpenRecarregaModal={() => handleOpenRecarregaModal(mobile)} onOpenExtratoModal={() => setShowExtratoModal(true)} onOpenReferralModal={() => setShowReferralModal(true)} />
+        
+        <div className={`${collapsed && !mobile ? "flex justify-center" : ""}`}>
+          <button
+            onClick={() => { setShowNovoDocModal(true); if (mobile) setMobileOpen(false); }}
+            className={`flex items-center gap-2 rounded-xl font-bold text-sm transition-all shadow-sm bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white active:scale-95 ${collapsed && !mobile ? "w-10 h-10 justify-center p-0" : "w-full px-4 py-2.5 justify-center"}`}
+          >
+            <FilePlus className="w-4 h-4 flex-shrink-0" />
+            {(!collapsed || mobile) && <span>Novo Documento</span>}
+          </button>
+        </div>
       </div>
 
       <nav className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto">

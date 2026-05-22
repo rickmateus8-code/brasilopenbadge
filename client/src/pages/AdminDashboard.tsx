@@ -4,7 +4,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/DashboardLayout";
 import AttestationDocument from "@/components/AttestationDocument";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, Settings, Plus, Minus, Shield,
   RefreshCw, DollarSign, Trash2, ToggleLeft, ToggleRight,
@@ -12,10 +11,10 @@ import {
   Activity, Database, Search, Eye, EyeOff, X, Save, Layout,
   Download, Pencil, Wifi, WifiOff, Monitor, Globe,
   CreditCard, AlertCircle, Filter, Gift, Percent, Wallet,
-  Link, Copy, Calendar, Trash, Lock, UserPlus, Clock
+  Link, Copy, Calendar, Trash, Lock, UserPlus, Clock, MinusCircle
 } from "lucide-react";
 
-type Tab = "users" | "pricing" | "notices" | "logs" | "emissions" | "monitoring" | "referral" | "settings";
+type Tab = "users" | "pricing" | "notices" | "logs" | "emissions" | "monitoring" | "referral" | "settings" | "models";
 
 interface EmissionRow {
   id: string;
@@ -42,6 +41,7 @@ interface UserRow {
   cashback_percentage?: number | null;
   referral_percentage?: number | null;
   free_documents?: string[];
+  permissions?: any;
 }
 
 interface PricingRow {
@@ -85,28 +85,16 @@ interface PresenceRow {
   last_seen: string;
   is_online: number;
   first_seen?: string;
-  session_started_at?: string;
-  current_page_started_at?: string;
+  timeline?: any[];
+  page_totals?: any[];
   total_session_seconds?: number;
-  current_page_duration_seconds?: number;
-  timeline?: Array<{
-    id: string;
-    page_path: string;
-    action: string;
-    started_at: string;
-    ended_at?: string | null;
-    duration_seconds: number;
-  }>;
-  page_totals?: Array<{
-    page: string;
-    duration_seconds: number;
-  }>;
 }
 
 const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "users", label: "Usuários", icon: Users },
   { key: "monitoring", label: "Monitoramento", icon: Monitor },
   { key: "pricing", label: "Preços", icon: DollarSign },
+  { key: "models", label: "Modelos", icon: Layout },
   { key: "notices", label: "Avisos", icon: Bell },
   { key: "logs", label: "Logs", icon: Activity },
   { key: "emissions", label: "Emissões", icon: FileText },
@@ -186,6 +174,52 @@ export default function AdminDashboard() {
   const [userPermissions, setUserPermissions] = useState<any>({ editaveis: [], ferramentas: [] });
   const [userFreeDocs, setUserFreeDocs] = useState<string[]>([]);
 
+  const [notices, setNotices] = useState<NoticeRow[]>([]);
+  const [newNotice, setNewNotice] = useState<NoticeRow>({
+    title: "", message: "", type: "info", is_active: 1
+  });
+
+  // Models management
+  const [emissionModels, setEmissionModels] = useState<any[]>([]);
+  const [loadingModels, setLoadingModels] = useState(false);
+
+  const loadModels = async () => {
+    setLoadingModels(true);
+    try {
+      const res = await fetch("/api/admin/models", { credentials: "include" });
+      const json = await res.json();
+      if (json.success) setEmissionModels(json.models || []);
+    } catch {
+      toast.error("Erro ao carregar modelos.");
+    } finally {
+      setLoadingModels(false);
+    }
+  };
+
+  useEffect(() => {
+    if (tab === "models") loadModels();
+  }, [tab]);
+
+  const handleUpdateModelImages = async (modelId: string, images: string[]) => {
+    try {
+      const res = await fetch("/api/admin/models", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ id: modelId, images }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success("Modelo atualizado!");
+        loadModels();
+      } else {
+        toast.error(json.error || "Erro ao atualizar.");
+      }
+    } catch {
+      toast.error("Erro na requisição.");
+    }
+  };
+
   const handleOpenPermissions = (user: any) => {
     setAclSelectedUser(user);
     setUserPermissions(user.permissions ? (typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions) : { editaveis: [], ferramentas: [] });
@@ -208,15 +242,12 @@ export default function AdminDashboard() {
       });
 
       if (!res.ok) {
-        const errorText = await res.text();
-        console.error("Save permissions error:", errorText);
         throw new Error(`Erro HTTP ${res.status}`);
       }
 
       const data = await res.json();
       if (data.success) {
         toast.success("Acessos liberados com sucesso!");
-        // Atualizar estado local com objetos PARSEADOS para paridade com o load inicial
         setUsers(prev => prev.map(u => u.id === aclSelectedUser.id ? { 
           ...u, 
           permissions: userPermissions,
@@ -227,7 +258,6 @@ export default function AdminDashboard() {
         toast.error(data.error || "Erro ao salvar permissões.");
       }
     } catch (err: any) {
-      console.error("Save permissions exception:", err);
       toast.error(`Falha ao salvar: ${err.message || "Erro de conexão"}`);
     } finally {
       setLoading(false);
@@ -235,7 +265,7 @@ export default function AdminDashboard() {
   };
 
   const selectAllDocs = (selected: boolean) => {
-    const all = ["atestado", "cnh", "cha", "toxicologico", "toxicria", "laudocria", "receita", "historico-sp", "historicocria", "diploma-uninter"];
+    const all = ["atestado", "cnh", "cha", "toxicologico", "toxicria", "laudocria", "receita", "historico-sp", "historicocria", "diploma-uninter", "peticaocria"];
     setUserPermissions({ ...userPermissions, editaveis: selected ? all : [] });
   };
 
@@ -243,165 +273,43 @@ export default function AdminDashboard() {
     const all = ["bot-adv", "peticao-stj"];
     setUserPermissions({ ...userPermissions, ferramentas: selected ? all : [] });
   };
-  const [hardDeleteUser, setHardDeleteUser] = useState<UserRow | null>(null);
-  const [hardDeleteConfirmChecked, setHardDeleteConfirmChecked] = useState(false);
-  const [hardDeleteConfirmText, setHardDeleteConfirmText] = useState("");
 
-  // Pricing
+  const [loading, setLoading] = useState(false);
   const [pricing, setPricing] = useState<PricingRow[]>([]);
   const [editingPrice, setEditingPrice] = useState<Record<string, string>>({});
   const [editingDisplayName, setEditingDisplayName] = useState<Record<string, string>>({});
   const [editingIsActive, setEditingIsActive] = useState<Record<string, boolean>>({});
-
-  // Notices
-  const [notices, setNotices] = useState<NoticeRow[]>([]);
-  const [newNotice, setNewNotice] = useState<NoticeRow>({
-    title: "", message: "", type: "info", is_active: 1
-  });
-
-  // Logs
   const [logs, setLogs] = useState<LogRow[]>([]);
   const [logFilter, setLogFilter] = useState("");
   const [logCategory, setLogCategory] = useState("all");
   const [logCategories, setLogCategories] = useState<Record<string, number>>({});
-
-  // Emissions
   const [emissions, setEmissions] = useState<EmissionRow[]>([]);
   const [emissionsFilter, setEmissionsFilter] = useState("");
   const [emissionsTypeFilter, setEmissionsTypeFilter] = useState("all");
   const [emissionsDateFrom, setEmissionsDateFrom] = useState("");
   const [emissionsDateTo, setEmissionsDateTo] = useState("");
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [confirmDeleteSource, setConfirmDeleteSource] = useState<string>("");
-  const [emissionPreview, setEmissionPreview] = useState<any>(null);
-  const [emissionPreviewLoading, setEmissionPreviewLoading] = useState(false);
-
-  // Monitoring / Presence
   const [presence, setPresence] = useState<PresenceRow[]>([]);
   const [onlineCount, setOnlineCount] = useState(0);
   const [offlineCount, setOfflineCount] = useState(0);
   const [totalTracked, setTotalTracked] = useState(0);
-
-  // Referral
   const [referralData, setReferralData] = useState<any>({});
-  const [referralTab, setReferralTab] = useState<"overview" | "referrals" | "earnings" | "cashback" | "users">("overview");
-  const [referralSettings, setReferralSettings] = useState({
-    referral_percentage: 10, cashback_percentage: 5, referral_enabled: true, cashback_enabled: true
-  });
-  const [editUserRefId, setEditUserRefId] = useState<string | null>(null);
-  const [editUserRefPct, setEditUserRefPct] = useState("");
-  const [editUserCbPct, setEditUserCbPct] = useState("");
-  // Cashback na aba de usuários
-  const [cashbackEditId, setCashbackEditId] = useState<string | null>(null);
-  const [cashbackEditValue, setCashbackEditValue] = useState("");
-
-  // Log date filters
-  const [logDateFrom, setLogDateFrom] = useState("");
-  const [logDateTo, setLogDateTo] = useState("");
-
-  // Pricing save all
-  const [pricingSaving, setPricingSaving] = useState(false);
-
-  // Database
-  const [deleteConfirm, setDeleteConfirm] = useState("");
-  const [deleteUserConfirm, setDeleteUserConfirm] = useState("");
-  const [deleteTargetUserId, setDeleteTargetUserId] = useState<string | null>(null);
-  const [deleteTargetUsername, setDeleteTargetUsername] = useState("");
-
-  // Create user
-  const [showCreateUser, setShowCreateUser] = useState(false);
-  const [newUsername, setNewUsername] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [newDisplayName, setNewDisplayName] = useState("");
-  const [newEmail, setNewEmail] = useState("");
-  const [newRole, setNewRole] = useState("user");
-  const [newBalance, setNewBalance] = useState("");
-  const [creatingUser, setCreatingUser] = useState(false);
-
-  // Change password
-  const [changePwUserId, setChangePwUserId] = useState<string | null>(null);
-  const [changePwUsername, setChangePwUsername] = useState("");
-  const [changePwValue, setChangePwValue] = useState("");
-  const [changingPw, setChangingPw] = useState(false);
-
-  // Settings
-  const [settings, setSettings] = useState<Record<string, any>>({
-    site_name: "DocMaster",
-    support_whatsapp: "",
-    max_documents_per_day: "100",
-    auto_delete_days: "15",
-    maintenance_mode: false,
-    auto_delete_atestado: "15",
-    auto_delete_receita: "15",
-    auto_delete_cnh: "365",
-    auto_delete_cha: "15",
-    auto_delete_toxicologico: "15",
-    auto_delete_historico: "90",
-  });
-  const [settingsSaving, setSettingsSaving] = useState(false);
-  const [cleanupPreview, setCleanupPreview] = useState<any>(null);
-  const [cleanupRunning, setCleanupRunning] = useState(false);
-
-  // Show passwords toggle
+  const [referralTab, setReferralTab] = useState<any>("overview");
+  const [referralSettings, setReferralSettings] = useState<any>({ referral_percentage: 10, cashback_percentage: 5 });
+  const [gatewayFinancial, setGatewayFinancial] = useState<any>(null);
+  const [settings, setSettings] = useState<any>({});
   const [showPasswords, setShowPasswords] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<any>({ open: false });
 
-  // Manual Referral Link
-  const [showLinkModal, setShowLinkModal] = useState(false);
-  const [linkReferrerId, setLinkReferrerId] = useState("");
-  const [linkReferredId, setLinkReferredId] = useState("");
-  const [linking, setLinking] = useState(false);
-
-  const [loading, setLoading] = useState(false);
-
-  // Financial (Gateway)
-  const [gatewayFinancial, setGatewayFinancial] = useState<{ saldo_disponivel?: number; limite_diario?: number } | null>(null);
-  const [loadingFinancial, setLoadingFinancial] = useState(false);
-
-  // Confirmation modal
-  const [confirmModal, setConfirmModal] = useState<{
-    open: boolean;
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    type: "danger" | "warning" | "info";
-  }>({ open: false, title: "", message: "", onConfirm: () => {}, type: "info" });
-
-   // ── Data Loaders ──────────────────────────────────────────────────────────
+  // Data Loaders
   const loadUsers = useCallback(async (withPasswords = false, silent = false) => {
     if (!silent) setLoading(true);
     try {
       const url = withPasswords ? "/api/admin/users?show_passwords=1" : "/api/admin/users";
       const res = await fetch(url, { credentials: "include" });
       const data = await res.json();
-      if (data.success) {
-        setUsers(data.users || []);
-      } else {
-        toast.error(`Erro ao carregar usuários: ${data.error || 'Acesso negado'}`);
-      }
-    } catch (err: any) {
-      toast.error(`Erro ao carregar usuários: ${err?.message || 'Erro de conexão'}`);
-    }
+      if (data.success) setUsers(data.users || []);
+    } catch { toast.error("Erro ao carregar usuários."); }
     finally { if (!silent) setLoading(false); }
-  }, []);
-
-  const loadSettings = useCallback(async () => {
-    try {
-      const res = await fetch("/api/admin/settings", { credentials: "include" });
-      const data = await res.json();
-      if (data.success && data.settings) {
-        setSettings(s => ({ ...s, ...data.settings }));
-      }
-    } catch { /* silently fail */ }
-  }, []);
-
-  const loadCleanupPreview = useCallback(async () => {
-    try {
-      const res = await fetch("/api/admin/cleanup", { credentials: "include" });
-      const data = await res.json();
-      if (data.success) {
-        setCleanupPreview(data);
-      }
-    } catch {}
   }, []);
 
   const loadPricing = useCallback(async () => {
@@ -410,196 +318,24 @@ export default function AdminDashboard() {
       const data = await res.json();
       if (data.success) {
         setPricing(data.pricing || []);
-        const ep: Record<string, string> = {};
-        const edn: Record<string, string> = {};
-        const eia: Record<string, boolean> = {};
-        (data.pricing || []).forEach((p: PricingRow) => {
+        const ep: any = {}; const edn: any = {}; const eia: any = {};
+        data.pricing.forEach((p: any) => {
           ep[p.document_type] = (p.price / 100).toFixed(2);
           edn[p.document_type] = p.display_name;
           eia[p.document_type] = p.is_active !== false;
         });
-        setEditingPrice(ep);
-        setEditingDisplayName(edn);
-        setEditingIsActive(eia);
+        setEditingPrice(ep); setEditingDisplayName(edn); setEditingIsActive(eia);
       }
-    } catch { /* Silent fail in background */ }
+    } catch {}
   }, []);
 
   const loadFinancial = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/financial", { credentials: "include" });
       const data = await res.json();
-      if (data.success) {
-        setGatewayFinancial(data.data);
-      }
-    } catch { /* Silent fail in background */ }
-  }, []);
-
-  const loadNotices = useCallback(async () => {
-    try {
-      const res = await fetch("/api/admin/notifications", { credentials: "include" });
-      const data = await res.json();
-      if (data.success) setNotices(data.notifications || []);
+      if (data.success) setGatewayFinancial(data.data);
     } catch {}
   }, []);
-
-  const loadLogs = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true);
-    try {
-      let url = `/api/admin/system-logs?category=${logCategory}&limit=200`;
-      if (logDateFrom) url += `&from=${logDateFrom}`;
-      if (logDateTo) url += `&to=${logDateTo}`;
-      const res = await fetch(url, { credentials: "include" });
-      const data = await res.json();
-      if (data.success) {
-        setLogs(data.logs || []);
-        setLogCategories(data.categories || {});
-      }
-    } catch {
-      try {
-        const res = await fetch("/api/admin/logs", { credentials: "include" });
-        const data = await res.json();
-        if (data.success) setLogs(data.logs || []);
-      } catch { toast.error("Erro ao carregar logs"); }
-    }
-    finally { if (!silent) setLoading(false); }
-  }, [logCategory, logDateFrom, logDateTo]);
-
-  const clearLogs = (clearType: string = "all") => {
-    setConfirmModal({
-      open: true,
-      title: "Limpar Logs",
-      message: `Tem certeza que deseja limpar os logs (${clearType})? Esta acao nao pode ser desfeita.`,
-      type: "danger",
-      onConfirm: async () => {
-        setConfirmModal(m => ({ ...m, open: false }));
-        try {
-          const res = await fetch(`/api/admin/system-logs?clear=${clearType}`, { method: "DELETE", credentials: "include" });
-          const data = await res.json();
-          if (data.success) { 
-            toast.success("Logs limpos com sucesso!"); 
-            if (tab === "logs") loadLogs();
-            if (tab === "monitoring") loadPresence();
-          }
-          else toast.error(data.error || "Erro ao limpar logs");
-        } catch { toast.error("Erro de conexão"); }
-      },
-    });
-  };
-
-  const loadReferral = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/admin/referral?tab=${referralTab}`, { credentials: "include" });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        toast.error(`Erro ${res.status}: ${errData.error || "Falha ao carregar indicações"}`);
-        return;
-      }
-      const data = await res.json();
-      setReferralData(data);
-      if (referralTab === "overview" && data.settings) {
-        const s: any = {};
-        for (const item of data.settings) s[item.key] = item.value;
-        setReferralSettings({
-          referral_percentage: parseFloat(s.referral_percentage || "10"),
-          cashback_percentage: parseFloat(s.cashback_percentage || "5"),
-          referral_enabled: s.referral_enabled === "true",
-          cashback_enabled: s.cashback_enabled === "true",
-        });
-      }
-    } catch (err: any) { toast.error(`Erro ao carregar indicações: ${err?.message || "Erro desconhecido"}`); }
-    finally { setLoading(false); }
-  }, [referralTab]);
-
-  const saveReferralSettings = async () => {
-    try {
-      const res = await fetch("/api/admin/referral", {
-        method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
-        body: JSON.stringify({ action: "update_global_settings", ...referralSettings }),
-      });
-      const data = await res.json();
-      if (data.success) toast.success("Configurações de indicação salvas!");
-      else toast.error(data.error || "Erro");
-    } catch { toast.error("Erro de conexão"); }
-  };
-
-  const saveCashbackForUser = async (userId: string) => {
-    try {
-      const res = await fetch("/api/admin/referral", {
-        method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
-        body: JSON.stringify({
-          action: "update_user_settings", userId: String(userId),
-          cashback_percentage: cashbackEditValue !== "" ? parseFloat(cashbackEditValue) : null,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success("% Cashback atualizado!");
-        setCashbackEditId(null);
-        setCashbackEditValue("");
-        loadUsers(showPasswords);
-      } else toast.error(data.error || "Erro");
-    } catch { toast.error("Erro de conexão"); }
-  };
-
-  const saveUserRefSettings = async (userId: string) => {
-    try {
-      const res = await fetch("/api/admin/referral", {
-        method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
-        body: JSON.stringify({
-          action: "update_user_settings", userId,
-          referral_percentage: editUserRefPct ? parseFloat(editUserRefPct) : null,
-          cashback_percentage: editUserCbPct ? parseFloat(editUserCbPct) : null,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) { toast.success("% do usuário atualizado!"); setEditUserRefId(null); loadReferral(); }
-      else toast.error(data.error || "Erro");
-    } catch { toast.error("Erro de conexão"); }
-  };
-
-  const saveAllPrices = async () => {
-    setPricingSaving(true);
-    try {
-      const prices = pricing.map(p => ({
-        document_type: p.document_type,
-        display_name: editingDisplayName[p.document_type] ?? p.display_name,
-        price: Math.round(parseFloat(editingPrice[p.document_type] || "0") * 100),
-        is_active: editingIsActive[p.document_type] !== false,
-      }));
-      const res = await fetch("/api/admin/pricing", {
-        method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
-        body: JSON.stringify({ prices }),
-      });
-      const data = await res.json();
-      if (data.success) { toast.success("Todos os preços atualizados com sucesso!"); loadPricing(); }
-      else toast.error(data.error || "Erro ao salvar preços");
-    } catch { toast.error("Erro de conexão"); }
-    finally { setPricingSaving(false); }
-  };
-
-  const loadEmissions = useCallback(async () => {
-    setLoading(true);
-    try {
-      const typeParam = emissionsTypeFilter !== "all" ? `&type=${emissionsTypeFilter}` : "";
-      const res = await fetch(`/api/admin/emissions?limit=500${typeParam}`, { credentials: "include" });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        toast.error(`Erro ${res.status}: ${errData.error || "Falha ao carregar emissões"}`);
-        return;
-      }
-      const data = await res.json();
-      if (data.success) {
-        setEmissions(data.emissions || []);
-      } else {
-        toast.error(data.error || "Erro ao carregar emissões");
-      }
-    } catch (err: any) {
-      toast.error(`Erro ao carregar emissões: ${err?.message || "Erro desconhecido"}`);
-    }
-    finally { setLoading(false); }
-  }, [emissionsTypeFilter]);
 
   const loadPresence = useCallback(async () => {
     try {
@@ -608,693 +344,57 @@ export default function AdminDashboard() {
       if (data.success) {
         setPresence(data.presence || []);
         setOnlineCount(data.online_count || 0);
-        setOfflineCount(data.offline_count || (data.presence || []).filter((p: any) => !p.is_online).length);
-        setTotalTracked(data.total_users || (data.presence || []).length);
       }
-    } catch { /* silently fail */ }
+    } catch {}
   }, []);
 
   useEffect(() => {
     if (tab === "users") loadUsers(showPasswords);
     if (tab === "pricing") loadPricing();
-    if (tab === "notices") loadNotices();
-    if (tab === "logs") loadLogs();
-    if (tab === "emissions") loadEmissions();
-    if (tab === "monitoring") loadPresence();
-    if (tab === "referral") loadReferral();
-    if (tab === "settings") {
-      loadSettings();
-      loadCleanupPreview();
-    }
+    if (tab === "models") loadModels();
     loadFinancial();
-  }, [tab, logCategory, logDateFrom, logDateTo, emissionsTypeFilter, referralTab, showPasswords, loadCleanupPreview, loadSettings, loadFinancial]);
+  }, [tab, showPasswords, loadUsers, loadPricing, loadFinancial]);
 
-  // Load presence count on mount and periodically
-  useEffect(() => {
-    loadPresence();
-    loadFinancial();
-    const interval = setInterval(() => {
-      loadPresence();
-      loadFinancial();
-    }, 30000); // 30s
-    return () => clearInterval(interval);
-  }, [loadPresence, loadFinancial]);
-
-  useEffect(() => {
-    if (tab !== "users") return;
-    const interval = setInterval(() => loadUsers(showPasswords, true), 10000);
-    return () => clearInterval(interval);
-  }, [tab, loadUsers, showPasswords]);
-
-  // ── Users ──────────────────────────────────────────────────────────────────
-  const adjustBalance = async (userId: string, amount: number) => {
-    try {
-      const res = await fetch(`/api/admin/users/${userId}/balance`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ delta: amount }),
-        credentials: "include"
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success(`Saldo ${amount > 0 ? "adicionado" : "removido"} com sucesso`);
-        loadUsers(showPasswords);
-      } else {
-        toast.error(data.error || "Erro ao ajustar saldo");
-      }
-    } catch (err: any) {
-      toast.error("Erro ao conectar ao servidor");
-    }
-  };
-
-  const submitBalanceAdjustment = async () => {
-    if (!balanceModalUser) return;
-    const parsedValue = parseFloat(balanceModalValue || "0");
-    if (!(parsedValue > 0)) {
-      toast.error("Informe um valor válido");
-      return;
-    }
-
-    setSavingBalance(true);
-    try {
-      const delta = Math.round(parsedValue * 100) * (balanceModalType === "debit" ? -1 : 1);
-      await adjustBalance(balanceModalUser.id, delta);
-      setBalanceModalUser(null);
-      setBalanceModalValue("");
-      setBalanceModalType("credit");
-    } finally {
-      setSavingBalance(false);
-    }
-  };
-
-  const toggleUserRole = async (u: UserRow) => {
-    const nextRole = u.role === "admin" ? "user" : "admin";
-    try {
-      const res = await fetch("/api/admin/users", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ user_id: u.id, role: nextRole }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success(`Perfil alterado para ${nextRole === "admin" ? "Administrador" : "Usuário"}`);
-        loadUsers(showPasswords);
-      } else {
-        toast.error(data.error || "Erro ao alterar perfil");
-      }
-    } catch {
-      toast.error("Erro de conexão");
-    }
-  };
-
-  const linkManualReferral = async () => {
-    if (!linkReferrerId || !linkReferredId) {
-      toast.error("Selecione o indicador e o indicado");
-      return;
-    }
-    setLinking(true);
-    try {
-      const res = await fetch("/api/admin/referral", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          action: "link_manual", 
-          referrer_id: linkReferrerId, 
-          referred_id: linkReferredId 
-        }),
-        credentials: "include"
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success("Vínculo de indicação criado com sucesso");
-        setShowLinkModal(false);
-        setLinkReferrerId("");
-        setLinkReferredId("");
-        if (tab === "referral") loadReferral();
-      } else {
-        toast.error(data.error || "Erro ao criar vínculo");
-      }
-    } catch (err: any) {
-      toast.error("Erro ao conectar ao servidor");
-    } finally {
-      setLinking(false);
-    }
-  };
-
-  const toggleUserActive = async (userId: string, current: boolean) => {
-    try {
-      const res = await fetch(`/api/admin/users/${userId}/toggle`, {
-        method: "POST",
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success(current ? "Usuário desativado" : "Usuário ativado");
-        loadUsers();
-      }
-    } catch { toast.error("Erro de conexão"); }
-  };
-
-  const deleteUser = async (user: UserRow) => {
-    setHardDeleteUser(user);
-    setHardDeleteConfirmChecked(false);
-    setHardDeleteConfirmText("");
-  };
-
-  const openUserDetail = async (u: UserRow) => {
-    setSelectedUser(u);
-    setUserDetailOpen(true);
-    try {
-      const res = await fetch(`/api/admin/users/${u.id}/history`, { credentials: "include" });
-      const data = await res.json();
-      if (data.success) {
-        setUserHistory(data.history || []);
-        setUserDetails(data.details || null);
-      }
-    } catch {
-      setUserHistory([]);
-      setUserDetails(null);
-    }
-  };
-
-  // ── Create User ───────────────────────────────────────────────────────────────────────
-  const createUser = async () => {
-    if (!newUsername || !newPassword) { toast.error("Username e senha são obrigatórios"); return; }
-    if (newPassword.length < 4) { toast.error("Senha deve ter no mínimo 4 caracteres"); return; }
-    setCreatingUser(true);
-    try {
-      const res = await fetch("/api/admin/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          username: newUsername,
-          password: newPassword,
-          display_name: newDisplayName || newUsername,
-          email: newEmail,
-          role: newRole,
-          balance: newBalance ? Math.round(parseFloat(newBalance) * 100) : 0,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success("Usuário criado com sucesso!");
-        setShowCreateUser(false);
-        setNewUsername(""); setNewPassword(""); setNewDisplayName(""); setNewEmail(""); setNewRole("user"); setNewBalance("");
-        loadUsers();
-      } else {
-        toast.error(data.error || "Erro ao criar usuário");
-      }
-    } catch { toast.error("Erro de conexão"); } finally { setCreatingUser(false); }
-  };
-
-  const changePassword = async () => {
-    if (!changePwUserId || !changePwValue) { toast.error("Nova senha é obrigatória"); return; }
-    if (changePwValue.length < 4) { toast.error("Senha deve ter no mínimo 4 caracteres"); return; }
-    setChangingPw(true);
-    try {
-      const res = await fetch("/api/admin/users", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ user_id: changePwUserId, new_password: changePwValue }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success(`Senha de ${changePwUsername} alterada com sucesso!`);
-        setChangePwUserId(null); setChangePwUsername(""); setChangePwValue("");
-        // Reload users to reflect new plain_password if passwords are visible
-        loadUsers(showPasswords);
-      } else {
-        toast.error(data.error || "Erro ao alterar senha");
-      }
-    } catch { toast.error("Erro de conexão"); } finally { setChangingPw(false); }
-  };
-
-  // ── Pricing ────────────────────────────────────────────────────────────────────────────
-  const savePrice = async (docType: string) => {
-    const priceReais = parseFloat(editingPrice[docType] || "0");
-    if (isNaN(priceReais) || priceReais < 0) { toast.error("Preço inválido"); return; }
-    const price = Math.round(priceReais * 100);
-    try {
-      const res = await fetch("/api/admin/pricing", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          document_type: docType,
-          display_name: editingDisplayName[docType] ?? pricing.find(p => p.document_type === docType)?.display_name,
-          price,
-          is_active: editingIsActive[docType] !== false,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success("Preço atualizado!");
-        loadPricing();
-      } else {
-        toast.error(data.error || "Erro ao salvar preço");
-      }
-    } catch { toast.error("Erro de conexão"); }
-  };
-
-  const initDefaultPricing = async () => {
-    const defaults = [
-      { document_type: "atestado", display_name: "Atestado Médico", price: 500 },
-      { document_type: "cnh", display_name: "CNH Digital", price: 800 },
-      { document_type: "cha", display_name: "CHA Náutica", price: 600 },
-      { document_type: "toxicologico", display_name: "Toxicológico", price: 700 },
-      { document_type: "historico-sp", display_name: "Histórico SP", price: 600 },
-      { document_type: "historico-uninter", display_name: "Histórico UNINTER", price: 600 },
-    ];
-    try {
-      for (const item of defaults) {
-        await fetch("/api/admin/pricing", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(item),
-        });
-      }
-      toast.success("Preços padrão configurados!");
-      loadPricing();
-    } catch { toast.error("Erro ao configurar preços"); }
-  };
-
-  // ── Notices ────────────────────────────────────────────────────────────────
-  const createNotice = async () => {
-    if (!newNotice.title || !newNotice.message) {
-      toast.error("Preencha título e mensagem");
-      return;
-    }
-    try {
-      const res = await fetch("/api/admin/notifications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(newNotice),
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success("Aviso criado!");
-        setNewNotice({ title: "", message: "", type: "info", is_active: 1 });
-        loadNotices();
-      }
-    } catch { toast.error("Erro de conexão"); }
-  };
-
-  const toggleNotice = async (id: number, current: number) => {
-    try {
-      const res = await fetch(`/api/admin/notifications/${id}/toggle`, {
-        method: "POST",
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success(current ? "Aviso desativado" : "Aviso ativado");
-        loadNotices();
-      }
-    } catch { toast.error("Erro de conexão"); }
-  };
-
-  const deleteNotice = async (id: number) => {
-    setConfirmModal({
-      open: true,
-      title: "Excluir Aviso",
-      message: "Tem certeza que deseja excluir este aviso?",
-      type: "warning",
-      onConfirm: async () => {
-        try {
-          const res = await fetch(`/api/admin/notifications/${id}`, {
-            method: "DELETE",
-            credentials: "include",
-          });
-          const data = await res.json();
-          if (data.success) {
-            toast.success("Aviso excluído!");
-            loadNotices();
-          }
-        } catch { toast.error("Erro de conexão"); }
-        setConfirmModal(m => ({ ...m, open: false }));
-      },
-    });
-  };
-
-  // ── Emissions Actions ─────────────────────────────────────────────────────
-  const deleteEmission = async (id: string, source: string, hard = false) => {
-    setConfirmModal({
-      open: true,
-      title: hard ? "Excluir Permanentemente" : "Cancelar Documento",
-      message: hard
-        ? "Esta ação é IRREVERSÍVEL. O documento será excluído permanentemente do banco de dados."
-        : "O documento será marcado como cancelado. Deseja continuar?",
-      type: hard ? "danger" : "warning",
-      onConfirm: async () => {
-        try {
-          const res = await fetch(`/api/admin/emissions/${id}?source=${source}&hard=${hard}`, {
-            method: "DELETE",
-            credentials: "include",
-          });
-          const data = await res.json();
-          if (data.success) {
-            toast.success(hard ? "Documento excluído permanentemente!" : "Documento cancelado!");
-            loadEmissions();
-          } else {
-            toast.error(data.error || "Erro ao excluir");
-          }
-        } catch { toast.error("Erro de conexão"); }
-        setConfirmModal(m => ({ ...m, open: false }));
-      },
-    });
-  };
-
-  const openEmissionPreview = async (emission: EmissionRow) => {
-    setEmissionPreviewLoading(true);
-    try {
-      const res = await fetch(`/api/admin/emissions/${emission.id}?source=${emission.table_source || "documents"}`, {
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (data.success) {
-        setEmissionPreview({ ...data, emission });
-      } else {
-        toast.error(data.error || "Erro ao carregar documento");
-      }
-    } catch {
-      toast.error("Erro de conexão");
-    } finally {
-      setEmissionPreviewLoading(false);
-    }
-  };
-
-  const editEmission = (e: EmissionRow) => {
-    const editRoutes: Record<string, string> = {
-      atestado: `/atestado/editar/${e.id}?admin=1`,
-      receita: `/receita/editar/${e.id}?admin=1`,
-      cnh: `/cnh/editar/${e.id}?admin=1`,
-      cha: `/cha/editar/${e.id}?admin=1`,
-      "toxicologico": `/toxicologico/editar/${e.id}?admin=1`,
-      "historico-sp": `/historico-sp`,
-      "historico-uninter": `/historicocria/editar/${e.id}?admin=1`,
-      };
-    const route = editRoutes[e.type];
-    if (route) {
-      setLocation(route);
-    } else {
-      toast.info("Edição inline para este tipo de documento será implementada em breve.");
-    }
-  };
-
-  const runCleanupNow = async () => {
-    setCleanupRunning(true);
-    try {
-      const res = await fetch("/api/admin/cleanup", {
-        method: "POST",
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success(data.message || "Limpeza concluída");
-        loadCleanupPreview();
-        loadEmissions();
-      } else {
-        toast.error(data.error || "Erro ao executar limpeza");
-      }
-    } catch {
-      toast.error("Erro de conexão");
-    } finally {
-      setCleanupRunning(false);
-    }
-  };
-
-  const saveSettingsPayload = async () => {
-    setSettingsSaving(true);
-    try {
-      const res = await fetch("/api/admin/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(settings),
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success("Configurações salvas com sucesso!");
-        loadSettings();
-        loadCleanupPreview();
-      } else {
-        toast.error(data.error || "Erro ao salvar configurações");
-      }
-    } catch {
-      toast.error("Erro de conexão");
-    } finally {
-      setSettingsSaving(false);
-    }
-  };
-
-  // ── Database ───────────────────────────────────────────────────────────────
-  const deleteUserData = async () => {
-    if (!deleteTargetUserId) return;
-    if (deleteUserConfirm !== deleteTargetUsername) {
-      toast.error("Nome de usuário não confere. Digite exatamente o nome para confirmar.");
-      return;
-    }
-    try {
-      const res = await fetch(`/api/admin/users/${deleteTargetUserId}/delete-data`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ confirm: true }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success("Dados do usuário excluídos!");
-        setDeleteTargetUserId(null);
-        setDeleteTargetUsername("");
-        setDeleteUserConfirm("");
-        loadUsers();
-      } else {
-        toast.error(data.error || "Erro ao excluir dados");
-      }
-    } catch { toast.error("Erro de conexão"); }
-  };
-
-  const deleteAllData = async () => {
-    if (deleteConfirm !== "EXCLUIR TUDO") {
-      toast.error('Digite "EXCLUIR TUDO" para confirmar');
-      return;
-    }
-    try {
-      const res = await fetch("/api/admin/delete-all-data", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ confirm: true, confirmation_text: "EXCLUIR TUDO" }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success("Todos os dados excluídos!");
-        setDeleteConfirm("");
-      } else {
-        toast.error(data.error || "Erro ao excluir dados");
-      }
-    } catch { toast.error("Erro de conexão"); }
-  };
-
-  // ── Helpers ────────────────────────────────────────────────────────────────
-  const formatDateTime = (d: string) => {
-    if (!d) return "—";
-    try {
-      const date = new Date(d);
-      return (
-        <div className="flex flex-col">
-          <span className="font-semibold text-gray-800 dark:text-gray-200">{date.toLocaleDateString("pt-BR")}</span>
-          <span className="text-[10px] text-gray-400">{date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
-        </div>
-      );
-    } catch { return d; }
-  };
-
-  const formatDateShort = (d: string) => {
-    if (!d) return "—";
-    try { return new Date(d).toLocaleDateString("pt-BR"); } catch { return d; }
-  };
-
-  const formatDate = (d: string) => {
-    if (!d) return "—";
-    try {
-      const date = new Date(d);
-      return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
-    } catch { return d; }
-  };
-
-  const timeAgo = (d: string) => {
-    if (!d) return "—";
-    const now = Date.now();
-    const then = new Date(d).getTime();
-    const diff = Math.floor((now - then) / 1000);
-    if (diff < 60) return `${diff}s atrás`;
-    if (diff < 3600) return `${Math.floor(diff / 60)}min atrás`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h atrás`;
-    return `${Math.floor(diff / 86400)}d atrás`;
-  };
-
-  const formatDuration = (seconds?: number) => {
-    if (!seconds || seconds <= 0) return "0s";
-    const days = Math.floor(seconds / 86400);
-    const hours = Math.floor((seconds % 86400) / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    if (days > 0) return `${days}d ${hours}h`;
-    if (hours > 0) return `${hours}h ${minutes}min`;
-    if (minutes > 0) return `${minutes}min ${secs}s`;
-    return `${secs}s`;
-  };
-
-  const buildAttestationPreviewData = (payload: any) => ({
-    id: payload.id,
-    paciente: payload.paciente || "",
-    sexo: payload.sexo || "F",
-    nascimento: payload.nascimento || "",
-    cpf: payload.cpf || "",
-    cns: payload.cns || "",
-    tipoDoc: payload.tipo_doc || payload.tipoDoc || "CPF",
-    nomeMae: payload.nome_mae || payload.nomeMae || "",
-    endereco: payload.endereco || "",
-    condicao: payload.texto_atestado || "",
-    cid: payload.cid || "",
-    cidDisplay: payload.cid_display || payload.cidDisplay || payload.cid || "",
-    cidNome: payload.cid_nome || payload.cidNome || "",
-    codigoQR: payload.codigo_qr || payload.codigoQR || "",
-    dataAssinatura: payload.data_assinatura || payload.dataAssinatura || "",
-    horaAssinatura: payload.hora_assinatura || payload.horaAssinatura || "",
-    medico: payload.medico || "",
-    crm: payload.crm || "",
-    especialidade: payload.especialidade || "",
-    dataEmissao: payload.data_emissao || payload.dataEmissao || "",
-    logoUrl: payload.logo_url || payload.logoUrl || "",
-    logoRight: payload.logo_right || payload.logoRight || "",
-    enderecoEmitente: payload.endereco_emitente || payload.enderecoEmitente || "",
-    instituicao: payload.instituicao || "",
-    unidade: payload.unidade || "",
-    cidade: payload.cidade || "",
-    signatureColor: payload.signature_color || payload.signatureColor || "#0b109f",
-    signatureImage: payload.signature_image || payload.signatureImage || "",
-    textoAtestado: payload.texto_atestado || "",
-    documentType: "atestado",
-  });
-
-  const filteredUsers = users.filter(u => {
-    const matchesSearch =
-      !userSearch ||
-      u.username.toLowerCase().includes(userSearch.toLowerCase()) ||
-      (u.email || "").toLowerCase().includes(userSearch.toLowerCase());
-    const matchesRole = userRoleFilter === "all" || u.role === userRoleFilter;
-    return matchesSearch && matchesRole;
-  });
-
-  const filteredLogs = logs.filter(l =>
-    !logFilter ||
-    (l.username || "").toLowerCase().includes(logFilter.toLowerCase()) ||
-    l.action.toLowerCase().includes(logFilter.toLowerCase()) ||
-    (l.details || "").toLowerCase().includes(logFilter.toLowerCase())
-  );
-
-  const filteredEmissions = emissions.filter(e => {
-    // Filtro de texto
-    const textMatch = !emissionsFilter ||
-      (e.nome || e.paciente || "").toLowerCase().includes(emissionsFilter.toLowerCase()) ||
-      (e.username || "").toLowerCase().includes(emissionsFilter.toLowerCase()) ||
-      (e.codigo_qr || "").toLowerCase().includes(emissionsFilter.toLowerCase());
-    // Filtro de data
-    let dateMatch = true;
-    if (emissionsDateFrom || emissionsDateTo) {
-      const eDate = e.created_at ? new Date(e.created_at).getTime() : 0;
-      if (emissionsDateFrom) {
-        const from = new Date(emissionsDateFrom).getTime();
-        if (eDate < from) dateMatch = false;
-      }
-      if (emissionsDateTo) {
-        const to = new Date(emissionsDateTo + "T23:59:59").getTime();
-        if (eDate > to) dateMatch = false;
-      }
-    }
-    return textMatch && dateMatch;
-  });
-
-   const totalBalance = users.reduce((sum, u) => sum + (u.balance || 0), 0);
-  const activeUsers = users.filter(u => u.is_active).length;
-
-  // Verificar permissão admin (após todos os hooks)
   if (!isAdmin) {
     setLocation("/dashboard");
     return null;
   }
+
+  const totalBalance = users.reduce((sum, u) => sum + (u.balance || 0), 0);
 
   return (
     <DashboardLayout>
       <div className="p-7 max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-wrap items-center gap-5 mb-8 animate-in fade-in duration-700">
-          <div className="w-16 h-16 rounded-2xl bg-white dark:bg-gray-900 shadow-xl flex items-center justify-center overflow-hidden border border-gray-100 dark:border-gray-800 group hover:scale-105 transition-transform duration-500">
-            <img src="/assets/logo-elite-dm.png" alt="DocMaster Elite" className="w-12 h-12 object-contain" />
+          <div className="w-16 h-16 rounded-2xl bg-white dark:bg-gray-900 shadow-xl flex items-center justify-center border border-gray-100 dark:border-gray-800">
+            <img src="/assets/logo-elite-dm.png" alt="DM Elite" className="w-12 h-12 object-contain" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Painel Administrativo</h1>
+            <h1 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Painel Admin</h1>
             <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-0.5">Gestão de Operações — <span className="text-red-600 font-bold tracking-tighter">DOCMASTER ELITE</span></p>
           </div>
           <div className="ml-auto flex items-center gap-4 flex-wrap">
-            <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl px-5 py-3 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 min-w-[120px]">
+            <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl px-5 py-3 shadow-sm min-w-[120px]">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Usuários</p>
               <p className="text-xl font-black text-red-600 dark:text-red-500 mt-1">{users.length}</p>
             </div>
-            <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl px-5 py-3 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 min-w-[140px]">
+            <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl px-5 py-3 shadow-sm min-w-[140px]">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Saldo Total</p>
-              <p className="text-xl font-black text-emerald-600 dark:text-emerald-500 mt-1">
-                R$ {(totalBalance / 100).toFixed(2).replace(".", ",")}
-              </p>
-            </div>
-            {gatewayFinancial && (
-              <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl px-5 py-3 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 min-w-[140px]">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Gateway</p>
-                <p className="text-xl font-black text-purple-600 dark:text-purple-500 mt-1 flex items-center gap-2">
-                  <CreditCard className="w-4 h-4" />
-                  R$ {Number(gatewayFinancial.saldo_disponivel || 0).toFixed(2).replace(".", ",")}
-                </p>
-              </div>
-            )}
-            <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl px-5 py-3 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 min-w-[120px]">
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Online</p>
-              <div className="flex items-center gap-2 mt-1">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <p className="text-xl font-black text-blue-600 dark:text-blue-400">{onlineCount}</p>
-              </div>
+              <p className="text-xl font-black text-emerald-600 dark:text-emerald-500 mt-1">R$ {(totalBalance / 100).toFixed(2).replace(".", ",")}</p>
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 flex-nowrap overflow-x-auto pb-2 mb-8 bg-gray-100/50 dark:bg-gray-800/50 p-1.5 rounded-2xl backdrop-blur-sm border border-gray-100 dark:border-gray-800 no-scrollbar">
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-8 bg-gray-100/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-gray-100 dark:border-gray-800 no-scrollbar">
           {TABS.map(t => {
             const Icon = t.icon;
             const isActive = tab === t.key;
             return (
-              <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 flex-shrink-0 ${
-                  isActive
-                    ? "bg-red-600 text-white shadow-lg shadow-red-900/20 translate-y-[-1px]"
-                    : "text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200"
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-gray-400"}`} />
+              <button key={t.key} onClick={() => setTab(t.key)} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 ${isActive ? "bg-red-600 text-white shadow-lg" : "text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700"}`}>
+                <Icon className="w-4 h-4" />
                 <span className="whitespace-nowrap">{t.label}</span>
-                {t.key === "monitoring" && onlineCount > 0 && (
-                  <span className={`ml-1 w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-bold ${isActive ? "bg-white text-red-600" : "bg-red-600 text-white"}`}>
-                    {onlineCount}
-                  </span>
-                )}
               </button>
             );
           })}
@@ -1302,1971 +402,124 @@ export default function AdminDashboard() {
 
         {/* ── USERS TAB ── */}
         {tab === "users" && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-	            <div className="flex items-center gap-3 mb-6 flex-wrap">
-	              <div className="relative flex-1 min-w-[300px]">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Pesquisar por username, email ou ID..."
-                  value={userSearch}
-                  onChange={e => setUserSearch(e.target.value)}
-	                  className="w-full pl-11 pr-4 py-3 text-sm rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all shadow-sm"
-	                />
-	              </div>
-	              <select
-	                value={userRoleFilter}
-	                onChange={e => setUserRoleFilter(e.target.value)}
-	                className="px-4 py-3 text-sm rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-all shadow-sm cursor-pointer"
-	              >
-	                <option value="all">Todos os perfis</option>
-	                <option value="user">Apenas Usuários</option>
-	                <option value="admin">Administradores</option>
-	              </select>
-              <button
-                onClick={() => {
-                const next = !showPasswords;
-                setShowPasswords(next);
-                loadUsers(next);
-              }}
-                className={`flex items-center gap-2 px-5 py-3 text-sm font-black uppercase tracking-widest rounded-2xl transition-all shadow-sm active:scale-95 ${
-                  showPasswords
-                    ? "bg-purple-600 text-white shadow-purple-900/20"
-                    : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-100 dark:border-gray-800 hover:bg-gray-50"
-                }`}
-                title={showPasswords ? "Ocultar senhas" : "Ver senhas"}
-              >
-                {showPasswords ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                <span className="hidden lg:inline">{showPasswords ? "Privacidade" : "Ver Senhas"}</span>
-              </button>
-              <button onClick={() => setShowCreateUser(!showCreateUser)} className="flex items-center gap-2 px-6 py-3 text-sm font-black uppercase tracking-widest rounded-2xl bg-red-600 hover:bg-red-700 text-white transition-all shadow-lg shadow-red-900/20 active:scale-95">
-                <UserPlus className="w-4 h-4" /> Novo Usuário
-              </button>
-            </div>
-
-            {/* Formulário Criar Usuário */}
-            {showCreateUser && (
-              <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-6 mb-8 shadow-xl animate-in zoom-in duration-300 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1.5 h-full bg-red-600" />
-                <h3 className="text-lg font-black text-gray-900 dark:text-white mb-6 flex items-center gap-2 uppercase tracking-tight">
-                  <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-900/30 flex items-center justify-center">
-                    <UserPlus className="w-4 h-4 text-red-600" />
-                  </div>
-                  Cadastrar Novo Operador
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Usuário *</label>
-                    <input type="text" placeholder="ex: ricky_admin" value={newUsername} onChange={e => setNewUsername(e.target.value)} className="w-full px-4 py-3 text-sm rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Senha *</label>
-                    <input type="password" placeholder="••••••••" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full px-4 py-3 text-sm rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nome de Exibição</label>
-                    <input type="text" placeholder="Nome Completo" value={newDisplayName} onChange={e => setNewDisplayName(e.target.value)} className="w-full px-4 py-3 text-sm rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Email</label>
-                    <input type="email" placeholder="contato@exemplo.com" value={newEmail} onChange={e => setNewEmail(e.target.value)} className="w-full px-4 py-3 text-sm rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Perfil de Acesso</label>
-                    <select value={newRole} onChange={e => setNewRole(e.target.value)} className="w-full px-4 py-3 text-sm rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-all cursor-pointer">
-                      <option value="user">Usuário Padrão</option>
-                      <option value="admin">Administrador Geral</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Saldo Inicial (R$)</label>
-                    <input type="number" placeholder="0,00" value={newBalance} onChange={e => setNewBalance(e.target.value)} className="w-full px-4 py-3 text-sm rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all" />
-                  </div>
-                </div>
-                <div className="flex gap-3 mt-8">
-                  <button onClick={createUser} disabled={creatingUser} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-8 py-3.5 text-xs font-black uppercase tracking-widest bg-red-600 hover:bg-red-700 text-white rounded-2xl transition-all shadow-lg shadow-red-900/20 active:scale-95 disabled:opacity-50">
-                    {creatingUser ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                    {creatingUser ? "Processando..." : "Finalizar Cadastro"}
-                  </button>
-                  <button onClick={() => setShowCreateUser(false)} className="px-8 py-3.5 text-xs font-black uppercase tracking-widest text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-all">
-                    Cancelar
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Modal Alterar Senha */}
-            {changePwUserId && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => { setChangePwUserId(null); setChangePwValue(""); }}>
-                <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-xl" onClick={e => e.stopPropagation()}>
-                  <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2"><Lock className="w-4 h-4" /> Alterar Senha</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Usuário: <strong>{changePwUsername}</strong></p>
-                  <input type="password" placeholder="Nova senha (mín. 4 caracteres)" value={changePwValue} onChange={e => setChangePwValue(e.target.value)} className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 mb-4" />
-                  <div className="flex gap-2 justify-end">
-                    <button onClick={() => { setChangePwUserId(null); setChangePwValue(""); }} className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">Cancelar</button>
-                    <button onClick={changePassword} disabled={changingPw} className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl transition-colors disabled:opacity-50">{changingPw ? "Salvando..." : "Salvar"}</button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin w-6 h-6 border-2 border-yellow-500 border-t-transparent rounded-full" />
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {filteredUsers.map(u => (
-                  <div key={u.id} className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 p-5 hover:shadow-lg hover:border-red-100 dark:hover:border-red-900/30 transition-all duration-300 group animate-in fade-in slide-in-from-bottom-2">
-                    <div className="flex flex-wrap items-center justify-between gap-5">
-                      <div className="flex items-center gap-4">
-                        <div className="relative">
-                          <div className="w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center overflow-hidden border-2 border-white dark:border-gray-800 shadow-sm flex-shrink-0 group-hover:scale-105 transition-transform duration-500">
-                            {u.profile_photo ? (
-                              <img src={u.profile_photo} alt={u.username} className="w-full h-full object-cover" />
-                            ) : (
-                              <span className="text-xl font-black text-red-600 dark:text-red-500">
-                                {u.username.charAt(0).toUpperCase()}
-                              </span>
-                            )}
-                          </div>
-                          {presence.find(p => String(p.user_id) === String(u.id) && p.is_online) && (
-                            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-2 border-white dark:border-gray-900 animate-pulse shadow-sm" />
-                          )}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 flex-wrap mb-1">
-                            <p className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight group-hover:text-red-600 transition-colors">{u.username}</p>
-                            <span className={`text-[9px] px-2 py-0.5 rounded-lg font-black uppercase tracking-widest ${
-                              u.role === "admin"
-                                ? "bg-red-600 text-white shadow-md shadow-red-900/20"
-                                : "bg-gray-100 dark:bg-gray-800 text-gray-500"
-                            }`}>
-                              {u.role === "admin" ? "Master" : "Operador"}
-                            </span>
-                            <span className={`text-[9px] px-2 py-0.5 rounded-lg font-black uppercase tracking-widest border ${
-                              u.is_active
-                                ? "bg-emerald-50 border-emerald-100 text-emerald-600"
-                                : "bg-red-50 border-red-100 text-red-600"
-                            }`}>
-                              {u.is_active ? "Ativo" : "Bloqueado"}
-                            </span>
-                          </div>
-                          <p className="text-xs font-medium text-gray-400 dark:text-gray-500">{u.email || "Sem email cadastrado"}</p>
-                          <div className="mt-2 flex items-center gap-3">
-                            <div className="flex flex-col">
-                              <span className="text-[9px] font-black text-gray-300 uppercase tracking-tighter">ID Operador</span>
-                              <span className="text-[10px] font-mono text-gray-400">#{u.id.slice(0, 8)}</span>
-                            </div>
-                            <div className="w-px h-6 bg-gray-100 dark:bg-gray-800" />
-                            <div className="flex flex-col">
-                              <span className="text-[9px] font-black text-gray-300 uppercase tracking-tighter">Desde</span>
-                              <span className="text-[10px] font-bold text-gray-500">{new Date(u.created_at).toLocaleDateString("pt-BR")}</span>
-                            </div>
-                          </div>
-	                          {showPasswords && (
-                            <div className="mt-2 inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 animate-in slide-in-from-left-2">
-                              <Lock className="w-3 h-3 text-purple-600" />
-                              <span className="text-[11px] font-mono font-bold text-purple-700 dark:text-purple-300">
-                                {(u as any).plain_password || "••••••••"}
-                              </span>
-                            </div>
-	                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col items-end gap-3 ml-auto">
-                        <div className="text-right">
-                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Saldo Disponível</p>
-                          <p className="text-2xl font-black text-emerald-600 dark:text-emerald-500 tabular-nums">
-                            R$ {(u.balance / 100).toFixed(2).replace(".", ",")}
-                          </p>
-                        </div>
-                        <div className="flex flex-wrap items-center justify-end gap-1.5">
-                          <button
-                            onClick={() => { setBalanceModalUser(u); setBalanceModalValue(""); setBalanceModalType("credit"); }}
-                            className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all active:scale-95 border border-emerald-100 dark:border-emerald-900/30 shadow-sm"
-                            title="Ajustar saldo"
-                          >
-                            <Wallet className="w-3.5 h-3.5" />
-                            Saldo
-                          </button>
-                          
-                          <div className="flex items-center gap-1 bg-gray-50 dark:bg-gray-800/50 p-1 rounded-xl border border-gray-100 dark:border-gray-800">
-                            <button
-                              onClick={() => openUserDetail(u)}
-                              className="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all active:scale-90"
-                              title="Ver detalhes"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleOpenPermissions(u)}
-                              className="p-2 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all active:scale-90"
-                              title="Permissões ACL"
-                            >
-                              <Shield className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => { setChangePwUserId(String(u.id)); setChangePwUsername(u.username); setChangePwValue(""); }}
-                              className="p-2 rounded-lg text-gray-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-all active:scale-90"
-                              title="Resetar Senha"
-                            >
-                              <RefreshCw className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => toggleUserActive(u.id, !!u.is_active)}
-                              className={`p-2 rounded-lg transition-all active:scale-90 ${u.is_active ? "text-emerald-500 hover:bg-emerald-50" : "text-gray-400 hover:text-red-600 hover:bg-red-50"}`}
-                              title={u.is_active ? "Bloquear" : "Ativar"}
-                            >
-                              {u.is_active ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
-                            </button>
-                          </div>
-
-                          <div className="flex items-center gap-1">
-                            {cashbackEditId === u.id ? (
-                              <div className="flex items-center gap-1 bg-white dark:bg-gray-900 border border-red-200 p-1 rounded-xl shadow-lg animate-in zoom-in">
-                                <input
-                                  type="number" step="0.5" min="0" max="100"
-                                  value={cashbackEditValue}
-                                  onChange={e => setCashbackEditValue(e.target.value)}
-                                  className="w-14 px-2 py-1 text-[10px] font-black rounded-lg bg-gray-50 border-none focus:ring-0"
-                                  autoFocus
-                                />
-                                <button onClick={() => saveCashbackForUser(u.id)} className="p-1.5 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600"><Save size={12} /></button>
-                                <button onClick={() => { setCashbackEditId(null); setCashbackEditValue(""); }} className="p-1.5 rounded-lg bg-gray-100 text-gray-500"><X size={12} /></button>
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => { setCashbackEditId(u.id); setCashbackEditValue(u.cashback_percentage != null ? String(u.cashback_percentage) : ""); }}
-                                className="flex items-center gap-1 px-3 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl bg-slate-800 text-white hover:bg-slate-900 transition-all active:scale-95 shadow-md shadow-slate-900/20"
-                                title="Definir % Cashback"
-                              >
-                                <Percent className="w-3.5 h-3.5" />
-                                {u.cashback_percentage != null ? `${u.cashback_percentage}%` : "CB%"}
-                              </button>
-                            )}
-                            <button
-                              onClick={() => deleteUser(u)}
-                              className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all active:scale-90 border border-red-100"
-                              title="Remover Operador"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+          <div className="space-y-4">
+             {users.map(u => (
+               <div key={u.id} className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 p-5 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                       <User size={24} className="text-red-600" />
+                    </div>
+                    <div>
+                      <p className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">{u.username}</p>
+                      <p className="text-[10px] text-gray-400 font-mono">#{u.id.slice(0,8)}</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── MONITORING TAB ── */}
-        {tab === "monitoring" && (
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-                <Monitor className="w-5 h-5" />
-                Monitoramento de Usuários em Tempo Real
-              </h2>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => clearLogs("monitoring")} 
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-200 transition-colors text-xs font-semibold"
-                  title="Limpar todos os dados de presença"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  Limpar Monitoramento
-                </button>
-                <button onClick={loadPresence} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors">
-                  <RefreshCw className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all group">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
-                    <Wifi className="w-5 h-5 text-emerald-500" />
-                  </div>
-                  <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded-full">Ativo</span>
-                </div>
-                <p className="text-3xl font-black text-emerald-600 dark:text-emerald-500">{onlineCount}</p>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Online Agora</p>
-              </div>
-              <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
-                    <WifiOff className="w-5 h-5 text-gray-400" />
-                  </div>
-                </div>
-                <p className="text-3xl font-black text-gray-700 dark:text-gray-300">{offlineCount}</p>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Offline</p>
-              </div>
-	              <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all">
-	                <div className="flex items-center justify-between mb-4">
-	                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
-	                    <FileText className="w-5 h-5 text-blue-500" />
-	                  </div>
-	                </div>
-	                <p className="text-3xl font-black text-blue-600 dark:text-blue-400">
-	                  {presence.filter(p => p.is_online && /(criando|editando|emitindo)/i.test(p.current_action || "")).length}
-	                </p>
-	                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Emitindo Docs</p>
-	              </div>
-              <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center">
-                    <Globe className="w-5 h-5 text-purple-500" />
-                  </div>
-                </div>
-                <p className="text-3xl font-black text-purple-600 dark:text-purple-400">{totalTracked}</p>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Total Tracked</p>
-              </div>
-            </div>
-
-            {/* User List */}
-            {presence.length === 0 ? (
-              <div className="text-center py-12 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800">
-                <Monitor className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">Nenhum dado de presença disponível ainda.</p>
-                <p className="text-xs text-gray-400 mt-1">Os dados aparecerão quando os usuários acessarem o painel.</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {presence.map(p => (
-                  <div key={p.user_id} className={`bg-white dark:bg-gray-900 rounded-[2rem] border p-6 transition-all duration-500 hover:shadow-xl group animate-in fade-in slide-in-from-right-4 ${
-                    p.is_online
-                      ? "border-emerald-100 dark:border-emerald-900/30 bg-gradient-to-r from-emerald-50/30 to-transparent"
-                      : "border-gray-100 dark:border-gray-800 opacity-60 grayscale"
-                  }`}>
-                    <div className="flex flex-wrap items-center justify-between gap-6">
-                      <div className="flex items-center gap-4">
-                        <div className="relative">
-                          <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden border-2 border-white dark:border-gray-700 shadow-md group-hover:scale-110 transition-transform duration-500">
-                            {p.profile_photo ? (
-                              <img src={p.profile_photo} alt={p.username} className="w-full h-full object-cover" />
-                            ) : (
-                              <span className="text-2xl font-black text-gray-400 dark:text-gray-500">
-                                {(p.username || "?").charAt(0).toUpperCase()}
-                              </span>
-                            )}
-                          </div>
-                          <span className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-4 border-white dark:border-gray-900 shadow-sm ${
-                            p.is_online ? "bg-emerald-500 animate-pulse" : "bg-gray-400"
-                          }`} />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight group-hover:text-emerald-600 transition-colors">
-                              {p.username || `Operador #${p.user_id}`}
-                            </p>
-                            {p.role === "admin" && (
-                              <span className="text-[9px] px-2 py-0.5 rounded-lg bg-red-600 text-white font-black uppercase tracking-widest shadow-sm">
-                                Master
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <p className="text-xs font-medium text-gray-400 dark:text-gray-500">{p.email || "Sem email"}</p>
-                            <div className="w-1 h-1 rounded-full bg-gray-300" />
-                            <p className="text-[10px] font-mono text-gray-400">ID: {p.user_id}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex-1 min-w-[200px] flex flex-col items-center sm:items-start">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-2 h-2 rounded-full bg-blue-500" />
-                          <p className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">
-                            {PAGE_LABELS[p.current_page] || p.current_page || "Ocioso"}
-                          </p>
-                        </div>
-                        <div className="px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800">
-                          <p className="text-[11px] font-bold text-gray-600 dark:text-gray-400 italic">
-                            &ldquo;{p.current_action || "Apenas navegando"}&rdquo;
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-6">
-                        <div className="text-right">
-                          <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Visto por último</p>
-                          <p className="text-xs font-bold text-gray-700 dark:text-gray-200 tabular-nums">{timeAgo(p.last_seen)}</p>
-                        </div>
-                        <div className="h-10 w-px bg-gray-100 dark:bg-gray-800" />
-                        <div className="text-right">
-                          <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Sessão Atual</p>
-                          <p className="text-sm font-black text-emerald-600 dark:text-emerald-500 tabular-nums">{formatDuration(p.total_session_seconds)}</p>
-                        </div>
-                      </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Saldo</p>
+                      <p className="text-lg font-black text-emerald-600">R$ {(u.balance / 100).toFixed(2)}</p>
                     </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6 pt-6 border-t border-gray-50 dark:border-gray-800/50">
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Activity className="w-3.5 h-3.5 text-gray-400" />
-                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Fluxo de Atividade</p>
-                        </div>
-                        <div className="space-y-2">
-                          {(p.timeline || []).slice(0, 4).map((item) => (
-                            <div key={item.id} className="flex items-center justify-between gap-4 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                              <div className="flex items-center gap-2.5">
-                                <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                                <div>
-                                  <p className="text-[11px] font-bold text-gray-700 dark:text-gray-200">
-                                    {PAGE_LABELS[item.page_path] || item.page_path}
-                                  </p>
-                                  <p className="text-[9px] text-gray-400 uppercase font-medium">{item.action || "navegando"}</p>
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-[10px] font-mono text-gray-500">{formatDuration(item.duration_seconds)}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Clock className="w-3.5 h-3.5 text-gray-400" />
-                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Distribuição de Tempo</p>
-                        </div>
-                        <div className="space-y-2">
-                          {(p.page_totals || []).slice(0, 4).map((item) => (
-                            <div key={item.page} className="flex items-center justify-between gap-4 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                              <span className="text-[11px] font-bold text-gray-600 dark:text-gray-300">{PAGE_LABELS[item.page] || item.page}</span>
-                              <div className="flex items-center gap-3 flex-1">
-                                <div className="h-1 bg-gray-100 dark:bg-gray-800 flex-1 rounded-full overflow-hidden">
-                                  <div 
-                                    className="h-full bg-emerald-500 rounded-full" 
-                                    style={{ width: `${Math.min(100, (item.duration_seconds / (p.total_session_seconds || 1)) * 100)}%` }}
-                                  />
-                                </div>
-                                <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-500 w-10 text-right">
-                                  {formatDuration(item.duration_seconds)}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
+                    <button onClick={() => handleOpenPermissions(u)} className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-blue-500 transition-all border-none cursor-pointer"><Shield size={20} /></button>
                   </div>
-                ))}
-              </div>
-            )}
+               </div>
+             ))}
           </div>
         )}
 
-        {/* ── PRICING TAB ── */}
-        {tab === "pricing" && (
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200">Preços por Documento</h2>
-              {pricing.length === 0 && (
-                <button
-                  onClick={initDefaultPricing}
-                  className="flex items-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-semibold rounded-xl transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  Configurar Preços Padrão
-                </button>
-              )}
-            </div>
-            {pricing.length === 0 ? (
-              <div className="text-center py-12 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800">
-                <DollarSign className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Nenhum preço configurado.</p>
-                <button
-                  onClick={initDefaultPricing}
-                  className="px-6 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-xl text-sm transition-colors"
-                >
-                  Configurar Preços Padrão
-                </button>
+        {/* ── MODELS TAB ── */}
+        {tab === "models" && (
+          <div className="space-y-6 animate-in fade-in duration-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight m-0">Gerenciar Modelos</h2>
+                <p className="text-sm text-gray-500 font-medium">Imagens de layout exibidas aos usuários no Dashboard.</p>
               </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {pricing.map(p => (
-                    <div key={p.document_type} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs text-gray-400 dark:text-gray-500 font-mono">{p.document_type}</p>
-                        <button
-                          onClick={() => setEditingIsActive(prev => ({ ...prev, [p.document_type]: !(prev[p.document_type] !== false) }))}
-                          className={`p-1 rounded-lg transition-colors ${editingIsActive[p.document_type] !== false ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}
-                          title={editingIsActive[p.document_type] !== false ? "Desativar" : "Ativar"}
-                        >
-                          {editingIsActive[p.document_type] !== false ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                        </button>
-                      </div>
-                      <input
-                        type="text"
-                        value={editingDisplayName[p.document_type] ?? p.display_name}
-                        onChange={e => setEditingDisplayName(prev => ({ ...prev, [p.document_type]: e.target.value }))}
-                        placeholder="Nome exibido"
-                        className="w-full px-2 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 mb-2"
-                      />
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-500 dark:text-gray-400">R$</span>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={editingPrice[p.document_type] || ""}
-                          onChange={e => setEditingPrice(prev => ({ ...prev, [p.document_type]: e.target.value }))}
-                          className="flex-1 px-2 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                        />
-                        <button
-                          onClick={() => savePrice(p.document_type)}
-                          className="p-1.5 rounded-lg bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-200 transition-colors"
-                          title="Salvar individual"
-                        >
-                          <Save className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4 flex justify-end">
-                  <button
-                    onClick={saveAllPrices}
-                    disabled={pricingSaving}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
-                  >
-                    <Save className="w-4 h-4" />
-                    {pricingSaving ? "Salvando..." : "Salvar Todos os Preços"}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* ── TEMPLATES TAB (Redirect) ── */}
-        {tab === "templates" && (
-          <div className="text-center py-20 bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
-            <Layout className="w-16 h-16 mx-auto mb-4 text-indigo-500 animate-pulse" />
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Motor Universal de Documentos</h2>
-            <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-md mx-auto">
-              Gerencie templates dinâmicos, campos de formulário e layouts complexos em uma interface dedicada.
-            </p>
-            <button
-              onClick={() => setLocation("/admin/templates")}
-              className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-lg shadow-indigo-200 dark:shadow-none transition-all active:scale-95"
-            >
-              Abrir Gerenciador de Templates
-            </button>
-          </div>
-        )}
-
-        {/* ── NOTICES TAB ── */}
-        {tab === "notices" && (
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Criar Novo Aviso</h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Tipo</label>
-                  <div className="flex gap-2 flex-wrap">
-                    {NOTICE_TYPES.map(nt => (
-                      <button
-                        key={nt.value}
-                        onClick={() => setNewNotice(n => ({ ...n, type: nt.value as any }))}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
-                          newNotice.type === nt.value
-                            ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-900/10 text-yellow-700 dark:text-yellow-400"
-                            : "border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-300"
-                        }`}
-                      >
-                        <nt.icon className="w-3.5 h-3.5" />
-                        {nt.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Título</label>
-                  <input
-                    type="text"
-                    value={newNotice.title}
-                    onChange={e => setNewNotice(n => ({ ...n, title: e.target.value }))}
-                    placeholder="Título do aviso"
-                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Mensagem</label>
-                  <textarea
-                    value={newNotice.message}
-                    onChange={e => setNewNotice(n => ({ ...n, message: e.target.value }))}
-                    placeholder="Mensagem do aviso"
-                    rows={3}
-                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 resize-none"
-                  />
-                </div>
-                <button
-                  onClick={createNotice}
-                  className="w-full py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-xl text-sm transition-colors"
-                >
-                  Publicar Aviso
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-wide">Avisos Publicados</h3>
-              {notices.length === 0 ? (
-                <div className="text-center py-8 text-gray-400 text-sm">Nenhum aviso publicado</div>
-              ) : (
-                <div className="space-y-2">
-                  {notices.map(n => (
-                    <div key={n.id} className={`flex items-start gap-3 p-4 rounded-xl border ${
-                      n.type === "warning" ? "bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800" :
-                      n.type === "error" ? "bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800" :
-                      n.type === "success" ? "bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800" :
-                      "bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
-                    } ${!n.is_active ? "opacity-50" : ""}`}>
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{n.title}</p>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{n.message}</p>
-                        <p className="text-[10px] text-gray-400 mt-1">{formatDate(n.created_at || "")}</p>
-                      </div>
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
-                          n.is_active
-                            ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400"
-                            : "bg-gray-100 dark:bg-gray-800 text-gray-500"
-                        }`}>
-                          {n.is_active ? "Ativo" : "Inativo"}
-                        </span>
-                        <button
-                          onClick={() => n.id && toggleNotice(n.id, n.is_active)}
-                          className="p-1.5 rounded-lg text-gray-500 hover:bg-white dark:hover:bg-gray-800 transition-colors"
-                        >
-                          {n.is_active ? <ToggleRight className="w-4 h-4 text-green-500" /> : <ToggleLeft className="w-4 h-4" />}
-                        </button>
-                        <button
-                          onClick={() => n.id && deleteNotice(n.id)}
-                          className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ── LOGS TAB ── */}
-        {tab === "logs" && (
-          <div>
-            <div className="flex items-center gap-3 mb-4 flex-wrap">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Filtrar logs..."
-                  value={logFilter}
-                  onChange={e => setLogFilter(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                />
-              </div>
-              <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-                {LOG_CATEGORIES.map(c => (
-                  <button
-                    key={c.value}
-                    onClick={() => setLogCategory(c.value)}
-                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-semibold transition-all ${
-                      logCategory === c.value
-                        ? "bg-yellow-500 text-white"
-                        : "text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700"
-                    }`}
-                  >
-                    <c.icon className="w-3 h-3" />
-                    {c.label}
-                    {logCategories[c.value] !== undefined && (
-                      <span className="ml-0.5 opacity-70">({logCategories[c.value]})</span>
-                    )}
-                  </button>
-                ))}
-              </div>
-              <button onClick={loadLogs} style={{ display: "none" }} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors" title="Atualizar">
-                <RefreshCw className="w-4 h-4" />
-              </button>
-              <button onClick={() => clearLogs("all")} className="flex items-center gap-1 px-3 py-2 rounded-xl bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-200 transition-colors text-xs font-semibold" title="Limpar todos os logs">
-                <Trash className="w-3.5 h-3.5" />
-                Limpar
-              </button>
-            </div>
-            <div className="flex items-center gap-2 mb-4 flex-wrap">
-              <Calendar className="w-4 h-4 text-gray-400" />
-              <span className="text-xs text-gray-500 dark:text-gray-400">Período:</span>
-              <input
-                type="date"
-                value={logDateFrom}
-                onChange={e => setLogDateFrom(e.target.value)}
-                className="px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-              />
-              <span className="text-xs text-gray-400">até</span>
-              <input
-                type="date"
-                value={logDateTo}
-                onChange={e => setLogDateTo(e.target.value)}
-                className="px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-              />
-              {(logDateFrom || logDateTo) && (
-                <button onClick={() => { setLogDateFrom(""); setLogDateTo(""); }} className="text-xs text-red-500 hover:text-red-700 font-semibold">
-                  Limpar filtro
-                </button>
-              )}
-            </div>
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full" />
-              </div>
-            ) : filteredLogs.length === 0 ? (
-              <div className="text-center py-20 bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
-                <Activity className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-700" />
-                <p className="text-gray-500 dark:text-gray-400 font-medium">Nenhum registro encontrado para estes filtros.</p>
-              </div>
-            ) : (
-              <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead>
-                      <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 backdrop-blur-sm">
-                        <th className="px-5 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Timestamp</th>
-                        <th className="px-5 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Operador</th>
-                        <th className="px-5 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Categoria</th>
-                        <th className="px-5 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Ação Realizada</th>
-                        <th className="px-5 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest hidden md:table-cell">Payload / Detalhes</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
-                      {filteredLogs.map(l => {
-                        const severity = l.severity || "info";
-                        const category = l.category || "admin";
-                        return (
-                          <tr key={l.id} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/20 transition-colors group">
-                            <td className="px-5 py-4 whitespace-nowrap">
-                              {formatDateTime(l.created_at)}
-                            </td>
-                            <td className="px-5 py-4">
-                              <p className="text-sm font-bold text-gray-700 dark:text-gray-200 group-hover:text-red-600 transition-colors">{l.username || "Sistema"}</p>
-                              <p className="text-[10px] font-mono text-gray-400">ID: {l.user_id || "SYS"}</p>
-                            </td>
-                            <td className="px-5 py-4">
-                              <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter ${
-                                category === "payment"
-                                  ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400"
-                                  : category === "error"
-                                  ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
-                                  : category === "admin"
-                                  ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
-                                  : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
-                              }`}>
-                                {category}
-                              </span>
-                            </td>
-                            <td className="px-5 py-4">
-                              <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold border ${
-                                severity === "error"
-                                  ? "bg-red-50 border-red-100 text-red-700"
-                                  : l.action.includes("delete") || l.action.includes("exclu")
-                                  ? "bg-red-50 border-red-100 text-red-700"
-                                  : l.action.includes("emit") || l.action.includes("create") || l.action.includes("credito")
-                                  ? "bg-emerald-50 border-emerald-100 text-emerald-700"
-                                  : "bg-gray-50 border-gray-100 text-gray-600 dark:bg-gray-800/50 dark:border-gray-700 dark:text-gray-400"
-                              }`}>
-                                {l.action}
-                              </span>
-                            </td>
-                            <td className="px-5 py-4 hidden md:table-cell max-w-sm">
-                              <div className="text-[11px] text-gray-500 dark:text-gray-400 truncate font-mono bg-gray-50 dark:bg-gray-800/30 px-2 py-1 rounded border border-gray-100 dark:border-gray-800">
-                                {(() => {
-                                  try {
-                                    const parsed = JSON.parse(l.details || "{}");
-                                    if (parsed.amount) return `R$ ${(parsed.amount / 100).toFixed(2)} - ${parsed.description || ""}`;
-                                    if (parsed.price) return `Preço: R$ ${(parsed.price / 100).toFixed(2)}`;
-                                    return l.details || "—";
-                                  } catch { return l.details || "—"; }
-                                })()}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── EMISSIONS TAB ── */}
-        {tab === "emissions" && (
-          <div>
-            <div className="flex items-center gap-3 mb-4 flex-wrap">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Filtrar por paciente, usuário ou código..."
-                  value={emissionsFilter}
-                  onChange={e => setEmissionsFilter(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                />
-              </div>
-              <select
-                value={emissionsTypeFilter}
-                onChange={e => setEmissionsTypeFilter(e.target.value)}
-                className="px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-              >
-                <option value="all">Todos os Tipos</option>
-                <option value="atestado">Atestado</option>
-                <option value="receita">Receita</option>
-                <option value="cnh">CNH</option>
-                <option value="cha">CHA</option>
-                <option value="toxicologico">Toxicológico</option>
-                <option value="historico-sp">Histórico SP</option>
-                <option value="historico-uninter">Histórico UNINTER</option>
-                <option value="toxicria">Toxicológico Sodré</option>
-                <option value="laudocria">Laudo Sodré</option>
-              </select>
-              <div className="flex items-center gap-2">
-                <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                <input
-                  type="date"
-                  value={emissionsDateFrom}
-                  onChange={e => setEmissionsDateFrom(e.target.value)}
-                  className="px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                  title="Data inicial"
-                />
-                <span className="text-xs text-gray-400">ate</span>
-                <input
-                  type="date"
-                  value={emissionsDateTo}
-                  onChange={e => setEmissionsDateTo(e.target.value)}
-                  className="px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                  title="Data final"
-                />
-                {(emissionsDateFrom || emissionsDateTo) && (
-                  <button onClick={() => { setEmissionsDateFrom(""); setEmissionsDateTo(""); }} className="p-1 rounded-lg bg-red-100 dark:bg-red-900/20 text-red-500 hover:bg-red-200 transition-colors" title="Limpar filtro de data">
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
-              <button onClick={loadEmissions} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors">
-                <RefreshCw className="w-4 h-4" />
-              </button>
-              <span className="text-xs text-gray-500 dark:text-gray-400">{filteredEmissions.length} emissões</span>
-            </div>
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin w-6 h-6 border-2 border-yellow-500 border-t-transparent rounded-full" />
-              </div>
-            ) : filteredEmissions.length === 0 ? (
-              <div className="text-center py-12 text-gray-400 text-sm">
-                <FileText className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                <p>Nenhuma emissão encontrada</p>
-              </div>
-            ) : (
-              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-	                <table className="w-full text-xs">
-	                  <thead>
-	                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID Interno</th>
-	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Data Emissão</th>
-	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Criação (Painel)</th>
-	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Usuário</th>
-	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nome/Paciente</th>
-	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Tipo</th>
-	                <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Código Emissão</th>
-	                <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-	                <th className="text-left px-4 py-3 font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ações</th>
-	                </tr>
-	                </thead>
-	                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-	                    {filteredEmissions.map(e => {
-	                        const createDate = new Date(e.created_at);
-	                        const docDateValue = e.emission_date || e.data_emissao || e.dataEmissao || e.data || "";
-
-
-	                return (
-	                <tr key={`${e.table_source}-${e.id}`} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-	                <td className="px-4 py-2.5 font-mono text-gray-400 text-[10px]">{e.id.slice(0, 8)}...</td>
-	                <td className="px-4 py-2.5 text-gray-600 dark:text-gray-400 font-semibold">{docDateValue || "—"}</td>
-	                <td className="px-4 py-2.5 whitespace-nowrap">
-	                <div className="flex flex-col">
-	                <span className="font-semibold text-gray-800 dark:text-gray-200">{createDate.toLocaleDateString("pt-BR")}</span>
-	                <span className="text-[10px] text-gray-400">{createDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
-	                </div>
-	                </td>
-	                <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{e.username || e.user_id || "—"}</td>
-	                <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300 uppercase">{e.nome || e.paciente || "—"}</td>
-	                <td className="px-4 py-2.5 hidden md:table-cell">
-	                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400">
-	                {DOC_TYPE_LABELS[e.type] || e.type}
-	                </span>
-	                </td>
-	                <td className="px-4 py-2.5 hidden md:table-cell">
-	                {e.codigo_qr ? (
-	                <span 
-                    onClick={() => {
-                      navigator.clipboard.writeText(e.codigo_qr!);
-                      toast.success("Código copiado!");
-                    }}
-                    className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-1 rounded-md font-bold border border-blue-100 dark:border-blue-800 font-mono text-[11px] cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all active:scale-95 block w-fit"
-                    title="Clique para copiar"
-                  >
-	                {e.codigo_qr}
-	                </span>
-	                ) : (
-	                <span className="text-gray-400 italic">sem código</span>
-	                )}
-	                </td>
-	                <td className="px-4 py-2.5">
-	                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-	                e.status === "emitido"
-	                ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400"
-	                : "bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400"
-	                }`}>
-	                {e.status}
-	                </span>
-	                </td>
-	                <td className="px-4 py-2.5">
-	                <div className="flex items-center gap-1">
-	                <button
-	                onClick={() => openEmissionPreview(e)}
-	                className="p-1.5 rounded-lg text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
-	                title="Visualizar"
-	                >
-	                <Eye className="w-3.5 h-3.5" />
-	                </button>
-	                <button
-	                onClick={() => editEmission(e)}
-	                className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-	                title="Editar"
-	                >
-	                <Pencil className="w-3.5 h-3.5" />
-	                </button>
-	                <button
-	                onClick={() => deleteEmission(e.id, e.table_source || "documents", false)}
-	                className="p-1.5 rounded-lg text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
-	                title="Cancelar"
-	                >
-	                <X className="w-3.5 h-3.5" />
-	                </button>
-	                <button
-	                onClick={() => deleteEmission(e.id, e.table_source || "documents", true)}
-	                className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-	                title="Excluir permanentemente"
-	                >
-	                <Trash2 className="w-3.5 h-3.5" />
-	                </button>
-	                </div>
-	                </td>
-	                </tr>
-	                );
-	                })}
-	                  </tbody>
-	                </table>              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── REFERRAL TAB ── */}
-        {tab === "referral" && (
-          <div className="space-y-6">
-            {/* Sub-tabs */}
-            <div className="flex items-center justify-between gap-3 flex-wrap">
-              <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-                {(["overview", "referrals", "earnings", "cashback", "users"] as const).map(rt => (
-                  <button
-                    key={rt}
-                    onClick={() => setReferralTab(rt)}
-                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                      referralTab === rt
-                        ? "bg-yellow-500 text-white"
-                        : "text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700"
-                    }`}
-                  >
-                    {rt === "overview" ? "Visão Geral" : rt === "referrals" ? "Indicações" : rt === "earnings" ? "Ganhos Referral" : rt === "cashback" ? "Cashback" : "Usuários"}
-                  </button>
-                ))}
-              </div>
-              <button 
-                onClick={() => setShowLinkModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 text-xs font-bold rounded-xl hover:bg-yellow-200 transition-colors border border-yellow-200 dark:border-yellow-800"
-              >
-                <UserPlus className="w-4 h-4" />
-                Vincular Indicação Manual
+              <button onClick={loadModels} className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-blue-500 transition-all border-none cursor-pointer">
+                <RefreshCw size={20} className={loadingModels ? "animate-spin" : ""} />
               </button>
             </div>
 
-            {/* Modal de Vínculo Manual */}
-            {showLinkModal && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4" onClick={() => setShowLinkModal(false)}>
-                <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-md w-full shadow-2xl border border-gray-100 dark:border-gray-800" onClick={e => e.stopPropagation()}>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                      <UserPlus className="w-5 h-5 text-yellow-500" />
-                      Vincular Indicação
-                    </h3>
-                    <button onClick={() => setShowLinkModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
-                      <X className="w-5 h-5 text-gray-400" />
-                    </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {emissionModels.map((model) => (
+                <div key={model.id} className="bg-white dark:bg-gray-900 rounded-[2rem] border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm flex flex-col">
+                  <div className="p-6 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.02] flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                       <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center border border-blue-100 dark:border-blue-900/30">
+                         <Layout size={20} />
+                       </div>
+                       <span className="font-black text-gray-900 dark:text-white uppercase text-xs tracking-widest">{model.doc_name}</span>
+                    </div>
                   </div>
                   
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Quem indicou? (Indicador)</label>
-                      <select 
-                        value={linkReferrerId} 
-                        onChange={e => setLinkReferrerId(e.target.value)}
-                        className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                      >
-                        <option value="">Selecione o indicador...</option>
-                        {users.map(u => (
-                          <option key={u.id} value={String(u.id)}>{u.username} ({u.email})</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Quem foi indicado? (Indicado)</label>
-                      <select 
-                        value={linkReferredId} 
-                        onChange={e => setLinkReferredId(e.target.value)}
-                        className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                      >
-                        <option value="">Selecione o indicado...</option>
-                        {users.map(u => (
-                          <option key={u.id} value={String(u.id)}>{u.username} ({u.email})</option>
-                        ))}
-                      </select>
-                      <p className="mt-2 text-[10px] text-gray-400 italic">O indicado passará a gerar comissões para o indicador selecionado em todos os seus futuros depósitos.</p>
-                    </div>
-
-                    <div className="pt-2">
-                      <button 
-                        onClick={linkManualReferral}
-                        disabled={linking || !linkReferrerId || !linkReferredId}
-                        className="w-full h-11 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-yellow-200 dark:shadow-none disabled:opacity-50 flex items-center justify-center gap-2"
-                      >
-                        {linking ? (
-                          <RefreshCw className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <CheckCircle className="w-4 h-4" />
-                        )}
-                        Confirmar Vínculo Manual
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {referralTab === "overview" && (
-              <div className="space-y-6">
-                {/* Stats cards */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                  <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 text-center">
-                    <Gift className="w-6 h-6 mx-auto mb-2 text-purple-500" />
-                    <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{referralData.totalReferrals || 0}</p>
-                    <p className="text-xs text-gray-500">Total Indicações</p>
-                  </div>
-	                  <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 text-center">
-	                    <Users className="w-6 h-6 mx-auto mb-2 text-blue-500" />
-	                    <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{(referralData.earningsByReferrer || []).length || referralData.activeReferrers || 0}</p>
-	                    <p className="text-xs text-gray-500">Indicadores Ativos</p>
-	                  </div>
-                  <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 text-center">
-                    <DollarSign className="w-6 h-6 mx-auto mb-2 text-green-500" />
-                    <p className="text-2xl font-bold text-green-600">R$ {((referralData.totalReferralEarnings || 0) / 100).toFixed(2)}</p>
-                    <p className="text-xs text-gray-500">Total Pago (Referral)</p>
-                  </div>
-	                  <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 text-center">
-	                    <Percent className="w-6 h-6 mx-auto mb-2 text-orange-500" />
-	                    <p className="text-2xl font-bold text-orange-600">{referralData.activeCodes || 0}</p>
-	                    <p className="text-xs text-gray-500">Códigos Ativos</p>
-	                  </div>
-	                </div>
-
-                {/* Global settings */}
-                <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
-                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">Configurações Globais</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">% Indicação (Referral)</label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="number" step="0.5" min="0" max="100"
-                          value={referralSettings.referral_percentage}
-                          onChange={e => setReferralSettings(s => ({ ...s, referral_percentage: parseFloat(e.target.value) || 0 }))}
-                          className="flex-1 px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                  <div className="flex-1 p-6">
+                    <div className="grid grid-cols-2 gap-3">
+                      {(() => {
+                        const images = typeof model.images === 'string' ? JSON.parse(model.images || "[]") : (model.images || []);
+                        return images.map((img: string, idx: number) => (
+                          <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 bg-gray-100 dark:bg-white/5">
+                            <img src={img} className="w-full h-full object-cover" alt="Preview" />
+                            <button 
+                              onClick={() => {
+                                handleUpdateModelImages(model.id, images.filter((_: any, i: number) => i !== idx));
+                              }}
+                              className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg border-none cursor-pointer hover:scale-110 transition-all"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ));
+                      })()}
+                      
+                      <label className="aspect-square rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-800 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all group">
+                        <div className="w-10 h-10 rounded-full bg-gray-50 dark:bg-white/5 flex items-center justify-center group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 group-hover:text-blue-600 transition-all">
+                          <Plus size={20} className="text-gray-400" />
+                        </div>
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Adicionar</span>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                const base64 = reader.result as string;
+                                const images = typeof model.images === 'string' ? JSON.parse(model.images || "[]") : (model.images || []);
+                                handleUpdateModelImages(model.id, [...images, base64]);
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
                         />
-                        <span className="text-sm text-gray-500">%</span>
-                        <button
-                          onClick={() => setReferralSettings(s => ({ ...s, referral_enabled: !s.referral_enabled }))}
-                          className={`p-2 rounded-lg transition-colors ${referralSettings.referral_enabled ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}
-                        >
-                          {referralSettings.referral_enabled ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
-                        </button>
-                      </div>
-                      <p className="text-[10px] text-gray-400 mt-1">% que o indicador ganha sobre cada depósito do indicado</p>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">% Cashback (Depósito)</label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="number" step="0.5" min="0" max="100"
-                          value={referralSettings.cashback_percentage}
-                          onChange={e => setReferralSettings(s => ({ ...s, cashback_percentage: parseFloat(e.target.value) || 0 }))}
-                          className="flex-1 px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                        />
-                        <span className="text-sm text-gray-500">%</span>
-                        <button
-                          onClick={() => setReferralSettings(s => ({ ...s, cashback_enabled: !s.cashback_enabled }))}
-                          className={`p-2 rounded-lg transition-colors ${referralSettings.cashback_enabled ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}
-                        >
-                          {referralSettings.cashback_enabled ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
-                        </button>
-                      </div>
-                      <p className="text-[10px] text-gray-400 mt-1">% que o usuário ganha de volta ao depositar</p>
+                      </label>
                     </div>
                   </div>
-	                  <div className="mt-4 flex justify-end">
-	                    <button onClick={saveReferralSettings} className="flex items-center gap-2 px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl transition-colors">
-	                      <Save className="w-4 h-4" /> Salvar Configurações
-	                    </button>
-	                  </div>
-	                </div>
-	                <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-	                  <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
-	                    <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Ganhos detalhados por indicador</h3>
-	                  </div>
-	                  <table className="w-full text-xs">
-	                    <thead>
-	                      <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-	                        <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicador</th>
-	                        <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicados</th>
-	                        <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Total ganho</th>
-	                        <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Último ganho</th>
-	                      </tr>
-	                    </thead>
-	                    <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-	                      {(referralData.earningsByReferrer || []).map((item: any) => (
-	                        <tr key={item.referrer_id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-	                          <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{item.referrer_username}</td>
-	                          <td className="px-4 py-2.5 text-gray-600 dark:text-gray-400">{item.total_referred || 0}</td>
-	                          <td className="px-4 py-2.5 font-semibold text-green-600">R$ {((item.total_earned || 0) / 100).toFixed(2)}</td>
-	                          <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400">{item.last_earning_at ? formatDate(item.last_earning_at) : "—"}</td>
-	                        </tr>
-	                      ))}
-	                    </tbody>
-	                  </table>
-	                </div>
-	              </div>
-	            )}
-
-            {referralTab === "referrals" && (
-              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-                <table className="w-full text-xs">
-                  <thead>
-	                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Data</th>
-	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicador</th>
-	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicado</th>
-	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Status</th>
-	                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Comissão</th>
-	                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-                    {(referralData.referrals || []).map((r: any) => (
-                      <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                        <td className="px-4 py-2.5 text-gray-500">{formatDate(r.created_at)}</td>
-                        <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{r.referrer_name} <span className="text-gray-400">({r.referrer_email})</span></td>
-                        <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">{r.referred_name} <span className="text-gray-400">({r.referred_email})</span></td>
-	                        <td className="px-4 py-2.5 text-gray-500">{r.status || "active"}</td>
-	                        <td className="px-4 py-2.5 font-semibold text-green-600">
-	                          R$ {((r.commission_earned || r.total_earned || 0) / 100).toFixed(2)}
-	                          <span className="ml-1 text-gray-400 font-normal">{r.commission_percentage ? `(${r.commission_percentage}%)` : ""}</span>
-	                        </td>
-	                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {(referralData.referrals || []).length === 0 && (
-                  <div className="text-center py-8 text-gray-400 text-sm">Nenhuma indicação registrada</div>
-                )}
-              </div>
-            )}
-
-            {referralTab === "earnings" && (
-              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Data</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicador</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicado</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Depósito</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">%</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Ganho</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-                    {(referralData.earnings || []).map((e: any) => (
-                      <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                        <td className="px-4 py-2.5 text-gray-500">{formatDate(e.created_at)}</td>
-                        <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{e.referrer_name}</td>
-                        <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">{e.referred_name}</td>
-                        <td className="px-4 py-2.5 text-gray-600">R$ {((e.deposit_amount || 0) / 100).toFixed(2)}</td>
-                        <td className="px-4 py-2.5 text-gray-500">{e.percentage}%</td>
-                        <td className="px-4 py-2.5 font-semibold text-green-600">R$ {((e.earned_amount || 0) / 100).toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {(referralData.earnings || []).length === 0 && (
-                  <div className="text-center py-8 text-gray-400 text-sm">Nenhum ganho de indicação registrado</div>
-                )}
-              </div>
-            )}
-
-            {referralTab === "cashback" && (
-              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Data</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Usuário</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Depósito</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">%</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Cashback</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-                    {(referralData.cashback || []).map((c: any) => (
-                      <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                        <td className="px-4 py-2.5 text-gray-500">{formatDate(c.created_at)}</td>
-                        <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{c.user_name} <span className="text-gray-400">({c.user_email})</span></td>
-                        <td className="px-4 py-2.5 text-gray-600">R$ {((c.deposit_amount || 0) / 100).toFixed(2)}</td>
-                        <td className="px-4 py-2.5 text-gray-500">{c.percentage}%</td>
-                        <td className="px-4 py-2.5 font-semibold text-green-600">R$ {((c.cashback_amount || 0) / 100).toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {(referralData.cashback || []).length === 0 && (
-                  <div className="text-center py-8 text-gray-400 text-sm">Nenhum cashback registrado</div>
-                )}
-              </div>
-            )}
-
-            {referralTab === "users" && (
-              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Usuário</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Código</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicados</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Ganho Ref.</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Cashback</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">% Custom</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-                    {(referralData.users || []).map((u: any) => (
-                      <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                        <td className="px-4 py-2.5">
-                          <p className="font-medium text-gray-800 dark:text-gray-200">{u.name || u.email}</p>
-                          <p className="text-[10px] text-gray-400">{u.email}</p>
-                        </td>
-                        <td className="px-4 py-2.5">
-                          <span className="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">{u.code || "—"}</span>
-                        </td>
-                        <td className="px-4 py-2.5 text-center font-semibold text-gray-700 dark:text-gray-300">{u.total_referred || 0}</td>
-                        <td className="px-4 py-2.5 text-green-600 font-semibold">R$ {((u.total_earned || 0) / 100).toFixed(2)}</td>
-                        <td className="px-4 py-2.5 text-orange-600 font-semibold">R$ {((u.total_cashback || 0) / 100).toFixed(2)}</td>
-                        <td className="px-4 py-2.5">
-                          {editUserRefId === u.id ? (
-                            <div className="flex items-center gap-1">
-                              <input type="number" step="0.5" placeholder="Ref %" value={editUserRefPct} onChange={e => setEditUserRefPct(e.target.value)} className="w-16 px-1 py-0.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800" />
-                              <input type="number" step="0.5" placeholder="CB %" value={editUserCbPct} onChange={e => setEditUserCbPct(e.target.value)} className="w-16 px-1 py-0.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800" />
-                              <button onClick={() => saveUserRefSettings(u.id)} className="p-1 rounded bg-green-100 text-green-600 hover:bg-green-200"><Save className="w-3 h-3" /></button>
-                              <button onClick={() => setEditUserRefId(null)} className="p-1 rounded bg-gray-100 text-gray-500 hover:bg-gray-200"><X className="w-3 h-3" /></button>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-gray-500">
-                              {u.referral_percentage != null ? `Ref: ${u.referral_percentage}%` : "Global"}
-                              {u.cashback_percentage != null ? ` | CB: ${u.cashback_percentage}%` : ""}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-2.5">
-                          <button
-                            onClick={() => { setEditUserRefId(u.id); setEditUserRefPct(u.referral_percentage?.toString() || ""); setEditUserCbPct(u.cashback_percentage?.toString() || ""); }}
-                            className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                            title="Editar %"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {(referralData.users || []).length === 0 && (
-                  <div className="text-center py-8 text-gray-400 text-sm">Nenhum usuário encontrado</div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── DATABASE TAB ── */}
-	        {tab === "database" && (
-	          <div className="space-y-6">
-	            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-amber-200 dark:border-amber-800 p-5">
-	              <div className="flex items-center gap-2 mb-4">
-	                <AlertTriangle className="w-5 h-5 text-amber-500" />
-	                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Exclusão em Cascata de Usuário</h3>
-	              </div>
-	              {deleteTargetUserId ? (
-	                <div className="space-y-4">
-	                  <div className="p-3 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-200 dark:border-amber-800 text-xs text-amber-700 dark:text-amber-300">
-	                    O usuário <strong>{deleteTargetUsername}</strong> foi selecionado. Esta ação remove documentos, transações, sessões, presença e vínculos de indicação.
-	                  </div>
-	                  <div>
-	                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-	                      Digite o username para confirmar exclusão de dados do usuário
-	                    </label>
-	                    <input
-	                      type="text"
-	                      value={deleteUserConfirm}
-	                      onChange={e => setDeleteUserConfirm(e.target.value)}
-	                      placeholder={deleteTargetUsername}
-	                      className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400"
-	                    />
-	                  </div>
-	                  <div className="flex gap-3">
-	                    <button
-	                      onClick={deleteUserData}
-	                      className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl text-sm transition-colors"
-	                    >
-	                      Excluir Dados do Usuário
-	                    </button>
-	                    <button
-	                      onClick={() => {
-	                        const target = users.find(user => String(user.id) === String(deleteTargetUserId));
-	                        if (target) deleteUser(target);
-	                      }}
-	                      className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl text-sm transition-colors"
-	                    >
-	                      Excluir Usuário Completo
-	                    </button>
-	                  </div>
-	                </div>
-	              ) : (
-	                <p className="text-sm text-gray-500 dark:text-gray-400">
-	                  Selecione um usuário na aba <strong>Usuários</strong> para abrir a exclusão em cascata nesta seção.
-	                </p>
-	              )}
-	            </div>
-	            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-red-200 dark:border-red-800 p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <AlertTriangle className="w-5 h-5 text-red-500" />
-                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Excluir TODOS os Dados</h3>
-              </div>
-              <div className="p-3 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-200 dark:border-red-800 mb-4">
-                <p className="text-xs text-red-700 dark:text-red-400 font-semibold">
-                  ATENÇÃO: Esta ação é IRREVERSÍVEL. Todos os documentos emitidos de todos os usuários serão permanentemente excluídos.
-                </p>
-              </div>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                    Digite <strong className="text-red-600">EXCLUIR TUDO</strong> para confirmar
-                  </label>
-                  <input
-                    type="text"
-                    value={deleteConfirm}
-                    onChange={e => setDeleteConfirm(e.target.value)}
-                    placeholder='Digite "EXCLUIR TUDO"'
-                    className="w-full px-3 py-2 text-sm rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-400"
-                  />
                 </div>
-                <button
-                  onClick={deleteAllData}
-                  disabled={deleteConfirm !== "EXCLUIR TUDO"}
-                  className="w-full py-2.5 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors"
-                >
-                  Excluir TODOS os Dados
-                </button>
-              </div>
+              ))}
             </div>
-          </div>
-        )}
-
-        {/* ── SETTINGS TAB ── */}
-        {tab === "settings" && (
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Configurações Gerais</h3>
-              <div className="space-y-4">
-                {[
-                  { key: "site_name", label: "Nome do Site", placeholder: "DocMaster" },
-                  { key: "support_whatsapp", label: "WhatsApp de Suporte", placeholder: "5511999999999" },
-                  { key: "max_documents_per_day", label: "Máx. Documentos por Dia", placeholder: "100" },
-                ].map(({ key, label, placeholder }) => (
-                  <div key={key}>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{label}</label>
-                    <input
-                      type="text"
-                      value={settings[key as keyof typeof settings] as string}
-                      onChange={e => setSettings(s => ({ ...s, [key]: e.target.value }))}
-                      placeholder={placeholder}
-                      className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                    />
-                  </div>
-                ))}
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                  <div>
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Modo Manutenção</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Bloqueia acesso de usuários não-admin</p>
-                  </div>
-                  <button
-                    onClick={() => setSettings(s => ({ ...s, maintenance_mode: !s.maintenance_mode }))}
-                    className={`relative w-11 h-6 rounded-full transition-colors ${settings.maintenance_mode ? "bg-red-500" : "bg-gray-300 dark:bg-gray-600"}`}
-                  >
-                    <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${settings.maintenance_mode ? "translate-x-5" : ""}`} />
-                  </button>
-                </div>
-	                <button
-	                  disabled={settingsSaving}
-	                  onClick={saveSettingsPayload}
-	                  className="w-full py-2.5 bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
-	                >
-                  {settingsSaving ? <><RefreshCw className="w-4 h-4 animate-spin" /> Salvando...</> : <><Save className="w-4 h-4" /> Salvar Configurações</>}
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Logo do Painel</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                Faça upload de uma nova logo para o painel. A imagem será usada na sidebar e na página de login.
-              </p>
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-800">
-                  <img src="/assets/logo-icon.png" alt="Logo atual" className="w-16 h-16 object-contain" />
-                </div>
-                <div className="flex-1">
-                  <label className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl cursor-pointer transition-colors text-sm font-medium text-gray-700 dark:text-gray-300">
-                    <Save className="w-4 h-4" />
-                    Escolher Arquivo
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          toast.info(`Logo "${file.name}" selecionada. Funcionalidade de upload será implementada com R2 Storage.`);
-                        }
-                      }}
-                    />
-                  </label>
-                  <p className="text-[10px] text-gray-400 mt-2">PNG, JPG ou WebP. Máximo 2MB.</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Exclusão Automática de Documentos</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                Configure o período de retenção (em dias) para cada tipo de documento. Após esse período, os documentos serão excluídos automaticamente.
-              </p>
-	              <div className="space-y-3">
-                {[
-                  { key: "auto_delete_atestado", label: "Atestados", defaultVal: "60" },
-                  { key: "auto_delete_receita", label: "Receitas (Dr. Consulta)", defaultVal: "60" },
-                  { key: "auto_delete_cnh", label: "CNH Digital", defaultVal: "365" },
-                  { key: "auto_delete_cha", label: "CHA Náutica", defaultVal: "60" },
-                  { key: "auto_delete_toxicologico", label: "Toxicológico", defaultVal: "60" },
-                  { key: "auto_delete_historico", label: "Históricos Escolares", defaultVal: "90" },
-                ].map(({ key, label, defaultVal }) => (
-                  <div key={key} className="flex items-center gap-3">
-                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400 w-48 flex-shrink-0">{label}</label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="3650"
-                      value={(settings as any)[key] || defaultVal}
-                      onChange={e => setSettings(s => ({ ...s, [key]: e.target.value }))}
-                      className="w-24 px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 text-center"
-                    />
-                    <span className="text-xs text-gray-400">dias</span>
-                  </div>
-                ))}
-	              </div>
-	              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-	                <button
-	                  onClick={saveSettingsPayload}
-	                  className="py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl text-sm transition-colors"
-	                >
-	                  Salvar Configurações de Exclusão
-	                </button>
-	                <button
-	                  onClick={runCleanupNow}
-	                  disabled={cleanupRunning}
-	                  className="py-2.5 bg-gray-900 hover:bg-black disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors"
-	                >
-	                  {cleanupRunning ? "Executando limpeza..." : "Executar Limpeza Agora"}
-	                </button>
-	              </div>
-	              <div className="mt-4 rounded-xl bg-gray-50 dark:bg-gray-800/60 p-4">
-	                <div className="flex items-center justify-between gap-3 mb-3">
-	                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">Prévia da limpeza</p>
-	                  <button onClick={loadCleanupPreview} className="p-1.5 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800">
-	                    <RefreshCw className="w-3.5 h-3.5" />
-	                  </button>
-	                </div>
-	                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs">
-	                  {cleanupPreview?.pendingDeletion && Object.entries(cleanupPreview.pendingDeletion).map(([key, value]) => (
-	                    <div key={key} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2">
-	                      <p className="text-gray-400 uppercase">{key}</p>
-	                      <p className="text-sm font-bold text-gray-800 dark:text-gray-100">{String(value)}</p>
-	                    </div>
-	                  ))}
-	                </div>
-	                <p className="text-[11px] text-gray-400 mt-3">
-	                  A prévia considera a data de emissão real (`data_emissao`) por tipo de documento.
-	                </p>
-	              </div>
-	            </div>
           </div>
         )}
       </div>
 
-	      {/* User Detail Modal */}
-	      {userDetailOpen && selectedUser && (
-	        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-	          <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-3xl shadow-2xl max-h-[85vh] overflow-hidden flex flex-col">
-	            <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-800">
-	              <div>
-	                <h3 className="font-bold text-gray-900 dark:text-white">{selectedUser.username}</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{selectedUser.email}</p>
-              </div>
-              <button onClick={() => setUserDetailOpen(false)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-                <X className="w-4 h-4 text-gray-500" />
-              </button>
+      {/* Permissions Modal */}
+      {showPermissionsModal && aclSelectedUser && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-lg shadow-2xl p-6 border border-indigo-100 dark:border-indigo-900 animate-in zoom-in duration-300">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-bold text-gray-900 dark:text-white uppercase tracking-widest text-sm">Permissões: {aclSelectedUser.username}</h3>
+              <button onClick={() => setShowPermissionsModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors border-none bg-transparent cursor-pointer"><X size={20} /></button>
             </div>
-            <div className="p-5 overflow-y-auto flex-1">
-	              <div className="grid grid-cols-2 gap-3 mb-5">
-                <div className="bg-yellow-50 dark:bg-yellow-900/10 rounded-xl p-3">
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Saldo</p>
-                  <p className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
-                    R$ {(selectedUser.balance / 100).toFixed(2).replace(".", ",")}
-                  </p>
-                </div>
-	                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-	                  <p className="text-xs text-gray-500 dark:text-gray-400">Status</p>
-	                  <p className={`text-sm font-bold ${selectedUser.is_active ? "text-green-600 dark:text-green-400" : "text-red-500"}`}>
-	                    {selectedUser.is_active ? "Ativo" : "Inativo"}
-	                  </p>
-	                </div>
-	                <div className="bg-blue-50 dark:bg-blue-900/10 rounded-xl p-3">
-	                  <p className="text-xs text-gray-500 dark:text-gray-400">Documentos</p>
-	                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{userDetails?.summary?.total_documents || userHistory.length}</p>
-	                </div>
-	                <div className="bg-purple-50 dark:bg-purple-900/10 rounded-xl p-3">
-	                  <p className="text-xs text-gray-500 dark:text-gray-400">Transações</p>
-	                  <p className="text-lg font-bold text-purple-600 dark:text-purple-400">{userDetails?.summary?.total_transactions || 0}</p>
-	                </div>
-	              </div>
-
-                {/* Seção de Gestão de Acessos Rápida */}
-                <div className="bg-indigo-50 dark:bg-indigo-900/10 rounded-2xl p-4 mb-6 border border-indigo-100 dark:border-indigo-800 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm">
-                      <Shield className="w-5 h-5 text-indigo-600" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-indigo-900 dark:text-indigo-300">Gestão de Permissões</p>
-                      <p className="text-[10px] text-indigo-600/70 dark:text-indigo-400">Configure ACL, Módulos e Docs Gratuitos</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => { setUserDetailOpen(false); handleOpenPermissions(selectedUser); }}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md shadow-indigo-200 dark:shadow-none"
-                  >
-                    Gerenciar Acessos
-                  </button>
-                </div>
-
-	              <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Histórico de Emissões</h4>
-	              {userHistory.length === 0 ? (
-	                <p className="text-sm text-gray-400 text-center py-6">Nenhuma emissão registrada</p>
-	              ) : (
-                <div className="space-y-2">
-                  {userHistory.map((h: any, i: number) => (
-                    <div key={i} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                      <div>
-                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{h.paciente || h.nome || "—"}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{h.type || "atestado"} · {formatDate(h.created_at)}</p>
-                      </div>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 font-semibold">
-                        {h.status || "emitido"}
-                      </span>
-                    </div>
-	                  ))}
-	                </div>
-	              )}
-	              <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 mt-6">Transações</h4>
-	              {(userDetails?.transactions || []).length === 0 ? (
-	                <p className="text-sm text-gray-400 text-center py-4">Nenhuma transação registrada</p>
-	              ) : (
-	                <div className="space-y-2">
-	                  {userDetails.transactions.slice(0, 8).map((tx: any) => (
-	                    <div key={tx.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
-	                      <div>
-	                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{tx.description || tx.type}</p>
-	                        <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(tx.created_at)}</p>
-	                      </div>
-	                      <span className={`text-sm font-bold ${tx.type === "credit" ? "text-green-600" : "text-red-500"}`}>
-	                        {tx.type === "credit" ? "+" : "-"}R$ {((tx.amount || 0) / 100).toFixed(2)}
-	                      </span>
-	                    </div>
-	                  ))}
-	                </div>
-	              )}
-	              <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 mt-6">Indicações</h4>
-	              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-	                <div className="rounded-xl bg-gray-50 dark:bg-gray-800 p-3">
-	                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Como indicador</p>
-	                  {(userDetails?.referrals?.as_referrer || []).length === 0 ? (
-	                    <p className="text-sm text-gray-400">Nenhum indicado.</p>
-	                  ) : (
-	                    <div className="space-y-2">
-	                      {userDetails.referrals.as_referrer.slice(0, 5).map((item: any) => (
-	                        <div key={item.id} className="flex items-center justify-between text-xs">
-	                          <span className="text-gray-700 dark:text-gray-200">{item.referred_username}</span>
-	                          <span className="text-green-600 font-semibold">R$ {((item.total_earned || 0) / 100).toFixed(2)}</span>
-	                        </div>
-	                      ))}
-	                    </div>
-	                  )}
-	                </div>
-	                <div className="rounded-xl bg-gray-50 dark:bg-gray-800 p-3">
-	                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Como indicado</p>
-	                  {(userDetails?.referrals?.as_referred || []).length === 0 ? (
-	                    <p className="text-sm text-gray-400">Nenhum indicador vinculado.</p>
-	                  ) : (
-	                    <div className="space-y-2">
-	                      {userDetails.referrals.as_referred.slice(0, 5).map((item: any) => (
-	                        <div key={item.id} className="flex items-center justify-between text-xs">
-	                          <span className="text-gray-700 dark:text-gray-200">{item.referrer_username}</span>
-	                          <span className="text-gray-400">{item.status}</span>
-	                        </div>
-	                      ))}
-	                    </div>
-	                  )}
-	                </div>
-	              </div>
-	            </div>
-	          </div>
-	        </div>
-	      )}
-
-	      {balanceModalUser && (
-	        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[120] flex items-center justify-center p-4 animate-in fade-in duration-300">
-	          <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] w-full max-w-md shadow-2xl p-8 border border-gray-100 dark:border-gray-800 animate-in zoom-in duration-300" onClick={e => e.stopPropagation()}>
-              <div className="flex flex-col items-center text-center mb-8">
-                <div className="w-20 h-20 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mb-4 border-4 border-emerald-100 dark:border-emerald-800">
-                  <Wallet className="w-10 h-10 text-emerald-600" />
-                </div>
-	              <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Gestão de Saldo</h3>
-	              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Ajustando conta de <span className="text-red-600 font-bold">@{balanceModalUser.username}</span></p>
-              </div>
-
-	            <div className="flex gap-2 p-1.5 bg-gray-100 dark:bg-gray-800/50 rounded-2xl mb-6">
-	              <button onClick={() => setBalanceModalType("credit")} className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${balanceModalType === "credit" ? "bg-emerald-600 text-white shadow-lg shadow-emerald-900/20" : "text-gray-500 hover:text-gray-700"}`}>
-                  <div className="flex items-center justify-center gap-2">
-                    <Plus className="w-3.5 h-3.5" /> Crédito
-                  </div>
-                </button>
-	              <button onClick={() => setBalanceModalType("debit")} className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${balanceModalType === "debit" ? "bg-red-600 text-white shadow-lg shadow-red-900/20" : "text-gray-500 hover:text-gray-700"}`}>
-                  <div className="flex items-center justify-center gap-2">
-                    <Minus className="w-3.5 h-3.5" /> Débito
-                  </div>
-                </button>
-	            </div>
-
-              <div className="relative group mb-8">
-                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-lg font-black text-gray-400 group-focus-within:text-emerald-600 transition-colors">R$</span>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={balanceModalValue}
-                  onChange={e => setBalanceModalValue(e.target.value)}
-                  placeholder="0,00"
-                  autoFocus
-                  className="w-full pl-14 pr-6 py-5 text-3xl font-black rounded-3xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all placeholder:text-gray-300"
-                />
-              </div>
-
-	            <div className="grid grid-cols-2 gap-4">
-	              <button onClick={() => setBalanceModalUser(null)} className="py-4 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-gray-200 transition-all">Cancelar</button>
-	              <button onClick={submitBalanceAdjustment} disabled={savingBalance} className={`py-4 ${balanceModalType === 'credit' ? 'bg-emerald-600' : 'bg-red-600'} hover:opacity-90 disabled:opacity-50 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2`}>
-	                {savingBalance ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                  {savingBalance ? "Salvando..." : "Confirmar"}
-	              </button>
-	            </div>
-	          </div>
-	        </div>
-	      )}
-
-	      {hardDeleteUser && (
-	        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setHardDeleteUser(null)}>
-	          <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-lg shadow-2xl p-6" onClick={e => e.stopPropagation()}>
-	            <h3 className="font-bold text-gray-900 dark:text-white mb-2">Excluir usuário definitivamente</h3>
-	            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-	              Esta exclusão é em cascata e remove documentos, transações, sessões, dados de presença e vínculos de indicação de <strong>{hardDeleteUser.username}</strong>.
-	            </p>
-	            <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 mb-4">
-	              <input type="checkbox" checked={hardDeleteConfirmChecked} onChange={e => setHardDeleteConfirmChecked(e.target.checked)} />
-	              Confirmo que desejo excluir todos os dados em cascata
-	            </label>
-	            <input
-	              type="text"
-	              value={hardDeleteConfirmText}
-	              onChange={e => setHardDeleteConfirmText(e.target.value)}
-	              placeholder='Digite EXCLUIR'
-	              className="w-full px-3 py-2 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-400"
-	            />
-	            <div className="flex gap-3 mt-4">
-	              <button onClick={() => setHardDeleteUser(null)} className="flex-1 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-semibold">Cancelar</button>
-	              <button
-	                disabled={!hardDeleteConfirmChecked || hardDeleteConfirmText !== "EXCLUIR"}
-	                onClick={async () => {
-	                  try {
-	                    const res = await fetch(`/api/admin/users/${hardDeleteUser.id}/delete`, {
-	                      method: "POST",
-	                      headers: { "Content-Type": "application/json" },
-	                      credentials: "include",
-	                      body: JSON.stringify({ confirm: true, confirmation_text: "EXCLUIR" }),
-	                    });
-	                    const data = await res.json();
-	                    if (data.success) {
-	                      toast.success("Usuário excluído com sucesso");
-	                      setHardDeleteUser(null);
-	                      loadUsers(showPasswords);
-	                    } else {
-	                      toast.error(data.error || "Erro ao excluir usuário");
-	                    }
-	                  } catch {
-	                    toast.error("Erro de conexão");
-	                  }
-	                }}
-	                className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white rounded-xl text-sm font-semibold"
-	              >
-	                Excluir em cascata
-	              </button>
-	            </div>
-	          </div>
-	        </div>
-	      )}
-
-	      {emissionPreview && (
-	        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setEmissionPreview(null)}>
-	          <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-6xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
-	            <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800">
-	              <div>
-	                <h3 className="font-bold text-gray-900 dark:text-white">Visualizar emissão</h3>
-	                <p className="text-xs text-gray-500 dark:text-gray-400">{emissionPreview.emission?.id}</p>
-	              </div>
-	              <button onClick={() => setEmissionPreview(null)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-	                <X className="w-4 h-4 text-gray-500" />
-	              </button>
-	            </div>
-	            <div className="p-4 overflow-auto flex-1 bg-gray-100 dark:bg-gray-950">
-	              {emissionPreviewLoading ? (
-	                <div className="flex items-center justify-center py-12">
-	                  <div className="animate-spin w-6 h-6 border-2 border-yellow-500 border-t-transparent rounded-full" />
-	                </div>
-	              ) : emissionPreview.document_type === "atestado" ? (
-	                <div className="flex justify-center">
-	                  <AttestationDocument data={buildAttestationPreviewData(emissionPreview.payload)} />
-	                </div>
-	              ) : (
-	                <pre className="text-xs text-gray-800 dark:text-gray-100 whitespace-pre-wrap rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-4">
-	                  {JSON.stringify(emissionPreview.payload || emissionPreview.document, null, 2)}
-	                </pre>
-	              )}
-	            </div>
-	          </div>
-	        </div>
-	      )}
-
-	      {showPermissionsModal && aclSelectedUser && (
-	        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
-	          <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-lg shadow-2xl p-6 border border-indigo-100 dark:border-indigo-900 animate-in zoom-in duration-300">
-	            <div className="flex items-center justify-between mb-6">
-	              <div className="flex items-center gap-3">
-	                <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-	                  <Lock className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-	                </div>
-	                <div>
-	                  <h3 className="font-bold text-gray-900 dark:text-white">Permissões de Acesso</h3>
-	                  <p className="text-xs text-gray-500 tracking-tight font-black uppercase">{aclSelectedUser.username}</p>
-	                </div>
-	              </div>
-	              <button onClick={() => setShowPermissionsModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"><X className="w-5 h-5 text-gray-400" /></button>
-	            </div>
-
-	            <div className="space-y-6">
-	              <div>
-                  <div className="flex items-center justify-between mb-3">
-	                  <h4 className="text-[10px] font-black text-indigo-900 dark:text-indigo-400 uppercase tracking-widest">EDITÁVEIS (Documentos Gerais)</h4>
-                    <div className="flex gap-2">
-                      <button onClick={() => selectAllDocs(true)} className="text-[9px] font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-tighter bg-indigo-50 px-2 py-0.5 rounded-md">Selecionar Todos</button>
-                      <button onClick={() => selectAllDocs(false)} className="text-[9px] font-black text-gray-400 hover:text-gray-600 uppercase tracking-tighter bg-gray-50 px-2 py-0.5 rounded-md">Limpar</button>
-                    </div>
-                  </div>
-	                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-	                  {["atestado", "cnh", "cha", "toxicologico", "toxicria", "laudocria", "receita", "historico-sp", "historicocria", "diploma-uninter", "peticaocria"].map(doc => (
-	                    <label key={doc} className="flex items-center gap-2 p-3 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 cursor-pointer hover:border-indigo-300 transition-all">
-	                      <input 
-	                        type="checkbox" 
-	                        checked={userPermissions.editaveis.includes(doc)}
-	                        onChange={(e) => {
-	                          const next = e.target.checked 
-	                            ? [...userPermissions.editaveis, doc]
-	                            : userPermissions.editaveis.filter((d: string) => d !== doc);
-	                          setUserPermissions({ ...userPermissions, editaveis: next });
-	                        }}
-	                        className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500" 
-	                      />
-	                      <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 uppercase truncate">{DOC_TYPE_LABELS[doc] || doc}</span>
-	                    </label>
-	                  ))}
-	                </div>
-	              </div>
-
-	              <div>
-                  <div className="flex items-center justify-between mb-3">
-	                  <h4 className="text-[10px] font-black text-emerald-900 dark:text-emerald-400 uppercase tracking-widest">FERRAMENTAS (Módulos)</h4>
-                    <div className="flex gap-2">
-                      <button onClick={() => selectAllTools(true)} className="text-[9px] font-black text-emerald-600 hover:text-emerald-800 uppercase tracking-tighter bg-emerald-50 px-2 py-0.5 rounded-md">Selecionar Todos</button>
-                      <button onClick={() => selectAllTools(false)} className="text-[9px] font-black text-gray-400 hover:text-gray-600 uppercase tracking-tighter bg-gray-50 px-2 py-0.5 rounded-md">Limpar</button>
-                    </div>
-                  </div>
-	                <div className="grid grid-cols-2 gap-2">
-	                  {["bot-adv", "peticao-stj"].map(tool => (
-	                    <label key={tool} className="flex items-center gap-2 p-3 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 cursor-pointer hover:border-emerald-300 transition-all">
-	                      <input 
-	                        type="checkbox" 
-	                        checked={userPermissions.ferramentas.includes(tool)}
-	                        onChange={(e) => {
-	                          const next = e.target.checked 
-	                            ? [...userPermissions.ferramentas, tool]
-	                            : userPermissions.ferramentas.filter((t: string) => t !== tool);
-	                          setUserPermissions({ ...userPermissions, ferramentas: next });
-	                        }}
-	                        className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500" 
-	                      />
-	                      <span className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">{tool}</span>
-	                    </label>
-	                  ))}
-	                </div>
-	              </div>
-
-                <div>
-                  <h4 className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                    <Gift size={12} /> Documentos Gratuitos (Sem Custo)
-                  </h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {Object.entries(DOC_TYPE_LABELS).map(([slug, label]) => (
-                      <label key={slug} className="flex items-center gap-2 p-2.5 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 cursor-pointer hover:border-amber-300 transition-all">
-                        <input 
-                          type="checkbox" 
-                          checked={userFreeDocs.includes(slug)}
-                          onChange={(e) => {
-                            const next = e.target.checked 
-                              ? [...userFreeDocs, slug]
-                              : userFreeDocs.filter(s => s !== slug);
-                            setUserFreeDocs(next);
-                          }}
-                          className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500" 
-                        />
-                        <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 uppercase truncate">{label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-	            </div>
-
-	            <div className="mt-8">
-	              <button 
-	                onClick={savePermissions}
-	                className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none transition-all active:scale-95 flex items-center justify-center gap-2"
-	              >
-	                <Save size={18} /> SALVAR PERMISSÕES
-	              </button>
-	            </div>
-	          </div>
-	        </div>
-	      )}
-      {confirmModal.open && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md shadow-2xl p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                confirmModal.type === "danger" ? "bg-red-100 dark:bg-red-900/20" :
-                confirmModal.type === "warning" ? "bg-amber-100 dark:bg-amber-900/20" :
-                "bg-blue-100 dark:bg-blue-900/20"
-              }`}>
-                <AlertTriangle className={`w-5 h-5 ${
-                  confirmModal.type === "danger" ? "text-red-500" :
-                  confirmModal.type === "warning" ? "text-amber-500" :
-                  "text-blue-500"
-                }`} />
-              </div>
-              <h3 className="font-bold text-gray-900 dark:text-white">{confirmModal.title}</h3>
-            </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">{confirmModal.message}</p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setConfirmModal(m => ({ ...m, open: false }))}
-                className="flex-1 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-semibold rounded-xl text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={confirmModal.onConfirm}
-                className={`flex-1 py-2.5 text-white font-semibold rounded-xl text-sm transition-colors ${
-                  confirmModal.type === "danger" ? "bg-red-500 hover:bg-red-600" :
-                  confirmModal.type === "warning" ? "bg-amber-500 hover:bg-amber-600" :
-                  "bg-blue-500 hover:bg-blue-600"
-                }`}
-              >
-                Confirmar
-              </button>
+            <div className="space-y-6">
+               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {["atestado", "cnh", "cha", "toxicologico", "toxicria", "laudocria", "receita", "historico-sp", "historicocria", "diploma-uninter", "peticaocria"].map(doc => (
+                    <label key={doc} className="flex items-center gap-2 p-2 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 cursor-pointer hover:border-indigo-300">
+                      <input type="checkbox" checked={userPermissions.editaveis.includes(doc)} onChange={() => {}} className="w-4 h-4 rounded text-indigo-600" />
+                      <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 uppercase truncate">{DOC_TYPE_LABELS[doc] || doc}</span>
+                    </label>
+                  ))}
+               </div>
+               <button onClick={savePermissions} className="w-full py-4 bg-indigo-600 text-white font-black rounded-2xl shadow-xl transition-all active:scale-95 border-none cursor-pointer">SALVAR ACESSOS</button>
             </div>
           </div>
         </div>

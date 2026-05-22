@@ -6,13 +6,14 @@ import NovoDocumentoModal from "@/components/NovoDocumentoModal";
 import RecarregaModal from "@/components/RecarregaModal";
 import ExtratoModal from "@/components/ExtratoModal";
 import ReferralModal from "@/components/ReferralModal";
+import ModelosEmissaoModal from "@/components/ModelosEmissaoModal";
 import PatentCard from "@/components/PatentCard";
 import {
   FileText, Car, Anchor, FlaskConical, GraduationCap,
   Wallet, TrendingUp, BarChart3, ChevronRight, Plus,
   Clock, CheckCircle, Bell, Download, Trash2, Pill, Pencil, QrCode,
   Copy, X, Send, RefreshCw, Search, Save, Smartphone, AlertTriangle, Gift, Users, Loader2, Settings,
-  Eye, Trash, Receipt
+  Eye, Trash, Receipt, Camera
 } from "lucide-react";
 import AttestationActionButtons from "@/components/AttestationActionButtons";
 import AttestationViewerModal from "@/components/AttestationViewerModal";
@@ -88,6 +89,7 @@ export default function Dashboard() {
   const [showRecarregaModal, setShowRecarregaModal] = useState(false);
   const [showExtratoModal, setShowExtratoModal] = useState(false);
   const [showReferralModal, setShowReferralModal] = useState(false);
+  const [showModelsModal, setShowModelsModal] = useState(false);
   const [loyaltyData, setLoyaltyData] = useState<any>(null);
 
   // Additional states for history management
@@ -270,10 +272,13 @@ const intelligentStats = [
             </p>
             {hasAnyPermission && (
               <div className="mt-6 flex flex-wrap gap-3">
-                <button onClick={() => setShowNovoDocModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20 active:scale-95 flex items-center gap-2">
+                <button onClick={() => setShowNovoDocModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20 active:scale-95 flex items-center gap-2">
                   <Plus className="w-4 h-4" /> Novo Documento
                 </button>
-                <button onClick={() => setShowReferralModal(true)} className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 active:scale-95">
+                <button onClick={() => setShowModelsModal(true)} className="bg-white text-blue-600 border border-blue-100 hover:bg-blue-50 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 active:scale-95">
+                  <Camera className="w-4 h-4" /> Modelos de Emissão
+                </button>
+                <button onClick={() => setShowReferralModal(true)} className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 active:scale-95">
                   <Gift className="w-4 h-4" /> Indique e Ganhe
                 </button>
               </div>
@@ -293,8 +298,8 @@ const intelligentStats = [
         {loyaltyData && <PatentCard loyalty={loyaltyData} />}
 
         {/* Resumo Financeiro Rapido */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="md:col-span-2 bg-gradient-to-br from-indigo-600 to-blue-700 rounded-[2.5rem] p-8 text-white shadow-xl shadow-blue-900/20 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group">
+        <div className="mb-8">
+          <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-[2.5rem] p-8 text-white shadow-xl shadow-blue-900/20 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700">
                <Wallet size={120} />
             </div>
@@ -326,20 +331,6 @@ const intelligentStats = [
                 <Receipt className="w-4 h-4" /> Ver Extrato
               </button>
             </div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] p-8 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col justify-center items-center text-center group hover:border-emerald-200 dark:hover:border-emerald-900/30 transition-all">
-            <div className="w-16 h-16 rounded-[1.5rem] bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <Gift size={28} />
-            </div>
-            <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest mb-1">Indique e Ganhe</h3>
-            <p className="text-xs text-gray-500 font-medium mb-5 px-4">Ganhe comissões por cada recarga de seus indicados.</p>
-            <button 
-              onClick={() => setShowReferralModal(true)}
-              className="text-[10px] font-black text-emerald-600 hover:text-emerald-700 uppercase tracking-[0.2em] flex items-center gap-2 group/btn"
-            >
-              Começar agora <ChevronRight className="w-3 h-3 group-hover/btn:translate-x-1 transition-transform" />
-            </button>
           </div>
         </div>
 
@@ -514,6 +505,7 @@ const intelligentStats = [
       <RecarregaModal isOpen={showRecarregaModal} onClose={() => setShowRecarregaModal(false)} userName={user?.displayName || user?.username || ""} />
       <ExtratoModal isOpen={showExtratoModal} onClose={() => setShowExtratoModal(false)} />
       <ReferralModal isOpen={showReferralModal} onClose={() => setShowReferralModal(false)} />
+      <ModelosEmissaoModal isOpen={showModelsModal} onClose={() => setShowModelsModal(false)} />
 
       {/* ── VIEWER & DELETE MODALS ── */}
       {viewAtestado && (

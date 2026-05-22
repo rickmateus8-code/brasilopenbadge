@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Crown, Rocket, Hourglass, HelpCircle, CheckCircle2, ChevronRight } from "lucide-react";
+import { Crown, Rocket, Hourglass, HelpCircle, CheckCircle2, ChevronRight, X } from "lucide-react";
 
 interface PatentCardProps {
   loyalty: {
@@ -13,8 +13,64 @@ interface PatentCardProps {
   };
 }
 
+function PatentRulesModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[10000] bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300" onClick={onClose}>
+      <div className="bg-[#0f172a] border border-white/10 rounded-[2.5rem] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
+        <div className="p-8 border-b border-white/5 flex items-center justify-between">
+          <h2 className="text-xl font-black text-white tracking-tight m-0 uppercase italic">Clube de recarga semanal</h2>
+          <button onClick={onClose} className="w-10 h-10 rounded-full border-none bg-white/5 cursor-pointer flex items-center justify-center text-gray-400 hover:text-white transition-all">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="p-8 space-y-6">
+          <p className="text-gray-400 text-sm leading-relaxed text-center">
+            Aqui sua parceria gera <strong className="text-blue-500">lucro imediato</strong>. Acumule suas recargas durante a semana e <strong className="text-white">garanta a maior bonificação</strong>!
+          </p>
+          
+          <div className="rounded-2xl border border-white/10 overflow-hidden">
+            <div className="grid grid-cols-3 bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest text-center py-3">
+              <span>Patente</span>
+              <span>Meta Acumulada</span>
+              <span>Bônus</span>
+            </div>
+            {[
+              { rank: "RECRUTA", meta: "Início", bonus: "20%", bg: "bg-white/[0.02]" },
+              { rank: "BRONZE", meta: "R$ 100,00", bonus: "25%", bg: "bg-white/[0.04]", color: "text-orange-500" },
+              { rank: "PRATA", meta: "R$ 180,00", bonus: "30%", bg: "bg-white/[0.02]", color: "text-blue-400" },
+              { rank: "OURO", meta: "R$ 250,00+", bonus: "40%", bg: "bg-white/[0.04]", color: "text-amber-500" },
+            ].map((r, i) => (
+              <div key={i} className={`grid grid-cols-3 py-4 text-center border-t border-white/5 items-center ${r.bg}`}>
+                <span className={`font-black text-xs ${r.color || "text-gray-500"}`}>{r.rank}</span>
+                <span className="text-xs text-gray-300 font-bold">{r.meta}</span>
+                <span className="text-sm font-black text-white">{r.bonus}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-4">
+            <div className="bg-white/5 rounded-2xl p-5 border border-white/5">
+               <div className="mb-3"><strong className="text-blue-500 block text-[10px] uppercase tracking-widest mb-1">1. ACÚMULO INTELIGENTE</strong><p className="text-xs text-gray-400 leading-snug">Toda recarga de segunda a domingo vai somando. Não precisa carregar tudo de uma vez!</p></div>
+               <div className="mb-3"><strong className="text-emerald-500 block text-[10px] uppercase tracking-widest mb-1">2. ATIVAÇÃO NA HORA</strong><p className="text-xs text-gray-400 leading-snug">Bateu a meta? O bônus maior já vale para aquela mesma recarga e as próximas.</p></div>
+               <div><strong className="text-purple-500 block text-[10px] uppercase tracking-widest mb-1">3. A TRAVA DE SEGUNDA-FEIRA</strong><p className="text-xs text-gray-400 leading-snug">Ao bater a meta, você garante essa patente para a semana seguinte inteira!</p></div>
+            </div>
+            <div className="p-4 bg-amber-500/10 border-l-4 border-amber-500 rounded-lg">
+               <p className="text-xs text-amber-200 leading-relaxed"><strong>DICA DE MESTRE:</strong> Atingindo OURO na terça, você lucra 40% o resto da semana E garante 40% fixo na próxima semana!</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-6 bg-white/[0.02] text-center border-t border-white/5">
+           <button onClick={onClose} className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95">Entendido, bora subir!</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PatentCard({ loyalty }: PatentCardProps) {
   const [timeLeft, setTimeLeft] = useState("");
+  const [showRules, setShowRules] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -78,10 +134,15 @@ export default function PatentCard({ loyalty }: PatentCardProps) {
                 ESTE STATUS EXPIRA EM: <span className="text-blue-600 dark:text-blue-400 font-black">{timeLeft}</span>
               </p>
             </div>
-            <div className="flex items-center gap-1.5 mt-2 cursor-pointer group">
-               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest m-0 group-hover:text-blue-500 transition-colors">Sua Patente Atual</p>
+            <div className="flex items-center gap-1.5 mt-2">
+               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest m-0">Sua Patente Atual</p>
                <HelpCircle size={12} className="text-blue-500" />
-               <span className="text-[10px] font-bold text-blue-500 underline uppercase">Saiba Mais</span>
+               <button 
+                 onClick={() => setShowRules(true)} 
+                 className="text-[10px] font-bold text-blue-500 underline uppercase ml-1 bg-transparent border-none cursor-pointer p-0 hover:text-blue-600 transition-colors"
+               >
+                 Saiba Mais
+               </button>
             </div>
           </div>
         </div>
@@ -163,6 +224,7 @@ export default function PatentCard({ loyalty }: PatentCardProps) {
           </div>
         </div>
       )}
+      <PatentRulesModal isOpen={showRules} onClose={() => setShowRules(false)} />
     </div>
   );
 }
