@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Camera, ChevronLeft, ChevronRight, SearchPlus, Loader2 } from "lucide-react";
+import { X, Camera, ChevronLeft, ChevronRight, ZoomIn, Loader2 } from "lucide-react";
 
 interface EmissionModel {
   id: string;
@@ -159,7 +159,7 @@ export default function ModelosEmissaoModal({ isOpen, onClose }: ModelosEmissaoM
                 )}
               </div>
               <div className="mt-6 flex items-center gap-2 text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">
-                <SearchPlus size={14} className="text-blue-500" /> Clique na imagem para ampliar
+                <ZoomIn size={14} className="text-blue-500" /> Clique na imagem para ampliar
               </div>
             </div>
           )}
