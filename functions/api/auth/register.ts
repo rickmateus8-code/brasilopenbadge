@@ -57,7 +57,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         displayName: displayName || username,
         role: 'user',
         balance: 0,
-        permissions: defaultPermissions,
+        permissions: JSON.parse(defaultPermissions),
       }
     };
 

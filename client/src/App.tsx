@@ -56,7 +56,9 @@ function ProtectedRoute({ component: Component, adminOnly = false, requiredTool,
       } else if (adminOnly && !isAdmin) {
         setLocation("/dashboard");
       } else if (!isAdmin && requiredTool) {
-        const perms = user.permissions ? JSON.parse(user.permissions) : { ferramentas: [] };
+        const perms = user.permissions 
+          ? (typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions)
+          : { ferramentas: [] };
         if (!perms.ferramentas?.includes(requiredTool)) {
           setLocation("/dashboard");
         }
@@ -68,7 +70,9 @@ function ProtectedRoute({ component: Component, adminOnly = false, requiredTool,
   if (!user || (adminOnly && !isAdmin)) return null;
   
   if (!isAdmin && requiredTool) {
-    const perms = user.permissions ? JSON.parse(user.permissions) : { ferramentas: [] };
+    const perms = user.permissions 
+      ? (typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions)
+      : { ferramentas: [] };
     if (!perms.ferramentas?.includes(requiredTool)) return null;
   }
 

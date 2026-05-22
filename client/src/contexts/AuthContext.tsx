@@ -8,7 +8,10 @@ export type AuthUser = {
   balance: number;
   displayName?: string;
   profilePhoto?: string | null;
-  permissions?: string;
+  permissions?: string | {
+    editaveis: string[];
+    ferramentas: string[];
+  };
   free_documents?: string[];
 };
 
