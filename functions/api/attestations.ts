@@ -39,13 +39,19 @@ async function getAuthUser(env: Env, token: string | null): Promise<any | null> 
 
 function generateCode(): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let code = "";
+  let part1 = "";
+  let part2 = "";
   const arr = new Uint8Array(8);
   crypto.getRandomValues(arr);
-  for (let i = 0; i < 8; i++) {
-    code += chars[arr[i] % chars.length];
+  
+  for (let i = 0; i < 4; i++) {
+    part1 += chars[arr[i] % chars.length];
   }
-  return `${code.slice(0, 4)}.${code.slice(4)}`;
+  for (let i = 4; i < 8; i++) {
+    part2 += chars[arr[i] % chars.length];
+  }
+  
+  return `${part1}.${part2}`;
 }
 
 async function generateUniqueCode(env: Env): Promise<string> {
