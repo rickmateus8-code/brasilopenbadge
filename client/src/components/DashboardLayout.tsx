@@ -361,14 +361,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </button>
             </div>
           )}
-
-          <button 
-            onClick={() => { logout(); if (mobile) setMobileOpen(false); }}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all ${collapsed && !mobile ? "justify-center w-full" : ""}`}
-          >
-            <LogOut className="w-4 h-4" />
-            {(!collapsed || mobile) && <span>SAIR DA CONTA</span>}
-          </button>
         </div>
       </div>
 
@@ -414,6 +406,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </button>
           </div>
         )}
+
+        <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-800">
+          <button 
+            onClick={() => { logout(); if (mobile) setMobileOpen(false); }}
+            className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs font-black text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all ${collapsed && !mobile ? "justify-center w-full" : "w-full"}`}
+          >
+            <LogOut className="w-4 h-4 flex-shrink-0" />
+            {(!collapsed || mobile) && <span>SAIR DA CONTA</span>}
+          </button>
+        </div>
       </nav>
     </div>
   );
