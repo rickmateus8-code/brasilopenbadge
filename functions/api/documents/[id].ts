@@ -25,9 +25,18 @@ async function getAuthUser(env: Env, token: string | null): Promise<any | null> 
     "SELECT user_id FROM sessions WHERE token = ? AND expires_at > ? LIMIT 1"
   ).bind(token, now).first<{ user_id: string }>();
   if (!session) return null;
-  return env.DB.prepare(
+  const user = await env.DB.prepare(
     "SELECT id, username, role, balance, is_active, free_documents FROM users WHERE id = ? AND is_active = 1 LIMIT 1"
   ).bind(session.user_id).first<any>();
+
+  if (user) {
+    try {
+      user.free_documents = typeof user.free_documents === 'string' ? JSON.parse(user.free_documents) : (user.free_documents || []);
+    } catch {
+      user.free_documents = [];
+    }
+  }
+  return user;
 }
 
 async function generateUniqueCode(env: Env): Promise<string> {
@@ -96,8 +105,7 @@ export async function onRequest(context: { request: Request; env: Env; params: {
         price = defaults[docType] || 1000;
       }
 
-      const freeDocs = JSON.parse(user.free_documents || '[]');
-      const isFree = freeDocs.includes(docType);
+      const isFree = Array.isArray(user.free_documents) ? user.free_documents.includes(docType) : false;
 
       if (user.role !== 'admin' && !isFree && user.balance < price) {
         return jsonResponse({ success: false, error: "Saldo insuficiente.", code: 'INSUFFICIENT_BALANCE' }, 402);

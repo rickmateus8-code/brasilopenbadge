@@ -533,7 +533,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {showInsufficientBalance && (
         <div style={{position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px"}} onClick={() => setShowInsufficientBalance(false)}>
           <div style={{background: "#fff", borderRadius: 20, padding: "36px 32px", maxWidth: 380, width: "100%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.25)"}} onClick={e => e.stopPropagation()}>
-            <div style={{width: 72, height: 72, borderRadius: "50%", border: "3px solid #f97316", display: "flex", alignItems: "center", justifyCenter: "center", margin: "0 auto 20px"}}><svg viewBox="0 0 24 24" style={{ width: 36, height: 36, color: "#f97316" }} fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg></div>
+            <div style={{width: 72, height: 72, borderRadius: "50%", border: "3px solid #f97316", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px"}}>
+              <svg viewBox="0 0 24 24" style={{ width: 36, height: 36, color: "#f97316", display: "block" }} fill="none" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              </svg>
+            </div>
             <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111827", marginBottom: 12 }}>Saldo Insuficiente</h2>
             <p style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.6, marginBottom: 28 }}>Você não possui saldo suficiente para criar um novo documento. Recarregue seu saldo para continuar.</p>
             <div style={{background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: "10px 16px", marginBottom: 24, display: "flex", alignItems: "center", justifyCenter: "center", gap: 8}}><Wallet style={{ width: 16, height: 16, color: "#dc2626" }} /><span style={{ fontSize: 13, color: "#dc2626", fontWeight: 700 }}>Saldo atual: R$ {(userBalanceSafe / 100).toFixed(2).replace(".", ",")}</span></div>
