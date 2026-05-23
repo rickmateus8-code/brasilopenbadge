@@ -74,12 +74,14 @@ function SidebarItem({
   collapsed,
   onNavigate,
   userBalance = 0,
+  freeDocuments = [],
   onInsufficientBalance,
 }: {
   item: MenuItem;
   collapsed: boolean;
   onNavigate?: () => void;
   userBalance?: number;
+  freeDocuments?: string[];
   onInsufficientBalance?: () => void;
 }) {
   const [location, setLocation] = useLocation();
@@ -372,6 +374,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               collapsed={!mobile && collapsed}
               onNavigate={mobile ? () => setMobileOpen(false) : undefined}
               userBalance={userBalanceSafe}
+              freeDocuments={user?.free_documents || []}
               onInsufficientBalance={() => {
                 if (mobile) setMobileOpen(false);
                 setShowInsufficientBalance(true);
