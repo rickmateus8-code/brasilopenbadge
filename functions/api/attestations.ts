@@ -37,7 +37,8 @@ async function getAuthUser(env: Env, token: string | null): Promise<any | null> 
     // Garantir que free_documents seja um array
     try {
       user.free_documents = typeof user.free_documents === 'string' ? JSON.parse(user.free_documents) : (user.free_documents || []);
-    } catch {
+    } catch (e) {
+      console.error("[getAuthUser] Erro ao parsear free_documents:", e);
       user.free_documents = [];
     }
   }
