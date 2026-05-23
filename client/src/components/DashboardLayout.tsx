@@ -528,7 +528,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       )}
       {showInsufficientBalance && (
-        <div style={{position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyCenter: "center", padding: "16px"}} onClick={() => setShowInsufficientBalance(false)}>
+        <div style={{position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px"}} onClick={() => setShowInsufficientBalance(false)}>
           <div style={{background: "#fff", borderRadius: 20, padding: "36px 32px", maxWidth: 380, width: "100%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.25)"}} onClick={e => e.stopPropagation()}>
             <div style={{width: 72, height: 72, borderRadius: "50%", border: "3px solid #f97316", display: "flex", alignItems: "center", justifyCenter: "center", margin: "0 auto 20px"}}><svg viewBox="0 0 24 24" style={{ width: 36, height: 36, color: "#f97316" }} fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg></div>
             <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111827", marginBottom: 12 }}>Saldo Insuficiente</h2>
