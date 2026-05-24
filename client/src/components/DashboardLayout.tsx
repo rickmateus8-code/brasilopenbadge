@@ -12,7 +12,7 @@ import {
   LayoutDashboard, FileText, CreditCard, Receipt, LogOut,
   ChevronDown, ChevronRight, Menu, X, Sun, Moon,
   Shield, GraduationCap, Car, Anchor, FlaskConical,
-  User, Wallet, Settings, HelpCircle, Plus, Bell, Pill, Gift, FilePlus, Search
+  User, Wallet, Settings, HelpCircle, Plus, Bell, Pill, Gift, FilePlus, Search, AlertCircle
 } from "lucide-react";
 
 interface MenuItem {
@@ -93,6 +93,7 @@ function SidebarItem({
   onNavigate,
   userBalance = 0,
   freeDocuments = [],
+  isAdmin = false,
   onInsufficientBalance,
 }: {
   item: MenuItem;
@@ -100,6 +101,7 @@ function SidebarItem({
   onNavigate?: () => void;
   userBalance?: number;
   freeDocuments?: string[];
+  isAdmin?: boolean;
   onInsufficientBalance?: () => void;
 }) {
   const [location, setLocation] = useLocation();
@@ -119,7 +121,9 @@ function SidebarItem({
 
   const navigate = useCallback((path: string, isCreation?: boolean) => {
     const slug = getPathSlug(path);
-    const isFree = Array.isArray(freeDocuments) && freeDocuments.includes(slug);
+    const freeDocsArr = Array.isArray(freeDocuments) ? freeDocuments : [];
+    // Um documento é grátis se estiver na lista ou se o usuário for Admin
+    const isFree = freeDocsArr.includes(slug) || isAdmin;
 
     if (isCreation && userBalance <= 0 && !isFree) {
       onInsufficientBalance?.();
@@ -127,7 +131,7 @@ function SidebarItem({
     }
     setLocation(path);
     onNavigate?.();
-  }, [setLocation, onNavigate, userBalance, onInsufficientBalance, freeDocuments]);
+  }, [setLocation, onNavigate, userBalance, onInsufficientBalance, freeDocuments, isAdmin]);
 
   const handleToggle = useCallback(() => {
     setOpen(o => !o);
@@ -396,6 +400,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               onNavigate={mobile ? () => setMobileOpen(false) : undefined}
               userBalance={userBalanceSafe}
               freeDocuments={user?.free_documents || []}
+              isAdmin={isAdmin}
               onInsufficientBalance={() => {
                 if (mobile) setMobileOpen(false);
                 setShowInsufficientBalance(true);
@@ -552,17 +557,56 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       )}
       {showInsufficientBalance && (
-        <div style={{position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px"}} onClick={() => setShowInsufficientBalance(false)}>
-          <div style={{background: "#fff", borderRadius: 20, padding: "36px 32px", maxWidth: 380, width: "100%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.25)"}} onClick={e => e.stopPropagation()}>
-            <div style={{width: 72, height: 72, borderRadius: "50%", border: "3px solid #f97316", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px"}}>
-              <svg viewBox="0 0 24 24" style={{ width: 36, height: 36, color: "#f97316", display: "block" }} fill="none" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-              </svg>
+        <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300" onClick={() => setShowInsufficientBalance(false)}>
+          <div className="bg-slate-950 border border-slate-800 rounded-[2.5rem] p-8 max-w-md w-full text-center shadow-2xl relative overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="absolute -top-24 -left-24 w-48 h-48 bg-orange-500/10 blur-[100px] rounded-full" />
+            <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-blue-500/10 blur-[100px] rounded-full" />
+            
+            <div className="relative z-10">
+              <div className="w-20 h-20 rounded-full bg-orange-500/10 border-2 border-orange-500/20 flex items-center justify-center mx-auto mb-6 animate-pulse">
+                <AlertCircle className="w-10 h-10 text-orange-500" />
+              </div>
+
+              <h2 className="text-2xl font-black text-white uppercase italic tracking-tight mb-2">
+                Saldo Insuficiente
+              </h2>
+              <p className="text-slate-400 text-sm font-medium leading-relaxed mb-8 px-4">
+                Você não possui saldo suficiente para iniciar esta emissão. 
+                Recarregue agora e continue utilizando a plataforma Elite.
+              </p>
+
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-8 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center">
+                    <Wallet className="w-5 h-5 text-red-500" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Saldo Atual</p>
+                    <p className="text-lg font-black text-white">{balanceFormatted}</p>
+                  </div>
+                </div>
+                <div className="w-px h-8 bg-white/10" />
+                <div className="text-right">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Acesso</p>
+                    <p className="text-xs font-black text-slate-300 uppercase">Bloqueado</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => { setShowInsufficientBalance(false); handleOpenRecarregaModal(); }}
+                  className="py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-emerald-900/20"
+                >
+                  Recarregar
+                </button>
+                <button
+                  onClick={() => setShowInsufficientBalance(false)}
+                  className="py-4 rounded-2xl bg-slate-800 text-slate-400 font-black text-xs uppercase tracking-widest hover:bg-slate-700 transition-all border border-slate-700"
+                >
+                  Voltar
+                </button>
+              </div>
             </div>
-            <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111827", marginBottom: 12 }}>Saldo Insuficiente</h2>
-            <p style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.6, marginBottom: 28 }}>Você não possui saldo suficiente para criar um novo documento. Recarregue seu saldo para continuar.</p>
-            <div style={{background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: "10px 16px", marginBottom: 24, display: "flex", alignItems: "center", justifyCenter: "center", gap: 8}}><Wallet style={{ width: 16, height: 16, color: "#dc2626" }} /><span style={{ fontSize: 13, color: "#dc2626", fontWeight: 700 }}>Saldo atual: R$ {(userBalanceSafe / 100).toFixed(2).replace(".", ",")}</span></div>
-            <div style={{ display: "flex", gap: 12 }}><button onClick={() => { setShowInsufficientBalance(false); handleOpenRecarregaModal(); }} style={{flex: 1, padding: "12px 0", borderRadius: 10, border: "none", background: "#16a34a", color: "#fff", fontWeight: 700, fontSize: 14, cursor: "pointer"}}>Recarregar Agora</button><button onClick={() => setShowInsufficientBalance(false)} style={{flex: 1, padding: "12px 0", borderRadius: 10, border: "none", background: "#6b7280", color: "#fff", fontWeight: 700, fontSize: 14, cursor: "pointer"}}>Cancelar</button></div>
           </div>
         </div>
       )}

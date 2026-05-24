@@ -43,7 +43,11 @@ export default function HistoricoEditar() {
     gradeRows,
     updateField,
     loadFromFieldMap,
-    handleGenerateGrade
+    handleGenerateGrade,
+    applyHistorico,
+    applyImportText,
+    setImportText,
+    importText
   } = useSubstitutionUninter();
 
   // 1. Carregar dados do documento
@@ -262,9 +266,9 @@ export default function HistoricoEditar() {
               fields={fields}
               activeHistorico={activeHistorico}
               modifiedCount={modifiedCount}
-              importText={""}
-              onUpdateImportText={() => {}}
-              onApplyImportText={() => {}}
+              importText={importText}
+              onUpdateImportText={setImportText}
+              onApplyImportText={applyImportText}
               onApplyHistorico={applyHistorico}
               onUpdateField={updateField}
               onGenerateMatricula={() => {}}

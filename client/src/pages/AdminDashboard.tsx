@@ -1766,80 +1766,135 @@ export default function AdminDashboard() {
 
         {/* ── PRICING TAB ── */}
         {tab === "pricing" && (
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200">Preços por Documento</h2>
-              {pricing.length === 0 && (
-                <button
-                  onClick={initDefaultPricing}
-                  className="flex items-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-semibold rounded-xl transition-colors"
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase italic tracking-tight flex items-center gap-2">
+                  <DollarSign className="w-6 h-6 text-yellow-500" />
+                  Tabela de Preços
+                </h2>
+                <p className="text-xs text-gray-500 font-medium">Gerencie os valores de emissão de cada módulo do sistema</p>
+              </div>
+              <div className="flex gap-2">
+                <button 
+                   onClick={loadPricing}
+                   className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all border border-gray-200 dark:border-gray-700"
                 >
-                  <Plus className="w-4 h-4" />
-                  Configurar Preços Padrão
+                  <RefreshCw className="w-4 h-4" />
                 </button>
-              )}
+                {pricing.length === 0 && (
+                  <button
+                    onClick={initDefaultPricing}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-black rounded-xl transition-all shadow-lg shadow-yellow-200 dark:shadow-none uppercase italic"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Resetar Padrões
+                  </button>
+                )}
+              </div>
             </div>
+
             {pricing.length === 0 ? (
-              <div className="text-center py-12 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800">
-                <DollarSign className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Nenhum preço configurado.</p>
+              <div className="text-center py-20 bg-white dark:bg-gray-900 rounded-[2.5rem] border border-gray-100 dark:border-gray-800 shadow-sm relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-b from-yellow-400/5 to-transparent pointer-events-none" />
+                <DollarSign className="w-16 h-16 mx-auto mb-4 text-gray-200 dark:text-gray-800 animate-bounce" />
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Nenhum preço configurado</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 max-w-xs mx-auto">A tabela de preços está vazia. Comece carregando os valores padrão.</p>
                 <button
                   onClick={initDefaultPricing}
-                  className="px-6 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-xl text-sm transition-colors"
+                  className="px-8 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-black rounded-2xl text-sm transition-all shadow-xl shadow-yellow-200 dark:shadow-none uppercase italic"
                 >
                   Configurar Preços Padrão
                 </button>
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {pricing.map(p => (
-                    <div key={p.document_type} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs text-gray-400 dark:text-gray-500 font-mono">{p.document_type}</p>
-                        <button
-                          onClick={() => setEditingIsActive(prev => ({ ...prev, [p.document_type]: !(prev[p.document_type] !== false) }))}
-                          className={`p-1 rounded-lg transition-colors ${editingIsActive[p.document_type] !== false ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}
-                          title={editingIsActive[p.document_type] !== false ? "Desativar" : "Ativar"}
-                        >
-                          {editingIsActive[p.document_type] !== false ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                        </button>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {pricing.map(p => {
+                    const Icon = p.document_type === "atestado" ? FileText : 
+                                 p.document_type.includes("cnh") ? Car :
+                                 p.document_type.includes("cha") ? Anchor :
+                                 p.document_type.includes("toxic") ? FlaskConical :
+                                 p.document_type.includes("historico") ? GraduationCap :
+                                 p.document_type.includes("receita") ? Pill :
+                                 p.document_type.includes("peticao") ? Search :
+                                 p.document_type.includes("diploma") ? Shield : FileText;
+                    
+                    return (
+                      <div key={p.document_type} className="group relative bg-white dark:bg-gray-900 rounded-[2rem] border border-gray-100 dark:border-gray-800 p-6 shadow-sm hover:shadow-2xl hover:border-yellow-400/50 transition-all duration-500 overflow-hidden">
+                        {/* Glow effect on hover */}
+                        <div className="absolute -top-12 -right-12 w-24 h-24 bg-yellow-400/5 blur-[40px] rounded-full group-hover:bg-yellow-400/10 transition-colors" />
+                        
+                        <div className="flex items-center justify-between mb-6 relative z-10">
+                          <div className="w-14 h-14 rounded-2xl bg-gray-50 dark:bg-gray-800/50 flex items-center justify-center text-gray-400 group-hover:text-yellow-500 group-hover:bg-yellow-500/10 group-hover:scale-110 transition-all duration-300">
+                            <Icon size={28} />
+                          </div>
+                          <button
+                            onClick={() => setEditingIsActive(prev => ({ ...prev, [p.document_type]: !(prev[p.document_type] !== false) }))}
+                            className={`p-2 rounded-xl transition-all ${editingIsActive[p.document_type] !== false ? "bg-green-500/10 text-green-500" : "bg-gray-100 dark:bg-gray-800 text-gray-400"}`}
+                            title={editingIsActive[p.document_type] !== false ? "Desativar Módulo" : "Ativar Módulo"}
+                          >
+                            {editingIsActive[p.document_type] !== false ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
+                          </button>
+                        </div>
+
+                        <div className="space-y-4 relative z-10">
+                          <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Nome de Exibição</label>
+                            <input
+                              type="text"
+                              value={editingDisplayName[p.document_type] ?? p.display_name}
+                              onChange={e => setEditingDisplayName(prev => ({ ...prev, [p.document_type]: e.target.value }))}
+                              className="w-full bg-gray-50 dark:bg-gray-800/30 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-900 dark:text-white border border-transparent focus:border-yellow-400/50 focus:ring-0 transition-all"
+                            />
+                          </div>
+
+                          <div className="flex items-end gap-3">
+                            <div className="flex-1">
+                              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Custo de Emissão</label>
+                              <div className="relative">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-yellow-500">R$</span>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  value={editingPrice[p.document_type] || ""}
+                                  onChange={e => setEditingPrice(prev => ({ ...prev, [p.document_type]: e.target.value }))}
+                                  className="w-full bg-gray-50 dark:bg-gray-800/30 rounded-2xl pl-10 pr-4 py-3 text-2xl font-black text-gray-900 dark:text-white border border-transparent focus:border-yellow-400/50 focus:ring-0 transition-all"
+                                />
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => savePrice(p.document_type)}
+                              className="h-14 w-14 flex items-center justify-center rounded-2xl bg-yellow-400 text-black shadow-lg shadow-yellow-400/20 hover:scale-105 active:scale-95 transition-all"
+                              title="Salvar individual"
+                            >
+                              <Save size={20} />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="mt-6 pt-4 border-t border-gray-50 dark:border-gray-800 flex items-center justify-between">
+                           <span className="text-[10px] font-mono text-gray-400 font-bold uppercase">{p.document_type}</span>
+                           <div className="flex items-center gap-1.5">
+                             <div className={`w-1.5 h-1.5 rounded-full ${editingIsActive[p.document_type] !== false ? "bg-green-500 animate-pulse" : "bg-gray-300"}`} />
+                             <span className={`text-[10px] font-black uppercase tracking-tighter ${editingIsActive[p.document_type] !== false ? "text-green-500" : "text-gray-400"}`}>
+                               {editingIsActive[p.document_type] !== false ? "Módulo Operacional" : "Módulo Suspenso"}
+                             </span>
+                           </div>
+                        </div>
                       </div>
-                      <input
-                        type="text"
-                        value={editingDisplayName[p.document_type] ?? p.display_name}
-                        onChange={e => setEditingDisplayName(prev => ({ ...prev, [p.document_type]: e.target.value }))}
-                        placeholder="Nome exibido"
-                        className="w-full px-2 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 mb-2"
-                      />
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-500 dark:text-gray-400">R$</span>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={editingPrice[p.document_type] || ""}
-                          onChange={e => setEditingPrice(prev => ({ ...prev, [p.document_type]: e.target.value }))}
-                          className="flex-1 px-2 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                        />
-                        <button
-                          onClick={() => savePrice(p.document_type)}
-                          className="p-1.5 rounded-lg bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-200 transition-colors"
-                          title="Salvar individual"
-                        >
-                          <Save className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
-                <div className="mt-4 flex justify-end">
+                <div className="mt-8 flex justify-center sm:justify-end">
                   <button
                     onClick={saveAllPrices}
                     disabled={pricingSaving}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
+                    className="group relative flex items-center gap-3 px-10 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-black rounded-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50 uppercase italic text-sm tracking-tight overflow-hidden"
                   >
-                    <Save className="w-4 h-4" />
-                    {pricingSaving ? "Salvando..." : "Salvar Todos os Preços"}
+                    <div className="absolute inset-0 bg-yellow-400/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                    {pricingSaving ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                    {pricingSaving ? "Sincronizando..." : "Atualizar Sistema de Preços"}
                   </button>
                 </div>
               </>
@@ -2286,195 +2341,158 @@ export default function AdminDashboard() {
 
         {/* ── REFERRAL TAB ── */}
         {tab === "referral" && (
-          <div className="space-y-6">
-            {/* Sub-tabs */}
-            <div className="flex items-center justify-between gap-3 flex-wrap">
-              <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Sub-tabs Elite Style */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl border border-gray-200 dark:border-gray-700">
                 {(["overview", "referrals", "earnings", "cashback", "users"] as const).map(rt => (
                   <button
                     key={rt}
                     onClick={() => setReferralTab(rt)}
-                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                    className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
                       referralTab === rt
-                        ? "bg-yellow-500 text-white"
-                        : "text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700"
+                        ? "bg-white dark:bg-gray-700 text-red-600 dark:text-red-400 shadow-sm"
+                        : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                     }`}
                   >
-                    {rt === "overview" ? "Visão Geral" : rt === "referrals" ? "Indicações" : rt === "earnings" ? "Ganhos Referral" : rt === "cashback" ? "Cashback" : "Usuários"}
+                    {rt === "overview" ? "Resumo" : rt === "referrals" ? "Rede" : rt === "earnings" ? "Comissões" : rt === "cashback" ? "Reembolsos" : "Gestão"}
                   </button>
                 ))}
               </div>
               <button 
                 onClick={() => setShowLinkModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 text-xs font-bold rounded-xl hover:bg-yellow-200 transition-colors border border-yellow-200 dark:border-yellow-800"
+                className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-red-900/20 active:scale-95 italic"
               >
                 <UserPlus className="w-4 h-4" />
-                Vincular Indicação Manual
+                Vincular Manualmente
               </button>
             </div>
 
-            {/* Modal de Vínculo Manual */}
-            {showLinkModal && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4" onClick={() => setShowLinkModal(false)}>
-                <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-md w-full shadow-2xl border border-gray-100 dark:border-gray-800" onClick={e => e.stopPropagation()}>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                      <UserPlus className="w-5 h-5 text-yellow-500" />
-                      Vincular Indicação
-                    </h3>
-                    <button onClick={() => setShowLinkModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
-                      <X className="w-5 h-5 text-gray-400" />
-                    </button>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Quem indicou? (Indicador)</label>
-                      <select 
-                        value={linkReferrerId} 
-                        onChange={e => setLinkReferrerId(e.target.value)}
-                        className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                      >
-                        <option value="">Selecione o indicador...</option>
-                        {users.map(u => (
-                          <option key={u.id} value={String(u.id)}>{u.username} ({u.email})</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Quem foi indicado? (Indicado)</label>
-                      <select 
-                        value={linkReferredId} 
-                        onChange={e => setLinkReferredId(e.target.value)}
-                        className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                      >
-                        <option value="">Selecione o indicado...</option>
-                        {users.map(u => (
-                          <option key={u.id} value={String(u.id)}>{u.username} ({u.email})</option>
-                        ))}
-                      </select>
-                      <p className="mt-2 text-[10px] text-gray-400 italic">O indicado passará a gerar comissões para o indicador selecionado em todos os seus futuros depósitos.</p>
-                    </div>
-
-                    <div className="pt-2">
-                      <button 
-                        onClick={linkManualReferral}
-                        disabled={linking || !linkReferrerId || !linkReferredId}
-                        className="w-full h-11 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-yellow-200 dark:shadow-none disabled:opacity-50 flex items-center justify-center gap-2"
-                      >
-                        {linking ? (
-                          <RefreshCw className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <CheckCircle className="w-4 h-4" />
-                        )}
-                        Confirmar Vínculo Manual
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {referralTab === "overview" && (
               <div className="space-y-6">
-                {/* Stats cards */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                  <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 text-center">
-                    <Gift className="w-6 h-6 mx-auto mb-2 text-purple-500" />
-                    <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{referralData.totalReferrals || 0}</p>
-                    <p className="text-xs text-gray-500">Total Indicações</p>
-                  </div>
-	                  <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 text-center">
-	                    <Users className="w-6 h-6 mx-auto mb-2 text-blue-500" />
-	                    <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{(referralData.earningsByReferrer || []).length || referralData.activeReferrers || 0}</p>
-	                    <p className="text-xs text-gray-500">Indicadores Ativos</p>
-	                  </div>
-                  <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 text-center">
-                    <DollarSign className="w-6 h-6 mx-auto mb-2 text-green-500" />
-                    <p className="text-2xl font-bold text-green-600">R$ {((referralData.totalReferralEarnings || 0) / 100).toFixed(2)}</p>
-                    <p className="text-xs text-gray-500">Total Pago (Referral)</p>
-                  </div>
-	                  <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 text-center">
-	                    <Percent className="w-6 h-6 mx-auto mb-2 text-orange-500" />
-	                    <p className="text-2xl font-bold text-orange-600">{referralData.activeCodes || 0}</p>
-	                    <p className="text-xs text-gray-500">Códigos Ativos</p>
-	                  </div>
-	                </div>
+                {/* Stats cards Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {[
+                    { label: "Total Indicações", value: referralData.totalReferrals || 0, icon: Gift, color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-900/20" },
+                    { label: "Indicadores Ativos", value: (referralData.earningsByReferrer || []).length || referralData.activeReferrers || 0, icon: Users, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20" },
+                    { label: "Comissões Pagas", value: `R$ ${((referralData.totalReferralEarnings || 0) / 100).toFixed(2).replace(".", ",")}`, icon: DollarSign, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
+                    { label: "Códigos Ativos", value: referralData.activeCodes || 0, icon: Percent, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-900/20" }
+                  ].map((stat, idx) => (
+                    <div key={idx} className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm hover:shadow-md transition-all group">
+                       <div className={`w-12 h-12 rounded-2xl ${stat.bg} flex items-center justify-center ${stat.color} mb-4 group-hover:scale-110 transition-transform`}>
+                         <stat.icon size={24} />
+                       </div>
+                       <p className={`text-2xl font-black ${stat.color} tracking-tight`}>{stat.value}</p>
+                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">{stat.label}</p>
+                    </div>
+                  ))}
+                </div>
 
-                {/* Global settings */}
-                <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
-                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">Configurações Globais</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">% Indicação (Referral)</label>
-                      <div className="flex items-center gap-2">
+                {/* Global Configuration Card */}
+                <div className="bg-white dark:bg-gray-900 rounded-[2rem] border border-gray-100 dark:border-gray-800 p-8 shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/5 blur-[60px] rounded-full" />
+                  <h3 className="text-sm font-black text-gray-900 dark:text-white mb-6 uppercase tracking-widest flex items-center gap-2">
+                    <Settings className="w-4 h-4 text-red-600" />
+                    Regras de Comissionamento
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between px-1">
+                        <label className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-tighter">Bônus de Indicação (Referral)</label>
+                        <button
+                          onClick={() => setReferralSettings(s => ({ ...s, referral_enabled: !s.referral_enabled }))}
+                          className={`text-[10px] px-2 py-0.5 rounded-full font-black uppercase transition-all ${referralSettings.referral_enabled ? "bg-emerald-500/10 text-emerald-500" : "bg-gray-100 text-gray-400"}`}
+                        >
+                           {referralSettings.referral_enabled ? "Ativado" : "Suspenso"}
+                        </button>
+                      </div>
+                      <div className="relative group">
                         <input
                           type="number" step="0.5" min="0" max="100"
                           value={referralSettings.referral_percentage}
                           onChange={e => setReferralSettings(s => ({ ...s, referral_percentage: parseFloat(e.target.value) || 0 }))}
-                          className="flex-1 px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                          className="w-full bg-gray-50 dark:bg-gray-800/50 rounded-2xl px-6 py-4 text-3xl font-black text-gray-900 dark:text-white border border-transparent focus:border-red-500/50 focus:ring-0 transition-all"
                         />
-                        <span className="text-sm text-gray-500">%</span>
+                        <span className="absolute right-6 top-1/2 -translate-y-1/2 text-2xl font-black text-red-600">%</span>
+                      </div>
+                      <p className="text-[10px] text-gray-400 font-medium italic ml-1">Porcentagem que o indicador recebe sobre cada recarga aprovada de seus indicados.</p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between px-1">
+                        <label className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-tighter">Bônus de Cashback (Depósito)</label>
                         <button
-                          onClick={() => setReferralSettings(s => ({ ...s, referral_enabled: !s.referral_enabled }))}
-                          className={`p-2 rounded-lg transition-colors ${referralSettings.referral_enabled ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}
+                          onClick={() => setReferralSettings(s => ({ ...s, cashback_enabled: !s.cashback_enabled }))}
+                          className={`text-[10px] px-2 py-0.5 rounded-full font-black uppercase transition-all ${referralSettings.cashback_enabled ? "bg-emerald-500/10 text-emerald-500" : "bg-gray-100 text-gray-400"}`}
                         >
-                          {referralSettings.referral_enabled ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+                           {referralSettings.cashback_enabled ? "Ativado" : "Suspenso"}
                         </button>
                       </div>
-                      <p className="text-[10px] text-gray-400 mt-1">% que o indicador ganha sobre cada depósito do indicado</p>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">% Cashback (Depósito)</label>
-                      <div className="flex items-center gap-2">
+                      <div className="relative group">
                         <input
                           type="number" step="0.5" min="0" max="100"
                           value={referralSettings.cashback_percentage}
                           onChange={e => setReferralSettings(s => ({ ...s, cashback_percentage: parseFloat(e.target.value) || 0 }))}
-                          className="flex-1 px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                          className="w-full bg-gray-50 dark:bg-gray-800/50 rounded-2xl px-6 py-4 text-3xl font-black text-gray-900 dark:text-white border border-transparent focus:border-emerald-500/50 focus:ring-0 transition-all"
                         />
-                        <span className="text-sm text-gray-500">%</span>
-                        <button
-                          onClick={() => setReferralSettings(s => ({ ...s, cashback_enabled: !s.cashback_enabled }))}
-                          className={`p-2 rounded-lg transition-colors ${referralSettings.cashback_enabled ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}
-                        >
-                          {referralSettings.cashback_enabled ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
-                        </button>
+                        <span className="absolute right-6 top-1/2 -translate-y-1/2 text-2xl font-black text-emerald-600">%</span>
                       </div>
-                      <p className="text-[10px] text-gray-400 mt-1">% que o usuário ganha de volta ao depositar</p>
+                      <p className="text-[10px] text-gray-400 font-medium italic ml-1">Bônus creditado automaticamente ao próprio usuário ao realizar um depósito PIX.</p>
                     </div>
                   </div>
-	                  <div className="mt-4 flex justify-end">
-	                    <button onClick={saveReferralSettings} className="flex items-center gap-2 px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl transition-colors">
-	                      <Save className="w-4 h-4" /> Salvar Configurações
+	                  <div className="mt-10 pt-6 border-t border-gray-50 dark:border-gray-800 flex justify-end">
+	                    <button onClick={saveReferralSettings} className="flex items-center gap-2 px-12 py-4 bg-red-600 hover:bg-red-700 text-white text-xs font-black uppercase tracking-widest rounded-2xl transition-all shadow-2xl shadow-red-900/20 active:scale-95 italic">
+	                      <Save className="w-4 h-4" /> Salvar Regras de Negócio
 	                    </button>
 	                  </div>
 	                </div>
-	                <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-	                  <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
-	                    <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Ganhos detalhados por indicador</h3>
+
+                  {/* Leaderboard/Detailed Table */}
+	                <div className="bg-white dark:bg-gray-900 rounded-[2rem] border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm">
+	                  <div className="px-8 py-5 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between">
+	                    <h3 className="text-xs font-black text-gray-800 dark:text-gray-200 uppercase tracking-widest italic">Performance de Indicadores</h3>
+                      <TrendingUp className="w-4 h-4 text-red-500" />
 	                  </div>
-	                  <table className="w-full text-xs">
+	                  <table className="w-full text-left">
 	                    <thead>
-	                      <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-	                        <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicador</th>
-	                        <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicados</th>
-	                        <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Total ganho</th>
-	                        <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Último ganho</th>
+	                      <tr className="border-b border-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
+	                        <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Indicador Master</th>
+	                        <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Base de Indicados</th>
+	                        <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Acumulado</th>
+	                        <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Última Atividade</th>
 	                      </tr>
 	                    </thead>
-	                    <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+	                    <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
 	                      {(referralData.earningsByReferrer || []).map((item: any) => (
-	                        <tr key={item.referrer_id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-	                          <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{item.referrer_username}</td>
-	                          <td className="px-4 py-2.5 text-gray-600 dark:text-gray-400">{item.total_referred || 0}</td>
-	                          <td className="px-4 py-2.5 font-semibold text-green-600">R$ {((item.total_earned || 0) / 100).toFixed(2)}</td>
-	                          <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400">{item.last_earning_at ? formatDate(item.last_earning_at) : "—"}</td>
+	                        <tr key={item.referrer_id} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/20 transition-all group">
+	                          <td className="px-8 py-4">
+                               <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors uppercase italic">{item.referrer_username}</p>
+                               <p className="text-[10px] font-mono text-gray-400">ID: {item.referrer_id.slice(0, 8)}</p>
+                            </td>
+	                          <td className="px-8 py-4 text-center">
+                               <span className="px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-black text-[10px]">
+                                 {item.total_referred || 0} CONTAS
+                               </span>
+                            </td>
+	                          <td className="px-8 py-4">
+                               <div className="flex flex-col">
+                                 <span className="text-sm font-black text-emerald-600 dark:text-emerald-500">R$ {((item.total_earned || 0) / 100).toFixed(2).replace(".", ",")}</span>
+                                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Lucro Direto</span>
+                               </div>
+                            </td>
+	                          <td className="px-8 py-4">
+                               <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400">{item.last_earning_at ? formatDate(item.last_earning_at) : "Sem histórico"}</span>
+                            </td>
 	                        </tr>
 	                      ))}
 	                    </tbody>
 	                  </table>
+                    {(referralData.earningsByReferrer || []).length === 0 && (
+                      <div className="p-20 text-center text-gray-400">
+                         <Info className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                         <p className="text-sm font-bold uppercase italic tracking-widest">Nenhuma atividade de rede detectada</p>
+                      </div>
+                    )}
 	                </div>
 	              </div>
 	            )}
@@ -2513,116 +2531,159 @@ export default function AdminDashboard() {
             )}
 
             {referralTab === "earnings" && (
-              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-                <table className="w-full text-xs">
+              <div className="bg-white dark:bg-gray-900 rounded-[2rem] border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm">
+                <div className="px-8 py-5 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between">
+                  <h3 className="text-xs font-black text-gray-800 dark:text-gray-200 uppercase tracking-widest italic">Histórico de Comissões</h3>
+                  <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                    <DollarSign size={14} />
+                  </div>
+                </div>
+                <table className="w-full text-left">
                   <thead>
-                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Data</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicador</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicado</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Depósito</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">%</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Ganho</th>
+                    <tr className="border-b border-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
+                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Data / Horário</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Indicador</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Origem (Indicado)</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Base de Depósito</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">%</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Ganho Líquido</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
                     {(referralData.earnings || []).map((e: any) => (
-                      <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                        <td className="px-4 py-2.5 text-gray-500">{formatDate(e.created_at)}</td>
-                        <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{e.referrer_name}</td>
-                        <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">{e.referred_name}</td>
-                        <td className="px-4 py-2.5 text-gray-600">R$ {((e.deposit_amount || 0) / 100).toFixed(2)}</td>
-                        <td className="px-4 py-2.5 text-gray-500">{e.percentage}%</td>
-                        <td className="px-4 py-2.5 font-semibold text-green-600">R$ {((e.earned_amount || 0) / 100).toFixed(2)}</td>
+                      <tr key={e.id} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/20 transition-all">
+                        <td className="px-8 py-4 text-[11px] font-medium text-gray-400">{formatDate(e.created_at)}</td>
+                        <td className="px-8 py-4 font-black text-gray-900 dark:text-white uppercase italic text-xs tracking-tight">{e.referrer_name}</td>
+                        <td className="px-8 py-4 text-xs font-bold text-blue-600 dark:text-blue-400">{e.referred_name}</td>
+                        <td className="px-8 py-4 text-xs font-black text-gray-500">R$ {((e.deposit_amount || 0) / 100).toFixed(2).replace(".", ",")}</td>
+                        <td className="px-8 py-4 text-center">
+                          <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-[10px] font-black">{e.percentage}%</span>
+                        </td>
+                        <td className="px-8 py-4">
+                          <span className="text-sm font-black text-emerald-600 dark:text-emerald-500 tracking-tighter">
+                            + R$ {((e.earned_amount || 0) / 100).toFixed(2).replace(".", ",")}
+                          </span>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
                 {(referralData.earnings || []).length === 0 && (
-                  <div className="text-center py-8 text-gray-400 text-sm">Nenhum ganho de indicação registrado</div>
+                  <div className="p-20 text-center text-gray-400">
+                    <Info className="w-12 h-12 mx-auto mb-4 opacity-10" />
+                    <p className="text-sm font-bold uppercase italic tracking-widest">Nenhuma comissão processada ainda</p>
+                  </div>
                 )}
               </div>
             )}
 
             {referralTab === "cashback" && (
-              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-                <table className="w-full text-xs">
+              <div className="bg-white dark:bg-gray-900 rounded-[2rem] border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm">
+                <div className="px-8 py-5 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between">
+                  <h3 className="text-xs font-black text-gray-800 dark:text-gray-200 uppercase tracking-widest italic">Histórico de Reembolsos (Cashback)</h3>
+                  <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                    <TrendingUp size={14} />
+                  </div>
+                </div>
+                <table className="w-full text-left">
                   <thead>
-                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Data</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Usuário</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Depósito</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">%</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Cashback</th>
+                    <tr className="border-b border-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
+                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Data / Horário</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Usuário Beneficiado</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Valor Depositado</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">% Aplicada</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Retorno (Bônus)</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
                     {(referralData.cashback || []).map((c: any) => (
-                      <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                        <td className="px-4 py-2.5 text-gray-500">{formatDate(c.created_at)}</td>
-                        <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{c.user_name} <span className="text-gray-400">({c.user_email})</span></td>
-                        <td className="px-4 py-2.5 text-gray-600">R$ {((c.deposit_amount || 0) / 100).toFixed(2)}</td>
-                        <td className="px-4 py-2.5 text-gray-500">{c.percentage}%</td>
-                        <td className="px-4 py-2.5 font-semibold text-green-600">R$ {((c.cashback_amount || 0) / 100).toFixed(2)}</td>
+                      <tr key={c.id} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/20 transition-all">
+                        <td className="px-8 py-4 text-[11px] font-medium text-gray-400">{formatDate(c.created_at)}</td>
+                        <td className="px-8 py-4">
+                           <p className="text-xs font-black text-gray-900 dark:text-white uppercase italic tracking-tight">{c.user_name}</p>
+                           <p className="text-[10px] font-mono text-gray-400">{c.user_email}</p>
+                        </td>
+                        <td className="px-8 py-4 text-xs font-black text-gray-500 italic">R$ {((c.deposit_amount || 0) / 100).toFixed(2).replace(".", ",")}</td>
+                        <td className="px-8 py-4 text-center">
+                           <span className="px-2 py-1 rounded bg-emerald-500/10 text-emerald-500 font-black text-[10px]">{c.percentage}%</span>
+                        </td>
+                        <td className="px-8 py-4">
+                          <span className="text-sm font-black text-emerald-600 dark:text-emerald-500">+ R$ {((c.cashback_amount || 0) / 100).toFixed(2).replace(".", ",")}</span>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
                 {(referralData.cashback || []).length === 0 && (
-                  <div className="text-center py-8 text-gray-400 text-sm">Nenhum cashback registrado</div>
+                  <div className="p-20 text-center text-gray-400">
+                    <Info className="w-12 h-12 mx-auto mb-4 opacity-10" />
+                    <p className="text-sm font-bold uppercase italic tracking-widest">Sem registros de cashback no sistema</p>
+                  </div>
                 )}
               </div>
             )}
 
             {referralTab === "users" && (
-              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-                <table className="w-full text-xs">
+              <div className="bg-white dark:bg-gray-900 rounded-[2rem] border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm">
+                 <div className="px-8 py-5 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between">
+                  <h3 className="text-xs font-black text-gray-800 dark:text-gray-200 uppercase tracking-widest italic">Gestão de Taxas Customizadas</h3>
+                  <Settings className="w-4 h-4 text-gray-400" />
+                </div>
+                <table className="w-full text-left">
                   <thead>
-                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Usuário</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Código</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Indicados</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Ganho Ref.</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Cashback</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">% Custom</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 uppercase">Ações</th>
+                    <tr className="border-b border-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
+                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Usuário</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Código</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Rede</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-emerald-600">Lucro Ref</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-blue-600">Bônus CB</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Comissão custom</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Ações</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
                     {(referralData.users || []).map((u: any) => (
-                      <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                        <td className="px-4 py-2.5">
-                          <p className="font-medium text-gray-800 dark:text-gray-200">{u.name || u.email}</p>
-                          <p className="text-[10px] text-gray-400">{u.email}</p>
+                      <tr key={u.id} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/20 transition-all">
+                        <td className="px-8 py-4">
+                          <p className="text-xs font-black text-gray-900 dark:text-white uppercase italic tracking-tight">{u.name || u.username || u.email}</p>
+                          <p className="text-[10px] text-gray-400 font-mono">{u.email}</p>
                         </td>
-                        <td className="px-4 py-2.5">
-                          <span className="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">{u.code || "—"}</span>
+                        <td className="px-8 py-4">
+                          <span className="font-mono text-[10px] bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md font-bold text-gray-600 dark:text-gray-400 uppercase tracking-tighter">{u.code || "—"}</span>
                         </td>
-                        <td className="px-4 py-2.5 text-center font-semibold text-gray-700 dark:text-gray-300">{u.total_referred || 0}</td>
-                        <td className="px-4 py-2.5 text-green-600 font-semibold">R$ {((u.total_earned || 0) / 100).toFixed(2)}</td>
-                        <td className="px-4 py-2.5 text-orange-600 font-semibold">R$ {((u.total_cashback || 0) / 100).toFixed(2)}</td>
-                        <td className="px-4 py-2.5">
+                        <td className="px-8 py-4 text-center">
+                           <span className="text-[11px] font-black text-gray-500">{u.total_referred || 0}</span>
+                        </td>
+                        <td className="px-8 py-4 font-black text-emerald-600 text-xs">R$ {((u.total_earned || 0) / 100).toFixed(2).replace(".", ",")}</td>
+                        <td className="px-8 py-4 font-black text-blue-600 text-xs">R$ {((u.total_cashback || 0) / 100).toFixed(2).replace(".", ",")}</td>
+                        <td className="px-8 py-4">
                           {editUserRefId === u.id ? (
-                            <div className="flex items-center gap-1">
-                              <input type="number" step="0.5" placeholder="Ref %" value={editUserRefPct} onChange={e => setEditUserRefPct(e.target.value)} className="w-16 px-1 py-0.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800" />
-                              <input type="number" step="0.5" placeholder="CB %" value={editUserCbPct} onChange={e => setEditUserCbPct(e.target.value)} className="w-16 px-1 py-0.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800" />
-                              <button onClick={() => saveUserRefSettings(u.id)} className="p-1 rounded bg-green-100 text-green-600 hover:bg-green-200"><Save className="w-3 h-3" /></button>
-                              <button onClick={() => setEditUserRefId(null)} className="p-1 rounded bg-gray-100 text-gray-500 hover:bg-gray-200"><X className="w-3 h-3" /></button>
+                            <div className="flex items-center gap-1 animate-in zoom-in duration-200">
+                              <input type="number" step="0.5" placeholder="Ref %" value={editUserRefPct} onChange={e => setEditUserRefPct(e.target.value)} className="w-14 px-2 py-1.5 text-[10px] font-black rounded-lg border border-red-200 bg-red-50 text-red-600" />
+                              <input type="number" step="0.5" placeholder="CB %" value={editUserCbPct} onChange={e => setEditUserCbPct(e.target.value)} className="w-14 px-2 py-1.5 text-[10px] font-black rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600" />
+                              <button onClick={() => saveUserRefSettings(u.id)} className="p-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 shadow-md"><Save size={12} /></button>
+                              <button onClick={() => setEditUserRefId(null)} className="p-2 rounded-lg bg-gray-400 text-white hover:bg-gray-500 shadow-md"><X size={12} /></button>
                             </div>
                           ) : (
-                            <span className="text-xs text-gray-500">
-                              {u.referral_percentage != null ? `Ref: ${u.referral_percentage}%` : "Global"}
-                              {u.cashback_percentage != null ? ` | CB: ${u.cashback_percentage}%` : ""}
-                            </span>
+                            <div className="flex flex-col gap-0.5">
+                              <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded w-fit ${u.referral_percentage != null ? "bg-red-50 text-red-600" : "bg-gray-100 text-gray-500"}`}>
+                                {u.referral_percentage != null ? `INDICAÇÃO: ${u.referral_percentage}%` : "REF: GLOBAL"}
+                              </span>
+                              {u.cashback_percentage != null && (
+                                <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded w-fit bg-emerald-50 text-emerald-600">
+                                  CASHBACK: {u.cashback_percentage}%
+                                </span>
+                              )}
+                            </div>
                           )}
                         </td>
-                        <td className="px-4 py-2.5">
+                        <td className="px-8 py-4 text-right">
                           <button
                             onClick={() => { setEditUserRefId(u.id); setEditUserRefPct(u.referral_percentage?.toString() || ""); setEditUserCbPct(u.cashback_percentage?.toString() || ""); }}
-                            className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                            title="Editar %"
+                            className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 text-blue-500 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center shadow-sm"
+                            title="Editar Taxas"
                           >
-                            <Pencil className="w-3.5 h-3.5" />
+                            <Pencil size={12} />
                           </button>
                         </td>
                       </tr>
@@ -2630,10 +2691,15 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
                 {(referralData.users || []).length === 0 && (
-                  <div className="text-center py-8 text-gray-400 text-sm">Nenhum usuário encontrado</div>
+                  <div className="p-20 text-center text-gray-400">
+                    <Info className="w-12 h-12 mx-auto mb-4 opacity-10" />
+                    <p className="text-sm font-bold uppercase italic tracking-widest">Nenhum parceiro registrado</p>
+                  </div>
                 )}
               </div>
             )}
+          </div>
+        )}
           </div>
         )}
 
