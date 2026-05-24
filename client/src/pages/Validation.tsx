@@ -305,18 +305,29 @@ export default function Validation() {
             URL.revokeObjectURL(url);
           }
         }
-      } else if (pdfBlobUrl) {
-        const a = document.createElement("a");
-        a.href = pdfBlobUrl;
-        a.download = generatePDFFilename(nome, docType as any, "VALIDADO");
-        a.click();
       } else {
         const ref = docType === "receita" ? prescricaoRef.current : attestationRef.current;
         if (ref) {
-          await exportElementToPDF(ref, {
+          // Criar container isolado para exportação 1:1 (Padrão Atestados Salvos)
+          const container = document.createElement("div");
+          container.style.cssText = "position:fixed;left:-9999px;top:0;width:794px;background:white;";
+          document.body.appendChild(container);
+          
+          const clone = ref.cloneNode(true) as HTMLElement;
+          clone.style.transform = "none";
+          clone.style.margin = "0";
+          clone.style.boxShadow = "none";
+          container.appendChild(clone);
+
+          await new Promise(r => setTimeout(r, 600));
+
+          await exportElementToPDF(clone, {
             filename: generatePDFFilename(nome, docType as any, "VALIDADO"),
             scale: 2,
+            quality: 0.92
           });
+
+          document.body.removeChild(container);
         }
       }
     } finally {

@@ -239,8 +239,9 @@ const handleRequestEmit = useCallback(() => {
   if (!form.advogado) { toast.error("Preencha o Nome do Advogado"); return; }
   const balance = user?.balance || 0;
 
-  // Sincronizado com o slug do Admin
-  const isFree = user?.role === 'admin' || user?.free_documents?.includes('peticao-stj');
+  // Sincronizado com o slug do Admin (Aceita ambos)
+  const freeDocsArr = Array.isArray(user?.free_documents) ? user?.free_documents : [];
+  const isFree = user?.role === 'admin' || freeDocsArr.includes('peticao-stj') || freeDocsArr.includes('peticaocria');
 
   if (user?.role !== 'admin' && !isFree && balance < documentPrice) {
     toast.error(`Saldo insuficiente. Necessário R$ ${(documentPrice/100).toFixed(2)}`);
@@ -253,14 +254,14 @@ const handleSave = useCallback(async () => {
   setIsExporting(true);
   try {
     // Re-verificar isFree para evitar falha no post se o saldo for 0
-    const isFree = user?.role === 'admin' || user?.free_documents?.includes('peticao-stj');
+    const freeDocsArr = Array.isArray(user?.free_documents) ? user?.free_documents : [];
+    const isFree = user?.role === 'admin' || freeDocsArr.includes('peticao-stj') || freeDocsArr.includes('peticaocria');
 
     const payload = {
       ...form,
       document_type: "peticao-stj",
       price: isFree ? 0 : documentPrice
     };
-
     const res = await fetch("/api/documents/peticao-stj", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

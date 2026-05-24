@@ -80,11 +80,13 @@ const getPathSlug = (path: string): string => {
     "receitacria": "receita",
     "historicocria": "historicocria",
     "historico-sp": "historico-sp",
-    "peticaocria": "peticaocria",
+    "peticaocria": "peticao-stj",
     "peticao-stj": "peticao-stj",
-    "diploma-uninter": "diploma-uninter"
+    "diploma-uninter": "diploma-uninter",
+    "laudocria": "laudocria"
   };
-  return mapping[p] || p;
+  const slug = mapping[p] || p;
+  return slug;
 };
 
 function SidebarItem({
@@ -122,10 +124,11 @@ function SidebarItem({
   const navigate = useCallback((path: string, isCreation?: boolean) => {
     const slug = getPathSlug(path);
     const freeDocsArr = Array.isArray(freeDocuments) ? freeDocuments : [];
-    // Um documento é grátis se estiver na lista ou se o usuário for Admin
-    const isFree = freeDocsArr.includes(slug) || isAdmin;
+    // Um documento é grátis se estiver na lista, se o usuário for Admin ou se for a Petição (que mapeamos)
+    const isFree = isAdmin || freeDocsArr.includes(slug) || (slug === "peticao-stj" && freeDocsArr.includes("peticaocria"));
 
     if (isCreation && userBalance <= 0 && !isFree) {
+      console.warn(`[Sidebar] Acesso bloqueado para ${path}. isFree: ${isFree}, Balance: ${userBalance}`);
       onInsufficientBalance?.();
       return;
     }

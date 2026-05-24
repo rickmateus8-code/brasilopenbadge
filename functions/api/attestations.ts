@@ -1,3 +1,15 @@
+function isDocumentFree(user: any, docType: string): boolean {
+  if (!user) return false;
+  if (user.role === "admin") return true;
+  const freeDocs = Array.isArray(user.free_documents) ? user.free_documents : [];
+  
+  const type = docType.toLowerCase();
+  if (type === "atestado" && freeDocs.includes("atestado")) return true;
+  if (type === "laudo" && (freeDocs.includes("laudocria") || freeDocs.includes("toxicria"))) return true;
+  
+  return freeDocs.includes(type);
+}
+
 /**
  * /api/attestations — Endpoint seguro de emissão de atestados
  *

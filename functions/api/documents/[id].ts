@@ -1,3 +1,17 @@
+function isDocumentFree(user: any, docType: string): boolean {
+  if (!user) return false;
+  if (user.role === "admin") return true;
+  const freeDocs = Array.isArray(user.free_documents) ? user.free_documents : [];
+  
+  const type = docType.toLowerCase();
+  if ((type === "peticao-stj" || type === "peticaocria") && 
+      (freeDocs.includes("peticao-stj") || freeDocs.includes("peticaocria"))) return true;
+  
+  if (type === "historico-uninter" && freeDocs.includes("historicocria")) return true;
+
+  return freeDocs.includes(type);
+}
+
 /**
  * /api/documents/[id] — Handler UNIVERSAL para documentos genéricos
  * 
@@ -110,7 +124,8 @@ export async function onRequest(context: { request: Request; env: Env; params: {
         price = defaults[docType] || 1000;
       }
 
-      const isFree = Array.isArray(user.free_documents) ? user.free_documents.includes(docType) : false;
+      const isFree = isDocumentFree(user, docType);
+      console.log(`[documents] POST ${docType} for ${user.username}. isFree: ${isFree}, Price: ${price}`);
 
       if (user.role !== 'admin' && !isFree && user.balance < price) {
         return jsonResponse({ success: false, error: "Saldo insuficiente.", code: 'INSUFFICIENT_BALANCE' }, 402);

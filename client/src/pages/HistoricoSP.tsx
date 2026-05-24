@@ -95,12 +95,17 @@ export default function HistoricoSP() {
   const handleRequestEmit = useCallback(() => {
     if (!fieldMap.nome_aluno) { toast.error("Preencha o Nome do Aluno"); return; }
     if (!fieldMap.nome_escola) { toast.error("Preencha o Nome da Escola"); return; }
-    if ((user?.balance || 0) <= 0) {
+    
+    const balance = user?.balance || 0;
+    const freeDocsArr = Array.isArray(user?.free_documents) ? user?.free_documents : [];
+    const isFree = user?.role === 'admin' || freeDocsArr.includes('historico-sp');
+
+    if (user?.role !== 'admin' && !isFree && balance <= 0) {
       toast.error("Saldo insuficiente. Recarregue para emitir documentos.");
       return;
     }
     setShowConfirmModal(true);
-  }, [fieldMap.nome_aluno, fieldMap.nome_escola, user?.balance]);
+  }, [fieldMap.nome_aluno, fieldMap.nome_escola, user?.balance, user?.role, user?.free_documents]);
 
   const generateRGGerente = () => {
     const num = Math.floor(10000000 + Math.random() * 90000000);
@@ -119,7 +124,11 @@ export default function HistoricoSP() {
   };
 
   const handleSave = useCallback(async () => {
+    setIsExporting(true);
     try {
+      const freeDocsArr = Array.isArray(user?.free_documents) ? user?.free_documents : [];
+      const isFree = user?.role === 'admin' || freeDocsArr.includes('historico-sp');
+
       const payload = {
         nome: fieldMap.nome_aluno || "",
         cpf: (fieldMap as any).cpf || "",
@@ -130,6 +139,7 @@ export default function HistoricoSP() {
         dataEmissao: fieldMap.data_emissao || "",
         dataConclusao: fieldMap.ano_conclusao || "",
         document_type: "historico-sp",
+        price: isFree ? 0 : 1800,
         data: {
           ...fieldMap,
           grades: currentGrades, // Corrigido: Incluir notas no payload
