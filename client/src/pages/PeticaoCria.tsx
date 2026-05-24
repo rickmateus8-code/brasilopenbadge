@@ -260,10 +260,13 @@ const handleSave = useCallback(async () => {
       document_type: "peticao-stj",
       price: isFree ? 0 : documentPrice
     };
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(payload),
-      });
+
+    const res = await fetch("/api/documents/peticao-stj", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(payload),
+    });
       const result = await res.json();
       if (result.success) {
         if (result.newBalance !== undefined) updateBalance(result.newBalance);
