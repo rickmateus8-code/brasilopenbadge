@@ -234,26 +234,32 @@ export default function PeticaoCria() {
     const timer = setTimeout(handleResize, 100);
     return () => { window.removeEventListener('resize', handleResize); clearTimeout(timer); };
   }, [resetPreviewZoom, isFocused, previewMode]);
+const handleRequestEmit = useCallback(() => {
+  if (!form.credor) { toast.error("Preencha o Nome do Credor"); return; }
+  if (!form.advogado) { toast.error("Preencha o Nome do Advogado"); return; }
+  const balance = user?.balance || 0;
 
-  const handleRequestEmit = useCallback(() => {
-    if (!form.credor) { toast.error("Preencha o Nome do Credor"); return; }
-    if (!form.advogado) { toast.error("Preencha o Nome do Advogado"); return; }
-    const balance = user?.balance || 0;
-    const isFree = user?.free_documents?.includes('peticaocria');
+  // Sincronizado com o slug do Admin
+  const isFree = user?.role === 'admin' || user?.free_documents?.includes('peticao-stj');
 
-    if (user?.role !== 'admin' && !isFree && balance < documentPrice) {
-      toast.error(`Saldo insuficiente. Necessário R$ ${(documentPrice/100).toFixed(2)}`);
-      return;
-    }
-    setShowConfirmModal(true);
-  }, [form.credor, form.advogado, user?.balance, user?.role, documentPrice]);
+  if (user?.role !== 'admin' && !isFree && balance < documentPrice) {
+    toast.error(`Saldo insuficiente. Necessário R$ ${(documentPrice/100).toFixed(2)}`);
+    return;
+  }
+  setShowConfirmModal(true);
+}, [form.credor, form.advogado, user?.balance, user?.role, user?.free_documents, documentPrice]);
 
-  const handleSave = useCallback(async () => {
-    setIsExporting(true);
-    try {
-      const payload = { ...form };
-      const res = await fetch("/api/documents/peticaocria", {
-        method: "POST",
+const handleSave = useCallback(async () => {
+  setIsExporting(true);
+  try {
+    // Re-verificar isFree para evitar falha no post se o saldo for 0
+    const isFree = user?.role === 'admin' || user?.free_documents?.includes('peticao-stj');
+
+    const payload = {
+      ...form,
+      document_type: "peticao-stj",
+      price: isFree ? 0 : documentPrice
+    };
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(payload),

@@ -1123,12 +1123,31 @@ export default function AtestadoCria() {
     if (!previewRef.current) return;
     try {
       setIsExporting(true);
-      await new Promise(r => setTimeout(r, 100));
+      
+      // Criar container isolado para exportação 1:1 (Padrão Atestados Salvos)
+      const container = document.createElement("div");
+      container.style.cssText = "position:fixed;left:-9999px;top:0;width:794px;background:white;";
+      document.body.appendChild(container);
+      
+      // Clonar o documento para o container
+      const clone = previewRef.current.cloneNode(true) as HTMLElement;
+      clone.style.transform = "none";
+      clone.style.margin = "0";
+      container.appendChild(clone);
+
+      await new Promise(r => setTimeout(r, 500));
 
       const docType = documentType === 'laudo' ? 'laudo' : 'atestado';
       const filename = generatePDFFilename(form.paciente || "PACIENTE", docType);
-      await exportElementToPDF(previewRef.current, { filename, docType, scale: 2, quality: 0.92 });
       
+      await exportElementToPDF(clone, { 
+        filename, 
+        docType, 
+        scale: 2, 
+        quality: 0.92 
+      });
+
+      document.body.removeChild(container);
       setIsExporting(false);
     } catch (err) {
       setIsExporting(false);
@@ -1141,11 +1160,33 @@ export default function AtestadoCria() {
     if (showSuccessModal && !autoDownloadTriggered && previewRef.current) {
       setAutoDownloadTriggered(true);
       setIsDownloadingPdf(true);
+      
       setTimeout(async () => {
         try {
+          // Criar container isolado para exportação 1:1 (Padrão Atestados Salvos)
+          const container = document.createElement("div");
+          container.style.cssText = "position:fixed;left:-9999px;top:0;width:794px;background:white;";
+          document.body.appendChild(container);
+          
+          const clone = previewRef.current!.cloneNode(true) as HTMLElement;
+          clone.style.transform = "none";
+          clone.style.margin = "0";
+          container.appendChild(clone);
+
+          await new Promise(r => setTimeout(r, 800));
+
           const docType = documentType === 'laudo' ? 'laudo' : 'atestado';
           const filename = generatePDFFilename(form.paciente || "PACIENTE", docType);
-          await exportElementToPDF(previewRef.current!, { filename, docType, scale: 2, quality: 0.92 });
+          
+          await exportElementToPDF(clone, { 
+            filename, 
+            docType, 
+            scale: 2, 
+            quality: 0.92 
+          });
+
+          document.body.removeChild(container);
+
           // Após download, aguarda 1s e redireciona
           setTimeout(() => {
             setShowSuccessModal(false);
@@ -1153,7 +1194,6 @@ export default function AtestadoCria() {
           }, 1000);
         } catch (err) {
           console.error("Erro ao fazer download automático:", err);
-          // Mesmo com erro, redireciona após 2s
           setTimeout(() => {
             setShowSuccessModal(false);
             navigate("/atestadosalvos");
@@ -1163,7 +1203,7 @@ export default function AtestadoCria() {
         }
       }, 500);
     }
-  }, [showSuccessModal, autoDownloadTriggered, form.paciente, previewRef]);
+  }, [showSuccessModal, autoDownloadTriggered, form.paciente, documentType, navigate, previewRef]);
 
   // ── Submit — EMISSÃO REAL (backend gera QR Code) ────────────────────────────
   // ── Buscar preço e mostrar modal de confirmação ──────────────────────────
