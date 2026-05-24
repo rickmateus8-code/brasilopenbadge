@@ -2700,8 +2700,6 @@ export default function AdminDashboard() {
             )}
           </div>
         )}
-          </div>
-        )}
 
         {/* ── DATABASE TAB ── */}
 	        {tab === "database" && (
