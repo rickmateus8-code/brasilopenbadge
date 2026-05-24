@@ -17,8 +17,8 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-const A4_WIDTH_PX = 826;
-const A4_HEIGHT_PX = 1180;
+const A4_WIDTH_PX = 794;
+const A4_HEIGHT_PX = 1123;
 
 export default function PeticaoCria() {
   const { user, updateBalance } = useAuth();
@@ -297,8 +297,8 @@ const handleSave = useCallback(async () => {
               await exportPDF(previewRef.current, {
                 filename: generatePDFFilename(form.credor || "PETICAO", "peticaocria"),
                 docType: "peticaocria",
-                customWidth: 826,
-                customHeight: 1180,
+                customWidth: 794,
+                customHeight: 1123,
               });
               toast.success("Download iniciado!");
               // Redirecionar após o download
@@ -327,8 +327,8 @@ const handleSave = useCallback(async () => {
       await exportPDF(previewRef.current, {
         filename: generatePDFFilename(form.credor || "PETICAO", "peticaocria"),
         docType: "peticaocria",
-        customWidth: 826,
-        customHeight: 1180,
+        customWidth: 794,
+        customHeight: 1123,
       });
       toast.success("PDF gerado com sucesso!");
     } catch (err) { toast.error("Erro ao exportar PDF."); }

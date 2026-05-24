@@ -27,11 +27,11 @@ interface PetitionSTJDocumentProps {
   data: PetitionData;
 }
 
-const DOC_WIDTH_PX = 826;  // Expandido +1% (818 -> 826)
-const DOC_HEIGHT_PX = 1180; // Aumentado em mais 3% (1145 -> 1180)
+const DOC_WIDTH_PX = 794;  // Padronizado A4 (96 DPI)
+const DOC_HEIGHT_PX = 1123; // Padronizado A4 (96 DPI)
 
 const DPI_TARGET = 300;
-const EXPORT_SCALE = 1.92; // Reajustado para a nova largura de 826px
+const EXPORT_SCALE = 2.0; // Proporção padrão para A4 1:1
 
 // Constantes de conversão ABNT expandidas para zona de respiro técnica
 const MARGIN_TOP = 170.0;    // Aumentado +3% (135.4 -> 170.0)
