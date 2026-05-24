@@ -362,12 +362,12 @@ export default function DiplomaUninterCria() {
       </div>
 
       <EmissionModal
-        docLabel="Diploma Uninter" docEmoji="🎓" documentPrice={documentPrice} userBalance={user?.balance ?? 0}
+        docLabel="Diploma Uninter" docEmoji="🎓" documentPrice={1800} userBalance={user?.balance ?? 0}
         showConfirm={showConfirmModal} showSuccess={showSuccessModal} isEmitting={loading} isDownloading={isDownloading}
         onConfirm={handleSave} onCancel={() => setShowConfirmModal(false)}
         onDownload={handleExportPdf}
         onClose={() => setShowSuccessModal(false)} historyPath="/dashboard"
-        isFree={user?.free_documents?.includes('diploma-uninter')}
+        isFree={user?.role === 'admin' || (Array.isArray(user?.free_documents) && user.free_documents.includes('diploma-uninter'))}
       />
     </DashboardLayout>
   );

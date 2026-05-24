@@ -646,9 +646,9 @@ export default function ReceitaCria() {
         <EmissaoConfirmModal
           documentoNome="Receituário Médico"
           documentoEmoji="💊"
-          documentPrice={documentPrice}
+          documentPrice={1800}
           userBalance={user?.balance ?? 0}
-          isFree={user?.free_documents?.includes('receita')}
+          isFree={user?.role === 'admin' || (Array.isArray(user?.free_documents) && user.free_documents.includes('receita'))}
           isLoading={isLoading}
           onConfirm={handleSubmit}
           onCancel={() => setShowConfirmModal(false)}

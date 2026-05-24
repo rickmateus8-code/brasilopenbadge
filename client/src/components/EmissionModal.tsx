@@ -63,6 +63,8 @@ export default function EmissionModal({
   const saldoInsuficiente = !isFree && documentPrice > 0 && userBalance < documentPrice;
   const saldoApos = isFree ? userBalance : userBalance - documentPrice;
 
+  console.log(`[EmissionModal] Doc: ${docLabel}, Price: ${documentPrice}, Balance: ${userBalance}, isFree: ${isFree}, Insufficient: ${saldoInsuficiente}`);
+
   const overlay: React.CSSProperties = {
     position: "fixed",
     inset: 0,

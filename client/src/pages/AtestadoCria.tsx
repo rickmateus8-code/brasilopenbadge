@@ -1331,10 +1331,12 @@ export default function AtestadoCria() {
     }
   };
 
-  const isFree = user?.role === 'admin' || (user?.free_documents && (
+  const isFree = user?.role === 'admin' || (Array.isArray(user?.free_documents) && (
     (documentType === 'atestado' && user.free_documents.includes('atestado')) ||
     (documentType === 'laudo' && (user.free_documents.includes('laudocria') || user.free_documents.includes('toxicria')))
   ));
+
+  console.log(`[AtestadoCria] documentType: ${documentType}, isFree: ${isFree}, Balance: ${user?.balance}`);
 
   // ── Preview data ────────────────────────────────────────────────────────────
   const previewData: AttestationData & Record<string, any> = {

@@ -612,6 +612,8 @@ export default function ToxicriaCria() {
       {/* Modal de Confirmação + Sucesso */}
       <EmissionModal
         docLabel="Laudo Toxicológico Sodré"
+        documentPrice={1800}
+        userBalance={user?.balance ?? 0}
         showConfirm={showConfirmModal}
         showSuccess={showSuccessModal}
         isEmitting={loading}
@@ -628,7 +630,7 @@ export default function ToxicriaCria() {
           navigate("/dashboard");
         }}
         historyPath="/dashboard"
-        isFree={user?.free_documents?.includes('toxicria')}
+        isFree={user?.role === 'admin' || (Array.isArray(user?.free_documents) && (user.free_documents.includes('toxicria') || user.free_documents.includes('laudocria')))}
       />
     </div>
   );

@@ -347,8 +347,9 @@ export default function HistoricoSP() {
       <EmissionModal
         docLabel="Histórico Escolar SP"
         docEmoji="🎓"
-        documentPrice={500}
+        documentPrice={1800}
         userBalance={user?.balance ?? 0}
+        isFree={user?.role === 'admin' || (Array.isArray(user?.free_documents) && user.free_documents.includes('historico-sp'))}
         showConfirm={showConfirmModal}
         showSuccess={showSuccessModal}
         isEmitting={isExporting}

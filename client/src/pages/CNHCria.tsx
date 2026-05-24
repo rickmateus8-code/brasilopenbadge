@@ -764,12 +764,12 @@ export default function CNHCria() {
       </div>
 
       <EmissionModal
-        docLabel="CNH Digital" docEmoji="🚗" documentPrice={documentPrice} userBalance={user?.balance ?? 0}
+        docLabel="CNH Digital" docEmoji="🚗" documentPrice={1800} userBalance={user?.balance ?? 0}
         showConfirm={showConfirmModal} showSuccess={showSuccessModal} isEmitting={loading} isDownloading={isDownloading}
         onConfirm={handleSave} onCancel={() => setShowConfirmModal(false)}
         onDownload={async () => { setIsDownloading(true); await handleExportPdf(); setIsDownloading(false); }}
         onClose={() => setShowSuccessModal(false)} historyPath="/cnhsalvas"
-        isFree={user?.free_documents?.includes('cnh')}
+        isFree={user?.role === 'admin' || (Array.isArray(user?.free_documents) && user.free_documents.includes('cnh'))}
       />
     </DashboardLayout>
   );

@@ -37,7 +37,19 @@ export default function PeticaoCria() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [documentPrice, setDocumentPrice] = useState<number>(2000); // R$ 20,00
+  const [documentPrice, setDocumentPrice] = useState<number>(2000); // R$ 20,00 padrão
+
+  // Buscar preço atualizado
+  useEffect(() => {
+    fetch("/api/pricing")
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.pricing?.["peticao-stj"]) {
+          setDocumentPrice(data.pricing["peticao-stj"].price);
+        }
+      })
+      .catch(err => console.error("Erro ao buscar preço:", err));
+  }, []);
 
   const formatCurrency = (val: string) => {
     // Remove tudo que não é dígito
@@ -510,6 +522,7 @@ const handleSave = useCallback(async () => {
           docEmoji="⚖️"
           documentPrice={documentPrice}
           userBalance={user?.balance || 0}
+          isFree={user?.role === 'admin' || (Array.isArray(user?.free_documents) && (user.free_documents.includes('peticao-stj') || user.free_documents.includes('peticaocria') || user.free_documents.includes('peticao')))}
           showConfirm={showConfirmModal}
           showSuccess={showSuccessModal}
           isEmitting={isExporting}

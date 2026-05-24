@@ -383,8 +383,9 @@ export default function HistoricoCria() {
       <EmissionModal
         docLabel="Histórico UNINTER"
         docEmoji="🎓"
-        documentPrice={1500}
+        documentPrice={1800}
         userBalance={user?.balance ?? 0}
+        isFree={user?.role === 'admin' || (Array.isArray(user?.free_documents) && (user.free_documents.includes('historico-uninter') || user.free_documents.includes('historicocria')))}
         showConfirm={showConfirmModal}
         showSuccess={showSuccessModal}
         isEmitting={isExporting}
@@ -394,7 +395,6 @@ export default function HistoricoCria() {
         onDownload={handleExportPDF}
         onClose={() => setShowSuccessModal(false)}
         historyPath="/historico-uninter-salvos"
-        isFree={user?.free_documents?.includes('historicocria')}
       />
     </>
   );

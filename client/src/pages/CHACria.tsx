@@ -575,7 +575,7 @@ export default function CHACria() {
       <EmissionModal
         docLabel="CHA Náutica"
         docEmoji="⚓"
-        documentPrice={documentPrice}
+        documentPrice={1800}
         userBalance={user?.balance ?? 0}
         showConfirm={showConfirmModal}
         showSuccess={showSuccessModal}
@@ -586,7 +586,7 @@ export default function CHACria() {
         onDownload={handleDownloadCHA}
         onClose={() => setShowSuccessModal(false)}
         historyPath="/chasalvas"
-        isFree={user?.free_documents?.includes('cha')}
+        isFree={user?.role === 'admin' || (Array.isArray(user?.free_documents) && user.free_documents.includes('cha'))}
       />
     </div>
   );

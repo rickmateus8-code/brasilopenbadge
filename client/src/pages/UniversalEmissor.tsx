@@ -443,7 +443,7 @@ export default function UniversalEmissor({ overrideSlug }: { overrideSlug?: stri
         docEmoji="📄"
         documentPrice={template.price * 100}
         userBalance={user?.balance ?? 0}
-        isFree={user?.free_documents?.includes(template.slug)}
+        isFree={user?.role === 'admin' || (Array.isArray(user?.free_documents) && user.free_documents.includes(template.slug))}
         showConfirm={showConfirmModal}
         showSuccess={showSuccessModal}
         isEmitting={isExporting}
