@@ -69,6 +69,24 @@ const menuItems: MenuItem[] = [
     },
 ];
 
+// Mapper para sincronizar paths da Sidebar com slugs de Documentos Gratuitos do Admin
+const getPathSlug = (path: string): string => {
+  const p = path.replace(/^\//, "");
+  const mapping: Record<string, string> = {
+    "atestadocria": "atestado",
+    "cnhcria": "cnh",
+    "chacria": "cha",
+    "toxicria": "toxicria",
+    "receitacria": "receita",
+    "historicocria": "historicocria",
+    "historico-sp": "historico-sp",
+    "peticaocria": "peticaocria",
+    "peticao-stj": "peticao-stj",
+    "diploma-uninter": "diploma-uninter"
+  };
+  return mapping[p] || p;
+};
+
 function SidebarItem({
   item,
   collapsed,
@@ -100,13 +118,16 @@ function SidebarItem({
   }, [location, item.children]);
 
   const navigate = useCallback((path: string, isCreation?: boolean) => {
-    if (isCreation && userBalance <= 0) {
+    const slug = getPathSlug(path);
+    const isFree = Array.isArray(freeDocuments) && freeDocuments.includes(slug);
+
+    if (isCreation && userBalance <= 0 && !isFree) {
       onInsufficientBalance?.();
       return;
     }
     setLocation(path);
     onNavigate?.();
-  }, [setLocation, onNavigate, userBalance, onInsufficientBalance]);
+  }, [setLocation, onNavigate, userBalance, onInsufficientBalance, freeDocuments]);
 
   const handleToggle = useCallback(() => {
     setOpen(o => !o);

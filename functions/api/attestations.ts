@@ -280,7 +280,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
   const docTypeFromParams = (body.documentType || body.document_type || "atestado").toLowerCase();
   const price = await getDocumentPrice(env, docTypeFromParams);
 
-  const freeDocs = JSON.parse(user.free_documents || '[]');
+  const freeDocs = Array.isArray(user.free_documents) ? user.free_documents : [];
   const isFree = freeDocs.includes(docTypeFromParams);
 
   if (user.role !== "admin" && !isFree && price > 0) {

@@ -26,7 +26,7 @@ async function getAuthUser(env: Env, token: string | null): Promise<any | null> 
   ).bind(token, now).first<{ user_id: string }>();
   if (!session) return null;
   const user = await env.DB.prepare(
-    "SELECT id, username, role, balance, is_active, free_documents FROM users WHERE id = ? AND is_active = 1 LIMIT 1"
+    "SELECT id, username, role, balance, is_active, free_documents, permissions FROM users WHERE id = ? AND is_active = 1 LIMIT 1"
   ).bind(session.user_id).first<any>();
 
   if (user) {
@@ -34,6 +34,11 @@ async function getAuthUser(env: Env, token: string | null): Promise<any | null> 
       user.free_documents = typeof user.free_documents === 'string' ? JSON.parse(user.free_documents) : (user.free_documents || []);
     } catch {
       user.free_documents = [];
+    }
+    try {
+      user.permissions = typeof user.permissions === 'string' ? JSON.parse(user.permissions) : (user.permissions || { editaveis: [], ferramentas: [] });
+    } catch {
+      user.permissions = { editaveis: [], ferramentas: [] };
     }
   }
   return user;
