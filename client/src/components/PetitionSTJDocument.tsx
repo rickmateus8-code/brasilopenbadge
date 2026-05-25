@@ -119,9 +119,9 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            </div>
         </div>
 
-        {/* Logo OAB (Diminuído 2% e Subido 1% ≈ -11px adicionais) */}
+        {/* Logo OAB (Diminuído 5% adicional ≈ 93.2pt) */}
         <div style={{ position: "absolute", top: "-26px", left: "4pt", zIndex: 11 }}>
-           <img src="/assets/peticao/oab_logo.png" style={{ width: "98.1pt" }} alt="OAB" />
+           <img src="/assets/peticao/oab_logo.png" style={{ width: "93.2pt" }} alt="OAB" />
         </div>
 
         {/* Título do Documento (SUBIDO 1% E ESPAÇAMENTO +1mm) */}
