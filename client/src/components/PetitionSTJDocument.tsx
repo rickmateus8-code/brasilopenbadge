@@ -95,10 +95,10 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           padding: "0"
         }}
       >
-        {/* ─── Layer de Fundo: Marca d'Água (REDUZIDO 2% E SUBIDO 1%) ─── */}
+        {/* ─── Layer de Fundo: Marca d'Água (REDUZIDO 2% E DESCIDO 2% ADICIONAL) ─── */}
         <div style={{
           position: "absolute",
-          top: "49%",
+          top: "51%",
           left: "50%",
           transform: "translate(-50%, -41.3%)", 
           width: "489.8pt",
@@ -205,10 +205,10 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           {formatLongDate(data.data)}.
         </div>
 
-        {/* ─── Rodapé (DESCIDO 2% ≈ -22.4px bottom) ─── */}
-        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 24.6, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "10.8pt", fontFamily: "Arial, sans-serif" }}>
+        {/* ─── Rodapé (SUBIDO 1% ≈ +11.2px E REDUZIDO 1%) ─── */}
+        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 35.8, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "10.69pt", fontFamily: "Arial, sans-serif" }}>
            <div style={{ textTransform: "uppercase", fontWeight: 400, letterSpacing: "1px", color: "#374151", marginBottom: 2 }}>PODER JUDICIÁRIO</div>
-           <div style={{ fontStyle: "italic", color: "#374151", fontSize: "11.8pt", marginLeft: "4.2px" }}>TJ – Tribunal de Justiça.</div>  
+           <div style={{ fontStyle: "italic", color: "#374151", fontSize: "11.68pt", marginLeft: "4.2px" }}>TJ – Tribunal de Justiça.</div>  
         </div>
 
         {/* Assinatura Judicial (DIMINUIDA 5% E DESCIDA 2%) */}
@@ -228,19 +228,19 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
 
         {/* QR CODE (CANTO INFERIOR ESQUERDO - REDUZIDO 2% ADICIONAL) */}
         <div style={{ position: "absolute", bottom: "25px", left: "25px", zIndex: 12 }}>
-           <img src="/assets/peticao/qr_code_peticao.png" style={{ width: "81px" }} alt="QR Code" />
+           <img src="/assets/peticao/qr_code_peticao.png" style={{ width: "79px" }} alt="QR Code" />
         </div>
 
-        {/* COD DE BARRAS 2 (VERTICAL DIREITA - DESCIDO 2% ≈ -23px bottom) */}
+        {/* COD DE BARRAS 2 (VERTICAL DIREITA - AUMENTADO 2% E MOVIDO 1% DIREITA) */}
         <div style={{ 
           position: "absolute", 
           bottom: "67px", 
-          right: "16px", 
+          right: "8px", 
           zIndex: 12 
         }}>
            <img 
              src="/assets/peticao/cod_barras_vertical.png" 
-             style={{ height: "171px", width: "auto", display: "block" }} 
+             style={{ height: "175px", width: "auto", display: "block" }} 
              alt="Vertical Barcode" 
            />
         </div>
