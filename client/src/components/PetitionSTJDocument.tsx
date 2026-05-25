@@ -229,16 +229,25 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <img src="/assets/peticao/qr_code_peticao.png" style={{ width: "95px" }} alt="QR Code" />
         </div>
 
-        {/* COD DE BARRAS 2 (VERTICAL DIREITA - ROTAÇÃO 90° E RECUO 5%) */}
+        {/* COD DE BARRAS 2 (VERTICAL DIREITA - ROTAÇÃO 90° ELITE) */}
         <div style={{ 
           position: "absolute", 
-          bottom: "180px", 
+          bottom: "250px", 
           right: "40px", 
-          transform: "rotate(90deg)", 
+          width: "200px",
+          height: "40px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          transform: "rotate(90deg)",
           transformOrigin: "center",
           zIndex: 12 
         }}>
-           <img src="/assets/peticao/cod_barras_vertical.png" style={{ height: "140px", width: "auto" }} alt="Vertical Barcode" />
+           <img 
+             src="/assets/peticao/cod_barras_vertical.png" 
+             style={{ width: "100%", height: "auto", display: "block" }} 
+             alt="Vertical Barcode" 
+           />
         </div>
 
         {/* Marca d'água de Preview */}
