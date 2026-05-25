@@ -42,12 +42,12 @@ const MARGIN_BOTTOM = 86.6;
 
 const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
   ({ data }, ref) => {
-    // Estilo base para os textos (REDUZIDO 3% ADICIONAL ≈ 12.26pt)
+    // Estilo base para os textos (REDUZIDO +2% ADICIONAL ≈ 12.01pt)
     const textStyle: React.CSSProperties = {
       position: "absolute",
       fontFamily: "Arial, sans-serif",
       color: "#000",
-      fontSize: "12.26pt",
+      fontSize: "12.01pt",
       whiteSpace: "nowrap",
       zIndex: 10
     };
@@ -161,7 +161,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           paddingBottom: "3.78px", 
           display: "inline-block", 
           paddingRight: 130,
-          fontSize: "12.26pt" 
+          fontSize: "12.01pt" 
         }}>
           <span style={labelStyle}>CUMPRIMENTO DE SENTENÇA CONTRA:</span>
           <span style={valueStyle}>{data.contra?.toUpperCase() || ""}</span>
@@ -189,19 +189,19 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            />
         </div>
 
-        {/* Valor de Repasse (DESCIDO 1 LINHA E REDUZIDO 3% ADICIONAL ≈ 12.39pt) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 555.6, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", fontSize: "12.39pt" }}>
+        {/* Valor de Repasse (REDUZIDO +2% ADICIONAL ≈ 12.14pt) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 555.6, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", fontSize: "12.14pt" }}>
           Valor a receber: <span style={valueStyle}>R$ {data.valor ? data.valor.replace(/^R\$\s?/, "") : ""}</span> será depositado em conta corrente de sua titularidade..    
         </div>
 
-        {/* Texto Legal (REDUZIDO 3% ADICIONAL ≈ 11.92pt) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 617.4, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", textAlign: "justify", lineHeight: "1.5", fontSize: "11.92pt", fontFamily: "Arial, sans-serif" }}>
+        {/* Texto Legal (REDUZIDO +2% ADICIONAL ≈ 11.68pt) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 617.4, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", textAlign: "justify", lineHeight: "1.5", fontSize: "11.68pt", fontFamily: "Arial, sans-serif" }}>
           Os autos foram encaminhados pelo TJ à Vara da Fazenda para a execução do processo e <br/>
           posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
         </div>
 
-        {/* Data (REDUZIDO 3% ADICIONAL ≈ 12.91pt) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 697.4, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "12.91pt" }}>
+        {/* Data (REDUZIDO +2% ADICIONAL ≈ 12.65pt) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 697.4, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "12.65pt" }}>
           {formatLongDate(data.data)}.
         </div>
 
