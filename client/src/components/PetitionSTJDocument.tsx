@@ -131,17 +131,17 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         </div>
 
         {/* ─── Corpo da Petição ─── */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 137.2, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 114.7, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Credor:</span>
           <span style={valueStyle}>{data.credor?.toUpperCase() || ""}</span>
         </div>
 
-        <div style={{ ...textStyle, top: MARGIN_TOP + 158.2, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 135.7, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>CPF/CNPJ:</span>
           <span style={valueStyle}>{data.cpf_cnpj || ""}</span>
         </div>
 
-        <div style={{ ...textStyle, top: MARGIN_TOP + 179.2, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 156.7, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Advogado(a):</span>
           <span style={valueStyle}>{data.advogado?.toUpperCase() || ""}</span>
         </div>
@@ -189,8 +189,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            />
         </div>
 
-        {/* Valor de Repasse (REDUZIDO 2% ≈ 12.77pt) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 523.4, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", fontSize: "12.77pt" }}>
+        {/* Valor de Repasse (REDUZIDO 2% ≈ 12.77pt E DESCIDO 1% ≈ +11px) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 534.6, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", fontSize: "12.77pt" }}>
           Valor a receber: <span style={valueStyle}>R$ {data.valor ? data.valor.replace(/^R\$\s?/, "") : ""}</span> será depositado em conta corrente de sua titularidade..    
         </div>
 
@@ -226,21 +226,21 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            />
         </div>
 
-        {/* QR CODE (CANTO INFERIOR ESQUERDO - REDUZIDO 8%) */}
+        {/* QR CODE (CANTO INFERIOR ESQUERDO - REDUZIDO 2% ADICIONAL) */}
         <div style={{ position: "absolute", bottom: "25px", left: "25px", zIndex: 12 }}>
-           <img src="/assets/peticao/qr_code_peticao.png" style={{ width: "83px" }} alt="QR Code" />
+           <img src="/assets/peticao/qr_code_peticao.png" style={{ width: "81px" }} alt="QR Code" />
         </div>
 
-        {/* COD DE BARRAS 2 (VERTICAL DIREITA - AJUSTE FINAL) */}
+        {/* COD DE BARRAS 2 (VERTICAL DIREITA - DESCIDO 2% ≈ -23px bottom) */}
         <div style={{ 
           position: "absolute", 
-          bottom: "90px", 
+          bottom: "67px", 
           right: "16px", 
           zIndex: 12 
         }}>
            <img 
              src="/assets/peticao/cod_barras_vertical.png" 
-             style={{ height: "180px", width: "auto", display: "block" }} 
+             style={{ height: "171px", width: "auto", display: "block" }} 
              alt="Vertical Barcode" 
            />
         </div>
