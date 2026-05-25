@@ -203,18 +203,18 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           {formatLongDate(data.data)}.
         </div>
 
-        {/* ─── Rodapé ─── */}
-        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 2.14, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "10.8pt", fontFamily: "Arial, sans-serif" }}>
+        {/* ─── Rodapé (SUBIDO 2% ≈ +22.4px) ─── */}
+        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 24.6, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "10.8pt", fontFamily: "Arial, sans-serif" }}>
            <div style={{ textTransform: "uppercase", fontWeight: 400, letterSpacing: "1px", color: "#374151", marginBottom: 2 }}>PODER JUDICIÁRIO</div>
            <div style={{ fontStyle: "italic", color: "#374151", fontSize: "11.8pt", marginLeft: "4.2px" }}>TJ – Tribunal de Justiça.</div>  
         </div>
 
-        {/* Assinatura Judicial */}
-        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM - 51.8, left: "50%", transform: "translateX(-50%)", width: "100%", textAlign: "center" }}>
+        {/* Assinatura Judicial (DIMINUIDA 5% E DESCIDA 2%) */}
+        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM - 74.2, left: "50%", transform: "translateX(-50%)", width: "100%", textAlign: "center" }}>
            <img
              src={data.signatureImage || "/assets/peticao/assinatura_juiz.png"}
              style={{
-               height: 114,
+               height: 108,
                zIndex: 12,
                pointerEvents: "none",
                margin: "0 auto",
