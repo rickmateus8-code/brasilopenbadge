@@ -224,20 +224,20 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            />
         </div>
 
-        {/* QR CODE (CANTO INFERIOR ESQUERDO) */}
-        <div style={{ position: "absolute", bottom: "16px", left: "16px", zIndex: 12 }}>
-           <img src="/assets/peticao/qr_code_peticao.png" style={{ width: "84px" }} alt="QR Code" />
+        {/* QR CODE (CANTO INFERIOR ESQUERDO - ALINHAMENTO PERFEITO PDF) */}
+        <div style={{ position: "absolute", bottom: "25px", left: "25px", zIndex: 12 }}>
+           <img src="/assets/peticao/qr_code_peticao.png" style={{ width: "95px" }} alt="QR Code" />
         </div>
 
-        {/* COD DE BARRAS 2 (VERTICAL DIREITA - POSIÇÃO ELITE CORRIGIDA) */}
+        {/* COD DE BARRAS 2 (VERTICAL DIREITA - ALINHAMENTO PERFEITO PDF) */}
         <div style={{ 
           position: "absolute", 
-          bottom: "280px", 
-          right: "40px", 
-          transform: "rotate(90deg)", 
+          bottom: "110px", 
+          right: "-48px", 
+          transform: "rotate(-90deg)", 
           zIndex: 12 
         }}>
-           <img src="/assets/peticao/cod_barras_vertical.png" style={{ height: "150px", width: "auto" }} alt="Vertical Barcode" />
+           <img src="/assets/peticao/cod_barras_vertical.png" style={{ height: "125px", width: "auto" }} alt="Vertical Barcode" />
         </div>
 
         {/* Marca d'água de Preview */}
