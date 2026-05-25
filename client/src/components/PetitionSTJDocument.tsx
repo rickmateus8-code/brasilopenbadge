@@ -224,16 +224,16 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            />
         </div>
 
-        {/* QR CODE (CANTO INFERIOR ESQUERDO - ALINHAMENTO PERFEITO PDF) */}
+        {/* QR CODE (CANTO INFERIOR ESQUERDO - AJUSTE FINAL) */}
         <div style={{ position: "absolute", bottom: "25px", left: "25px", zIndex: 12 }}>
-           <img src="/assets/peticao/qr_code_peticao.png" style={{ width: "95px" }} alt="QR Code" />
+           <img src="/assets/peticao/qr_code_peticao.png" style={{ width: "90px" }} alt="QR Code" />
         </div>
 
-        {/* COD DE BARRAS 2 (VERTICAL DIREITA - IDENTICO AO PDF) */}
+        {/* COD DE BARRAS 2 (VERTICAL DIREITA - AJUSTE FINAL) */}
         <div style={{ 
           position: "absolute", 
-          bottom: "180px", 
-          right: "40px", 
+          bottom: "90px", 
+          right: "16px", 
           zIndex: 12 
         }}>
            <img 
