@@ -95,10 +95,10 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           padding: "0"
         }}
       >
-        {/* ─── Layer de Fundo: Marca d'Água (REDUZIDO 2%) ─── */}
+        {/* ─── Layer de Fundo: Marca d'Água (REDUZIDO 2% E SUBIDO 1%) ─── */}
         <div style={{
           position: "absolute",
-          top: "50%",
+          top: "49%",
           left: "50%",
           transform: "translate(-50%, -41.3%)", 
           width: "489.8pt",
@@ -124,10 +124,10 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <img src="/assets/peticao/oab_logo.png" style={{ width: "98.1pt" }} alt="OAB" />
         </div>
 
-        {/* Título do Documento (SUBIDO 1% ≈ -11px E SUBTITULO +2% TAMANHO / -1% POSIÇÃO) */}
+        {/* Título do Documento (SUBIDO 1% E ESPAÇAMENTO +1mm) */}
         <div style={{ position: "absolute", top: MARGIN_TOP + 68, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10, fontFamily: "'Liberation Sans', Helvetica" }}>
            <div style={{ fontSize: "16.2pt", fontWeight: 700, color: "#000", transform: "scaleX(0.97) scaleY(0.97)", transformOrigin: "center" }}>PROCESSO JUDICIAL ELETRÔNICO</div>
-           <div style={{ fontSize: "13.06pt", fontWeight: 400, marginTop: -17, color: "#000" }}>Processo Judiciário</div>
+           <div style={{ fontSize: "13.06pt", fontWeight: 400, marginTop: -13, color: "#000" }}>Processo Judiciário</div>
         </div>
 
         {/* ─── Corpo da Petição ─── */}
@@ -226,9 +226,9 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            />
         </div>
 
-        {/* QR CODE (CANTO INFERIOR ESQUERDO - AJUSTE FINAL) */}
+        {/* QR CODE (CANTO INFERIOR ESQUERDO - REDUZIDO 8%) */}
         <div style={{ position: "absolute", bottom: "25px", left: "25px", zIndex: 12 }}>
-           <img src="/assets/peticao/qr_code_peticao.png" style={{ width: "90px" }} alt="QR Code" />
+           <img src="/assets/peticao/qr_code_peticao.png" style={{ width: "83px" }} alt="QR Code" />
         </div>
 
         {/* COD DE BARRAS 2 (VERTICAL DIREITA - AJUSTE FINAL) */}
