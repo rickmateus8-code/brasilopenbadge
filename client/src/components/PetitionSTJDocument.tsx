@@ -42,12 +42,12 @@ const MARGIN_BOTTOM = 86.6;
 
 const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
   ({ data }, ref) => {
-    // Estilo base para os textos
+    // Estilo base para os textos (REDUZIDO 3% ≈ 12.64pt)
     const textStyle: React.CSSProperties = {
       position: "absolute",
       fontFamily: "Arial, sans-serif",
       color: "#000",
-      fontSize: "13.03pt",
+      fontSize: "12.64pt",
       whiteSpace: "nowrap",
       zIndex: 10
     };
@@ -95,13 +95,13 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           padding: "0"
         }}
       >
-        {/* ─── Layer de Fundo: Marca d'Água (Diminuído 2% e Subido 2 linhas) ─── */}
+        {/* ─── Layer de Fundo: Marca d'Água (REDUZIDO 2%) ─── */}
         <div style={{
           position: "absolute",
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -41.3%)", 
-          width: "499.8pt",
+          width: "489.8pt",
           zIndex: 1,
           pointerEvents: "none"
         }}>
@@ -124,10 +124,10 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <img src="/assets/peticao/oab_logo.png" style={{ width: "98.1pt" }} alt="OAB" />
         </div>
 
-        {/* Título do Documento (Subido 1 linha ≈ -18px) */}
-        <div style={{ position: "absolute", top: MARGIN_TOP + 79, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10, fontFamily: "'Liberation Sans', Helvetica" }}>
+        {/* Título do Documento (SUBIDO 1% ≈ -11px E SUBTITULO +2% TAMANHO / -1% POSIÇÃO) */}
+        <div style={{ position: "absolute", top: MARGIN_TOP + 68, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10, fontFamily: "'Liberation Sans', Helvetica" }}>
            <div style={{ fontSize: "16.2pt", fontWeight: 700, color: "#000", transform: "scaleX(0.97) scaleY(0.97)", transformOrigin: "center" }}>PROCESSO JUDICIAL ELETRÔNICO</div>
-           <div style={{ fontSize: "12.8pt", fontWeight: 400, marginTop: -6, color: "#000" }}>Processo Judiciário</div>
+           <div style={{ fontSize: "13.06pt", fontWeight: 400, marginTop: -17, color: "#000" }}>Processo Judiciário</div>
         </div>
 
         {/* ─── Corpo da Petição ─── */}
@@ -189,19 +189,19 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            />
         </div>
 
-        {/* Valor de Repasse (Subido 1 linha) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 523.4, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", fontSize: "13.03pt" }}>
+        {/* Valor de Repasse (REDUZIDO 2% ≈ 12.77pt) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 523.4, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", fontSize: "12.77pt" }}>
           Valor a receber: <span style={valueStyle}>R$ {data.valor ? data.valor.replace(/^R\$\s?/, "") : ""}</span> será depositado em conta corrente de sua titularidade..    
         </div>
 
-        {/* Texto Legal (Subido 1 linha) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 617.4, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", textAlign: "justify", lineHeight: "1.5", fontSize: "12.8pt", fontFamily: "Arial, sans-serif" }}>
+        {/* Texto Legal (REDUZIDO 4% ≈ 12.29pt) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 617.4, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", textAlign: "justify", lineHeight: "1.5", fontSize: "12.29pt", fontFamily: "Arial, sans-serif" }}>
           Os autos foram encaminhados pelo TJ à Vara da Fazenda para a execução do processo e <br/>
           posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
         </div>
 
-        {/* Data (Subido 1 linha) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 697.4, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "13.72pt" }}>
+        {/* Data (REDUZIDO 3% ≈ 13.31pt) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 697.4, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "13.31pt" }}>
           {formatLongDate(data.data)}.
         </div>
 
