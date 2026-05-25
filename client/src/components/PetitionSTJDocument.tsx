@@ -203,8 +203,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           {formatLongDate(data.data)}.
         </div>
 
-        {/* ─── Rodapé (SUBIDO 2% ≈ +22.4px) ─── */}
-        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 24.6, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "10.8pt", fontFamily: "Arial, sans-serif" }}>
+        {/* ─── Rodapé (SUBIDO +1% adicional ≈ +11.2px) ─── */}
+        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 35.8, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "10.8pt", fontFamily: "Arial, sans-serif" }}>
            <div style={{ textTransform: "uppercase", fontWeight: 400, letterSpacing: "1px", color: "#374151", marginBottom: 2 }}>PODER JUDICIÁRIO</div>
            <div style={{ fontStyle: "italic", color: "#374151", fontSize: "11.8pt", marginLeft: "4.2px" }}>TJ – Tribunal de Justiça.</div>  
         </div>
@@ -226,7 +226,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
 
         {/* QR CODE (CANTO INFERIOR ESQUERDO) */}
         <div style={{ position: "absolute", bottom: "16px", left: "16px", zIndex: 12 }}>
-           <img src="/assets/peticao/qr code.png" style={{ width: "84px" }} alt="QR Code" />
+           <img src="/assets/peticao/qr_code_peticao.png" style={{ width: "84px" }} alt="QR Code" />
         </div>
 
         {/* COD DE BARRAS 2 (VERTICAL DIREITA) */}
@@ -237,7 +237,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           transform: "rotate(-90deg)", 
           zIndex: 12 
         }}>
-           <img src="/assets/peticao/cod de barras2.png" style={{ height: "130px", width: "auto" }} alt="Vertical Barcode" />
+           <img src="/assets/peticao/cod_barras_vertical.png" style={{ height: "130px", width: "auto" }} alt="Vertical Barcode" />
         </div>
 
         {/* Marca d'água de Preview */}
