@@ -42,12 +42,12 @@ const MARGIN_BOTTOM = 86.6;
 
 const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
   ({ data }, ref) => {
-    // Estilo base para os textos (REDUZIDO 3% ≈ 12.64pt)
+    // Estilo base para os textos (REDUZIDO 3% ADICIONAL ≈ 12.26pt)
     const textStyle: React.CSSProperties = {
       position: "absolute",
       fontFamily: "Arial, sans-serif",
       color: "#000",
-      fontSize: "12.64pt",
+      fontSize: "12.26pt",
       whiteSpace: "nowrap",
       zIndex: 10
     };
@@ -131,54 +131,54 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         </div>
 
         {/* ─── Corpo da Petição ─── */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 114.7, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 135.7, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Credor:</span>
           <span style={valueStyle}>{data.credor?.toUpperCase() || ""}</span>
         </div>
 
-        <div style={{ ...textStyle, top: MARGIN_TOP + 135.7, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 156.7, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>CPF/CNPJ:</span>
           <span style={valueStyle}>{data.cpf_cnpj || ""}</span>
         </div>
 
-        <div style={{ ...textStyle, top: MARGIN_TOP + 156.7, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 177.7, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Advogado(a):</span>
           <span style={valueStyle}>{data.advogado?.toUpperCase() || ""}</span>
         </div>
 
-        {/* Processo N° (Subido 2% ≈ -22px) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 246.8, left: MARGIN_LEFT_BODY }}>
+        {/* Processo N° (DESCIDO 1 LINHA ≈ +21px) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 267.8, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Processo N°:</span>
           <span style={valueStyle}>{data.processo || ""}</span>
         </div>
 
-        {/* Cumprimento de Sentença (Subido 1 linha) */}
+        {/* Cumprimento de Sentença (DESCIDO 1 LINHA ≈ +21px) */}
         <div style={{ 
           ...textStyle, 
-          top: MARGIN_TOP + 328.8, 
+          top: MARGIN_TOP + 349.8, 
           left: MARGIN_LEFT_BODY, 
           borderBottom: "1px solid #000", 
           paddingBottom: "3.78px", 
           display: "inline-block", 
           paddingRight: 130,
-          fontSize: "13.03pt" 
+          fontSize: "12.26pt" 
         }}>
           <span style={labelStyle}>CUMPRIMENTO DE SENTENÇA CONTRA:</span>
           <span style={valueStyle}>{data.contra?.toUpperCase() || ""}</span>
         </div>
 
-        {/* Bloco de Decisão (Subido 1 linha) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 385.8, left: MARGIN_LEFT_BODY }}>
+        {/* Bloco de Decisão (DESCIDO 1 LINHA ≈ +21px) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 406.8, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Assunto:</span>
           <span style={valueStyle}>Decisão Favorável</span>
         </div>
-        <div style={{ ...textStyle, top: MARGIN_TOP + 410.8, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 431.8, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Situação:</span>
           <span style={{ ...valueStyle, color: "#000" }}>AUTORIZADO</span>
         </div>
 
-        {/* Código de Barras Dinâmico (Subido 1 linha) */}
-        <div style={{ position: "absolute", top: MARGIN_TOP + 455.2, left: MARGIN_LEFT_BODY + 4, zIndex: 11 }}>
+        {/* Código de Barras Dinâmico (DESCIDO SINCRONIZADO) */}
+        <div style={{ position: "absolute", top: MARGIN_TOP + 476.2, left: MARGIN_LEFT_BODY + 4, zIndex: 11 }}>
            <Barcode
              value={alvara_final}
              width={1.4}
@@ -189,24 +189,24 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            />
         </div>
 
-        {/* Valor de Repasse (REDUZIDO 2% ≈ 12.77pt E DESCIDO 1% ≈ +11px) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 534.6, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", fontSize: "12.77pt" }}>
+        {/* Valor de Repasse (DESCIDO 1 LINHA E REDUZIDO 3% ADICIONAL ≈ 12.39pt) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 555.6, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", fontSize: "12.39pt" }}>
           Valor a receber: <span style={valueStyle}>R$ {data.valor ? data.valor.replace(/^R\$\s?/, "") : ""}</span> será depositado em conta corrente de sua titularidade..    
         </div>
 
-        {/* Texto Legal (REDUZIDO 4% ≈ 12.29pt) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 617.4, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", textAlign: "justify", lineHeight: "1.5", fontSize: "12.29pt", fontFamily: "Arial, sans-serif" }}>
+        {/* Texto Legal (REDUZIDO 3% ADICIONAL ≈ 11.92pt) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 617.4, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", textAlign: "justify", lineHeight: "1.5", fontSize: "11.92pt", fontFamily: "Arial, sans-serif" }}>
           Os autos foram encaminhados pelo TJ à Vara da Fazenda para a execução do processo e <br/>
           posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
         </div>
 
-        {/* Data (REDUZIDO 3% ≈ 13.31pt) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 697.4, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "13.31pt" }}>
+        {/* Data (REDUZIDO 3% ADICIONAL ≈ 12.91pt) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 697.4, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "12.91pt" }}>
           {formatLongDate(data.data)}.
         </div>
 
-        {/* ─── Rodapé (SUBIDO +1% adicional ≈ +11.2px) ─── */}
-        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 47.0, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "10.8pt", fontFamily: "Arial, sans-serif" }}>
+        {/* ─── Rodapé (DESCIDO 2% ≈ -22.4px bottom) ─── */}
+        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 24.6, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "10.8pt", fontFamily: "Arial, sans-serif" }}>
            <div style={{ textTransform: "uppercase", fontWeight: 400, letterSpacing: "1px", color: "#374151", marginBottom: 2 }}>PODER JUDICIÁRIO</div>
            <div style={{ fontStyle: "italic", color: "#374151", fontSize: "11.8pt", marginLeft: "4.2px" }}>TJ – Tribunal de Justiça.</div>  
         </div>
