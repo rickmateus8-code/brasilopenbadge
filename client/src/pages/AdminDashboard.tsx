@@ -10,7 +10,7 @@ import {
   RefreshCw, DollarSign, Trash2, ToggleLeft, ToggleRight,
   Bell, AlertTriangle, CheckCircle, Info, FileText,
   Activity, Database, Search, Eye, EyeOff, X, Save, Layout,
-  Download, Pencil, Wifi, WifiOff, Monitor, Globe,
+  Download, Pencil, Wifi, WifiOff, Monitor, Globe, Anchor,
   CreditCard, AlertCircle, Filter, Gift, Percent, Wallet,
   Link, Copy, Calendar, Trash, Lock, UserPlus, Clock, User
 } from "lucide-react";
