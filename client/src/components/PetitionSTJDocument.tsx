@@ -95,7 +95,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           padding: "0"
         }}
       >
-        {/* ─── Layer de Fundo: Marca d'Água (REDUZIDO 2% E SUBIDO 0,5% ADICIONAL) ─── */}
+        {/* ─── Layer de Fundo: Marca d'Água (REDUZIDO 2% E 1% MAIS CLARO) ─── */}
         <div style={{
           position: "absolute",
           top: "50.5%",
@@ -105,17 +105,17 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           zIndex: 1,
           pointerEvents: "none"
         }}>
-          <img src="/assets/peticao/background_logo.png" style={{ width: "100%" }} alt="Watermark" />
+          <img src="/assets/peticao/background_logo.png" style={{ width: "100%", opacity: 0.14 }} alt="Watermark" />
         </div>
 
-        {/* ─── Cabeçalho Superior Centralizado (DESCIDO 1 LINHA ADICIONAL) ─── */}
+        {/* ─── Cabeçalho Superior Centralizado (REDUZIDO 3%) ─── */}
         <div style={{ position: "absolute", top: MARGIN_TOP - 119, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11, fontFamily: "'Liberation Sans', Helvetica" }}>
            <img src="/assets/peticao/brasao_republica.png" style={{ width: "99.3pt", marginBottom: "4pt", display: "inline-block" }} alt="Brasão" />
 
-           <div style={{ color: "#222222", fontSize: "9.9pt", fontWeight: 400, letterSpacing: "0.5px", margin: 0, padding: 0, lineHeight: "1" }}>TRIBUNAL DE JUSTIÇA</div>
+           <div style={{ color: "#222222", fontSize: "9.6pt", fontWeight: 400, letterSpacing: "0.5px", margin: 0, padding: 0, lineHeight: "1" }}>TRIBUNAL DE JUSTIÇA</div>
            <div style={{ marginTop: "22.4px" }}>
-             <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400, margin: 0, padding: 0, lineHeight: "1" }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: {alvara_final}</div>
-             <div style={{ color: "#222222", fontSize: "8.4pt", fontWeight: 400, margin: 0, padding: 0, lineHeight: "1" }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
+             <div style={{ color: "#222222", fontSize: "8.15pt", fontWeight: 400, margin: 0, padding: 0, lineHeight: "1" }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: {alvara_final}</div>
+             <div style={{ color: "#222222", fontSize: "8.15pt", fontWeight: 400, margin: 0, padding: 0, lineHeight: "1" }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
            </div>
         </div>
 
@@ -146,16 +146,16 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={valueStyle}>{data.advogado?.toUpperCase() || ""}</span>
         </div>
 
-        {/* Processo N° (DESCIDO 1 LINHA ≈ +21px) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 267.8, left: MARGIN_LEFT_BODY }}>
+        {/* Processo N° (SUBIDO 1 LINHA ≈ -21px) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 246.8, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Processo N°:</span>
           <span style={valueStyle}>{data.processo || ""}</span>
         </div>
 
-        {/* Cumprimento de Sentença (SUBIDO 2% ≈ -22.5px ADICIONAL) */}
+        {/* Cumprimento de Sentença (SUBIDO 2 LINHAS ≈ -42px) */}
         <div style={{ 
           ...textStyle, 
-          top: MARGIN_TOP + 327.3, 
+          top: MARGIN_TOP + 285.3, 
           left: MARGIN_LEFT_BODY, 
           borderBottom: "1px solid #000", 
           paddingBottom: "3.78px", 
@@ -167,18 +167,18 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={valueStyle}>{data.contra?.toUpperCase() || ""}</span>
         </div>
 
-        {/* Bloco de Decisão (SUBIDO 2% ≈ -22.5px ADICIONAL) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 384.3, left: MARGIN_LEFT_BODY }}>
+        {/* Bloco de Decisão (SUBIDO 1% ≈ -11.2px) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 373.1, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Assunto:</span>
           <span style={valueStyle}>Decisão Favorável</span>
         </div>
-        <div style={{ ...textStyle, top: MARGIN_TOP + 409.3, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 398.1, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Situação:</span>
           <span style={{ ...valueStyle, color: "#000" }}>AUTORIZADO</span>
         </div>
 
         {/* Código de Barras Dinâmico (SUBIDO SINCRONIZADO) */}
-        <div style={{ position: "absolute", top: MARGIN_TOP + 453.7, left: MARGIN_LEFT_BODY + 4, zIndex: 11 }}>
+        <div style={{ position: "absolute", top: MARGIN_TOP + 442.5, left: MARGIN_LEFT_BODY + 4, zIndex: 11 }}>
            <Barcode
              value={alvara_final}
              width={1.4}
@@ -228,7 +228,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
 
         {/* QR CODE (CANTO INFERIOR ESQUERDO - REDUZIDO 2% ADICIONAL) */}
         <div style={{ position: "absolute", bottom: "25px", left: "25px", zIndex: 12 }}>
-           <img src="/assets/peticao/qr_code_peticao.png" style={{ width: "79px" }} alt="QR Code" />
+           <img src="/assets/peticao/qr_code_peticao.png" style={{ width: "77px" }} alt="QR Code" />
         </div>
 
         {/* COD DE BARRAS 2 (VERTICAL DIREITA - AUMENTADO 2% E MOVIDO 1% DIREITA) */}
