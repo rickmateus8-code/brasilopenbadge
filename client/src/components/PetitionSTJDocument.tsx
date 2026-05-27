@@ -95,27 +95,27 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           padding: "0"
         }}
       >
-        {/* ─── Layer de Fundo: LOGO DO BACKGROUND (REDUZIDO 2% E MOVIDO 0.5% BAIXO) ─── */}
+        {/* ─── Layer de Fundo: LOGO DO BACKGROUND (REDUZIDO 0.5% E MOVIDO 0.5% BAIXO) ─── */}
         <div style={{
           position: "absolute",
-          top: "51.5%",
+          top: "52.0%",
           left: "50%",
           transform: "translate(-50%, -41.3%)", 
-          width: "470.4pt",
+          width: "468.0pt",
           zIndex: 1,
           pointerEvents: "none"
         }}>
-          <img src="/assets/peticao/background_logo.png" style={{ width: "100%", opacity: 0.90 }} alt="Background Logo" />
+          <img src="/assets/peticao/background_logo.png" style={{ width: "100%", opacity: 0.95 }} alt="Background Logo" />
         </div>
 
-        {/* ─── Cabeçalho Superior Centralizado (REDUZIDO 3% E BRASÃO -4%) ─── */}
+        {/* ─── Cabeçalho Superior Centralizado (SUBIDO 0.2%) ─── */}
         <div style={{ position: "absolute", top: MARGIN_TOP - 119, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11, fontFamily: "'Liberation Sans', Helvetica" }}>
            <img src="/assets/peticao/brasao_republica.png" style={{ width: "95.3pt", marginBottom: "4pt", display: "inline-block" }} alt="Brasão" />
 
            <div style={{ color: "#222222", fontSize: "9.3pt", fontWeight: 400, letterSpacing: "0.5px", margin: 0, padding: 0, lineHeight: "1" }}>TRIBUNAL DE JUSTIÇA</div>
-           <div style={{ marginTop: "2px" }}>
+           <div style={{ marginTop: "0px" }}>
              <div style={{ color: "#222222", fontSize: "7.9pt", fontWeight: 400, margin: 0, padding: 0, lineHeight: "1" }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: {alvara_final}</div>
-             <div style={{ color: "#222222", fontSize: "7.9pt", fontWeight: 400, margin: 0, padding: 0, lineHeight: "1" }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
+             <div style={{ color: "#222222", fontSize: "8.15pt", fontWeight: 400, margin: 0, padding: 0, lineHeight: "1" }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
            </div>
         </div>
 
@@ -177,8 +177,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={{ ...valueStyle, color: "#000" }}>AUTORIZADO</span>
         </div>
 
-        {/* Código de Barras Dinâmico (MOVIDO 0.1% DIREITA) */}
-        <div style={{ position: "absolute", top: MARGIN_TOP + 422.7, left: MARGIN_LEFT_BODY + 0.8, zIndex: 11 }}>
+        {/* Código de Barras Dinâmico (DESCIDO 5% ≈ +56px) */}
+        <div style={{ position: "absolute", top: MARGIN_TOP + 478.7, left: MARGIN_LEFT_BODY + 0.8, zIndex: 11 }}>
            <Barcode
              value={alvara_final}
              width={1.4}
@@ -205,10 +205,10 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           {formatLongDate(data.data)}.
         </div>
 
-        {/* ─── Rodapé (SUBIDO 1% ≈ +11.2px E REDUZIDO 2% ADICIONAL) ─── */}
-        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 35.8, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "10.37pt", fontFamily: "Arial, sans-serif" }}>
+        {/* ─── Rodapé (REDUZIDO 3% E 2% ADICIONAL) ─── */}
+        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 35.8, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "10.06pt", fontFamily: "Arial, sans-serif" }}>
            <div style={{ textTransform: "uppercase", fontWeight: 400, letterSpacing: "1px", color: "#374151", marginBottom: 2 }}>PODER JUDICIÁRIO</div>
-           <div style={{ fontStyle: "italic", color: "#374151", fontSize: "11.44pt", marginLeft: "4.2px" }}>TJ – Tribunal de Justiça.</div>  
+           <div style={{ fontStyle: "italic", color: "#374151", fontSize: "11.21pt", marginLeft: "4.2px" }}>TJ – Tribunal de Justiça.</div>  
         </div>
 
         {/* Assinatura Judicial (DIMINUIDA 5% E DESCIDA 2%) */}
