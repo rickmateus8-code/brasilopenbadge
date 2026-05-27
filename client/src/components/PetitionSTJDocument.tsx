@@ -130,18 +130,18 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <div style={{ fontSize: "13.06pt", fontWeight: 400, marginTop: -11, color: "#000" }}>Processo Judiciário</div>
         </div>
 
-        {/* ─── Corpo da Petição ─── */}
+        {/* ─── Corpo da Petição (ESPAÇAMENTO REDUZIDO 0.3%) ─── */}
         <div style={{ ...textStyle, top: MARGIN_TOP + 171.7, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Credor:</span>
           <span style={valueStyle}>{data.credor?.toUpperCase() || ""}</span>
         </div>
 
-        <div style={{ ...textStyle, top: MARGIN_TOP + 192.7, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 189.3, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>CPF/CNPJ:</span>
           <span style={valueStyle}>{data.cpf_cnpj || ""}</span>
         </div>
 
-        <div style={{ ...textStyle, top: MARGIN_TOP + 213.7, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 206.9, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Advogado(a):</span>
           <span style={valueStyle}>{data.advogado?.toUpperCase() || ""}</span>
         </div>
@@ -167,8 +167,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={valueStyle}>{data.contra?.toUpperCase() || ""}</span>
         </div>
 
-        {/* Bloco de Decisão (APROXIMADO AO CUMPRIMENTO - 1% DISTÂNCIA) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 353.3, left: MARGIN_LEFT_BODY }}>
+        {/* Bloco de Decisão (APROXIMADO AO CUMPRIMENTO) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 357.8, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Assunto:</span>
           <span style={valueStyle}>Decisão Favorável</span>
         </div>
@@ -177,8 +177,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={{ ...valueStyle, color: "#000" }}>AUTORIZADO</span>
         </div>
 
-        {/* Código de Barras Dinâmico (SUBIDO SINCRONIZADO) */}
-        <div style={{ position: "absolute", top: MARGIN_TOP + 422.7, left: MARGIN_LEFT_BODY + 0, zIndex: 11 }}>
+        {/* Código de Barras Dinâmico (MOVIDO 0.1% DIREITA) */}
+        <div style={{ position: "absolute", top: MARGIN_TOP + 422.7, left: MARGIN_LEFT_BODY + 0.8, zIndex: 11 }}>
            <Barcode
              value={alvara_final}
              width={1.4}
@@ -189,19 +189,19 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            />
         </div>
 
-        {/* Valor de Repasse (DESCIDO PARA ACOMPANHAR FLUXO) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 512.9, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", fontSize: "12.14pt" }}>
+        {/* Valor de Repasse (SUBIDO 1 LINHA ADICIONAL) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 491.9, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", fontSize: "12.14pt" }}>
           Valor a receber: <span style={valueStyle}>R$ {data.valor ? data.valor.replace(/^R\$\s?/, "") : ""}</span> será depositado em conta corrente de sua titularidade..    
         </div>
 
-        {/* Texto Legal (DESCIDO PARA ACOMPANHAR FLUXO) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 574.7, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", textAlign: "justify", lineHeight: "1.5", fontSize: "11.68pt", fontFamily: "Arial, sans-serif" }}>
+        {/* Texto Legal (SUBIDO 1 LINHA E ESPAÇAMENTO REDUZIDO) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 553.7, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", textAlign: "justify", lineHeight: "1.42", fontSize: "11.68pt", fontFamily: "Arial, sans-serif" }}>
           Os autos foram encaminhados pelo TJ à Vara da Fazenda para a execução do processo e <br/>
           posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
         </div>
 
-        {/* Data (REDUZIDO 2% ADICIONAL ≈ 12.40pt) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 654.7, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "12.40pt" }}>
+        {/* Data (SUBIDO 1 LINHA ADICIONAL) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 633.7, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "12.40pt" }}>
           {formatLongDate(data.data)}.
         </div>
 
