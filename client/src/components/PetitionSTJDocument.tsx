@@ -95,10 +95,10 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           padding: "0"
         }}
       >
-        {/* ─── Layer de Fundo: LOGO DO BACKGROUND (REDUZIDO 2%) ─── */}
+        {/* ─── Layer de Fundo: LOGO DO BACKGROUND (DESCIDO 1% ADICIONAL) ─── */}
         <div style={{
           position: "absolute",
-          top: "50.0%",
+          top: "51.0%",
           left: "50%",
           transform: "translate(-50%, -41.3%)", 
           width: "480.0pt",
@@ -177,8 +177,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={{ ...valueStyle, color: "#000" }}>AUTORIZADO</span>
         </div>
 
-        {/* Código de Barras Dinâmico (DESCIDO SINCRONIZADO) */}
-        <div style={{ position: "absolute", top: MARGIN_TOP + 478.5, left: MARGIN_LEFT_BODY + 4, zIndex: 11 }}>
+        {/* Código de Barras Dinâmico (DESCIDO 1% E MOVIDO 0.5% ESQUERDA) */}
+        <div style={{ position: "absolute", top: MARGIN_TOP + 489.7, left: MARGIN_LEFT_BODY + 0, zIndex: 11 }}>
            <Barcode
              value={alvara_final}
              width={1.4}
@@ -226,9 +226,9 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            />
         </div>
 
-        {/* QR CODE (CANTO INFERIOR ESQUERDO - REDUZIDO 2% ADICIONAL) */}
-        <div style={{ position: "absolute", bottom: "25px", left: "25px", zIndex: 12 }}>
-           <img src="/assets/peticao/qr_code_peticao.png" style={{ width: "77px" }} alt="QR Code" />
+        {/* QR CODE (REDUZIDO 3%, MOVIDO 1% ESQUERDA E 1% BAIXO) */}
+        <div style={{ position: "absolute", bottom: "13.8px", left: "17px", zIndex: 12 }}>
+           <img src="/assets/peticao/qr_code_peticao.png" style={{ width: "74.7px" }} alt="QR Code" />
         </div>
 
         {/* COD DE BARRAS 2 (VERTICAL DIREITA - AUMENTADO 2% E MOVIDO 1% DIREITA) */}
