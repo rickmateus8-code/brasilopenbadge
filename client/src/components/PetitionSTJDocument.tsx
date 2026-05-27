@@ -95,7 +95,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           padding: "0"
         }}
       >
-        {/* ─── Layer de Fundo: Marca d'Água (VISIBILIDADE REFORÇADA +8%) ─── */}
+        {/* ─── Layer de Fundo: Marca d'Água (VISIBILIDADE REFORÇADA +18%) ─── */}
         <div style={{
           position: "absolute",
           top: "50.0%",
@@ -105,7 +105,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           zIndex: 1,
           pointerEvents: "none"
         }}>
-          <img src="/assets/peticao/background_logo.png" style={{ width: "100%", opacity: 0.33 }} alt="Watermark" />
+          <img src="/assets/peticao/background_logo.png" style={{ width: "100%", opacity: 0.43 }} alt="Watermark" />
         </div>
 
         {/* ─── Cabeçalho Superior Centralizado (COMPRIMIDO DE ELITE) ─── */}
