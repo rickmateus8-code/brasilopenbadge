@@ -95,7 +95,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           padding: "0"
         }}
       >
-        {/* ─── Layer de Fundo: LOGO DO BACKGROUND (VISIBILIDADE MÁXIMA) ─── */}
+        {/* ─── Layer de Fundo: LOGO DO BACKGROUND (VISIBILIDADE MÁXIMA +5%) ─── */}
         <div style={{
           position: "absolute",
           top: "50.0%",
@@ -105,17 +105,17 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           zIndex: 1,
           pointerEvents: "none"
         }}>
-          <img src="/assets/peticao/background_logo.png" style={{ width: "100%", opacity: 0.85 }} alt="Background Logo" />
+          <img src="/assets/peticao/background_logo.png" style={{ width: "100%", opacity: 0.90 }} alt="Background Logo" />
         </div>
 
-        {/* ─── Cabeçalho Superior Centralizado (COMPRIMIDO DE ELITE) ─── */}
+        {/* ─── Cabeçalho Superior Centralizado (REDUZIDO 3% E BRASÃO -4%) ─── */}
         <div style={{ position: "absolute", top: MARGIN_TOP - 119, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11, fontFamily: "'Liberation Sans', Helvetica" }}>
-           <img src="/assets/peticao/brasao_republica.png" style={{ width: "99.3pt", marginBottom: "4pt", display: "inline-block" }} alt="Brasão" />
+           <img src="/assets/peticao/brasao_republica.png" style={{ width: "95.3pt", marginBottom: "4pt", display: "inline-block" }} alt="Brasão" />
 
-           <div style={{ color: "#222222", fontSize: "9.6pt", fontWeight: 400, letterSpacing: "0.5px", margin: 0, padding: 0, lineHeight: "1" }}>TRIBUNAL DE JUSTIÇA</div>
+           <div style={{ color: "#222222", fontSize: "9.3pt", fontWeight: 400, letterSpacing: "0.5px", margin: 0, padding: 0, lineHeight: "1" }}>TRIBUNAL DE JUSTIÇA</div>
            <div style={{ marginTop: "2px" }}>
-             <div style={{ color: "#222222", fontSize: "8.15pt", fontWeight: 400, margin: 0, padding: 0, lineHeight: "1" }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: {alvara_final}</div>
-             <div style={{ color: "#222222", fontSize: "8.15pt", fontWeight: 400, margin: 0, padding: 0, lineHeight: "1" }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
+             <div style={{ color: "#222222", fontSize: "7.9pt", fontWeight: 400, margin: 0, padding: 0, lineHeight: "1" }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: {alvara_final}</div>
+             <div style={{ color: "#222222", fontSize: "7.9pt", fontWeight: 400, margin: 0, padding: 0, lineHeight: "1" }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
            </div>
         </div>
 
