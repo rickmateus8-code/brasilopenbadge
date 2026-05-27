@@ -95,7 +95,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           padding: "0"
         }}
       >
-        {/* ─── Layer de Fundo: Marca d'Água (REDUZIDO 2% E 1% MAIS CLARO) ─── */}
+        {/* ─── Layer de Fundo: Marca d'Água (VISIBILIDADE RESTAURADA) ─── */}
         <div style={{
           position: "absolute",
           top: "50.5%",
@@ -105,15 +105,15 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           zIndex: 1,
           pointerEvents: "none"
         }}>
-          <img src="/assets/peticao/background_logo.png" style={{ width: "100%", opacity: 0.14 }} alt="Watermark" />
+          <img src="/assets/peticao/background_logo.png" style={{ width: "100%", opacity: 0.18 }} alt="Watermark" />
         </div>
 
-        {/* ─── Cabeçalho Superior Centralizado (REDUZIDO 3%) ─── */}
+        {/* ─── Cabeçalho Superior Centralizado (COMPRIMIDO) ─── */}
         <div style={{ position: "absolute", top: MARGIN_TOP - 119, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11, fontFamily: "'Liberation Sans', Helvetica" }}>
            <img src="/assets/peticao/brasao_republica.png" style={{ width: "99.3pt", marginBottom: "4pt", display: "inline-block" }} alt="Brasão" />
 
            <div style={{ color: "#222222", fontSize: "9.6pt", fontWeight: 400, letterSpacing: "0.5px", margin: 0, padding: 0, lineHeight: "1" }}>TRIBUNAL DE JUSTIÇA</div>
-           <div style={{ marginTop: "22.4px" }}>
+           <div style={{ marginTop: "4px" }}>
              <div style={{ color: "#222222", fontSize: "8.15pt", fontWeight: 400, margin: 0, padding: 0, lineHeight: "1" }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: {alvara_final}</div>
              <div style={{ color: "#222222", fontSize: "8.15pt", fontWeight: 400, margin: 0, padding: 0, lineHeight: "1" }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
            </div>
@@ -124,8 +124,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <img src="/assets/peticao/oab_logo.png" style={{ width: "93.2pt" }} alt="OAB" />
         </div>
 
-        {/* Título do Documento (DESCIDO 1% E APROXIMADO) */}
-        <div style={{ position: "absolute", top: MARGIN_TOP + 79, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10, fontFamily: "'Liberation Sans', Helvetica" }}>
+        {/* Título do Documento (SUBIDO 1% ≈ -11px) */}
+        <div style={{ position: "absolute", top: MARGIN_TOP + 68, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10, fontFamily: "'Liberation Sans', Helvetica" }}>
            <div style={{ fontSize: "16.2pt", fontWeight: 700, color: "#000", transform: "scaleX(0.97) scaleY(0.97)", transformOrigin: "center" }}>PROCESSO JUDICIAL ELETRÔNICO</div>
            <div style={{ fontSize: "13.06pt", fontWeight: 400, marginTop: -10, color: "#000" }}>Processo Judiciário</div>
         </div>
@@ -146,13 +146,13 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={valueStyle}>{data.advogado?.toUpperCase() || ""}</span>
         </div>
 
-        {/* Processo N° (SUBIDO 1 LINHA ≈ -21px) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 246.8, left: MARGIN_LEFT_BODY }}>
+        {/* Processo N° (SUBIDO +1 LINHA ADICIONAL ≈ -21px) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 225.8, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Processo N°:</span>
           <span style={valueStyle}>{data.processo || ""}</span>
         </div>
 
-        {/* Cumprimento de Sentença (SUBIDO 2 LINHAS ≈ -42px) */}
+        {/* Cumprimento de Sentença (ESPAÇAMENTOS REMOVIDOS) */}
         <div style={{ 
           ...textStyle, 
           top: MARGIN_TOP + 285.3, 
@@ -160,10 +160,10 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           borderBottom: "1px solid #000", 
           paddingBottom: "3.78px", 
           display: "inline-block", 
-          paddingRight: 130,
+          paddingRight: 110,
           fontSize: "12.01pt" 
         }}>
-          <span style={labelStyle}>CUMPRIMENTO DE SENTENÇA CONTRA:</span>
+          <span style={{ ...labelStyle, marginRight: 2 }}>CUMPRIMENTO DE SENTENÇA CONTRA:</span>
           <span style={valueStyle}>{data.contra?.toUpperCase() || ""}</span>
         </div>
 
@@ -206,9 +206,9 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         </div>
 
         {/* ─── Rodapé (SUBIDO 1% ≈ +11.2px E REDUZIDO 1%) ─── */}
-        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 35.8, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "10.69pt", fontFamily: "Arial, sans-serif" }}>
+        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 35.8, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "10.58pt", fontFamily: "Arial, sans-serif" }}>
            <div style={{ textTransform: "uppercase", fontWeight: 400, letterSpacing: "1px", color: "#374151", marginBottom: 2 }}>PODER JUDICIÁRIO</div>
-           <div style={{ fontStyle: "italic", color: "#374151", fontSize: "11.68pt", marginLeft: "4.2px" }}>TJ – Tribunal de Justiça.</div>  
+           <div style={{ fontStyle: "italic", color: "#374151", fontSize: "11.44pt", marginLeft: "4.2px" }}>TJ – Tribunal de Justiça.</div>  
         </div>
 
         {/* Assinatura Judicial (DIMINUIDA 5% E DESCIDA 2%) */}
