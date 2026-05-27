@@ -127,7 +127,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         {/* Título do Documento (DESCIDO 0.2% E REDUZIDO 8%/5%) */}
         <div style={{ position: "absolute", top: MARGIN_TOP + 105.3, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10, fontFamily: "'Liberation Sans', Helvetica" }}>
            <div style={{ fontSize: "14.9pt", fontWeight: 700, color: "#000", transform: "scaleX(0.97) scaleY(0.97)", transformOrigin: "center" }}>PROCESSO JUDICIAL ELETRÔNICO</div>
-           <div style={{ fontSize: "12.4pt", fontWeight: 400, marginTop: -11, color: "#000" }}>Processo Judiciário</div>
+           <div style={{ fontSize: "12.03pt", fontWeight: 400, marginTop: -11, color: "#000" }}>Processo Judiciário</div>
         </div>
 
         {/* ─── Corpo da Petição (ESPAÇAMENTO IGUALITÁRIO) ─── */}
@@ -160,7 +160,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           borderBottom: "1px solid #000", 
           paddingBottom: "3.78px", 
           display: "inline-block", 
-          paddingRight: 70,
+          paddingRight: 90,
           fontSize: "12.01pt" 
         }}>
           <span style={{ ...labelStyle, marginRight: 2 }}>CUMPRIMENTO DE SENTENÇA CONTRA:</span>
@@ -177,8 +177,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={{ ...valueStyle, color: "#000" }}>AUTORIZADO</span>
         </div>
 
-        {/* Código de Barras Dinâmico (CENTRALIZADO ENTRE SITUAÇÃO E VALOR) */}
-        <div style={{ position: "absolute", top: MARGIN_TOP + 435.0, left: MARGIN_LEFT_BODY + 0.8, zIndex: 11 }}>
+        {/* Código de Barras Dinâmico (SUBIDO 0.6% ≈ -6.7px) */}
+        <div style={{ position: "absolute", top: MARGIN_TOP + 428.3, left: MARGIN_LEFT_BODY + 0.8, zIndex: 11 }}>
            <Barcode
              value={alvara_final}
              width={1.4}
