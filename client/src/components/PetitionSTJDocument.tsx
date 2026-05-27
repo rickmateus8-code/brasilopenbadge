@@ -124,10 +124,10 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <img src="/assets/peticao/oab_logo.png" style={{ width: "93.2pt" }} alt="OAB" />
         </div>
 
-        {/* Título do Documento (DESCIDO 0.2% E REDUZIDO 8%/5%) */}
+        {/* Título do Documento (RESOLVIDA FUSÃO NA EXPORTAÇÃO) */}
         <div style={{ position: "absolute", top: MARGIN_TOP + 105.3, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10, fontFamily: "'Liberation Sans', Helvetica" }}>
            <div style={{ fontSize: "14.9pt", fontWeight: 700, color: "#000", transform: "scaleX(0.97) scaleY(0.97)", transformOrigin: "center" }}>PROCESSO JUDICIAL ELETRÔNICO</div>
-           <div style={{ fontSize: "12.03pt", fontWeight: 400, marginTop: -11, color: "#000" }}>Processo Judiciário</div>
+           <div style={{ fontSize: "12.03pt", fontWeight: 400, marginTop: 2, color: "#000" }}>Processo Judiciário</div>
         </div>
 
         {/* ─── Corpo da Petição (ESPAÇAMENTO IGUALITÁRIO) ─── */}
@@ -158,7 +158,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           top: MARGIN_TOP + 321.3, 
           left: MARGIN_LEFT_BODY, 
           borderBottom: "1px solid #000", 
-          paddingBottom: "3.78px", 
+          paddingBottom: "7.18px", 
           display: "inline-block", 
           paddingRight: 90,
           fontSize: "12.01pt" 
@@ -205,8 +205,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           {formatLongDate(data.data)}.
         </div>
 
-        {/* ─── Rodapé (DESCIDO 0.2% E REDUZIDO 2%) ─── */}
-        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 39.15, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "9.86pt", fontFamily: "Arial, sans-serif" }}>
+        {/* ─── Rodapé (POSIÇÃO TRAVADA EM 'TOP' PARA PARIDADE 1:1 NA EXPORTAÇÃO) ─── */}
+        <div style={{ position: "absolute", top: 997.2, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "9.86pt", fontFamily: "Arial, sans-serif" }}>
            <div style={{ textTransform: "uppercase", fontWeight: 400, letterSpacing: "1px", color: "#374151", marginBottom: 2 }}>PODER JUDICIÁRIO</div>
            <div style={{ fontStyle: "italic", color: "#374151", fontSize: "11.21pt", marginLeft: "4.2px" }}>TJ – Tribunal de Justiça.</div>  
         </div>
