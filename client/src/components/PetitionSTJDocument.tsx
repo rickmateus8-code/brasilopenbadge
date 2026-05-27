@@ -130,18 +130,18 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <div style={{ fontSize: "12.4pt", fontWeight: 400, marginTop: -11, color: "#000" }}>Processo Judiciário</div>
         </div>
 
-        {/* ─── Corpo da Petição (ESPAÇAMENTO REDUZIDO 0.3%) ─── */}
+        {/* ─── Corpo da Petição (ESPAÇAMENTO IGUALITÁRIO) ─── */}
         <div style={{ ...textStyle, top: MARGIN_TOP + 171.7, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Credor:</span>
           <span style={valueStyle}>{data.credor?.toUpperCase() || ""}</span>
         </div>
 
-        <div style={{ ...textStyle, top: MARGIN_TOP + 189.3, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 192.6, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>CPF/CNPJ:</span>
           <span style={valueStyle}>{data.cpf_cnpj || ""}</span>
         </div>
 
-        <div style={{ ...textStyle, top: MARGIN_TOP + 206.9, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 213.5, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Advogado(a):</span>
           <span style={valueStyle}>{data.advogado?.toUpperCase() || ""}</span>
         </div>
