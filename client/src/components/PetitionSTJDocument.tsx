@@ -124,10 +124,10 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <img src="/assets/peticao/oab_logo.png" style={{ width: "84.1pt" }} alt="OAB" />
         </div>
 
-        {/* Título do Documento (SUBTITULO SUBIDO 0.5%) */}
+        {/* Título do Documento (SUBTITULO SUBIDO +0.5%) */}
         <div style={{ position: "absolute", top: MARGIN_TOP + 105.3, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10, fontFamily: "'Liberation Sans', Helvetica" }}>
            <div style={{ fontSize: "14.9pt", fontWeight: 700, color: "#000", transform: "scaleX(0.97) scaleY(0.97)", transformOrigin: "center" }}>PROCESSO JUDICIAL ELETRÔNICO</div>
-           <div style={{ fontSize: "12.03pt", fontWeight: 400, marginTop: 0.4, color: "#000" }}>Processo Judiciário</div>
+           <div style={{ fontSize: "12.03pt", fontWeight: 400, marginTop: -5.2, color: "#000" }}>Processo Judiciário</div>
         </div>
 
         {/* ─── Corpo da Petição (ESPAÇAMENTO IGUALITÁRIO) ─── */}
@@ -205,8 +205,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           {formatLongDate(data.data)}.
         </div>
 
-        {/* ─── Rodapé (SUBIDO 2% ADICIONAL PARA EXPORTAÇÃO) ─── */}
-        <div style={{ position: "absolute", top: 952.2, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "9.86pt", fontFamily: "Arial, sans-serif" }}>
+        {/* ─── Rodapé (REDUZIDO -3% ADICIONAL) ─── */}
+        <div style={{ position: "absolute", top: 952.2, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "9.56pt", fontFamily: "Arial, sans-serif" }}>
            <div style={{ textTransform: "uppercase", fontWeight: 400, letterSpacing: "1px", color: "#374151", marginBottom: 2 }}>PODER JUDICIÁRIO</div>
            <div style={{ fontStyle: "italic", color: "#374151", fontSize: "11.21pt", marginLeft: "4.2px" }}>TJ – Tribunal de Justiça.</div>  
         </div>
