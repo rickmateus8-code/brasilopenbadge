@@ -108,20 +108,20 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <img src="/assets/peticao/background_logo.png" style={{ width: "100%", opacity: 0.95 }} alt="Background Logo" />
         </div>
 
-        {/* ─── Cabeçalho Superior Centralizado (SUBIDO 0.2%) ─── */}
-        <div style={{ position: "absolute", top: MARGIN_TOP - 119, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11, fontFamily: "'Liberation Sans', Helvetica" }}>
+        {/* ─── Cabeçalho Superior Centralizado (SUBIDO 0.5%) ─── */}
+        <div style={{ position: "absolute", top: MARGIN_TOP - 124.6, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11, fontFamily: "'Liberation Sans', Helvetica" }}>
            <img src="/assets/peticao/brasao_republica.png" style={{ width: "95.3pt", marginBottom: "3.4px", display: "inline-block" }} alt="Brasão" />
 
            <div style={{ color: "#222222", fontSize: "9.3pt", fontWeight: 400, letterSpacing: "0.5px", margin: 0, padding: 0, lineHeight: "1" }}>TRIBUNAL DE JUSTIÇA</div>
            <div style={{ marginTop: "0px" }}>
              <div style={{ color: "#222222", fontSize: "7.9pt", fontWeight: 400, margin: 0, padding: 0, lineHeight: "1" }}>ALVARÁ DE LIBERAÇÃO DE PAGAMENTO Nº: {alvara_final}</div>
-             <div style={{ color: "#222222", fontSize: "8.15pt", fontWeight: 400, margin: 0, padding: 0, lineHeight: "1" }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
+             <div style={{ color: "#222222", fontSize: "7.9pt", fontWeight: 400, margin: 0, padding: 0, lineHeight: "1" }}>AÇÃO: EXECUÇÃO DE SENTENÇA CNJ LEI.13.105</div>
            </div>
         </div>
 
-        {/* Logo OAB (Diminuído 5% adicional ≈ 88.5pt) */}
+        {/* Logo OAB (Diminuído 5% adicional ≈ 84.1pt) */}
         <div style={{ position: "absolute", top: "-26px", left: "4pt", zIndex: 11 }}>
-           <img src="/assets/peticao/oab_logo.png" style={{ width: "88.5pt" }} alt="OAB" />
+           <img src="/assets/peticao/oab_logo.png" style={{ width: "84.1pt" }} alt="OAB" />
         </div>
 
         {/* Título do Documento (ESPAÇAMENTO REFORÇADO PARA EXPORTAÇÃO) */}
@@ -177,12 +177,12 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={{ ...valueStyle, color: "#000" }}>AUTORIZADO</span>
         </div>
 
-        {/* Código de Barras Dinâmico (SUBIDO 0.6% ≈ -6.7px) */}
-        <div style={{ position: "absolute", top: MARGIN_TOP + 428.3, left: MARGIN_LEFT_BODY + 0.8, zIndex: 11 }}>
+        {/* Código de Barras Dinâmico (REDUZIDO 2% E DESCIDO 0.5%) */}
+        <div style={{ position: "absolute", top: MARGIN_TOP + 433.9, left: MARGIN_LEFT_BODY + 0.8, zIndex: 11 }}>
            <Barcode
              value={alvara_final}
-             width={1.4}
-             height={40.2}
+             width={1.37}
+             height={39.4}
              displayValue={false}
              margin={0}
              background="transparent"
@@ -205,8 +205,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           {formatLongDate(data.data)}.
         </div>
 
-        {/* ─── Rodapé (POSIÇÃO TRAVADA EM 974.7px PARA PARIDADE 1:1) ─── */}
-        <div style={{ position: "absolute", top: 974.7, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "9.86pt", fontFamily: "Arial, sans-serif" }}>
+        {/* ─── Rodapé (SUBIDO 2% ADICIONAL PARA EXPORTAÇÃO) ─── */}
+        <div style={{ position: "absolute", top: 952.2, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "9.86pt", fontFamily: "Arial, sans-serif" }}>
            <div style={{ textTransform: "uppercase", fontWeight: 400, letterSpacing: "1px", color: "#374151", marginBottom: 2 }}>PODER JUDICIÁRIO</div>
            <div style={{ fontStyle: "italic", color: "#374151", fontSize: "11.21pt", marginLeft: "4.2px" }}>TJ – Tribunal de Justiça.</div>  
         </div>
