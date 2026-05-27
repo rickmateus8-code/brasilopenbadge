@@ -167,18 +167,18 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={valueStyle}>{data.contra?.toUpperCase() || ""}</span>
         </div>
 
-        {/* Bloco de Decisão (DESCIDO PARA ACOMPANHAR FLUXO) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 409.1, left: MARGIN_LEFT_BODY }}>
+        {/* Bloco de Decisão (APROXIMADO AO CUMPRIMENTO - 1% DISTÂNCIA) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 353.3, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Assunto:</span>
           <span style={valueStyle}>Decisão Favorável</span>
         </div>
-        <div style={{ ...textStyle, top: MARGIN_TOP + 434.1, left: MARGIN_LEFT_BODY }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 378.3, left: MARGIN_LEFT_BODY }}>
           <span style={labelStyle}>Situação:</span>
           <span style={{ ...valueStyle, color: "#000" }}>AUTORIZADO</span>
         </div>
 
-        {/* Código de Barras Dinâmico (DESCIDO 1% E MOVIDO 0.5% ESQUERDA) */}
-        <div style={{ position: "absolute", top: MARGIN_TOP + 489.7, left: MARGIN_LEFT_BODY + 0, zIndex: 11 }}>
+        {/* Código de Barras Dinâmico (SUBIDO SINCRONIZADO) */}
+        <div style={{ position: "absolute", top: MARGIN_TOP + 422.7, left: MARGIN_LEFT_BODY + 0, zIndex: 11 }}>
            <Barcode
              value={alvara_final}
              width={1.4}
@@ -190,18 +190,18 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         </div>
 
         {/* Valor de Repasse (DESCIDO PARA ACOMPANHAR FLUXO) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 569.1, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", fontSize: "12.14pt" }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 512.9, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", fontSize: "12.14pt" }}>
           Valor a receber: <span style={valueStyle}>R$ {data.valor ? data.valor.replace(/^R\$\s?/, "") : ""}</span> será depositado em conta corrente de sua titularidade..    
         </div>
 
         {/* Texto Legal (DESCIDO PARA ACOMPANHAR FLUXO) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 630.9, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", textAlign: "justify", lineHeight: "1.5", fontSize: "11.68pt", fontFamily: "Arial, sans-serif" }}>
+        <div style={{ ...textStyle, top: MARGIN_TOP + 574.7, left: MARGIN_LEFT_BODY, width: DOC_WIDTH_PX - MARGIN_LEFT_BODY - MARGIN_RIGHT, whiteSpace: "nowrap", textAlign: "justify", lineHeight: "1.5", fontSize: "11.68pt", fontFamily: "Arial, sans-serif" }}>
           Os autos foram encaminhados pelo TJ à Vara da Fazenda para a execução do processo e <br/>
           posteriormente encaminhado para Vara das Execuções gerando o processo de Execução.
         </div>
 
-        {/* Data (DESCIDO PARA ACOMPANHAR FLUXO) */}
-        <div style={{ ...textStyle, top: MARGIN_TOP + 710.9, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "12.65pt" }}>
+        {/* Data (REDUZIDO 2% ADICIONAL ≈ 12.40pt) */}
+        <div style={{ ...textStyle, top: MARGIN_TOP + 654.7, left: MARGIN_LEFT_BODY, fontFamily: "Arial, sans-serif", fontSize: "12.40pt" }}>
           {formatLongDate(data.data)}.
         </div>
 
