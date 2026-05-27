@@ -108,8 +108,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <img src="/assets/peticao/background_logo.png" style={{ width: "100%", opacity: 0.95 }} alt="Background Logo" />
         </div>
 
-        {/* ─── Cabeçalho Superior Centralizado (SUBIDO 0.5%) ─── */}
-        <div style={{ position: "absolute", top: MARGIN_TOP - 124.6, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11, fontFamily: "'Liberation Sans', Helvetica" }}>
+        {/* ─── Cabeçalho Superior Centralizado (SUBIDO 0.5% ADICIONAL) ─── */}
+        <div style={{ position: "absolute", top: MARGIN_TOP - 130.2, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11, fontFamily: "'Liberation Sans', Helvetica" }}>
            <img src="/assets/peticao/brasao_republica.png" style={{ width: "95.3pt", marginBottom: "3.4px", display: "inline-block" }} alt="Brasão" />
 
            <div style={{ color: "#222222", fontSize: "9.3pt", fontWeight: 400, letterSpacing: "0.5px", margin: 0, padding: 0, lineHeight: "1" }}>TRIBUNAL DE JUSTIÇA</div>
