@@ -95,13 +95,13 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           padding: "0"
         }}
       >
-        {/* ─── Layer de Fundo: LOGO DO BACKGROUND (VISIBILIDADE MÁXIMA +5%) ─── */}
+        {/* ─── Layer de Fundo: LOGO DO BACKGROUND (REDUZIDO 2%) ─── */}
         <div style={{
           position: "absolute",
           top: "50.0%",
           left: "50%",
           transform: "translate(-50%, -41.3%)", 
-          width: "489.8pt",
+          width: "480.0pt",
           zIndex: 1,
           pointerEvents: "none"
         }}>
