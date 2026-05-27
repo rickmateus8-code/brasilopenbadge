@@ -205,18 +205,18 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           {formatLongDate(data.data)}.
         </div>
 
-        {/* ─── Rodapé (REDUZIDO 3% E 2% ADICIONAL) ─── */}
-        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 35.8, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "10.06pt", fontFamily: "Arial, sans-serif" }}>
+        {/* ─── Rodapé (SUBIDO 0.5% ADICIONAL ≈ +5.6px) ─── */}
+        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 41.4, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "10.06pt", fontFamily: "Arial, sans-serif" }}>
            <div style={{ textTransform: "uppercase", fontWeight: 400, letterSpacing: "1px", color: "#374151", marginBottom: 2 }}>PODER JUDICIÁRIO</div>
            <div style={{ fontStyle: "italic", color: "#374151", fontSize: "11.21pt", marginLeft: "4.2px" }}>TJ – Tribunal de Justiça.</div>  
         </div>
 
-        {/* Assinatura Judicial (DIMINUIDA 5% E DESCIDA 2%) */}
+        {/* Assinatura Judicial (AUMENTADA 0.1% ≈ 108.1px) */}
         <div style={{ position: "absolute", bottom: MARGIN_BOTTOM - 74.2, left: "50%", transform: "translateX(-50%)", width: "100%", textAlign: "center" }}>
            <img
              src={data.signatureImage || "/assets/peticao/assinatura_juiz.png"}
              style={{
-               height: 108,
+               height: 108.1,
                zIndex: 12,
                pointerEvents: "none",
                margin: "0 auto",
