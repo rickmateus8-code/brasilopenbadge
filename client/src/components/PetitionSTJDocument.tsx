@@ -95,13 +95,13 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           padding: "0"
         }}
       >
-        {/* ─── Layer de Fundo: LOGO DO BACKGROUND (DESCIDO 1% ADICIONAL) ─── */}
+        {/* ─── Layer de Fundo: LOGO DO BACKGROUND (REDUZIDO 2% E MOVIDO 0.5% BAIXO) ─── */}
         <div style={{
           position: "absolute",
-          top: "51.0%",
+          top: "51.5%",
           left: "50%",
           transform: "translate(-50%, -41.3%)", 
-          width: "480.0pt",
+          width: "470.4pt",
           zIndex: 1,
           pointerEvents: "none"
         }}>
@@ -205,8 +205,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           {formatLongDate(data.data)}.
         </div>
 
-        {/* ─── Rodapé (SUBIDO 1% ≈ +11.2px E REDUZIDO 1%) ─── */}
-        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 35.8, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "10.58pt", fontFamily: "Arial, sans-serif" }}>
+        {/* ─── Rodapé (SUBIDO 1% ≈ +11.2px E REDUZIDO 2% ADICIONAL) ─── */}
+        <div style={{ position: "absolute", bottom: MARGIN_BOTTOM + 35.8, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", fontSize: "10.37pt", fontFamily: "Arial, sans-serif" }}>
            <div style={{ textTransform: "uppercase", fontWeight: 400, letterSpacing: "1px", color: "#374151", marginBottom: 2 }}>PODER JUDICIÁRIO</div>
            <div style={{ fontStyle: "italic", color: "#374151", fontSize: "11.44pt", marginLeft: "4.2px" }}>TJ – Tribunal de Justiça.</div>  
         </div>
@@ -231,7 +231,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <img src="/assets/peticao/qr_code_peticao.png" style={{ width: "74.7px" }} alt="QR Code" />
         </div>
 
-        {/* COD DE BARRAS 2 (VERTICAL DIREITA - AUMENTADO 2% E MOVIDO 1% DIREITA) */}
+        {/* COD DE BARRAS 2 (VERTICAL DIREITA - REDUZIDO 2%) ─── */}
         <div style={{ 
           position: "absolute", 
           bottom: "67px", 
@@ -240,7 +240,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         }}>
            <img 
              src="/assets/peticao/cod_barras_vertical.png" 
-             style={{ height: "175px", width: "auto", display: "block" }} 
+             style={{ height: "171.5px", width: "auto", display: "block" }} 
              alt="Vertical Barcode" 
            />
         </div>
