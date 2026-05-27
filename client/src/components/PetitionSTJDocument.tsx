@@ -110,7 +110,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
 
         {/* ─── Cabeçalho Superior Centralizado (SUBIDO 0.2%) ─── */}
         <div style={{ position: "absolute", top: MARGIN_TOP - 119, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11, fontFamily: "'Liberation Sans', Helvetica" }}>
-           <img src="/assets/peticao/brasao_republica.png" style={{ width: "95.3pt", marginBottom: "4pt", display: "inline-block" }} alt="Brasão" />
+           <img src="/assets/peticao/brasao_republica.png" style={{ width: "95.3pt", marginBottom: "3.4px", display: "inline-block" }} alt="Brasão" />
 
            <div style={{ color: "#222222", fontSize: "9.3pt", fontWeight: 400, letterSpacing: "0.5px", margin: 0, padding: 0, lineHeight: "1" }}>TRIBUNAL DE JUSTIÇA</div>
            <div style={{ marginTop: "0px" }}>
@@ -119,9 +119,9 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            </div>
         </div>
 
-        {/* Logo OAB (Diminuído 5% adicional ≈ 93.2pt) */}
+        {/* Logo OAB (Diminuído 5% adicional ≈ 88.5pt) */}
         <div style={{ position: "absolute", top: "-26px", left: "4pt", zIndex: 11 }}>
-           <img src="/assets/peticao/oab_logo.png" style={{ width: "93.2pt" }} alt="OAB" />
+           <img src="/assets/peticao/oab_logo.png" style={{ width: "88.5pt" }} alt="OAB" />
         </div>
 
         {/* Título do Documento (RESOLVIDA FUSÃO NA EXPORTAÇÃO) */}
@@ -158,12 +158,12 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           top: MARGIN_TOP + 321.3, 
           left: MARGIN_LEFT_BODY, 
           borderBottom: "1px solid #000", 
-          paddingBottom: "7.18px", 
+          paddingBottom: "8.5px", 
           display: "inline-block", 
           paddingRight: 90,
           fontSize: "12.01pt" 
         }}>
-          <span style={{ ...labelStyle, marginRight: 2 }}>CUMPRIMENTO DE SENTENÇA CONTRA:</span>
+          <span style={{ ...labelStyle, marginRight: 5 }}>CUMPRIMENTO DE SENTENÇA CONTRA: </span>
           <span style={valueStyle}>{data.contra?.toUpperCase() || ""}</span>
         </div>
 
