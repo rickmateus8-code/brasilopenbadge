@@ -95,21 +95,21 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           padding: "0"
         }}
       >
-        {/* ─── Layer de Fundo: LOGO DO BACKGROUND (REDUZIDO 0.5% E MOVIDO 1.0% BAIXO) ─── */}
+        {/* ─── Layer de Fundo: LOGO DO BACKGROUND (REDUZIDO 0.5% E MOVIDO 0.2% BAIXO) ─── */}
         <div style={{
           position: "absolute",
-          top: "52.5%",
+          top: "52.7%",
           left: "50%",
           transform: "translate(-50%, -41.3%)", 
-          width: "468.0pt",
+          width: "465.7pt",
           zIndex: 1,
           pointerEvents: "none"
         }}>
           <img src="/assets/peticao/background_logo.png" style={{ width: "100%", opacity: 0.95 }} alt="Background Logo" />
         </div>
 
-        {/* ─── Cabeçalho Superior Centralizado (SUBIDO 0.5% ADICIONAL) ─── */}
-        <div style={{ position: "absolute", top: MARGIN_TOP - 130.2, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11, fontFamily: "'Liberation Sans', Helvetica" }}>
+        {/* ─── Cabeçalho Superior Centralizado (DESCIDO 0.5%) ─── */}
+        <div style={{ position: "absolute", top: MARGIN_TOP - 124.6, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 11, fontFamily: "'Liberation Sans', Helvetica" }}>
            <img src="/assets/peticao/brasao_republica.png" style={{ width: "95.3pt", marginBottom: "3.4px", display: "inline-block" }} alt="Brasão" />
 
            <div style={{ color: "#222222", fontSize: "9.3pt", fontWeight: 400, letterSpacing: "0.5px", margin: 0, padding: 0, lineHeight: "1" }}>TRIBUNAL DE JUSTIÇA</div>
