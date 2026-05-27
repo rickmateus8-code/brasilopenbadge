@@ -177,8 +177,8 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
           <span style={{ ...valueStyle, color: "#000" }}>AUTORIZADO</span>
         </div>
 
-        {/* Código de Barras Dinâmico (DESCIDO 5% ≈ +56px) */}
-        <div style={{ position: "absolute", top: MARGIN_TOP + 478.7, left: MARGIN_LEFT_BODY + 0.8, zIndex: 11 }}>
+        {/* Código de Barras Dinâmico (CENTRALIZADO ENTRE SITUAÇÃO E VALOR) */}
+        <div style={{ position: "absolute", top: MARGIN_TOP + 435.0, left: MARGIN_LEFT_BODY + 0.8, zIndex: 11 }}>
            <Barcode
              value={alvara_final}
              width={1.4}
@@ -226,12 +226,12 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            />
         </div>
 
-        {/* QR CODE (REDUZIDO 3%, MOVIDO 1% ESQUERDA E 1% BAIXO) */}
+        {/* QR CODE (REDUZIDO 8% ADICIONAL) */}
         <div style={{ position: "absolute", bottom: "13.8px", left: "17px", zIndex: 12 }}>
-           <img src="/assets/peticao/qr_code_peticao.png" style={{ width: "74.7px" }} alt="QR Code" />
+           <img src="/assets/peticao/qr_code_peticao.png" style={{ width: "68.7px" }} alt="QR Code" />
         </div>
 
-        {/* COD DE BARRAS 2 (VERTICAL DIREITA - REDUZIDO 2%) ─── */}
+        {/* COD DE BARRAS 2 (VERTICAL DIREITA - REDUZIDO 5% ADICIONAL) ─── */}
         <div style={{ 
           position: "absolute", 
           bottom: "67px", 
@@ -240,7 +240,7 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
         }}>
            <img 
              src="/assets/peticao/cod_barras_vertical.png" 
-             style={{ height: "171.5px", width: "auto", display: "block" }} 
+             style={{ height: "162.9px", width: "auto", display: "block" }} 
              alt="Vertical Barcode" 
            />
         </div>
