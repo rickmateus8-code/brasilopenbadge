@@ -102,7 +102,6 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const cidNome = (data as any).cidNome || (data as any).cid_nome || "";
     const cidade = (data as any).cidade || "";
     const uf = (data as any).uf || "MG";
-    const modoCarimbo = (data as any).modoCarimbo || (data as any).modo_carimbo || false;
 
     const layout = ATTESTATION_LAYOUT;
     const sScale = stampScale ?? (data as any).stampScale ?? (data as any).stamp_scale ?? layout.stamp.defaultScale;
@@ -182,10 +181,10 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           #attestation-document * { box-sizing: border-box; }
         `}</style>
 
-        {/* ─── LAYOUT RELATÓRIO (CLONAGEM 100% IDENTICA - ESTILO ALFENAS) ─── */}
+        {/* ─── LAYOUT RELATÓRIO (REFORTALECIMENTO FORENSE) ─── */}
         {docType === 'relatorio' ? (
           <div style={{ display: "flex", flexDirection: "column", height: "100%", fontFamily: "Arial, sans-serif" }}>
-            {/* Header: Logo Esquerda + Texto Centralizado */}
+            {/* Header: Logo Esquerda + Texto Centralizado (REDUZIDO 10%) */}
             <div style={{ 
               display: "flex", 
               alignItems: "center", 
@@ -201,18 +200,18 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 )}
               </div>
               <div style={{ flex: 1, textAlign: "center", paddingRight: 140 }}>
-                <div style={{ fontSize: 18, fontWeight: 700, textTransform: "uppercase", color: "#000", marginBottom: 10 }}>{instituicao}</div>
-                <div style={{ fontSize: 12, fontWeight: 400, textTransform: "uppercase", color: "#000" }}>{enderecoEmitente}</div>
+                <div style={{ fontSize: 16.2, fontWeight: 700, textTransform: "uppercase", color: "#000", marginBottom: 10 }}>{instituicao}</div>
+                <div style={{ fontSize: 10.8, fontWeight: 400, textTransform: "uppercase", color: "#000" }}>{enderecoEmitente}</div>
               </div>
             </div>
 
-            {/* Título Centralizado */}
+            {/* Título Centralizado (REDUZIDO 10%) */}
             <div style={{ textAlign: "center", marginBottom: 50 }}>
-               <h1 style={{ fontSize: 24, fontWeight: 400, textTransform: "uppercase", letterSpacing: 2 }}>RELATÓRIO MÉDICO</h1>
+               <h1 style={{ fontSize: 21.6, fontWeight: 400, textTransform: "uppercase", letterSpacing: 2 }}>RELATÓRIO MÉDICO</h1>
             </div>
 
-            {/* Corpo do Texto */}
-            <div style={{ flex: 1, fontSize: 15, lineHeight: 1.8, color: "#000", textAlign: "justify" }}>
+            {/* Corpo do Texto (REDUZIDO 8% ≈ 13.8px) */}
+            <div style={{ flex: 1, fontSize: 13.8, lineHeight: 1.8, color: "#000", textAlign: "justify" }}>
                <p style={{ marginBottom: 30 }}>
                  ATESTO para os fins de comprovação profissional que <strong>{data.paciente?.toUpperCase()}</strong> foi, por mim atendido(a) na data abaixo, estando sem condições de assumir suas atividades profissionais por ( <strong>{data.afastamento || "__"}</strong> ) dias.
                </p>
@@ -225,45 +224,46 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                  Sendo assim, eu <strong>{data.paciente?.toUpperCase()}</strong> expressamente solicito que seja informado neste atestado médico o diagnóstico, codificado (CID) relativo à patologia que originou este documento.
                </p>
 
-               <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 60 }}>
+               <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 60 }}>
                  CID: {cidDisplay || "C560"}
                </div>
 
                {/* Local e Data à Direita */}
-               <div style={{ textAlign: "right", marginTop: 20, marginBottom: 80, fontSize: 16 }}>
+               <div style={{ textAlign: "right", marginTop: 20, marginBottom: 80, fontSize: 14 }}>
                   {dataFormatada}
                </div>
 
                {/* Área de Assinaturas */}
                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 80 }}>
-                  {/* Assinatura Paciente */}
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  {/* Assinatura Paciente (SUBIDA 1% E NEGRITO) */}
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: -11 }}>
                      <div style={{ width: 400, borderTop: "1.5px solid #000" }}></div>
-                     <div style={{ fontSize: 14, marginTop: 8 }}>Assinatura do Paciente ou Responsável</div>
+                     <div style={{ fontSize: 14, marginTop: 4, fontWeight: 700 }}>Assinatura do Paciente ou Responsável</div>
                   </div>
 
-                  {/* Assinatura Médico */}
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}>
-                     <div style={{ position: "absolute", top: -85, opacity: 0.95, transform: "rotate(-2deg)", zIndex: 10 }}>
+                  {/* Assinatura Médico (SUBIDA 1% E NEGRITO) */}
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", marginTop: -11 }}>
+                     {/* Carimbo/Assinatura - DESCIDO 2 LINHAS PARA FICAR ACIMA DA LINHA */}
+                     <div style={{ position: "absolute", top: -45, opacity: 0.95, transform: "rotate(-1deg)", zIndex: 10 }}>
                         {fotoAssinatura && <img src={fotoAssinatura} style={{ maxHeight: 100, maxWidth: 300 }} alt="Assinatura" />}
                         {sStampInfo && (
-                          <div style={{ textAlign: "center", color: corAssinatura, marginTop: -15 }}>
+                          <div style={{ textAlign: "center", color: corAssinatura, marginTop: -5 }}>
                              <div style={{ fontWeight: 700, fontSize: 13 }}>{data.medico?.toUpperCase()}</div>
                              <div style={{ fontSize: 11 }}>{data.crm}</div>
                           </div>
                         )}
                      </div>
                      <div style={{ width: 400, borderTop: "1.5px solid #000" }}></div>
-                     <div style={{ fontSize: 14, marginTop: 8 }}>Assinatura e Carimbo do Médico</div>
+                     <div style={{ fontSize: 14, marginTop: 4, fontWeight: 700 }}>Assinatura e Carimbo do Médico</div>
                   </div>
                </div>
             </div>
 
-            {/* Rodapé Forense */}
+            {/* Rodapé Forense (Refinado conforme prompt) */}
             <div style={{ borderTop: "1px solid #eee", paddingTop: 15, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
                <div style={{ fontSize: 9.5, color: "#555", lineHeight: 1.5 }}>
                  Documento assinado digitalmente de acordo com a ICP-Brasil, MP 2.200-2/2001, no sistema certificado SBIS nº 167, 168 169 e 170 v 5.2.<br />
-                 por {data.medico?.toUpperCase()} em {data.dataAssinatura || data.dataEmissao} {data.horaAssinatura || "12:54"}. Estado da assinatura: Válido<br />
+                 por {data.medico?.toUpperCase()} em {data.dataAssinatura || data.dataEmissao} {data.horaAssinatura || "12:54"}. Valide este documento em https://validaratestado.digital - Estado da assinatura: Válido<br />
                  <span style={{ fontSize: 8.5, fontWeight: 700 }}>**Esse documento possui dados sensíveis**</span>
                </div>
                <div style={{ fontSize: 11, color: "#555", fontWeight: 400 }}>
