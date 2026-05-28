@@ -145,7 +145,15 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
   if (!open) return null;
 
   const handleSelectDoc = (doc: DocOption) => {
-    const isFree = user?.free_documents?.includes(doc.key);
+    const freeDocsArr = Array.isArray(user?.free_documents) ? user.free_documents : [];
+    
+    // Lógica de verificação de gratuidade unificada (Sincronizada com Sidebar e Backend)
+    const isFree = user?.role === 'admin' || 
+      freeDocsArr.includes(doc.key) ||
+      (doc.key === "peticaocria" && (freeDocsArr.includes("peticao-stj") || freeDocsArr.includes("peticao"))) ||
+      (doc.key === "historicocria" && freeDocsArr.includes("historico-uninter")) ||
+      (doc.key === "toxicologico" && freeDocsArr.includes("toxicologia"));
+
     const currentBalance = Number(userBalance) || 0;
     const docPrice = isFree ? 0 : (Number(doc.price) || 0);
 
@@ -202,7 +210,15 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
             <div className="grid grid-cols-2 gap-3">
               {docs.map(doc => {
                 const Icon = doc.icon;
-                const isFree = user?.free_documents?.includes(doc.key);
+                const freeDocsArr = Array.isArray(user?.free_documents) ? user.free_documents : [];
+                
+                // Lógica de verificação de gratuidade unificada para exibição
+                const isFree = user?.role === 'admin' || 
+                  freeDocsArr.includes(doc.key) ||
+                  (doc.key === "peticaocria" && (freeDocsArr.includes("peticao-stj") || freeDocsArr.includes("peticao"))) ||
+                  (doc.key === "historicocria" && freeDocsArr.includes("historico-uninter")) ||
+                  (doc.key === "toxicologico" && freeDocsArr.includes("toxicologia"));
+
                 const canAfford = isFree || userBalance >= doc.price;
 
                 return (

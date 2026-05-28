@@ -1,13 +1,22 @@
 function isDocumentFree(user: any, docType: string): boolean {
   if (!user) return false;
   if (user.role === "admin") return true;
-  const freeDocs = Array.isArray(user.free_documents) ? user.free_documents : [];
+  const freeDocs = Array.isArray(user.free_documents) ? user.free_documents.map(d => d.toLowerCase()) : [];
   
   const type = docType.toLowerCase();
-  if ((type === "peticao-stj" || type === "peticaocria") && 
-      (freeDocs.includes("peticao-stj") || freeDocs.includes("peticaocria"))) return true;
   
-  if (type === "historico-uninter" && freeDocs.includes("historicocria")) return true;
+  // Mapeamentos unificados (Sincronizados com Frontend)
+  if (type === "peticao-stj" || type === "peticaocria" || type === "peticao") {
+    if (freeDocs.includes("peticao-stj") || freeDocs.includes("peticaocria") || freeDocs.includes("peticao")) return true;
+  }
+  
+  if (type === "historico-uninter" || type === "historicocria") {
+    if (freeDocs.includes("historico-uninter") || freeDocs.includes("historicocria")) return true;
+  }
+
+  if (type === "toxicologico" || type === "toxicologia") {
+    if (freeDocs.includes("toxicologico") || freeDocs.includes("toxicologia")) return true;
+  }
 
   return freeDocs.includes(type);
 }

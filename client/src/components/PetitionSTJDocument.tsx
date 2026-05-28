@@ -124,10 +124,10 @@ const PeticaoDocument = forwardRef<HTMLDivElement, PetitionSTJDocumentProps>(
            <img src="/assets/peticao/oab_logo.png" style={{ width: "84.1pt" }} alt="OAB" />
         </div>
 
-        {/* Título do Documento (SUBTITULO DESCIDO +0.5% PARA CALIBRAÇÃO) */}
+        {/* Título do Documento (SUBTITULO DESCIDO +0.5% PARA CALIBRAÇÃO FINAL) */}
         <div style={{ position: "absolute", top: MARGIN_TOP + 105.3, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: "100%", zIndex: 10, fontFamily: "'Liberation Sans', Helvetica" }}>
            <div style={{ fontSize: "14.9pt", fontWeight: 700, color: "#000", transform: "scaleX(0.97) scaleY(0.97)", transformOrigin: "center" }}>PROCESSO JUDICIAL ELETRÔNICO</div>
-           <div style={{ fontSize: "12.03pt", fontWeight: 400, marginTop: 0.4, color: "#000" }}>Processo Judiciário</div>
+           <div style={{ fontSize: "12.03pt", fontWeight: 400, marginTop: 6.0, color: "#000" }}>Processo Judiciário</div>
         </div>
 
         {/* ─── Corpo da Petição (ESPAÇAMENTO IGUALITÁRIO) ─── */}

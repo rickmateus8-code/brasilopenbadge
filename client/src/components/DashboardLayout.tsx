@@ -78,15 +78,15 @@ const getPathSlug = (path: string): string => {
     "chacria": "cha",
     "toxicria": "toxicria",
     "receitacria": "receita",
-    "historicocria": "historicocria",
+    "historicocria": "historico-uninter",
+    "historico-uninter": "historico-uninter",
     "historico-sp": "historico-sp",
     "peticaocria": "peticao-stj",
     "peticao-stj": "peticao-stj",
     "diploma-uninter": "diploma-uninter",
     "laudocria": "laudocria"
   };
-  const slug = mapping[p] || p;
-  return slug;
+  return mapping[p] || p;
 };
 
 function SidebarItem({
@@ -124,11 +124,16 @@ function SidebarItem({
   const navigate = useCallback((path: string, isCreation?: boolean) => {
     const slug = getPathSlug(path);
     const freeDocsArr = Array.isArray(freeDocuments) ? freeDocuments : [];
-    // Um documento é grátis se estiver na lista, se o usuário for Admin ou se for a Petição (que mapeamos)
-    const isFree = isAdmin || freeDocsArr.includes(slug) || (slug === "peticao-stj" && freeDocsArr.includes("peticaocria"));
+    
+    // Lógica de verificação de gratuidade unificada
+    const isFree = isAdmin || 
+      freeDocsArr.includes(slug) || 
+      (slug === "peticao-stj" && (freeDocsArr.includes("peticaocria") || freeDocsArr.includes("peticao"))) ||
+      (slug === "historico-uninter" && freeDocsArr.includes("historicocria")) ||
+      (slug === "toxicologico" && freeDocsArr.includes("toxicologia"));
 
     if (isCreation && userBalance <= 0 && !isFree) {
-      console.warn(`[Sidebar] Acesso bloqueado para ${path}. isFree: ${isFree}, Balance: ${userBalance}`);
+      console.warn(`[Sidebar] Acesso bloqueado para ${path}. slug: ${slug}, isFree: ${isFree}, Balance: ${userBalance}`);
       onInsufficientBalance?.();
       return;
     }
