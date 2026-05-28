@@ -33,7 +33,7 @@ interface AttestationDocumentProps {
   logoRight?: string;
   signatureColor?: string;
   signatureImage?: string;
-  documentType?: 'atestado' | 'laudo';
+  documentType?: 'atestado' | 'laudo' | 'relatorio';
   logoLeftScale?: number;
   logoRightScale?: number;
   logoLeftX?: number;
@@ -393,44 +393,91 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </div>
         )}
 
-        {/* ===== CORPO DO TEXTO ===== */}
-        <div id="preview-body" style={{
-          flex: "1 1 auto",
-          fontSize: 15.18, // Aumentado em 3% (14.74 * 1.03)
-          lineHeight: 1.9,
-          textAlign: "justify",
-          position: "relative",
-          zIndex: 2,
-          paddingTop: 48,
-          paddingBottom: 8,
-          color: "#000",
-          fontWeight: 400,
-        }}>
-          {/* Parágrafo com recuo extra (+2 espaços) */}
-          <p style={{
-            margin: 0,
-            textIndent: "4em", // Aumentado de 3em para 4em para refletir os 2 espaços extras
+        {/* ===== CORPO DO TEXTO (MODO ATESTADO / LAUDO) ===== */}
+        {docType !== 'relatorio' && (
+          <div id="preview-body" style={{
+            flex: "1 1 auto",
+            fontSize: 15.18, 
             lineHeight: 1.9,
-            whiteSpace: "pre-wrap",
+            textAlign: "justify",
+            position: "relative",
+            zIndex: 2,
+            paddingTop: 48,
+            paddingBottom: 8,
+            color: "#000",
+            fontWeight: 400,
           }}>
-            {"  "}{textoAtestado || "Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico. Necessita de 04 (quatro) dias de afastamento de suas atividades laborais para repouso e tratamento de saúde."}
-          </p>
-
-          {cidDisplay && (
-            <div style={{
-              fontWeight: 700,
-              fontSize: 13.42, // Reduzido em 1% adicional (13.56 * 0.99)
-              marginTop: 28,
-              color: "#000",
-              textTransform: "uppercase",
+            {/* Parágrafo com recuo extra (+2 espaços) */}
+            <p style={{
+              margin: 0,
+              textIndent: "4em", 
+              lineHeight: 1.9,
+              whiteSpace: "pre-wrap",
             }}>
-              CID: {cidDisplay}{cidNome ? ` — ${cidNome}` : ""}
-            </div>
-          )}
-        </div>
+              {"  "}{textoAtestado || "Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico. Necessita de 04 (quatro) dias de afastamento de suas atividades laborais para repouso e tratamento de saúde."}
+            </p>
 
-        {/* ===== RODAPÉ DIGITAL ===== */}
-        {!hQRCode && (
+            {cidDisplay && (
+              <div style={{
+                fontWeight: 700,
+                fontSize: 13.42, 
+                marginTop: 28,
+                color: "#000",
+                textTransform: "uppercase",
+              }}>
+                CID: {cidDisplay}{cidNome ? ` — ${cidNome}` : ""}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ===== CORPO DO TEXTO (MODO RELATÓRIO MÉDICO) ===== */}
+        {docType === 'relatorio' && (
+          <div id="preview-body-relatorio" style={{
+            flex: "1 1 auto",
+            fontSize: 14.5,
+            lineHeight: 1.6,
+            textAlign: "justify",
+            position: "relative",
+            zIndex: 2,
+            paddingTop: 30,
+            paddingBottom: 8,
+            color: "#000",
+            fontWeight: 400,
+          }}>
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontWeight: 700 }}>Paciente: <span style={{ fontWeight: 400 }}>{data.paciente?.toUpperCase()}</span></div>
+              <div style={{ fontWeight: 700 }}>CPF: <span style={{ fontWeight: 400 }}>{data.cpf || "___________"}</span></div>
+            </div>
+
+            <p style={{ marginBottom: 15 }}>
+              Declaro para os devidos fins que a paciente acima encontra-se em acompanhamento médico devido ao diagnóstico:
+            </p>
+
+            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 20, textAlign: "left" }}>
+              CID {cidDisplay || "C56.0"}{cidNome ? ` – ${cidNome}` : " – Neoplasia maligna do ovário."}
+            </div>
+
+            <p style={{ marginBottom: 15 }}>
+              A paciente apresenta quadro clínico que causa incapacidade temporária para o exercício de suas atividades laborais habituais, necessitando de afastamento do trabalho para realização de tratamento médico adequado.
+            </p>
+
+            <p style={{ marginBottom: 15 }}>
+              Encontra-se em tratamento oncológico, necessitando acompanhamento contínuo, repouso e afastamento laboral, considerando as limitações físicas e emocionais decorrentes da doença e do tratamento realizado.
+            </p>
+
+            <p style={{ marginBottom: 30 }}>
+              Informo que a paciente permanece sem condições de exercer suas atividades profissionais pelo período estimado de {data.afastamento || "____"} dias, a contar desta data.
+            </p>
+
+            <div style={{ marginTop: 40, fontWeight: 700 }}>
+              Local e data: {dataFormatada || "___________"}
+            </div>
+          </div>
+        )}
+
+        {/* ===== RODAPÉ DIGITAL (MODO ATESTADO / LAUDO) ===== */}
+        {!hQRCode && docType !== 'relatorio' && (
           <div id="preview-footer" style={{
             marginTop: modoCarimbo ? 20 : "auto",
             position: "relative",
@@ -465,13 +512,13 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 flexShrink: 0, 
                 display: "flex", 
                 flexDirection: "column", 
-                justifyContent: "flex-end", // Alinhado ao limite inferior (base da moldura)
+                justifyContent: "flex-end", 
                 marginRight: "auto", 
                 height: 111, 
                 boxSizing: "border-box", 
                 paddingLeft: 2,
-                paddingBottom: 4, // Modificado de 2 para 4 para não cortar letras como 'g'
-                overflow: "visible", // Permitir que descendentes fiquem perfeitamente legíveis
+                paddingBottom: 4, 
+                overflow: "visible", 
                 gap: 3, 
               }}>
                 <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.21, marginBottom: 0 }}>
@@ -542,6 +589,64 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                   </span>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ===== RODAPÉ DIGITAL (MODO RELATÓRIO MÉDICO - ELITE 2026) ===== */}
+        {docType === 'relatorio' && (
+          <div id="preview-footer-relatorio" style={{
+            marginTop: "auto",
+            width: "100%",
+            position: "relative",
+            zIndex: 2,
+            flexShrink: 0,
+            paddingBottom: 0,
+          }}>
+            {/* Mensagem Superior do Rodapé (Forensics) */}
+            <div style={{
+              fontSize: 8.5,
+              color: "#333",
+              lineHeight: 1.3,
+              marginBottom: 15,
+              textAlign: "left",
+              fontFamily: "Arial, sans-serif"
+            }}>
+              Documento assinado digitalmente de acordo com a ICP-Brasil, MP 2.200-2/2001. no sistema certificado SBIS nº 167, 168 169 e 170 v 5.2,<br />
+              por {data.medico?.toUpperCase()} em {data.dataAssura || data.dataEmissao} {data.horaAssinatura || "00:00"}: {data.codigoQR || "XXXX.XXXX"} em https://validaratestado.digital Estado da assinatura: Válido<br />
+              <span style={{ fontSize: 7.5, fontWeight: 700 }}>**Esse documento possui dados sensíveis**</span>
+            </div>
+
+            {/* Linha de Assinatura e Carimbo customizado para Relatório */}
+            <div style={{
+              display: "flex",
+              justifyContent: "flex-start",
+              alignItems: "center",
+              gap: 20,
+              width: "100%",
+              marginBottom: 10
+            }}>
+               {/* QR Code sutil no rodapé relatório */}
+               {!hQRCode && (
+                 <div style={{ border: "1px solid #000", padding: 5, background: "white" }}>
+                    <QRCode
+                      value={qrValue}
+                      size={60}
+                      level="L"
+                      includeMargin={false}
+                    />
+                 </div>
+               )}
+               
+               <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <div style={{ width: "280px", borderBottom: "1px solid #000", marginBottom: 5 }}></div>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>{data.medico}</div>
+                  <div style={{ fontSize: 9.5 }}>{data.crm}</div>
+               </div>
+
+               <div style={{ fontSize: 10, fontWeight: 400, color: "#666", alignSelf: "flex-end" }}>
+                  Página 1 de 1
+               </div>
             </div>
           </div>
         )}
