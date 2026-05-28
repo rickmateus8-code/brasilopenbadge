@@ -302,6 +302,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         }}>
           {docType === 'laudo' ? (
             <div style={{ fontSize: 23.15, fontWeight: 900 }}>LAUDO MÉDICO</div>
+          ) : docType === 'relatorio' ? (
+            <div style={{ fontSize: 23.15, fontWeight: 900 }}>RELATÓRIO MÉDICO</div>
           ) : (
             <div style={{ fontSize: 23.15, fontWeight: 900 }}>ATESTADO MÉDICO</div>
           )}

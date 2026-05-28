@@ -26,13 +26,14 @@ import CNHDocument from "@/components/CNHDocument";
 import { useParams } from "wouter";
 import { exportElementToPDF, exportElementToPDFBlob, generatePDFFilename } from "@/lib/pdfExport";
 
-type DocType = "atestado" | "receita" | "cnh" | "laudo" | "unknown";
+type DocType = "atestado" | "receita" | "cnh" | "laudo" | "relatorio" | "unknown";
 
 function detectDocType(data: any): DocType {
   const typeStr = (data.tipo || data.type || data.document_type || "").toLowerCase();
   if (typeStr === "receita") return "receita";
   if (typeStr === "cnh") return "cnh";
   if (typeStr === "laudo") return "laudo";
+  if (typeStr === "relatorio") return "relatorio";
   if (typeStr === "atestado") return "atestado";
   
   // Fallback por campos
@@ -340,6 +341,7 @@ export default function Validation() {
     switch (docType) {
       case "atestado": return "Atestado Médico";
       case "laudo": return "Laudo Médico";
+      case "relatorio": return "Relatório Médico";
       case "receita": return "Receita Médica";
       case "cnh": return "Carteira Nacional de Habilitação";
       default: return "Documento";

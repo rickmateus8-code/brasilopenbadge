@@ -2433,6 +2433,18 @@ export default function AtestadoEditar() {
                     >
                       LAUDO MÉDICO
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => { setDocumentType('relatorio'); handleFocusSection("body"); }}
+                      style={{
+                        flex: 1, padding: "7px 0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer",
+                        background: documentType === 'relatorio' ? "#005CA9" : "#e2e8f0",
+                        color: documentType === 'relatorio' ? "#fff" : "#374151",
+                        border: documentType === 'relatorio' ? "2px solid #005CA9" : "2px solid #d1d5db",
+                      }}
+                    >
+                      RELATÓRIO MÉDICO
+                    </button>
                   </div>
                 </div>
 
