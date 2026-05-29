@@ -183,7 +183,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           #attestation-document * { box-sizing: border-box; }
         `}</style>
 
-        {/* ─── LAYOUT RELATÓRIO (MODO ALFENAS) ─── */}
+        {/* ─── LAYOUT RELATÓRIO (MODO ALFENAS - REFINADO) ─── */}
         {docType === 'relatorio' ? (
           <div style={{ display: "flex", flexDirection: "column", height: "100%", fontFamily: "Arial, sans-serif" }}>
             {/* Header: Logo Esquerda + Texto Centralizado */}
@@ -209,27 +209,35 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               </div>
               <div style={{ flex: 1, textAlign: "center", paddingRight: 140 }}>
                 <div style={{ fontSize: 16.2, fontWeight: 700, textTransform: "uppercase", color: "#000", marginBottom: 10 }}>{instituicao}</div>
-                <div style={{ fontSize: 10.8, fontWeight: 400, textTransform: "uppercase", color: "#000" }}>{enderecoEmitente}</div>
+                <div style={{ fontSize: 10.8, fontWeight: 700, textTransform: "uppercase", color: "#000" }}>{enderecoEmitente}</div>
               </div>
             </div>
 
             {/* Título Centralizado */}
             <div style={{ textAlign: "center", marginBottom: 50 }}>
-               <h1 style={{ fontSize: 21.6, fontWeight: 400, textTransform: "uppercase", letterSpacing: 2 }}>RELATÓRIO MÉDICO</h1>
+               <h1 style={{ fontSize: 21.6, fontWeight: 900, textTransform: "uppercase", color: "#000", letterSpacing: 0 }}>RELATÓRIO MÉDICO</h1>
             </div>
 
             {/* Corpo do Texto */}
             <div style={{ flex: 1, fontSize: 13.8, lineHeight: 1.8, color: "#000", textAlign: "justify" }}>
                <div style={{ whiteSpace: "pre-wrap", marginBottom: 30 }}>
-                 {textoAtestado || `ATESTO para os fins de comprovação profissional que ${data.paciente?.toUpperCase()} foi, por mim atendido(a) na data abaixo, estando sem condições de assumir suas atividades profissionais por ( ${data.afastamento || "__"} ) dias.
+                 {textoAtestado || `Paciente: ${data.paciente?.toUpperCase()}
+CPF: ${data.cpf || "________"}
 
-A resolução CFM Nº 1.658/2002, art. 5º, parágrafo único, determina que os médicos somente podem informar o diagnóstico nos atestados (CID) nas hipóteses de exercício de dever legal ou por solicitação do próprio paciente ou seu responsável legal.
+Declaro para os devidos fins que a paciente acima encontra-se em acompanhamento médico devido ao diagnóstico:
 
-Sendo assim, eu ${data.paciente?.toUpperCase()} expressamente solicito que seja informado neste atestado médico o diagnóstico, codificado (CID) relativo à patologia que originou este documento.`}
+CID C56.0 – Neoplasia maligna do ovário.
+
+A paciente apresenta quadro clínico que causa incapacidade temporária para o exercício de suas atividades laborais habituais, necessitando de afastamento do trabalho para realização de tratamento médico adequado.
+
+Encontra-se em tratamento oncológico, necessitando acompanhamento contínuo, repouso e afastamento laboral, considerando as limitações físicas e emocionais decorrentes da doença e do tratamento realizado.
+
+Informo que a paciente permanece sem condições de exercer suas atividades profissionais pelo período estimado de ${data.afastamento || "__"} dias, a contar desta data.`}
                </div>
 
-               <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 60 }}>
-                 CID: {cidDisplay || "C560"}
+               <div style={{ fontSize: 17, marginBottom: 60 }}>
+                 <span style={{ fontWeight: 700 }}>CID: </span>
+                 <span style={{ fontWeight: 400 }}>{cidDisplay || "C560"}</span>
                </div>
 
                {/* Local e Data à Direita */}
@@ -245,10 +253,26 @@ Sendo assim, eu ${data.paciente?.toUpperCase()} expressamente solicito que seja 
                      <div style={{ fontSize: 14, marginTop: 4, fontWeight: 700 }}>Assinatura do Paciente ou Responsável</div>
                   </div>
 
-                  {/* Assinatura Médico */}
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", marginTop: -11 }}>
-                     {/* Carimbo/Assinatura sobre a linha */}
-                     <div style={{ position: "absolute", top: -45, opacity: 0.95, transform: "rotate(-1deg)", zIndex: 10 }}>
+                  {/* Assinatura Médico (Controlado por Elite 2.0) */}
+                  <div style={{ 
+                    display: "flex", 
+                    flexDirection: "column", 
+                    alignItems: "center", 
+                    position: "relative", 
+                    marginTop: -11,
+                    zIndex: 10
+                  }}>
+                     {/* Bloco do Médico posicionado dinamicamente via Elite 2.0 */}
+                     <div style={{ 
+                       position: "absolute", 
+                       top: modoCarimbo ? sY : -45, 
+                       left: modoCarimbo ? sX : 0,
+                       transform: `scale(${modoCarimbo ? sScale : 1}) rotate(${modoCarimbo ? sRotate : -1}deg)`,
+                       opacity: 0.95, 
+                       textAlign: "center",
+                       width: "max-content",
+                       transition: "transform 0.1s"
+                     }}>
                         {fotoAssinatura && <img src={fotoAssinatura} style={{ maxHeight: 100, maxWidth: 300, background: "transparent" }} alt="Assinatura" />}
                         {sStampInfo && (
                           <div style={{ textAlign: "center", color: corAssinatura, marginTop: -5 }}>
@@ -263,11 +287,12 @@ Sendo assim, eu ${data.paciente?.toUpperCase()} expressamente solicito que seja 
                </div>
             </div>
 
-            {/* Rodapé Forense */}
+            {/* Rodapé Forense Refinado */}
             <div style={{ borderTop: "1px solid #eee", paddingTop: 15, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
                <div style={{ fontSize: 9.5, color: "#555", lineHeight: 1.5 }}>
                  Documento assinado digitalmente de acordo com a ICP-Brasil, MP 2.200-2/2001, no sistema certificado SBIS nº 167, 168 169 e 170 v 5.2.<br />
-                 por {data.medico?.toUpperCase()} em {data.dataAssinatura || data.dataEmissao} {data.horaAssinatura || "12:54"}. Valide este documento em https://validaratestado.digital - Estado da assinatura: Válido<br />
+                 por {data.medico?.toUpperCase()} em {data.dataAssinatura || data.dataEmissao} {data.horaAssinatura || "12:54"} Estado da assinatura: Válido<br />
+                 Valide este documento em https://validaratestado.digital através do Código: {data.codigoQR || "****.****"}<br />
                  <span style={{ fontSize: 8.5, fontWeight: 700 }}>**Esse documento possui dados sensíveis**</span>
                </div>
                <div style={{ fontSize: 11, color: "#555", fontWeight: 400 }}>

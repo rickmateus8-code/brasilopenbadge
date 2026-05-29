@@ -540,8 +540,8 @@ export default function AtestadoCria() {
   // ── Tipo de documento do paciente ──────────────────────────────────────────
   const [tipoDoc, setTipoDoc] = useState<"CPF" | "CNS">("CPF");
 
-  // ── Tipo de documento (Atestado ou Laudo) ──────────────────────────────────
-  const [documentType, setDocumentType] = useState<'atestado' | 'laudo'>('atestado');
+  // ── Tipo de documento (Atestado, Laudo ou Relatório) ───────────────────────
+  const [documentType, setDocumentType] = useState<'atestado' | 'laudo' | 'relatorio'>('atestado');
 
   // ── API de CPF ─────────────────────────────────────────────────────────────
   const [cpfLoading, setCpfLoading] = useState(false);
