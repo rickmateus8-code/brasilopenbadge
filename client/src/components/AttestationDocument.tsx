@@ -273,23 +273,15 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                     <span style={{ fontWeight: 700 }}>{cidDisplay || ""} {cidNome ? `(${cidNome})` : ""}</span>
                   </div>
 
-                  <div style={{ marginTop: 25 }}>
-                    A paciente apresenta quadro clínico que causa incapacidade temporária para o exercício de suas atividades laborais habituais, necessitando de afastamento do trabalho para realização de tratamento médico adequado.
-                  </div>
-                  
-                  <div style={{ marginTop: 15 }}>
-                    Encontra-se em tratamento oncológico, necessitando acompanhamento contínuo, repouso e afastamento laboral, considerando as limitações físicas e emocionais decorrentes da doença e do tratamento realizado.
-                  </div>
+                  {textoAtestado && (
+                    <div style={{ marginTop: 25 }}>
+                      {textoAtestado}
+                    </div>
+                  )}
 
                   <div style={{ marginTop: 15 }}>
                     Informo que a paciente permanece sem condições de exercer suas atividades profissionais pelo período estimado de {diasExtenso}, a contar desta data.
                   </div>
-
-                  {textoAtestado && (
-                    <div style={{ marginTop: 20 }}>
-                      {textoAtestado}
-                    </div>
-                  )}
                </div>
 
                {/* Local e Data à Direita */}
@@ -344,7 +336,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                <div style={{ fontSize: 9.5, color: "#555", lineHeight: 1.5 }}>
                  Documento assinado digitalmente de acordo com a ICP-Brasil, MP 2.200-2/2001, no sistema certificado SBIS nº 167, 168 169 e 170 v 5.2.<br />
                  por {data.medico?.toUpperCase()} em {data.dataAssinatura || data.dataEmissao} {data.horaAssinatura || "12:54"} Estado da assinatura: Válido<br />
-                 Valide este documento em https://validaratestado.digital através do Código: {data.codigoQR || "****.****"}<br />
+                 Valide este documento em https://validaratestado.digital | através do Código: {data.codigoQR || "****.****"}<br />
                  <span style={{ fontSize: 8.5, fontWeight: 700 }}>**Esse documento possui dados sensíveis**</span>
                </div>
                <div style={{ fontSize: 11, color: "#555", fontWeight: 400 }}>

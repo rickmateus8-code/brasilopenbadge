@@ -1395,6 +1395,7 @@ export default function AtestadoCria() {
     cidDisplay: form.cidDisplay || form.cid,
     cidNome: form.cidNome,
     cidade: form.cidade,
+    uf: filtroUF,
     modoCarimbo: form.modoCarimbo,
     documentType,
     logoLeftScale,
