@@ -250,7 +250,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 )}
               </div>
               <div style={{ flex: 1, textAlign: "center", paddingRight: 140 }}>
-                <div style={{ fontSize: 16.2, fontWeight: 700, textTransform: "uppercase", color: "#000", marginTop: -15, marginBottom: 8 }}>{unidade || instituicao}</div>
+                <div style={{ fontSize: 16.2, fontWeight: 700, textTransform: "uppercase", color: "#000", marginTop: -26, marginBottom: 8 }}>{unidade || instituicao}</div>
                 <div style={{ fontSize: 10.8, fontWeight: 700, textTransform: "uppercase", color: "#000" }}>{enderecoEmitente}</div>
               </div>
             </div>
@@ -293,7 +293,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                </div>
 
                {/* Local e Data à Direita */}
-               <div style={{ textAlign: "right", marginTop: 20, marginBottom: 140, fontSize: 11.34 }}>
+               <div style={{ textAlign: "right", marginTop: 20, marginBottom: 115, fontSize: 11.68 }}>
                   {dataFormatada}
                </div>
 
