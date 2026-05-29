@@ -134,7 +134,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const docType = (documentType || (data as any).documentType || (data as any).document_type || (data as any).tipo || 'atestado').toLowerCase();
     
     // Data de emissão formatada em Cidade / UF, dia de mês de ano
-    const dataFormatada = (data as any).dataEmissaoFormatada || (() => {
+    const dataFormatada = (docType !== 'relatorio' && (data as any).dataEmissaoFormatada) ? (data as any).dataEmissaoFormatada : (() => {
       const d = data.dataEmissao || "";
       if (!d || d.length < 10) return d;
       const parts = d.split("/");
@@ -149,7 +149,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         const cidadeLimpa = String(cidade || "").split(",")[0].trim(); // Previne se o banco salvou com a data junto
         const cidArr = cidadeLimpa.split("/");
         const cidadeNome = cidArr[0].trim();
-        const cidadePura = cidadeNome ? cidadeNome.charAt(0).toUpperCase() + cidadeNome.slice(1).toLowerCase() : "";
+        const cidadePura = cidadeNome.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
         const ufFinal = (cidArr[1] || uf || "").trim().toUpperCase();
         
         const diaStr = String(dia).padStart(2, "0");
