@@ -529,8 +529,10 @@ export default function Validation() {
     switch (docType) {
       case "atestado":
       case "laudo":
+      case "relatorio":
         return (
           <div style={style}>
+
             <AttestationDocument
               ref={attestationRef}
               data={validDoc}

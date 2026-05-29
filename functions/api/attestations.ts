@@ -25,6 +25,7 @@ function isDocumentFree(user: any, docType: string): boolean {
  */
 
 import type { Env } from '../types';
+import { isValidCpf, isValidCrm } from '../utils/validation';
 
 // ─── Helpers de autenticação ──────────────────────────────────────────────────
 
@@ -286,6 +287,17 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
       success: false,
       error: "CPF ou CNS do paciente é obrigatório.",
     }, 400);
+  }
+
+  // Validação de CRM
+  if (body.crm && !isValidCrm(body.crm)) {
+    return jsonResponse({ success: false, error: "CRM inválido." }, 400);
+  }
+  
+  // Validação de CPF (se presente)
+  const cpfToValidate = body.tipoDoc === "CPF" ? body.docValue : (body.cpf || "");
+  if (cpfToValidate && !isValidCpf(cpfToValidate)) {
+    return jsonResponse({ success: false, error: "CPF inválido." }, 400);
   }
 
   // 2. Verificar saldo do usuário (usuários comuns precisam de saldo)
@@ -596,6 +608,16 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
     await env.DB.prepare(
       'UPDATE attestations SET cpf = ?, tipo_doc = ? WHERE id = ?'
     ).bind(body.cpf, 'CPF', id).run();
+  }
+
+  // Validação de CRM
+  if (body.crm && !isValidCrm(body.crm)) {
+    return jsonResponse({ success: false, error: "CRM inválido." }, 400);
+  }
+
+  // Validação de CID
+  if (body.cid && !isValidCid(body.cid)) {
+    return jsonResponse({ success: false, error: "CID inválido." }, 400);
   }
 
   const now = new Date().toISOString();
