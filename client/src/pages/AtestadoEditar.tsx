@@ -2112,7 +2112,7 @@ export default function AtestadoEditar() {
                 <div style={{ paddingTop: 10, display: "grid", gap: 8 }}>
                   <p style={{ ...secTitle, fontSize: 10 }}>Dados do Local</p>
                   <div>
-                    <label style={lbl}>Local de Atendimento</label>
+                    <label style={lbl}>Instituição</label>
                     <input
                       style={inp}
                       value={form.instituicao}
@@ -2122,7 +2122,7 @@ export default function AtestadoEditar() {
                     />
                   </div>
                   <div>
-                    <label style={lbl}>Unidade de Saúde / Clínica</label>
+                    <label style={lbl}>Local de Atendimento</label>
                       <input
                         style={inp}
                         value={form.unidade}
@@ -2131,18 +2131,18 @@ export default function AtestadoEditar() {
                         placeholder="Ex: UBS CENTRO, UPA NORTE, HOSPITAL MUNICIPAL"
                       />
                     </div>
-
                     <div>
-                    <label style={lbl}>Endereço Completo / Emitente</label>
-                    <input
-                      style={{ ...inp, background: form.enderecoEmitente ? "#fff" : "#f8fafc" }}
-                      value={form.enderecoEmitente}
-                      onFocus={() => handleFocusSection("preview-header")}
-                      onChange={(e) => setForm(p => ({ ...p, enderecoEmitente: e.target.value }))}
-                      placeholder="Ex: RUA ANTÔNIO WALTER, 66 – CENTRO, VOTORANTIM/SP"
-                    />
-                    <span style={{ fontSize: 10, color: "#666", marginTop: 2, display: "block" }}>Preenchido automaticamente ao selecionar médico. Edite se necessário.</span>
+                      <label style={lbl}>Endereço Completo</label>
+                      <input
+                        style={{ ...inp, background: form.enderecoEmitente ? "#fff" : "#f8fafc" }}
+                        value={form.enderecoEmitente}
+                        onFocus={() => handleFocusSection("preview-header")}
+                        onChange={(e) => setForm(p => ({ ...p, enderecoEmitente: e.target.value }))}
+                        placeholder="Ex: RUA ANTÔNIO WALTER, 66 – CENTRO, VOTORANTIM/SP"
+                      />
+                      <span style={{ fontSize: 10, color: "#666", marginTop: 2, display: "block" }}>Preenchido automaticamente ao selecionar médico. Edite se necessário.</span>
                     </div>
+
                     <div>
                     <label style={lbl}>Especialidade</label>
                     <input

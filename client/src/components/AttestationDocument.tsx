@@ -234,18 +234,33 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             {/* Corpo do Texto */}
             <div style={{ flex: 1, fontSize: 12.4, lineHeight: 1.8, color: "#000", textAlign: "justify", marginTop: -22 }}>
                <div style={{ whiteSpace: "pre-wrap", marginBottom: 30 }}>
-                 {textoAtestado || `Paciente: ${data.paciente?.toUpperCase() || ""}
-CPF: ${data.cpf || ""}
+                 {textoAtestado ? (
+                   textoAtestado
+                 ) : (
+                   <>
+                     <div>Paciente: {data.paciente?.toUpperCase() || ""}</div>
+                     <div style={{ marginBottom: 15 }}>CPF: {data.cpf || ""}</div>
 
-Declaro para os devidos fins que a paciente acima encontra-se em acompanhamento médico devido ao diagnóstico:
+                     <div>Declaro para os devidos fins que a paciente acima encontra-se em acompanhamento médico devido ao diagnóstico:</div>
+                     
+                     <div style={{ marginTop: 15, fontSize: 12.9 }}>
+                        <span style={{ fontWeight: 700 }}>CID: </span>
+                        {cidDisplay || ""}
+                     </div>
 
-CID: ${cidDisplay || ""}
+                     <div style={{ marginTop: 15 }}>
+                       A paciente apresenta quadro clínico que causa incapacidade temporária para o exercício de suas atividades laborais habituais, necessitando de afastamento do trabalho para realização de tratamento médico adequado.
+                     </div>
+                     
+                     <div style={{ marginTop: 15 }}>
+                       Encontra-se em tratamento oncológico, necessitando acompanhamento contínuo, repouso e afastamento laboral, considerando as limitações físicas e emocionais decorrentes da doença e do tratamento realizado.
+                     </div>
 
-A paciente apresenta quadro clínico que causa incapacidade temporária para o exercício de suas atividades laborais habituais, necessitando de afastamento do trabalho para realização de tratamento médico adequado.
-
-Encontra-se em tratamento oncológico, necessitando acompanhamento contínuo, repouso e afastamento laboral, considerando as limitações físicas e emocionais decorrentes da doença e do tratamento realizado.
-
-Informo que a paciente permanece sem condições de exercer suas atividades profissionais pelo período estimado de ${data.afastamento || ""} dias, a contar desta data.`}
+                     <div style={{ marginTop: 15 }}>
+                       Informo que a paciente permanece sem condições de exercer suas atividades profissionais pelo período estimado de {data.afastamento || ""} dias, a contar desta data.
+                     </div>
+                   </>
+                 )}
                </div>
 
                {/* Local e Data à Direita */}

@@ -1870,7 +1870,7 @@ export default function AtestadoCria() {
                 <div style={{ paddingTop: 10, display: "grid", gap: 8 }}>
                   <p style={{ ...secTitle, fontSize: 10 }}>Dados do Local</p>
                   <div>
-                    <label style={lbl}>Local de Atendimento</label>
+                    <label style={lbl}>Instituição</label>
                     <input
                       style={inp}
                       value={form.instituicao}
@@ -1880,7 +1880,7 @@ export default function AtestadoCria() {
                     />
                   </div>
                   <div>
-                    <label style={lbl}>Unidade de Saúde / Clínica</label>
+                    <label style={lbl}>Local de Atendimento</label>
                       <input
                         style={inp}
                         value={form.unidade}
@@ -1890,7 +1890,7 @@ export default function AtestadoCria() {
                       />
                     </div>
                     <div>
-                      <label style={lbl}>Endereço Completo / Emitente</label>
+                      <label style={lbl}>Endereço Completo</label>
                       <input
                         style={{ ...inp, background: form.enderecoEmitente ? "#fff" : "#f8fafc" }}
                         value={form.enderecoEmitente}
