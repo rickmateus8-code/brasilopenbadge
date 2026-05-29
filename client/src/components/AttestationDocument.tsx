@@ -56,6 +56,24 @@ const DOC_HEIGHT_PX = 1123;
 const PAD_H = 56;  
 const PAD_V = 60;  
 
+const DIAS_EXTENSO: Record<number, { num: string; ext: string }> = {
+  1:  { num: "01", ext: "um" },
+  2:  { num: "02", ext: "dois" },
+  3:  { num: "03", ext: "três" },
+  4:  { num: "04", ext: "quatro" },
+  5:  { num: "05", ext: "cinco" },
+  6:  { num: "06", ext: "seis" },
+  7:  { num: "07", ext: "sete" },
+  8:  { num: "08", ext: "oito" },
+  9:  { num: "09", ext: "nove" },
+  10: { num: "10", ext: "dez" },
+  11: { num: "11", ext: "onze" },
+  12: { num: "12", ext: "doze" },
+  13: { num: "13", ext: "treze" },
+  14: { num: "14", ext: "quatorze" },
+  15: { num: "15", ext: "quinze" },
+};
+
 const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>(
   ({ 
     data, logoUrl, logoLeft, logoRight, signatureColor, signatureImage, documentType, 
@@ -94,6 +112,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const effectiveLogoRight = logoRight || (data as any).logoRight || (data as any).logo_right || "";
 
     const instituicao = (data as any).instituicao || "";
+    const unidade = (data as any).unidade || "";
     const enderecoEmitente = (data as any).enderecoEmitente || (data as any).endereco_emitente || "";
     const corAssinatura = signatureColor || (data as any).signatureColor || (data as any).signature_color || "#0b109f";
     const fotoAssinatura = signatureImage || (data as any).signatureImage || (data as any).signature_image || "";
@@ -228,7 +247,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 )}
               </div>
               <div style={{ flex: 1, textAlign: "center", paddingRight: 140 }}>
-                <div style={{ fontSize: 16.2, fontWeight: 700, textTransform: "uppercase", color: "#000", marginTop: -25, marginBottom: 8 }}>{instituicao}</div>
+                <div style={{ fontSize: 16.2, fontWeight: 700, textTransform: "uppercase", color: "#000", marginTop: -50, marginBottom: 8 }}>{unidade || instituicao}</div>
                 <div style={{ fontSize: 10.8, fontWeight: 700, textTransform: "uppercase", color: "#000" }}>{enderecoEmitente}</div>
               </div>
             </div>
@@ -241,17 +260,17 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             {/* Corpo do Texto */}
             <div style={{ flex: 1, fontSize: 12.4, lineHeight: 1.8, color: "#000", textAlign: "justify", marginTop: -22 }}>
                <div style={{ whiteSpace: "pre-wrap", marginBottom: 30 }}>
-                  <div>Paciente: {data.paciente?.toUpperCase() || ""}</div>
-                  <div style={{ marginBottom: 15 }}>CPF: {data.cpf || ""}</div>
+                  <div><span style={{ fontWeight: 700 }}>Paciente:</span> {data.paciente?.toUpperCase() || ""}</div>
+                  <div style={{ marginBottom: 15 }}><span style={{ fontWeight: 700 }}>CPF:</span> {data.cpf || ""}</div>
 
                   <div>Declaro para os devidos fins que a paciente acima encontra-se em acompanhamento médico devido ao diagnóstico:</div>
                   
-                  <div style={{ marginTop: 15, fontSize: 12.9 }}>
+                  <div style={{ marginTop: 25, fontSize: 13.28 }}>
                     <span style={{ fontWeight: 700 }}>CID: </span>
-                    {cidDisplay || ""} {cidNome ? `(${cidNome})` : ""}
+                    <span style={{ fontWeight: 700 }}>{cidDisplay || ""} {cidNome ? `(${cidNome})` : ""}</span>
                   </div>
 
-                  <div style={{ marginTop: 15 }}>
+                  <div style={{ marginTop: 25 }}>
                     A paciente apresenta quadro clínico que causa incapacidade temporária para o exercício de suas atividades laborais habituais, necessitando de afastamento do trabalho para realização de tratamento médico adequado.
                   </div>
                   
@@ -271,16 +290,16 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                </div>
 
                {/* Local e Data à Direita */}
-               <div style={{ textAlign: "right", marginTop: 20, marginBottom: 120, fontSize: 12.6 }}>
+               <div style={{ textAlign: "right", marginTop: 20, marginBottom: 180, fontSize: 11.34 }}>
                   {dataFormatada}
                </div>
 
                {/* Área de Assinaturas */}
-               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 110 }}>
+               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 180 }}>
                   {/* Assinatura Paciente */}
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: -22 }}>
-                     <div style={{ width: 360, borderTop: "1.5px solid #000" }}></div>
-                     <div style={{ fontSize: 13.3, marginTop: 1.5, fontWeight: 700 }}>Assinatura do Paciente ou Responsável</div>
+                     <div style={{ width: 280, borderTop: "1px solid #000" }}></div>
+                     <div style={{ fontSize: 12.6, marginTop: 2, fontWeight: 700 }}>Assinatura do Paciente ou Responsável</div>
                   </div>
 
                   {/* Assinatura Médico (Controlado por Elite 2.0) */}
@@ -311,8 +330,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                           </div>
                         )}
                      </div>
-                     <div style={{ width: 360, borderTop: "1.5px solid #000" }}></div>
-                     <div style={{ fontSize: 13.3, marginTop: 1.5, fontWeight: 700 }}>Assinatura e Carimbo do Médico</div>
+                     <div style={{ width: 280, borderTop: "1px solid #000" }}></div>
+                     <div style={{ fontSize: 12.6, marginTop: 2, fontWeight: 700 }}>Assinatura e Carimbo do Médico</div>
                   </div>
                </div>
             </div>
@@ -368,6 +387,11 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 {instituicao && (
                   <div style={{ fontSize: 14.7, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", letterSpacing: 0, lineHeight: 1.3 }}>
                     {instituicao}
+                  </div>
+                )}
+                {unidade && unidade !== instituicao && (
+                  <div style={{ fontSize: 12.6, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", lineHeight: 1.3 }}>
+                    {unidade}
                   </div>
                 )}
                 {enderecoEmitente && (
