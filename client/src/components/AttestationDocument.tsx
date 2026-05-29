@@ -127,12 +127,19 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         if (isNaN(dia) || isNaN(m) || m < 0 || m > 11 || dia < 1 || dia > 31) return d;
         
         // Formato Cidade / UF (ex: Votorantim / SP)
-        const cidadeFormatada = cidade ? cidade.charAt(0).toUpperCase() + cidade.slice(1).toLowerCase() : "";
-        const ufFormatada = uf ? uf.toUpperCase() : "";
+        const cidArr = String(cidade).split("/");
+        const cidadePura = cidArr[0] ? cidArr[0].charAt(0).toUpperCase() + cidArr[0].slice(1).toLowerCase() : "";
+        const ufFinal = (cidArr[1] || uf || "").toUpperCase();
         
-        return `${cidadeFormatada}${ufFormatada ? ' / ' + ufFormatada : ''}, ${dia} de ${meses[m]} de ${ano}`;
+        return `${cidadePura}${ufFinal ? ' / ' + ufFinal : ''}, ${dia} de ${meses[m]} de ${ano}`;
       }
       return d;
+    })();
+
+    const diasExtenso = (() => {
+      const n = parseInt(data.afastamento || "3");
+      const d = (DIAS_EXTENSO as any)[n] || { num: "03", ext: "três" };
+      return `${d.num} (${d.ext}) dias`;
     })();
 
     const sexoLabel = (() => {
@@ -221,7 +228,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 )}
               </div>
               <div style={{ flex: 1, textAlign: "center", paddingRight: 140 }}>
-                <div style={{ fontSize: 16.2, fontWeight: 700, textTransform: "uppercase", color: "#000", marginTop: -15, marginBottom: 8 }}>{instituicao}</div>
+                <div style={{ fontSize: 16.2, fontWeight: 700, textTransform: "uppercase", color: "#000", marginTop: -25, marginBottom: 8 }}>{instituicao}</div>
                 <div style={{ fontSize: 10.8, fontWeight: 700, textTransform: "uppercase", color: "#000" }}>{enderecoEmitente}</div>
               </div>
             </div>
@@ -234,46 +241,46 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             {/* Corpo do Texto */}
             <div style={{ flex: 1, fontSize: 12.4, lineHeight: 1.8, color: "#000", textAlign: "justify", marginTop: -22 }}>
                <div style={{ whiteSpace: "pre-wrap", marginBottom: 30 }}>
-                 {textoAtestado ? (
-                   textoAtestado
-                 ) : (
-                   <>
-                     <div>Paciente: {data.paciente?.toUpperCase() || ""}</div>
-                     <div style={{ marginBottom: 15 }}>CPF: {data.cpf || ""}</div>
+                  <div>Paciente: {data.paciente?.toUpperCase() || ""}</div>
+                  <div style={{ marginBottom: 15 }}>CPF: {data.cpf || ""}</div>
 
-                     <div>Declaro para os devidos fins que a paciente acima encontra-se em acompanhamento médico devido ao diagnóstico:</div>
-                     
-                     <div style={{ marginTop: 15, fontSize: 12.9 }}>
-                        <span style={{ fontWeight: 700 }}>CID: </span>
-                        {cidDisplay || ""}
-                     </div>
+                  <div>Declaro para os devidos fins que a paciente acima encontra-se em acompanhamento médico devido ao diagnóstico:</div>
+                  
+                  <div style={{ marginTop: 15, fontSize: 12.9 }}>
+                    <span style={{ fontWeight: 700 }}>CID: </span>
+                    {cidDisplay || ""} {cidNome ? `(${cidNome})` : ""}
+                  </div>
 
-                     <div style={{ marginTop: 15 }}>
-                       A paciente apresenta quadro clínico que causa incapacidade temporária para o exercício de suas atividades laborais habituais, necessitando de afastamento do trabalho para realização de tratamento médico adequado.
-                     </div>
-                     
-                     <div style={{ marginTop: 15 }}>
-                       Encontra-se em tratamento oncológico, necessitando acompanhamento contínuo, repouso e afastamento laboral, considerando as limitações físicas e emocionais decorrentes da doença e do tratamento realizado.
-                     </div>
+                  <div style={{ marginTop: 15 }}>
+                    A paciente apresenta quadro clínico que causa incapacidade temporária para o exercício de suas atividades laborais habituais, necessitando de afastamento do trabalho para realização de tratamento médico adequado.
+                  </div>
+                  
+                  <div style={{ marginTop: 15 }}>
+                    Encontra-se em tratamento oncológico, necessitando acompanhamento contínuo, repouso e afastamento laboral, considerando as limitações físicas e emocionais decorrentes da doença e do tratamento realizado.
+                  </div>
 
-                     <div style={{ marginTop: 15 }}>
-                       Informo que a paciente permanece sem condições de exercer suas atividades profissionais pelo período estimado de {data.afastamento || ""} dias, a contar desta data.
-                     </div>
-                   </>
-                 )}
+                  <div style={{ marginTop: 15 }}>
+                    Informo que a paciente permanece sem condições de exercer suas atividades profissionais pelo período estimado de {diasExtenso}, a contar desta data.
+                  </div>
+
+                  {textoAtestado && (
+                    <div style={{ marginTop: 20 }}>
+                      {textoAtestado}
+                    </div>
+                  )}
                </div>
 
                {/* Local e Data à Direita */}
-               <div style={{ textAlign: "right", marginTop: 20, marginBottom: 80, fontSize: 14 }}>
+               <div style={{ textAlign: "right", marginTop: 20, marginBottom: 120, fontSize: 12.6 }}>
                   {dataFormatada}
                </div>
 
                {/* Área de Assinaturas */}
-               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 80 }}>
+               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 110 }}>
                   {/* Assinatura Paciente */}
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: -22 }}>
-                     <div style={{ width: 400, borderTop: "1.5px solid #000" }}></div>
-                     <div style={{ fontSize: 14, marginTop: 4, fontWeight: 700 }}>Assinatura do Paciente ou Responsável</div>
+                     <div style={{ width: 360, borderTop: "1.5px solid #000" }}></div>
+                     <div style={{ fontSize: 13.3, marginTop: 1.5, fontWeight: 700 }}>Assinatura do Paciente ou Responsável</div>
                   </div>
 
                   {/* Assinatura Médico (Controlado por Elite 2.0) */}
@@ -304,8 +311,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                           </div>
                         )}
                      </div>
-                     <div style={{ width: 400, borderTop: "1.5px solid #000" }}></div>
-                     <div style={{ fontSize: 14, marginTop: 4, fontWeight: 700 }}>Assinatura e Carimbo do Médico</div>
+                     <div style={{ width: 360, borderTop: "1.5px solid #000" }}></div>
+                     <div style={{ fontSize: 13.3, marginTop: 1.5, fontWeight: 700 }}>Assinatura e Carimbo do Médico</div>
                   </div>
                </div>
             </div>
