@@ -250,7 +250,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 )}
               </div>
               <div style={{ flex: 1, textAlign: "center", paddingRight: 140 }}>
-                <div style={{ fontSize: 16.2, fontWeight: 700, textTransform: "uppercase", color: "#000", marginTop: -26, marginBottom: 8 }}>{unidade || instituicao}</div>
+                <div style={{ fontSize: 16.2, fontWeight: 700, textTransform: "uppercase", color: "#000", marginTop: -41, marginBottom: 8 }}>{unidade || instituicao}</div>
                 <div style={{ fontSize: 10.8, fontWeight: 700, textTransform: "uppercase", color: "#000" }}>{enderecoEmitente}</div>
               </div>
             </div>
@@ -285,14 +285,14 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                </div>
 
                {/* Local e Data à Direita */}
-               <div style={{ textAlign: "right", marginTop: 20, marginBottom: 115, fontSize: 11.68 }}>
+               <div style={{ textAlign: "right", marginTop: 45, marginBottom: 90, fontSize: 12.39 }}>
                   {dataFormatada}
                </div>
 
                {/* Área de Assinaturas */}
                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 120 }}>
                   {/* Assinatura Paciente */}
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: -22 }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 28 }}>
                      <div style={{ width: 280, borderTop: "1px solid #000" }}></div>
                      <div style={{ fontSize: 12.6, marginTop: 2, fontWeight: 700 }}>Assinatura do Paciente ou Responsável</div>
                   </div>
@@ -303,7 +303,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                     flexDirection: "column", 
                     alignItems: "center", 
                     position: "relative", 
-                    marginTop: -22,
+                    marginTop: -47,
                     zIndex: 10
                   }}>
                      {/* Bloco do Médico posicionado dinamicamente via Elite 2.0 */}
@@ -336,7 +336,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                <div style={{ fontSize: 9.5, color: "#555", lineHeight: 1.5 }}>
                  Documento assinado digitalmente de acordo com a ICP-Brasil, MP 2.200-2/2001, no sistema certificado SBIS nº 167, 168 169 e 170 v 5.2.<br />
                  por {data.medico?.toUpperCase()} em {data.dataAssinatura || data.dataEmissao} {data.horaAssinatura || "12:54"} Estado da assinatura: Válido<br />
-                 Valide este documento em https://validaratestado.digital | através do Código: {data.codigoQR || "****.****"}<br />
+                 Valide este documento em https://validaratestado.digital | Código: {data.codigoQR || "****.****"}<br />
                  <span style={{ fontSize: 8.5, fontWeight: 700 }}>**Esse documento possui dados sensíveis**</span>
                </div>
                <div style={{ fontSize: 11, color: "#555", fontWeight: 400 }}>
