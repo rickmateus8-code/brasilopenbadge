@@ -250,8 +250,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 )}
               </div>
               <div style={{ flex: 1, textAlign: "center", paddingRight: 140 }}>
-                <div style={{ fontSize: 16.2, fontWeight: 700, textTransform: "uppercase", color: "#000", marginTop: -41, marginBottom: 8 }}>{unidade || instituicao}</div>
-                <div style={{ fontSize: 10.8, fontWeight: 700, textTransform: "uppercase", color: "#000" }}>{enderecoEmitente}</div>
+                <div style={{ fontSize: 16.2, fontWeight: 700, textTransform: "uppercase", color: "#000", marginTop: -41, marginBottom: 8, whiteSpace: "nowrap" }}>{unidade || instituicao}</div>
+                <div style={{ fontSize: 11.34, fontWeight: 700, textTransform: "uppercase", color: "#000", whiteSpace: "nowrap" }}>{enderecoEmitente}</div>
               </div>
             </div>
 
@@ -380,17 +380,17 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
               <div style={{ flex: 1, padding: "0 12px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                 {instituicao && (
-                  <div style={{ fontSize: 14.7, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", letterSpacing: 0, lineHeight: 1.3 }}>
+                  <div style={{ fontSize: 14.7, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", letterSpacing: 0, lineHeight: 1.3, whiteSpace: "nowrap" }}>
                     {instituicao}
                   </div>
                 )}
                 {unidade && unidade !== instituicao && (
-                  <div style={{ fontSize: 12.6, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", lineHeight: 1.3 }}>
+                  <div style={{ fontSize: 12.6, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", lineHeight: 1.3, whiteSpace: "nowrap" }}>
                     {unidade}
                   </div>
                 )}
                 {enderecoEmitente && (
-                  <div style={{ fontSize: 10.5, fontWeight: 400, textTransform: "uppercase", color: "#000", lineHeight: 1.3 }}>
+                  <div style={{ fontSize: 11.025, fontWeight: 400, fontStyle: "italic", textTransform: "uppercase", color: "#000", lineHeight: 1.3, whiteSpace: "nowrap" }}>
                     {enderecoEmitente}
                   </div>
                 )}
