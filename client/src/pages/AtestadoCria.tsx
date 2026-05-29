@@ -519,6 +519,8 @@ Sendo assim, eu ${patientName.toUpperCase()} expressamente solicito que seja inf
   }, [documentType]);
 
   // Alternância automática de coordenadas baseada no modo Ocultar QR
+  useEffect(() => {
+    if (hideQRCode) {
       setStampX(-3);
       setStampY(-64);
       setStampScale(1.10);
