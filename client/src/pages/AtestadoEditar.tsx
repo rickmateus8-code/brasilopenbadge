@@ -285,6 +285,19 @@ Atualmente, a mesma não possui condições de exercer atividades laborativas, d
 
 Diante do quadro apresentado, recomenda-se afastamento de atividades trabalhistas por tempo indeterminado, devendo ser reavaliada periodicamente conforme evolução clínica.`;
 
+// ─── Texto padrão do relatório médico ─────────────────────────────────────────
+const TEXTO_RELATORIO_TEMPLATE = (paciente: string, cpf: string, cid: string, afastamento: string) => `Paciente: ${paciente.toUpperCase() || "________________"}
+CPF: ${cpf || "________________"}
+
+Declaro para os devidos fins que a paciente acima encontra-se em acompanhamento médico devido ao diagnóstico:
+CID: ${cid || "________________"}
+
+A paciente apresenta quadro clínico que causa incapacidade temporária para o exercício de suas atividades laborais habituais, necessitando de afastamento do trabalho para realização de tratamento médico adequado.
+
+Encontra-se em tratamento oncológico, necessitando acompanhamento contínuo, repouso e afastamento laboral, considerando as limitações físicas e emocionais decorrentes da doença e do tratamento realizado.
+
+Informo que a paciente permanece sem condições de exercer suas atividades profissionais pelo período estimado de ${afastamento || "__"} dias, a contar desta data.`;
+
 // ─── Máscaras ─────────────────────────────────────────────────────────────────
 function maskCPF(v: string): string {
   const d = v.replace(/\D/g, "").slice(0, 11);
@@ -859,15 +872,45 @@ export default function AtestadoEditar() {
 
   // ── Atualizar texto do atestado quando dias mudam ──────────────────────────
   useEffect(() => {
-    if (skipAutoTextSync.current || documentType !== "atestado") return;
+    if (skipAutoTextSync.current) return;
     const dias = parseInt(form.afastamento);
     if (!isNaN(dias) && dias >= 1 && dias <= 15) {
       const d = DIAS_EXTENSO[dias];
       const unidade = dias === 1 ? "dia" : "dias";
-      const textoBase = `Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico. Necessita de ${d.num} (${d.ext}) ${unidade} de afastamento de suas atividades laborais para repouso e tratamento de saúde.`;
-      setForm(p => ({ ...p, textoAtestado: textoBase }));
+      
+      if (documentType === 'relatorio') {
+        // Para relatório médico, o texto é mais complexo e dinâmico
+        setForm(p => ({ 
+          ...p, 
+          textoAtestado: TEXTO_RELATORIO_TEMPLATE(p.paciente, p.docValue, p.cidDisplay, p.afastamento)
+        }));
+      } else if (documentType === 'atestado') {
+        const textoBase = `Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico. Necessita de ${d.num} (${d.ext}) ${unidade} de afastamento de suas atividades laborais para repouso e tratamento de saúde.`;
+        setForm(p => ({ ...p, textoAtestado: textoBase }));
+      }
     }
-  }, [documentType, form.afastamento]);
+  }, [documentType, form.afastamento, form.paciente, form.docValue, form.cidDisplay]);
+
+  // ── Mudar texto quando documentType muda (ATESTADO, LAUDO ou RELATORIO) ─────
+  useEffect(() => {
+    if (skipAutoTextSync.current) return;
+    if (documentType === 'laudo') {
+      setForm(p => ({ ...p, textoAtestado: TEXTO_LAUDO, modoCarimbo: true }));
+    } else if (documentType === 'relatorio') {
+      setForm(p => ({ 
+        ...p, 
+        textoAtestado: TEXTO_RELATORIO_TEMPLATE(p.paciente, p.docValue, p.cidDisplay, p.afastamento),
+        modoCarimbo: false 
+      }));
+    } else {
+      // Atestado
+      const dias = parseInt(form.afastamento);
+      const d = DIAS_EXTENSO[dias] || DIAS_EXTENSO[3];
+      const unidade = dias === 1 ? "dia" : "dias";
+      const textoBase = `Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico. Necessita de ${d.num} (${d.ext}) ${unidade} de afastamento de suas atividades laborais para repouso e tratamento de saúde.`;
+      setForm(p => ({ ...p, textoAtestado: textoBase, modoCarimbo: true }));
+    }
+  }, [documentType]);
 
   // ── Carregar cidades quando UF muda ────────────────────────────────────────
   useEffect(() => {
@@ -2149,6 +2192,27 @@ export default function AtestadoEditar() {
                         <option value="#000000">⚫ Preto (Xerox)</option>
                       </select>
                     </div>
+
+                    {/* Upload de Carimbo PNG */}
+                    <div style={{ marginTop: 8 }}>
+                      <label style={{ ...btnBlue, width: "100%", display: "block", textAlign: "center", padding: "8px 0", cursor: "pointer" }}>
+                        📁 UPLOAD CARIMBO (PNG)
+                        <input 
+                          type="file" 
+                          ref={signatureRef} 
+                          accept="image/png" 
+                          style={{ display: "none" }} 
+                          onChange={handleSignatureUpload} 
+                        />
+                      </label>
+                      {signatureImage && (
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
+                          <span style={{ fontSize: 10, color: "#16a34a", fontWeight: 700 }}>✅ Carimbo carregado</span>
+                          <button type="button" style={{ background: "none", border: "none", color: "#dc2626", fontSize: 10, fontWeight: 700, cursor: "pointer" }} onClick={() => setSignatureImage("")}>Remover</button>
+                        </div>
+                      )}
+                    </div>
+
                     {/* Ajuste de Carimbo Elite 2.0 */}
                     {form.modoCarimbo && (
                       <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 12, background: "#f8fafc", marginTop: 8 }}>
@@ -2506,19 +2570,6 @@ export default function AtestadoEditar() {
                     <input style={inp} value={form.cidDisplay} onFocus={() => handleFocusSection("preview-body")} onChange={(e) => setForm(p => ({ ...p, cidDisplay: e.target.value }))} placeholder="Código (Ex: J11)" />
                     <input style={inp} value={form.cidNome} onFocus={() => handleFocusSection("preview-body")} onChange={(e) => setForm(p => ({ ...p, cidNome: e.target.value }))} placeholder="Nome do CID" />
                   </div>
-                </div>
-
-                {/* Modo Carimbo */}
-                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0" }} onClick={() => handleFocusSection("footer")}>
-                  <label style={{ ...lbl, margin: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-                    <input
-                      type="checkbox"
-                      checked={form.modoCarimbo}
-                      onChange={(e) => setForm(p => ({ ...p, modoCarimbo: e.target.checked }))}
-                      style={{ width: 16, height: 16 }}
-                    />
-                    Modo Carimbo (Elite 2.0)
-                  </label>
                 </div>
               </div>
             </div>

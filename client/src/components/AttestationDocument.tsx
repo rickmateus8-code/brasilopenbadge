@@ -208,14 +208,14 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 )}
               </div>
               <div style={{ flex: 1, textAlign: "center", paddingRight: 140 }}>
-                <div style={{ fontSize: 16.2, fontWeight: 700, textTransform: "uppercase", color: "#000", marginBottom: 10 }}>{instituicao}</div>
+                <div style={{ fontSize: 16.2, fontWeight: 700, textTransform: "uppercase", color: "#000", marginTop: -5, marginBottom: 8 }}>{instituicao}</div>
                 <div style={{ fontSize: 10.8, fontWeight: 700, textTransform: "uppercase", color: "#000" }}>{enderecoEmitente}</div>
               </div>
             </div>
 
             {/* Título Centralizado */}
             <div style={{ textAlign: "center", marginBottom: 50 }}>
-               <h1 style={{ fontSize: 21.6, fontWeight: 900, textTransform: "uppercase", color: "#000", letterSpacing: 0 }}>RELATÓRIO MÉDICO</h1>
+               <h1 style={{ fontSize: 19.44, fontWeight: 400, textTransform: "uppercase", color: "#000", letterSpacing: 0 }}>RELATÓRIO MÉDICO</h1>
             </div>
 
             {/* Corpo do Texto */}
@@ -226,7 +226,7 @@ CPF: ${data.cpf || "________"}
 
 Declaro para os devidos fins que a paciente acima encontra-se em acompanhamento médico devido ao diagnóstico:
 
-CID C56.0 – Neoplasia maligna do ovário.
+CID: ${cidDisplay || "________"}
 
 A paciente apresenta quadro clínico que causa incapacidade temporária para o exercício de suas atividades laborais habituais, necessitando de afastamento do trabalho para realização de tratamento médico adequado.
 
