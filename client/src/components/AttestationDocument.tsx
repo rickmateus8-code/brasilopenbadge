@@ -295,7 +295,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                </div>
 
                {/* Área de Assinaturas */}
-               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 180 }}>
+               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 120 }}>
                   {/* Assinatura Paciente */}
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: -22 }}>
                      <div style={{ width: 280, borderTop: "1px solid #000" }}></div>
