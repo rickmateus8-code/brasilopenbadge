@@ -1307,8 +1307,10 @@ export default function AtestadoEditar() {
       setIsDownloadingPdf(true);
       setTimeout(async () => {
         try {
-          const docType = documentType === 'laudo' ? 'laudo' : 'atestado';
-          const filename = generatePDFFilename(form.paciente || "PACIENTE", docType);
+          const docTypeForName = documentType === 'laudo' ? 'laudo' : documentType === 'relatorio' ? 'relatorio' : 'atestado';
+          const filename = documentType === 'relatorio' 
+            ? `RELATORIO_MEDICO_${(form.paciente || "PACIENTE").trim().toUpperCase().replace(/\s+/g, "_")}.pdf`
+            : generatePDFFilename(form.paciente || "PACIENTE", docTypeForName as any);
           await exportElementToPDF(previewRef.current!, { filename, docType, scale: 2, quality: 0.92 });
           // Após download, aguarda 1s e redireciona
           setTimeout(() => {

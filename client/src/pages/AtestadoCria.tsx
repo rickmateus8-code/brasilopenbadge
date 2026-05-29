@@ -1191,8 +1191,10 @@ export default function AtestadoCria() {
 
           await new Promise(r => setTimeout(r, 800));
 
-          const docType = documentType === 'laudo' ? 'laudo' : 'atestado';
-          const filename = generatePDFFilename(form.paciente || "PACIENTE", docType);
+          const docTypeForName = documentType === 'laudo' ? 'laudo' : documentType === 'relatorio' ? 'relatorio' : 'atestado';
+          const filename = documentType === 'relatorio' 
+            ? `RELATORIO_MEDICO_${(form.paciente || "PACIENTE").trim().toUpperCase().replace(/\s+/g, "_")}.pdf`
+            : generatePDFFilename(form.paciente || "PACIENTE", docTypeForName as any);
           
           await exportElementToPDF(clone, { 
             filename, 
