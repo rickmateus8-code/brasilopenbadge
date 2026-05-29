@@ -531,9 +531,10 @@ export default function AtestadoEditar() {
   // ── Tipo de documento do paciente ──────────────────────────────────────────
   const [tipoDoc, setTipoDoc] = useState<"CPF" | "CNS">("CPF");
 
-  // ── Tipo de documento (Atestado ou Laudo) ──────────────────────────────────
-  const [documentType, setDocumentType] = useState<'atestado' | 'laudo'>('atestado');
+  // ── Tipo de documento (Atestado, Laudo ou Relatório) ──────────────────
+  const [documentType, setDocumentType] = useState<'atestado' | 'laudo' | 'relatorio'>('atestado');
   const [codigoQR, setCodigoQR] = useState("");
+
 
   // ── API de CPF ─────────────────────────────────────────────────────────────
   const [cpfLoading, setCpfLoading] = useState(false);
@@ -668,7 +669,8 @@ export default function AtestadoEditar() {
 
         const loadedTipoDoc = (d.tipo_doc || d.tipoDoc || (d.cns ? "CNS" : "CPF")) as "CPF" | "CNS";
         const loadedDocValue = loadedTipoDoc === "CNS" ? (d.cns || "") : (d.cpf || "");
-        const loadedDocumentType = ((d.document_type || d.documentType || "atestado").toLowerCase() === "laudo" ? "laudo" : "atestado") as "atestado" | "laudo";
+        const dtRaw = (d.document_type || d.documentType || "atestado").toLowerCase();
+        const loadedDocumentType = (dtRaw === "laudo" ? "laudo" : dtRaw === "relatorio" ? "relatorio" : "atestado") as "atestado" | "laudo" | "relatorio";
 
         setTipoDoc(loadedTipoDoc);
         setCodigoQR(d.codigo_qr || d.codigoQR || "");

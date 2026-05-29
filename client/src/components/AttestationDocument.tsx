@@ -290,11 +290,11 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                </div>
 
                {/* Área de Assinaturas */}
-               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 120 }}>
+               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 145 }}>
                   {/* Assinatura Paciente */}
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 28 }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 45 }}>
                      <div style={{ width: 280, borderTop: "1px solid #000" }}></div>
-                     <div style={{ fontSize: 12.6, marginTop: 2, fontWeight: 700 }}>Assinatura do Paciente ou Responsável</div>
+                     <div style={{ fontSize: 12.6, marginTop: 0.1, fontWeight: 700 }}>Assinatura do Paciente ou Responsável</div>
                   </div>
 
                   {/* Assinatura Médico (Controlado por Elite 2.0) */}
@@ -303,7 +303,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                     flexDirection: "column", 
                     alignItems: "center", 
                     position: "relative", 
-                    marginTop: -47,
+                    marginTop: -35,
                     zIndex: 10
                   }}>
                      {/* Bloco do Médico posicionado dinamicamente via Elite 2.0 */}
@@ -326,7 +326,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                         )}
                      </div>
                      <div style={{ width: 280, borderTop: "1px solid #000" }}></div>
-                     <div style={{ fontSize: 12.6, marginTop: 2, fontWeight: 700 }}>Assinatura e Carimbo do Médico</div>
+                     <div style={{ fontSize: 12.6, marginTop: 0.1, fontWeight: 700 }}>Assinatura e Carimbo do Médico</div>
                   </div>
                </div>
             </div>
