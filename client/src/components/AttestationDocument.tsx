@@ -146,11 +146,14 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         if (isNaN(dia) || isNaN(m) || m < 0 || m > 11 || dia < 1 || dia > 31) return d;
         
         // Formato Cidade / UF (ex: Votorantim / SP)
-        const cidArr = String(cidade).split("/");
-        const cidadePura = cidArr[0] ? cidArr[0].charAt(0).toUpperCase() + cidArr[0].slice(1).toLowerCase() : "";
-        const ufFinal = (cidArr[1] || uf || "").toUpperCase();
+        const cidadeLimpa = String(cidade || "").split(",")[0].trim(); // Previne se o banco salvou com a data junto
+        const cidArr = cidadeLimpa.split("/");
+        const cidadeNome = cidArr[0].trim();
+        const cidadePura = cidadeNome ? cidadeNome.charAt(0).toUpperCase() + cidadeNome.slice(1).toLowerCase() : "";
+        const ufFinal = (cidArr[1] || uf || "").trim().toUpperCase();
         
-        return `${cidadePura}${ufFinal ? ' / ' + ufFinal : ''}, ${dia} de ${meses[m]} de ${ano}`;
+        const diaStr = String(dia).padStart(2, "0");
+        return `${cidadePura}${ufFinal ? ' / ' + ufFinal : ''}, ${diaStr} de ${meses[m]} de ${ano}`;
       }
       return d;
     })();
