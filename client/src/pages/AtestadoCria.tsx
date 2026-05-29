@@ -370,12 +370,6 @@ async function optimizeImageForUpload(file: File, options?: { maxWidth?: number;
         return;
       }
 
-      // Se não for PNG, preencher fundo com branco para evitar fundo preto em transparências convertidas
-      if (file.type !== "image/png") {
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, targetWidth, targetHeight);
-      }
-
       ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
 
       const preferredType = file.type === "image/png" ? "image/png" : "image/jpeg";
@@ -440,12 +434,6 @@ export default function AtestadoCria() {
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [autoDownloadTriggered, setAutoDownloadTriggered] = useState(false);
 
-  // ── Tipo de documento do paciente ──────────────────────────────────────────
-  const [tipoDoc, setTipoDoc] = useState<"CPF" | "CNS">("CPF");
-
-  // ── Tipo de documento (Atestado, Laudo ou Relatório) ───────────────────────
-  const [documentType, setDocumentType] = useState<'atestado' | 'laudo' | 'relatorio'>('atestado');
-
   // ── Logos ──────────────────────────────────────────────────────────────────
   const [logoLeft, setLogoLeft] = useState<string>("");
   const [logoRight, setLogoRight] = useState<string>("");
@@ -461,8 +449,28 @@ export default function AtestadoCria() {
   const [logoRightX, setLogoRightX] = useState<number>(0);
   const [logoRightY, setLogoRightY] = useState<number>(0);
 
+  // helpers de ajuste
+  const SCALE_STEP = 0.05;
+  const POS_STEP = 2;
+  const adjustScale = (side: "left" | "right", delta: number) => {
+    if (side === "left") setLogoLeftScale(v => Math.max(0.1, Math.min(3, parseFloat((v + delta).toFixed(2)))));
+    else setLogoRightScale(v => Math.max(0.1, Math.min(3, parseFloat((v + delta).toFixed(2)))));
+  };
+  const adjustX = (side: "left" | "right", delta: number) => {
+    if (side === "left") setLogoLeftX(v => v + delta);
+    else setLogoRightX(v => v + delta);
+  };
+  const adjustY = (side: "left" | "right", delta: number) => {
+    if (side === "left") setLogoLeftY(v => v + delta);
+    else setLogoRightY(v => v + delta);
+  };
+  const resetLogoTransform = (side: "left" | "right") => {
+    if (side === "left") { setLogoLeftScale(1); setLogoLeftX(0); setLogoLeftY(0); }
+    else { setLogoRightScale(1); setLogoRightX(0); setLogoRightY(0); }
+  };
+
   // ── Assinatura ─────────────────────────────────────────────────────────────
-  const [signatureColor, setSignatureColor] = useState<string>("#0b109f"); 
+  const [signatureColor, setSignatureColor] = useState<string>("#000000"); // PRETA fixa por padrão
   const [signatureImage, setSignatureImage] = useState<string>("");
   const signatureRef = useRef<HTMLInputElement>(null);
 
@@ -474,106 +482,18 @@ export default function AtestadoCria() {
   const [hideQRCode, setHideQRCode] = useState<boolean>(false);
   const [showStampInfo, setShowStampInfo] = useState<boolean>(true);
 
-  // ── API de CPF ─────────────────────────────────────────────────────────────
-  const [cpfLoading, setCpfLoading] = useState(false);
-  const [cpfStatus, setCpfStatus] = useState<"idle" | "ok" | "error" | "not_found">("idle");
-  const [cpfMsg, setCpfMsg] = useState("");
-
-  // ── Busca de médicos ────────────────────────────────────────────────────────
-  const [filtroUF, setFiltroUF] = useState("");
-  const [filtroCidade, setFiltroCidade] = useState("");
-  const [filtroBairro, setFiltroBairro] = useState("");
-  const [filtroLocal, setFiltroLocal] = useState("");
-  const [filtroEsp, setFiltroEsp] = useState("");
-  const [termoBusca, setTermoBusca] = useState("");
-  const [cidades, setCidades] = useState<string[]>([]);
-  const [bairros, setBairros] = useState<string[]>([]);
-  const [locais, setLocais] = useState<string[]>([]);
-  const [resultados, setResultados] = useState<MedicoDB[]>([]);
-  const [buscando, setBuscando] = useState(false);
-  const [erroBusca, setErroBusca] = useState("");
-  const [showResultados, setShowResultados] = useState(false);
-  const [showEditar, setShowEditar] = useState(true); 
-  const skipClearUnidade = useRef(false);
-
-  // ── Formulário ─────────────────────────────────────────────────────────────
-  const [form, setForm] = useState({
-    instituicao: "",
-    unidade: "",
-    enderecoEmitente: "",
-    medico: "",
-    crm: "",
-    especialidade: "",
-    paciente: "",
-    sexo: "FEMALE" as "MALE" | "FEMALE",
-    nascimento: "",
-    docValue: "",
-    nomeMae: "",
-    endereco: "",
-    cid: "",
-    cidDisplay: "",
-    cidNome: "",
-    afastamento: "3",
-    textoAtestado: TEXTO_PADRAO,
-    dataAssinatura: todayBR(),
-    horaAssinatura: nowTime(),
-    dataEmissao: todayBR(),
-    cidade: "",
-    modoCarimbo: false,
-  });
-
-  // ── Importação rápida ───────────────────────────────────────────────────────
-  const [importTexto, setImportTexto] = useState("");
-  const [showImport, setShowImport] = useState(false);
-
-  // ── CEP do paciente ─────────────────────────────────────────────────────────
-  const [cepPaciente, setCepPaciente] = useState("");
-  const [cepNumero, setCepNumero] = useState("");
-  const [cepLoading, setCepLoading] = useState(false);
-  const [cepUFPreenchida, setCepUFPreenchida] = useState(""); 
-
-  // ── Modal de confirmação de preço ─────────────────────────────────────────
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [documentPrice, setDocumentPrice] = useState<number>(0);
-  const [priceLoading, setPriceLoading] = useState<boolean>(false);
-
-  // ── Lógica de Preview Inteligente com Zoom Dinâmico ─────────────────────────
-  const [zoomScale, setZoomScale] = useState(0.65);
-  const [zoomTranslateY, setZoomTranslateY] = useState(0);
-  const [isFocused, setIsFocused] = useState(false);
-  const [previewMode, setPreviewMode] = useState<"auto" | "full">("auto");
-  const [currentSection, setCurrentSection] = useState<"top" | "bottom">("top");
-
-  // ── Efeitos e Lógica ───────────────────────────────────────────────────────
-  
   // Giro aleatório a cada emissão para realismo
   const generateRandomGiro = () => {
+    // Retorna um valor entre -10 e 10 graus
     return parseFloat((Math.random() * (10 - (-10)) + (-10)).toFixed(1));
   };
 
-  // Gerador de posições randômicas
+  // Gerador de posições randômicas para o botão RESET (conforme solicitado)
   const generateRandomPos = () => {
     const rx = Math.floor(Math.random() * (141 - (-131) + 1)) + (-131);
     const ry = Math.floor(Math.random() * ((-120) - (-208) + 1)) + (-208);
     return { x: rx, y: ry };
   };
-
-  useEffect(() => {
-    if (documentType === 'relatorio') {
-      const patientName = form.paciente || "NOME DO PACIENTE";
-      const relatorioTemplate = `ATESTO para os fins de comprovação profissional que ${patientName.toUpperCase()} foi, por mim atendido(a) na data abaixo, estando sem condições de assumir suas atividades profissionais por ( ${form.afastamento || "3"} ) dias.
-
-A resolução CFM Nº 1.658/2002, art. 5º, parágrafo único, determina que os médicos somente podem informar o diagnóstico nos atestados (CID) nas hipóteses de exercício de dever legal ou por solicitação do próprio paciente ou seu responsável legal.
-
-Sendo assim, eu ${patientName.toUpperCase()} expressamente solicito que seja informado neste atestado médico o diagnóstico, codificado (CID) relativo à patologia que originou este documento.`;
-      
-      setForm(prev => ({ ...prev, textoAtestado: relatorioTemplate }));
-    } else if (documentType === 'laudo') {
-      setForm(prev => ({ ...prev, textoAtestado: TEXTO_LAUDO }));
-    } else {
-      setForm(prev => ({ ...prev, textoAtestado: TEXTO_PADRAO }));
-    }
-  }, [documentType]);
 
   // Alternância automática de coordenadas baseada no modo Ocultar QR
   useEffect(() => {
