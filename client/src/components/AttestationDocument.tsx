@@ -94,7 +94,6 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const effectiveLogoRight = logoRight || (data as any).logoRight || (data as any).logo_right || "";
 
     const instituicao = (data as any).instituicao || "";
-    const unidade = (data as any).unidade || "";
     const enderecoEmitente = (data as any).enderecoEmitente || (data as any).endereco_emitente || "";
     const corAssinatura = signatureColor || (data as any).signatureColor || (data as any).signature_color || "#0b109f";
     const fotoAssinatura = signatureImage || (data as any).signatureImage || (data as any).signature_image || "";
@@ -316,11 +315,6 @@ Sendo assim, eu ${data.paciente?.toUpperCase()} expressamente solicito que seja 
                     {instituicao}
                   </div>
                 )}
-                {unidade && unidade !== instituicao && (
-                  <div style={{ fontSize: 12.6, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", lineHeight: 1.3 }}>
-                    {unidade}
-                  </div>
-                )}
                 {enderecoEmitente && (
                   <div style={{ fontSize: 10.5, fontWeight: 400, textTransform: "uppercase", color: "#000", lineHeight: 1.3 }}>
                     {enderecoEmitente}
@@ -383,6 +377,7 @@ Sendo assim, eu ${data.paciente?.toUpperCase()} expressamente solicito que seja 
               flexShrink: 0,
             }} />
 
+            {/* ===== DADOS DO PACIENTE ===== */}
             <div id="preview-patient" style={{
               border: "1px solid #000",
               padding: isExporting ? "6px 15px 22px 15px" : "14.25px 15px", 

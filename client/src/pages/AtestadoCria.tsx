@@ -370,9 +370,17 @@ async function optimizeImageForUpload(file: File, options?: { maxWidth?: number;
         return;
       }
 
+      // IMPORTANTE: Preencher com branco para evitar fundo preto em transparências (especialmente ao converter para JPEG)
+      // Se for PNG, mantemos transparente. Para todos os outros (JPG, WebP, etc), forçamos fundo branco.
+      const isPng = file.type === "image/png";
+      if (!isPng) {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, targetWidth, targetHeight);
+      }
+
       ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
 
-      const preferredType = file.type === "image/png" ? "image/png" : "image/jpeg";
+      const preferredType = isPng ? "image/png" : "image/jpeg";
       const optimizedDataUrl = canvas.toDataURL(preferredType, quality);
 
       resolve(optimizedDataUrl.length < originalDataUrl.length ? optimizedDataUrl : originalDataUrl);
