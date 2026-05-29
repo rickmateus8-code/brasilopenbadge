@@ -2111,18 +2111,27 @@ export default function AtestadoEditar() {
                 </summary>
                 <div style={{ paddingTop: 10, display: "grid", gap: 8 }}>
                   <p style={{ ...secTitle, fontSize: 10 }}>Dados do Local</p>
-                  {/* Instituição: preenchida automaticamente como PREFEITURA DE {CIDADE} — não exibida no formulário */}
-                  {/* Campo oculto — valor gerenciado pelo useEffect de filtroCidade e selecionarMedico */}
                   <div>
                     <label style={lbl}>Local de Atendimento</label>
                     <input
                       style={inp}
-                      value={form.unidade}
+                      value={form.instituicao}
                       onFocus={() => handleFocusSection("preview-header")}
-                      onChange={(e) => setForm(p => ({ ...p, unidade: e.target.value }))}
-                      placeholder="Ex: UBS CENTRO, UPA NORTE, HOSPITAL MUNICIPAL"
+                      onChange={(e) => setForm(p => ({ ...p, instituicao: e.target.value.toUpperCase() }))}
+                      placeholder="Ex: PREFEITURA DE VOTORANTIM"
                     />
+                  </div>
+                  <div>
+                    <label style={lbl}>Unidade de Saúde / Clínica</label>
+                      <input
+                        style={inp}
+                        value={form.unidade}
+                        onFocus={() => handleFocusSection("preview-header")}
+                        onChange={(e) => setForm(p => ({ ...p, unidade: e.target.value }))}
+                        placeholder="Ex: UBS CENTRO, UPA NORTE, HOSPITAL MUNICIPAL"
+                      />
                     </div>
+
                     <div>
                     <label style={lbl}>Endereço Completo / Emitente</label>
                     <input

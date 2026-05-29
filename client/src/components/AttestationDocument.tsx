@@ -114,18 +114,23 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
     const docType = (documentType || (data as any).documentType || (data as any).document_type || (data as any).tipo || 'atestado').toLowerCase();
     
-    // Data de emissão formatada em CAIXA ALTA conforme solicitado
+    // Data de emissão formatada em Cidade / UF, dia de mês de ano
     const dataFormatada = (data as any).dataEmissaoFormatada || (() => {
       const d = data.dataEmissao || "";
       if (!d || d.length < 10) return d;
       const parts = d.split("/");
       if (parts.length === 3) {
-        const meses = ["JANEIRO","FEVEREIRO","MARÇO","ABRIL","MAIO","JUNHO","JULHO","AGOSTO","SETEMBRO","OUTUBRO","NOVEMBRO","DEZEMBRO"];
+        const meses = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
         const dia = parseInt(parts[0]);
         const m = parseInt(parts[1]) - 1;
         const ano = parts[2];
         if (isNaN(dia) || isNaN(m) || m < 0 || m > 11 || dia < 1 || dia > 31) return d;
-        return `${cidade} / ${uf}, ${dia < 10 ? '0'+dia : dia} DE ${meses[m]} DE ${ano}`;
+        
+        // Formato Cidade / UF (ex: Votorantim / SP)
+        const cidadeFormatada = cidade ? cidade.charAt(0).toUpperCase() + cidade.slice(1).toLowerCase() : "";
+        const ufFormatada = uf ? uf.toUpperCase() : "";
+        
+        return `${cidadeFormatada}${ufFormatada ? ' / ' + ufFormatada : ''}, ${dia} de ${meses[m]} de ${ano}`;
       }
       return d;
     })();
@@ -197,29 +202,37 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               boxSizing: "border-box",
               background: "transparent"
             }}>
-              <div style={{ width: 140, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent" }}>
+              <div style={{ width: 140, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", overflow: "visible" }}>
                 {effectiveLogoLeft && (
                   <img 
                     src={effectiveLogoLeft} 
-                    style={{ maxWidth: "100%", maxHeight: 90, objectFit: "contain", background: "transparent" }} 
+                    style={{ 
+                      maxWidth: "100%", 
+                      maxHeight: 90, 
+                      objectFit: "contain", 
+                      background: "transparent",
+                      transform: `scale(${logoLeftScale}) translate(${logoLeftX}px, ${logoLeftY}px)`,
+                      transformOrigin: "center center",
+                      transition: "transform 0.1s",
+                    }} 
                     alt="Logo" 
                     crossOrigin={getCrossOrigin(effectiveLogoLeft)}
                   />
                 )}
               </div>
               <div style={{ flex: 1, textAlign: "center", paddingRight: 140 }}>
-                <div style={{ fontSize: 16.2, fontWeight: 700, textTransform: "uppercase", color: "#000", marginTop: -5, marginBottom: 8 }}>{instituicao}</div>
+                <div style={{ fontSize: 16.2, fontWeight: 700, textTransform: "uppercase", color: "#000", marginTop: -15, marginBottom: 8 }}>{instituicao}</div>
                 <div style={{ fontSize: 10.8, fontWeight: 700, textTransform: "uppercase", color: "#000" }}>{enderecoEmitente}</div>
               </div>
             </div>
 
             {/* Título Centralizado */}
-            <div style={{ textAlign: "center", marginBottom: 50 }}>
-               <h1 style={{ fontSize: 19.44, fontWeight: 400, textTransform: "uppercase", color: "#000", letterSpacing: 0 }}>RELATÓRIO MÉDICO</h1>
+            <div style={{ textAlign: "center", marginBottom: 50, marginTop: -12 }}>
+               <h1 style={{ fontSize: 17.5, fontWeight: 400, textTransform: "uppercase", color: "#000", letterSpacing: 0 }}>RELATÓRIO MÉDICO</h1>
             </div>
 
             {/* Corpo do Texto */}
-            <div style={{ flex: 1, fontSize: 13.8, lineHeight: 1.8, color: "#000", textAlign: "justify" }}>
+            <div style={{ flex: 1, fontSize: 12.4, lineHeight: 1.8, color: "#000", textAlign: "justify", marginTop: -22 }}>
                <div style={{ whiteSpace: "pre-wrap", marginBottom: 30 }}>
                  {textoAtestado || `Paciente: ${data.paciente?.toUpperCase() || ""}
 CPF: ${data.cpf || ""}
@@ -235,11 +248,6 @@ Encontra-se em tratamento oncológico, necessitando acompanhamento contínuo, re
 Informo que a paciente permanece sem condições de exercer suas atividades profissionais pelo período estimado de ${data.afastamento || ""} dias, a contar desta data.`}
                </div>
 
-               <div style={{ fontSize: 17, marginBottom: 60 }}>
-                 <span style={{ fontWeight: 700 }}>CID: </span>
-                 <span style={{ fontWeight: 400 }}>{cidDisplay || "C560"}</span>
-               </div>
-
                {/* Local e Data à Direita */}
                <div style={{ textAlign: "right", marginTop: 20, marginBottom: 80, fontSize: 14 }}>
                   {dataFormatada}
@@ -248,7 +256,7 @@ Informo que a paciente permanece sem condições de exercer suas atividades prof
                {/* Área de Assinaturas */}
                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 80 }}>
                   {/* Assinatura Paciente */}
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: -11 }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: -22 }}>
                      <div style={{ width: 400, borderTop: "1.5px solid #000" }}></div>
                      <div style={{ fontSize: 14, marginTop: 4, fontWeight: 700 }}>Assinatura do Paciente ou Responsável</div>
                   </div>
@@ -259,7 +267,7 @@ Informo que a paciente permanece sem condições de exercer suas atividades prof
                     flexDirection: "column", 
                     alignItems: "center", 
                     position: "relative", 
-                    marginTop: -11,
+                    marginTop: -22,
                     zIndex: 10
                   }}>
                      {/* Bloco do Médico posicionado dinamicamente via Elite 2.0 */}
@@ -274,7 +282,7 @@ Informo que a paciente permanece sem condições de exercer suas atividades prof
                        transition: "transform 0.1s"
                      }}>
                         {fotoAssinatura && <img src={fotoAssinatura} style={{ maxHeight: 100, maxWidth: 300, background: "transparent" }} alt="Assinatura" />}
-                        {sStampInfo && (
+                        {modoCarimbo && sStampInfo && (
                           <div style={{ textAlign: "center", color: corAssinatura, marginTop: -5 }}>
                              <div style={{ fontWeight: 700, fontSize: 13 }}>{data.medico?.toUpperCase()}</div>
                              <div style={{ fontSize: 11 }}>{data.crm}</div>
