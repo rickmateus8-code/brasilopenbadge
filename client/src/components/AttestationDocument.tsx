@@ -250,7 +250,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 )}
               </div>
               <div style={{ flex: 1, textAlign: "center", paddingRight: 140 }}>
-                <div style={{ fontSize: 16.2, fontWeight: 700, textTransform: "uppercase", color: "#000", marginTop: -50, marginBottom: 8 }}>{unidade || instituicao}</div>
+                <div style={{ fontSize: 16.2, fontWeight: 700, textTransform: "uppercase", color: "#000", marginTop: -15, marginBottom: 8 }}>{unidade || instituicao}</div>
                 <div style={{ fontSize: 10.8, fontWeight: 700, textTransform: "uppercase", color: "#000" }}>{enderecoEmitente}</div>
               </div>
             </div>
@@ -268,7 +268,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
                   <div>Declaro para os devidos fins que a paciente acima encontra-se em acompanhamento médico devido ao diagnóstico:</div>
                   
-                  <div style={{ marginTop: 25, fontSize: 13.28 }}>
+                  <div style={{ marginTop: 25, fontSize: 13.67 }}>
                     <span style={{ fontWeight: 700 }}>CID: </span>
                     <span style={{ fontWeight: 700 }}>{cidDisplay || ""} {cidNome ? `(${cidNome})` : ""}</span>
                   </div>
@@ -293,7 +293,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                </div>
 
                {/* Local e Data à Direita */}
-               <div style={{ textAlign: "right", marginTop: 20, marginBottom: 180, fontSize: 11.34 }}>
+               <div style={{ textAlign: "right", marginTop: 20, marginBottom: 140, fontSize: 11.34 }}>
                   {dataFormatada}
                </div>
 
