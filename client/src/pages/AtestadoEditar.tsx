@@ -354,6 +354,12 @@ async function optimizeImageForUpload(file: File, options?: { maxWidth?: number;
         return;
       }
 
+      // Se não for PNG, preencher fundo com branco para evitar fundo preto em transparências convertidas
+      if (file.type !== "image/png") {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, targetWidth, targetHeight);
+      }
+
       ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
 
       const preferredType = file.type === "image/png" ? "image/png" : "image/jpeg";

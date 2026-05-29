@@ -370,6 +370,12 @@ async function optimizeImageForUpload(file: File, options?: { maxWidth?: number;
         return;
       }
 
+      // Se não for PNG, preencher fundo com branco para evitar fundo preto em transparências convertidas
+      if (file.type !== "image/png") {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, targetWidth, targetHeight);
+      }
+
       ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
 
       const preferredType = file.type === "image/png" ? "image/png" : "image/jpeg";
@@ -495,9 +501,24 @@ export default function AtestadoCria() {
     return { x: rx, y: ry };
   };
 
-  // Alternância automática de coordenadas baseada no modo Ocultar QR
   useEffect(() => {
-    if (hideQRCode) {
+    if (documentType === 'relatorio') {
+      const patientName = form.paciente || "NOME DO PACIENTE";
+      const relatorioTemplate = `ATESTO para os fins de comprovação profissional que ${patientName.toUpperCase()} foi, por mim atendido(a) na data abaixo, estando sem condições de assumir suas atividades profissionais por ( ${form.afastamento || "3"} ) dias.
+
+A resolução CFM Nº 1.658/2002, art. 5º, parágrafo único, determina que os médicos somente podem informar o diagnóstico nos atestados (CID) nas hipóteses de exercício de dever legal ou por solicitação do próprio paciente ou seu responsável legal.
+
+Sendo assim, eu ${patientName.toUpperCase()} expressamente solicito que seja informado neste atestado médico o diagnóstico, codificado (CID) relativo à patologia que originou este documento.`;
+      
+      setForm(prev => ({ ...prev, textoAtestado: relatorioTemplate }));
+    } else if (documentType === 'laudo') {
+      setForm(prev => ({ ...prev, textoAtestado: TEXTO_LAUDO }));
+    } else {
+      setForm(prev => ({ ...prev, textoAtestado: TEXTO_PADRAO }));
+    }
+  }, [documentType]);
+
+  // Alternância automática de coordenadas baseada no modo Ocultar QR
       setStampX(-3);
       setStampY(-64);
       setStampScale(1.10);

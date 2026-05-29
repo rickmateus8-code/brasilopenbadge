@@ -102,6 +102,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const cidNome = (data as any).cidNome || (data as any).cid_nome || "";
     const cidade = (data as any).cidade || "";
     const uf = (data as any).uf || "MG";
+    const modoCarimbo = (data as any).modoCarimbo || (data as any).modo_carimbo || false;
 
     const layout = ATTESTATION_LAYOUT;
     const sScale = stampScale ?? (data as any).stampScale ?? (data as any).stamp_scale ?? layout.stamp.defaultScale;
@@ -113,17 +114,18 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
     const docType = (documentType || (data as any).documentType || (data as any).document_type || (data as any).tipo || 'atestado').toLowerCase();
     
+    // Data de emissão formatada em CAIXA ALTA conforme solicitado
     const dataFormatada = (data as any).dataEmissaoFormatada || (() => {
       const d = data.dataEmissao || "";
       if (!d || d.length < 10) return d;
       const parts = d.split("/");
       if (parts.length === 3) {
-        const meses = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+        const meses = ["JANEIRO","FEVEREIRO","MARÇO","ABRIL","MAIO","JUNHO","JULHO","AGOSTO","SETEMBRO","OUTUBRO","NOVEMBRO","DEZEMBRO"];
         const dia = parseInt(parts[0]);
         const m = parseInt(parts[1]) - 1;
         const ano = parts[2];
         if (isNaN(dia) || isNaN(m) || m < 0 || m > 11 || dia < 1 || dia > 31) return d;
-        return `${cidade} / ${uf}, ${dia < 10 ? '0'+dia : dia} de ${meses[m]} de ${ano}`;
+        return `${cidade} / ${uf}, ${dia < 10 ? '0'+dia : dia} DE ${meses[m]} DE ${ano}`;
       }
       return d;
     })();
@@ -181,7 +183,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           #attestation-document * { box-sizing: border-box; }
         `}</style>
 
-        {/* ─── LAYOUT RELATÓRIO (REFORTALECIMENTO FORENSE) ─── */}
+        {/* ─── LAYOUT RELATÓRIO (CLONAGEM 100% IDENTICA - ESTILO ALFENAS) ─── */}
         {docType === 'relatorio' ? (
           <div style={{ display: "flex", flexDirection: "column", height: "100%", fontFamily: "Arial, sans-serif" }}>
             {/* Header: Logo Esquerda + Texto Centralizado (REDUZIDO 10%) */}
@@ -192,11 +194,17 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               border: "1px solid #000", 
               padding: "15px",
               height: 120,
-              boxSizing: "border-box"
+              boxSizing: "border-box",
+              background: "transparent"
             }}>
-              <div style={{ width: 140, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ width: 140, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent" }}>
                 {effectiveLogoLeft && (
-                  <img src={effectiveLogoLeft} style={{ maxWidth: "100%", maxHeight: 90, objectFit: "contain" }} alt="Logo" />
+                  <img 
+                    src={effectiveLogoLeft} 
+                    style={{ maxWidth: "100%", maxHeight: 90, objectFit: "contain", background: "transparent" }} 
+                    alt="Logo" 
+                    crossOrigin={getCrossOrigin(effectiveLogoLeft)}
+                  />
                 )}
               </div>
               <div style={{ flex: 1, textAlign: "center", paddingRight: 140 }}>
@@ -212,24 +220,20 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
             {/* Corpo do Texto (REDUZIDO 8% ≈ 13.8px) */}
             <div style={{ flex: 1, fontSize: 13.8, lineHeight: 1.8, color: "#000", textAlign: "justify" }}>
-               <p style={{ marginBottom: 30 }}>
-                 ATESTO para os fins de comprovação profissional que <strong>{data.paciente?.toUpperCase()}</strong> foi, por mim atendido(a) na data abaixo, estando sem condições de assumir suas atividades profissionais por ( <strong>{data.afastamento || "__"}</strong> ) dias.
-               </p>
+               <div style={{ whiteSpace: "pre-wrap", marginBottom: 30 }}>
+                 {textoAtestado || `ATESTO para os fins de comprovação profissional que ${data.paciente?.toUpperCase()} foi, por mim atendido(a) na data abaixo, estando sem condições de assumir suas atividades profissionais por ( ${data.afastamento || "__"} ) dias.
 
-               <p style={{ marginBottom: 30 }}>
-                 A resolução CFM Nº 1.658/2002, art. 5º, parágrafo único, determina que os médicos somente podem informar o diagnóstico nos atestados (CID) nas hipóteses de exercício de dever legal ou por solicitação do próprio paciente ou seu responsável legal.
-               </p>
+A resolução CFM Nº 1.658/2002, art. 5º, parágrafo único, determina que os médicos somente podem informar o diagnóstico nos atestados (CID) nas hipóteses de exercício de dever legal ou por solicitação do próprio paciente ou seu responsável legal.
 
-               <p style={{ marginBottom: 30 }}>
-                 Sendo assim, eu <strong>{data.paciente?.toUpperCase()}</strong> expressamente solicito que seja informado neste atestado médico o diagnóstico, codificado (CID) relativo à patologia que originou este documento.
-               </p>
+Sendo assim, eu ${data.paciente?.toUpperCase()} expressamente solicito que seja informado neste atestado médico o diagnóstico, codificado (CID) relativo à patologia que originou este documento.`}
+               </div>
 
                <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 60 }}>
                  CID: {cidDisplay || "C560"}
                </div>
 
                {/* Local e Data à Direita */}
-               <div style={{ textAlign: "right", marginTop: 20, marginBottom: 80, fontSize: 14 }}>
+               <div style={{ textAlign: "right", marginTop: 20, marginBottom: 80, fontSize: 16 }}>
                   {dataFormatada}
                </div>
 
@@ -284,8 +288,9 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               position: "relative",
               zIndex: 2,
               flexShrink: 0,
+              background: "transparent"
             }}>
-              <div style={{ width: 154, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start", flexShrink: 0, overflow: "visible" }}>
+              <div style={{ width: 154, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start", flexShrink: 0, overflow: "visible", background: "transparent" }}>
                 {effectiveLogoLeft && (
                   <img
                     src={effectiveLogoLeft}
@@ -295,6 +300,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                       maxHeight: "100%",
                       maxWidth: 149.38, 
                       objectFit: "contain",
+                      background: "transparent",
                       transform: `scale(${logoLeftScale}) translate(${logoLeftX}px, ${logoLeftY}px)`,
                       transformOrigin: "left center",
                       transition: "transform 0.1s",
@@ -321,7 +327,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 )}
               </div>
 
-              <div style={{ width: 149.38, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, overflow: "visible" }}>
+              <div style={{ width: 149.38, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, overflow: "visible", background: "transparent" }}>
                 {effectiveLogoRight && (
                   <img
                     src={effectiveLogoRight}
@@ -331,6 +337,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                       maxHeight: "100%",
                       maxWidth: 149.38,
                       objectFit: "contain",
+                      background: "transparent",
                       transform: `scale(${logoRightScale}) translate(${logoRightX}px, ${logoRightY}px)`,
                       transformOrigin: "right center",
                       transition: "transform 0.1s",
@@ -450,7 +457,9 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 <div style={{ borderTop: "2px solid #000", marginBottom: 6 }} />
                 <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "flex-end", gap: 0, width: "100%" }}>
                   <div style={{ color: "#000", lineHeight: 1.2, fontFamily: "Arial, sans-serif", height: 111, paddingBottom: 4, display: "flex", flexDirection: "column", justifyContent: "flex-end", marginRight: "auto" }}>
-                    <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.21 }}>{data.dataEmissao}</div>
+                    <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.21 }}>
+                      {dataFormatada}
+                    </div>
                     <div style={{ fontSize: 9.65 }}>Valide este documento acessando:</div>
                     <strong style={{ fontSize: 10.21 }}>https://validaratestado.digital</strong>
                     <div style={{ display: "flex", alignItems: "center" }}>
@@ -459,11 +468,17 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                     </div>
                   </div>
                   <div style={{ border: "1px solid #000", width: 385, height: 111, display: "flex", alignItems: "center", background: "white", paddingRight: 10 }}>
-                    <div style={{ width: 108, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <QRCode value={qrValue} size={96} level="H" />
+                    <div style={{ width: 108, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {isEmitted ? (
+                        <QRCode value={qrValue} size={96} level="H" />
+                      ) : (
+                        <div style={{ filter: "blur(4px)", opacity: 0.5 }}>
+                           <QRCode value="https://validaratestado.digital" size={96} level="H" />
+                        </div>
+                      )}
                     </div>
                     <div style={{ flex: 1, textAlign: "right", color: "#000" }}>
-                      <div style={{ fontSize: 9.5 }}>Documento assinado digitalmente...</div>
+                      <div style={{ fontSize: 9.5 }}>Documento assinado digitalmente conforme MP nº 2.200-2</div>
                       <strong style={{ fontSize: 11.2, textTransform: "uppercase" }}>{data.medico}</strong>
                       <span style={{ display: "block", fontSize: 10.1 }}>{data.crm}</span>
                       <span style={{ display: "block", fontSize: 10.1, textTransform: "uppercase" }}>{data.especialidade}</span>
@@ -480,7 +495,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 transform: `scale(${sScale}) translate(${sX}px, ${sY}px) rotate(${sRotate}deg)`,
               }}>
                 <div style={{ position: "relative", textAlign: "center" }}>
-                   {fotoAssinatura && <img src={fotoAssinatura} style={{ maxWidth: 273, maxHeight: 89 }} alt="Carimbo" />}
+                   {fotoAssinatura && <img src={fotoAssinatura} style={{ maxWidth: 273, maxHeight: 89, background: "transparent" }} alt="Carimbo" />}
                    {sStampInfo && (
                      <div style={{ color: corAssinatura, marginTop: -5, opacity: 0.9 }}>
                         <div style={{ fontWeight: 700, fontSize: 12.2 }}>{data.medico}</div>
