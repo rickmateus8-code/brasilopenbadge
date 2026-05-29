@@ -483,23 +483,24 @@ export default function AtestadoCria() {
   const signatureRef = useRef<HTMLInputElement>(null);
 
   // ── Carimbo Interativo Elite 2.0 ───────────────────────────────────────────
-  const [stampScale, setStampScale] = useState<number>(1.2);
-  const [stampX, setStampX] = useState<number>(141); 
-  const [stampY, setStampY] = useState<number>(-120); 
-  const [stampRotate, setStampRotate] = useState<number>(-3);
+  const [stampScale, setStampScale] = useState<number>(1.30);
+  const [stampX, setStampX] = useState<number>(131); 
+  const [stampY, setStampY] = useState<number>(-39); 
+  const [stampRotate, setStampRotate] = useState<number>(-5.9);
   const [hideQRCode, setHideQRCode] = useState<boolean>(false);
   const [showStampInfo, setShowStampInfo] = useState<boolean>(true);
 
   // Giro aleatório a cada emissão para realismo
   const generateRandomGiro = () => {
-    // Retorna um valor entre -10 e 10 graus
-    return parseFloat((Math.random() * (10 - (-10)) + (-10)).toFixed(1));
+    // Retorna um valor entre -11.9 e 21.1 graus
+    return parseFloat((Math.random() * (21.1 - (-11.9)) + (-11.9)).toFixed(1));
   };
 
   // Gerador de posições randômicas para o botão RESET (conforme solicitado)
   const generateRandomPos = () => {
-    const rx = Math.floor(Math.random() * (141 - (-131) + 1)) + (-131);
-    const ry = Math.floor(Math.random() * ((-120) - (-208) + 1)) + (-208);
+    // X entre -13 e 299
+    const rx = Math.floor(Math.random() * (299 - (-13) + 1)) + (-13);
+    const ry = -39; 
     return { x: rx, y: ry };
   };
 
@@ -508,30 +509,22 @@ export default function AtestadoCria() {
     if (hideQRCode) {
       setStampX(-3);
       setStampY(-64);
-      setStampScale(1.10);
+      setStampScale(1.30);
       setStampRotate(-3);
     } else {
       const pos = generateRandomPos();
       setStampX(pos.x);
       setStampY(pos.y);
-      setStampScale(1.20);
+      setStampScale(1.30);
       setStampRotate(generateRandomGiro());
     }
   }, [hideQRCode]);
 
   const resetStampTransform = () => {
-    if (hideQRCode) {
-      setStampScale(1.10);
-      setStampX(-3);
-      setStampY(-64);
-      setStampRotate(-3);
-    } else {
-      const pos = generateRandomPos();
-      setStampScale(1.20);
-      setStampX(pos.x);
-      setStampY(pos.y);
-      setStampRotate(generateRandomGiro());
-    }
+    setStampScale(1.30);
+    setStampX(131);
+    setStampY(-39);
+    setStampRotate(-5.9);
   };
 
   const STAMP_POS_STEP = 8; // Rápido
