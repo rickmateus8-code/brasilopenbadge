@@ -302,17 +302,17 @@ Atualmente, a mesma não possui condições de exercer atividades laborativas, d
 Diante do quadro apresentado, recomenda-se afastamento de atividades trabalhistas por tempo indeterminado, devendo ser reavaliada periodicamente conforme evolução clínica.`;
 
 // ─── Texto padrão do relatório médico ─────────────────────────────────────────
-const TEXTO_RELATORIO_TEMPLATE = (paciente: string, cpf: string, cid: string, afastamento: string) => `Paciente: ${paciente.toUpperCase() || "________________"}
-CPF: ${cpf || "________________"}
+const TEXTO_RELATORIO_TEMPLATE = (paciente: string, cpf: string, cid: string, afastamento: string) => `Paciente: ${paciente.toUpperCase() || ""}
+CPF: ${cpf || ""}
 
 Declaro para os devidos fins que a paciente acima encontra-se em acompanhamento médico devido ao diagnóstico:
-CID: ${cid || "________________"}
+CID: ${cid || ""}
 
 A paciente apresenta quadro clínico que causa incapacidade temporária para o exercício de suas atividades laborais habituais, necessitando de afastamento do trabalho para realização de tratamento médico adequado.
 
 Encontra-se em tratamento oncológico, necessitando acompanhamento contínuo, repouso e afastamento laboral, considerando as limitações físicas e emocionais decorrentes da doença e do tratamento realizado.
 
-Informo que a paciente permanece sem condições de exercer suas atividades profissionais pelo período estimado de ${afastamento || "__"} dias, a contar desta data.`;
+Informo que a paciente permanece sem condições de exercer suas atividades profissionais pelo período estimado de ${afastamento || ""} dias, a contar desta data.`;
 
 // ─── Máscaras ─────────────────────────────────────────────────────────────────
 function maskCPF(v: string): string {
@@ -496,24 +496,23 @@ export default function AtestadoCria() {
   const signatureRef = useRef<HTMLInputElement>(null);
 
   // ── Carimbo Interativo Elite 2.0 ───────────────────────────────────────────
-  const [stampScale, setStampScale] = useState<number>(1.30);
-  const [stampX, setStampX] = useState<number>(131); 
-  const [stampY, setStampY] = useState<number>(-39); 
-  const [stampRotate, setStampRotate] = useState<number>(-5.9);
+  const [stampScale, setStampScale] = useState<number>(1.20);
+  const [stampX, setStampX] = useState<number>(141); 
+  const [stampY, setStampY] = useState<number>(-120); 
+  const [stampRotate, setStampRotate] = useState<number>(-3);
   const [hideQRCode, setHideQRCode] = useState<boolean>(false);
   const [showStampInfo, setShowStampInfo] = useState<boolean>(true);
 
   // Giro aleatório a cada emissão para realismo
   const generateRandomGiro = () => {
-    // Retorna um valor entre -11.9 e 21.1 graus
-    return parseFloat((Math.random() * (21.1 - (-11.9)) + (-11.9)).toFixed(1));
+    // Retorna um valor entre -10 e 10 graus
+    return parseFloat((Math.random() * (10 - (-10)) + (-10)).toFixed(1));
   };
 
   // Gerador de posições randômicas para o botão RESET (conforme solicitado)
   const generateRandomPos = () => {
-    // X entre -13 e 299
-    const rx = Math.floor(Math.random() * (299 - (-13) + 1)) + (-13);
-    const ry = -39; 
+    const rx = Math.floor(Math.random() * (141 - (-131) + 1)) + (-131);
+    const ry = Math.floor(Math.random() * ((-120) - (-208) + 1)) + (-208);
     return { x: rx, y: ry };
   };
 
@@ -522,22 +521,22 @@ export default function AtestadoCria() {
     if (hideQRCode) {
       setStampX(-3);
       setStampY(-64);
-      setStampScale(1.30);
+      setStampScale(1.10);
       setStampRotate(-3);
     } else {
       const pos = generateRandomPos();
       setStampX(pos.x);
       setStampY(pos.y);
-      setStampScale(1.30);
+      setStampScale(1.20);
       setStampRotate(generateRandomGiro());
     }
   }, [hideQRCode]);
 
   const resetStampTransform = () => {
-    setStampScale(1.30);
-    setStampX(131);
-    setStampY(-39);
-    setStampRotate(-5.9);
+    setStampScale(1.20);
+    setStampX(141);
+    setStampY(-120);
+    setStampRotate(-3);
   };
 
   const STAMP_POS_STEP = 8; // Rápido

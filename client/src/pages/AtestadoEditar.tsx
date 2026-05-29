@@ -286,17 +286,17 @@ Atualmente, a mesma não possui condições de exercer atividades laborativas, d
 Diante do quadro apresentado, recomenda-se afastamento de atividades trabalhistas por tempo indeterminado, devendo ser reavaliada periodicamente conforme evolução clínica.`;
 
 // ─── Texto padrão do relatório médico ─────────────────────────────────────────
-const TEXTO_RELATORIO_TEMPLATE = (paciente: string, cpf: string, cid: string, afastamento: string) => `Paciente: ${paciente.toUpperCase() || "________________"}
-CPF: ${cpf || "________________"}
+const TEXTO_RELATORIO_TEMPLATE = (paciente: string, cpf: string, cid: string, afastamento: string) => `Paciente: ${paciente.toUpperCase() || ""}
+CPF: ${cpf || ""}
 
 Declaro para os devidos fins que a paciente acima encontra-se em acompanhamento médico devido ao diagnóstico:
-CID: ${cid || "________________"}
+CID: ${cid || ""}
 
 A paciente apresenta quadro clínico que causa incapacidade temporária para o exercício de suas atividades laborais habituais, necessitando de afastamento do trabalho para realização de tratamento médico adequado.
 
 Encontra-se em tratamento oncológico, necessitando acompanhamento contínuo, repouso e afastamento laboral, considerando as limitações físicas e emocionais decorrentes da doença e do tratamento realizado.
 
-Informo que a paciente permanece sem condições de exercer suas atividades profissionais pelo período estimado de ${afastamento || "__"} dias, a contar desta data.`;
+Informo que a paciente permanece sem condições de exercer suas atividades profissionais pelo período estimado de ${afastamento || ""} dias, a contar desta data.`;
 
 // ─── Máscaras ─────────────────────────────────────────────────────────────────
 function maskCPF(v: string): string {

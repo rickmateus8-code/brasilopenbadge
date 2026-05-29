@@ -221,18 +221,18 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             {/* Corpo do Texto */}
             <div style={{ flex: 1, fontSize: 13.8, lineHeight: 1.8, color: "#000", textAlign: "justify" }}>
                <div style={{ whiteSpace: "pre-wrap", marginBottom: 30 }}>
-                 {textoAtestado || `Paciente: ${data.paciente?.toUpperCase()}
-CPF: ${data.cpf || "________"}
+                 {textoAtestado || `Paciente: ${data.paciente?.toUpperCase() || ""}
+CPF: ${data.cpf || ""}
 
 Declaro para os devidos fins que a paciente acima encontra-se em acompanhamento médico devido ao diagnóstico:
 
-CID: ${cidDisplay || "________"}
+CID: ${cidDisplay || ""}
 
 A paciente apresenta quadro clínico que causa incapacidade temporária para o exercício de suas atividades laborais habituais, necessitando de afastamento do trabalho para realização de tratamento médico adequado.
 
 Encontra-se em tratamento oncológico, necessitando acompanhamento contínuo, repouso e afastamento laboral, considerando as limitações físicas e emocionais decorrentes da doença e do tratamento realizado.
 
-Informo que a paciente permanece sem condições de exercer suas atividades profissionais pelo período estimado de ${data.afastamento || "__"} dias, a contar desta data.`}
+Informo que a paciente permanece sem condições de exercer suas atividades profissionais pelo período estimado de ${data.afastamento || ""} dias, a contar desta data.`}
                </div>
 
                <div style={{ fontSize: 17, marginBottom: 60 }}>
@@ -450,6 +450,25 @@ Informo que a paciente permanece sem condições de exercer suas atividades prof
                 </div>
               </div>
             </div>
+
+            {/* ENDEREÇO EMITENTE (Restaurado da V7.61) */}
+            {enderecoEmitente && (
+              <div style={{
+                fontSize: 10.5,
+                lineHeight: 1.2,
+                fontFamily: "Arial, Helvetica, sans-serif",
+                textAlign: "left",
+                position: "relative",
+                zIndex: 2,
+                flexShrink: 0,
+                marginTop: isExporting ? layout.export.addressMarginTop : -2,
+                marginBottom: isExporting ? layout.export.addressMarginBottom : 22,
+                color: "#000",
+                textTransform: "uppercase"
+              }}>
+                <span style={{ fontWeight: 700 }}>ENDEREÇO EMITENTE:</span> <span style={{ fontWeight: 400 }}>{enderecoEmitente}</span>
+              </div>
+            )}
 
             <div id="preview-body" style={{
               flex: "1 1 auto",
