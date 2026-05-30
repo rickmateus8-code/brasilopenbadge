@@ -330,6 +330,34 @@ const intelligentStats = [
         {/* Patent Card */}
         {loyaltyData && <PatentCard loyalty={loyaltyData} />}
 
+        {/* Sua Rede de Indicações (Resumo) */}
+        {loyaltyData && (
+          <div className="mb-8 p-6 bg-emerald-50/50 dark:bg-emerald-900/5 rounded-[2rem] border border-emerald-100/50 dark:border-emerald-800/30 flex flex-col md:flex-row items-center justify-between gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+             <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+                   <Gift size={24} />
+                </div>
+                <div>
+                   <h3 className="text-sm font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-tight m-0">Sua Rede de Indicações</h3>
+                   <p className="text-[10px] text-emerald-600/70 dark:text-emerald-500/70 font-bold uppercase tracking-widest mt-1">Ganhe 10% de todas as recargas da sua rede</p>
+                </div>
+             </div>
+             <div className="flex items-center gap-6">
+                <div className="text-center">
+                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Ganhos</p>
+                   <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">R$ {Number(loyaltyData.totalEarnings || 0).toFixed(2).replace('.', ',')}</span>
+                </div>
+                <div className="w-px h-8 bg-emerald-200 dark:bg-emerald-800/50" />
+                <button 
+                  onClick={() => setShowReferralModal(true)}
+                  className="bg-white dark:bg-slate-900 border-2 border-emerald-500 text-emerald-600 px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all active:scale-95 flex items-center gap-2"
+                >
+                  <Users size={14} /> Minha Rede
+                </button>
+             </div>
+          </div>
+        )}
+
         {/* Resumo Financeiro Rapido */}
         <div className="mb-8">
           <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-[2.5rem] p-8 text-white shadow-xl shadow-blue-900/20 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group">
