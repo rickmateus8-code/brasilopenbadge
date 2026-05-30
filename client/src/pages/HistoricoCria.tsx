@@ -101,8 +101,8 @@ export default function HistoricoCria() {
   const gradeChunks = useMemo(() => {
     const remaining = [...gradeRows];
     const chunks: any[][] = [];
-    const MAX_ROWS_LAST = 36;
-    const MAX_ROWS_INT = 62;
+    const MAX_ROWS_LAST = 32;
+    const MAX_ROWS_INT = 60;
 
     if (remaining.length === 0) {
        chunks.push([{ anoMes: "", disciplina: "Nenhuma disciplina informada", ch: "", media: "", resultado: "", docente: "", titulacao: "" }]);
@@ -111,8 +111,8 @@ export default function HistoricoCria() {
         if (remaining.length <= MAX_ROWS_LAST) {
           chunks.push(remaining.splice(0, remaining.length));
         } else if (remaining.length <= MAX_ROWS_INT) {
-           // Zona de Perigo: balanceamento proporcional
-           chunks.push(remaining.splice(0, Math.floor(remaining.length / 2)));
+           // Se couber em uma página cheia mas não sobrar quase nada para a próxima, não divide no meio
+           chunks.push(remaining.splice(0, remaining.length));
         } else {
           chunks.push(remaining.splice(0, MAX_ROWS_INT));
         }

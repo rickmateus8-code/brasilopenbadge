@@ -120,8 +120,8 @@ function GradeGrid({ rows }: { rows: GradeRow[] }) {
           <div style={{ ...CELL_STYLE, width: "38px", textAlign: "center" }}>{r.ch}</div>
           <div style={{ ...CELL_STYLE, width: "38px", textAlign: "center" }}>{r.media}</div>
           <div style={{ ...CELL_STYLE, width: "75px", textAlign: "center" }}>{r.resultado}</div>
-          <div style={{ ...CELL_STYLE, width: "125px", textAlign: "center", fontSize: "7pt", overflow: "hidden" }}>{r.docente}</div>
-          <div style={{ ...CELL_STYLE, width: "85px", fontSize: "7pt" }}>{r.titulacao}</div>
+          <div style={{ ...CELL_STYLE, width: "125px", textAlign: "center", fontSize: "6.8pt", wordBreak: "break-all", whiteSpace: "normal" }}>{r.docente}</div>
+          <div style={{ ...CELL_STYLE, width: "85px", fontSize: "7pt", whiteSpace: "normal" }}>{r.titulacao}</div>
         </div>
       ))}
     </div>
@@ -415,9 +415,9 @@ export default function UninterDocument({ f, highlightModified, profileKey, grad
   const chunks: GradeRow[][] = [];
   let remaining = [...allRows];
   
-  // Recalibrado para flexbox com maior espaçamento
-  const MAX_ROWS_LAST = 24;
-  const MAX_ROWS_INT = 38;
+  // Recalibrado para evitar quebras desnecessárias e garantir encaixe perfeito
+  const MAX_ROWS_LAST = 32; 
+  const MAX_ROWS_INT = 60;
 
   if (remaining.length === 0) {
     chunks.push([{ anoMes: "", disciplina: "Nenhuma disciplina informada", ch: "", media: "", resultado: "", docente: "", titulacao: "" }]);
@@ -426,7 +426,8 @@ export default function UninterDocument({ f, highlightModified, profileKey, grad
       if (remaining.length <= MAX_ROWS_LAST) {
         chunks.push(remaining.splice(0, remaining.length));
       } else if (remaining.length <= MAX_ROWS_INT) {
-         chunks.push(remaining.splice(0, Math.floor(remaining.length / 2)));
+         // Se couber em uma página cheia mas não sobrar quase nada para a próxima, não divide no meio
+         chunks.push(remaining.splice(0, remaining.length));
       } else {
         chunks.push(remaining.splice(0, MAX_ROWS_INT));
       }

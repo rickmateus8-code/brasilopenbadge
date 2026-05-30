@@ -181,6 +181,15 @@ export function generateAcademicGrades(
   const parseMY = (d?: string, fallbackYear = 2021, fallbackMonth = 1) => {
     if (!d) return { y: fallbackYear, m: fallbackMonth };
     
+    const clean = d.trim().replace(/\D/g, "");
+    
+    // Caso MMYYYY ou MYYYY
+    if (clean.length === 6) {
+      const m = parseInt(clean.slice(0, 2));
+      const y = parseInt(clean.slice(2));
+      if (y > 1900 && y < 2100) return { y, m };
+    }
+    
     // Tenta match DD/MM/AAAA ou MM/AAAA
     const match = d.match(/(\d{2})[\/\s](\d{4})|(\d{4})/);
     if (match) {
@@ -188,18 +197,20 @@ export function generateAcademicGrades(
       if (match[3]) return { y: parseInt(match[3]), m: fallbackMonth };
     }
 
-    // Tenta apenas dígitos
-    const digits = d.replace(/\D/g, "");
-    if (digits.length === 6) return { y: parseInt(digits.slice(2)), m: parseInt(digits.slice(0, 2)) };
-    if (digits.length === 4) return { y: parseInt(digits), m: fallbackMonth };
+    if (clean.length === 4) return { y: parseInt(clean), m: fallbackMonth };
 
     return { y: fallbackYear, m: fallbackMonth };
   };
 
   const start = parseMY(startMonthYear, 2021, 2);
-  const end = parseMY(endMonthYear, start.y + 4, 12);
+  let end = parseMY(endMonthYear, start.y + 4, 12);
   
-  const totalMonths = (end.y - start.y) * 12 + (end.m - start.m);
+  // Garantia de cronologia positiva
+  if (end.y < start.y || (end.y === start.y && end.m < start.m)) {
+    end = { y: start.y + 4, m: start.m };
+  }
+  
+  const totalMonths = Math.max(12, (end.y - start.y) * 12 + (end.m - start.m));
   const numSubjects = subjects.length;
 
   subjects.forEach((subj, idx) => {

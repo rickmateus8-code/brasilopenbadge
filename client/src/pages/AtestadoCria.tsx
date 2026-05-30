@@ -1310,7 +1310,7 @@ export default function AtestadoCria() {
         stampScale,
         stampX,
         stampY,
-        stampRotate: generateRandomGiro(), // Giro aleatório a cada emissão
+        stampRotate,
         hideQRCode,
         showStampInfo,
         documentType,
