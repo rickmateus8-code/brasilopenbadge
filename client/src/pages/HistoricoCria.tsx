@@ -89,11 +89,18 @@ export default function HistoricoCria() {
   }, [gradeRows]);
 
   // Injetar totalCH no fieldMap para o componente visual
-  const enrichedFieldMap = useMemo(() => ({
-    ...fieldMap,
-    carga_horaria: String(totalCH || fieldMap.carga_horaria || "0"),
-    dateText: effectiveDateText
-  }), [fieldMap, totalCH, effectiveDateText]);
+  const enrichedFieldMap = useMemo(() => {
+    // Se o usuário preencheu manualmente o campo carga_horaria, usamos ele.
+    // Caso contrário, usamos o cálculo automático da grade.
+    const formCH = parseInt(String(fieldMap.carga_horaria || "0").replace(/\D/g, ""));
+    const displayCH = formCH > 0 ? String(formCH) : String(totalCH || "0");
+
+    return {
+      ...fieldMap,
+      carga_horaria: displayCH,
+      dateText: effectiveDateText
+    };
+  }, [fieldMap, totalCH, effectiveDateText]);
 
   // Paginação dinâmica balanceada (Sincronizada com DocumentPages.tsx)
   const showPage4 = activeHistorico !== "pedagogia";

@@ -374,9 +374,26 @@ export function Page4() {
 // ==================== GRADE PAGE (DYNAMIC) ====================
 export function GradePage({ f, highlightModified, profileKey, rows, isLast }: Props & { rows: GradeRow[]; isLast: boolean }) {
   const hl = highlightModified;
+  const today = new Date().toLocaleDateString("pt-BR");
 
   return (
-    <div className="doc-page grade-page" style={{ ...PAGE_STYLE, fontSize: "8.5pt", paddingTop: "12mm" }}>
+    <div className="doc-page grade-page" style={{ ...PAGE_STYLE, fontSize: "8.5pt", paddingTop: "15mm", position: "relative" }}>
+      {/* Header Inteligente de Exportação */}
+      <div style={{ 
+        position: "absolute", 
+        top: "8mm", 
+        left: "15mm", 
+        fontSize: "7pt", 
+        color: "#666", 
+        fontWeight: "bold",
+        display: "flex",
+        gap: "10px",
+        zIndex: 10
+      }}>
+        <span>{today}</span>
+        <span>Documentos Digitais</span>
+      </div>
+
       <Fieldset legend="IDENTIFICAÇÃO DO ALUNO">
         <p style={{ margin: "1.5px 0" }}><b>Nome:</b> <V val={f.nome} orig="" highlight={hl} /></p>
         <p style={{ margin: "1.5px 0" }}><b>CPF:</b> <V val={f.cpf} orig="" highlight={hl} /> &nbsp;&nbsp; <b>RG:</b> <V val={f.rg} orig="" highlight={hl} /> - <V val={f.rg_orgao} orig="" highlight={hl} /></p>

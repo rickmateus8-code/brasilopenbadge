@@ -204,24 +204,24 @@ export function generateAcademicGrades(
 
   const start = parseMY(startMonthYear, 2021, 2);
   let end = parseMY(endMonthYear, start.y + 4, 12);
-  
-  // Garantia de cronologia positiva
+
+  // Garantia de cronologia positiva e respeito ao final preenchido
   if (end.y < start.y || (end.y === start.y && end.m < start.m)) {
     end = { y: start.y + 4, m: start.m };
   }
-  
-  const totalMonths = Math.max(12, (end.y - start.y) * 12 + (end.m - start.m));
+
+  // Diferença exata em meses
+  const totalMonths = (end.y - start.y) * 12 + (end.m - start.m);
   const numSubjects = subjects.length;
 
   subjects.forEach((subj, idx) => {
-    // Interpolação linear: garante progressão rigorosa
-    // O último item (idx = numSubjects - 1) terá progress = 1.0, logo currentTotalMonths = totalMonths
+    // Interpolação linear: garante que a última disciplina caia EXATAMENTE no mês/ano de conclusão
     const progress = numSubjects > 1 ? idx / (numSubjects - 1) : 0;
-    const currentTotalMonths = Math.floor(progress * totalMonths);
-    
-    const currentYear = start.y + Math.floor((start.m - 1 + currentTotalMonths) / 12);
-    const currentMonth = ((start.m - 1 + currentTotalMonths) % 12) + 1;
-    
+    const monthsFromStart = Math.floor(progress * totalMonths);
+
+    const currentYear = start.y + Math.floor((start.m - 1 + monthsFromStart) / 12);
+    const currentMonth = ((start.m - 1 + monthsFromStart) % 12) + 1;
+
     const anoMes = `${currentYear}/${String(currentMonth).padStart(2, "0")}`;
     const grade = getRandomGrade();
     const isActivity = subj.toLowerCase().includes("atividades") || subj.toLowerCase().includes("estágio") || subj.toLowerCase().includes("tcc");
