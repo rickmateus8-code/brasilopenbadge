@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { getQRCodeCNH } from "@/config.qrcode";
 import { validarCPF, displayDateToHtml } from "@/lib/utils";
 import EmissionModal from "@/components/EmissionModal";
+import RequiredFieldsModal from "@/components/RequiredFieldsModal";
 import {
   ArrowLeft, Save, Download, MessageCircle, Copy, Zap,
   Upload, Type, AlertCircle, Camera, PenTool, Layout,
@@ -53,6 +54,20 @@ const TABS = [
   { id: "documento", label: "2. CNH", icon: Layout },
   { id: "finalizacao", label: "3. Finalização", icon: Camera },
 ];
+
+const MANDATORY_FIELDS: Record<string, keyof CNHDocumentProps> = {
+  "Nome Completo": "nome",
+  "CPF": "cpf",
+  "RG": "rg",
+  "Órgão Emissor": "orgaoEmissor",
+  "UF do RG": "ufRG",
+  "Data de Nascimento": "dataNascimento",
+  "Categoria": "categoria",
+  "Local de Emissão": "localEmissao",
+  "UF de Emissão": "ufEmissao",
+  "Foto do Rosto": "fotoUrl",
+  "Assinatura": "assinaturaUrl",
+};
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function gerarNumero(len: number): string {
@@ -120,6 +135,8 @@ export default function CNHCria() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isApplyingAI, setIsApplyingAI] = useState(false);
   const [documentPrice, setDocumentPrice] = useState(0);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
+  const [showRequiredModal, setShowRequiredModal] = useState(false);
 
   const [data, setData] = useState<CNHDocumentProps>({
     nome: "", cpf: "", rg: "", orgaoEmissor: "", ufRG: "",
@@ -273,8 +290,19 @@ export default function CNHCria() {
   }, [assTexto, assEstilo]);
 
   const handleRequestEmit = async () => {
-    if (!data.nome || !data.cpf) { toast.error("Preencha Nome e CPF!"); return; }
+    const missing: string[] = [];
+    Object.entries(MANDATORY_FIELDS).forEach(([label, key]) => {
+      if (!data[key]) missing.push(label);
+    });
+
+    if (missing.length > 0) {
+      setMissingFields(missing);
+      setShowRequiredModal(true);
+      return;
+    }
+
     if (!validarCPF(data.cpf)) { toast.error("CPF inválido!"); return; }
+    
     try {
       const pricingRes = await fetch("/api/pricing", { credentials: "include" });
       const pricingData = await pricingRes.json();
@@ -299,7 +327,15 @@ export default function CNHCria() {
         setData(d => ({ ...d, codigoQR: codigo, blurred: false }));
         setSaved(true);
         setShowConfirmModal(false);
-        setShowSuccessModal(true);
+        
+        // Auto Download
+        toast.info("Emissão concluída! Iniciando download...");
+        setTimeout(async () => {
+          if (docRef.current) await docRef.current.exportAsPdf();
+          toast.success("Download iniciado. Redirecionando...");
+          setTimeout(() => setLocation("/cnhsalvas"), 2000);
+        }, 1000);
+
         if (result.newBalance !== undefined) updateBalance(result.newBalance);
 
         // Sync (não crítico)
@@ -728,6 +764,16 @@ export default function CNHCria() {
           <CNHDocument ref={docRef} {...data} codigoQR={saved ? codigoQR : "PREVIEW"} blurred={!saved} />
         </div>
       </div>
+
+      <RequiredFieldsModal
+        isOpen={showRequiredModal}
+        onClose={() => setShowRequiredModal(false)}
+        missingFields={missingFields}
+        onConfirm={() => {
+          setShowRequiredModal(false);
+          setShowConfirmModal(true);
+        }}
+      />
 
       <EmissionModal
         docLabel="CNH Digital" docEmoji="🚗" documentPrice={1800} userBalance={user?.balance ?? 0}

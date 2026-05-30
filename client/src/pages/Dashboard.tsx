@@ -8,6 +8,8 @@ import ExtratoModal from "@/components/ExtratoModal";
 import ReferralModal from "@/components/ReferralModal";
 import ModelosEmissaoModal from "@/components/ModelosEmissaoModal";
 import PatentCard from "@/components/PatentCard";
+import RenewModal from "@/components/RenewModal";
+import DocumentViewerModal from "@/components/DocumentViewerModal";
 import {
   FileText, Car, Anchor, FlaskConical, GraduationCap,
   Wallet, TrendingUp, BarChart3, ChevronRight, Plus,
@@ -16,7 +18,6 @@ import {
   Eye, Trash, Receipt, Camera
 } from "lucide-react";
 import AttestationActionButtons from "@/components/AttestationActionButtons";
-import AttestationViewerModal from "@/components/AttestationViewerModal";
 import { downloadAttestationPdf, fetchLatestAttestationRecord } from "@/lib/attestationActions";
 import { toast } from "sonner";
 
@@ -97,6 +98,20 @@ export default function Dashboard() {
   const [downloadingAtestadoId, setDownloadingAtestadoId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showRenewModal, setShowRenewModal] = useState<DocRecord | null>(null);
+
+  const handleRenew = (doc: DocRecord) => {
+    setShowRenewModal(doc);
+  };
+
+  const handleWhatsAppHistory = (doc: DocRecord) => {
+    const parsed = parseDocData(doc);
+    const codigoQR = doc.codigo_qr || doc.codigo_validacao || doc.id?.slice(0, 8);
+    const texto = encodeURIComponent(
+      `*DocMaster - ${doc.type === 'cnh' ? 'CNH Digital' : 'CHA Náutica'}*\n\nOlá! Segue seu documento gerado pelo DocMaster.\n\nNome: ${doc.nome || parsed.nome || doc.paciente}\nCPF: ${doc.cpf || parsed.cpf}\n\nAcesse o documento: ${getQRCodeCNH(codigoQR)}\n\n_Documento gerado por DocMaster_`
+    );
+    window.open(`https://wa.me/?text=${texto}`, "_blank");
+  };
 
   useEffect(() => {
     refresh();
@@ -535,7 +550,10 @@ const intelligentStats = [
                                 <td className="px-6 py-5 text-right">
                                   <div className="flex justify-end scale-90 origin-right">
                                     <AttestationActionButtons
+                                        onRenew={() => handleRenew(doc)}
                                         onEdit={() => setLocation(`/${activeTab}/editar/${doc.id}`)}
+                                        onView={() => openViewAtestado(doc)}
+                                        onWhatsApp={() => handleWhatsAppHistory(doc)}
                                         onDelete={() => setConfirmDeleteId(doc.id)}
                                     />
                                   </div>
@@ -594,16 +612,34 @@ const intelligentStats = [
       <ReferralModal isOpen={showReferralModal} onClose={() => setShowReferralModal(false)} />
       <ModelosEmissaoModal isOpen={showModelsModal} onClose={() => setShowModelsModal(false)} />
 
+      {showRenewModal && (
+        <RenewModal
+          isOpen={!!showRenewModal}
+          onClose={() => setShowRenewModal(null)}
+          doc={showRenewModal}
+          onRenewSuccess={(newBal) => {
+            refresh();
+            if (newBal !== undefined) updateBalance(newBal);
+            loadHistory(activeTab);
+          }}
+        />
+      )}
+
       {/* ── VIEWER & DELETE MODALS ── */}
       {viewAtestado && (
-        <AttestationViewerModal
+        <DocumentViewerModal
           doc={viewAtestado}
           isDownloading={downloadingAtestadoId === viewAtestado.id}
           onClose={() => setViewAtestado(null)}
           onDownload={() => handleDirectDownloadAtestado(viewAtestado)}
           onEdit={() => {
+            const type = viewAtestado.type === 'atestado' ? 'atestado' : 
+                         viewAtestado.type === 'cnh' ? 'cnh' : 
+                         viewAtestado.type === 'cha' ? 'cha' : 
+                         viewAtestado.type === 'receita' ? 'receita' : 
+                         viewAtestado.type === 'historico-uninter' ? 'historicocria' : viewAtestado.type;
             setViewAtestado(null);
-            setLocation(`/atestado/editar/${viewAtestado.id}`);
+            setLocation(`/${type}/editar/${viewAtestado.id}`);
           }}
         />
       )}
