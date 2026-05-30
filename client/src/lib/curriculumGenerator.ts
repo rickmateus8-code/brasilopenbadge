@@ -55,6 +55,18 @@ const SUBJECTS_DATABASE: Record<string, string[]> = {
     "Automação Industrial I", "Automação Industrial II", "Sistemas Hidráulicos e Pneumáticos", "Mecânica dos Sólidos", "Ciência dos Materiais",
     "Termodinâmica", "Fenômenos de Transporte", "Gestão de Projetos de Engenharia", "Ética e Legislação para Engenharia", "TCC I", "TCC II"
   ],
+  engenharia_eletrica: [
+    "Cálculo Diferencial e Integral I", "Cálculo Diferencial e Integral II", "Cálculo Diferencial e Integral III", "Cálculo Diferencial e Integral IV", "Álgebra Linear e Geometria Analítica",
+    "Física Geral e Experimental I", "Física Geral e Experimental II", "Física Geral e Experimental III", "Física Geral e Experimental IV", "Química Geral e Tecnológica",
+    "Introdução à Engenharia Elétrica", "Desenho Técnico Assistido por Computador", "Algoritmos e Programação de Computadores", "Métodos Numéricos", "Probabilidade e Estatística",
+    "Fenômenos de Transporte", "Resistência dos Materiais", "Circuitos Elétricos I", "Circuitos Elétricos II", "Sistemas Digitais I",
+    "Sistemas Digitais II", "Eletrônica Analógica I", "Eletrônica Analógica II", "Eletromagnetismo Aplicado", "Conversão de Energia",
+    "Máquinas Elétricas I", "Máquinas Elétricas II", "Instalações Elétricas Prediais", "Instalações Elétricas Industriais", "Sistemas de Potência I",
+    "Sistemas de Potência II", "Proteção de Sistemas Elétricos", "Controle de Sistemas Lineares I", "Controle de Sistemas Lineares II", "Microprocessadores e Microcontroladores",
+    "Eletrônica de Potência", "Acionamentos Elétricos", "Instrumentação Eletrônica", "Transmissão e Distribuição de Energia", "Energias Renováveis",
+    "Eficiência Energética", "Automação e Controle Industrial", "Redes de Comunicação Industrial", "Engenharia Econômica", "Administração para Engenheiros",
+    "Ética e Legislação Profissional", "Atividades Complementares", "Estágio Supervisionado", "Trabalho de Conclusão de Curso (TCC) I", "Trabalho de Conclusão de Curso (TCC) II"
+  ],
   gestao_recursos_humanos: [
     "Rotinas Trabalhistas", "Gestão de Cargos e Salários", "Recrutamento e Seleção", "Treinamento e Desenvolvimento", "Comportamento Organizacional",
     "Legislação Trabalhista e Previdenciária", "Saúde e Segurança no Trabalho", "Gestão de Desempenho", "Cultura e Clima Organizacional", "Psicologia Organizacional",

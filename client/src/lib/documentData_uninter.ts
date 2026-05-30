@@ -17,6 +17,7 @@ export type ProfileKey =
   | "historia"
   | "pedagogia"
   | "engenharia_controle_automacao"
+  | "engenharia_eletrica"
   | "administracao"
   | "letras"
   | "direito"
@@ -42,6 +43,7 @@ export const HISTORICOS_DISPONIVEIS: HistoricoDisponivel[] = [
   { key: "direito", label: "DIREITO", shortLabel: "DIR" },
   { key: "enfermagem", label: "ENFERMAGEM", shortLabel: "ENF" },
   { key: "engenharia_controle_automacao", label: "ENG. CONTROLE E AUTOMAÇÃO", shortLabel: "ENG" },
+  { key: "engenharia_eletrica", label: "ENGENHARIA ELÉTRICA", shortLabel: "ELET" },
   { key: "gestao_recursos_humanos", label: "GESTÃO DE REC. HUMANOS", shortLabel: "RH" },
   { key: "historia", label: "HISTÓRIA", shortLabel: "HIST" },
   { key: "letras", label: "LETRAS", shortLabel: "LET" },
@@ -156,6 +158,7 @@ export const PROFILES: Record<ProfileKey, Profile> = {
   direito: { name: "", label: "Direito", curso: "", cursoAbreviado: "Direito", fields: { ...BASE_FIELDS } },
   enfermagem: { name: "", label: "Enfermagem", curso: "", cursoAbreviado: "Enfermagem", fields: { ...BASE_FIELDS } },
   engenharia_controle_automacao: { name: "", label: "Eng. Controle e Automação", curso: "", cursoAbreviado: "Eng. Controle e Automação", fields: { ...BASE_FIELDS } },
+  engenharia_eletrica: { name: "", label: "Engenharia Elétrica", curso: "", cursoAbreviado: "Engenharia Elétrica", fields: { ...BASE_FIELDS } },
   gestao_recursos_humanos: { name: "", label: "Gestão de RH", curso: "", cursoAbreviado: "Gestão RH", fields: { ...BASE_FIELDS } },
   historia: { name: "", label: "História", curso: "", cursoAbreviado: "História", fields: { ...BASE_FIELDS } },
   letras: { name: "", label: "Letras", curso: "", cursoAbreviado: "Letras", fields: { ...BASE_FIELDS } },
@@ -184,6 +187,7 @@ export const COURSE_METADATA: Record<ProfileKey, CourseMetadata> = {
   direito: { ...BASE_META },
   enfermagem: { ...BASE_META },
   engenharia_controle_automacao: { ...BASE_META },
+  engenharia_eletrica: { ...BASE_META },
   gestao_recursos_humanos: { ...BASE_META },
   historia: { ...BASE_META },
   letras: { ...BASE_META },

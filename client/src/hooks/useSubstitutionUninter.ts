@@ -18,6 +18,7 @@ const HISTORICO_TO_PROFILE: Record<HistoricoDisponivelKey, ProfileKey> = {
   direito: "direito",
   enfermagem: "enfermagem",
   engenharia_controle_automacao: "engenharia_controle_automacao",
+  engenharia_eletrica: "engenharia_eletrica",
   gestao_recursos_humanos: "gestao_recursos_humanos",
   historia: "historia",
   letras: "letras",
@@ -76,6 +77,7 @@ function detectHistoricoByCurso(curso: string): HistoricoDisponivelKey | null {
   if (text.includes("DIREITO")) return "direito";
   if (text.includes("ENFERM")) return "enfermagem";
   if (text.includes("ENGENHARIA DE CONTROLE") || text.includes("AUTOMA")) return "engenharia_controle_automacao";
+  if (text.includes("ENGENHARIA ELETRICA") || text.includes("ELÉTRICA")) return "engenharia_eletrica";
   if (text.includes("RH") || text.includes("HUMANO")) return "gestao_recursos_humanos";
   if (text.includes("HIST")) return "historia";
   if (text.includes("LETRAS")) return "letras";
