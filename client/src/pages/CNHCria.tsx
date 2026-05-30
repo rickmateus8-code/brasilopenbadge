@@ -3,7 +3,7 @@
  * UI: Moderna com Abas (Automação, Pessoais, CNH, Finalização)
  * Layout: Preserva paridade 1:1 na exportação via CNHDocument
  */
-import { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -380,7 +380,7 @@ export default function CNHCria() {
           </button>
           <div className="h-8 w-px bg-white/20" />
           <h1 className="text-lg font-black tracking-tighter text-white uppercase italic">
-            ELITEDOC<span className="text-white/60">.STORE</span> <span className="font-light mx-2">|</span> GERADOR DE CNH
+            DOCMASTER<span className="text-white/60">.STORE</span> <span className="font-light mx-2">|</span> GERADOR DE CNH
           </h1>
           <div className="ml-auto flex items-center gap-4">
             <div className="bg-emerald-500/20 border border-emerald-500/30 px-4 py-1.5 rounded-full flex items-center gap-2">
