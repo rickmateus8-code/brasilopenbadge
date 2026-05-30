@@ -132,6 +132,24 @@ export default function Dashboard() {
     } catch { return dateStr; }
   };
 
+  const getDaysRemaining = (dateStr: string) => {
+    if (!dateStr) return null;
+    try {
+      let d: Date;
+      if (/^\d{2}\/\d{2}\/\d{4}/.test(dateStr)) {
+        const [day, month, year] = dateStr.split("/");
+        d = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      } else {
+        d = new Date(dateStr);
+      }
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      d.setHours(0, 0, 0, 0);
+      const diff = d.getTime() - today.getTime();
+      return Math.ceil(diff / (1000 * 60 * 60 * 24));
+    } catch { return null; }
+  };
+
   const loadStats = async () => {
     try {
       const res = await fetch("/api/attestations?stats=1", { credentials: "include" });
@@ -465,20 +483,28 @@ const intelligentStats = [
                             );
                           }
 
-                          if (activeTab === "cnh") {
+                          if (activeTab === "cnh" || activeTab === "cha") {
                             const validadePainel = parsed.validade_cnh || parsed.validade || "—";
+                            const daysRemaining = getDaysRemaining(validadePainel);
+                            const isExpired = daysRemaining !== null && daysRemaining < 0;
+                            const isNearExp = daysRemaining !== null && daysRemaining >= 0 && daysRemaining <= 30;
+
                             return (
                               <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors border-b border-gray-100 dark:border-gray-800/50">
                                 <td className="px-6 py-5">
                                    <div className="flex flex-col">
                                       <span className="text-[13px] font-black text-gray-900 dark:text-white uppercase tracking-tight">{doc.nome || parsed.nome || "—"}</span>
-                                      <span className="text-[10px] text-blue-600 font-bold uppercase mt-0.5 tracking-wider">Carteira Digital</span>
+                                      <span className="text-[10px] text-blue-600 font-bold uppercase mt-0.5 tracking-wider">
+                                        {activeTab === "cnh" ? "Carteira Digital" : "CHA Náutica"}
+                                      </span>
                                    </div>
                                 </td>
                                 <td className="px-6 py-5">
                                    <div className="flex flex-col">
                                       <span className="text-[11px] font-black text-gray-600 dark:text-gray-400 font-mono tracking-tighter">{cpf}</span>
-                                      <span className="text-[9px] text-gray-400 font-bold uppercase mt-0.5">Nº Registro: {parsed.registro || "—"}</span>
+                                      <span className="text-[9px] text-gray-400 font-bold uppercase mt-0.5">
+                                        {activeTab === "cnh" ? `Nº Registro: ${parsed.registro || "—"}` : `Nº Inscrição: ${parsed.inscricao || "—"}`}
+                                      </span>
                                    </div>
                                 </td>
                                 <td className="px-6 py-5">
@@ -492,15 +518,24 @@ const intelligentStats = [
                                    </div>
                                 </td>
                                 <td className="px-6 py-5">
-                                   <div className="flex items-center gap-2">
-                                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                      <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 uppercase">{formatDate(validadePainel)}</span>
+                                   <div className="flex flex-col gap-1">
+                                      <div className="flex items-center gap-2">
+                                         <div className={`w-1.5 h-1.5 rounded-full ${isExpired ? "bg-red-500 animate-pulse" : isNearExp ? "bg-amber-500" : "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"}`} />
+                                         <span className={`text-[11px] font-black uppercase ${isExpired ? "text-red-600" : isNearExp ? "text-amber-600" : "text-emerald-600 dark:text-emerald-400"}`}>
+                                           {formatDate(validadePainel)}
+                                         </span>
+                                      </div>
+                                      {daysRemaining !== null && (
+                                        <span className={`text-[9px] font-black uppercase tracking-widest ${isExpired ? "text-red-500" : isNearExp ? "text-amber-500" : "text-gray-400"}`}>
+                                          {isExpired ? "EXPIRADO" : isNearExp ? `EXPIRA EM ${daysRemaining} DIAS` : `${daysRemaining} DIAS RESTANTES`}
+                                        </span>
+                                      )}
                                    </div>
                                 </td>
                                 <td className="px-6 py-5 text-right">
                                   <div className="flex justify-end scale-90 origin-right">
                                     <AttestationActionButtons
-                                        onEdit={() => setLocation(`/cnh/editar/${doc.id}`)}
+                                        onEdit={() => setLocation(`/${activeTab}/editar/${doc.id}`)}
                                         onDelete={() => setConfirmDeleteId(doc.id)}
                                     />
                                   </div>
