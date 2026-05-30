@@ -153,20 +153,20 @@ const BASE_FIELDS: Record<string, string> = {
 };
 
 export const PROFILES: Record<ProfileKey, Profile> = {
-  administracao: { name: "", label: "Administração", curso: "", cursoAbreviado: "Administração", fields: { ...BASE_FIELDS } },
-  ciencias_contabeis: { name: "", label: "Ciências Contábeis", curso: "", cursoAbreviado: "Ciências Contábeis", fields: { ...BASE_FIELDS } },
-  direito: { name: "", label: "Direito", curso: "", cursoAbreviado: "Direito", fields: { ...BASE_FIELDS } },
-  enfermagem: { name: "", label: "Enfermagem", curso: "", cursoAbreviado: "Enfermagem", fields: { ...BASE_FIELDS } },
-  engenharia_controle_automacao: { name: "", label: "Eng. Controle e Automação", curso: "", cursoAbreviado: "Eng. Controle e Automação", fields: { ...BASE_FIELDS } },
-  engenharia_eletrica: { name: "", label: "Engenharia Elétrica", curso: "", cursoAbreviado: "Engenharia Elétrica", fields: { ...BASE_FIELDS } },
-  gestao_recursos_humanos: { name: "", label: "Gestão de RH", curso: "", cursoAbreviado: "Gestão RH", fields: { ...BASE_FIELDS } },
-  historia: { name: "", label: "História", curso: "", cursoAbreviado: "História", fields: { ...BASE_FIELDS } },
-  letras: { name: "", label: "Letras", curso: "", cursoAbreviado: "Letras", fields: { ...BASE_FIELDS } },
-  marketing: { name: "", label: "Marketing", curso: "", cursoAbreviado: "Marketing", fields: { ...BASE_FIELDS } },
-  pedagogia: { name: "", label: "Pedagogia", curso: "", cursoAbreviado: "Pedagogia", fields: { ...BASE_FIELDS } },
-  psicologia: { name: "", label: "Psicologia", curso: "", cursoAbreviado: "Psicologia", fields: { ...BASE_FIELDS } },
-  servico_social: { name: "", label: "Serviço Social", curso: "", cursoAbreviado: "Serviço Social", fields: { ...BASE_FIELDS } },
-  teologia: { name: "", label: "Teologia", curso: "", cursoAbreviado: "Teologia", fields: { ...BASE_FIELDS } },
+  administracao: { name: "", label: "Administração", curso: "BACHARELADO EM ADMINISTRAÇÃO", cursoAbreviado: "Administração", fields: { ...BASE_FIELDS } },
+  ciencias_contabeis: { name: "", label: "Ciências Contábeis", curso: "BACHARELADO EM CIÊNCIAS CONTÁBEIS", cursoAbreviado: "Ciências Contábeis", fields: { ...BASE_FIELDS } },
+  direito: { name: "", label: "Direito", curso: "BACHARELADO EM DIREITO", cursoAbreviado: "Direito", fields: { ...BASE_FIELDS } },
+  enfermagem: { name: "", label: "Enfermagem", curso: "BACHARELADO EM ENFERMAGEM", cursoAbreviado: "Enfermagem", fields: { ...BASE_FIELDS } },
+  engenharia_controle_automacao: { name: "", label: "Eng. Controle e Automação", curso: "BACHARELADO EM ENGENHARIA DE CONTROLE E AUTOMAÇÃO", cursoAbreviado: "Eng. Controle e Automação", fields: { ...BASE_FIELDS } },
+  engenharia_eletrica: { name: "", label: "Engenharia Elétrica", curso: "BACHARELADO EM ENGENHARIA ELÉTRICA", cursoAbreviado: "Engenharia Elétrica", fields: { ...BASE_FIELDS } },
+  gestao_recursos_humanos: { name: "", label: "Gestão de RH", curso: "TECNOLOGIA EM GESTÃO DE RECURSOS HUMANOS", cursoAbreviado: "Gestão RH", fields: { ...BASE_FIELDS } },
+  historia: { name: "", label: "História", curso: "LICENCIATURA EM HISTÓRIA", cursoAbreviado: "História", fields: { ...BASE_FIELDS } },
+  letras: { name: "", label: "Letras", curso: "LICENCIATURA EM LETRAS", cursoAbreviado: "Letras", fields: { ...BASE_FIELDS } },
+  marketing: { name: "", label: "Marketing", curso: "TECNOLOGIA EM MARKETING", cursoAbreviado: "Marketing", fields: { ...BASE_FIELDS } },
+  pedagogia: { name: "", label: "Pedagogia", curso: "LICENCIATURA EM PEDAGOGIA", cursoAbreviado: "Pedagogia", fields: { ...BASE_FIELDS } },
+  psicologia: { name: "", label: "Psicologia", curso: "BACHARELADO EM PSICOLOGIA", cursoAbreviado: "Psicologia", fields: { ...BASE_FIELDS } },
+  servico_social: { name: "", label: "Serviço Social", curso: "BACHARELADO EM SERVIÇO SOCIAL", cursoAbreviado: "Serviço Social", fields: { ...BASE_FIELDS } },
+  teologia: { name: "", label: "Teologia", curso: "BACHARELADO EM TEOLOGIA", cursoAbreviado: "Teologia", fields: { ...BASE_FIELDS } },
 };
 
 const BASE_META: CourseMetadata = {
