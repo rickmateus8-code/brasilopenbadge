@@ -468,16 +468,42 @@ const intelligentStats = [
                           if (activeTab === "cnh") {
                             const validadePainel = parsed.validade_cnh || parsed.validade || "—";
                             return (
-                              <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
-                                <td className="px-4 py-4 text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">{doc.nome || parsed.nome || "—"}</td>
-                                <td className="px-4 py-4 text-xs font-mono text-gray-500 dark:text-gray-400">{cpf}</td>
-                                <td className="px-4 py-4 text-[10px] font-mono text-gray-400">{new Date(doc.created_at).toLocaleDateString("pt-BR")}</td>
-                                <td className="px-4 py-4 text-xs font-bold text-emerald-600 dark:text-emerald-400">{formatDate(validadePainel)}</td>
-                                <td className="px-4 py-4 text-right">
-                                  <AttestationActionButtons
-                                      onEdit={() => setLocation(`/cnh/editar/${doc.id}`)}
-                                      onDelete={() => setConfirmDeleteId(doc.id)}
-                                  />
+                              <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors border-b border-gray-100 dark:border-gray-800/50">
+                                <td className="px-6 py-5">
+                                   <div className="flex flex-col">
+                                      <span className="text-[13px] font-black text-gray-900 dark:text-white uppercase tracking-tight">{doc.nome || parsed.nome || "—"}</span>
+                                      <span className="text-[10px] text-blue-600 font-bold uppercase mt-0.5 tracking-wider">Carteira Digital</span>
+                                   </div>
+                                </td>
+                                <td className="px-6 py-5">
+                                   <div className="flex flex-col">
+                                      <span className="text-[11px] font-black text-gray-600 dark:text-gray-400 font-mono tracking-tighter">{cpf}</span>
+                                      <span className="text-[9px] text-gray-400 font-bold uppercase mt-0.5">Nº Registro: {parsed.registro || "—"}</span>
+                                   </div>
+                                </td>
+                                <td className="px-6 py-5">
+                                   <div className="flex flex-col">
+                                      <span className="text-[11px] font-black text-gray-700 dark:text-gray-300">
+                                         {new Date(doc.created_at).toLocaleDateString("pt-BR")}
+                                      </span>
+                                      <span className="text-[9px] text-gray-400 font-bold uppercase mt-0.5">
+                                         {new Date(doc.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                                      </span>
+                                   </div>
+                                </td>
+                                <td className="px-6 py-5">
+                                   <div className="flex items-center gap-2">
+                                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                      <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 uppercase">{formatDate(validadePainel)}</span>
+                                   </div>
+                                </td>
+                                <td className="px-6 py-5 text-right">
+                                  <div className="flex justify-end scale-90 origin-right">
+                                    <AttestationActionButtons
+                                        onEdit={() => setLocation(`/cnh/editar/${doc.id}`)}
+                                        onDelete={() => setConfirmDeleteId(doc.id)}
+                                    />
+                                  </div>
                                 </td>
                               </tr>
                             );
