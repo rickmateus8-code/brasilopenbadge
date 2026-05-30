@@ -395,6 +395,14 @@ const intelligentStats = [
                             <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase">Criação (Painel)</th>
                             <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase text-right">Ações</th>
                           </tr>
+                        ) : activeTab === "cnh" ? (
+                          <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                            <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase">Nome</th>
+                            <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase">CPF / Documento</th>
+                            <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase">Criado Em</th>
+                            <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase">Validade Painel</th>
+                            <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase text-right">Ações</th>
+                          </tr>
                         ) : (
                           <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
                             <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase">Documento</th>
@@ -457,13 +465,31 @@ const intelligentStats = [
                             );
                           }
 
+                          if (activeTab === "cnh") {
+                            const validadePainel = parsed.validade_cnh || parsed.validade || "—";
+                            return (
+                              <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+                                <td className="px-4 py-4 text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">{doc.nome || parsed.nome || "—"}</td>
+                                <td className="px-4 py-4 text-xs font-mono text-gray-500 dark:text-gray-400">{cpf}</td>
+                                <td className="px-4 py-4 text-[10px] font-mono text-gray-400">{new Date(doc.created_at).toLocaleDateString("pt-BR")}</td>
+                                <td className="px-4 py-4 text-xs font-bold text-emerald-600 dark:text-emerald-400">{formatDate(validadePainel)}</td>
+                                <td className="px-4 py-4 text-right">
+                                  <AttestationActionButtons
+                                      onEdit={() => setLocation(`/cnh/editar/${doc.id}`)}
+                                      onDelete={() => setConfirmDeleteId(doc.id)}
+                                  />
+                                </td>
+                              </tr>
+                            );
+                          }
+
                           return (
                             <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors border-b border-gray-50 dark:border-gray-800/50">
                               <td className="px-4 py-4 text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">{doc.paciente || doc.nome || parsed.nome || "Sem nome"}</td>
                               <td className="px-4 py-4 text-[10px] font-mono text-gray-400">{new Date(doc.created_at).toLocaleDateString("pt-BR")}</td>
                               <td className="px-4 py-4 text-right">
                                 <AttestationActionButtons
-                                    onEdit={() => setLocation(`/${activeTab === "historico-uninter" ? "historicocria" : activeTab}/editar/${doc.id}`)}
+                                    onEdit={() => setLocation(`/${activeTab === "historico-uninter" ? "editar/historicocria" : activeTab}/editar/${doc.id}`)}
                                     onDelete={() => setConfirmDeleteId(doc.id)}
                                 />
                               </td>
