@@ -1,13 +1,7 @@
 /**
- * CNHCria — Formulário de criação de CNH Digital
- *
- * Layout visual idêntico ao elitedoc.store/cnhcria:
- * - Single column (sem preview lateral)
- * - Inputs com border tracejada em vermelho/laranja
- * - Botão SALVAR DOCUMENTO flutuante no bottom
- * - Seções com dividers (border-bottom)
- * - Canvas oculto (ghostCanvas) para geração da imagem
- * - Após emissão: botões de download JPEG + WhatsApp
+ * CNHCria — Formulário Elite 3.0 (Universal)
+ * UI: Moderna com Abas (Automação, Pessoais, CNH, Finalização)
+ * Layout: Preserva paridade 1:1 na exportação via CNHDocument
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
@@ -21,7 +15,8 @@ import { validarCPF, displayDateToHtml } from "@/lib/utils";
 import EmissionModal from "@/components/EmissionModal";
 import {
   ArrowLeft, Save, Download, MessageCircle, Copy, Zap,
-  Upload, Type, AlertCircle
+  Upload, Type, AlertCircle, Camera, PenTool, Layout,
+  RefreshCw, MousePointer2, ZoomIn, ZoomOut, Move, Trash2
 } from "lucide-react";
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
@@ -52,6 +47,13 @@ const ESTILOS_ASS = [
   { label: "Estilo 2 (Bradley Hand)", font: "'Caveat', cursive" },
 ];
 
+const TABS = [
+  { id: "automacao", label: "Automação", icon: Zap },
+  { id: "pessoais", label: "1. Pessoais", icon: MousePointer2 },
+  { id: "documento", label: "2. CNH", icon: Layout },
+  { id: "finalizacao", label: "3. Finalização", icon: Camera },
+];
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function gerarNumero(len: number): string {
   let r = "";
@@ -67,6 +69,38 @@ function formatarCPFInput(v: string): string {
   return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
 }
 
+/**
+ * Filtro avançado para remover fundo (branco para transparente)
+ */
+async function removeBackground(dataUrl: string): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        // Se for muito próximo do branco (threshold 230), torna transparente
+        if (r > 230 && g > 230 && b > 230) {
+          data[i + 3] = 0;
+        }
+      }
+      ctx.putImageData(imageData, 0, 0);
+      resolve(canvas.toDataURL("image/png"));
+    };
+    img.src = dataUrl;
+  });
+}
+
 // ─── Componente ──────────────────────────────────────────────────────────────
 export default function CNHCria() {
   const { user, updateBalance } = useAuth();
@@ -76,6 +110,7 @@ export default function CNHCria() {
   const [, setLocation] = useLocation();
   const docRef = useRef<CNHDocumentHandle>(null);
 
+  const [activeTab, setActiveTab] = useState("automacao");
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [codigoQR, setCodigoQR] = useState("");
@@ -94,6 +129,8 @@ export default function CNHCria() {
     validade: "", validadeCNH2: "", dataEmissao: "", primeiraHabilitacao: "",
     localEmissao: "", ufEmissao: "", assDigital1: "", assDigital2: "",
     senhaApp: "", observacoes: "", fotoUrl: "", assinaturaUrl: "",
+    fotoScale: 1.1, fotoOffsetX: 0, fotoOffsetY: 0,
+    assScale: 1.0, assOffsetX: 0, assOffsetY: 0,
     codigoQR: "PREVIEW", blurred: true,
   });
 
@@ -101,14 +138,26 @@ export default function CNHCria() {
     let val = e.target.value;
     if (field === "cpf") val = formatarCPFInput(val);
     if (field === "rg") val = val.replace(/\./g, "");
-    setData(d => ({ ...d, [field]: val }));
+    
+    setData(d => {
+      const next = { ...d, [field]: val };
+      // Auto Renach (Ass Digital 2)
+      if (field === "ufEmissao" && val.length === 2) {
+        next.assDigital2 = val.toUpperCase() + gerarNumero(8);
+      }
+      return next;
+    });
   }, []);
+
+  const adjustMedia = (field: keyof CNHDocumentProps, amount: number) => {
+    setData(d => ({ ...d, [field]: (Number(d[field] || 0) + amount) }));
+  };
 
   const handleAutoRegistro = () => setData(d => ({ ...d, registro: gerarNumero(11) }));
   const handleAutoEspelho = () => setData(d => ({ ...d, espelho: gerarNumero(10) }));
   const handleAutoAss1 = () => setData(d => ({ ...d, assDigital1: gerarNumero(10) }));
   const handleAutoAss2 = () => {
-    const uf = data.ufEmissao || "SP";
+    const uf = (data.ufEmissao || "SP").toUpperCase();
     setData(d => ({ ...d, assDigital2: uf + gerarNumero(8) }));
   };
 
@@ -139,7 +188,7 @@ export default function CNHCria() {
     const autoRegistro = get("N[ºo] Registro") || gerarNumero(11);
     const autoEspelho = get("N[ºo] CNH") || get("Espelho") || gerarNumero(10);
     const autoAss1 = get("Ass\\.? Digital 1") || gerarNumero(10);
-    const autoAss2 = get("Ass\\.? Digital 2") || (ufEmissaoVal + gerarNumero(8));
+    const autoAss2 = get("Ass\\.? Digital 2") || (ufEmissaoVal.toUpperCase() + gerarNumero(8));
     const autoSenha = get("Senha App") || get("Senha") || String(Math.floor(1000 + Math.random() * 9000));
 
     setData(d => ({
@@ -171,34 +220,7 @@ export default function CNHCria() {
       observacoes: get("Observa[çc][oõ]es") || d.observacoes,
     }));
     toast.success("Dados importados!");
-  };
-
-  const compressImage = (dataUrl: string, maxW = 400, maxH = 500, quality = 0.7, preserveTransparency = false): Promise<string> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let w = img.width, h = img.height;
-        if (w > maxW || h > maxH) {
-          const ratio = Math.min(maxW / w, maxH / h);
-          w = Math.round(w * ratio);
-          h = Math.round(h * ratio);
-        }
-        canvas.width = w; canvas.height = h;
-        const ctx = canvas.getContext('2d')!;
-        if (preserveTransparency) {
-          ctx.clearRect(0, 0, w, h);
-          ctx.drawImage(img, 0, 0, w, h);
-          resolve(canvas.toDataURL('image/png'));
-        } else {
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, w, h);
-          ctx.drawImage(img, 0, 0, w, h);
-          resolve(canvas.toDataURL('image/jpeg', quality));
-        }
-      };
-      img.src = dataUrl;
-    });
+    setActiveTab("pessoais");
   };
 
   const handleFotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -206,52 +228,12 @@ export default function CNHCria() {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = async () => {
-      const compressed = await compressImage(reader.result as string);
-      setData(d => ({ ...d, fotoUrl: compressed }));
+      // Remove fundo automaticamente ao subir
+      const cleanImg = await removeBackground(reader.result as string);
+      setData(d => ({ ...d, fotoUrl: cleanImg }));
+      toast.success("Foto processada (Fundo Removido)");
     };
     reader.readAsDataURL(file);
-  };
-
-  const applyImageAdjustments = (base64: string, brightness: number, contrast: number, saturation: number): Promise<string> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width; canvas.height = img.height;
-        const ctx = canvas.getContext('2d')!;
-        ctx.filter = `brightness(${1 + brightness/100}) contrast(${1 + contrast/100}) saturate(${1 + saturation/100})`;
-        ctx.drawImage(img, 0, 0);
-        resolve(canvas.toDataURL('image/jpeg', 0.92));
-      };
-      img.src = base64;
-    });
-  };
-
-  const handleApplyAI = async () => {
-    if (!data.fotoUrl) { toast.error("Envie uma foto primeiro!"); return; }
-    setIsApplyingAI(true);
-    try {
-      const res = await fetch("/api/cnh-ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64: data.fotoUrl }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const result = await res.json();
-      if (result?.success && result?.imageUrl) {
-        const adj = result.adjustments || { brightness: 5, contrast: 10, saturation: -5 };
-        const adjustedImage = await applyImageAdjustments(result.imageUrl, adj.brightness, adj.contrast, adj.saturation);
-        setData(d => ({ ...d, fotoUrl: adjustedImage }));
-        toast.success(`Ajustes visuais aplicados!`);
-      } else {
-        toast.error(result?.error || "Erro ao aplicar ajustes");
-      }
-    } catch (err) {
-      console.error("AI error:", err);
-      toast.error("Erro ao processar ajustes.");
-    } finally {
-      setIsApplyingAI(false);
-    }
   };
 
   const handleAssinaturaUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -259,8 +241,9 @@ export default function CNHCria() {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = async () => {
-      const compressed = await compressImage(reader.result as string, 500, 150, 0.8, true);
-      setData(d => ({ ...d, assinaturaUrl: compressed }));
+      const cleanImg = await removeBackground(reader.result as string);
+      setData(d => ({ ...d, assinaturaUrl: cleanImg }));
+      toast.success("Assinatura processada");
     };
     reader.readAsDataURL(file);
   };
@@ -307,7 +290,7 @@ export default function CNHCria() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ ...data, type: "cnh" }),
+        body: JSON.stringify({ ...data, type: "cnh", renach: data.assDigital2 }),
       });
       const result = await res.json();
       if (result.success) {
@@ -389,378 +372,361 @@ export default function CNHCria() {
 
   return (
     <DashboardLayout>
-      <style>{`
-        .cnh-form {
-          font-family: 'Inter', sans-serif;
-          background: ${isDark ? "#0f172a" : "#ffffff"};
-          color: ${isDark ? "#f1f5f9" : "#1e293b"};
-          padding: 24px;
-          padding-bottom: 120px;
-          width: 100vw;
-          height: 100vh;
-          box-sizing: border-box;
-          position: fixed;
-          top: 0;
-          left: 0;
-          z-index: 9999;
-          overflow-y: auto;
-        }
-        .cnh-header-top {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 24px;
-          border-bottom: 2px solid #005CA9;
-          padding-bottom: 12px;
-        }
-        .cnh-header-top h1 {
-          font-size: 20px;
-          font-weight: 800;
-          margin: 0;
-          color: #005CA9;
-        }
-        .cnh-header-top h1 span.brand-black { color: ${isDark ? "#f1f5f9" : "#1e293b"}; }
-        .cnh-header-top h1 span.brand-blue { color: #005CA9; }
-        .cnh-divider {
-          padding: 10px 0;
-          font-size: 11px;
-          text-transform: uppercase;
-          color: ${isDark ? "#94a3b8" : "#64748b"};
-          font-weight: 700;
-          border-bottom: 1px solid ${isDark ? "#1e293b" : "#e2e8f0"};
-          margin: 25px 0 15px 0;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        .cnh-form-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 16px;
-          margin-bottom: 16px;
-        }
-        .cnh-form-group {
-          display: flex;
-          flex-direction: column;
-          gap: 5px;
-        }
-        .cnh-form-group label {
-          font-size: 12px;
-          font-weight: 600;
-          color: ${isDark ? "#94a3b8" : "#64748b"};
-        }
-        .cnh-form-group input,
-        .cnh-form-group select,
-        .cnh-form-group textarea {
-          padding: 10px 12px;
-          border-radius: 8px;
-          border: 1px solid ${isDark ? "#334155" : "#cbd5e1"};
-          background: ${isDark ? "#1e293b" : "#ffffff"};
-          color: ${isDark ? "#f1f5f9" : "#0f172a"};
-          outline: none;
-          font-size: 13px;
-          font-family: 'Inter', sans-serif;
-          transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .cnh-form-group input:focus,
-        .cnh-form-group select:focus,
-        .cnh-form-group textarea:focus {
-          border-color: #005CA9;
-          box-shadow: 0 0 0 2px rgba(0, 92, 169, 0.1);
-        }
-        .cnh-form-group textarea {
-          resize: vertical;
-          min-height: 60px;
-        }
-        .cnh-badge-auto {
-          font-size: 9px;
-          background: #059669;
-          color: white;
-          padding: 3px 8px;
-          border-radius: 4px;
-          cursor: pointer;
-          border: none;
-          font-weight: 700;
-          margin-left: 5px;
-        }
-        .cnh-import-box {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 15px;
-          padding: 16px;
-          border: 1px solid ${isDark ? "#334155" : "#e2e8f0"};
-          border-radius: 12px;
-          background: ${isDark ? "#1e293b" : "#f8fafc"};
-          margin-bottom: 16px;
-        }
-        .cnh-import-box .import-col h3 {
-          font-size: 12px;
-          font-weight: 600;
-          color: ${isDark ? "#94a3b8" : "#64748b"};
-          margin: 0 0 8px 0;
-        }
-        .cnh-import-box .modelo-text {
-          font-family: monospace;
-          font-size: 11px;
-          color: ${isDark ? "#94a3b8" : "#475569"};
-          background: ${isDark ? "#0f172a" : "#ffffff"};
-          border: 1px solid ${isDark ? "#334155" : "#e2e8f0"};
-          border-radius: 8px;
-          padding: 10px;
-          height: 160px;
-          overflow: auto;
-          white-space: pre-wrap;
-          margin-bottom: 8px;
-        }
-        .cnh-import-box textarea {
-          width: 100%;
-          height: 160px;
-          padding: 10px;
-          border: 1px solid ${isDark ? "#334155" : "#e2e8f0"};
-          border-radius: 8px;
-          background: ${isDark ? "#0f172a" : "#ffffff"};
-          font-size: 12px;
-          color: ${isDark ? "#f1f5f9" : "#0f172a"};
-          margin-bottom: 8px;
-          resize: none;
-        }
-        .cnh-btn-copiar, .cnh-btn-processar {
-          width: 100%;
-          padding: 10px;
-          border: none;
-          border-radius: 8px;
-          font-weight: 700;
-          font-size: 12px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
-          color: white;
-        }
-        .cnh-btn-copiar { background: #f59e0b; }
-        .cnh-btn-processar { background: #005CA9; }
-        .cnh-fotos-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 15px;
-          align-items: start;
-        }
-        .cnh-preview-box {
-          margin-top: 10px;
-          border: 1px solid ${isDark ? "#334155" : "#e2e8f0"};
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-          background: ${isDark ? "#0f172a" : "#f1f5f9"};
-        }
-        .cnh-preview-rosto { width: 150px; height: 200px; }
-        .cnh-preview-ass { width: 100%; height: 60px; }
-        .cnh-ass-option { padding: 10px; border-radius: 8px; margin-bottom: 10px; }
-        .cnh-ass-option.green {
-          background: ${isDark ? "#1a2e1a" : "#f0fdf4"};
-          border: 1px solid ${isDark ? "#22c55e33" : "#bbf7d0"};
-        }
-        .cnh-ass-option.blue {
-          background: ${isDark ? "#1a1e2e" : "#eff6ff"};
-          border: 1px solid ${isDark ? "#3b82f633" : "#bfdbfe"};
-        }
-        .cnh-ass-option h4 { font-size: 12px; font-weight: 600; margin: 0 0 6px 0; display: flex; align-items: center; gap: 5px; }
-        .cnh-ass-option.green h4 { color: ${isDark ? "#4ade80" : "#15803d"}; }
-        .cnh-ass-option.blue h4 { color: ${isDark ? "#60a5fa" : "#1d4ed8"}; }
-        .cnh-floating-save {
-          position: fixed;
-          bottom: 20px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 90%;
-          max-width: 500px;
-          background: #059669;
-          color: white;
-          padding: 15px;
-          border-radius: 12px;
-          font-size: 16px;
-          font-weight: bold;
-          box-shadow: 0 10px 25px -5px rgba(5, 150, 105, 0.4);
-          border: none;
-          cursor: pointer;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          gap: 10px;
-          z-index: 10000;
-        }
-        .cnh-result-box {
-          padding: 20px;
-          background: ${isDark ? "#1a2e1a" : "#f0fdf4"};
-          border: 1px solid ${isDark ? "#22c55e44" : "#bbf7d0"};
-          border-radius: 12px;
-          margin-bottom: 20px;
-        }
-        .cnh-btn-download {
-          padding: 10px 20px; background: #005CA9; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px;
-        }
-        .cnh-btn-whatsapp {
-          padding: 10px 20px; background: #25D366; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px;
-        }
-        .cnh-btn-voltar {
-          background: transparent; color: ${isDark ? "#94a3b8" : "#64748b"}; border: 1px solid ${isDark ? "#334155" : "#e2e8f0"}; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px;
-        }
-        .cnh-file-label {
-          display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1px solid ${isDark ? "#334155" : "#cbd5e1"}; border-radius: 8px; cursor: pointer; font-size: 12px; background: ${isDark ? "#1e293b" : "#ffffff"};
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-      `}</style>
-
-      <div className="cnh-form">
-        <div className="cnh-header-top">
-          <h1>
-            (Criação de CNH) <span className="brand-black">DOCMASTER</span><span className="brand-blue">.STORE</span>
+      <div className="fixed inset-0 z-[100] bg-white dark:bg-slate-950 overflow-y-auto font-sans flex flex-col">
+        {/* Header Elite */}
+        <header className="h-16 bg-[#005CA9] flex items-center px-8 gap-4 shrink-0 shadow-lg z-20">
+          <button onClick={() => setLocation("/dashboard")} className="bg-white/10 hover:bg-white/20 text-white text-[11px] font-black px-4 py-2 rounded-xl transition-all border border-white/10 flex items-center gap-2">
+            <ArrowLeft size={16} /> VOLTAR
+          </button>
+          <div className="h-8 w-px bg-white/20" />
+          <h1 className="text-lg font-black tracking-tighter text-white uppercase italic">
+            ELITEDOC<span className="text-white/60">.STORE</span> <span className="font-light mx-2">|</span> GERADOR DE CNH
           </h1>
-          <button className="cnh-btn-voltar" onClick={() => setLocation("/dashboard")}>
-            <ArrowLeft size={14} /> Voltar
-          </button>
-        </div>
-
-        {(user?.balance || 0) <= 0 && (
-          <div style={{ padding: 12, background: "#fee2e2", border: "1px solid #fecaca", borderRadius: 10, marginBottom: 20, color: "#991b1b", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
-            <AlertCircle size={18} />
-            Saldo insuficiente. <button onClick={() => setLocation("/recargas")} style={{ fontWeight: 700, textDecoration: "underline", background: "none", border: "none", color: "#ef4444", cursor: "pointer" }}>Recarregue aqui</button>
-          </div>
-        )}
-
-        {saved && (
-          <div className="cnh-result-box">
-            <h3 style={{ color: isDark ? "#4ade80" : "#15803d", fontWeight: 700 }}>CNH Digital emitida com sucesso!</h3>
-            <p style={{ color: isDark ? "#86efac" : "#166534", fontSize: 13 }}>Código: <strong style={{ fontFamily: "monospace" }}>{codigoQR}</strong></p>
-            <p style={{ color: isDark ? "#86efac" : "#166534", fontSize: 13 }}>Validação: <strong>{getQRCodeCNH(codigoQR)}</strong></p>
-            <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
-              <button className="cnh-btn-download" onClick={handleExportPdf} disabled={loading}>
-                <Download size={14} /> Baixar PDF
-              </button>
-              <button className="cnh-btn-download" onClick={handleExportJPEG} disabled={loading} style={{ background: "#6b7280" }}>
-                <Download size={14} /> Baixar JPEG
-              </button>
-              <button className="cnh-btn-whatsapp" onClick={handleWhatsApp}>
-                <MessageCircle size={14} /> Enviar WhatsApp
-              </button>
+          <div className="ml-auto flex items-center gap-4">
+            <div className="bg-emerald-500/20 border border-emerald-500/30 px-4 py-1.5 rounded-full flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Painel Ativo</span>
             </div>
-          </div>
-        )}
-
-        <div className="cnh-divider">✏️ IMPORTAÇÃO E MODELO</div>
-        <div className="cnh-import-box">
-          <div className="import-col">
-            <h3>1. Envie para o Cliente</h3>
-            <div className="modelo-text">{MODELO_TEXTO}</div>
-            <button className="cnh-btn-copiar" onClick={handleCopiarModelo}>
-              <Copy size={12} /> COPIAR MODELO
+            <button onClick={() => window.location.reload()} className="text-white/60 hover:text-white transition-colors">
+              <RefreshCw size={18} />
             </button>
           </div>
-          <div className="import-col">
-            <h3>2. Cole o texto preenchido</h3>
-            <textarea value={importText} onChange={(e) => setImportText(e.target.value)} placeholder="Cole aqui..." />
-            <button className="cnh-btn-processar" onClick={handleProcessarImportacao}>
-              <Zap size={12} /> PROCESSAR DADOS
-            </button>
-          </div>
-        </div>
+        </header>
 
-        <div className="cnh-divider">👤 1. DADOS PESSOAIS</div>
-        <div className="cnh-form-grid">
-          <div className="cnh-form-group" style={{ gridColumn: "span 2" }}><label>Nome Completo</label><input type="text" value={data.nome} onChange={update("nome")} /></div>
-          <div className="cnh-form-group"><label>CPF</label><input type="text" value={data.cpf} onChange={update("cpf")} placeholder="000.000.000-00" /></div>
-          <div className="cnh-form-group"><label>Sexo</label>
-            <select value={data.sexo} onChange={update("sexo")}>
-              <option value="">ESCOLHA</option><option value="Masculino">Masculino</option><option value="Feminino">Feminino</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="cnh-form-grid">
-          <div className="cnh-form-group"><label>RG</label><input type="text" value={data.rg} onChange={update("rg")} /></div>
-          <div className="cnh-form-group"><label>Orgão Emissor</label><input type="text" value={data.orgaoEmissor} onChange={update("orgaoEmissor")} /></div>
-          <div className="cnh-form-group"><label>UF RG</label><input type="text" value={data.ufRG} onChange={update("ufRG")} maxLength={2} style={{ textTransform: "uppercase" }} /></div>
-        </div>
-
-        <div className="cnh-form-grid">
-          <div className="cnh-form-group"><label>Nacionalidade</label><input type="text" value={data.nacionalidade} onChange={update("nacionalidade")} /></div>
-          <div className="cnh-form-group"><label>Data Nascimento</label><input type="date" value={data.dataNascimento} onChange={update("dataNascimento")} /></div>
-          <div className="cnh-form-group"><label>Local Nascimento</label><input type="text" value={data.localNascimento} onChange={update("localNascimento")} /></div>
-          <div className="cnh-form-group"><label>UF Nasc.</label><input type="text" value={data.ufNascimento} onChange={update("ufNascimento")} maxLength={2} style={{ textTransform: "uppercase" }} /></div>
-        </div>
-
-        <div className="cnh-divider">🪪 2. DADOS DA CNH</div>
-        <div className="cnh-form-grid">
-          <div className="cnh-form-group"><label>Nº Registro <button className="cnh-badge-auto" onClick={handleAutoRegistro}>AUTO</button></label><input type="text" value={data.registro} onChange={update("registro")} /></div>
-          <div className="cnh-form-group"><label>Nº CNH (Espelho) <button className="cnh-badge-auto" onClick={handleAutoEspelho}>AUTO</button></label><input type="text" value={data.espelho} onChange={update("espelho")} /></div>
-          <div className="cnh-form-group"><label>Categoria</label><input type="text" value={data.categoria} onChange={update("categoria")} style={{ textTransform: "uppercase" }} /></div>
-          <div className="cnh-form-group"><label>Tipo</label>
-            <select value={data.tipo} onChange={update("tipo")}><option value="Definitiva">Definitiva</option><option value="Permissão">Permissão</option></select>
-          </div>
-        </div>
-
-        <div className="cnh-form-grid">
-          <div className="cnh-form-group"><label>Validade</label><input type="date" value={data.validade} onChange={update("validade")} /></div>
-          <div className="cnh-form-group"><label>Emissão</label><input type="date" value={data.dataEmissao} onChange={update("dataEmissao")} /></div>
-          <div className="cnh-form-group"><label>1ª Habilitação</label><input type="date" value={data.primeiraHabilitacao} onChange={update("primeiraHabilitacao")} /></div>
-        </div>
-
-        <div className="cnh-divider">🔒 3. CÓDIGO DE SEGURANÇA</div>
-        <div className="cnh-form-grid">
-          <div className="cnh-form-group"><label>Ass. Digital 1 <button className="cnh-badge-auto" onClick={handleAutoAss1}>AUTO</button></label><input type="text" value={data.assDigital1} onChange={update("assDigital1")} /></div>
-          <div className="cnh-form-group"><label>Ass. Digital 2 <button className="cnh-badge-auto" onClick={handleAutoAss2}>AUTO</button></label><input type="text" value={data.assDigital2} onChange={update("assDigital2")} /></div>
-        </div>
-
-        <div className="cnh-divider">📷 4. FOTOS E ASSINATURA</div>
-        <div className="cnh-fotos-grid">
-          <div>
-            <label className="cnh-file-label"><Upload size={14} /> Foto do Rosto<input type="file" accept="image/*" onChange={handleFotoUpload} style={{ display: "none" }} /></label>
-            <div className="cnh-preview-box cnh-preview-rosto">
-              {data.fotoUrl ? <img src={data.fotoUrl} alt="Rosto" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 12 }}>Prévia</span>}
-            </div>
-            {data.fotoUrl && (
-              <button onClick={handleApplyAI} disabled={isApplyingAI} style={{ marginTop: 8, width: "100%", padding: 10, background: "linear-gradient(135deg, #8b5cf6, #a855f7)", color: "white", border: "none", borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: isApplyingAI ? "not-allowed" : "pointer" }}>
-                {isApplyingAI ? "Processando..." : "Aplicar Ajustes IA"}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Navegação por Abas Lateral */}
+          <aside className="w-56 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-4 flex flex-col gap-2">
+            {TABS.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-wider transition-all border ${
+                  activeTab === tab.id 
+                  ? "bg-[#005CA9] text-white border-[#005CA9] shadow-lg shadow-blue-500/20 translate-x-1" 
+                  : "bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-900"
+                }`}
+              >
+                <tab.icon size={18} /> {tab.label}
               </button>
-            )}
-          </div>
-          <div>
-            <div className="cnh-ass-option green">
-              <h4><Type size={12} /> Digitar Nome</h4>
-              <select value={assEstilo} onChange={(e) => setAssEstilo(parseInt(e.target.value))} style={{ width: "100%", padding: 6, marginBottom: 6, borderRadius: 6, background: isDark ? "#1e293b" : "#fff", color: isDark ? "#fff" : "#000", border: `1px solid ${isDark ? "#334155" : "#cbd5e1"}` }}>
-                {ESTILOS_ASS.map((e, i) => <option key={i} value={i}>{e.label}</option>)}
-              </select>
-              <div style={{ display: "flex", gap: 6 }}>
-                <input type="text" value={assTexto} onChange={(e) => setAssTexto(e.target.value)} placeholder="Nome..." style={{ flex: 1, padding: 6, borderRadius: 6, background: isDark ? "#1e293b" : "#fff", color: isDark ? "#fff" : "#000", border: `1px solid ${isDark ? "#334155" : "#cbd5e1"}` }} />
-                <button onClick={gerarAssinaturaTexto} style={{ background: "#22c55e", color: "white", border: "none", borderRadius: 6, padding: "0 10px" }}>Gerar</button>
-              </div>
+            ))}
+          </aside>
+
+          {/* Área do Formulário */}
+          <main className="flex-1 p-10 overflow-y-auto bg-white dark:bg-slate-950 custom-scrollbar relative">
+            <div className="max-w-4xl mx-auto">
+              
+              {saved && (
+                <div className="mb-10 p-8 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6 animate-in fade-in zoom-in">
+                  <div>
+                    <h3 className="text-xl font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-tight">Emissão Concluída!</h3>
+                    <p className="text-sm text-emerald-600 dark:text-emerald-500 font-medium">O documento foi gerado e registrado com sucesso.</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <button onClick={handleExportPdf} className="bg-[#005CA9] text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-900/20 active:scale-95 flex items-center gap-2">
+                      <Download size={14} /> PDF
+                    </button>
+                    <button onClick={handleExportJPEG} className="bg-slate-700 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2">
+                      <Camera size={14} /> JPEG
+                    </button>
+                    <button onClick={handleWhatsApp} className="bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-900/20 active:scale-95 flex items-center gap-2">
+                      <MessageCircle size={14} /> WHATSAPP
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ABA: AUTOMAÇÃO */}
+              {activeTab === "automacao" && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                   <div className="flex items-center gap-2 mb-8 border-b-2 border-dashed border-emerald-100 dark:border-emerald-900/30 pb-4">
+                      <Zap className="text-emerald-500" size={24} />
+                      <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Automação Inteligente</h2>
+                   </div>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-50 dark:bg-slate-900/50 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800">
+                      <div className="flex flex-col gap-4">
+                        <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">1. Envie para o Cliente</h3>
+                        <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 font-mono text-[11px] text-slate-500 h-48 overflow-y-auto whitespace-pre-wrap">
+                          {MODELO_TEXTO}
+                        </div>
+                        <button onClick={handleCopiarModelo} className="w-full bg-amber-500 hover:bg-amber-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-amber-500/20">
+                           <Copy size={16} /> COPIAR MODELO
+                        </button>
+                      </div>
+                      <div className="flex flex-col gap-4">
+                        <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">2. Cole a Resposta</h3>
+                        <textarea 
+                          value={importText} 
+                          onChange={(e) => setImportText(e.target.value)}
+                          placeholder="Cole aqui o texto preenchido pelo cliente..."
+                          className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 text-sm h-48 focus:ring-2 ring-blue-500/20 outline-none transition-all resize-none"
+                        />
+                        <button onClick={handleProcessarImportacao} className="w-full bg-[#005CA9] hover:bg-blue-700 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-blue-500/20">
+                           <Zap size={16} /> PROCESSAR DADOS
+                        </button>
+                      </div>
+                   </div>
+                </div>
+              )}
+
+              {/* ABA: PESSOAIS */}
+              {activeTab === "pessoais" && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                   <div className="flex items-center gap-2 mb-8 border-b-2 border-dashed border-blue-100 dark:border-blue-900/30 pb-4">
+                      <MousePointer2 className="text-blue-500" size={24} />
+                      <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">1. Dados Pessoais</h2>
+                   </div>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormGroup label="Nome Completo" className="md:col-span-2">
+                        <input type="text" value={data.nome} onChange={update("nome")} placeholder="NOME COMPLETO DO CONDUTOR" className="uppercase" />
+                      </FormGroup>
+                      <FormGroup label="CPF">
+                        <input type="text" value={data.cpf} onChange={update("cpf")} placeholder="000.000.000-00" />
+                      </FormGroup>
+                      <FormGroup label="Sexo">
+                        <select value={data.sexo} onChange={update("sexo")}>
+                          <option value="">ESCOLHA</option>
+                          <option value="Masculino">Masculino</option>
+                          <option value="Feminino">Feminino</option>
+                        </select>
+                      </FormGroup>
+                      <FormGroup label="RG">
+                        <input type="text" value={data.rg} onChange={update("rg")} placeholder="NÚMERO DO RG" />
+                      </FormGroup>
+                      <FormGroup label="Órgão Emissor">
+                        <input type="text" value={data.orgaoEmissor} onChange={update("orgaoEmissor")} placeholder="Ex: SSP" className="uppercase" />
+                      </FormGroup>
+                      <FormGroup label="UF RG">
+                        <input type="text" value={data.ufRG} onChange={update("ufRG")} maxLength={2} placeholder="UF" className="uppercase" />
+                      </FormGroup>
+                      <FormGroup label="Nacionalidade">
+                        <input type="text" value={data.nacionalidade} onChange={update("nacionalidade")} className="uppercase" />
+                      </FormGroup>
+                      <FormGroup label="Data Nascimento">
+                        <input type="date" value={data.dataNascimento} onChange={update("dataNascimento")} />
+                      </FormGroup>
+                      <FormGroup label="Local Nascimento">
+                        <input type="text" value={data.localNascimento} onChange={update("localNascimento")} placeholder="CIDADE" className="uppercase" />
+                      </FormGroup>
+                      <FormGroup label="UF Nasc.">
+                        <input type="text" value={data.ufNascimento} onChange={update("ufNascimento")} maxLength={2} placeholder="UF" className="uppercase" />
+                      </FormGroup>
+                      <FormGroup label="Nome do Pai">
+                        <input type="text" value={data.nomePai} onChange={update("nomePai")} className="uppercase" />
+                      </FormGroup>
+                      <FormGroup label="Nome da Mãe">
+                        <input type="text" value={data.nomeMae} onChange={update("nomeMae")} className="uppercase" />
+                      </FormGroup>
+                   </div>
+                </div>
+              )}
+
+              {/* ABA: CNH */}
+              {activeTab === "documento" && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                   <div className="flex items-center gap-2 mb-8 border-b-2 border-dashed border-blue-100 dark:border-blue-900/30 pb-4">
+                      <Layout className="text-blue-500" size={24} />
+                      <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">2. Dados da CNH</h2>
+                   </div>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormGroup label="Nº Registro" autoBtn={handleAutoRegistro}>
+                        <input type="text" value={data.registro} onChange={update("registro")} maxLength={11} />
+                      </FormGroup>
+                      <FormGroup label="Nº CNH (Espelho)" autoBtn={handleAutoEspelho}>
+                        <input type="text" value={data.espelho} onChange={update("espelho")} maxLength={10} />
+                      </FormGroup>
+                      <FormGroup label="Categoria">
+                        <input type="text" value={data.categoria} onChange={update("categoria")} className="uppercase" placeholder="Ex: AB" />
+                      </FormGroup>
+                      <FormGroup label="Tipo">
+                        <select value={data.tipo} onChange={update("tipo")}>
+                          <option value="Definitiva">Definitiva</option>
+                          <option value="Permissão">Permissão</option>
+                        </select>
+                      </FormGroup>
+                      <FormGroup label="Emissão">
+                        <input type="date" value={data.dataEmissao} onChange={update("dataEmissao")} />
+                      </FormGroup>
+                      <FormGroup label="Validade">
+                        <input type="date" value={data.validade} onChange={update("validade")} />
+                      </FormGroup>
+                      <FormGroup label="1ª Habilitação">
+                        <input type="date" value={data.primeiraHabilitacao} onChange={update("primeiraHabilitacao")} />
+                      </FormGroup>
+                      <FormGroup label="Local Emissão">
+                        <input type="text" value={data.localEmissao} onChange={update("localEmissao")} className="uppercase" />
+                      </FormGroup>
+                      <FormGroup label="UF Emissão">
+                        <input type="text" value={data.ufEmissao} onChange={update("ufEmissao")} maxLength={2} className="uppercase" placeholder="UF" />
+                      </FormGroup>
+                      <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 dark:bg-slate-900/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
+                         <FormGroup label="Ass. Digital 1 (Segurança)" autoBtn={handleAutoAss1}>
+                           <input type="text" value={data.assDigital1} onChange={update("assDigital1")} />
+                         </FormGroup>
+                         <FormGroup label="Ass. Digital 2 (Renach)" autoBtn={handleAutoAss2}>
+                           <input type="text" value={data.assDigital2} onChange={update("assDigital2")} placeholder="UF + 8 DÍGITOS" />
+                         </FormGroup>
+                      </div>
+                   </div>
+                </div>
+              )}
+
+              {/* ABA: FINALIZAÇÃO (FOTOS) */}
+              {activeTab === "finalizacao" && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                   <div className="flex items-center gap-2 mb-8 border-b-2 border-dashed border-blue-100 dark:border-blue-900/30 pb-4">
+                      <Camera className="text-blue-500" size={24} />
+                      <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">3. Fotos e Finalização</h2>
+                   </div>
+                   
+                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                      {/* Coluna Foto */}
+                      <div className="space-y-6">
+                        <div className="flex flex-col gap-3">
+                           <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                             <Upload size={14} /> FOTO DO ROSTO (3X4)
+                           </label>
+                           <div className="relative group">
+                              <input type="file" accept="image/*" onChange={handleFotoUpload} className="hidden" id="file-foto" />
+                              <label htmlFor="file-foto" className="block w-full h-[400px] bg-slate-100 dark:bg-slate-900 rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-slate-800 overflow-hidden cursor-pointer hover:border-blue-500 transition-all relative">
+                                 {data.fotoUrl ? (
+                                   <div className="w-full h-full relative">
+                                      <img src={data.fotoUrl} alt="Foto" style={{ 
+                                        width: "100%", 
+                                        height: "100%", 
+                                        objectFit: "cover",
+                                        transform: `scale(${data.fotoScale}) translate(${data.fotoOffsetX}px, ${data.fotoOffsetY}px)`
+                                      }} />
+                                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                         <span className="text-white font-black text-xs uppercase tracking-widest bg-blue-600 px-4 py-2 rounded-full">Trocar Foto</span>
+                                      </div>
+                                   </div>
+                                 ) : (
+                                   <div className="w-full h-full flex flex-col items-center justify-center gap-3">
+                                      <div className="w-16 h-16 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm">
+                                         <Upload size={24} className="text-blue-500" />
+                                      </div>
+                                      <span className="text-xs font-bold text-slate-400">CLIQUE PARA SUBIR</span>
+                                   </div>
+                                 )}
+                              </label>
+                           </div>
+
+                           {data.fotoUrl && (
+                             <div className="bg-slate-50 dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 space-y-4">
+                                <div className="flex items-center justify-between">
+                                   <span className="text-[10px] font-black text-slate-400 uppercase">Ajustes de Enquadramento</span>
+                                   <button onClick={() => setData(d => ({ ...d, fotoScale: 1.1, fotoOffsetX: 0, fotoOffsetY: 0 }))} className="text-blue-500 text-[10px] font-bold uppercase hover:underline">Resetar</button>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                   <ControlGroup label="Zoom">
+                                      <button onClick={() => adjustMedia("fotoScale", -0.05)} className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm"><ZoomOut size={14}/></button>
+                                      <span className="text-[10px] font-black min-w-[40px] text-center">{(data.fotoScale || 1).toFixed(2)}x</span>
+                                      <button onClick={() => adjustMedia("fotoScale", 0.05)} className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm"><ZoomIn size={14}/></button>
+                                   </ControlGroup>
+                                   <ControlGroup label="Vertical">
+                                      <button onClick={() => adjustMedia("fotoOffsetY", -5)} className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm"><ArrowLeft className="rotate-90" size={14}/></button>
+                                      <button onClick={() => adjustMedia("fotoOffsetY", 5)} className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm"><ArrowLeft className="-rotate-90" size={14}/></button>
+                                   </ControlGroup>
+                                </div>
+                                <button onClick={() => removeBackground(data.fotoUrl).then(url => setData(d => ({...d, fotoUrl: url})))} className="w-full py-3 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center gap-2">
+                                   <Trash2 size={14} /> Remover Fundo (Filtro PNG)
+                                </button>
+                             </div>
+                           )}
+                        </div>
+                      </div>
+
+                      {/* Coluna Assinatura */}
+                      <div className="space-y-6">
+                        <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 p-6 rounded-[2rem]">
+                           <h4 className="text-[11px] font-black text-blue-600 uppercase tracking-widest mb-4 flex items-center gap-2"><Type size={14}/> Gerar por Texto</h4>
+                           <div className="space-y-4">
+                              <select value={assEstilo} onChange={(e) => setAssEstilo(parseInt(e.target.value))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs font-bold outline-none">
+                                {ESTILOS_ASS.map((e, i) => <option key={i} value={i}>{e.label}</option>)}
+                              </select>
+                              <div className="flex gap-2">
+                                <input type="text" value={assTexto} onChange={(e) => setAssTexto(e.target.value)} placeholder="Digite o nome..." className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs outline-none focus:ring-2 ring-blue-500/20" />
+                                <button onClick={gerarAssinaturaTexto} className="bg-emerald-500 text-white px-5 rounded-xl font-black text-[10px] uppercase hover:bg-emerald-600 transition-all shadow-md shadow-emerald-500/20">Gerar</button>
+                              </div>
+                           </div>
+                        </div>
+
+                        <div className="flex flex-col gap-3">
+                           <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                             <PenTool size={14} /> OU ENVIE FOTO DA ASSINATURA
+                           </label>
+                           <div className="relative group">
+                              <input type="file" accept="image/*" onChange={handleAssinaturaUpload} className="hidden" id="file-ass" />
+                              <label htmlFor="file-ass" className="block w-full h-[120px] bg-white dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800 overflow-hidden cursor-pointer hover:border-blue-500 transition-all relative">
+                                 {data.assinaturaUrl ? (
+                                   <div className="w-full h-full flex items-center justify-center p-4 bg-white">
+                                      <img src={data.assinaturaUrl} alt="Ass" style={{ 
+                                        height: "100%", 
+                                        objectFit: "contain",
+                                        transform: `scale(${data.assScale}) translate(${data.assOffsetX}px, ${data.assOffsetY}px)`,
+                                        filter: "contrast(1.5) brightness(0.8)"
+                                      }} />
+                                   </div>
+                                 ) : (
+                                   <div className="w-full h-full flex items-center justify-center gap-3">
+                                      <Upload size={18} className="text-slate-300" />
+                                      <span className="text-[10px] font-bold text-slate-300 tracking-widest">SUBIR ARQUIVO</span>
+                                   </div>
+                                 )}
+                              </label>
+                           </div>
+                           
+                           {data.assinaturaUrl && (
+                             <ControlGroup label="Ajustar Assinatura" className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                <button onClick={() => adjustMedia("assScale", -0.05)} className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm"><ZoomOut size={12}/></button>
+                                <span className="text-[9px] font-black">Zoom</span>
+                                <button onClick={() => adjustMedia("assScale", 0.05)} className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm"><ZoomIn size={12}/></button>
+                                <div className="w-px h-6 bg-slate-200 mx-2" />
+                                <button onClick={() => adjustMedia("assOffsetY", -2)} className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm"><ArrowLeft className="rotate-90" size={12}/></button>
+                                <button onClick={() => adjustMedia("assOffsetY", 2)} className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm"><ArrowLeft className="-rotate-90" size={12}/></button>
+                             </ControlGroup>
+                           )}
+                        </div>
+
+                        <div className="bg-slate-50 dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 space-y-4">
+                           <FormGroup label="Senha App Cliente">
+                             <input type="text" value={data.senhaApp} onChange={update("senhaApp")} placeholder="Ex: 1234" />
+                           </FormGroup>
+                           <FormGroup label="Observações (EAR / Toxicológico)">
+                             <textarea value={data.observacoes} onChange={update("observacoes")} rows={3} placeholder="Digite as observações..." />
+                           </FormGroup>
+                        </div>
+                      </div>
+                   </div>
+                </div>
+              )}
+
+              <div className="h-40" /> {/* Spacer */}
             </div>
-            <div className="cnh-ass-option blue">
-              <h4><Upload size={12} /> Enviar Foto</h4>
-              <label className="cnh-file-label"><Upload size={14} /> Foto Assinatura<input type="file" accept="image/*" onChange={handleAssinaturaUpload} style={{ display: "none" }} /></label>
-            </div>
-            <div className="cnh-preview-box cnh-preview-ass">
-              {data.assinaturaUrl ? <img src={data.assinaturaUrl} alt="Ass" style={{ height: "40px", objectFit: "contain" }} /> : <span style={{ fontSize: 12 }}>Assinatura</span>}
-            </div>
-          </div>
+          </main>
         </div>
 
-        <div className="cnh-divider">ACESSO</div>
-        <div className="cnh-form-grid">
-          <div className="cnh-form-group"><label>Senha App Cliente</label><input type="text" value={data.senhaApp} onChange={update("senhaApp")} /></div>
-          <div className="cnh-form-group" style={{ gridColumn: "span 2" }}><label>Observações (EAR)</label><textarea value={data.observacoes} onChange={update("observacoes")} placeholder="Observações..." /></div>
-        </div>
-
-        <div style={{ position: "absolute", left: "-9999px", opacity: 0 }}><CNHDocument ref={docRef} {...data} codigoQR={saved ? codigoQR : "PREVIEW"} blurred={!saved} /></div>
-
+        {/* Footer de Ação Fixo */}
         {!saved && (
-          <button className="cnh-floating-save" onClick={handleRequestEmit} disabled={loading}>
-            {loading ? "Gerando..." : <><Save size={18} /> EMITIR CNH</>}
-          </button>
+          <div className="fixed bottom-0 left-0 right-0 h-24 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 px-10 flex items-center justify-between z-50 backdrop-blur-md bg-white/80 dark:bg-slate-950/80">
+            <div className="flex flex-col">
+               <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Custo da Emissão</span>
+               <span className="text-xl font-black text-[#005CA9] tracking-tight">R$ 18,00</span>
+            </div>
+            <button 
+              onClick={handleRequestEmit} 
+              disabled={loading}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-xl shadow-emerald-500/20 active:scale-95 flex items-center gap-3 disabled:opacity-50"
+            >
+              {loading ? "PROCESSANDO..." : <><Save size={20} /> EMITIR CNH ELITE</>}
+            </button>
+          </div>
         )}
+
+        {/* Canvas Oculto para Renderização 1:1 */}
+        <div style={{ position: "absolute", left: "-9999px", opacity: 0 }}>
+          <CNHDocument ref={docRef} {...data} codigoQR={saved ? codigoQR : "PREVIEW"} blurred={!saved} />
+        </div>
       </div>
 
       <EmissionModal
@@ -772,5 +738,33 @@ export default function CNHCria() {
         isFree={user?.role === 'admin' || (Array.isArray(user?.free_documents) && user.free_documents.includes('cnh'))}
       />
     </DashboardLayout>
+  );
+}
+
+// ─── Sub-componentes Locais ──────────────────────────────────────────────────
+function FormGroup({ label, children, className = "", autoBtn }: { label: string; children: React.ReactNode; className?: string; autoBtn?: () => void }) {
+  return (
+    <div className={`flex flex-col gap-2 ${className}`}>
+      <div className="flex items-center justify-between">
+        <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{label}</label>
+        {autoBtn && <button onClick={autoBtn} className="text-[9px] font-black bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded-md hover:bg-emerald-500 hover:text-white transition-all uppercase">Auto</button>}
+      </div>
+      <div className="relative group">
+        {React.cloneElement(children as React.ReactElement, {
+          className: `w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 ring-[#005CA9]/20 focus:border-[#005CA9] transition-all ${(children as any).props.className || ""}`
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ControlGroup({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`flex flex-col gap-2 ${className}`}>
+       <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
+       <div className="flex items-center gap-2">
+          {children}
+       </div>
+    </div>
   );
 }

@@ -344,32 +344,34 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       if (props.fotoUrl) {
         try {
           const fotoImg = await loadImage(props.fotoUrl);
-          const scale = props.fotoScale ?? 1.0;
+          const scale = props.fotoScale ?? 1.1;
           const offsetX = props.fotoOffsetX ?? 0;
           const offsetY = props.fotoOffsetY ?? 0;
+          
           const baseBw = 247, baseBh = 300;
-          const bw = Math.round(baseBw * scale);
-          const bh = Math.round(baseBh * scale);
-          const bx = 305 + Math.round((baseBw - bw) / 2) + offsetX;
-          const by = 550 + Math.round((baseBh - bh) / 2) + offsetY;
+          const bx = 305;
+          const by = 550;
+          
           ctx.save();
           ctx.beginPath();
-          ctx.rect(bx, by, bw, bh);
+          ctx.rect(bx, by, baseBw, baseBh);
           ctx.clip();
+          
           const imgRatio = fotoImg.width / fotoImg.height;
-          const boxRatio = bw / bh;
-          let drawW: number, drawH: number, drawX: number, drawY: number;
+          const boxRatio = baseBw / baseBh;
+          
+          let drawW: number, drawH: number;
           if (imgRatio > boxRatio) {
-            drawH = bh;
-            drawW = bh * imgRatio;
-            drawX = bx - (drawW - bw) / 2;
-            drawY = by;
+            drawH = baseBh * scale;
+            drawW = drawH * imgRatio;
           } else {
-            drawW = bw;
-            drawH = bw / imgRatio;
-            drawX = bx;
-            drawY = by - (drawH - bh) / 2;
+            drawW = baseBw * scale;
+            drawH = drawW / imgRatio;
           }
+          
+          const drawX = bx + (baseBw - drawW) / 2 + offsetX;
+          const drawY = by + (baseBh - drawH) / 2 + offsetY;
+          
           ctx.drawImage(fotoImg, drawX, drawY, drawW, drawH);
           ctx.restore();
         } catch (e) {
@@ -384,32 +386,30 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
           const scale = props.assScale ?? 1.0;
           const offsetX = props.assOffsetX ?? 0;
           const offsetY = props.assOffsetY ?? 0;
+          
           const baseBw = 250, baseBh = 60;
-          const bw = Math.round(baseBw * scale);
-          const bh = Math.round(baseBh * scale);
-          const bx = 303 + Math.round((baseBw - bw) / 2) + offsetX;
-          const by = 870 + Math.round((baseBh - bh) / 2) + offsetY;
+          const bx = 303;
+          const by = 870;
+          
           ctx.save();
           ctx.beginPath();
-          ctx.rect(bx, by, bw, bh);
+          ctx.rect(bx, by, baseBw, baseBh);
           ctx.clip();
 
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = assImg.width;
-          tempCanvas.height = assImg.height;
-          const tctx = tempCanvas.getContext('2d')!;
-          tctx.fillStyle = '#FFFFFF';
-          tctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-          tctx.drawImage(assImg, 0, 0);
-
-          const ratio = Math.min(bw / assImg.width, bh / assImg.height);
+          const ratio = Math.min(baseBw / assImg.width, baseBh / assImg.height) * scale;
           const drawW = assImg.width * ratio;
           const drawH = assImg.height * ratio;
-          const drawX = bx + (bw - drawW) / 2;
-          const drawY = by + (bh - drawH) / 2;
+          const drawX = bx + (baseBw - drawW) / 2 + offsetX;
+          const drawY = by + (baseBh - drawH) / 2 + offsetY;
 
-          ctx.filter = "contrast(5) brightness(0.3) grayscale(1)";
-          ctx.drawImage(tempCanvas, drawX, drawY, drawW, drawH);
+          // Se for PNG transparente do removedor de fundo, desenha direto
+          // Caso contrário, aplica filtro de contraste
+          if (props.assinaturaUrl.startsWith("data:image/png")) {
+             ctx.drawImage(assImg, drawX, drawY, drawW, drawH);
+          } else {
+             ctx.filter = "contrast(5) brightness(0.3) grayscale(1)";
+             ctx.drawImage(assImg, drawX, drawY, drawW, drawH);
+          }
           ctx.restore();
         } catch (e) {
           console.warn("Erro assinatura:", e);
@@ -421,36 +421,34 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
         try {
           const qrUrl = getQRCodeCNH(props.codigoQR);
           const qrDataUrl = await QRCode.toDataURL(qrUrl, {
-            width: 700,
+            width: 800, // Aumentado para 800px conforme referência
             margin: 0,
-            errorCorrectionLevel: "M",
+            errorCorrectionLevel: "H", // Alta precisão
           });
           const qrImg = await loadImage(qrDataUrl);
 
           if (props.blurred) {
-            // Desenhar QR borrado (anti-fraude)
             ctx.save();
-            ctx.filter = "blur(12px)";
-            ctx.drawImage(qrImg, 1441, 430, 700, 700);
+            ctx.filter = "blur(15px)";
+            ctx.drawImage(qrImg, 1400, 400, 750, 750);
             ctx.restore();
           } else {
-            ctx.drawImage(qrImg, 1441, 430, 700, 700);
+            ctx.drawImage(qrImg, 1400, 400, 750, 750);
           }
         } catch (e) {
           console.warn("Erro ao gerar QR:", e);
         }
       } else if (props.codigoQR === "PREVIEW") {
-        // QR placeholder borrado (anti-fraude antes da emissão)
         try {
           const qrDataUrl = await QRCode.toDataURL("https://docmaster.store", {
-            width: 700,
+            width: 800,
             margin: 0,
             errorCorrectionLevel: "M",
           });
           const qrImg = await loadImage(qrDataUrl);
           ctx.save();
-          ctx.filter = "blur(12px)";
-          ctx.drawImage(qrImg, 1441, 430, 700, 700);
+          ctx.filter = "blur(15px)";
+          ctx.drawImage(qrImg, 1400, 400, 750, 750);
           ctx.restore();
         } catch (e) {
           console.warn("Erro ao gerar QR preview:", e);

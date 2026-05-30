@@ -77,7 +77,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         foto: d.foto || "",
         assinatura: d.assinatura || "",
         nCnh: d.nCnh || d.numCnh || "",
-        renach: d.renach || "",
+        renach: d.assDigital2 || d.renach || "",
         codigoSeguranca: d.codigoSeguranca || "",
       },
     }), {
