@@ -133,6 +133,7 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
 
   useImperativeHandle(ref, () => ({
     exportAsBlob: async () => {
+      await renderCanvas();
       const cvs = canvasRef.current;
       if (!cvs) return null;
       return new Promise<Blob | null>((resolve) => {
@@ -140,13 +141,12 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       });
     },
     exportAsPdf: async () => {
+      await renderCanvas();
       const cvs = canvasRef.current;
       if (!cvs) return;
       const { default: jsPDF } = await import("jspdf");
-      // Canvas dimensions in pixels
       const cw = cvs.width;
       const ch = cvs.height;
-      // Convert to mm at 96 DPI (1px = 0.2646mm)
       const pxToMm = 0.2646;
       const wMm = cw * pxToMm;
       const hMm = ch * pxToMm;
@@ -159,6 +159,7 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
     },
     getCanvas: () => canvasRef.current,
     exportCropBlob: async (x: number, y: number, w: number, h: number) => {
+      await renderCanvas();
       const cvs = canvasRef.current;
       if (!cvs) return null;
       const crop = document.createElement('canvas');
@@ -190,15 +191,15 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       // Carregar template original
       const bg = await loadImage("/assets/cnh_modelo.jpg");
       
-      // Garantir que o canvas tenha as dimensões corretas
-      cvs.width = bg.width;
-      cvs.height = bg.height;
+      // Garantir dimensões
+      if (cvs.width !== bg.width) cvs.width = bg.width;
+      if (cvs.height !== bg.height) cvs.height = bg.height;
 
-      // Limpar o fundo com branco (evita o "quadrado preto" em JPEG)
+      // FORÇAR FUNDO BRANCO (Prevenir Retângulo Preto)
       ctx.fillStyle = "#FFFFFF";
       ctx.fillRect(0, 0, cvs.width, cvs.height);
 
-      // Desenhar o background
+      // Desenhar background
       ctx.drawImage(bg, 0, 0);
 
       // Configurar texto padrão

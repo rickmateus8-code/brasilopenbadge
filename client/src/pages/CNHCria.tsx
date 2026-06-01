@@ -623,15 +623,17 @@ export default function CNHCria() {
                            </label>
                            <div className="relative group">
                               <input type="file" accept="image/*" onChange={handleFotoUpload} className="hidden" id="file-foto" />
-                              <label htmlFor="file-foto" className="block w-full h-[400px] bg-slate-100 dark:bg-slate-900 rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-slate-800 overflow-hidden cursor-pointer hover:border-blue-500 transition-all relative">
+                              <label htmlFor="file-foto" className="block w-full h-[450px] bg-white dark:bg-slate-900 rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-slate-800 overflow-hidden cursor-pointer hover:border-blue-500 transition-all relative">
                                  {data.fotoUrl ? (
-                                   <div className="w-full h-full relative">
-                                      <img src={data.fotoUrl} alt="Foto" style={{ 
-                                        width: "100%", 
-                                        height: "100%", 
-                                        objectFit: "cover",
-                                        transform: `scale(${data.fotoScale}) translate(${data.fotoOffsetX}px, ${data.fotoOffsetY}px)`
-                                      }} />
+                                   <div className="w-full h-full relative flex items-center justify-center bg-white">
+                                      <div style={{ width: "300px", height: "400px", overflow: "hidden", position: "relative", backgroundColor: "#fff" }}>
+                                        <img src={data.fotoUrl} alt="Foto" style={{ 
+                                          width: "100%", 
+                                          height: "100%", 
+                                          objectFit: "cover",
+                                          transform: `scale(${data.fotoScale}) translate(${data.fotoOffsetX}px, ${data.fotoOffsetY}px)`
+                                        }} />
+                                      </div>
                                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                          <span className="text-white font-black text-xs uppercase tracking-widest bg-blue-600 px-4 py-2 rounded-full">Trocar Foto</span>
                                       </div>
@@ -641,7 +643,7 @@ export default function CNHCria() {
                                       <div className="w-16 h-16 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm">
                                          <Upload size={24} className="text-blue-500" />
                                       </div>
-                                      <span className="text-xs font-bold text-slate-400">CLIQUE PARA SUBIR</span>
+                                      <span className="text-xs font-bold text-slate-400">CLIQUE PARA SUBIR (3X4)</span>
                                    </div>
                                  )}
                               </label>
@@ -754,7 +756,7 @@ export default function CNHCria() {
               disabled={loading}
               className="bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-xl shadow-emerald-500/20 active:scale-95 flex items-center gap-3 disabled:opacity-50"
             >
-              {loading ? "PROCESSANDO..." : <><Save size={20} /> EMITIR CNH ELITE</>}
+              {loading ? "PROCESSANDO..." : <><Save size={20} /> EMITIR CNH</>}
             </button>
           </div>
         )}
