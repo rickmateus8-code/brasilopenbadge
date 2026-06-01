@@ -359,7 +359,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               flexShrink: 0,
               background: "transparent"
             }}>
-              <div style={{ width: 154, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start", flexShrink: 0, overflow: "visible", background: "transparent" }}>
+              <div style={{ width: 150, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start", flexShrink: 0, overflow: "visible", background: "transparent" }}>
                 {effectiveLogoLeft && (
                   <img
                     src={effectiveLogoLeft}
@@ -367,7 +367,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                     crossOrigin={getCrossOrigin(effectiveLogoLeft)}
                     style={{
                       maxHeight: "100%",
-                      maxWidth: 149.38, 
+                      maxWidth: 150, 
                       objectFit: "contain",
                       background: "transparent",
                       transform: `scale(${logoLeftScale}) translate(${logoLeftX}px, ${logoLeftY}px)`,
@@ -390,13 +390,13 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                   </div>
                 )}
                 {enderecoEmitente && (
-                  <div style={{ fontSize: 11.025, fontWeight: 400, fontStyle: "italic", textTransform: "uppercase", color: "#000", lineHeight: 1.3, whiteSpace: "nowrap" }}>
+                  <div style={{ fontSize: 11.025, fontWeight: 400, textTransform: "uppercase", color: "#000", lineHeight: 1.3, whiteSpace: "nowrap" }}>
                     {enderecoEmitente}
                   </div>
                 )}
               </div>
 
-              <div style={{ width: 149.38, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, overflow: "visible", background: "transparent" }}>
+              <div style={{ width: 150, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, overflow: "visible", background: "transparent" }}>
                 {effectiveLogoRight && (
                   <img
                     src={effectiveLogoRight}
@@ -404,7 +404,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                     crossOrigin={getCrossOrigin(effectiveLogoRight)}
                     style={{
                       maxHeight: "100%",
-                      maxWidth: 149.38,
+                      maxWidth: 150,
                       objectFit: "contain",
                       background: "transparent",
                       transform: `scale(${logoRightScale}) translate(${logoRightX}px, ${logoRightY}px)`,
