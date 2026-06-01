@@ -23,7 +23,7 @@ export const ATTESTATION_LAYOUT = {
     patientPadding: "0px 15px 30px 15px",
     
     // Address position: Ajustado para ficar 'colado' (subido 1% ≈ 4px de distância)
-    addressMarginTop: 4, 
+    addressMarginTop: -7, 
     addressMarginBottom: 15, 
   },
 
