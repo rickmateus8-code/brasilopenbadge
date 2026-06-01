@@ -222,16 +222,17 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           <div style={{ display: "flex", flexDirection: "column", height: "100%", fontFamily: "Arial, sans-serif" }}>
             {/* Header: Logo Esquerda + Texto Centralizado */}
             <div style={{ 
-              display: "flex", 
-              alignItems: "center", 
+              position: "relative",
               marginBottom: 40, 
               border: "1px solid #000", 
-              padding: "15px",
               height: 120,
               boxSizing: "border-box",
-              background: "transparent"
+              background: "transparent",
+              display: "flex",
+              alignItems: "center"
             }}>
-              <div style={{ width: 140, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", overflow: "visible" }}>
+              {/* Logo Esquerda */}
+              <div style={{ width: 140, height: "100%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", overflow: "visible", zIndex: 2 }}>
                 {effectiveLogoLeft && (
                   <img 
                     src={effectiveLogoLeft} 
@@ -249,9 +250,26 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                   />
                 )}
               </div>
-              <div style={{ flex: 1, textAlign: "center", paddingRight: 140 }}>
-                <div style={{ fontSize: 16.2, fontWeight: 700, textTransform: "uppercase", color: "#000", marginTop: -41, marginBottom: 8, whiteSpace: "nowrap" }}>{unidade || instituicao}</div>
-                <div style={{ fontSize: 11.34, fontWeight: 700, textTransform: "uppercase", color: "#000", whiteSpace: "nowrap" }}>{enderecoEmitente}</div>
+
+              {/* Texto Centralizado (Overlay Absoluto para Garante Centralização 1:1) */}
+              <div style={{ 
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                textAlign: "center",
+                zIndex: 1,
+                pointerEvents: "none"
+              }}>
+                <div style={{ padding: "0 150px", pointerEvents: "auto", marginTop: -2 }}>
+                  <div style={{ fontSize: 16.2, fontWeight: 700, textTransform: "uppercase", color: "#000", marginBottom: 8 }}>{unidade || instituicao}</div>
+                  <div style={{ fontSize: 11.34, fontWeight: 700, textTransform: "uppercase", color: "#000" }}>{enderecoEmitente}</div>
+                </div>
               </div>
             </div>
 
@@ -349,17 +367,27 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           <>
             {/* ===== HEADER ===== */}
             <div id="preview-header" style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 0,
-              height: 80,
               position: "relative",
+              height: 80,
+              width: "100%",
+              marginBottom: 0,
               zIndex: 2,
               flexShrink: 0,
               background: "transparent"
             }}>
-              <div style={{ width: 150, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start", flexShrink: 0, overflow: "visible", background: "transparent" }}>
+              {/* Logo Esquerda (Absoluto) */}
+              <div style={{ 
+                position: "absolute",
+                left: 0,
+                top: 0,
+                width: 150, 
+                height: "100%", 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "flex-start", 
+                overflow: "visible", 
+                background: "transparent" 
+              }}>
                 {effectiveLogoLeft && (
                   <img
                     src={effectiveLogoLeft}
@@ -378,25 +406,46 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 )}
               </div>
 
-              <div style={{ flex: 1, padding: "0 12px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+              {/* Bloco de Texto Centralizado */}
+              <div style={{ 
+                margin: "0 150px",
+                height: "100%",
+                display: "flex", 
+                flexDirection: "column", 
+                alignItems: "center", 
+                justifyContent: "center",
+                textAlign: "center"
+              }}>
                 {instituicao && (
-                  <div style={{ fontSize: 14.7, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", letterSpacing: 0, lineHeight: 1.3, whiteSpace: "nowrap" }}>
+                  <div style={{ fontSize: 14.7, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", letterSpacing: 0, lineHeight: 1.3 }}>
                     {instituicao}
                   </div>
                 )}
                 {unidade && unidade !== instituicao && (
-                  <div style={{ fontSize: 12.6, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", lineHeight: 1.3, whiteSpace: "nowrap" }}>
+                  <div style={{ fontSize: 12.6, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", lineHeight: 1.3 }}>
                     {unidade}
                   </div>
                 )}
                 {enderecoEmitente && (
-                  <div style={{ fontSize: 11.025, fontWeight: 400, textTransform: "uppercase", color: "#000", lineHeight: 1.3, whiteSpace: "nowrap" }}>
+                  <div style={{ fontSize: 11.025, fontWeight: 400, textTransform: "uppercase", color: "#000", lineHeight: 1.3 }}>
                     {enderecoEmitente}
                   </div>
                 )}
               </div>
 
-              <div style={{ width: 150, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-end", flexShrink: 0, overflow: "visible", background: "transparent" }}>
+              {/* Logo Direita (Absoluto) */}
+              <div style={{ 
+                position: "absolute",
+                right: 0,
+                top: 0,
+                width: 150, 
+                height: "100%", 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "flex-end", 
+                overflow: "visible", 
+                background: "transparent" 
+              }}>
                 {effectiveLogoRight && (
                   <img
                     src={effectiveLogoRight}
