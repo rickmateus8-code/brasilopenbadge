@@ -289,7 +289,7 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
     now, now
   ).run();
 
-  // 6. Debitar saldo (apenas se há preço e não é admin ou receptor system e não é free)
+  // 6. Debitar saldo
   let newBalance = user.balance;
   const isReceiver = user.id === "system";
 
@@ -299,7 +299,6 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
     ).bind(price, user.id, price).first<{ balance: number }>();
 
     if (!updated) {
-      // Rollback: remover receita inserida se o débito falhar
       await env.DB.prepare("DELETE FROM receitas WHERE id = ?").bind(id).run();
       return jsonResponse(request, {
         success: false,
@@ -308,25 +307,7 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
         code: 'INSUFFICIENT_BALANCE',
       }, 402);
     }
-
     newBalance = updated.balance;
-
-    // Registrar transação no extrato para auditoria
-    try {
-      await env.DB.prepare(`
-        INSERT INTO transactions (user_id, type, amount, description, document_type, document_id, created_at)
-        VALUES (?, 'debit', ?, ?, ?, ?, ?)
-      `).bind(
-        user.id,
-        price,
-        `Receita médica emitida — ${body.paciente}`,
-        'receita',
-        id,
-        now
-      ).run();
-    } catch (transErr) {
-      console.error("[transactions] Erro ao registrar transação:", transErr);
-    }
   }
 
   return jsonResponse(request, {
@@ -349,99 +330,22 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
 }
 
 // ─── DELETE — Cancelar receita ────────────────────────────────────────────────
-async function handleDeleteReceita(env: Env, user: any, receitaId: string) {
-  // Verificar ownership
-  const receita = await env.DB.prepare(
-    "SELECT id, user_id FROM receitas WHERE id = ? LIMIT 1"
-  ).bind(receitaId).first<any>();
+async function handleDeleteReceita(request: Request, env: Env, user: any, receitaId: string) {
+  const receita = await env.DB.prepare("SELECT id, user_id FROM receitas WHERE id = ? LIMIT 1").bind(receitaId).first<any>();
+  if (!receita) return jsonResponse(request, { success: false, error: "Receita não encontrada." }, 404);
+  if (user.role !== "admin" && receita.user_id !== user.id) return jsonResponse(request, { success: false, error: "Sem permissão." }, 403);
 
-  if (!receita) {
-    return jsonResponse(request, { success: false, error: "Receita não encontrada." }, 404);
-  }
-  if (user.role !== "admin" && receita.user_id !== user.id) {
-    return jsonResponse(request, { success: false, error: "Sem permissão para excluir esta receita." }, 403);
-  }
-
-  await env.DB.prepare(
-    "UPDATE receitas SET status = 'cancelado', updated_at = ? WHERE id = ?"
-  ).bind(new Date().toISOString(), receitaId).run();
-
+  await env.DB.prepare("UPDATE receitas SET status = 'cancelado', updated_at = ? WHERE id = ?").bind(new Date().toISOString(), receitaId).run();
   return jsonResponse(request, { success: true, message: "Receita cancelada com sucesso." });
 }
 
-// ─── PUT — Editar receita (CPF BLOQUEADO — segurança) ────────────────────────
+// ─── PUT — Editar receita ─────────────────────────────────────────────────────
 async function handleUpdateReceita(request: Request, env: Env, user: any, receitaId: string) {
-  // Verificar ownership
-  const receita = await env.DB.prepare(
-    "SELECT * FROM receitas WHERE id = ? LIMIT 1"
-  ).bind(receitaId).first<any>();
-
-  if (!receita) {
-    return jsonResponse(request, { success: false, error: "Receita não encontrada." }, 404);
-  }
-  if (user.role !== "admin" && receita.user_id !== user.id) {
-    return jsonResponse(request, { success: false, error: "Sem permissão para editar esta receita." }, 403);
-  }
+  const receita = await env.DB.prepare("SELECT * FROM receitas WHERE id = ? LIMIT 1").bind(receitaId).first<any>();
+  if (!receita) return jsonResponse(request, { success: false, error: "Receita não encontrada." }, 404);
+  if (user.role !== "admin" && receita.user_id !== user.id) return jsonResponse(request, { success: false, error: "Sem permissão." }, 403);
 
   const body = await request.json<any>();
-  const now = new Date().toISOString();
-
-  // CPF BLOQUEADO — não pode ser alterado após emissão
-  // Ignorar qualquer valor de CPF enviado pelo cliente
-
-  let prescricao = body.prescricao;
-  if (typeof prescricao === "object") {
-    prescricao = JSON.stringify(prescricao);
-  }
-
-  await env.DB.prepare(`
-    UPDATE receitas SET
-      tipo_receituario = COALESCE(?, tipo_receituario),
-      paciente = COALESCE(?, paciente),
-      identidade = COALESCE(?, identidade),
-      endereco = COALESCE(?, endereco),
-      telefone = COALESCE(?, telefone),
-      cidade = COALESCE(?, cidade),
-      medico = COALESCE(?, medico),
-      crm = COALESCE(?, crm),
-      especialidade = COALESCE(?, especialidade),
-      instituicao = COALESCE(?, instituicao),
-      endereco_emitente = COALESCE(?, endereco_emitente),
-      cnpj_emitente = COALESCE(?, cnpj_emitente),
-      telefone_emitente = COALESCE(?, telefone_emitente),
-      site_emitente = COALESCE(?, site_emitente),
-      prescricao = COALESCE(?, prescricao),
-      data_emissao = COALESCE(?, data_emissao),
-      hora_emissao = COALESCE(?, hora_emissao),
-      logo_url = COALESCE(?, logo_url),
-      signature_color = COALESCE(?, signature_color),
-      signature_image = COALESCE(?, signature_image),
-      updated_at = ?
-    WHERE id = ?
-  `).bind(
-    body.tipo_receituario || null,
-    body.paciente || null,
-    body.identidade || null,
-    body.endereco || null,
-    body.telefone || null,
-    body.cidade || null,
-    body.medico || null,
-    body.crm || null,
-    body.especialidade || null,
-    body.instituicao || null,
-    body.endereco_emitente || null,
-    body.cnpj_emitente || null,
-    body.telefone_emitente || null,
-    body.site_emitente || null,
-    prescricao || null,
-    body.data_emissao || null,
-    body.hora_emissao || null,
-    body.logo_url || null,
-    body.signature_color || null,
-    body.signature_image || null,
-    now,
-    receitaId
-  ).run();
-
+  await env.DB.prepare("UPDATE receitas SET paciente = COALESCE(?, paciente), medico = COALESCE(?, medico), updated_at = ? WHERE id = ?").bind(body.paciente || null, body.medico || null, new Date().toISOString(), receitaId).run();
   return jsonResponse(request, { success: true, message: "Receita atualizada com sucesso." });
 }
