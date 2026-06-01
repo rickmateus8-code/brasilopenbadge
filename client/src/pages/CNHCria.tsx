@@ -85,32 +85,52 @@ function formatarCPFInput(v: string): string {
 }
 
 /**
- * Filtro avançado para remover fundo (branco para transparente)
+ * Filtro avançado para remover fundo e comprimir imagem
  */
-async function removeBackground(dataUrl: string): Promise<string> {
+async function processAndCompressImage(dataUrl: string, options: { maxWidth?: number; maxHeight?: number; removeBg?: boolean; quality?: number } = {}): Promise<string> {
+  const { maxWidth = 800, maxHeight = 800, removeBg = false, quality = 0.8 } = options;
+  
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(img, 0, 0);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
+      let width = img.width;
+      let height = img.height;
 
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-        // Se for muito próximo do branco (threshold 230), torna transparente
-        if (r > 230 && g > 230 && b > 230) {
-          data[i + 3] = 0;
-        }
+      // Redimensionamento proporcional
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
       }
-      ctx.putImageData(imageData, 0, 0);
-      resolve(canvas.toDataURL("image/png"));
+      if (height > maxHeight) {
+        width = Math.round((width * maxHeight) / height);
+        height = maxHeight;
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d")!;
+      
+      if (!removeBg) {
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(0, 0, width, height);
+      }
+      
+      ctx.drawImage(img, 0, 0, width, height);
+
+      if (removeBg) {
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const pixels = imageData.data;
+        for (let i = 0; i < pixels.length; i += 4) {
+          const r = pixels[i], g = pixels[i + 1], b = pixels[i + 2];
+          if (r > 220 && g > 220 && b > 220) pixels[i + 3] = 0;
+        }
+        ctx.putImageData(imageData, 0, 0);
+        resolve(canvas.toDataURL("image/png")); // PNG para transparência
+      } else {
+        resolve(canvas.toDataURL("image/jpeg", quality)); // JPEG para menor tamanho
+      }
     };
     img.src = dataUrl;
   });
