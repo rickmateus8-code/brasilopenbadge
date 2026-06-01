@@ -1559,8 +1559,9 @@ export default function AtestadoEditar() {
       const [dd, mm, yyyy] = form.dataEmissao.split("/");
       const meses = ["JANEIRO","FEVEREIRO","MARÇO","ABRIL","MAIO","JUNHO","JULHO","AGOSTO","SETEMBRO","OUTUBRO","NOVEMBRO","DEZEMBRO"];
       const m = parseInt(mm) - 1;
-      const cidade = form.cidade || "";
-      return cidade ? `${cidade}, ${parseInt(dd)} DE ${meses[m] || mm} DE ${yyyy}` : `${parseInt(dd)} DE ${meses[m] || mm} DE ${yyyy}`;
+      const cidadeRaw = form.cidade || "";
+      const cidadeLimpa = cidadeRaw.split("/")[0].trim().toUpperCase();
+      return cidadeLimpa ? `${cidadeLimpa}, ${parseInt(dd)} DE ${meses[m] || mm} DE ${yyyy}` : `${parseInt(dd)} DE ${meses[m] || mm} DE ${yyyy}`;
     })(),
     logoUrl: logoLeft,
     logoRight: logoRight,

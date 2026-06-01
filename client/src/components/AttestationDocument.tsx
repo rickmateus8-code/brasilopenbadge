@@ -148,12 +148,10 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         // Formato Cidade / UF (ex: Votorantim / SP)
         const cidadeLimpa = String(cidade || "").split(",")[0].trim(); // Previne se o banco salvou com a data junto
         const cidArr = cidadeLimpa.split("/");
-        const cidadeNome = cidArr[0].trim();
-        const cidadePura = cidadeNome.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
-        const ufFinal = (cidArr[1] || uf || "").trim().toUpperCase();
+        const cidadeNome = cidArr[0].trim().toUpperCase();
         
         const diaStr = String(dia).padStart(2, "0");
-        return `${cidadePura}${ufFinal ? ' / ' + ufFinal : ''}, ${diaStr} de ${meses[m]} de ${ano}`;
+        return `${cidadeNome}, ${diaStr} DE ${meses[m].toUpperCase()} DE ${ano}`;
       }
       return d;
     })();
