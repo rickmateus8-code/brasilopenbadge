@@ -206,7 +206,6 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       ctx.textBaseline = "top";
 
       // Função helper txt() — idêntica à do elitedoc
-      // txt(texto, x, y, tamanho, bold, cor, maxWidth)
       const txt = (t: string, x: number, y: number, s: number, _b?: boolean | number, c?: string, mw?: number) => {
         if (!t) return;
         ctx.font = `${s}px 'Ultra', serif`;
@@ -288,7 +287,6 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       txt(tipoLetra, 1055, 555, 55, 1, "#000", 80);
 
       // ===== TEXTOS LATERAIS VERTICAIS =====
-      // Nº CNH (Espelho) rotacionado na lateral esquerda (2 posições)
       ctx.save();
       ctx.translate(213, 930);
       ctx.rotate(-Math.PI / 2);
@@ -337,7 +335,6 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       };
 
       let userCat = (props.categoria || "").toUpperCase();
-      // Lógica de herança de categorias (E inclui D,C,B; D inclui C,B; C inclui B)
       if (userCat.includes("E")) userCat += "DCB";
       else if (userCat.includes("D")) userCat += "CB";
       else if (userCat.includes("C")) userCat += "B";
@@ -410,8 +407,6 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
           const drawX = bx + (baseBw - drawW) / 2 + offsetX;
           const drawY = by + (baseBh - drawH) / 2 + offsetY;
 
-          // Se for PNG transparente do removedor de fundo, desenha direto
-          // Caso contrário, aplica filtro de contraste
           if (props.assinaturaUrl.startsWith("data:image/png")) {
              ctx.drawImage(assImg, drawX, drawY, drawW, drawH);
           } else {
@@ -427,11 +422,11 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       // ===== QR CODE =====
       if (props.codigoQR && props.codigoQR !== "PREVIEW") {
         try {
-          const qrUrl = getQRCodeCNH(props.codigoQR);
+          const qrUrl = `https://validacao.online-vio.digital/verificar?id=${props.codigoQR}`;
           const qrDataUrl = await QRCode.toDataURL(qrUrl, {
-            width: 800, // Aumentado para 800px conforme referência
+            width: 800,
             margin: 0,
-            errorCorrectionLevel: "H", // Alta precisão
+            errorCorrectionLevel: "H",
           });
           const qrImg = await loadImage(qrDataUrl);
 
@@ -467,7 +462,6 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
     }
   };
 
-  // Escala para preview (o canvas é ~2461x3496, escalar para caber na tela)
   const previewScale = 595 / 2461;
 
   return (
