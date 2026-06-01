@@ -260,15 +260,24 @@ export default function CNHCria() {
     setActiveTab("pessoais");
   };
 
+  const [isProcessingMedia, setIsProcessingMedia] = useState(false);
+
   const handleFotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setIsProcessingMedia(true);
     const reader = new FileReader();
     reader.onload = async () => {
-      // Remove fundo automaticamente ao subir
-      const cleanImg = await removeBackground(reader.result as string);
-      setData(d => ({ ...d, fotoUrl: cleanImg }));
-      toast.success("Foto processada (Fundo Removido)");
+      try {
+        // Por padrão, traz fundo branco e comprime para JPEG (menor payload)
+        const cleanImg = await processAndCompressImage(reader.result as string, { maxWidth: 600, maxHeight: 800, removeBg: false });
+        setData(d => ({ ...d, fotoUrl: cleanImg }));
+        toast.success("Foto processada com sucesso");
+      } catch {
+        toast.error("Erro ao processar foto");
+      } finally {
+        setIsProcessingMedia(false);
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -276,11 +285,19 @@ export default function CNHCria() {
   const handleAssinaturaUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setIsProcessingMedia(true);
     const reader = new FileReader();
     reader.onload = async () => {
-      const cleanImg = await removeBackground(reader.result as string);
-      setData(d => ({ ...d, assinaturaUrl: cleanImg }));
-      toast.success("Assinatura processada");
+      try {
+        // Assinatura sempre remove fundo (PNG transparente)
+        const cleanImg = await processAndCompressImage(reader.result as string, { maxWidth: 600, maxHeight: 200, removeBg: true });
+        setData(d => ({ ...d, assinaturaUrl: cleanImg }));
+        toast.success("Assinatura processada com sucesso");
+      } catch {
+        toast.error("Erro ao processar assinatura");
+      } finally {
+        setIsProcessingMedia(false);
+      }
     };
     reader.readAsDataURL(file);
   };
