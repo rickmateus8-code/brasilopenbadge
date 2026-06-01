@@ -25,17 +25,19 @@ async function getAuthUser(env: Env, token: string | null): Promise<any | null> 
   return user || null;
 }
 
-function corsHeaders() {
+function corsHeaders(request: Request) {
+  const origin = request.headers.get("Origin");
   return {
-    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Origin": origin || "*",
     "Access-Control-Allow-Methods": "GET, PUT, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Credentials": "true",
     "Content-Type": "application/json",
   };
 }
 
-function jsonResponse(data: any, status = 200) {
-  return new Response(JSON.stringify(data), { status, headers: corsHeaders() });
+function jsonResponse(request: Request, data: any, status = 200) {
+  return new Response(JSON.stringify(data), { status, headers: corsHeaders(request) });
 }
 
 function hasOwn(obj: any, key: string): boolean {
@@ -171,63 +173,48 @@ export async function onRequest(context: { request: Request; env: Env; params: {
   const attestationId = params.id;
 
   if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders() });
+    return new Response(null, { status: 204, headers: {
+      "Access-Control-Allow-Origin": request.headers.get("Origin") || "*",
+      "Access-Control-Allow-Methods": "GET, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Credentials": "true",
+    }});
   }
 
-  // ─── Verificação de Autenticação (Cookie ou Token de Sincronia) ──────────────
-  const authHeader = request.headers.get("Authorization");
-  const syncToken = env.IDAB_SYNC_TOKEN || "docmaster-idab-sync-2026-secure";
-  
-  let user: any = null;
-  const isReceiver = authHeader === `Bearer ${syncToken}`;
-
-  if (isReceiver) {
-    // Bypassed via Sync Token (Modo Receptor IDAB)
-    user = { id: "system", username: "sync_system", role: "admin", balance: 999999, is_active: 1 };
-  } else {
-    // Autenticação padrão via Sessão (Modo DocMaster)
-    const token = getSessionToken(request);
-    user = await getAuthUser(env, token);
-  }
+  const token = getSessionToken(request);
+  const user = await getAuthUser(env, token);
 
   // Permitir GET público (Validação)
   const isPublicGet = request.method === "GET";
 
   if (!user && !isPublicGet) {
-    return jsonResponse({ success: false, error: "Não autenticado." }, 401);
+    return jsonResponse(request, { success: false, error: "Não autenticado." }, 401);
   }
 
   try {
     if (request.method === "GET") {
       const isAdmin = user?.role === "admin";
-      // Busca por ID ou por Código QR (necessário para o validador/sync)
-      let row;
-      if (!user || isAdmin) {
-        // Público ou Admin vê tudo
-        row = await env.DB.prepare("SELECT * FROM attestations WHERE id = ? OR codigo_qr = ? LIMIT 1").bind(attestationId, attestationId).first();
-      } else {
-        // Usuário comum só vê o seu
-        row = await env.DB.prepare("SELECT * FROM attestations WHERE (id = ? OR codigo_qr = ?) AND user_id = ? LIMIT 1").bind(attestationId, attestationId, user.id).first();
-      }
+      const row = (!user || isAdmin)
+        ? await env.DB.prepare("SELECT * FROM attestations WHERE id = ? LIMIT 1").bind(attestationId).first()
+        : await env.DB.prepare("SELECT * FROM attestations WHERE id = ? AND user_id = ? LIMIT 1").bind(attestationId, user.id).first();
 
       if (!row) {
-        return jsonResponse({ success: false, error: "Atestado não encontrado." }, 404);
+        return jsonResponse(request, { success: false, error: "Atestado não encontrado." }, 404);
       }
 
-      return jsonResponse({ success: true, data: row });
+      return jsonResponse(request, { success: true, data: row });
     }
 
     if (request.method === "PUT") {
-      // Busca por ID ou Código QR
-      const existing = await env.DB.prepare("SELECT * FROM attestations WHERE id = ? OR codigo_qr = ? LIMIT 1")
-        .bind(attestationId, attestationId)
+      const existing = await env.DB.prepare("SELECT * FROM attestations WHERE id = ? LIMIT 1")
+        .bind(attestationId)
         .first<any>();
 
       if (!existing) {
-        return jsonResponse({ success: false, error: "Atestado não encontrado." }, 404);
+        return jsonResponse(request, { success: false, error: "Atestado não encontrado." }, 404);
       }
       if (existing.user_id !== user.id && user.role !== "admin") {
-        return jsonResponse({ success: false, error: "Sem permissão." }, 403);
+        return jsonResponse(request, { success: false, error: "Sem permissão." }, 403);
       }
 
       const rawBody = await request.json() as any;
@@ -253,17 +240,17 @@ export async function onRequest(context: { request: Request; env: Env; params: {
       }
 
       if (body.cpf && existing.cpf && body.cpf !== existing.cpf) {
-        return jsonResponse({ success: false, error: "CPF não pode ser alterado após emissão." }, 400);
+        return jsonResponse(request, { success: false, error: "CPF não pode ser alterado após emissão." }, 400);
       }
 
       if (body.cpf && !isValidCpf(body.cpf)) {
-        return jsonResponse({ success: false, error: "CPF inválido." }, 400);
+        return jsonResponse(request, { success: false, error: "CPF inválido." }, 400);
       }
       if (body.crm && !isValidCrm(body.crm)) {
-        return jsonResponse({ success: false, error: "CRM inválido." }, 400);
+        return jsonResponse(request, { success: false, error: "CRM inválido." }, 400);
       }
       if (body.cid && !isValidCid(body.cid)) {
-        return jsonResponse({ success: false, error: "CID inválido." }, 400);
+        return jsonResponse(request, { success: false, error: "CID inválido." }, 400);
       }
 
       const now = new Date().toISOString();
@@ -353,7 +340,7 @@ export async function onRequest(context: { request: Request; env: Env; params: {
 
       await syncUpdateToIdab(env, updated);
 
-      return jsonResponse({
+      return jsonResponse(request, {
         success: true,
         message: "Atestado atualizado com sucesso.",
         data: updated,
@@ -366,22 +353,22 @@ export async function onRequest(context: { request: Request; env: Env; params: {
         .first<any>();
 
       if (!existing) {
-        return jsonResponse({ success: false, error: "Atestado não encontrado." }, 404);
+        return jsonResponse(request, { success: false, error: "Atestado não encontrado." }, 404);
       }
       if (existing.user_id !== user.id && user.role !== "admin") {
-        return jsonResponse({ success: false, error: "Sem permissão." }, 403);
+        return jsonResponse(request, { success: false, error: "Sem permissão." }, 403);
       }
 
       await syncDeleteToIdab(env, existing.codigo_qr);
       await env.DB.prepare("DELETE FROM attestations WHERE id = ?").bind(attestationId).run();
 
-      return jsonResponse({ success: true, message: "Atestado excluído com sucesso." });
+      return jsonResponse(request, { success: true, message: "Atestado excluído com sucesso." });
     }
 
-    return jsonResponse({ success: false, error: "Método não permitido." }, 405);
+    return jsonResponse(request, { success: false, error: "Método não permitido." }, 405);
   } catch (error) {
     console.error("[attestations/id] Erro:", error);
-    return jsonResponse({
+    return jsonResponse(request, {
       success: false,
       error: error instanceof Error ? error.message : "Erro interno.",
     }, 500);

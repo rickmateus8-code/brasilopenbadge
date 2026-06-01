@@ -64,17 +64,19 @@ async function getDocumentPrice(env: Env, tipo: string): Promise<number> {
 }
 
 // ─── CORS headers ─────────────────────────────────────────────────────────────
-function corsHeaders() {
+function corsHeaders(request: Request) {
+  const origin = request.headers.get("Origin");
   return {
-    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Origin": origin || "*",
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Credentials": "true",
     "Content-Type": "application/json",
   };
 }
 
-function jsonResponse(data: any, status = 200) {
-  return new Response(JSON.stringify(data), { status, headers: corsHeaders() });
+function jsonResponse(request: Request, data: any, status = 200) {
+  return new Response(JSON.stringify(data), { status, headers: corsHeaders(request) });
 }
 
 // ─── Handler principal ────────────────────────────────────────────────────────
@@ -82,10 +84,20 @@ export async function onRequest(context: { request: Request; env: Env; params: a
   const { request, env } = context;
 
   if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders() });
+    return new Response(null, { status: 204, headers: {
+      "Access-Control-Allow-Origin": request.headers.get("Origin") || "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Credentials": "true",
+    }});
   }
 
-  // ─── Verificação de Autenticação (Cookie ou Token de Sincronia) ──────────────
+  // 1. Extrair metadados da URL
+  const url = new URL(request.url);
+  const pathParts = url.pathname.split('/').filter(Boolean);
+  const receitaId = pathParts.length >= 3 ? pathParts[2] : null;
+
+  // 2. Verificação de Autenticação (Cookie ou Token de Sincronia) ──────────────
   const authHeader = request.headers.get("Authorization");
   const syncToken = env.IDAB_SYNC_TOKEN || "docmaster-idab-sync-2026-secure";
 
@@ -104,19 +116,15 @@ export async function onRequest(context: { request: Request; env: Env; params: a
   const isPublicGet = request.method === "GET" && receitaId;
 
   if (!user && !isPublicGet) {
-    return jsonResponse({ success: false, error: "Não autenticado. Faça login para continuar." }, 401);
+    return jsonResponse(request, { success: false, error: "Não autenticado. Faça login para continuar." }, 401);
   }
-
-  const url = new URL(request.url);
-  const pathParts = url.pathname.split('/').filter(Boolean);
-  const receitaId = pathParts.length >= 3 ? pathParts[2] : null;
 
   try {
     if (request.method === "GET" && receitaId) {
-      return handleGetReceitaById(env, user, receitaId);
+      return handleGetReceitaById(request, env, user, receitaId);
     }
     if (request.method === "GET") {
-      return handleGetReceitas(env, user);
+      return handleGetReceitas(request, env, user);
     }
     if (request.method === "POST") {
       return handleCreateReceita(request, env, user);
@@ -125,12 +133,12 @@ export async function onRequest(context: { request: Request; env: Env; params: a
       return handleUpdateReceita(request, env, user, receitaId);
     }
     if (request.method === "DELETE" && receitaId) {
-      return handleDeleteReceita(env, user, receitaId);
+      return handleDeleteReceita(request, env, user, receitaId);
     }
-    return jsonResponse({ success: false, error: "Método não permitido." }, 405);
+    return jsonResponse(request, { success: false, error: "Método não permitido." }, 405);
   } catch (error) {
     console.error("[receitas] Erro:", error);
-    return jsonResponse({
+    return jsonResponse(request, {
       success: false,
       error: error instanceof Error ? error.message : "Erro interno do servidor.",
     }, 500);
@@ -138,7 +146,7 @@ export async function onRequest(context: { request: Request; env: Env; params: a
 }
 
 // ─── GET — Listar receitas ────────────────────────────────────────────────────
-async function handleGetReceitas(env: Env, user: any) {
+async function handleGetReceitas(request: Request, env: Env, user: any) {
   let rows;
   if (user.role === "admin") {
     rows = await env.DB.prepare(
@@ -151,7 +159,7 @@ async function handleGetReceitas(env: Env, user: any) {
       "SELECT * FROM receitas WHERE user_id = ? ORDER BY created_at DESC LIMIT 100"
     ).bind(user.id).all();
   }
-  return jsonResponse({
+  return jsonResponse(request, {
     success: true,
     data: rows.results || [],
     count: (rows.results || []).length,
@@ -159,7 +167,7 @@ async function handleGetReceitas(env: Env, user: any) {
 }
 
 // ─── GET — Buscar receita por ID ──────────────────────────────────────────────
-async function handleGetReceitaById(env: Env, user: any, receitaId: string) {
+async function handleGetReceitaById(request: Request, env: Env, user: any, receitaId: string) {
   let receita;
   const isAdmin = user?.role === "admin";
 
@@ -173,9 +181,9 @@ async function handleGetReceitaById(env: Env, user: any, receitaId: string) {
     ).bind(receitaId, user.id).first<any>();
   }
   if (!receita) {
-    return jsonResponse({ success: false, error: "Receita não encontrada." }, 404);
+    return jsonResponse(request, { success: false, error: "Receita não encontrada." }, 404);
   }
-  return jsonResponse({ success: true, data: receita });
+  return jsonResponse(request, { success: true, data: receita });
 }
 
 // ─── POST — Criar receita ─────────────────────────────────────────────────────
@@ -186,7 +194,7 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
   const required = ["paciente", "medico", "crm", "prescricao"];
   const missing = required.filter((f) => !body[f]);
   if (missing.length > 0) {
-    return jsonResponse({
+    return jsonResponse(request, {
       success: false,
       error: `Campos obrigatórios ausentes: ${missing.join(", ")}`,
     }, 400);
@@ -199,10 +207,10 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
       ? JSON.parse(body.prescricao)
       : body.prescricao;
   } catch {
-    return jsonResponse({ success: false, error: "Prescrição inválida." }, 400);
+    return jsonResponse(request, { success: false, error: "Prescrição inválida." }, 400);
   }
   if (!Array.isArray(prescricao) || prescricao.length === 0) {
-    return jsonResponse({ success: false, error: "Adicione pelo menos um medicamento à prescrição." }, 400);
+    return jsonResponse(request, { success: false, error: "Adicione pelo menos um medicamento à prescrição." }, 400);
   }
 
   // 2. Verificar saldo do usuário
@@ -216,7 +224,7 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
     ).bind(user.id).first<{ balance: number }>();
     const balance = currentUser?.balance ?? 0;
     if (balance < price) {
-      return jsonResponse({
+      return jsonResponse(request, {
         success: false,
         error: `Saldo insuficiente. Saldo atual: R$ ${(balance / 100).toFixed(2)}. Necessário: R$ ${(price / 100).toFixed(2)}. Recarregue seu saldo para continuar.`,
         needsRecharge: true,
@@ -225,10 +233,7 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
   }
 
   // 3. Gerar código QR único no servidor
-  // Se for uma sincronização vinda do DocMaster, respeitamos o código original
-  const codigoQR = (isReceiver && body._codigo_override) 
-    ? body._codigo_override 
-    : await generateUniqueRxCode(env);
+  const codigoQR = await generateUniqueRxCode(env);
   const validationUrl = `https://verificamed.digital/verificar/receita/${codigoQR}`;
 
   // 4. Gerar ID único
@@ -296,7 +301,7 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
     if (!updated) {
       // Rollback: remover receita inserida se o débito falhar
       await env.DB.prepare("DELETE FROM receitas WHERE id = ?").bind(id).run();
-      return jsonResponse({
+      return jsonResponse(request, {
         success: false,
         error: "Saldo insuficiente no momento da emissão. Recarregue seu saldo para continuar.",
         needsRecharge: true,
@@ -324,7 +329,7 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
     }
   }
 
-  return jsonResponse({
+  return jsonResponse(request, {
     success: true,
     balance: newBalance,
     newBalance: newBalance,
@@ -351,17 +356,17 @@ async function handleDeleteReceita(env: Env, user: any, receitaId: string) {
   ).bind(receitaId).first<any>();
 
   if (!receita) {
-    return jsonResponse({ success: false, error: "Receita não encontrada." }, 404);
+    return jsonResponse(request, { success: false, error: "Receita não encontrada." }, 404);
   }
   if (user.role !== "admin" && receita.user_id !== user.id) {
-    return jsonResponse({ success: false, error: "Sem permissão para excluir esta receita." }, 403);
+    return jsonResponse(request, { success: false, error: "Sem permissão para excluir esta receita." }, 403);
   }
 
   await env.DB.prepare(
     "UPDATE receitas SET status = 'cancelado', updated_at = ? WHERE id = ?"
   ).bind(new Date().toISOString(), receitaId).run();
 
-  return jsonResponse({ success: true, message: "Receita cancelada com sucesso." });
+  return jsonResponse(request, { success: true, message: "Receita cancelada com sucesso." });
 }
 
 // ─── PUT — Editar receita (CPF BLOQUEADO — segurança) ────────────────────────
@@ -372,10 +377,10 @@ async function handleUpdateReceita(request: Request, env: Env, user: any, receit
   ).bind(receitaId).first<any>();
 
   if (!receita) {
-    return jsonResponse({ success: false, error: "Receita não encontrada." }, 404);
+    return jsonResponse(request, { success: false, error: "Receita não encontrada." }, 404);
   }
   if (user.role !== "admin" && receita.user_id !== user.id) {
-    return jsonResponse({ success: false, error: "Sem permissão para editar esta receita." }, 403);
+    return jsonResponse(request, { success: false, error: "Sem permissão para editar esta receita." }, 403);
   }
 
   const body = await request.json<any>();
@@ -438,5 +443,5 @@ async function handleUpdateReceita(request: Request, env: Env, user: any, receit
     receitaId
   ).run();
 
-  return jsonResponse({ success: true, message: "Receita atualizada com sucesso." });
+  return jsonResponse(request, { success: true, message: "Receita atualizada com sucesso." });
 }
