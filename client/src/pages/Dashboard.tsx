@@ -113,6 +113,11 @@ export default function Dashboard() {
     window.open(`https://wa.me/?text=${texto}`, "_blank");
   };
 
+  const getEditPath = (doc: DocRecord) => {
+    const type = doc.type === 'historico-uninter' ? 'historicocria' : doc.type;
+    return `/${type}/editar/${doc.id}`;
+  };
+
   useEffect(() => {
     refresh();
     loadStats();
@@ -579,7 +584,7 @@ const intelligentStats = [
                                   <div className="flex justify-end scale-90 origin-right">
                                     <AttestationActionButtons
                                         onRenew={() => handleRenew(doc)}
-                                        onEdit={() => setLocation(`/${activeTab}/editar/${doc.id}`)}
+                                        onEdit={() => setLocation(getEditPath(doc))}
                                         onView={() => openViewAtestado(doc)}
                                         onWhatsApp={() => handleWhatsAppHistory(doc)}
                                         onDelete={() => setConfirmDeleteId(doc.id)}
@@ -596,7 +601,10 @@ const intelligentStats = [
                               <td className="px-4 py-4 text-[10px] font-mono text-gray-400">{new Date(doc.created_at).toLocaleDateString("pt-BR")}</td>
                               <td className="px-4 py-4 text-right">
                                 <AttestationActionButtons
-                                    onEdit={() => setLocation(`/${activeTab === "historico-uninter" ? "editar/historicocria" : activeTab}/editar/${doc.id}`)}
+                                    onEdit={() => {
+                                      const route = doc.type === "historico-uninter" ? "historicocria" : doc.type;
+                                      setLocation(`/${route}/editar/${doc.id}`);
+                                    }}
                                     onDelete={() => setConfirmDeleteId(doc.id)}
                                 />
                               </td>

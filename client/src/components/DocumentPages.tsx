@@ -233,7 +233,7 @@ export function Page1({ f, highlightModified, profileKey }: Props) {
 
       <p style={{ fontWeight: "bold", margin: "8px 0 3px 0", fontSize: "9.5pt" }}>COLAÇÃO DE GRAU:</p>
       <p style={{ textAlign: "justify", margin: "0 0 5px 0", lineHeight: 1.3, fontSize: "9.5pt" }}>
-        Em {f.colacao_grau} o <b>Centro Universitário Internacional UNINTER</b>, através da Secretaria Geral de Gestão Acadêmica, {secretaria}, em nome do magnífico Reitor, Professor Dr. {reitor}, vem informar que o(a) aluno(a) <b><V val={f.nome} orig="" highlight={hl} /></b>, CPF n.º <V val={f.cpf} orig="" highlight={hl} />, matriculado(a) sob o registro acadêmico n.º <V val={f.matricula} orig="" highlight={hl} />, Colou Grau no <b>CURSO SUPERIOR DE <V val={f.curso || meta.cursoCompleto} orig="" highlight={hl} /></b>, nível de Graduação, por ter cumprido todas as exigências curriculares do curso.
+        Em {f.colacao_grau} o <b>Centro Universitário Internacional UNINTER</b>, através da Secretaria Geral de Gestão Acadêmica, {secretaria}, em nome do magnífico Reitor, Professor Dr. {reitor}, vem informar que o(a) aluno(a) <b><V val={f.nome} orig="" highlight={hl} /></b>, CPF n.º <V val={f.cpf} orig="" highlight={hl} />, matriculado(a) sob o registro acadêmico n.º <V val={f.matricula} orig="" highlight={hl} />, Colou Grau no <b><V val={f.curso || meta.cursoCompleto} orig="" highlight={hl} /></b>, nível de Graduação, por ter cumprido todas as exigências curriculares do curso.
       </p>
 
       <p style={{ fontWeight: "bold", margin: "8px 0 3px 0", fontSize: "9.5pt" }}>EVENTO FESTIVO DE COLAÇÃO DE GRAU:</p>
@@ -328,7 +328,7 @@ export function Page3({ f, highlightModified, profileKey }: Props) {
       </Fieldset>
 
       <Fieldset legend="IDENTIFICAÇÃO DO CURSO">
-        <p style={{ margin: "1.5px 0" }}><b>Curso:</b> CURSO SUPERIOR DE LICENCIATURA EM <V val={f.curso || meta.cursoCompleto} orig="" highlight={hl} /></p>
+        <p style={{ margin: "1.5px 0" }}><b>Curso:</b> <V val={f.curso || meta.cursoCompleto} orig="" highlight={hl} /></p>
         <p style={{ margin: "1.5px 0" }}><b>Ato Autorizativo de Reconhecimento:</b> Portaria n.º <V val={f.reconhecimento_portaria} orig="357" highlight={hl} />, de <V val={f.reconhecimento_portaria_dt} orig="24/05/2018" highlight={hl} />, DOU de 25/05/2018</p>
         <p style={{ margin: "1.5px 0" }}><b>Número do Processo e-MEC*:</b> <V val={processoEmec} orig="201605151" highlight={hl} /></p>
       </Fieldset>

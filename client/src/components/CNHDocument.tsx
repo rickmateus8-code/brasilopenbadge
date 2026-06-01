@@ -187,10 +187,18 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
     await loadFonts();
 
     try {
-      // Carregar template original do elitedoc (modelo.jpg)
+      // Carregar template original
       const bg = await loadImage("/assets/cnh_modelo.jpg");
+      
+      // Garantir que o canvas tenha as dimensões corretas
       cvs.width = bg.width;
       cvs.height = bg.height;
+
+      // Limpar o fundo com branco (evita o "quadrado preto" em JPEG)
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+      // Desenhar o background
       ctx.drawImage(bg, 0, 0);
 
       // Configurar texto padrão
