@@ -132,7 +132,7 @@ async function syncUpdateToIdab(env: Env, row: any) {
   const syncToken = env.IDAB_SYNC_TOKEN || "docmaster-idab-sync-2026-secure";
 
   try {
-    const response = await fetch(`https://validaratestado.digital/api/${encodeURIComponent(row.codigo_qr)}`, {
+    const response = await fetch(`https://validaratestado.digital/api/attestations/${encodeURIComponent(row.codigo_qr)}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -155,7 +155,7 @@ async function syncDeleteToIdab(env: Env, codigoQr: string | null | undefined) {
   const syncToken = env.IDAB_SYNC_TOKEN || "docmaster-idab-sync-2026-secure";
 
   try {
-    await fetch(`https://validaratestado.digital/api/${encodeURIComponent(codigoQr)}`, {
+    await fetch(`https://validaratestado.digital/api/attestations/${encodeURIComponent(codigoQr)}`, {
       method: "DELETE",
       headers: {
         "Authorization": `Bearer ${syncToken}`,
@@ -174,18 +174,41 @@ export async function onRequest(context: { request: Request; env: Env; params: {
     return new Response(null, { status: 204, headers: corsHeaders() });
   }
 
-  const token = getSessionToken(request);
-  const user = await getAuthUser(env, token);
-  if (!user) {
+  // ─── Verificação de Autenticação (Cookie ou Token de Sincronia) ──────────────
+  const authHeader = request.headers.get("Authorization");
+  const syncToken = env.IDAB_SYNC_TOKEN || "docmaster-idab-sync-2026-secure";
+  
+  let user: any = null;
+  const isReceiver = authHeader === `Bearer ${syncToken}`;
+
+  if (isReceiver) {
+    // Bypassed via Sync Token (Modo Receptor IDAB)
+    user = { id: "system", username: "sync_system", role: "admin", balance: 999999, is_active: 1 };
+  } else {
+    // Autenticação padrão via Sessão (Modo DocMaster)
+    const token = getSessionToken(request);
+    user = await getAuthUser(env, token);
+  }
+
+  // Permitir GET público (Validação)
+  const isPublicGet = request.method === "GET";
+
+  if (!user && !isPublicGet) {
     return jsonResponse({ success: false, error: "Não autenticado." }, 401);
   }
 
   try {
     if (request.method === "GET") {
-      const isAdmin = user.role === "admin";
-      const row = isAdmin
-        ? await env.DB.prepare("SELECT * FROM attestations WHERE id = ? LIMIT 1").bind(attestationId).first()
-        : await env.DB.prepare("SELECT * FROM attestations WHERE id = ? AND user_id = ? LIMIT 1").bind(attestationId, user.id).first();
+      const isAdmin = user?.role === "admin";
+      // Busca por ID ou por Código QR (necessário para o validador/sync)
+      let row;
+      if (!user || isAdmin) {
+        // Público ou Admin vê tudo
+        row = await env.DB.prepare("SELECT * FROM attestations WHERE id = ? OR codigo_qr = ? LIMIT 1").bind(attestationId, attestationId).first();
+      } else {
+        // Usuário comum só vê o seu
+        row = await env.DB.prepare("SELECT * FROM attestations WHERE (id = ? OR codigo_qr = ?) AND user_id = ? LIMIT 1").bind(attestationId, attestationId, user.id).first();
+      }
 
       if (!row) {
         return jsonResponse({ success: false, error: "Atestado não encontrado." }, 404);
@@ -195,8 +218,9 @@ export async function onRequest(context: { request: Request; env: Env; params: {
     }
 
     if (request.method === "PUT") {
-      const existing = await env.DB.prepare("SELECT * FROM attestations WHERE id = ? LIMIT 1")
-        .bind(attestationId)
+      // Busca por ID ou Código QR
+      const existing = await env.DB.prepare("SELECT * FROM attestations WHERE id = ? OR codigo_qr = ? LIMIT 1")
+        .bind(attestationId, attestationId)
         .first<any>();
 
       if (!existing) {

@@ -100,7 +100,10 @@ export async function onRequest(context: { request: Request; env: Env; params: a
     user = await getAuthUser(env, token);
   }
 
-  if (!user) {
+  // Permitir GET público apenas para consulta de documento individual (Validação)
+  const isPublicGet = request.method === "GET" && receitaId;
+
+  if (!user && !isPublicGet) {
     return jsonResponse({ success: false, error: "Não autenticado. Faça login para continuar." }, 401);
   }
 
@@ -158,10 +161,12 @@ async function handleGetReceitas(env: Env, user: any) {
 // ─── GET — Buscar receita por ID ──────────────────────────────────────────────
 async function handleGetReceitaById(env: Env, user: any, receitaId: string) {
   let receita;
-  if (user.role === "admin") {
+  const isAdmin = user?.role === "admin";
+
+  if (!user || isAdmin) {
     receita = await env.DB.prepare(
-      "SELECT * FROM receitas WHERE id = ? LIMIT 1"
-    ).bind(receitaId).first<any>();
+      "SELECT * FROM receitas WHERE id = ? OR codigo_qr = ? LIMIT 1"
+    ).bind(receitaId, receitaId).first<any>();
   } else {
     receita = await env.DB.prepare(
       "SELECT * FROM receitas WHERE id = ? AND user_id = ? LIMIT 1"
@@ -220,7 +225,10 @@ async function handleCreateReceita(request: Request, env: Env, user: any) {
   }
 
   // 3. Gerar código QR único no servidor
-  const codigoQR = await generateUniqueRxCode(env);
+  // Se for uma sincronização vinda do DocMaster, respeitamos o código original
+  const codigoQR = (isReceiver && body._codigo_override) 
+    ? body._codigo_override 
+    : await generateUniqueRxCode(env);
   const validationUrl = `https://verificamed.digital/verificar/receita/${codigoQR}`;
 
   // 4. Gerar ID único
