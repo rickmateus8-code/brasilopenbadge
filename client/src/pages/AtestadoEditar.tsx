@@ -1292,10 +1292,30 @@ export default function AtestadoEditar() {
   const handleDownloadPdf = async () => {
     if (!previewRef.current) return;
     try {
-      const docType = documentType === 'laudo' ? 'laudo' : 'atestado';
-      const filename = generatePDFFilename(form.paciente || "PACIENTE", docType);
-      await exportElementToPDF(previewRef.current, { filename, docType, scale: 2, quality: 0.92 });
+      setIsExporting(true);
+      // Criar container isolado para exportação 1:1
+      const container = document.createElement("div");
+      container.style.cssText = "position:fixed;left:-9999px;top:0;width:794px;background:white;";
+      document.body.appendChild(container);
+      
+      const clone = previewRef.current.cloneNode(true) as HTMLElement;
+      clone.style.transform = "none";
+      clone.style.margin = "0";
+      container.appendChild(clone);
+
+      await new Promise(r => setTimeout(r, 600));
+
+      const docType = documentType === 'laudo' ? 'laudo' : documentType === 'relatorio' ? 'relatorio' : 'atestado';
+      const filename = documentType === 'relatorio' 
+        ? `RELATORIO_MEDICO_${(form.paciente || "PACIENTE").trim().toUpperCase().replace(/\s+/g, "_")}.pdf`
+        : generatePDFFilename(form.paciente || "PACIENTE", docType as any);
+      
+      await exportElementToPDF(clone, { filename, docType, scale: 2, quality: 0.92 });
+      
+      document.body.removeChild(container);
+      setIsExporting(false);
     } catch (err) {
+      setIsExporting(false);
       alert(`Erro ao gerar PDF: ${err instanceof Error ? err.message : "Erro desconhecido"}`);
     }
   };
@@ -1307,23 +1327,30 @@ export default function AtestadoEditar() {
       setIsDownloadingPdf(true);
       setTimeout(async () => {
         try {
+          // Criar container isolado para exportação 1:1
+          const container = document.createElement("div");
+          container.style.cssText = "position:fixed;left:-9999px;top:0;width:794px;background:white;";
+          document.body.appendChild(container);
+          
+          const clone = previewRef.current!.cloneNode(true) as HTMLElement;
+          clone.style.transform = "none";
+          clone.style.margin = "0";
+          container.appendChild(clone);
+
+          await new Promise(r => setTimeout(r, 800));
+
           const docTypeForName = documentType === 'laudo' ? 'laudo' : documentType === 'relatorio' ? 'relatorio' : 'atestado';
           const filename = documentType === 'relatorio' 
             ? `RELATORIO_MEDICO_${(form.paciente || "PACIENTE").trim().toUpperCase().replace(/\s+/g, "_")}.pdf`
             : generatePDFFilename(form.paciente || "PACIENTE", docTypeForName as any);
-          await exportElementToPDF(previewRef.current!, { filename, docType, scale: 2, quality: 0.92 });
-          // Após download, aguarda 1s e redireciona
-          setTimeout(() => {
-            setShowSuccessModal(false);
-            navigate("/atestadosalvos");
-          }, 1000);
+          
+          await exportElementToPDF(clone, { filename, docType: docTypeForName as any, scale: 2, quality: 0.92 });
+          
+          document.body.removeChild(container);
+          setTimeout(() => { setShowSuccessModal(false); navigate("/atestadosalvos"); }, 1000);
         } catch (err) {
-          console.error("Erro ao fazer download automático:", err);
-          // Mesmo com erro, redireciona após 2s
-          setTimeout(() => {
-            setShowSuccessModal(false);
-            navigate("/atestadosalvos");
-          }, 2000);
+          console.error("Erro no auto-download:", err);
+          setTimeout(() => { setShowSuccessModal(false); navigate("/atestadosalvos"); }, 2000);
         } finally {
           setIsDownloadingPdf(false);
         }

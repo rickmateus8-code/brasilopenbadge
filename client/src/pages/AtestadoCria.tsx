@@ -1198,28 +1198,28 @@ export default function AtestadoCria() {
           
           await exportElementToPDF(clone, { 
             filename, 
-            docType, 
+            docType: docTypeForName as any, 
             scale: 2, 
             quality: 0.92 
           });
 
           document.body.removeChild(container);
 
-          // Após download, aguarda 1s e redireciona
+          // Após download, redireciona
           setTimeout(() => {
             setShowSuccessModal(false);
             navigate("/atestadosalvos");
-          }, 1000);
+          }, 800);
         } catch (err) {
           console.error("Erro ao fazer download automático:", err);
           setTimeout(() => {
             setShowSuccessModal(false);
             navigate("/atestadosalvos");
-          }, 2000);
+          }, 1500);
         } finally {
           setIsDownloadingPdf(false);
         }
-      }, 500);
+      }, 300);
     }
   }, [showSuccessModal, autoDownloadTriggered, form.paciente, documentType, navigate, previewRef]);
 
