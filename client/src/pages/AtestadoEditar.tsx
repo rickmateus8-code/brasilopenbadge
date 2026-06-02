@@ -708,7 +708,7 @@ export default function AtestadoEditar() {
           cid: d.cid || "",
           cidDisplay: d.cid_display || d.cidDisplay || d.cid || "",
           cidNome: d.cid_nome || d.cidNome || "",
-          afastamento: d.afastamento || "3",
+          afastamento: d.afastamento || "",
           textoAtestado: d.texto_atestado || d.textoAtestado || (loadedDocumentType === "laudo" ? TEXTO_LAUDO : gerarTextoAfastamento(parseInt(d.afastamento || "3", 10) || 3)),
           dataAssinatura: d.data_assinatura || d.dataAssinatura || d.data_emissao || todayBR(),
           horaAssinatura: d.hora_assinatura || d.horaAssinatura || nowTime(),
