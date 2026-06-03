@@ -1,14 +1,7 @@
 /**
- * Worker: valida-laudo-sodretox
- * Domínio: valida-laudo-sodretox.online (temporário) / futuro: domínio definitivo
- *
- * Fluxo:
- *   GET /?codigo=XXXX.XXXX  → consulta D1 do DocMaster → renderiza laudo ou erro
- *   GET /                   → página de busca
+ * Worker: valida-laudo-innovatox
+ * Domínio: valida-laudo-sodretox.online (a ser atualizado para innovatox)
  */
-
-const DOCMASTER_API = "https://docmaster.store/api/documents";
-const DOCMASTER_DB_ID = "0cfb948c-fd13-4e09-8eaf-26df02e3e615";
 
 // ─── HTML Helpers ─────────────────────────────────────────────────────────────
 function htmlBase(title, body) {
@@ -19,45 +12,97 @@ function htmlBase(title, body) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: "Montserrat", sans-serif;
-      background-color: #f0f0f0;
+      font-family: "Inter", sans-serif;
+      background-color: #f8fafc;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       padding: 20px;
-      color: #333;
+      color: #0f172a;
       text-align: center;
     }
-    .logo-top {
-      max-width: 200px;
-      height: auto;
-      margin-top: 20px;
+    .logo-container {
+      margin-top: 30px;
       margin-bottom: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .logo-main {
+      display: flex;
+      align-items: center;
+    }
+    .logo-icon {
+      width: 18px;
+      height: 18px;
+      border: 3px solid #00aeef;
+      border-radius: 50% 50% 0 50%;
+      transform: rotate(-15deg);
+      position: relative;
+    }
+    .logo-dot {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 7px;
+      height: 7px;
+      background: #00aeef;
+      border-radius: 50%;
+    }
+    .logo-text {
+      margin-left: 6px;
+      font-size: 28px;
+      font-weight: 900;
+      color: #004a80;
+      letter-spacing: -1px;
+    }
+    .logo-text span { color: #00aeef; }
+    .logo-sub {
+      font-size: 7px;
+      color: #004a80;
+      font-weight: 700;
+      letter-spacing: 3px;
+      margin-top: -4px;
+      margin-left: 20px;
     }
     h1 {
-      font-size: 26px;
-      font-weight: 400;
+      font-size: 22px;
+      font-weight: 900;
       margin-bottom: 25px;
-      color: #333;
+      color: #004a80;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
     .card {
       background: white;
       padding: 40px 30px;
-      border-radius: 15px;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(0,74,128,0.1);
       width: 100%;
       max-width: 440px;
+      border: 1px solid #e2e8f0;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, #004a80, #00aeef);
     }
     .success-icon {
       width: 64px;
       height: 64px;
-      background: #e8f5e9;
-      border-radius: 50%;
+      background: #f0fdf4;
+      border-radius: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -67,163 +112,112 @@ function htmlBase(title, body) {
     .error-icon {
       width: 64px;
       height: 64px;
-      background: #ffeaea;
-      border-radius: 50%;
+      background: #fef2f2;
+      border-radius: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
       margin: 0 auto 20px;
       font-size: 32px;
     }
-    .success-text {
-      font-size: 15px;
-      line-height: 1.6;
-      color: #555;
-      margin-bottom: 30px;
-      font-weight: 400;
-    }
-    .error-text {
-      font-size: 15px;
-      line-height: 1.6;
-      color: #777;
+    .status-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      background: #f0fdf4;
+      color: #16a34a;
+      border-radius: 12px;
+      font-weight: 900;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
       margin-bottom: 20px;
+      border: 1px solid #bcf0da;
+    }
+    .info-group {
+      text-align: left;
+      margin-top: 10px;
     }
     .info-row {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid #f0f0f0;
-      text-align: left;
-      font-size: 14px;
+      flex-direction: column;
+      padding: 12px 0;
+      border-bottom: 1px solid #f1f5f9;
     }
     .info-row:last-child { border-bottom: none; }
-    .info-label { color: #999; font-weight: 400; }
-    .info-value { color: #333; font-weight: 600; text-align: right; max-width: 60%; }
-    .badge-negativo {
-      display: inline-block;
-      background: #e8f5e9;
-      color: #2e7d32;
-      font-weight: 700;
-      font-size: 13px;
-      padding: 4px 14px;
-      border-radius: 20px;
-      margin: 16px 0;
+    .info-label { 
+      color: #64748b; 
+      font-weight: 700; 
+      font-size: 10px; 
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
     }
-    .badge-positivo {
-      display: inline-block;
-      background: #ffeaea;
-      color: #c62828;
-      font-weight: 700;
-      font-size: 13px;
-      padding: 4px 14px;
-      border-radius: 20px;
-      margin: 16px 0;
+    .info-value { 
+      color: #0f172a; 
+      font-weight: 700; 
+      font-size: 15px;
     }
-    .btn-download {
-      background-color: #1a3a6b;
+    .btn-action {
+      background: #004a80;
       color: white;
       border: none;
-      padding: 16px 0;
+      padding: 18px 0;
       width: 100%;
-      border-radius: 50px;
-      font-size: 16px;
-      font-weight: 700;
+      border-radius: 16px;
+      font-size: 14px;
+      font-weight: 900;
       cursor: pointer;
       text-decoration: none;
       display: block;
-      margin-top: 24px;
-      transition: opacity 0.2s;
+      margin-top: 30px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+      box-shadow: 0 10px 20px rgba(0,74,128,0.2);
     }
-    .btn-download:hover { opacity: 0.85; }
-    .btn-buscar {
-      background-color: #1a3a6b;
-      color: white;
-      border: none;
-      padding: 14px 0;
-      width: 100%;
-      border-radius: 50px;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      margin-top: 16px;
-      transition: opacity 0.2s;
-    }
-    .btn-buscar:hover { opacity: 0.85; }
+    .btn-action:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(0,74,128,0.3); }
     input[type="text"] {
       width: 100%;
-      padding: 14px 18px;
-      border: 2px solid #e0e0e0;
-      border-radius: 50px;
+      padding: 16px 20px;
+      border: 2px solid #f1f5f9;
+      border-radius: 16px;
       font-size: 16px;
-      font-family: "Montserrat", sans-serif;
+      font-family: "Inter", sans-serif;
       outline: none;
       text-align: center;
-      letter-spacing: 2px;
-      text-transform: uppercase;
+      font-weight: 700;
+      background: #f8fafc;
+      transition: border-color 0.2s;
     }
-    input[type="text"]:focus { border-color: #1a3a6b; }
-    .contact-info {
-      font-size: 13px;
-      color: #888;
-      margin-top: 30px;
+    input[type="text"]:focus { border-color: #00aeef; }
+    .footer-text {
+      margin-top: 40px;
+      font-size: 11px;
+      color: #94a3b8;
       line-height: 1.6;
     }
-    .footer-container {
-      margin-top: 50px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .footer-logo {
-      width: 48px;
-      height: 48px;
-      background: linear-gradient(135deg, #1a3a6b, #2563eb);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 900;
-      font-size: 20px;
-      margin-bottom: 12px;
-    }
-    .footer-address {
-      font-size: 12px;
-      color: #aaa;
-      max-width: 320px;
-      line-height: 1.5;
-    }
-    .divider {
-      width: 40px;
-      height: 3px;
-      background: #1a3a6b;
-      border-radius: 2px;
-      margin: 16px auto;
-    }
-    .codigo-display {
+    .hash-display {
       font-family: monospace;
-      font-size: 18px;
-      font-weight: 700;
-      color: #1a3a6b;
-      letter-spacing: 3px;
-      background: #f0f4ff;
-      padding: 8px 16px;
-      border-radius: 8px;
-      display: inline-block;
-      margin: 8px 0;
+      font-size: 10px;
+      color: #cbd5e1;
+      margin-top: 15px;
     }
   </style>
 </head>
 <body>
-  <div class="footer-logo">S</div>
-  <h1>Verificação de Laudo</h1>
-  ${body}
-  <div class="footer-container">
-    <div class="footer-address">
-      Sodré SL Diagnósticos E Pesquisas Laboratoriais LTDA,<br>
-      Rua Luiz Gama nº 1801, Lins/SP, 16.400-472
+  <div class="logo-container">
+    <div class="logo-main">
+      <div class="logo-icon"><div class="logo-dot"></div></div>
+      <div class="logo-text">innova<span>tox</span></div>
     </div>
+    <div class="logo-sub">ANÁLISES E PESQUISAS</div>
+  </div>
+  <h1>Validação de Laudo</h1>
+  ${body}
+  <div class="footer-text">
+    INNOVATOX Análises e Pesquisas Ltda.<br>
+    Rua Levindo Lima, 55 - Pq. Campolim, Sorocaba - SP<br>
+    CNPJ: 28.256.904/0001-00
   </div>
 </body>
 </html>`;
@@ -233,22 +227,18 @@ function renderSuccess(doc) {
   const data = typeof doc.data === "string" ? JSON.parse(doc.data) : doc.data;
   const nome = data.nome || doc.nome || "—";
   const cpf = data.cpf || doc.cpf || "—";
-  const dataColeta = data.dataColeta || "—";
-  const dataLiberacao = data.dataLiberacao || "—";
-  const validadeExame = data.validadeExame || "—";
-  const codigo = doc.codigo_validacao || doc.id || "—";
+  const laudo = data.laudoNumero || "—";
+  const emissao = data.dataEmissao || "—";
+  const validade = "90 DIAS (CNH) / 60 DIAS (CLT)";
+  const hash = doc.codigo_validacao ? doc.codigo_validacao.replace(/-/g, "").toUpperCase() : "";
 
-  return htmlBase("Verificação de Laudo - Sodré", `
+  return htmlBase("Laudo Verificado - Innovatox", `
     <div class="card">
       <div class="success-icon">✅</div>
-      <div class="success-text">
-        Laudo verificado com sucesso. As informações abaixo confirmam a autenticidade do documento emitido pelo Laboratório Sodré.
-      </div>
-      <div class="divider"></div>
-      <div class="codigo-display">${codigo}</div>
-      <div style="margin-top: 20px;">
+      <div class="status-badge">Documento Autêntico</div>
+      <div class="info-group">
         <div class="info-row">
-          <span class="info-label">Paciente</span>
+          <span class="info-label">Doador</span>
           <span class="info-value">${nome}</span>
         </div>
         <div class="info-row">
@@ -256,40 +246,37 @@ function renderSuccess(doc) {
           <span class="info-value">${cpf}</span>
         </div>
         <div class="info-row">
-          <span class="info-label">Data da Coleta</span>
-          <span class="info-value">${dataColeta}</span>
+          <span class="info-label">N° do Laudo</span>
+          <span class="info-value">${laudo}</span>
         </div>
         <div class="info-row">
-          <span class="info-label">Data de Liberação</span>
-          <span class="info-value">${dataLiberacao}</span>
+          <span class="info-label">Data de Emissão</span>
+          <span class="info-value">${emissao}</span>
         </div>
         <div class="info-row">
-          <span class="info-label">Validade do Exame</span>
-          <span class="info-value">${validadeExame}</span>
+          <span class="info-label">Validade</span>
+          <span class="info-value">${validade}</span>
         </div>
         <div class="info-row">
-          <span class="info-label">Resultado Geral</span>
-          <span class="info-value"><span class="badge-negativo">NEGATIVO</span></span>
+          <span class="info-label">Resultado</span>
+          <span class="info-value" style="color: #16a34a;">NEGATIVO</span>
         </div>
       </div>
-      <div class="contact-info">
-        Exame realizado pelo Laboratório Sodré — Divisão Toxicológica<br>
-        Dr. Amadeu Cardoso Junior — Toxicologista — CRF-RJ 21698
-      </div>
+      <div class="hash-display">HASH: ${hash}</div>
+      <button class="btn-action" onclick="window.print()">Imprimir Comprovante</button>
     </div>
   `);
 }
 
 function renderNotFound(codigo) {
-  return htmlBase("Verificação de Laudo - Sodré", `
+  return htmlBase("Erro na Validação - Innovatox", `
     <div class="card">
       <div class="error-icon">❌</div>
-      <p style="font-size:18px;font-weight:600;color:#333;margin-bottom:12px;">Laudo não encontrado</p>
-      <p class="error-text">
-        O código <strong>${codigo || "informado"}</strong> não existe ou foi digitado incorretamente.<br>
-        Verifique o código QR do documento e tente novamente.
+      <p style="font-size:18px;font-weight:900;color:#0f172a;margin-bottom:12px;text-transform:uppercase;">Não Encontrado</p>
+      <p style="color:#64748b;font-size:14px;line-height:1.6;margin-bottom:20px;">
+        O código <strong>${codigo || ""}</strong> não foi localizado em nossa base de dados oficial.
       </p>
-      <a href="/" style="display:block;margin-top:16px;color:#1a3a6b;font-size:14px;font-weight:600;text-decoration:none;">
+      <a href="/" style="display:block;margin-top:16px;color:#00aeef;font-size:12px;font-weight:900;text-decoration:none;text-transform:uppercase;">
         ← Tentar outro código
       </a>
     </div>
@@ -297,14 +284,14 @@ function renderNotFound(codigo) {
 }
 
 function renderSearch() {
-  return htmlBase("Verificação de Laudo - Sodré", `
+  return htmlBase("Validação Innovatox", `
     <div class="card">
-      <p class="success-text">
-        Informe o código do laudo para verificar sua autenticidade.
+      <p style="color:#64748b;font-size:14px;line-height:1.6;margin-bottom:30px;">
+        Digite o código de validação presente no rodapé do laudo para verificar sua autenticidade.
       </p>
       <form method="GET" action="/">
-        <input type="text" name="codigo" placeholder="XXXX.XXXX" maxlength="9" autocomplete="off" />
-        <button type="submit" class="btn-buscar">Verificar Laudo</button>
+        <input type="text" name="codigo" placeholder="XXXX.XXXX" maxlength="20" autocomplete="off" />
+        <button type="submit" class="btn-action">Verificar Documento</button>
       </form>
     </div>
   `);
@@ -316,22 +303,18 @@ export default {
     const url = new URL(request.url);
     const codigo = url.searchParams.get("codigo") || url.searchParams.get("id") || "";
 
-    // CORS headers
     const headers = {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "no-cache",
     };
 
-    // Sem código → página de busca
     if (!codigo) {
       return new Response(renderSearch(), { headers });
     }
 
-    // Normalizar código: remover espaços, uppercase
     const codigoNorm = codigo.trim().toUpperCase();
 
     try {
-      // Consultar o banco D1 do DocMaster
       const result = await env.DB.prepare(
         "SELECT id, nome, cpf, data, codigo_validacao, type, created_at FROM documents WHERE (codigo_validacao = ? OR id = ?) AND type = 'toxicria' LIMIT 1"
       ).bind(codigoNorm, codigoNorm).first();

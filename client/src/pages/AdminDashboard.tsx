@@ -127,7 +127,7 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   cnh: "CNH",
   cha: "CHA Náutica",
   toxicologico: "Toxicológico",
-  toxicria: "Toxicológico Sodré",
+  toxicria: "Toxicológico Innovatox",
   laudocria: "Laudo Sodré",
   "historico-sp": "Histórico SP",
   "historico-uninter": "Histórico UNINTER",

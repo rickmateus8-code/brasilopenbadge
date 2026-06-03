@@ -1,51 +1,43 @@
 /**
- * ToxicriaSalvos — Histórico de Laudos Toxicológicos Sodré
+ * ToxicriaSalvos — Histórico de Laudos Toxicológicos Innovatox
  */
 import DocumentosSalvos from "@/components/DocumentosSalvos";
 
 const FIELDS = [
-  { key: "nome", label: "Nome Completo" },
+  { key: "laudoNumero", label: "Laudo N°", locked: true },
+  { key: "nome", label: "Nome do Doador" },
   { key: "cpf", label: "CPF", locked: true },
-  { key: "labColetor", label: "Lab. Coletor" },
-  { key: "comprimento", label: "Comprimento (CM)" },
-  { key: "dataColeta", label: "Data da Coleta" },
+  { key: "nf", label: "NF" },
+  { key: "codigoAmostra", label: "Cód. Amostra" },
+  { key: "dataColeta", label: "Data Coleta" },
   { key: "dataRecebimento", label: "Data Recebimento" },
-  { key: "dataLiberacao", label: "Data de Liberação" },
-  { key: "validadeExame", label: "Validade do Exame" },
-  { key: "os", label: "Número O.S" },
+  { key: "dataEmissao", label: "Data Emissão" },
+  { key: "material", label: "Material" },
+  { key: "postoColeta", label: "Posto de Coleta" },
 ];
 
 export default function ToxicriaSalvos() {
   return (
     <DocumentosSalvos
-      title="Laudos Toxicológicos Sodré"
+      title="Laudos Innovatox Salvos"
       apiEndpoint="/api/documents/toxicria"
       docType="toxicria"
-      validityDays={60}
       fields={FIELDS}
       nameField="nome"
       cpfField="cpf"
-      idLabel="Código Emissão"
-      idField="codigo_qr"
+      idLabel="Laudo N°"
+      idField="laudoNumero"
       dateLabel="Data Emissão"
-      dateField="dataLiberacao"
+      dateField="dataEmissao"
       extraColumns={[
         {
-          key: "created_at",
-          label: "Criação (Painel)",
-          render: (doc) => {
-            const date = new Date(doc.created_at);
-            return (
-              <div className="flex flex-col">
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  {date.toLocaleDateString("pt-BR")}
-                </span>
-                <span className="text-[10px] text-gray-400">
-                  {date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                </span>
-              </div>
-            );
-          }
+          key: "codigo_validacao",
+          label: "Código Validação",
+          render: (doc) => (
+            <span className="font-mono text-[10px] bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+              {doc.codigo_qr || "—"}
+            </span>
+          )
         }
       ]}
     />

@@ -1,8 +1,8 @@
 /**
- * ToxicriaCria — Emissão de Laudo Toxicológico Sodré
+ * ToxicriaCria — Emissão de Laudo Toxicológico Innovatox
  *
- * Layout baseado no LAUDO_GLADEMIR_PARAY.pdf
- * Domínio de validação: valida-laudo-sodretox.online
+ * Layout baseado no Laudo Innovatox (Alison Alander Castiglione)
+ * Domínio de validação: valida-laudo-sodretox.online (a ser atualizado)
  * Fluxo: Preencher dados → Emitir → QR Code gerado → Salvar em /toxicriasalvos
  */
 import { useState, useRef, useEffect } from "react";
@@ -13,35 +13,41 @@ import DashboardLayout from "@/components/DashboardLayout";
 import EmissionModal from "@/components/EmissionModal";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
-import { FlaskConical, Save, Download, ArrowLeft } from "lucide-react";
+import { FlaskConical, Save, Download, ArrowLeft, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 
-// ─── Substâncias pesquisadas ──────────────────────────────────────────────────
+// ─── Substâncias pesquisadas (Innovatox) ──────────────────────────────────────
 const SUBSTANCIAS = [
+  { grupo: "ANFEPRAMONA", itens: [
+    { nome: "ANFEPRAMONA", triagem: "0.2", confirmacao: "0.2" },
+  ]},
   { grupo: "ANFETAMINAS", itens: [
-    { nome: "ANFEPRAMONA", triagem: "0,2ng/mg", confirmacao: "0,2ng/mg" },
-    { nome: "ANFETAMINA", triagem: "0,2ng/mg", confirmacao: "0,2ng/mg" },
-    { nome: "FEMPROPOREX", triagem: "0,2ng/mg", confirmacao: "0,2ng/mg" },
-    { nome: "MAZINDOL", triagem: "0,5ng/mg", confirmacao: "0,5ng/mg" },
+    { nome: "ANFETAMINA", triagem: "0.2", confirmacao: "0.2" },
+    { nome: "MDA", triagem: "0.2", confirmacao: "0.2" },
+  ]},
+  { grupo: "COCAÍNA", itens: [
+    { nome: "COCAÍNA", triagem: "0.5", confirmacao: "0.5" },
+    { nome: "BENZOILECGONINA", triagem: "-", confirmacao: "0.05" },
+    { nome: "COCAETILENO", triagem: "-", confirmacao: "0.05" },
+    { nome: "NORCOCAINA", triagem: "-", confirmacao: "0.05" },
+  ]},
+  { grupo: "FEMPROPOREX", itens: [
+    { nome: "FEMPROPOREX", triagem: "0.2", confirmacao: "0.2" },
   ]},
   { grupo: "CANABINOIDES", itens: [
-    { nome: "CARBOXY THC (THC-COOH)", triagem: "0,0002 ng/mg", confirmacao: "0,0002 ng/mg" },
-    { nome: "THC", triagem: "0,05ng/mg", confirmacao: "0,05ng/mg" },
+    { nome: "THC", triagem: "0.1", confirmacao: "-" },
+    { nome: "CARBOXI THC", triagem: "-", confirmacao: "0.0002" },
   ]},
-  { grupo: "COCAINICOS", itens: [
-    { nome: "BENZOILECGONINA", triagem: "0,05ng/mg", confirmacao: "0,05ng/mg" },
-    { nome: "COCAETILENO", triagem: "0,05ng/mg", confirmacao: "0,05ng/mg" },
-    { nome: "COCAÍNA", triagem: "0,5ng/mg", confirmacao: "0,5ng/mg" },
-    { nome: "NORCOCAINA", triagem: "0,05ng/mg", confirmacao: "0,05ng/mg" },
+  { grupo: "MAZINDOL", itens: [
+    { nome: "MAZINDOL", triagem: "0.5", confirmacao: "0.5" },
   ]},
   { grupo: "METANFETAMINAS", itens: [
-    { nome: "MDA", triagem: "0,2ng/mg", confirmacao: "0,2ng/mg" },
-    { nome: "MDMA", triagem: "0,2ng/mg", confirmacao: "0,2ng/mg" },
-    { nome: "METANFETAMINA", triagem: "0,2ng/mg", confirmacao: "0,2ng/mg" },
+    { nome: "METANFETAMINA", triagem: "0.2", confirmacao: "0.2" },
+    { nome: "MDMA", triagem: "0.2", confirmacao: "0.2" },
   ]},
-  { grupo: "OPIOIDES E OPIACEOS", itens: [
-    { nome: "6-ACETIL MORFINA (HEROINA)", triagem: "0,2ng/mg", confirmacao: "0,2ng/mg" },
-    { nome: "CODEINA", triagem: "0,2ng/mg", confirmacao: "0,2ng/mg" },
-    { nome: "MORFINA", triagem: "0,2ng/mg", confirmacao: "0,2ng/mg" },
+  { grupo: "OPIÁCEOS", itens: [
+    { nome: "MORFINA", triagem: "0.2", confirmacao: "0.2" },
+    { nome: "CODEÍNA", triagem: "0.2", confirmacao: "0.2" },
+    { nome: "6-ACETILMORFINA", triagem: "0.2", confirmacao: "0.2" },
   ]},
 ];
 
@@ -62,243 +68,196 @@ function handleDateInput(v: string) {
   if (d.length <= 4) return `${d.slice(0,2)}/${d.slice(2)}`;
   return `${d.slice(0,2)}/${d.slice(2,4)}/${d.slice(4)}`;
 }
-function addDays(dateStr: string, days: number): string {
-  if (!dateStr || dateStr.length < 10) return "";
-  const [dd, mm, yyyy] = dateStr.split("/");
-  const d = new Date(Number(yyyy), Number(mm)-1, Number(dd));
-  d.setDate(d.getDate() + days);
-  return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;
-}
-function addYears(dateStr: string, years: number): string {
-  if (!dateStr || dateStr.length < 10) return "";
-  const [dd, mm, yyyy] = dateStr.split("/");
-  return `${dd}/${mm}/${Number(yyyy)+years}`;
-}
 
 interface ToxicriaForm {
   nome: string;
   cpf: string;
-  labColetor: string;
-  comprimento: string;
+  telefone: string;
+  laudoNumero: string;
+  nf: string;
+  codigoAmostra: string;
   dataColeta: string;
   dataRecebimento: string;
-  dataLiberacao: string;
-  validadeExame: string;
-  os: string;
-  // Campos adicionais
-  numeroLaudo: string;
-  tituloExame: string;
-  realizadoPor: string;
+  dataEmissao: string;
   material: string;
-  jDeteccao: string;
-  metodo: string;
-  procedimento: string;
-  valorReferencia: string;
+  comprimentoColetado: string;
+  comprimentoAnalisado: string;
+  postoColeta: string;
+  postoEndereco: string;
+  analisadoPor: string;
+  metodoAnalitico: string;
+  janelaDeteccao: string;
+  resultadoGeral: string;
 }
 
 const EMPTY: ToxicriaForm = {
   nome: "",
   cpf: "",
-  labColetor: "",
-  comprimento: "3,00",
+  telefone: "",
+  laudoNumero: "0GTN60IX000" + Math.floor(Math.random() * 90000000),
+  nf: "",
+  codigoAmostra: "0002C" + Math.floor(Math.random() * 900000),
   dataColeta: todayBR(),
   dataRecebimento: todayBR(),
-  dataLiberacao: "",
-  validadeExame: "",
-  os: "",
-  // Campos adicionais com defaults
-  numeroLaudo: "",
-  tituloExame: "EXAME TOXICOLÓGICO DE LONGA JANELA DE DETECÇÃO",
-  realizadoPor: "LABORATÓRIO SODRÉ",
-  material: "CABELO",
-  jDeteccao: "90 DIAS",
-  metodo: "LC-MS/MS",
-  procedimento: "IMUNOENSAIO / CROMATOGRAFIA LÍQUIDA ACOPLADA À ESPECTROMETRIA DE MASSAS",
-  valorReferencia: "NEGATIVO",
+  dataEmissao: todayBR(),
+  material: "Pelo - Tórax",
+  comprimentoColetado: "1.0 cm",
+  comprimentoAnalisado: "1.0 cm",
+  postoColeta: "",
+  postoEndereco: "",
+  analisadoPor: "Innovatox Análises e Pesquisas Ltda",
+  metodoAnalitico: "LC-MS/MS",
+  janelaDeteccao: "mínimo 90 dias",
+  resultadoGeral: "NEGATIVO",
 };
 
-// ─── Componente de Preview do Laudo ──────────────────────────────────────────
-function LaudoPreview({ form, codigoLaudo, validationUrl }: {
+// ─── Componente de Preview do Laudo (Innovatox) ─────────────────────────────
+function LaudoPreview({ form, codigoValidacao, validationUrl }: {
   form: ToxicriaForm;
-  codigoLaudo: string | null;
+  codigoValidacao: string | null;
   validationUrl: string | null;
 }) {
   return (
     <div style={{
       fontFamily: "Arial, Helvetica, sans-serif",
-      fontSize: 11,
+      fontSize: 10,
       color: "#000",
       background: "#fff",
-      width: "100%",
-      maxWidth: 794,
+      width: 794,
+      minHeight: 1123,
       margin: "0 auto",
-      padding: "20px 24px",
+      padding: "30px 40px",
       boxSizing: "border-box",
+      position: "relative",
     }}>
+      {/* ── Top Info ── */}
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginBottom: 5 }}>
+        <div style={{ textAlign: "right", fontSize: 11, fontWeight: 700 }}>
+          <div style={{ color: "#000" }}>www.innovatox.com.br</div>
+          <div style={{ color: "#000" }}>Central de Relacionamento: (15) 3359-1768</div>
+        </div>
+      </div>
+
       {/* ── Header ── */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", borderBottom: "2px solid #000", paddingBottom: 10, marginBottom: 10 }}>
-        {/* Logo SODRÉ */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{
-            width: 60, height: 60, borderRadius: "50%",
-            background: "linear-gradient(135deg, #1a3a6b 0%, #2563eb 100%)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            flexShrink: 0,
-          }}>
-            <span style={{ color: "#fff", fontWeight: 900, fontSize: 16, letterSpacing: -1 }}>S</span>
-          </div>
-          <div>
-            <div style={{ fontWeight: 900, fontSize: 18, color: "#1a3a6b", letterSpacing: 1 }}>SODRÉ</div>
-            <div style={{ fontSize: 9, color: "#555", fontWeight: 600 }}>LABORATÓRIO</div>
-          </div>
-          <div style={{ marginLeft: 12 }}>
-            <div style={{ fontWeight: 700, fontSize: 11 }}>SODRE SL DIAGNOSTICOS E PESQUISAS LABORATORIAIS LTDA</div>
-            <div style={{ fontSize: 10, color: "#333" }}>05.934.885/0016-04</div>
-            <div style={{ fontSize: 10, color: "#333", marginTop: 3 }}>CNES: 9778608</div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
+          {/* Logo Innovatox Placeholder */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <div style={{ width: 22, height: 22, border: "3px solid #00aeef", borderRadius: "50% 50% 0 50%", transform: "rotate(-15deg)", position: "relative" }}>
+                <div style={{ position: "absolute", top: 4, left: 4, width: 8, height: 8, background: "#00aeef", borderRadius: "50%" }}></div>
+              </div>
+              <div style={{ marginLeft: 6, fontSize: 32, fontWeight: 900, color: "#004a80", letterSpacing: -1, display: "flex", alignItems: "baseline" }}>
+                innova<span style={{ color: "#00aeef" }}>tox</span>
+              </div>
+            </div>
+            <div style={{ fontSize: 8, color: "#004a80", fontWeight: 700, letterSpacing: 3, marginTop: -5, marginLeft: 25 }}>ANÁLISES E PESQUISAS</div>
           </div>
         </div>
-        {/* Logo CAP ACCREDITED */}
-        <div style={{
-          border: "2px solid #1a3a6b", borderRadius: 6, padding: "4px 8px",
-          textAlign: "center", fontSize: 9, color: "#1a3a6b", fontWeight: 700,
-          minWidth: 80,
-        }}>
-          <div style={{ fontSize: 14, fontWeight: 900 }}>CAP</div>
-          <div style={{ fontSize: 7 }}>ACCREDITED</div>
-          <div style={{ fontSize: 7, fontWeight: 400 }}>COLLEGE of AMERICAN PATHOLOGISTS</div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}>
+           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <div style={{ border: "2px solid #004a80", borderRadius: 4, padding: "2px 10px", textAlign: "center", background: "#f8f8f8" }}>
+                <div style={{ fontSize: 13, fontWeight: 900, color: "#004a80" }}>Laudo n°: {form.laudoNumero}</div>
+              </div>
+              <div style={{ border: "1px solid #004a80", padding: 2, display: "flex", flexDirection: "column", alignItems: "center", width: 50 }}>
+                <div style={{ width: "100%", height: 30, background: "#004a80", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 12 }}>CRL</div>
+                <div style={{ fontSize: 8, color: "#004a80", fontWeight: 700, marginTop: 2 }}>CRL 1487</div>
+              </div>
+           </div>
         </div>
       </div>
 
-      {/* ── Dados do Paciente + Laudo ── */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-        {/* Coluna esquerda - Dados do Paciente */}
-        <div style={{ flex: 1, border: "1px solid #ccc", borderRadius: 4, padding: "8px 10px" }}>
-          <div style={{ marginBottom: 5 }}>
-            <span style={{ fontWeight: 700 }}>Nome: </span>
-            <span>{form.nome || "—"}</span>
-          </div>
-          <div style={{ marginBottom: 5 }}>
-            <span style={{ fontWeight: 700 }}>CPF: </span>
-            <span>{form.cpf || "—"}</span>
-          </div>
-          <div style={{ marginBottom: 5, fontSize: 10 }}>
-            <span style={{ fontWeight: 700 }}>Lab. Coletor: </span>
-            <span>{form.labColetor || "—"}</span>
-          </div>
-          <div style={{ marginBottom: 5 }}>
-            <span style={{ fontWeight: 700 }}>Material: </span>
-            <span>QUERATINA ({form.material || "CABELO"})</span>
-          </div>
-          <div style={{ display: "flex", gap: 16, marginBottom: 5 }}>
-            <div>
-              <span style={{ fontWeight: 700 }}>Comprimento: </span>
-              <span>{form.comprimento || "3,00"} CM</span>
-            </div>
-            <div>
-              <span style={{ fontWeight: 700 }}>J.Detecção: </span>
-              <span>APROX. {form.jDeteccao || "90 DIAS"}</span>
-            </div>
-          </div>
-          <div>
-            <span style={{ fontWeight: 700 }}>Data da Coleta: </span>
-            <span>{form.dataColeta || "—"}</span>
+      <div style={{ background: "#f0f0f0", padding: "6px 12px", marginBottom: 12, borderLeft: "4px solid #00aeef" }}>
+        <div style={{ fontSize: 14, fontWeight: 900, color: "#000" }}>LAUDO DE ANÁLISE TOXICOLÓGICA</div>
+      </div>
+
+      {/* ── Dados do Doador / NF ── */}
+      <div style={{ display: "flex", gap: 0, borderTop: "1.5px solid #000", borderBottom: "1.5px solid #000", marginBottom: 15 }}>
+        <div style={{ flex: 1, padding: "8px 0" }}>
+          <div style={{ fontWeight: 900, fontSize: 11, marginBottom: 5 }}>Dados do doador</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <div><span style={{ fontWeight: 700 }}>Nome:</span> {form.nome || "—"}</div>
+            <div><span style={{ fontWeight: 700 }}>CPF:</span> {form.cpf || "—"}</div>
+            <div><span style={{ fontWeight: 700 }}>Telefone:</span> {form.telefone || "—"}</div>
           </div>
         </div>
+        <div style={{ width: 1.5, background: "#000" }}></div>
+        <div style={{ flex: 1, padding: "8px 15px" }}>
+          <div style={{ fontWeight: 900, fontSize: 11, marginBottom: 5 }}>NF</div>
+          <div><span style={{ fontWeight: 700 }}>Número Doc. Fiscal:</span> {form.nf || "—"}</div>
+        </div>
+      </div>
 
-        {/* Coluna direita - Dados do Laudo + QR */}
-        <div style={{ width: 280, border: "1px solid #ccc", borderRadius: 4, padding: "8px 10px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ marginBottom: 4 }}>
-                <span style={{ fontWeight: 700 }}>Laudo: </span>
-                <span style={{ fontWeight: 700 }}>{form.numeroLaudo || codigoLaudo || "—"}</span>
-                {form.os && <span style={{ marginLeft: 6 }}>O.S {form.os}</span>}
-              </div>
-              <div style={{ marginBottom: 3, fontSize: 10 }}>
-                <span style={{ fontWeight: 700 }}>Exame realizado por: </span>{form.realizadoPor || "LAB.SODRÉ"}
-              </div>
-              <div style={{ marginBottom: 3, fontSize: 10 }}>
-                <span style={{ fontWeight: 700 }}>Data recebimento da amostra: </span>
-                {form.dataRecebimento || "—"}
-              </div>
-              <div style={{ marginBottom: 3, fontSize: 10 }}>
-                <span style={{ fontWeight: 700 }}>Data de liberação: </span>
-                {form.dataLiberacao || "—"}
-              </div>
-              <div style={{ marginBottom: 3, fontSize: 10 }}>
-                <span style={{ fontWeight: 700 }}>Validade do exame: </span>
-                {form.validadeExame || "—"}
-              </div>
-              <div style={{ marginBottom: 3, fontSize: 10 }}>
-                <span style={{ fontWeight: 700 }}>Realizado pelo laboratório em: </span>{form.realizadoPor || "SODRÉ"}
-              </div>
-              <div style={{ marginTop: 6, fontSize: 10 }}>
-                <span style={{ fontWeight: 700 }}>Informações de segurança: </span>
-                <div style={{ background: "#000", height: 20, width: 100, marginTop: 2, display: "inline-block", verticalAlign: "middle" }}>
-                  {/* Barcode placeholder */}
-                  <div style={{ display: "flex", height: "100%", gap: 1, padding: "0 2px" }}>
-                    {Array.from({ length: 20 }).map((_, i) => (
-                      <div key={i} style={{ flex: i % 3 === 0 ? 2 : 1, background: i % 2 === 0 ? "#000" : "#fff", height: "100%" }} />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* QR Code */}
-            <div style={{ marginLeft: 8, display: "flex", flexDirection: "column", alignItems: "center" }}>
-              <div style={{ border: "2px solid #333", padding: 3, borderRadius: 3, background: "#fff" }}>
-                {validationUrl ? (
-                  <QRCodeSVG value={validationUrl} size={60} />
-                ) : (
-                  <div style={{ width: 60, height: 60, background: "#f0f0f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, color: "#999", textAlign: "center" }}>
-                    QR após emissão
-                  </div>
-                )}
-              </div>
-              <div style={{ fontSize: 8, marginTop: 3, textAlign: "center", color: "#555", fontWeight: 700 }}>VALIDAÇÃO</div>
-            </div>
+      {/* ── Características da Amostra ── */}
+      <div style={{ borderBottom: "1.5px solid #000", paddingBottom: 10, marginBottom: 15 }}>
+        <div style={{ fontWeight: 900, fontSize: 11, marginBottom: 8 }}>Características da Amostra</div>
+        <div style={{ display: "flex" }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 3 }}>
+            <div><span style={{ fontWeight: 700 }}>Código da amostra:</span> {form.codigoAmostra || "—"}</div>
+            <div><span style={{ fontWeight: 700 }}>Data da coleta:</span> {form.dataColeta || "—"}</div>
+            <div><span style={{ fontWeight: 700 }}>Data do recebimento:</span> {form.dataRecebimento || "—"}</div>
+            <div><span style={{ fontWeight: 700 }}>Data da emissão do laudo:</span> {form.dataEmissao || "—"}</div>
+          </div>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 3 }}>
+            <div><span style={{ fontWeight: 700 }}>Material:</span> {form.material || "—"}</div>
+            <div><span style={{ fontWeight: 700 }}>Comprimento mínimo coletado:</span> {form.comprimentoColetado || "—"}</div>
+            <div><span style={{ fontWeight: 700 }}>Comprimento mínimo analisado:</span> {form.comprimentoAnalisado || "—"}</div>
           </div>
         </div>
       </div>
 
-      {/* ── Título do Exame ── */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", border: "1px solid #ccc", borderRadius: 4, padding: "8px 12px", marginBottom: 10 }}>
-        <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: 0.5 }}>
-          {form.tituloExame || "EXAME TOXICOLÓGICO DE LONGA JANELA DE DETECÇÃO"}
-        </div>
-        <div style={{ textAlign: "right", fontSize: 10 }}>
-          <div><span style={{ fontWeight: 700 }}>Procedimento: </span>{form.procedimento || "IT.TOX.008/POP.TOX.022/POP.TOX.032/POP.TOX.033"}</div>
-          <div style={{ marginTop: 3 }}>
-            <span style={{ fontWeight: 700 }}>Método: </span>{form.metodo || "CLAE-EM/EM"}
-            <span style={{ marginLeft: 16, fontWeight: 700 }}>Valor de referência: </span>{form.valorReferencia || "CUT OFF"}
+      {/* ── Dados do Posto / Características do Método ── */}
+      <div style={{ display: "flex", borderBottom: "1.5px solid #000", paddingBottom: 10, marginBottom: 15 }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 900, fontSize: 11, marginBottom: 8 }}>Dados do Posto de Coleta</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            <div><span style={{ fontWeight: 700 }}>Coletado por:</span> {form.postoColeta || "—"}</div>
+            <div><span style={{ fontWeight: 700 }}>Analisado por:</span> {form.analisadoPor || "—"}</div>
           </div>
         </div>
+        <div style={{ flex: 1, paddingLeft: 15 }}>
+          <div style={{ fontWeight: 900, fontSize: 11, marginBottom: 8, color: "#00aeef" }}>Característica do Método</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            <div><span style={{ fontWeight: 700 }}>Método Analítico (triagem e confirmatório):</span> {form.metodoAnalitico || "—"}</div>
+            <div><span style={{ fontWeight: 700 }}>Janela de Detecção:</span> {form.janelaDeteccao || "—"}</div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ background: "#004a80", color: "#fff", textAlign: "center", padding: "4px 0", fontWeight: 900, fontSize: 12, letterSpacing: 1, marginBottom: 1 }}>
+        RESULTADO DE ANÁLISE TOXICOLÓGICA
       </div>
 
       {/* ── Tabela de Resultados ── */}
-      <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 14, fontSize: 10 }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 20 }}>
         <thead>
-          <tr style={{ background: "#e8e8e8" }}>
-            <th style={{ border: "1px solid #ccc", padding: "5px 8px", textAlign: "left", fontWeight: 700, width: "50%" }}>SUBSTÂNCIAS (METABÓLITO)</th>
-            <th style={{ border: "1px solid #ccc", padding: "5px 8px", textAlign: "center", fontWeight: 700, width: "20%" }}>RESULTADO</th>
-            <th style={{ border: "1px solid #ccc", padding: "5px 8px", textAlign: "center", fontWeight: 700, width: "15%" }}>TRIAGEM</th>
-            <th style={{ border: "1px solid #ccc", padding: "5px 8px", textAlign: "center", fontWeight: 700, width: "15%" }}>CONFIRMAÇÃO</th>
+          <tr style={{ borderBottom: "1px solid #000" }}>
+            <th style={{ textAlign: "left", padding: "5px 8px", fontWeight: 900, fontSize: 10, width: "35%" }}>SUBSTÂNCIA</th>
+            <th style={{ textAlign: "center", padding: "5px 8px", fontWeight: 900, fontSize: 10, width: "15%" }}>RESULTADO</th>
+            <th style={{ textAlign: "center", padding: "5px 8px", fontWeight: 900, fontSize: 10, width: "15%" }}>VALOR OBTIDO</th>
+            <th colSpan={2} style={{ textAlign: "center", padding: "5px 8px", fontWeight: 900, fontSize: 10, borderBottom: "1px solid #000" }}>VALORES DE CORTE</th>
+          </tr>
+          <tr style={{ borderBottom: "1px solid #000" }}>
+             <th colSpan={3}></th>
+             <th style={{ textAlign: "center", padding: "2px 8px", fontWeight: 900, fontSize: 9 }}>TRIAGEM (ng/mg)</th>
+             <th style={{ textAlign: "center", padding: "2px 8px", fontWeight: 900, fontSize: 9 }}>CONFIRMATÓRIO (ng/mg)</th>
           </tr>
         </thead>
         <tbody>
-          {SUBSTANCIAS.map(grupo => (
+          {SUBSTANCIAS.map((grupo, idx) => (
             <>
-              <tr key={grupo.grupo} style={{ background: "#f5f5f5" }}>
-                <td colSpan={4} style={{ border: "1px solid #ccc", padding: "4px 8px", fontWeight: 700, fontSize: 10 }}>
-                  {grupo.grupo}
-                </td>
+              <tr key={grupo.grupo} style={{ background: idx % 2 === 0 ? "#fff" : "#f5f5f5" }}>
+                <td style={{ padding: "4px 8px", fontWeight: 900, fontSize: 10 }}>{grupo.grupo}</td>
+                <td colSpan={4}></td>
               </tr>
               {grupo.itens.map(item => (
-                <tr key={item.nome}>
-                  <td style={{ border: "1px solid #ccc", padding: "3px 8px" }}>{item.nome}</td>
-                  <td style={{ border: "1px solid #ccc", padding: "3px 8px", textAlign: "center", fontWeight: 700, color: "#16a34a" }}>NEGATIVO</td>
-                  <td style={{ border: "1px solid #ccc", padding: "3px 8px", textAlign: "center" }}>{item.triagem}</td>
-                  <td style={{ border: "1px solid #ccc", padding: "3px 8px", textAlign: "center" }}>{item.confirmacao}</td>
+                <tr key={item.nome} style={{ background: idx % 2 === 0 ? "#fff" : "#f5f5f5" }}>
+                  <td style={{ padding: "3px 8px", paddingLeft: 15, fontSize: 9 }}>{item.nome}</td>
+                  <td style={{ padding: "3px 8px", textAlign: "center", fontSize: 9, fontWeight: 700 }}>{form.resultadoGeral}</td>
+                  <td style={{ padding: "3px 8px", textAlign: "center", fontSize: 9 }}>-</td>
+                  <td style={{ padding: "3px 8px", textAlign: "center", fontSize: 9 }}>{item.triagem}</td>
+                  <td style={{ padding: "3px 8px", textAlign: "center", fontSize: 9 }}>{item.confirmacao}</td>
                 </tr>
               ))}
             </>
@@ -306,34 +265,57 @@ function LaudoPreview({ form, codigoLaudo, validationUrl }: {
         </tbody>
       </table>
 
-      {/* ── Texto Legal ── */}
-      <div style={{ fontSize: 9, color: "#333", lineHeight: 1.5, marginBottom: 12 }}>
-        <p style={{ margin: "0 0 4px" }}>Este relatório de ensaio é válido exclusivamente para as amostras analisadas e só pode ser reproduzido na íntegra. Reprodução parcial requer aprovação por escrito do laboratório.</p>
-        <p style={{ margin: "0 0 4px" }}>Um resultado negativo significa que a droga não foi detectada em quantidades que atinjam o valor de <em>cut off</em>.</p>
-        <p style={{ margin: "0 0 4px" }}>Um resultado positivo significa que a droga foi identificada em quantidades que igualam ou excedam o valor de <em>cut off</em>.</p>
-        <p style={{ margin: "0 0 4px" }}>Exame repetido e confirmado através de duas extrações.</p>
-        <p style={{ margin: 0 }}>Exame realizado pelo Laboratório Sodré</p>
+      {/* ── Informações Gerais ── */}
+      <div style={{ marginBottom: 15 }}>
+        <div style={{ fontWeight: 900, fontSize: 11, marginBottom: 5 }}>Informações Gerais</div>
+        <div style={{ fontSize: 8.5, lineHeight: 1.4, textAlign: "justify" }}>
+          Resultado negativo significa que não foi encontrada substância na quantidade maior do que o valor de corte (cut-off). Resultado positivo significa que foi encontrada substância na quantidade maior ou igual do que o valor de corte (cut-off). Este laudo não pode ser reproduzido parcialmente. A coleta foi realizada pelo posto de coleta: {form.postoColeta || "—"}, {form.postoEndereco || "—"}, não acreditado para esta atividade. O laboratório é responsável por todas as informações fornecidas neste relatório, exceto aquelas fornecidas pelo cliente ou seus representantes. Os resultados acima apresentados referem-se apenas as substâncias analisadas nesta amostra. Análise realizada por {form.metodoAnalitico} e plano de amostragem de acordo com os procedimentos em vigência.
+        </div>
       </div>
 
-      {/* ── Validação QR ── */}
-      {validationUrl && (
-        <div style={{ fontSize: 9, color: "#333", marginBottom: 16 }}>
-          <p style={{ margin: 0 }}>
-            Para garantir a autenticidade do laudo por meio do código QR, verifique se o link aberto pertence ao Laboratório Sodré. Nossos links seguem o seguinte padrão:
-          </p>
-          <p style={{ margin: "2px 0 0", fontFamily: "monospace", fontSize: 9 }}>{validationUrl}</p>
-        </div>
-      )}
+      <div style={{ border: "2px solid #00aeef", padding: "10px", textAlign: "center", marginBottom: 25 }}>
+        <div style={{ fontSize: 13, fontWeight: 900 }}>Validade do Exame: <span style={{ color: "#00aeef" }}>90 dias para finalidade CNH e 60 dias para finalidade CLT (Contados a partir da coleta)</span></div>
+      </div>
 
-      {/* ── Assinatura ── */}
-      <div style={{ marginTop: 24, textAlign: "center" }}>
-        <div style={{ fontStyle: "italic", fontSize: 14, marginBottom: 4, fontFamily: "Georgia, serif", color: "#333" }}>
-          Amadeu Cardoso Jr.
+      {/* ── Footer / Assinatura ── */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 20 }}>
+        <div style={{ fontSize: 9, lineHeight: 1.4 }}>
+          <div style={{ fontWeight: 900, fontSize: 11 }}>INNOVATOX Análises e Pesquisas Ltda.</div>
+          <div>Rua Levindo Lima, 55 - Pq. Campolim, Sorocaba - SP</div>
+          <div>CNPJ: 28.256.904/0001-00</div>
+          <div>FOR.TOX.019.V00</div>
         </div>
-        <div style={{ borderTop: "1px solid #333", width: 200, margin: "0 auto 6px" }} />
-        <div style={{ fontSize: 10, fontWeight: 700 }}>DR. AMADEU CARDOSO JUNIOR - TOXICOLOGISTA - CRF-RJ 21698</div>
-        <div style={{ fontSize: 9, color: "#555", marginTop: 2 }}>F9F5CEBDBAA0B0714AFA7AB21D10BE0F</div>
-        <div style={{ fontSize: 9, color: "#555" }}>Laboratório – Divisão Toxicológica – REG.CRBM No. 2019-5802-08</div>
+
+        <div style={{ textAlign: "center" }}>
+           {/* Assinatura Placeholder */}
+           <div style={{ position: "relative", width: 220 }}>
+             <div style={{ fontFamily: "Georgia, serif", fontStyle: "italic", fontSize: 18, marginBottom: 5, color: "#333" }}>
+                Rafael Menck de Almeida
+             </div>
+             <div style={{ borderTop: "1.5px solid #000", width: "100%", margin: "0 auto" }}></div>
+             <div style={{ fontWeight: 900, fontSize: 11, marginTop: 4 }}>Rafael Menck de Almeida, PhD</div>
+             <div style={{ fontSize: 10, fontWeight: 700 }}>CRF-SP 38295</div>
+           </div>
+        </div>
+      </div>
+
+      {/* QR Code de Validação e Hash */}
+      <div style={{ position: "absolute", bottom: 40, left: 40, right: 40, borderTop: "1px solid #eee", paddingTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <div style={{ fontSize: 8, fontFamily: "monospace", color: "#666" }}>
+            {codigoValidacao ? codigoValidacao.replace(/-/g, "").toUpperCase() : "AGUARDANDO EMISSÃO"}
+          </div>
+          <div style={{ fontSize: 7, fontWeight: 700, color: "#aaa" }}>ASSINATURA DIGITAL</div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+           <div style={{ fontSize: 8, fontWeight: 700, color: "#333" }}>Pag. 1 de 1</div>
+           {validationUrl && (
+             <div style={{ padding: 2, background: "#fff", border: "1px solid #ccc" }}>
+               <QRCodeSVG value={validationUrl} size={45} />
+             </div>
+           )}
+        </div>
       </div>
     </div>
   );
@@ -348,7 +330,7 @@ export default function ToxicriaCria() {
   const previewRef = useRef<HTMLDivElement>(null);
 
   const [form, setForm] = useState<ToxicriaForm>({ ...EMPTY });
-  const [codigoLaudo, setCodigoLaudo] = useState<string | null>(null);
+  const [codigoValidacao, setCodigoValidacao] = useState<string | null>(null);
   const [validationUrl, setValidationUrl] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
@@ -356,21 +338,7 @@ export default function ToxicriaCria() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-
-  // Auto-calcular datas
-  useEffect(() => {
-    if (form.dataColeta && form.dataColeta.length === 10) {
-      const recebimento = addDays(form.dataColeta, 1);
-      const liberacao = addDays(form.dataColeta, 5);
-      const validade = addYears(form.dataColeta, 5);
-      setForm(p => ({
-        ...p,
-        dataRecebimento: p.dataRecebimento === todayBR() || !p.dataRecebimento ? recebimento : p.dataRecebimento,
-        dataLiberacao: p.dataLiberacao || liberacao,
-        validadeExame: p.validadeExame || validade,
-      }));
-    }
-  }, [form.dataColeta]);
+  const [zoom, setZoom] = useState(0.7);
 
   const handleChange = (field: keyof ToxicriaForm, value: string) => {
     setForm(p => ({ ...p, [field]: value }));
@@ -387,24 +355,7 @@ export default function ToxicriaCria() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          nome: form.nome.toUpperCase(),
-          cpf: form.cpf,
-          labColetor: form.labColetor,
-          comprimento: form.comprimento,
-          dataColeta: form.dataColeta,
-          dataRecebimento: form.dataRecebimento,
-          dataLiberacao: form.dataLiberacao,
-          validadeExame: form.validadeExame,
-          os: form.os,
-          // Campos adicionais
-          numeroLaudo: form.numeroLaudo,
-          tituloExame: form.tituloExame,
-          realizadoPor: form.realizadoPor,
-          material: form.material,
-          jDeteccao: form.jDeteccao,
-          metodo: form.metodo,
-          procedimento: form.procedimento,
-          valorReferencia: form.valorReferencia,
+          ...form,
           tipo: "toxicria",
         }),
       });
@@ -413,13 +364,13 @@ export default function ToxicriaCria() {
 
       const codigo = data.data.codigoValidacao;
       const url = `https://valida-laudo-sodretox.online/?codigo=${codigo}`;
-      setCodigoLaudo(codigo);
+      setCodigoValidacao(codigo);
       setValidationUrl(url);
       setSaved(true);
       setShowConfirmModal(false);
       setShowSuccessModal(true);
       if (updateBalance && data.newBalance !== undefined) updateBalance(data.newBalance);
-      toast.success("Laudo emitido com sucesso!");
+      toast.success("Laudo Innovatox emitido com sucesso!");
     } catch (err: any) {
       toast.error(err.message || "Erro ao emitir laudo");
     } finally {
@@ -431,187 +382,200 @@ export default function ToxicriaCria() {
     if (!previewRef.current) return;
     try {
       const { exportElementToPDF } = await import("@/lib/pdfExport");
-      const filename = `LAUDO_TOXICOLOGICO_${(form.nome || "PACIENTE").replace(/\s+/g, "_").toUpperCase()}.pdf`;
-      await exportElementToPDF(previewRef.current, { filename, scale: 2, quality: 0.92 });
+      const filename = `LAUDO_INNOVATOX_${(form.nome || "PACIENTE").replace(/\s+/g, "_").toUpperCase()}.pdf`;
+      await exportElementToPDF(previewRef.current, { filename, scale: 2.5, quality: 1.0 });
     } catch (err: any) {
       toast.error("Erro ao gerar PDF: " + err.message);
     }
   };
 
-  // ── Estilos ─────────────────────────────────────────────────────────────────
-  const card: React.CSSProperties = {
-    background: isDark ? "#1e293b" : "#fff",
-    borderRadius: 10,
-    boxShadow: isDark ? "0 2px 8px rgba(0,0,0,0.3)" : "0 2px 8px rgba(0,0,0,0.08)",
-    padding: "14px 16px",
-    marginBottom: 12,
-    border: isDark ? "1px solid #334155" : "1px solid #e2e8f0",
-  };
-  const secTitle: React.CSSProperties = {
-    fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const,
-    letterSpacing: 1, color: isDark ? "#60a5fa" : "#1a3a6b",
-    borderBottom: isDark ? "2px solid #3b82f6" : "2px solid #1a3a6b",
-    paddingBottom: 5, marginBottom: 10,
-  };
-  const lbl: React.CSSProperties = {
-    display: "block", fontSize: 11, fontWeight: 600,
-    color: isDark ? "#cbd5e1" : "#374151", marginBottom: 3,
-  };
-  const inp: React.CSSProperties = {
-    width: "100%", padding: "6px 10px",
-    border: isDark ? "1px solid #475569" : "1px solid #d1d5db",
-    borderRadius: 6, fontSize: 13, outline: "none",
-    boxSizing: "border-box" as const, fontFamily: "inherit",
-    color: isDark ? "#e2e8f0" : "#000",
-    background: isDark ? "#0f172a" : "#fff",
-  };
-  const btnBlue: React.CSSProperties = {
-    background: "#1a3a6b", color: "#fff", border: "none",
-    borderRadius: 7, padding: "8px 16px", fontWeight: 700,
-    fontSize: 12, cursor: "pointer", letterSpacing: 0.5,
-  };
-  const btnGreen: React.CSSProperties = {
-    background: "#16a34a", color: "#fff", border: "none",
-    borderRadius: 7, padding: "8px 16px", fontWeight: 700,
-    fontSize: 12, cursor: "pointer",
-  };
-  const btnGray: React.CSSProperties = {
-    background: isDark ? "#334155" : "#e2e8f0",
-    color: isDark ? "#e2e8f0" : "#000",
-    border: isDark ? "1px solid #475569" : "1px solid #cbd5e1",
-    borderRadius: 7, padding: "8px 16px", fontWeight: 700,
-    fontSize: 12, cursor: "pointer",
-  };
-
   return (
-    <div style={{ height: "100vh", width: "100%", overflow: "hidden", background: isDark ? "#0f172a" : "#f1f5f9", fontFamily: "Roboto, sans-serif", color: isDark ? "#e2e8f0" : "#1e293b", display: "flex", flexDirection: "column" }}>
-      {/* Header */}
-      <div style={{ background: "#1a3a6b", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button style={{ ...btnGray, padding: "5px 12px", fontSize: 11 }} onClick={() => navigate("/dashboard")}>
-            <ArrowLeft size={12} style={{ display: "inline", marginRight: 4 }} />VOLTAR
+    <div style={{ height: "100vh", width: "100%", overflow: "hidden", background: isDark ? "#0f172a" : "#f1f5f9", fontFamily: "Inter, sans-serif", color: isDark ? "#e2e8f0" : "#1e293b", display: "flex", flexDirection: "column" }}>
+      {/* Header Estilo DocMaster Elite */}
+      <div style={{ background: "#004a80", padding: "10px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", zIndex: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <button 
+            className="group flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all border border-white/10" 
+            onClick={() => navigate("/dashboard")}
+          >
+            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+            <span className="text-xs font-bold tracking-widest">VOLTAR</span>
           </button>
-          <FlaskConical size={18} color="#fff" />
-          <h1 style={{ color: "#fff", fontSize: 16, fontWeight: 700, margin: 0 }}>DocMaster — EMITIR LAUDO TOXICOLÓGICO SODRÉ</h1>
+          <div className="h-8 w-[1px] bg-white/20 mx-2" />
+          <FlaskConical size={24} color="#00aeef" />
+          <div>
+            <h1 style={{ color: "#fff", fontSize: 18, fontWeight: 900, margin: 0, letterSpacing: -0.5 }}>DocMaster Elite</h1>
+            <p className="text-[10px] text-white/60 font-black uppercase tracking-[0.2em]">Laudo Toxicológico Innovatox</p>
+          </div>
         </div>
-        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.9)", background: "rgba(0,0,0,0.15)", padding: "4px 12px", borderRadius: 6, fontWeight: 600 }}>
-          🔒 Dados excluídos automaticamente após 60 dias
-        </span>
+        
+        <div className="flex items-center gap-6">
+            <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-black/20 rounded-2xl border border-white/5">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                <span className="text-[10px] font-black text-white/80 uppercase tracking-widest">Sistema Forense Ativo</span>
+            </div>
+            <span className="text-xs font-bold text-white/90 bg-indigo-500 px-4 py-2 rounded-xl shadow-lg shadow-indigo-500/20">
+              VALOR: R$ 18,00
+            </span>
+        </div>
       </div>
 
-      <div className="flex-1 flex flex-col lg:flex-row gap-4 p-3 md:p-4 max-w-[1600px] mx-auto overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row gap-6 p-4 md:p-6 max-w-[1800px] mx-auto overflow-hidden w-full">
         {/* ═══ COLUNA ESQUERDA — FORMULÁRIO ═══ */}
-        <div className="w-full lg:w-[340px] xl:w-[400px] lg:flex-shrink-0 lg:overflow-y-auto lg:max-h-[calc(100vh-100px)] custom-scrollbar">
-          <div className="space-y-4">
+        <div className="w-full lg:w-[420px] lg:flex-shrink-0 lg:overflow-y-auto lg:max-h-[calc(100vh-140px)] custom-scrollbar pr-2">
+          <div className="space-y-6">
             {/* Dados do Paciente */}
-            <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800">
-              <p className="text-xs font-black text-indigo-900 dark:text-indigo-400 uppercase tracking-widest mb-4 border-b pb-2">Dados do Paciente</p>
-              <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Nome Completo *</label>
-                  <input className="w-full h-10 px-3 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none uppercase" value={form.nome} onChange={e => handleChange("nome", e.target.value.toUpperCase())} placeholder="NOME DO PACIENTE" />
+            <div className="bg-white dark:bg-gray-900 rounded-[2rem] p-6 shadow-2xl shadow-black/5 border border-gray-100 dark:border-gray-800 transition-all hover:shadow-indigo-500/5">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center text-indigo-600">
+                    <Save size={20} />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">CPF *</label>
-                  <input className="w-full h-10 px-3 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none" value={form.cpf} onChange={e => handleChange("cpf", maskCPF(e.target.value))} placeholder="000.000.000-00" maxLength={14} />
+                <div>
+                    <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em]">Seção 01</p>
+                    <h2 className="text-sm font-black text-gray-800 dark:text-gray-100 uppercase">Identificação</h2>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Lab. Coletor</label>
-                  <input className="w-full h-10 px-3 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none uppercase" value={form.labColetor} onChange={e => handleChange("labColetor", e.target.value.toUpperCase())} placeholder="ENDEREÇO DO LABORATÓRIO" />
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nome Completo do Doador</label>
+                  <input className="w-full h-12 px-4 rounded-2xl border-2 border-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950 text-sm font-bold outline-none focus:border-indigo-500 transition-all uppercase" value={form.nome} onChange={e => handleChange("nome", e.target.value.toUpperCase())} placeholder="ALISON ALANDER CASTIGLIONE" />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Comprimento</label>
-                    <input className="w-full h-10 px-3 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none" value={form.comprimento} onChange={e => handleChange("comprimento", e.target.value)} placeholder="3,00 CM" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">CPF</label>
+                    <input className="w-full h-12 px-4 rounded-2xl border-2 border-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950 text-sm font-bold outline-none focus:border-indigo-500 transition-all" value={form.cpf} onChange={e => handleChange("cpf", maskCPF(e.target.value))} placeholder="000.000.000-00" maxLength={14} />
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Data Coleta</label>
-                    <input className="w-full h-10 px-3 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none" value={form.dataColeta} onChange={e => handleChange("dataColeta", handleDateInput(e.target.value))} placeholder="DD/MM/AAAA" maxLength={10} />
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Telefone</label>
+                    <input className="w-full h-12 px-4 rounded-2xl border-2 border-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950 text-sm font-bold outline-none focus:border-indigo-500 transition-all" value={form.telefone} onChange={e => handleChange("telefone", e.target.value)} placeholder="(00) 0000-0000" />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Dados do Laudo */}
-            <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800">
-              <p className="text-xs font-black text-indigo-900 dark:text-indigo-400 uppercase tracking-widest mb-4 border-b pb-2">Dados do Laudo</p>
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Número O.S</label>
-                    <input className="w-full h-10 px-3 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none" value={form.os} onChange={e => handleChange("os", e.target.value)} placeholder="56392178" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Nº Laudo</label>
-                    <input className="w-full h-10 px-3 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none" value={form.numeroLaudo} onChange={e => handleChange("numeroLaudo", e.target.value)} placeholder="2024001234" />
-                  </div>
+            {/* Dados Administrativos */}
+            <div className="bg-white dark:bg-gray-900 rounded-[2rem] p-6 shadow-2xl shadow-black/5 border border-gray-100 dark:border-gray-800 transition-all hover:shadow-sky-500/5">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-sky-50 dark:bg-sky-900/30 rounded-2xl flex items-center justify-center text-sky-600">
+                    <FlaskConical size={20} />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Recebimento Amostra</label>
-                  <input className="w-full h-10 px-3 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none" value={form.dataRecebimento} onChange={e => handleChange("dataRecebimento", handleDateInput(e.target.value))} placeholder="DD/MM/AAAA" maxLength={10} />
+                <div>
+                    <p className="text-[10px] font-black text-sky-500 uppercase tracking-[0.2em]">Seção 02</p>
+                    <h2 className="text-sm font-black text-gray-800 dark:text-gray-100 uppercase">Laudo & NF</h2>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Data Liberação</label>
-                  <input className="w-full h-10 px-3 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none" value={form.dataLiberacao} onChange={e => handleChange("dataLiberacao", handleDateInput(e.target.value))} placeholder="DD/MM/AAAA" maxLength={10} />
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Laudo N°</label>
+                      <input className="w-full h-12 px-4 rounded-2xl border-2 border-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950 text-sm font-bold outline-none focus:border-sky-500 transition-all" value={form.laudoNumero} onChange={e => handleChange("laudoNumero", e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">N° Doc. Fiscal (NF)</label>
+                      <input className="w-full h-12 px-4 rounded-2xl border-2 border-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950 text-sm font-bold outline-none focus:border-sky-500 transition-all" value={form.nf} onChange={e => handleChange("nf", e.target.value)} placeholder="00177779" />
+                    </div>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-gray-600 uppercase ml-1">Validade Exame</label>
-                  <input className="w-full h-10 px-3 rounded-xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm outline-none font-bold text-indigo-600" value={form.validadeExame} onChange={e => handleChange("validadeExame", handleDateInput(e.target.value))} placeholder="DD/MM/AAAA" maxLength={10} />
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Código da Amostra</label>
+                  <input className="w-full h-12 px-4 rounded-2xl border-2 border-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950 text-sm font-bold outline-none focus:border-sky-500 transition-all uppercase" value={form.codigoAmostra} onChange={e => handleChange("codigoAmostra", e.target.value.toUpperCase())} />
                 </div>
               </div>
             </div>
 
-            {/* Ações */}
-            <div className="flex flex-col gap-2 pt-2">
+            {/* Datas e Coleta */}
+            <div className="bg-white dark:bg-gray-900 rounded-[2rem] p-6 shadow-2xl shadow-black/5 border border-gray-100 dark:border-gray-800">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6 border-b border-gray-50 dark:border-gray-800 pb-4">Datas e Local de Coleta</p>
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-gray-400 uppercase">Coleta</label>
+                      <input className="w-full h-10 px-3 rounded-xl border-2 border-gray-50 dark:border-gray-800 bg-gray-50/50 text-xs font-bold outline-none" value={form.dataColeta} onChange={e => handleChange("dataColeta", handleDateInput(e.target.value))} maxLength={10} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-gray-400 uppercase">Recimento</label>
+                      <input className="w-full h-10 px-3 rounded-xl border-2 border-gray-50 dark:border-gray-800 bg-gray-50/50 text-xs font-bold outline-none" value={form.dataRecebimento} onChange={e => handleChange("dataRecebimento", handleDateInput(e.target.value))} maxLength={10} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-gray-400 uppercase">Emissão</label>
+                      <input className="w-full h-10 px-3 rounded-xl border-2 border-gray-50 dark:border-gray-800 bg-gray-50/50 text-xs font-bold outline-none" value={form.dataEmissao} onChange={e => handleChange("dataEmissao", handleDateInput(e.target.value))} maxLength={10} />
+                    </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Posto de Coleta (Nome Fantasia)</label>
+                  <input className="w-full h-12 px-4 rounded-2xl border-2 border-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950 text-sm font-bold outline-none focus:border-indigo-500 transition-all uppercase" value={form.postoColeta} onChange={e => handleChange("postoColeta", e.target.value.toUpperCase())} placeholder="CENTRAL DOM JOAO VI ANALISES CLINICAS EIRELI" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Endereço Completo do Posto</label>
+                  <input className="w-full h-12 px-4 rounded-2xl border-2 border-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950 text-sm font-bold outline-none focus:border-indigo-500 transition-all uppercase" value={form.postoEndereco} onChange={e => handleChange("postoEndereco", e.target.value.toUpperCase())} placeholder="AVENIDA DOM JOÃO VI, 494, DIADEMA - SP" />
+                </div>
+              </div>
+            </div>
+
+            {/* Botão de Ação */}
+            <div className="sticky bottom-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl p-4 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-2xl z-20">
               <button 
-                className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none active:scale-95 transition-all"
+                className="w-full py-5 bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-700 hover:to-sky-700 text-white font-black text-sm rounded-[1.5rem] shadow-xl shadow-indigo-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
                 onClick={() => setShowConfirmModal(true)}
               >
-                <Save size={16} className="inline mr-2" /> EMITIR LAUDO
+                <Save size={18} />
+                <span className="tracking-[0.2em] uppercase">Emitir Laudo Innovatox</span>
               </button>
-              {saved && (
-                <button 
-                  className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm rounded-2xl shadow-xl shadow-emerald-100 dark:shadow-none active:scale-95 transition-all"
-                  onClick={() => { setIsDownloading(true); handleExport().finally(() => setIsDownloading(false)); }}
-                >
-                  <Download size={16} className="inline mr-2" /> BAIXAR PDF
-                </button>
-              )}
             </div>
-
-            {saved && codigoLaudo && (
-              <div className="mt-4 p-4 bg-emerald-50 dark:bg-emerald-950/20 border-2 border-emerald-500 rounded-2xl animate-in zoom-in-95">
-                <p className="text-[11px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-1">✅ Sucesso!</p>
-                <p className="text-xs text-emerald-900 dark:text-emerald-100 mb-2">Código: <strong className="font-mono">{codigoLaudo}</strong></p>
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-500 break-all opacity-80">{validationUrl}</p>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* ═══ COLUNA DIREITA — PREVIEW ═══ */}
-        <div className="hidden lg:flex flex-1 flex-col min-w-0 h-full">
-          <div className="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm mb-4 flex items-center justify-between">
-            <span className="text-sm font-black text-gray-800 dark:text-gray-200 italic uppercase">Preview Realtime</span>
-            <div className="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 text-[10px] font-black rounded-lg">
-              LAUDO SODRÉ
+        {/* ═══ COLUNA DIREITA — PREVIEW INTELIGENTE ═══ */}
+        <div className="hidden lg:flex flex-1 flex-col min-w-0 h-full relative group">
+          <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-10 pointer-events-none">
+            <div className="px-6 py-3 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-800 shadow-xl pointer-events-auto flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-indigo-500 rounded-full" />
+                    <span className="text-[10px] font-black text-gray-800 dark:text-gray-200 uppercase tracking-widest">Preview Forense 1:1</span>
+                </div>
+                <div className="h-4 w-[1px] bg-gray-200 dark:bg-gray-700" />
+                <div className="flex items-center gap-1">
+                    <button onClick={() => setZoom(z => Math.max(0.4, z - 0.1))} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors pointer-events-auto"><ZoomOut size={16} /></button>
+                    <span className="text-[10px] font-bold w-12 text-center">{Math.round(zoom * 100)}%</span>
+                    <button onClick={() => setZoom(z => Math.min(1.2, z + 0.1))} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors pointer-events-auto"><ZoomIn size={16} /></button>
+                </div>
+            </div>
+
+            <div className="flex gap-2 pointer-events-auto">
+                <button 
+                  className={`p-3 rounded-2xl shadow-xl transition-all ${saved ? 'bg-emerald-500 text-white hover:bg-emerald-600' : 'bg-gray-400 text-white cursor-not-allowed'}`}
+                  onClick={() => { setIsDownloading(true); handleExport().finally(() => setIsDownloading(false)); }}
+                  disabled={!saved}
+                >
+                  <Download size={20} />
+                </button>
+                <button className="p-3 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 hover:bg-gray-50">
+                  <Maximize2 size={20} />
+                </button>
             </div>
           </div>
-          <div className="flex-1 bg-gray-200 dark:bg-gray-800 rounded-3xl p-6 overflow-auto shadow-inner flex items-start justify-center">
+
+          <div className="flex-1 bg-[#d1d5db] dark:bg-gray-800/50 rounded-[3rem] p-12 overflow-auto shadow-inner custom-scrollbar-thin flex items-start justify-center">
             <div 
               ref={previewRef} 
-              className="bg-white shadow-2xl origin-top transition-transform"
-              style={{ width: 794, flexShrink: 0 }}
+              className="bg-white shadow-[0_0_80px_rgba(0,0,0,0.2)] transition-all duration-500 ease-out"
+              style={{ 
+                width: 794, 
+                flexShrink: 0, 
+                transform: `scale(${zoom})`,
+                transformOrigin: "top center",
+                marginBottom: 100,
+              }}
             >
-              <LaudoPreview form={form} codigoLaudo={codigoLaudo} validationUrl={validationUrl} />
+              <LaudoPreview form={form} codigoValidacao={codigoValidacao} validationUrl={validationUrl} />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Modal de Confirmação + Sucesso */}
       <EmissionModal
-        docLabel="Laudo Toxicológico Sodré"
+        docLabel="Laudo Toxicológico Innovatox"
         documentPrice={1800}
         userBalance={user?.balance ?? 0}
         showConfirm={showConfirmModal}
