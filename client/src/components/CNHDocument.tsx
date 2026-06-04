@@ -10,7 +10,6 @@
  */
 import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import QRCode from "qrcode";
-import { getQRCodeCNH } from "@/config.qrcode";
 
 export interface CNHDocumentProps {
   nome: string;
@@ -41,12 +40,6 @@ export interface CNHDocumentProps {
   observacoes: string;
   fotoUrl: string;
   assinaturaUrl: string;
-  fotoScale?: number;
-  fotoOffsetX?: number;
-  fotoOffsetY?: number;
-  assScale?: number;
-  assOffsetX?: number;
-  assOffsetY?: number;
   codigoQR?: string;
   blurred?: boolean;
 }
@@ -82,7 +75,11 @@ function gerarMRZ(user: CNHDocumentProps): string[] {
   const fmtData = (d: string) => {
     if (!d) return "000000";
     const p = d.split("-");
-    return p.length === 3 ? `${p[0].slice(2)}${p[1]}${p[2]}` : "000000";
+    if (p.length === 3) return `${p[0].slice(2)}${p[1]}${p[2]}`;
+    // Fallback para DD/MM/YYYY
+    const p2 = d.split("/");
+    if (p2.length === 3) return `${p2[2].slice(2)}${p2[1]}${p2[0]}`;
+    return "000000";
   };
   const r = (user.registro || "00000000000").replace(/\D/g, "").padEnd(11, "<").slice(0, 11);
   const e = (user.espelho || "000000000").replace(/\D/g, "").padEnd(9, "<").slice(0, 9);
@@ -122,9 +119,7 @@ async function loadFonts() {
 
 export interface CNHDocumentHandle {
   exportAsBlob: () => Promise<Blob | null>;
-  exportAsPdf: () => Promise<void>;
   getCanvas: () => HTMLCanvasElement | null;
-  exportCropBlob: (x: number, y: number, w: number, h: number) => Promise<Blob | null>;
 }
 
 const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref) => {
@@ -133,45 +128,13 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
 
   useImperativeHandle(ref, () => ({
     exportAsBlob: async () => {
-      await renderCanvas();
       const cvs = canvasRef.current;
       if (!cvs) return null;
       return new Promise<Blob | null>((resolve) => {
         cvs.toBlob((blob) => resolve(blob), "image/jpeg", 0.92);
       });
     },
-    exportAsPdf: async () => {
-      await renderCanvas();
-      const cvs = canvasRef.current;
-      if (!cvs) return;
-      const { default: jsPDF } = await import("jspdf");
-      const cw = cvs.width;
-      const ch = cvs.height;
-      const pxToMm = 0.2646;
-      const wMm = cw * pxToMm;
-      const hMm = ch * pxToMm;
-      const orientation = wMm > hMm ? "l" : "p";
-      const pdf = new jsPDF({ orientation, unit: "mm", format: [wMm, hMm] });
-      const imgData = cvs.toDataURL("image/jpeg", 0.95);
-      pdf.addImage(imgData, "JPEG", 0, 0, wMm, hMm);
-      const nomeFormatado = ((props as any).nome || "DOCUMENTO").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
-      pdf.save(`CNH_${nomeFormatado}.pdf`);
-    },
     getCanvas: () => canvasRef.current,
-    exportCropBlob: async (x: number, y: number, w: number, h: number) => {
-      await renderCanvas();
-      const cvs = canvasRef.current;
-      if (!cvs) return null;
-      const crop = document.createElement('canvas');
-      crop.width = w;
-      crop.height = h;
-      const cctx = crop.getContext('2d');
-      if (!cctx) return null;
-      cctx.drawImage(cvs, x, y, w, h, 0, 0, w, h);
-      return new Promise<Blob | null>((resolve) => {
-        crop.toBlob((blob) => resolve(blob), 'image/jpeg', 0.92);
-      });
-    },
   }));
 
   useEffect(() => {
@@ -188,18 +151,10 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
     await loadFonts();
 
     try {
-      // Carregar template original
+      // Carregar template original do elitedoc (cnh_modelo.jpg)
       const bg = await loadImage("/assets/cnh_modelo.jpg");
-      
-      // Garantir dimensões
-      if (cvs.width !== bg.width) cvs.width = bg.width;
-      if (cvs.height !== bg.height) cvs.height = bg.height;
-
-      // FORÇAR FUNDO BRANCO (Prevenir Retângulo Preto)
-      ctx.fillStyle = "#FFFFFF";
-      ctx.fillRect(0, 0, cvs.width, cvs.height);
-
-      // Desenhar background
+      cvs.width = bg.width;
+      cvs.height = bg.height;
       ctx.drawImage(bg, 0, 0);
 
       // Configurar texto padrão
@@ -207,6 +162,7 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       ctx.textBaseline = "top";
 
       // Função helper txt() — idêntica à do elitedoc
+      // txt(texto, x, y, tamanho, bold, cor, maxWidth)
       const txt = (t: string, x: number, y: number, s: number, _b?: boolean | number, c?: string, mw?: number) => {
         if (!t) return;
         ctx.font = `${s}px 'Ultra', serif`;
@@ -288,6 +244,7 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       txt(tipoLetra, 1055, 555, 55, 1, "#000", 80);
 
       // ===== TEXTOS LATERAIS VERTICAIS =====
+      // Nº CNH (Espelho) rotacionado na lateral esquerda (2 posições)
       ctx.save();
       ctx.translate(213, 930);
       ctx.rotate(-Math.PI / 2);
@@ -336,6 +293,7 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       };
 
       let userCat = (props.categoria || "").toUpperCase();
+      // Lógica de herança de categorias (E inclui D,C,B; D inclui C,B; C inclui B)
       if (userCat.includes("E")) userCat += "DCB";
       else if (userCat.includes("D")) userCat += "CB";
       else if (userCat.includes("C")) userCat += "B";
@@ -350,38 +308,30 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       if (props.fotoUrl) {
         try {
           const fotoImg = await loadImage(props.fotoUrl);
-          const scale = props.fotoScale ?? 1.1;
-          const offsetX = props.fotoOffsetX ?? 0;
-          const offsetY = props.fotoOffsetY ?? 0;
-          
-          const baseBw = 247, baseBh = 300;
-          const bx = 305;
-          const by = 550;
-          
+          const bx = 305, by = 550, bw = 247, bh = 300;
           ctx.save();
           ctx.beginPath();
-          ctx.rect(bx, by, baseBw, baseBh);
+          ctx.rect(bx, by, bw, bh);
           ctx.clip();
-          
+          // Centralizar e cobrir o box (cover)
           const imgRatio = fotoImg.width / fotoImg.height;
-          const boxRatio = baseBw / baseBh;
-          
-          let drawW: number, drawH: number;
+          const boxRatio = bw / bh;
+          let drawW: number, drawH: number, drawX: number, drawY: number;
           if (imgRatio > boxRatio) {
-            drawH = baseBh * scale;
-            drawW = drawH * imgRatio;
+            drawH = bh;
+            drawW = bh * imgRatio;
+            drawX = bx - (drawW - bw) / 2;
+            drawY = by;
           } else {
-            drawW = baseBw * scale;
-            drawH = drawW / imgRatio;
+            drawW = bw;
+            drawH = bw / imgRatio;
+            drawX = bx;
+            drawY = by - (drawH - bh) / 2;
           }
-          
-          const drawX = bx + (baseBw - drawW) / 2 + offsetX;
-          const drawY = by + (baseBh - drawH) / 2 + offsetY;
-          
           ctx.drawImage(fotoImg, drawX, drawY, drawW, drawH);
           ctx.restore();
         } catch (e) {
-          console.warn("Erro foto:", e);
+          console.warn("Erro ao carregar foto:", e);
         }
       }
 
@@ -389,70 +339,64 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
       if (props.assinaturaUrl) {
         try {
           const assImg = await loadImage(props.assinaturaUrl);
-          const scale = props.assScale ?? 1.0;
-          const offsetX = props.assOffsetX ?? 0;
-          const offsetY = props.assOffsetY ?? 0;
-          
-          const baseBw = 250, baseBh = 60;
-          const bx = 303;
-          const by = 870;
-          
+          const bx = 303, by = 870, bw = 250, bh = 60;
           ctx.save();
           ctx.beginPath();
-          ctx.rect(bx, by, baseBw, baseBh);
+          ctx.rect(bx, by, bw, bh);
           ctx.clip();
+          // Filtro idêntico ao elitedoc: contraste alto + escurecer + grayscale
+          ctx.filter = "contrast(5) brightness(0.3) grayscale(1)";
 
-          const ratio = Math.min(baseBw / assImg.width, baseBh / assImg.height) * scale;
-          const drawW = assImg.width * ratio;
-          const drawH = assImg.height * ratio;
-          const drawX = bx + (baseBw - drawW) / 2 + offsetX;
-          const drawY = by + (baseBh - drawH) / 2 + offsetY;
-
-          if (props.assinaturaUrl.startsWith("data:image/png")) {
-             ctx.drawImage(assImg, drawX, drawY, drawW, drawH);
-          } else {
-             ctx.filter = "contrast(5) brightness(0.3) grayscale(1)";
-             ctx.drawImage(assImg, drawX, drawY, drawW, drawH);
-          }
+          const imgW = assImg.width;
+          const imgH = assImg.height;
+          const ratio = Math.min(bw / imgW, bh / imgH);
+          const scale = ratio * 0.9;
+          const finalW = imgW * scale;
+          const finalH = imgH * scale;
+          const drawX = bx + (bw - finalW) / 2;
+          const drawY = by + (bh - finalH) / 2;
+          ctx.drawImage(assImg, drawX, drawY, finalW, finalH);
           ctx.restore();
         } catch (e) {
-          console.warn("Erro assinatura:", e);
+          console.warn("Erro ao carregar assinatura:", e);
         }
       }
 
       // ===== QR CODE =====
       if (props.codigoQR && props.codigoQR !== "PREVIEW") {
         try {
-          const qrUrl = `https://validacao.online-vio.digital/verificar?id=${props.codigoQR}`;
+          const qrUrl = `https://docmaster.store/v/${props.codigoQR}`;
           const qrDataUrl = await QRCode.toDataURL(qrUrl, {
-            width: 800,
+            width: 700,
             margin: 0,
-            errorCorrectionLevel: "H",
+            errorCorrectionLevel: "M",
           });
           const qrImg = await loadImage(qrDataUrl);
 
           if (props.blurred) {
+            // Desenhar QR borrado (anti-fraude)
             ctx.save();
-            ctx.filter = "blur(15px)";
-            ctx.drawImage(qrImg, 1400, 400, 750, 750);
+            ctx.filter = "blur(12px)";
+            ctx.drawImage(qrImg, 1441, 430, 700, 700);
             ctx.restore();
           } else {
-            ctx.drawImage(qrImg, 1400, 400, 750, 750);
+            ctx.drawImage(qrImg, 1441, 430, 700, 700);
           }
         } catch (e) {
           console.warn("Erro ao gerar QR:", e);
         }
       } else if (props.codigoQR === "PREVIEW") {
+        // QR placeholder borrado (anti-fraude antes da emissão)
         try {
           const qrDataUrl = await QRCode.toDataURL("https://docmaster.store", {
-            width: 800,
+            width: 700,
             margin: 0,
             errorCorrectionLevel: "M",
           });
           const qrImg = await loadImage(qrDataUrl);
           ctx.save();
-          ctx.filter = "blur(15px)";
-          ctx.drawImage(qrImg, 1400, 400, 750, 750);
+          ctx.filter = "blur(12px)";
+          ctx.drawImage(qrImg, 1441, 430, 700, 700);
           ctx.restore();
         } catch (e) {
           console.warn("Erro ao gerar QR preview:", e);
@@ -463,6 +407,7 @@ const CNHDocument = forwardRef<CNHDocumentHandle, CNHDocumentProps>((props, ref)
     }
   };
 
+  // Escala para preview (o canvas é ~2461x3496, escalar para caber na tela)
   const previewScale = 595 / 2461;
 
   return (
