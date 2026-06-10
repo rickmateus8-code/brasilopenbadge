@@ -338,10 +338,10 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                      }}>
                         {fotoAssinatura && <img src={fotoAssinatura} style={{ maxHeight: 100, maxWidth: 300, background: "transparent" }} alt="Assinatura" />}
                         {modoCarimbo && sStampInfo && (
-                          <div style={{ textAlign: "center", color: corAssinatura, marginTop: -5 }}>
-                             <div style={{ fontWeight: 700, fontSize: 13 }}>{data.medico?.toUpperCase()}</div>
-                             {data.especialidade && <div style={{ fontSize: 11 }}>{data.especialidade.toUpperCase()}</div>}
-                             <div style={{ fontSize: 11 }}>{data.crm}</div>
+                          <div style={{ textAlign: "center", color: corAssinatura, marginTop: -5, lineHeight: 1.1 }}>
+                             <div style={{ fontWeight: 700, fontSize: 13, margin: 0 }}>{data.medico?.toUpperCase()}</div>
+                             {data.especialidade && <div style={{ fontSize: 11, margin: 0 }}>{data.especialidade.toUpperCase()}</div>}
+                             <div style={{ fontSize: 11, margin: 0 }}>{data.crm}</div>
                           </div>
                         )}
                      </div>
@@ -643,10 +643,10 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 <div style={{ position: "relative", textAlign: "center" }}>
                    {fotoAssinatura && <img src={fotoAssinatura} style={{ maxWidth: 273, maxHeight: 89, background: "transparent" }} alt="Carimbo" />}
                    {sStampInfo && (
-                     <div style={{ color: corAssinatura, marginTop: -5, opacity: 0.9, textAlign: "center" }}>
-                        <div style={{ fontWeight: 700, fontSize: 12.2 }}>{data.medico?.toUpperCase()}</div>
-                        {data.especialidade && <div style={{ fontSize: 11 }}>{data.especialidade.toUpperCase()}</div>}
-                        <div style={{ fontSize: 11 }}>{data.crm}</div>
+                     <div style={{ color: corAssinatura, marginTop: -5, opacity: 0.9, textAlign: "center", lineHeight: 1.1 }}>
+                        <div style={{ fontWeight: 700, fontSize: 12.2, margin: 0 }}>{data.medico?.toUpperCase()}</div>
+                        {data.especialidade && <div style={{ fontSize: 11, margin: 0 }}>{data.especialidade.toUpperCase()}</div>}
+                        <div style={{ fontSize: 11, margin: 0 }}>{data.crm}</div>
                      </div>
                    )}
                 </div>
