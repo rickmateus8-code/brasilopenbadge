@@ -641,6 +641,7 @@ export default function AtestadoEditar() {
     dataEmissao: todayBR(),
     cidade: "",
     modoCarimbo: false,
+    hideSignatureLine: false,
   });
 
   const skipAutoTextSync = useRef(true);
@@ -715,6 +716,7 @@ export default function AtestadoEditar() {
           dataEmissao: d.data_emissao || d.dataEmissao || todayBR(),
           cidade: d.cidade || "",
           modoCarimbo: d.modo_carimbo === 1 || d.modoCarimbo === true,
+          hideSignatureLine: d.hide_signature_line === 1 || d.hideSignatureLine === true,
         });
 
         setTimeout(() => {
@@ -1437,6 +1439,7 @@ export default function AtestadoEditar() {
         stampRotate,
         hideQRCode,
         showStampInfo,
+        hideSignatureLine: form.hideSignatureLine,
         documentType,
       };
 
@@ -1523,6 +1526,7 @@ export default function AtestadoEditar() {
         stampRotate,
         hideQRCode,
         showStampInfo,
+        hideSignatureLine: form.hideSignatureLine,
         documentType,
       };
 
@@ -1604,6 +1608,7 @@ export default function AtestadoEditar() {
     cidade: form.cidade,
     uf: filtroUF,
     modoCarimbo: form.modoCarimbo,
+    hideSignatureLine: form.hideSignatureLine,
     documentType,
     logoLeftScale,
     logoRightScale,
@@ -2264,7 +2269,7 @@ export default function AtestadoEditar() {
 
                         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                           {/* Toggles */}
-                          <div style={{ display: "flex", gap: 12 }}>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 12px" }}>
                             <label style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
                               <input type="checkbox" checked={hideQRCode} onChange={e => setHideQRCode(e.target.checked)} />
                               Ocultar QR
@@ -2272,6 +2277,14 @@ export default function AtestadoEditar() {
                             <label style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
                               <input type="checkbox" checked={showStampInfo} onChange={e => setShowStampInfo(e.target.checked)} />
                               Dados Médico
+                            </label>
+                            <label style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                              <input 
+                                type="checkbox" 
+                                checked={form.hideSignatureLine} 
+                                onChange={e => setForm(p => ({ ...p, hideSignatureLine: e.target.checked }))} 
+                              />
+                              Ocultar Assinatura e Carimbo
                             </label>
                           </div>
 
@@ -2919,6 +2932,7 @@ export default function AtestadoEditar() {
                 stampRotate={stampRotate}
                 hideQRCode={hideQRCode}
                 showStampInfo={showStampInfo}
+                hideSignatureLine={form.hideSignatureLine}
                 isExporting={isExporting}
               />
             </div>

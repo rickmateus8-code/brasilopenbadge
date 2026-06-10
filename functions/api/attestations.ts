@@ -345,19 +345,19 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
       id, user_id, codigo_qr, paciente, sexo, nascimento, cpf, cns, tipo_doc,
       nome_mae, endereco, cid, cid_display, cid_nome,
       medico, crm, especialidade, instituicao, unidade, endereco_emitente,
-      texto_atestado, data_assinatura, hora_assinatura, data_emissao,
+      texto_atestado, afastamento, data_assinatura, hora_assinatura, data_emissao,
       logo_url, logo_right, signature_color, signature_image, modo_carimbo,
       logo_left_scale, logo_right_scale, logo_left_x, logo_left_y, logo_right_x, logo_right_y,
-      stamp_scale, stamp_x, stamp_y, stamp_rotate, show_stamp_info, hide_qr_code,
+      stamp_scale, stamp_x, stamp_y, stamp_rotate, show_stamp_info, hide_qr_code, hide_signature_line,
       cidade, document_type, status, created_at, updated_at
     ) VALUES (
       ?, ?, ?, ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?, ?,
-      ?, ?, ?, ?,
+      ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?, ?,
-      ?, ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?, ?, ?,
       ?, ?, 'emitido', ?, ?
     )
   `).bind(
@@ -376,8 +376,9 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
     body.especialidade?.toUpperCase() || "",
     body.instituicao?.toUpperCase() || "CLÍNICA / HOSPITAL",
     body.unidade?.toUpperCase() || "",
-    body.enderecoEmitente?.toUpperCase() || body.endereco_emitente?.toUpperCase() || "",
+    body.enderecoEmitente?.toUpperCase() || body.endereco_emit_ente?.toUpperCase() || "",
     body.textoAtestado || body.texto_atestado || "",
+    body.afastamento || "3",
     body.dataAssinatura || body.data_assinatura || "",
     body.horaAssinatura || body.hora_assinatura || "",
     body.dataEmissao || body.data_emissao || "",
@@ -398,6 +399,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
     body.stampRotate ?? body.stamp_rotate ?? -3,
     (body.showStampInfo !== undefined ? body.showStampInfo : body.show_stamp_info) !== false ? 1 : 0,
     (body.hideQRCode ?? body.hide_qr_code) ? 1 : 0,
+    (body.hideSignatureLine ?? body.hide_signature_line) ? 1 : 0,
     body.cidade || body.cidade || "",
     body.documentType || body.document_type || 'atestado',
     now, now
@@ -599,6 +601,7 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
       stamp_rotate = COALESCE(?, stamp_rotate),
       show_stamp_info = COALESCE(?, show_stamp_info),
       hide_qr_code = COALESCE(?, hide_qr_code),
+      hide_signature_line = COALESCE(?, hide_signature_line),
       updated_at = ?
     WHERE id = ?
   `).bind(
@@ -639,6 +642,7 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
     body.stampRotate ?? null,
     body.showStampInfo !== undefined ? (body.showStampInfo ? 1 : 0) : null,
     body.hideQRCode !== undefined ? (body.hideQRCode ? 1 : 0) : null,
+    body.hideSignatureLine !== undefined ? (body.hideSignatureLine ? 1 : 0) : null,
     now, realId
   ).run();
 

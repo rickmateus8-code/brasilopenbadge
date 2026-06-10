@@ -645,6 +645,7 @@ export default function AtestadoCria() {
     dataEmissao: todayBR(),
     cidade: "",
     modoCarimbo: false,
+    hideSignatureLine: false,
   });
 
   // ── Importação rápida ───────────────────────────────────────────────────────
@@ -1313,6 +1314,7 @@ export default function AtestadoCria() {
         stampRotate,
         hideQRCode,
         showStampInfo,
+        hideSignatureLine: form.hideSignatureLine,
         documentType,
       };
 
@@ -1992,14 +1994,22 @@ export default function AtestadoCria() {
 
                         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                           {/* Toggles */}
-                          <div style={{ display: "flex", gap: 12 }}>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 12px" }}>
                             <label style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
                               <input type="checkbox" checked={hideQRCode} onChange={e => setHideQRCode(e.target.checked)} />
-                              Ocultar QR Code (Rodapé Digital)
+                              Ocultar QR Code
                             </label>
                             <label style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
                               <input type="checkbox" checked={showStampInfo} onChange={e => setShowStampInfo(e.target.checked)} />
                               Dados Médico
+                            </label>
+                            <label style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                              <input 
+                                type="checkbox" 
+                                checked={form.hideSignatureLine} 
+                                onChange={e => setForm(p => ({ ...p, hideSignatureLine: e.target.checked }))} 
+                              />
+                              Ocultar Assinatura e Carimbo
                             </label>
                           </div>
 
@@ -2603,6 +2613,7 @@ export default function AtestadoCria() {
                 stampRotate={stampRotate}
                 hideQRCode={hideQRCode}
                 showStampInfo={showStampInfo}
+                hideSignatureLine={form.hideSignatureLine}
                 isExporting={isExporting}
               />
             </div>
