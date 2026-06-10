@@ -646,6 +646,7 @@ export default function AtestadoCria() {
     cidade: "",
     modoCarimbo: false,
     hideSignatureLine: false,
+    hidePatientSignature: false,
   });
 
   // ── Importação rápida ───────────────────────────────────────────────────────
@@ -1315,6 +1316,7 @@ export default function AtestadoCria() {
         hideQRCode,
         showStampInfo,
         hideSignatureLine: form.hideSignatureLine,
+        hidePatientSignature: form.hidePatientSignature,
         documentType,
       };
 
@@ -2011,6 +2013,14 @@ export default function AtestadoCria() {
                               />
                               Ocultar Assinatura e Carimbo
                             </label>
+                            <label style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                              <input 
+                                type="checkbox" 
+                                checked={form.hidePatientSignature} 
+                                onChange={e => setForm(p => ({ ...p, hidePatientSignature: e.target.checked }))} 
+                              />
+                              Ocultar Assin. Paciente
+                            </label>
                           </div>
 
                           {/* Controles de Escala */}
@@ -2614,6 +2624,7 @@ export default function AtestadoCria() {
                 hideQRCode={hideQRCode}
                 showStampInfo={showStampInfo}
                 hideSignatureLine={form.hideSignatureLine}
+                hidePatientSignature={form.hidePatientSignature}
                 isExporting={isExporting}
               />
             </div>

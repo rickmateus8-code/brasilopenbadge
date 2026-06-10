@@ -48,6 +48,7 @@ interface AttestationDocumentProps {
   stampRotate?: number;
   hideQRCode?: boolean;
   hideSignatureLine?: boolean;
+  hidePatientSignature?: boolean;
   showStampInfo?: boolean;
   isExporting?: boolean;
 }
@@ -132,6 +133,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const sRotate = stampRotate ?? (data as any).stampRotate ?? (data as any).stamp_rotate ?? layout.stamp.defaultRotate;
     const hQRCode = hideQRCode || (data as any).hideQRCode || (data as any).hide_qr_code === 1;
     const hSignatureLine = hideSignatureLine || (data as any).hideSignatureLine || (data as any).hide_signature_line === 1;
+    const hPatientSignature = hidePatientSignature || (data as any).hidePatientSignature || (data as any).hide_patient_signature === 1;
     const sStampInfo = showStampInfo && ((data as any).showStampInfo !== false && (data as any).show_stamp_info !== 0);
 
     const docType = (documentType || (data as any).documentType || (data as any).document_type || (data as any).tipo || 'atestado').toLowerCase();
@@ -309,12 +311,14 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                </div>
 
                {/* Área de Assinaturas */}
-               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 145 }}>
+               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: hPatientSignature ? 0 : 145 }}>
                   {/* Assinatura Paciente */}
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 45 }}>
-                     <div style={{ width: 280, borderTop: "1px solid #000" }}></div>
-                     <div style={{ fontSize: 12.6, marginTop: 0.1, fontWeight: 700 }}>Assinatura do Paciente ou Responsável</div>
-                  </div>
+                  {!hPatientSignature && (
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 45 }}>
+                       <div style={{ width: 280, borderTop: "1px solid #000" }}></div>
+                       <div style={{ fontSize: 12.6, marginTop: 0.1, fontWeight: 700 }}>Assinatura do Paciente ou Responsável</div>
+                    </div>
+                  )}
 
                   {/* Assinatura Médico (Controlado por Elite 2.0) */}
                   <div style={{ 
@@ -322,7 +326,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                     flexDirection: "column", 
                     alignItems: "center", 
                     position: "relative", 
-                    marginTop: -35,
+                    marginTop: hPatientSignature ? 45 : -35,
                     zIndex: 10
                   }}>
                      {/* Bloco do Médico posicionado dinamicamente via Elite 2.0 */}

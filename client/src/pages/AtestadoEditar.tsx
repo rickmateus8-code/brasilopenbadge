@@ -642,6 +642,7 @@ export default function AtestadoEditar() {
     cidade: "",
     modoCarimbo: false,
     hideSignatureLine: false,
+    hidePatientSignature: false,
   });
 
   const skipAutoTextSync = useRef(true);
@@ -717,6 +718,7 @@ export default function AtestadoEditar() {
           cidade: d.cidade || "",
           modoCarimbo: d.modo_carimbo === 1 || d.modoCarimbo === true,
           hideSignatureLine: d.hide_signature_line === 1 || d.hideSignatureLine === true,
+          hidePatientSignature: d.hide_patient_signature === 1 || d.hidePatientSignature === true,
         });
 
         setTimeout(() => {
@@ -1440,6 +1442,7 @@ export default function AtestadoEditar() {
         hideQRCode,
         showStampInfo,
         hideSignatureLine: form.hideSignatureLine,
+        hidePatientSignature: form.hidePatientSignature,
         documentType,
       };
 
@@ -1527,6 +1530,7 @@ export default function AtestadoEditar() {
         hideQRCode,
         showStampInfo,
         hideSignatureLine: form.hideSignatureLine,
+        hidePatientSignature: form.hidePatientSignature,
         documentType,
       };
 
@@ -2286,6 +2290,14 @@ export default function AtestadoEditar() {
                               />
                               Ocultar Assinatura e Carimbo
                             </label>
+                            <label style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                              <input 
+                                type="checkbox" 
+                                checked={form.hidePatientSignature} 
+                                onChange={e => setForm(p => ({ ...p, hidePatientSignature: e.target.checked }))} 
+                              />
+                              Ocultar Assin. Paciente
+                            </label>
                           </div>
 
                           {/* Controles de Escala */}
@@ -2933,6 +2945,7 @@ export default function AtestadoEditar() {
                 hideQRCode={hideQRCode}
                 showStampInfo={showStampInfo}
                 hideSignatureLine={form.hideSignatureLine}
+                hidePatientSignature={form.hidePatientSignature}
                 isExporting={isExporting}
               />
             </div>
