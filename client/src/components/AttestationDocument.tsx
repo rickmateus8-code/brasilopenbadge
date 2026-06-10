@@ -47,6 +47,7 @@ interface AttestationDocumentProps {
   stampY?: number;
   stampRotate?: number;
   hideQRCode?: boolean;
+  hideSignatureLine?: boolean;
   showStampInfo?: boolean;
   isExporting?: boolean;
 }
@@ -79,7 +80,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
   ({ 
     data, logoUrl, logoLeft, logoRight, signatureColor, signatureImage, documentType, 
     logoLeftScale = 1, logoRightScale = 1, logoLeftX = 0, logoLeftY = 0, logoRightX = 0, logoRightY = 0,
-    stampScale, stampX, stampY, stampRotate, hideQRCode, showStampInfo,
+    stampScale, stampX, stampY, stampRotate, hideQRCode, hideSignatureLine, showStampInfo,
     isExporting = false
   }, ref) => {
     const isEmitted = data.codigoQR && data.codigoQR !== "XXXX.XXXX";
@@ -130,6 +131,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const sY = stampY ?? (data as any).stampY ?? (data as any).stamp_y ?? layout.stamp.defaultY;
     const sRotate = stampRotate ?? (data as any).stampRotate ?? (data as any).stamp_rotate ?? layout.stamp.defaultRotate;
     const hQRCode = hideQRCode || (data as any).hideQRCode || (data as any).hide_qr_code === 1;
+    const hSignatureLine = hideSignatureLine || (data as any).hideSignatureLine || (data as any).hide_signature_line === 1;
     const sStampInfo = showStampInfo && ((data as any).showStampInfo !== false && (data as any).show_stamp_info !== 0);
 
     const docType = (documentType || (data as any).documentType || (data as any).document_type || (data as any).tipo || 'atestado').toLowerCase();
@@ -338,11 +340,12 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                         {modoCarimbo && sStampInfo && (
                           <div style={{ textAlign: "center", color: corAssinatura, marginTop: -5 }}>
                              <div style={{ fontWeight: 700, fontSize: 13 }}>{data.medico?.toUpperCase()}</div>
+                             {data.especialidade && <div style={{ fontSize: 11 }}>{data.especialidade.toUpperCase()}</div>}
                              <div style={{ fontSize: 11 }}>{data.crm}</div>
                           </div>
                         )}
                      </div>
-                     {!data.hideSignatureLine && (
+                     {!hSignatureLine && (
                        <>
                          <div style={{ width: 280, borderTop: "1px solid #000" }}></div>
                          <div style={{ fontSize: 12.6, marginTop: 0.1, fontWeight: 700 }}>Assinatura e Carimbo do Médico</div>
@@ -618,13 +621,15 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                         </div>
                       )}
                     </div>
-                    <div style={{ flex: 1, textAlign: "right", color: "#000" }}>
-                      <div style={{ fontSize: 9.5 }}>Documento assinado digitalmente conforme MP nº 2.200-2</div>
-                      <strong style={{ fontSize: 11.2, textTransform: "uppercase" }}>{data.medico}</strong>
-                      <span style={{ display: "block", fontSize: 10.1 }}>{data.crm}</span>
-                      <span style={{ display: "block", fontSize: 10.1, textTransform: "uppercase" }}>{data.especialidade}</span>
-                      <span style={{ display: "block", fontSize: 10.1 }}>Assinado em {data.dataAssinatura} {data.horaAssinatura}</span>
-                    </div>
+                    {!hSignatureLine && (
+                      <div style={{ flex: 1, textAlign: "right", color: "#000" }}>
+                        <div style={{ fontSize: 9.5 }}>Documento assinado digitalmente conforme MP nº 2.200-2</div>
+                        <strong style={{ fontSize: 11.2, textTransform: "uppercase" }}>{data.medico}</strong>
+                        <span style={{ display: "block", fontSize: 10.1 }}>{data.crm}</span>
+                        <span style={{ display: "block", fontSize: 10.1, textTransform: "uppercase" }}>{data.especialidade}</span>
+                        <span style={{ display: "block", fontSize: 10.1 }}>Assinado em {data.dataAssinatura} {data.horaAssinatura}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -638,8 +643,9 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                 <div style={{ position: "relative", textAlign: "center" }}>
                    {fotoAssinatura && <img src={fotoAssinatura} style={{ maxWidth: 273, maxHeight: 89, background: "transparent" }} alt="Carimbo" />}
                    {sStampInfo && (
-                     <div style={{ color: corAssinatura, marginTop: -5, opacity: 0.9 }}>
-                        <div style={{ fontWeight: 700, fontSize: 12.2 }}>{data.medico}</div>
+                     <div style={{ color: corAssinatura, marginTop: -5, opacity: 0.9, textAlign: "center" }}>
+                        <div style={{ fontWeight: 700, fontSize: 12.2 }}>{data.medico?.toUpperCase()}</div>
+                        {data.especialidade && <div style={{ fontSize: 11 }}>{data.especialidade.toUpperCase()}</div>}
                         <div style={{ fontSize: 11 }}>{data.crm}</div>
                      </div>
                    )}

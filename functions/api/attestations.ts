@@ -376,7 +376,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
     body.especialidade?.toUpperCase() || "",
     body.instituicao?.toUpperCase() || "CLÍNICA / HOSPITAL",
     body.unidade?.toUpperCase() || "",
-    body.enderecoEmitente?.toUpperCase() || body.endereco_emit_ente?.toUpperCase() || "",
+    body.enderecoEmitente?.toUpperCase() || body.endereco_emitente?.toUpperCase() || "",
     body.textoAtestado || body.texto_atestado || "",
     body.afastamento || "3",
     body.dataAssinatura || body.data_assinatura || "",
@@ -511,6 +511,48 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
     balance: newBalance,
     newBalance: newBalance,
   }, 201);
+}
+
+function buildSyncPayload(row: any) {
+  return {
+    paciente: row.paciente || "",
+    sexo: row.sexo || "FEMALE",
+    nascimento: row.nascimento || "",
+    cpf: row.cpf || "-",
+    cns: row.cns || "",
+    tipo_doc: row.tipo_doc || (row.cns ? "CNS" : "CPF"),
+    nome_mae: row.nome_mae || "-",
+    endereco: row.endereco || "-",
+    condicao: row.texto_atestado || "Atestado médico",
+    texto_atestado: row.texto_atestado || "",
+    vacinacao: "-",
+    cid: row.cid_display || row.cid || "-",
+    cid_display: row.cid_display || row.cid || "-",
+    cid_nome: row.cid_nome || "",
+    medico: row.medico || "",
+    crm: row.crm || "",
+    especialidade: row.especialidade || "",
+    data_assinatura: row.data_assinatura || "",
+    hora_assinatura: row.hora_assinatura || "",
+    data_emissao: row.data_emissao || "",
+    logo_url: row.logo_url || "",
+    logo_right: row.logo_right || "",
+    endereco_emitente: row.endereco_emitente || "",
+    instituicao: row.instituicao || "",
+    unidade: row.unidade || "",
+    cidade: row.cidade || "",
+    signature_color: row.signature_color || "#0b109f",
+    signature_image: row.signature_image || "",
+    modo_carimbo: row.modo_carimbo || 0,
+    logo_left_scale: row.logo_left_scale ?? 1.0,
+    logo_right_scale: row.logo_right_scale ?? 1.0,
+    logo_left_x: row.logo_left_x ?? 0,
+    logo_left_y: row.logo_left_y ?? 0,
+    logo_right_x: row.logo_right_x ?? 0,
+    logo_right_y: row.logo_right_y ?? 0,
+    document_type: row.document_type || 'atestado',
+    hide_signature_line: row.hide_signature_line ?? 0,
+  };
 }
 
 // ─── GET por ID ───────────────────────────────────────────────────────────────
