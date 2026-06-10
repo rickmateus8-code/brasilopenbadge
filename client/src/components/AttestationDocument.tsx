@@ -81,7 +81,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
   ({ 
     data, logoUrl, logoLeft, logoRight, signatureColor, signatureImage, documentType, 
     logoLeftScale = 1, logoRightScale = 1, logoLeftX = 0, logoLeftY = 0, logoRightX = 0, logoRightY = 0,
-    stampScale, stampX, stampY, stampRotate, hideQRCode, hideSignatureLine, showStampInfo,
+    stampScale, stampX, stampY, stampRotate, hideQRCode, hideSignatureLine, hidePatientSignature, showStampInfo,
     isExporting = false
   }, ref) => {
     const isEmitted = data.codigoQR && data.codigoQR !== "XXXX.XXXX";
