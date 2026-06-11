@@ -12,5 +12,6 @@ export function isValidCrm(crm: string | null): boolean {
 
 export function isValidCid(cid: string | null): boolean {
   if (!cid || cid === "-") return true;
-  return /^[A-Z][0-9]{2}(\.[0-9]{0,2})?$/.test(cid.toUpperCase());
+  // Permite strings contendo letras, números, pontos e espaços (ex: "J32.0 Sinusite")
+  return cid.trim().length > 0;
 }
