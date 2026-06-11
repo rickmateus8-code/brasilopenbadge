@@ -247,8 +247,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                   <div><span style={{ fontWeight: 700 }}>Paciente:</span> {data.paciente?.toUpperCase()}</div>
                   <div style={{ marginBottom: 15 }}><span style={{ fontWeight: 700 }}>CPF:</span> {data.cpf || data.cns || ""}</div>
 
-                  <div>Declaro para os devidos fins que a paciente acima identificado(a) encontra-se em acompanhamento médico devido ao diagnóstico:</div>
-                  
+                  <div>Declaro para os devidos fins que {sexoLabel === "M" ? "o paciente acima identificado" : "a paciente acima identificada"} encontra-se em acompanhamento médico devido ao diagnóstico:</div>
+
                   <div style={{ marginTop: 25, fontSize: 13.67 }}>
                     <span style={{ fontWeight: 700 }}>CID: </span>
                     <span style={{ fontWeight: 700 }}>{cidDisplay} {cidNome ? `(${cidNome})` : ""}</span>
@@ -258,7 +258,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
                   {!hAfastamentoText && (
                     <div style={{ marginTop: 15 }}>
-                      Informo que a paciente permanece sem condições de exercer suas atividades profissionais pelo período estimado de {diasExtenso}, a contar desta data.
+                      Informo que {sexoLabel === "M" ? "o paciente" : "a paciente"} permanece sem condições de exercer suas atividades profissionais pelo período estimado de {diasExtenso}, a contar desta data.
                     </div>
                   )}
                </div>

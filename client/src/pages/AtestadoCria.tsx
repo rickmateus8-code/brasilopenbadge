@@ -302,9 +302,9 @@ Atualmente, a mesma não possui condições de exercer atividades laborativas, d
 Diante do quadro apresentado, recomenda-se afastamento de atividades trabalhistas por tempo indeterminado, devendo ser reavaliada periodicamente conforme evolução clínica.`;
 
 // ─── Texto padrão do relatório médico ─────────────────────────────────────────
-const TEXTO_RELATORIO_TEMPLATE = () => `A paciente apresenta quadro clínico que causa incapacidade temporária para o exercício de suas atividades laborais habituais, necessitando de afastamento do trabalho para realização de tratamento médico adequado.
+const TEXTO_RELATORIO_TEMPLATE = (sexoLabel: string) => `A paciente apresenta quadro clínico que causa incapacidade temporária para o exercício de suas atividades laborais habituais, necessitando de afastamento do trabalho para realização de tratamento médico adequado.
 
-Encontra-se em tratamento oncológico, necessitando acompanhamento contínuo, repouso e afastamento laboral, considerando as limitações físicas e emocionais decorrentes da doença e do tratamento realizado.`;
+Encontra-se em tratamento oncológico, necessitando acompanhamento contínuo, repouso e afastamento laboral, considerando as limitações físicas e emocionais decorrentes da doença e do tratamento realizado.`.replace("A paciente", sexoLabel === "M" ? "O paciente" : "A paciente");
 
 // ─── Máscaras ─────────────────────────────────────────────────────────────────
 function maskCPF(v: string): string {
