@@ -273,30 +273,10 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                     </div>
                   )}
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", marginTop: hPatientSignature ? 45 : -35, zIndex: 10 }}>
-                     {/* Bloco do Médico posicionado dinamicamente via Elite 2.0 */}
-                     <div style={{ 
-                       position: "absolute", 
-                       top: modoCarimbo ? sY : -45, 
-                       left: modoCarimbo ? sX : 0,
-                       transform: `scale(${modoCarimbo ? sScale : 1}) rotate(${modoCarimbo ? sRotate : -1}deg)`,
-                       opacity: 0.95, 
-                       textAlign: "center",
-                       width: "max-content",
-                       transition: "transform 0.1s"
-                     }}>
-                        {fotoAssinatura && <img src={fotoAssinatura} style={{ maxHeight: 100, maxWidth: 300, background: "transparent" }} alt="Assinatura" />}
-                        {modoCarimbo && sStampInfo && (
-                          <div style={{ textAlign: "center", color: corAssinatura, marginTop: -5, lineHeight: 1.1 }}>
-                             <div style={{ fontWeight: 700, fontSize: 13, margin: 0 }}>{data.medico?.toUpperCase()}</div>
-                             {data.especialidade && <div style={{ fontSize: 11, margin: 0 }}>{data.especialidade.toUpperCase()}</div>}
-                             <div style={{ fontSize: 11, margin: 0 }}>{data.crm}</div>
-                          </div>
-                        )}
-                     </div>
-                     {!hSignatureLine && (
+                     {!hSignatureLine && !modoCarimbo && (
                        <>
                          <div style={{ width: 280, borderTop: "1px solid #000" }}></div>
-                         <div style={{ fontSize: 12.6, marginTop: 0.1, fontWeight: 700 }}>Assinatura e Carimbo do Médico</div>
+                         <div style={{ fontSize: 12.6, marginTop: 0.1, fontWeight: 700, color: "#000" }}>Assinatura e Carimbo do Médico</div>
                        </>
                      )}
                   </div>
