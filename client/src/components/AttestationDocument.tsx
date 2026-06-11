@@ -227,7 +227,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             <div style={{ position: "relative", marginBottom: 40, border: "1px solid #000", height: 120, display: "flex", alignItems: "center" }}>
               <div style={{ width: 140, height: "100%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible", zIndex: 2 }}>
                 {effectiveLogoLeft && (
-                  <img src={effectiveLogoLeft} crossOrigin={getCrossOrigin(effectiveLogoLeft)} style={{ maxHeight: 90, maxWidth: "100%", objectFit: "contain", transform: `scale(${logoLeftScale}) translate(${logoLeftX}px, ${logoLeftY}px)`, transformOrigin: "center center", transition: "transform 0.1s" }} alt="Logo" />
+                  <img src={effectiveLogoLeft} crossOrigin={getCrossOrigin(effectiveLogoLeft)} style={{ maxHeight: 75, maxWidth: "90%", objectFit: "contain", transform: `scale(${logoLeftScale}) translate(${logoLeftX}px, ${logoLeftY}px)`, transformOrigin: "center center", transition: "transform 0.1s" }} alt="Logo" />
                 )}
               </div>
               <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", zIndex: 1, pointerEvents: "none" }}>
@@ -273,6 +273,26 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                     </div>
                   )}
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", marginTop: hPatientSignature ? 45 : -35, zIndex: 10 }}>
+                     {/* Bloco do Médico posicionado dinamicamente via Elite 2.0 */}
+                     <div style={{ 
+                       position: "absolute", 
+                       top: modoCarimbo ? sY : -45, 
+                       left: modoCarimbo ? sX : 0,
+                       transform: `scale(${modoCarimbo ? sScale : 1}) rotate(${modoCarimbo ? sRotate : -1}deg)`,
+                       opacity: 0.95, 
+                       textAlign: "center",
+                       width: "max-content",
+                       transition: "transform 0.1s"
+                     }}>
+                        {fotoAssinatura && <img src={fotoAssinatura} style={{ maxHeight: 100, maxWidth: 300, background: "transparent" }} alt="Assinatura" />}
+                        {modoCarimbo && sStampInfo && (
+                          <div style={{ textAlign: "center", color: corAssinatura, marginTop: -5, lineHeight: 1.1 }}>
+                             <div style={{ fontWeight: 700, fontSize: 13, margin: 0 }}>{data.medico?.toUpperCase()}</div>
+                             {data.especialidade && <div style={{ fontSize: 11, margin: 0 }}>{data.especialidade.toUpperCase()}</div>}
+                             <div style={{ fontSize: 11, margin: 0 }}>{data.crm}</div>
+                          </div>
+                        )}
+                     </div>
                      {!hSignatureLine && (
                        <>
                          <div style={{ width: 280, borderTop: "1px solid #000" }}></div>
