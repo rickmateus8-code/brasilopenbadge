@@ -339,18 +339,18 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             </div>
             <div style={{ borderTop: "2.04px solid #000", width: "100%", marginBottom: 23, zIndex: 2, flexShrink: 0 }} />
 
-            <div id="preview-patient" style={{ border: "1px solid #000", padding: isExporting ? "6px 15px 22px 15px" : "14.25px 15px", fontSize: 10.815, marginBottom: 10, lineHeight: 1.2, zIndex: 2, background: "#fff", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-              <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-                <div style={{ flex: 3 }}><span style={{ fontWeight: 700 }}>Paciente: </span><span style={{ textTransform: "uppercase" }}>{data.paciente}</span></div>
-                <div><span style={{ fontWeight: 700 }}>Sexo: </span>{sexoLabel}</div>
-                <div><span style={{ fontWeight: 700 }}>Nasc.: </span>{data.nascimento}</div>
+            <div id="preview-patient" style={{ border: "1px solid #000", padding: isExporting ? "6px 15px 22px 15px" : "14.25px 15px", fontSize: 10.815, marginBottom: 10, lineHeight: 1.2, zIndex: 2, background: "#fff", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "center", color: "#000" }}>
+              <div style={{ display: "flex", gap: 12, justifyContent: "center", color: "#000" }}>
+                <div style={{ flex: 3 }}><span style={{ fontWeight: 700, color: "#000" }}>Paciente: </span><span style={{ textTransform: "uppercase", color: "#000" }}>{data.paciente}</span></div>
+                <div><span style={{ fontWeight: 700, color: "#000" }}>Sexo: </span><span style={{ color: "#000" }}>{sexoLabel}</span></div>
+                <div><span style={{ fontWeight: 700, color: "#000" }}>Nasc.: </span><span style={{ color: "#000" }}>{data.nascimento}</span></div>
               </div>
-              <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-                <div style={{ flex: 1 }}><span style={{ fontWeight: 700 }}>{data.tipoDoc === "CNS" ? "Cartão Nacional:" : "CPF:"} </span><span style={{ textTransform: "uppercase" }}>{data.cpf || data.cns || "___________"}</span></div>
-                <div style={{ flex: 2 }}><span style={{ fontWeight: 700 }}>Nome da Mãe: </span><span style={{ textTransform: "uppercase" }}>{data.nomeMae}</span></div>
+              <div style={{ display: "flex", gap: 12, justifyContent: "center", color: "#000" }}>
+                <div style={{ flex: 1 }}><span style={{ fontWeight: 700, color: "#000" }}>{data.tipoDoc === "CNS" ? "Cartão Nacional:" : "CPF:"} </span><span style={{ textTransform: "uppercase", color: "#000" }}>{data.cpf || data.cns || "___________"}</span></div>
+                <div style={{ flex: 2 }}><span style={{ fontWeight: 700, color: "#000" }}>Nome da Mãe: </span><span style={{ textTransform: "uppercase", color: "#000" }}>{data.nomeMae}</span></div>
               </div>
-              <div style={{ display: "flex", justifyContent: "center" }}>
-                <div style={{ width: "100%" }}><span style={{ fontWeight: 700 }}>Endereço: </span><span style={{ textTransform: "uppercase" }}>{data.endereco}</span></div>
+              <div style={{ display: "flex", justifyContent: "center", color: "#000" }}>
+                <div style={{ width: "100%" }}><span style={{ fontWeight: 700, color: "#000" }}>Endereço: </span><span style={{ textTransform: "uppercase", color: "#000" }}>{data.endereco}</span></div>
               </div>
             </div>
 
