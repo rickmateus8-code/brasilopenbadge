@@ -273,7 +273,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                     </div>
                   )}
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", marginTop: hPatientSignature ? 45 : -35, zIndex: 10 }}>
-                     {!hSignatureLine && !modoCarimbo && (
+                     {!hSignatureLine && (
                        <>
                          <div style={{ width: 280, borderTop: "1px solid #000" }}></div>
                          <div style={{ fontSize: 12.6, marginTop: 0.1, fontWeight: 700, color: "#000" }}>Assinatura e Carimbo do Médico</div>
