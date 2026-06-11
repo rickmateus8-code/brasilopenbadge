@@ -129,7 +129,6 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const cidDisplay = (data as any).cidDisplay || (data as any).cid_display || data.cid || "";
     const cidNome = (data as any).cidNome || (data as any).cid_nome || "";
     const cidade = (data as any).cidade || "";
-    const uf = (data as any).uf || "MG";
     const modoCarimbo = (data as any).modoCarimbo || (data as any).modo_carimbo || false;
 
     const layout = ATTESTATION_LAYOUT;
