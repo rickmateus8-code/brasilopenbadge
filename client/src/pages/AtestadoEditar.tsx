@@ -1617,6 +1617,8 @@ export default function AtestadoEditar() {
     uf: filtroUF,
     modoCarimbo: form.modoCarimbo,
     hideSignatureLine: form.hideSignatureLine,
+    hidePatientSignature: form.hidePatientSignature,
+    hideAfastamentoText: form.hideAfastamentoText,
     documentType,
     logoLeftScale,
     logoRightScale,
@@ -2960,6 +2962,7 @@ export default function AtestadoEditar() {
                 showStampInfo={showStampInfo}
                 hideSignatureLine={form.hideSignatureLine}
                 hidePatientSignature={form.hidePatientSignature}
+                hideAfastamentoText={form.hideAfastamentoText}
                 isExporting={isExporting}
               />
             </div>

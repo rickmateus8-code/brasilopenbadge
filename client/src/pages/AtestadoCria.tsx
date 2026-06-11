@@ -2638,6 +2638,7 @@ export default function AtestadoCria() {
                 showStampInfo={showStampInfo}
                 hideSignatureLine={form.hideSignatureLine}
                 hidePatientSignature={form.hidePatientSignature}
+                hideAfastamentoText={form.hideAfastamentoText}
                 isExporting={isExporting}
               />
             </div>
