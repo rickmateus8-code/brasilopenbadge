@@ -537,7 +537,7 @@ export default function Validation() {
               ref={attestationRef}
               data={validDoc}
               documentType={docType}
-              logoLeft={fixUrl(validDoc.logoUrl || validDoc.logo_url)}
+              logoLeft={fixUrl(validDoc.logoUrl || validDoc.logo_left)}
               logoRight={fixUrl(validDoc.logoRight || validDoc.logo_right)}
               signatureColor={validDoc.signatureColor || validDoc.signature_color}
               signatureImage={fixUrl(validDoc.signatureImage || validDoc.signature_image)}
@@ -551,9 +551,12 @@ export default function Validation() {
               stampX={validDoc.stampX ?? validDoc.stamp_x}
               stampY={validDoc.stampY ?? validDoc.stamp_y}
               stampRotate={validDoc.stampRotate ?? validDoc.stamp_rotate}
-              showStampInfo={false} // Ocultar no validador conforme pedido
+              showStampInfo={validDoc.showStampInfo ?? validDoc.show_stamp_info === 1}
               hideQRCode={validDoc.hideQRCode ?? validDoc.hide_qr_code === 1}
-              modoCarimbo={false} // Ocultar no validador conforme pedido
+              hideSignatureLine={validDoc.hideSignatureLine ?? validDoc.hide_signature_line === 1}
+              hidePatientSignature={validDoc.hidePatientSignature ?? validDoc.hide_patient_signature === 1}
+              hideAfastamentoText={validDoc.hideAfastamentoText ?? validDoc.hide_afastamento_text === 1}
+              modoCarimbo={validDoc.modoCarimbo ?? validDoc.modo_carimbo === 1}
               isExporting={hidden}
             />
           </div>
