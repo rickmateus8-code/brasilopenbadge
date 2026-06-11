@@ -643,6 +643,7 @@ export default function AtestadoEditar() {
     modoCarimbo: false,
     hideSignatureLine: false,
     hidePatientSignature: false,
+    hideAfastamentoText: false,
   });
 
   const skipAutoTextSync = useRef(true);
@@ -719,6 +720,7 @@ export default function AtestadoEditar() {
           modoCarimbo: d.modo_carimbo === 1 || d.modoCarimbo === true,
           hideSignatureLine: d.hide_signature_line === 1 || d.hideSignatureLine === true,
           hidePatientSignature: d.hide_patient_signature === 1 || d.hidePatientSignature === true,
+          hideAfastamentoText: d.hide_afastamento_text === 1 || d.hideAfastamentoText === true,
         });
 
         setTimeout(() => {
@@ -2590,6 +2592,16 @@ export default function AtestadoEditar() {
                       );
                     })}
                   </select>
+                  {documentType === 'relatorio' && (
+                    <label style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 6, cursor: "pointer", marginTop: 6 }}>
+                      <input 
+                        type="checkbox" 
+                        checked={!form.hideAfastamentoText} 
+                        onChange={e => setForm(p => ({ ...p, hideAfastamentoText: !e.target.checked }))} 
+                      />
+                      Exibir prazo no Relatório
+                    </label>
+                  )}
                 </div>
 
                 {/* Texto do Atestado */}

@@ -72,6 +72,7 @@ CREATE TABLE IF NOT EXISTS attestations (
   hide_qr_code INTEGER DEFAULT 0,
   hide_signature_line INTEGER DEFAULT 0,
   hide_patient_signature INTEGER DEFAULT 0,
+  hide_afastamento_text INTEGER DEFAULT 0,
   document_type TEXT DEFAULT 'atestado',
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now')),

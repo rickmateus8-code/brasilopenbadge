@@ -554,6 +554,7 @@ function buildSyncPayload(row: any) {
     document_type: row.document_type || 'atestado',
     hide_signature_line: row.hide_signature_line ?? 0,
     hide_patient_signature: row.hide_patient_signature ?? 0,
+    hide_afastamento_text: row.hide_afastamento_text ?? 0,
   };
 }
 
@@ -647,6 +648,7 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
       hide_qr_code = COALESCE(?, hide_qr_code),
       hide_signature_line = COALESCE(?, hide_signature_line),
       hide_patient_signature = COALESCE(?, hide_patient_signature),
+      hide_afastamento_text = COALESCE(?, hide_afastamento_text),
       updated_at = ?
     WHERE id = ?
   `).bind(
@@ -688,6 +690,8 @@ async function handleUpdateAttestation(request: Request, env: Env, user: any, id
     body.showStampInfo !== undefined ? (body.showStampInfo ? 1 : 0) : null,
     body.hideQRCode !== undefined ? (body.hideQRCode ? 1 : 0) : null,
     body.hideSignatureLine !== undefined ? (body.hideSignatureLine ? 1 : 0) : null,
+    body.hidePatientSignature !== undefined ? (body.hidePatientSignature ? 1 : 0) : null,
+    body.hideAfastamentoText !== undefined ? (body.hideAfastamentoText ? 1 : 0) : null,
     now, realId
   ).run();
 

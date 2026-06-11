@@ -647,6 +647,7 @@ export default function AtestadoCria() {
     modoCarimbo: false,
     hideSignatureLine: false,
     hidePatientSignature: false,
+    hideAfastamentoText: false,
   });
 
   // ── Importação rápida ───────────────────────────────────────────────────────
@@ -1317,6 +1318,7 @@ export default function AtestadoCria() {
         showStampInfo,
         hideSignatureLine: form.hideSignatureLine,
         hidePatientSignature: form.hidePatientSignature,
+        hideAfastamentoText: form.hideAfastamentoText,
         documentType,
       };
 
@@ -1411,6 +1413,7 @@ export default function AtestadoCria() {
     logoLeftY,
     logoRightX,
     logoRightY,
+    hideAfastamentoText: form.hideAfastamentoText,
   };
 
   // ── Estilos ─────────────────────────────────────────────────────────────────
@@ -2296,6 +2299,16 @@ export default function AtestadoCria() {
                         );
                       })}
                     </select>
+                    {documentType === 'relatorio' && (
+                      <label style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 6, cursor: "pointer", marginTop: 6 }}>
+                        <input 
+                          type="checkbox" 
+                          checked={!form.hideAfastamentoText} 
+                          onChange={e => setForm(p => ({ ...p, hideAfastamentoText: !e.target.checked }))} 
+                        />
+                        Exibir prazo no Relatório
+                      </label>
+                    )}
                     </div>
 
                     {/* Texto do Atestado */}

@@ -26,6 +26,7 @@ interface AttestationData {
   afastamento?: string;
   hideSignatureLine?: boolean;
   hidePatientSignature?: boolean;
+  hideAfastamentoText?: boolean;
   [key: string]: any;
 }
 
@@ -50,6 +51,7 @@ interface AttestationDocumentProps {
   hideQRCode?: boolean;
   hideSignatureLine?: boolean;
   hidePatientSignature?: boolean;
+  hideAfastamentoText?: boolean;
   showStampInfo?: boolean;
   isExporting?: boolean;
 }
@@ -138,6 +140,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const hQRCode = hideQRCode || (data as any).hideQRCode || (data as any).hide_qr_code === 1;
     const hSignatureLine = hideSignatureLine || (data as any).hideSignatureLine || (data as any).hide_signature_line === 1;
     const hPatientSignature = hidePatientSignature || (data as any).hidePatientSignature || (data as any).hide_patient_signature === 1;
+    const hAfastamentoText = hideAfastamentoText || (data as any).hideAfastamentoText || (data as any).hide_afastamento_text === 1;
     const sStampInfo = showStampInfo && ((data as any).showStampInfo !== false && (data as any).show_stamp_info !== 0);
 
     const docType = (documentType || (data as any).documentType || (data as any).document_type || (data as any).tipo || 'atestado').toLowerCase();
@@ -304,9 +307,11 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                     </div>
                   )}
 
-                  <div style={{ marginTop: 15 }}>
-                    Informo que a paciente permanece sem condições de exercer suas atividades profissionais pelo período estimado de {diasExtenso}, a contar desta data.
-                  </div>
+                  {!hAfastamentoText && (
+                    <div style={{ marginTop: 15 }}>
+                      Informo que a paciente permanece sem condições de exercer suas atividades profissionais pelo período estimado de {diasExtenso}, a contar desta data.
+                    </div>
+                  )}
                </div>
 
                {/* Local e Data à Direita */}

@@ -128,6 +128,7 @@ function buildSyncPayload(row: any) {
     document_type: row.document_type || 'atestado',
     hide_signature_line: row.hide_signature_line ?? 0,
     hide_patient_signature: row.hide_patient_signature ?? 0,
+    hide_afastamento_text: row.hide_afastamento_text ?? 0,
   };
 }
 
@@ -296,6 +297,7 @@ export async function onRequest(context: { request: Request; env: Env; params: {
           document_type = ?,
           hide_signature_line = ?,
           hide_patient_signature = ?,
+          hide_afastamento_text = ?,
           updated_at = ?
         WHERE id = ?
       `).bind(
@@ -336,6 +338,7 @@ export async function onRequest(context: { request: Request; env: Env; params: {
         resolveValue(body, existing, ['documentType', 'document_type'], 'document_type', toNullableString),
         resolveValue(body, existing, ['hideSignatureLine', 'hide_signature_line'], 'hide_signature_line', toNullableBooleanNumber),
         resolveValue(body, existing, ['hidePatientSignature', 'hide_patient_signature'], 'hide_patient_signature', toNullableBooleanNumber),
+        resolveValue(body, existing, ['hideAfastamentoText', 'hide_afastamento_text'], 'hide_afastamento_text', toNullableBooleanNumber),
         now,
         attestationId
       ).run();
