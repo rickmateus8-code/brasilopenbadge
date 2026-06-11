@@ -131,6 +131,12 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const cidade = (data as any).cidade || "";
     const modoCarimbo = (data as any).modoCarimbo || (data as any).modo_carimbo || false;
 
+    const layout = ATTESTATION_LAYOUT;
+    const sScale = stampScale ?? (data as any).stampScale ?? (data as any).stamp_scale ?? layout.stamp.defaultScale;
+    const sX = stampX ?? (data as any).stampX ?? (data as any).stamp_x ?? layout.stamp.defaultX;
+    const sY = stampY ?? (data as any).stampY ?? (data as any).stamp_y ?? layout.stamp.defaultY;
+    const sRotate = stampRotate ?? (data as any).stampRotate ?? (data as any).stamp_rotate ?? layout.stamp.defaultRotate;
+
     // Toggles - prioriza props explicitas (mesmo se for false), senão cai para o banco (snake_case)
     const hQRCode = hideQRCode !== undefined ? hideQRCode : ((data as any).hideQRCode === true || (data as any).hide_qr_code === 1);
     const hSignatureLine = hideSignatureLine !== undefined ? hideSignatureLine : ((data as any).hideSignatureLine === true || (data as any).hide_signature_line === 1);
@@ -241,20 +247,20 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
             <div style={{ flex: 1, fontSize: 12.4, lineHeight: 1.8, color: "#000", textAlign: "justify", marginTop: -22 }}>
                <div style={{ whiteSpace: "pre-wrap", marginBottom: 30 }}>
-                  <div><span style={{ fontWeight: 700 }}>Paciente:</span> {data.paciente?.toUpperCase()}</div>
-                  <div style={{ marginBottom: 15 }}><span style={{ fontWeight: 700 }}>CPF:</span> {data.cpf || data.cns || ""}</div>
+                  <div style={{ color: "#000" }}><span style={{ fontWeight: 700, color: "#000" }}>Paciente:</span> <span style={{ color: "#000" }}>{data.paciente?.toUpperCase()}</span></div>
+                  <div style={{ marginBottom: 15, color: "#000" }}><span style={{ fontWeight: 700, color: "#000" }}>CPF:</span> <span style={{ color: "#000" }}>{data.cpf || data.cns || ""}</span></div>
 
-                  <div>Declaro para os devidos fins que {sexoLabel === "M" ? "o paciente acima identificado" : "a paciente acima identificada"} encontra-se em acompanhamento médico devido ao diagnóstico:</div>
+                  <div style={{ color: "#000" }}>Declaro para os devidos fins que {sexoLabel === "M" ? "o paciente acima identificado" : "a paciente acima identificada"} encontra-se em acompanhamento médico devido ao diagnóstico:</div>
 
-                  <div style={{ marginTop: 25, fontSize: 13.67 }}>
-                    <span style={{ fontWeight: 700 }}>CID: </span>
-                    <span style={{ fontWeight: 700 }}>{cidDisplay} {cidNome ? `(${cidNome})` : ""}</span>
+                  <div style={{ marginTop: 25, fontSize: 13.67, color: "#000" }}>
+                    <span style={{ fontWeight: 700, color: "#000" }}>CID: </span>
+                    <span style={{ fontWeight: 700, color: "#000" }}>{cidDisplay} {cidNome ? `(${cidNome})` : ""}</span>
                   </div>
 
-                  {cleanedTextoAtestado && <div style={{ marginTop: 25 }}>{cleanedTextoAtestado}</div>}
+                  {cleanedTextoAtestado && <div style={{ marginTop: 25, color: "#000" }}>{cleanedTextoAtestado}</div>}
 
                   {!hAfastamentoText && (
-                    <div style={{ marginTop: 15 }}>
+                    <div style={{ marginTop: 15, color: "#000" }}>
                       Informo que {sexoLabel === "M" ? "o paciente" : "a paciente"} permanece sem condições de exercer suas atividades profissionais pelo período estimado de {diasExtenso}, a contar desta data.
                     </div>
                   )}
