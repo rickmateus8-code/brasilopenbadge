@@ -25,6 +25,7 @@ interface AttestationData {
   dataEmissao: string;
   afastamento?: string;
   hideSignatureLine?: boolean;
+  hidePatientSignature?: boolean;
   [key: string]: any;
 }
 
@@ -78,12 +79,15 @@ const DIAS_EXTENSO: Record<number, { num: string; ext: string }> = {
 };
 
 const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>(
-  ({ 
-    data, logoUrl, logoLeft, logoRight, signatureColor, signatureImage, documentType, 
-    logoLeftScale = 1, logoRightScale = 1, logoLeftX = 0, logoLeftY = 0, logoRightX = 0, logoRightY = 0,
-    stampScale, stampX, stampY, stampRotate, hideQRCode, hideSignatureLine, hidePatientSignature, showStampInfo,
-    isExporting = false
-  }, ref) => {
+  (props, ref) => {
+    if (!props.data) return null;
+    const {
+      data, logoUrl, logoLeft, logoRight, signatureColor, signatureImage, documentType,
+      logoLeftScale = 1, logoRightScale = 1, logoLeftX = 0, logoLeftY = 0, logoRightX = 0, logoRightY = 0,
+      stampScale, stampX, stampY, stampRotate, hideQRCode, hideSignatureLine, hidePatientSignature, showStampInfo,
+      isExporting = false
+    } = props;
+
     const isEmitted = data.codigoQR && data.codigoQR !== "XXXX.XXXX";
     const rawDateToUse = data.dataAssinatura || data.dataEmissao || "";
     const dataEmissaoForQR = rawDateToUse
