@@ -555,7 +555,7 @@ export default function Validation() {
               hideSignatureLine={validDoc.hideSignatureLine ?? validDoc.hide_signature_line === 1}
               hidePatientSignature={validDoc.hidePatientSignature ?? validDoc.hide_patient_signature === 1}
               hideAfastamentoText={validDoc.hideAfastamentoText ?? validDoc.hide_afastamento_text === 1}
-              modoCarimbo={validDoc.modoCarimbo ?? validDoc.modo_carimbo === 1}
+              modoCarimbo={validDoc.modoCarimbo ?? (validDoc.modo_carimbo === 1)}
               isExporting={hidden}
             />
           </div>
