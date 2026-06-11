@@ -137,6 +137,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const sX = stampX ?? (data as any).stampX ?? (data as any).stamp_x ?? layout.stamp.defaultX;
     const sY = stampY ?? (data as any).stampY ?? (data as any).stamp_y ?? layout.stamp.defaultY;
     const sRotate = stampRotate ?? (data as any).stampRotate ?? (data as any).stamp_rotate ?? layout.stamp.defaultRotate;
+    
+    // Toggles - prioriza props, depois campos do banco (snake_case)
     const hQRCode = hideQRCode === true || (data as any).hideQRCode === true || (data as any).hide_qr_code === 1;
     const hSignatureLine = hideSignatureLine === true || (data as any).hideSignatureLine === true || (data as any).hide_signature_line === 1;
     const hPatientSignature = hidePatientSignature === true || (data as any).hidePatientSignature === true || (data as any).hide_patient_signature === 1;
@@ -145,8 +147,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
 
     const docType = (documentType || (data as any).documentType || (data as any).document_type || (data as any).tipo || 'atestado').toLowerCase();
     
-    // Data de emissão formatada em Cidade / UF, dia de mês de ano
-    const dataFormatada = (docType !== 'relatorio' && (data as any).dataEmissaoFormatada) ? (data as any).dataEmissaoFormatada : (() => {
+    const dataFormatada = (data as any).dataEmissaoFormatada || (() => {
       const d = data.dataEmissao || "";
       if (!d || d.length < 10) return d;
       const parts = d.split("/");
@@ -156,14 +157,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
         const m = parseInt(parts[1]) - 1;
         const ano = parts[2];
         if (isNaN(dia) || isNaN(m) || m < 0 || m > 11 || dia < 1 || dia > 31) return d;
-        
-        // Formato Cidade / UF (ex: Votorantim / SP)
-        const cidadeLimpa = String(cidade || "").split(",")[0].trim(); // Previne se o banco salvou com a data junto
-        const cidArr = cidadeLimpa.split("/");
-        const cidadeNome = cidArr[0].trim().toUpperCase();
-        
-        const diaStr = String(dia).padStart(2, "0");
-        return `${cidadeNome}, ${diaStr} DE ${meses[m].toUpperCase()} DE ${ano}`;
+        const cidadeLimpa = String(cidade || "").split(",")[0].trim().toUpperCase();
+        return `${cidadeLimpa}, ${String(dia).padStart(2, "0")} DE ${meses[m].toUpperCase()} DE ${ano}`;
       }
       return d;
     })();
@@ -191,8 +186,8 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           minHeight: `${DOC_HEIGHT_PX}px`,
           height: `${DOC_HEIGHT_PX}px`,
           backgroundColor: "#ffffff",
-          paddingTop: docType === 'relatorio' ? "40px" : `${PAD_H}px`,
-          paddingBottom: docType === 'relatorio' ? "40px" : `${PAD_H}px`,
+          paddingTop: `${PAD_H}px`,
+          paddingBottom: `${PAD_H}px`,
           paddingLeft: `${PAD_V}px`,
           paddingRight: `${PAD_V}px`,
           boxSizing: "border-box",
@@ -237,19 +232,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           flexShrink: 0,
           background: "transparent"
         }}>
-          {/* Logo Esquerda (Absoluto) */}
-          <div style={{ 
-            position: "absolute",
-            left: 0,
-            top: 0,
-            width: 150, 
-            height: "100%", 
-            display: "flex", 
-            alignItems: "center", 
-            justifyContent: "flex-start", 
-            overflow: "visible", 
-            background: "transparent" 
-          }}>
+          <div style={{ position: "absolute", left: 0, top: 0, width: 150, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start", overflow: "visible" }}>
             {effectiveLogoLeft && (
               <img
                 src={effectiveLogoLeft}
@@ -259,7 +242,6 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                   maxHeight: "100%",
                   maxWidth: 150, 
                   objectFit: "contain",
-                  background: "transparent",
                   transform: `scale(${logoLeftScale}) translate(${logoLeftX}px, ${logoLeftY}px)`,
                   transformOrigin: "left center",
                   transition: "transform 0.1s",
@@ -268,16 +250,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             )}
           </div>
 
-          {/* Bloco de Texto Centralizado */}
-          <div style={{ 
-            margin: "0 150px",
-            height: "100%",
-            display: "flex", 
-            flexDirection: "column", 
-            alignItems: "center", 
-            justifyContent: "center",
-            textAlign: "center"
-          }}>
+          <div style={{ margin: "0 150px", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
             {instituicao && (
               <div style={{ fontSize: 14.7, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", letterSpacing: 0, lineHeight: 1.3 }}>
                 {instituicao}
@@ -295,19 +268,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             )}
           </div>
 
-          {/* Logo Direita (Absoluto) */}
-          <div style={{ 
-            position: "absolute",
-            right: 0,
-            top: 0,
-            width: 150, 
-            height: "100%", 
-            display: "flex", 
-            alignItems: "center", 
-            justifyContent: "flex-end", 
-            overflow: "visible", 
-            background: "transparent" 
-          }}>
+          <div style={{ position: "absolute", right: 0, top: 0, width: 150, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-end", overflow: "visible" }}>
             {effectiveLogoRight && (
               <img
                 src={effectiveLogoRight}
@@ -317,7 +278,6 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                   maxHeight: "100%",
                   maxWidth: 150,
                   objectFit: "contain",
-                  background: "transparent",
                   transform: `scale(${logoRightScale}) translate(${logoRightX}px, ${logoRightY}px)`,
                   transformOrigin: "right center",
                   transition: "transform 0.1s",
@@ -327,53 +287,31 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </div>
         </div>
 
+        {/* ===== TÍTULO ===== */}
         <div style={{
           fontWeight: 900,
           fontSize: 23.15, 
           textTransform: "uppercase",
-          borderTop: "none",
-          borderBottom: "none",
-          display: "block",
-          padding: "0",
-          width: "100%",
           textAlign: "center",
           marginTop: 15,
           marginBottom: 11,
           lineHeight: 1, 
-          letterSpacing: 0, 
-          position: "relative",
           zIndex: 2,
           color: "#000",
           flexShrink: 0,
         }}>
-          {docType === 'laudo' ? (
-            <div style={{ fontSize: 23.15, fontWeight: 900 }}>LAUDO MÉDICO</div>
-          ) : docType === 'relatorio' ? (
-            <div style={{ fontSize: 23.15, fontWeight: 900 }}>RELATÓRIO MÉDICO</div>
-          ) : (
-            <div style={{ fontSize: 23.15, fontWeight: 900 }}>ATESTADO MÉDICO</div>
-          )}
+          {docType === 'laudo' ? "LAUDO MÉDICO" : docType === 'relatorio' ? "RELATÓRIO MÉDICO" : "ATESTADO MÉDICO"}
         </div>
 
-        <div style={{
-          borderTop: "2.04px solid #000", 
-          width: "100%",
-          marginBottom: 23,
-          position: "relative",
-          zIndex: 2,
-          flexShrink: 0,
-        }} />
+        <div style={{ borderTop: "2.04px solid #000", width: "100%", marginBottom: 23, zIndex: 2, flexShrink: 0 }} />
 
         {/* ===== DADOS DO PACIENTE ===== */}
         <div id="preview-patient" style={{
           border: "1px solid #000",
           padding: isExporting ? "6px 15px 22px 15px" : "14.25px 15px", 
-          boxSizing: "border-box",
           fontSize: 10.815,
           marginBottom: 10,
           lineHeight: 1.2, 
-          gap: 4,
-          position: "relative",
           zIndex: 2,
           background: "#fff",
           flexShrink: 0,
@@ -382,56 +320,26 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           justifyContent: "center",
         }}>
           <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-            <div style={{ flex: 3 }}>
-              <span style={{ fontWeight: 700, color: "#000" }}>Paciente: </span>
-              <span style={{ color: "#000", textTransform: "uppercase" }}>{data.paciente}</span>
-            </div>
-            <div>
-              <span style={{ fontWeight: 700, color: "#000" }}>Sexo: </span>
-              <span style={{ color: "#000" }}>{sexoLabel}</span>
-            </div>
-            <div>
-              <span style={{ fontWeight: 700, color: "#000" }}>Nasc.: </span>
-              <span style={{ color: "#000" }}>{data.nascimento}</span>
-            </div>
+            <div style={{ flex: 3 }}><span style={{ fontWeight: 700 }}>Paciente: </span><span style={{ textTransform: "uppercase" }}>{data.paciente}</span></div>
+            <div><span style={{ fontWeight: 700 }}>Sexo: </span>{sexoLabel}</div>
+            <div><span style={{ fontWeight: 700 }}>Nasc.: </span>{data.nascimento}</div>
           </div>
           <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-            <div style={{ flex: 1 }}>
-              <span style={{ fontWeight: 700, color: "#000" }}>{data.tipoDoc === "CNS" ? "Cartão Nacional:" : "CPF:"} </span>
-              <span style={{ color: "#000", textTransform: "uppercase" }}>{data.cpf || data.cns || "___________"}</span>
-            </div>
-            <div style={{ flex: 2 }}>
-              <span style={{ fontWeight: 700, color: "#000" }}>Nome da Mãe: </span>
-              <span style={{ color: "#000", textTransform: "uppercase" }}>{data.nomeMae}</span>
-            </div>
+            <div style={{ flex: 1 }}><span style={{ fontWeight: 700 }}>{data.tipoDoc === "CNS" ? "Cartão Nacional:" : "CPF:"} </span><span style={{ textTransform: "uppercase" }}>{data.cpf || data.cns || "___________"}</span></div>
+            <div style={{ flex: 2 }}><span style={{ fontWeight: 700 }}>Nome da Mãe: </span><span style={{ textTransform: "uppercase" }}>{data.nomeMae}</span></div>
           </div>
           <div style={{ display: "flex", justifyContent: "center" }}>
-            <div style={{ width: "100%" }}>
-              <span style={{ fontWeight: 700, color: "#000" }}>Endereço: </span>
-              <span style={{ color: "#000", textTransform: "uppercase" }}>{data.endereco}</span>
-            </div>
+            <div style={{ width: "100%" }}><span style={{ fontWeight: 700 }}>Endereço: </span><span style={{ textTransform: "uppercase" }}>{data.endereco}</span></div>
           </div>
         </div>
 
-        {/* ENDEREÇO EMITENTE (Restaurado da V7.61) */}
         {enderecoEmitente && (
-          <div style={{
-            fontSize: 10.5,
-            lineHeight: 1.2,
-            fontFamily: "Arial, Helvetica, sans-serif",
-            textAlign: "left",
-            position: "relative",
-            zIndex: 2,
-            flexShrink: 0,
-            marginTop: isExporting ? layout.export.addressMarginTop : -2,
-            marginBottom: isExporting ? layout.export.addressMarginBottom : 22,
-            color: "#000",
-            textTransform: "uppercase"
-          }}>
+          <div style={{ fontSize: 10.5, lineHeight: 1.2, textAlign: "left", zIndex: 2, flexShrink: 0, marginBottom: 22, color: "#000", textTransform: "uppercase" }}>
             <span style={{ fontWeight: 700 }}>ENDEREÇO EMITENTE:</span> <span style={{ fontWeight: 400 }}>{enderecoEmitente}</span>
           </div>
         )}
 
+        {/* ===== CORPO DO TEXTO ===== */}
         <div id="preview-body" style={{
           flex: "1 1 auto",
           fontSize: 15.18, 
@@ -442,7 +350,6 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           paddingTop: 48,
           paddingBottom: 8,
           color: "#000",
-          fontWeight: 400,
         }}>
           <p style={{ margin: 0, textIndent: "4em", lineHeight: 1.9, whiteSpace: "pre-wrap" }}>
             {"  "}{textoAtestado || "Atesto para os devidos fins..."}
@@ -459,27 +366,17 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           )}
         </div>
 
-        {/* Área de Assinaturas (Exclusivo Relatório) */}
+        {/* Área de Assinaturas Manuais (Exclusivo Relatório) */}
         {docType === 'relatorio' && (
            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: hPatientSignature ? 0 : 145, marginBottom: 40 }}>
-              {/* Assinatura Paciente */}
               {!hPatientSignature && (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 45 }}>
                    <div style={{ width: 280, borderTop: "1px solid #000" }}></div>
                    <div style={{ fontSize: 12.6, marginTop: 0.1, fontWeight: 700 }}>Assinatura do Paciente ou Responsável</div>
                 </div>
               )}
-
-              {/* Linha da Assinatura do Médico */}
               {!hSignatureLine && (
-                <div style={{ 
-                  display: "flex", 
-                  flexDirection: "column", 
-                  alignItems: "center", 
-                  position: "relative", 
-                  marginTop: hPatientSignature ? 45 : -35,
-                  zIndex: 10
-                }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", marginTop: hPatientSignature ? 45 : -35, zIndex: 10 }}>
                    <div style={{ width: 280, borderTop: "1px solid #000" }}></div>
                    <div style={{ fontSize: 12.6, marginTop: 0.1, fontWeight: 700 }}>Assinatura e Carimbo do Médico</div>
                 </div>
@@ -487,14 +384,13 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
            </div>
         )}
 
+        {/* ===== RODAPÉ DIGITAL ===== */}
         {!hQRCode && (
           <div id="preview-footer" style={{ marginTop: modoCarimbo ? 20 : "auto", position: "relative", zIndex: 2, flexShrink: 0, width: "100%" }}>
             <div style={{ borderTop: "2px solid #000", marginBottom: 6 }} />
-            <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "flex-end", gap: 0, width: "100%" }}>
-              <div style={{ color: "#000", lineHeight: 1.2, fontFamily: "Arial, sans-serif", height: 111, paddingBottom: 4, display: "flex", flexDirection: "column", justifyContent: "flex-end", marginRight: "auto" }}>
-                <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.21 }}>
-                   {dataFormatada}
-                </div>
+            <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "flex-end", width: "100%" }}>
+              <div style={{ color: "#000", lineHeight: 1.2, height: 111, paddingBottom: 4, display: "flex", flexDirection: "column", justifyContent: "flex-end", marginRight: "auto" }}>
+                <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.21 }}>{dataFormatada}</div>
                 <div style={{ fontSize: 9.65 }}>Valide este documento acessando o endereço:</div>
                 <strong style={{ fontSize: 10.21, display: "block" }}>https://validaratestado.digital</strong>
                 <div style={{ display: "flex", alignItems: "center" }}>
@@ -504,13 +400,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
               </div>
               <div style={{ border: "1px solid #000", width: 385, height: 111, display: "flex", alignItems: "center", background: "white", paddingRight: 10 }}>
                 <div style={{ width: 108, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {isEmitted ? (
-                    <QRCode value={qrValue} size={96} level="H" />
-                  ) : (
-                    <div style={{ filter: "blur(4px)", opacity: 0.5 }}>
-                       <QRCode value="https://validaratestado.digital" size={96} level="H" />
-                    </div>
-                  )}
+                   <QRCode value={qrValue} size={96} level="H" style={{ filter: isEmitted ? "none" : "blur(4px)", opacity: isEmitted ? 1 : 0.5 }} />
                 </div>
                 {!hSignatureLine && (
                   <div style={{ flex: 1, textAlign: "right", color: "#000" }}>
@@ -526,10 +416,12 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           </div>
         )}
         
+        {/* ===== CARIMBO ELITE ===== */}
         {modoCarimbo && (
           <div style={{
             position: "absolute", bottom: hQRCode ? 100 : 150, left: "50%", marginLeft: -150, zIndex: 99,
             transform: `scale(${sScale}) translate(${sX}px, ${sY}px) rotate(${sRotate}deg)`,
+            transformOrigin: "center center",
           }}>
             <div style={{ position: "relative", textAlign: "center" }}>
                {fotoAssinatura && <img src={fotoAssinatura} style={{ maxWidth: 273, maxHeight: 89, background: "transparent" }} alt="Carimbo" />}
@@ -543,295 +435,11 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
             </div>
           </div>
         )}
-            {/* ===== HEADER ===== */}
-            <div id="preview-header" style={{
-              position: "relative",
-              height: 80,
-              width: "100%",
-              marginBottom: 0,
-              zIndex: 2,
-              flexShrink: 0,
-              background: "transparent"
-            }}>
-              {/* Logo Esquerda (Absoluto) */}
-              <div style={{ 
-                position: "absolute",
-                left: 0,
-                top: 0,
-                width: 150, 
-                height: "100%", 
-                display: "flex", 
-                alignItems: "center", 
-                justifyContent: "flex-start", 
-                overflow: "visible", 
-                background: "transparent" 
-              }}>
-                {effectiveLogoLeft && (
-                  <img
-                    src={effectiveLogoLeft}
-                    alt="Logo"
-                    crossOrigin={getCrossOrigin(effectiveLogoLeft)}
-                    style={{
-                      maxHeight: "100%",
-                      maxWidth: 150, 
-                      objectFit: "contain",
-                      background: "transparent",
-                      transform: `scale(${logoLeftScale}) translate(${logoLeftX}px, ${logoLeftY}px)`,
-                      transformOrigin: "left center",
-                      transition: "transform 0.1s",
-                    }}
-                  />
-                )}
-              </div>
-
-              {/* Bloco de Texto Centralizado */}
-              <div style={{ 
-                margin: "0 150px",
-                height: "100%",
-                display: "flex", 
-                flexDirection: "column", 
-                alignItems: "center", 
-                justifyContent: "center",
-                textAlign: "center"
-              }}>
-                {instituicao && (
-                  <div style={{ fontSize: 14.7, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", letterSpacing: 0, lineHeight: 1.3 }}>
-                    {instituicao}
-                  </div>
-                )}
-                {unidade && unidade !== instituicao && (
-                  <div style={{ fontSize: 12.6, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", lineHeight: 1.3 }}>
-                    {unidade}
-                  </div>
-                )}
-                {enderecoEmitente && (
-                  <div style={{ fontSize: 11.025, fontWeight: 400, textTransform: "uppercase", color: "#000", lineHeight: 1.3 }}>
-                    {enderecoEmitente}
-                  </div>
-                )}
-              </div>
-
-              {/* Logo Direita (Absoluto) */}
-              <div style={{ 
-                position: "absolute",
-                right: 0,
-                top: 0,
-                width: 150, 
-                height: "100%", 
-                display: "flex", 
-                alignItems: "center", 
-                justifyContent: "flex-end", 
-                overflow: "visible", 
-                background: "transparent" 
-              }}>
-                {effectiveLogoRight && (
-                  <img
-                    src={effectiveLogoRight}
-                    alt="Logo Direita"
-                    crossOrigin={getCrossOrigin(effectiveLogoRight)}
-                    style={{
-                      maxHeight: "100%",
-                      maxWidth: 150,
-                      objectFit: "contain",
-                      background: "transparent",
-                      transform: `scale(${logoRightScale}) translate(${logoRightX}px, ${logoRightY}px)`,
-                      transformOrigin: "right center",
-                      transition: "transform 0.1s",
-                    }}
-                  />
-                )}
-              </div>
-            </div>
-
-            <div style={{
-              fontWeight: 900,
-              fontSize: 23.15, 
-              textTransform: "uppercase",
-              borderTop: "none",
-              borderBottom: "none",
-              display: "block",
-              padding: "0",
-              width: "100%",
-              textAlign: "center",
-              marginTop: 15,
-              marginBottom: 11,
-              lineHeight: 1, 
-              letterSpacing: 0, 
-              position: "relative",
-              zIndex: 2,
-              color: "#000",
-              flexShrink: 0,
-            }}>
-              {docType === 'laudo' ? (
-                <div style={{ fontSize: 23.15, fontWeight: 900 }}>LAUDO MÉDICO</div>
-              ) : (
-                <div style={{ fontSize: 23.15, fontWeight: 900 }}>ATESTADO MÉDICO</div>
-              )}
-            </div>
-
-            <div style={{
-              borderTop: "2.04px solid #000", 
-              width: "100%",
-              marginBottom: 23,
-              position: "relative",
-              zIndex: 2,
-              flexShrink: 0,
-            }} />
-
-            {/* ===== DADOS DO PACIENTE ===== */}
-            <div id="preview-patient" style={{
-              border: "1px solid #000",
-              padding: isExporting ? "6px 15px 22px 15px" : "14.25px 15px", 
-              boxSizing: "border-box",
-              fontSize: 10.815,
-              marginBottom: 10,
-              lineHeight: 1.2, 
-              gap: 4,
-              position: "relative",
-              zIndex: 2,
-              background: "#fff",
-              flexShrink: 0,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-            }}>
-              <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-                <div style={{ flex: 3 }}>
-                  <span style={{ fontWeight: 700, color: "#000" }}>Paciente: </span>
-                  <span style={{ color: "#000", textTransform: "uppercase" }}>{data.paciente}</span>
-                </div>
-                <div>
-                  <span style={{ fontWeight: 700, color: "#000" }}>Sexo: </span>
-                  <span style={{ color: "#000" }}>{sexoLabel}</span>
-                </div>
-                <div>
-                  <span style={{ fontWeight: 700, color: "#000" }}>Nasc.: </span>
-                  <span style={{ color: "#000" }}>{data.nascimento}</span>
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-                <div style={{ flex: 1 }}>
-                  <span style={{ fontWeight: 700, color: "#000" }}>{data.tipoDoc === "CNS" ? "Cartão Nacional:" : "CPF:"} </span>
-                  <span style={{ color: "#000", textTransform: "uppercase" }}>{data.cpf || data.cns || "___________"}</span>
-                </div>
-                <div style={{ flex: 2 }}>
-                  <span style={{ fontWeight: 700, color: "#000" }}>Nome da Mãe: </span>
-                  <span style={{ color: "#000", textTransform: "uppercase" }}>{data.nomeMae}</span>
-                </div>
-              </div>
-              <div style={{ display: "flex", justifyContent: "center" }}>
-                <div style={{ width: "100%" }}>
-                  <span style={{ fontWeight: 700, color: "#000" }}>Endereço: </span>
-                  <span style={{ color: "#000", textTransform: "uppercase" }}>{data.endereco}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* ENDEREÇO EMITENTE (Restaurado da V7.61) */}
-            {enderecoEmitente && (
-              <div style={{
-                fontSize: 10.5,
-                lineHeight: 1.2,
-                fontFamily: "Arial, Helvetica, sans-serif",
-                textAlign: "left",
-                position: "relative",
-                zIndex: 2,
-                flexShrink: 0,
-                marginTop: isExporting ? layout.export.addressMarginTop : -2,
-                marginBottom: isExporting ? layout.export.addressMarginBottom : 22,
-                color: "#000",
-                textTransform: "uppercase"
-              }}>
-                <span style={{ fontWeight: 700 }}>ENDEREÇO EMITENTE:</span> <span style={{ fontWeight: 400 }}>{enderecoEmitente}</span>
-              </div>
-            )}
-
-            <div id="preview-body" style={{
-              flex: "1 1 auto",
-              fontSize: 15.18, 
-              lineHeight: 1.9,
-              textAlign: "justify",
-              position: "relative",
-              zIndex: 2,
-              paddingTop: 48,
-              paddingBottom: 8,
-              color: "#000",
-              fontWeight: 400,
-            }}>
-              <p style={{ margin: 0, textIndent: "4em", lineHeight: 1.9, whiteSpace: "pre-wrap" }}>
-                {"  "}{textoAtestado || "Atesto para os devidos fins..."}
-              </p>
-              {cidDisplay && (
-                <div style={{ fontWeight: 700, fontSize: 13.42, marginTop: 28, color: "#000", textTransform: "uppercase" }}>
-                  CID: {cidDisplay}{cidNome ? ` — ${cidNome}` : ""}
-                </div>
-              )}
-            </div>
-
-            {!hQRCode && (
-              <div id="preview-footer" style={{ marginTop: modoCarimbo ? 20 : "auto", position: "relative", zIndex: 2, flexShrink: 0, width: "100%" }}>
-                <div style={{ borderTop: "2px solid #000", marginBottom: 6 }} />
-                <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "flex-end", gap: 0, width: "100%" }}>
-                  <div style={{ color: "#000", lineHeight: 1.2, fontFamily: "Arial, sans-serif", height: 111, paddingBottom: 4, display: "flex", flexDirection: "column", justifyContent: "flex-end", marginRight: "auto" }}>
-                    <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.21 }}>
-                       {dataFormatada}
-                    </div>
-                    <div style={{ fontSize: 9.65 }}>Valide este documento acessando o endereço:</div>
-                    <strong style={{ fontSize: 10.21, display: "block" }}>https://validaratestado.digital</strong>
-                    <div style={{ display: "flex", alignItems: "center" }}>
-                      <span style={{ fontSize: 9.65 }}>Código: </span>
-                      <strong style={{ fontSize: 10.21, marginLeft: 2 }}>{isEmitted ? data.codigoQR : "****.****"}</strong>
-                    </div>
-                  </div>
-                  <div style={{ border: "1px solid #000", width: 385, height: 111, display: "flex", alignItems: "center", background: "white", paddingRight: 10 }}>
-                    <div style={{ width: 108, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      {isEmitted ? (
-                        <QRCode value={qrValue} size={96} level="H" />
-                      ) : (
-                        <div style={{ filter: "blur(4px)", opacity: 0.5 }}>
-                           <QRCode value="https://validaratestado.digital" size={96} level="H" />
-                        </div>
-                      )}
-                    </div>
-                    {!hSignatureLine && (
-                      <div style={{ flex: 1, textAlign: "right", color: "#000" }}>
-                        <div style={{ fontSize: 9.5 }}>Documento assinado digitalmente conforme MP nº 2.200-2</div>
-                        <strong style={{ fontSize: 11.2, textTransform: "uppercase" }}>{data.medico}</strong>
-                        <span style={{ display: "block", fontSize: 10.1 }}>{data.crm}</span>
-                        <span style={{ display: "block", fontSize: 10.1, textTransform: "uppercase" }}>{data.especialidade}</span>
-                        <span style={{ display: "block", fontSize: 10.1 }}>Assinado em {data.dataAssinatura} {data.horaAssinatura}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {modoCarimbo && (
-              <div style={{
-                position: "absolute", bottom: hQRCode ? 100 : 150, left: "50%", marginLeft: -150, zIndex: 99,
-                transform: `scale(${sScale}) translate(${sX}px, ${sY}px) rotate(${sRotate}deg)`,
-              }}>
-                <div style={{ position: "relative", textAlign: "center" }}>
-                   {fotoAssinatura && <img src={fotoAssinatura} style={{ maxWidth: 273, maxHeight: 89, background: "transparent" }} alt="Carimbo" />}
-                   {sStampInfo && (
-                     <div style={{ color: corAssinatura, marginTop: -5, opacity: 0.9, textAlign: "center", lineHeight: 1.1 }}>
-                        <div style={{ fontWeight: 700, fontSize: 12.2, margin: 0 }}>{data.medico?.toUpperCase()}</div>
-                        {data.especialidade && <div style={{ fontSize: 11, margin: 0 }}>{data.especialidade.toUpperCase()}</div>}
-                        <div style={{ fontSize: 11, margin: 0 }}>{data.crm}</div>
-                     </div>
-                   )}
-                </div>
-              </div>
-            )}
-          </>
-        )}
       </div>
     );
   }
 );
 
 AttestationDocument.displayName = "AttestationDocument";
-
 export default AttestationDocument;
 export type { AttestationData };
