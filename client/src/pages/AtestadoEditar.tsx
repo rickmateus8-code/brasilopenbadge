@@ -712,7 +712,7 @@ export default function AtestadoEditar() {
           cidDisplay: d.cid_display || d.cidDisplay || d.cid || "",
           cidNome: d.cid_nome || d.cidNome || "",
           afastamento: d.afastamento || "",
-          textoAtestado: d.texto_atestado || d.textoAtestado || (loadedDocumentType === "laudo" ? TEXTO_LAUDO : gerarTextoAfastamento(parseInt(d.afastamento || "3", 10) || 3)),
+          textoAtestado: (d.texto_atestado || d.textoAtestado || (loadedDocumentType === "laudo" ? TEXTO_LAUDO : gerarTextoAfastamento(parseInt(d.afastamento || "3", 10) || 3))).replace(/Informo que[\s\S]*?a contar desta data\.?/gi, "").trim(),
           dataAssinatura: d.data_assinatura || d.dataAssinatura || d.data_emissao || todayBR(),
           horaAssinatura: d.hora_assinatura || d.horaAssinatura || nowTime(),
           dataEmissao: d.data_emissao || d.dataEmissao || todayBR(),
@@ -870,45 +870,40 @@ export default function AtestadoEditar() {
     };
   }, [getFitScale, isFocused, previewMode]);
 
-  // ── Atualizar texto do atestado quando dias mudam ──────────────────────────
+  // ── Atualizar texto do atestado quando dias mudam (SOMENTE SE VAZIO) ──────
   useEffect(() => {
     if (skipAutoTextSync.current) return;
     const dias = parseInt(form.afastamento);
     if (!isNaN(dias) && dias >= 1 && dias <= 15) {
       const d = DIAS_EXTENSO[dias];
       const unidade = dias === 1 ? "dia" : "dias";
-      
+
       if (documentType === 'relatorio') {
-        // Para relatório médico, o texto é dinâmico apenas pelo sexo
-        setForm(p => ({ 
-          ...p, 
-          textoAtestado: TEXTO_RELATORIO_TEMPLATE(p.sexo === "MALE" ? "M" : "F")
-        }));
+        const textoBase = TEXTO_RELATORIO_TEMPLATE(form.sexo === "MALE" ? "M" : "F");
+        if (!form.textoAtestado) setForm(p => ({ ...p, textoAtestado: textoBase }));
       } else if (documentType === 'atestado') {
         const textoBase = `Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico. Necessita de ${d.num} (${d.ext}) ${unidade} de afastamento de suas atividades laborais para repouso e tratamento de saúde.`;
-        setForm(p => ({ ...p, textoAtestado: textoBase }));
+        if (!form.textoAtestado) setForm(p => ({ ...p, textoAtestado: textoBase }));
       }
     }
-  }, [form.afastamento]); // Removido dependências extras para não sobrescrever texto manual na edição
+  }, [form.afastamento]);
 
-  // ── Mudar texto quando documentType muda (ATESTADO, LAUDO ou RELATORIO) ─────
+  // ── Mudar texto quando documentType muda (SOMENTE SE VAZIO) ───────────────
   useEffect(() => {
     if (skipAutoTextSync.current) return;
     if (documentType === 'laudo') {
-      setForm(p => ({ ...p, textoAtestado: TEXTO_LAUDO, modoCarimbo: true }));
+      if (!form.textoAtestado) setForm(p => ({ ...p, textoAtestado: TEXTO_LAUDO, modoCarimbo: true }));
+      else setForm(p => ({ ...p, modoCarimbo: true }));
     } else if (documentType === 'relatorio') {
-      setForm(p => ({ 
-        ...p, 
-        textoAtestado: TEXTO_RELATORIO_TEMPLATE(p.sexo === "MALE" ? "M" : "F"),
-        modoCarimbo: false 
-      }));
+      if (!form.textoAtestado) setForm(p => ({ ...p, textoAtestado: TEXTO_RELATORIO_TEMPLATE(form.sexo === "MALE" ? "M" : "F"), modoCarimbo: false }));
+      else setForm(p => ({ ...p, modoCarimbo: false }));
     } else {
-      // Atestado
       const dias = parseInt(form.afastamento);
       const d = DIAS_EXTENSO[dias] || DIAS_EXTENSO[3];
       const unidade = dias === 1 ? "dia" : "dias";
       const textoBase = `Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico. Necessita de ${d.num} (${d.ext}) ${unidade} de afastamento de suas atividades laborais para repouso e tratamento de saúde.`;
-      setForm(p => ({ ...p, textoAtestado: textoBase, modoCarimbo: true }));
+      if (!form.textoAtestado) setForm(p => ({ ...p, textoAtestado: textoBase, modoCarimbo: true }));
+      else setForm(p => ({ ...p, modoCarimbo: true }));
     }
   }, [documentType]);
 

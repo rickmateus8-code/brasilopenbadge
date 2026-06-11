@@ -131,20 +131,17 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
     const cidade = (data as any).cidade || "";
     const modoCarimbo = (data as any).modoCarimbo || (data as any).modo_carimbo || false;
 
-    const layout = ATTESTATION_LAYOUT;
-    const sScale = stampScale ?? (data as any).stampScale ?? (data as any).stamp_scale ?? layout.stamp.defaultScale;
-    const sX = stampX ?? (data as any).stampX ?? (data as any).stamp_x ?? layout.stamp.defaultX;
-    const sY = stampY ?? (data as any).stampY ?? (data as any).stamp_y ?? layout.stamp.defaultY;
-    const sRotate = stampRotate ?? (data as any).stampRotate ?? (data as any).stamp_rotate ?? layout.stamp.defaultRotate;
-    
-    // Toggles - prioriza props, depois campos do banco (snake_case)
-    const hQRCode = hideQRCode === true || (data as any).hideQRCode === true || (data as any).hide_qr_code === 1;
-    const hSignatureLine = hideSignatureLine === true || (data as any).hideSignatureLine === true || (data as any).hide_signature_line === 1;
-    const hPatientSignature = hidePatientSignature === true || (data as any).hidePatientSignature === true || (data as any).hide_patient_signature === 1;
-    const hAfastamentoText = hideAfastamentoText === true || (data as any).hideAfastamentoText === true || (data as any).hide_afastamento_text === 1;
-    const sStampInfo = showStampInfo !== false && (data as any).showStampInfo !== false && (data as any).show_stamp_info !== 0;
+    // Toggles - prioriza props explicitas (mesmo se for false), senão cai para o banco (snake_case)
+    const hQRCode = hideQRCode !== undefined ? hideQRCode : ((data as any).hideQRCode === true || (data as any).hide_qr_code === 1);
+    const hSignatureLine = hideSignatureLine !== undefined ? hideSignatureLine : ((data as any).hideSignatureLine === true || (data as any).hide_signature_line === 1);
+    const hPatientSignature = hidePatientSignature !== undefined ? hidePatientSignature : ((data as any).hidePatientSignature === true || (data as any).hide_patient_signature === 1);
+    const hAfastamentoText = hideAfastamentoText !== undefined ? hideAfastamentoText : ((data as any).hideAfastamentoText === true || (data as any).hide_afastamento_text === 1);
+    const sStampInfo = showStampInfo !== undefined ? showStampInfo : ((data as any).showStampInfo !== false && (data as any).show_stamp_info !== 0);
 
     const docType = (documentType || (data as any).documentType || (data as any).document_type || (data as any).tipo || 'atestado').toLowerCase();
+
+    // Limpeza de redundância: Remove a frase de afastamento caso ela tenha sido salva no corpo do texto no banco
+    const cleanedTextoAtestado = textoAtestado.replace(/Informo que (o|a) paciente permanece sem condi[\s\S]*?a contar desta data\.?/gi, "").trim();
     
     const dataFormatada = (data as any).dataEmissaoFormatada || (() => {
       const d = data.dataEmissao || "";
@@ -254,7 +251,7 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
                     <span style={{ fontWeight: 700 }}>{cidDisplay} {cidNome ? `(${cidNome})` : ""}</span>
                   </div>
 
-                  {textoAtestado && <div style={{ marginTop: 25 }}>{textoAtestado}</div>}
+                  {cleanedTextoAtestado && <div style={{ marginTop: 25 }}>{cleanedTextoAtestado}</div>}
 
                   {!hAfastamentoText && (
                     <div style={{ marginTop: 15 }}>
