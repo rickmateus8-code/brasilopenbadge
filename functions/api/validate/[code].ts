@@ -74,6 +74,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       const data = {
         id: attestation.id,
         tipo: attestation.document_type || "atestado",
+        documentType: attestation.document_type || "atestado",
         codigoQR: attestation.codigo_qr,
         paciente: attestation.paciente,
         sexo: attestation.sexo,
