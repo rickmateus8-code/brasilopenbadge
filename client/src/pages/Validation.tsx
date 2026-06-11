@@ -29,7 +29,7 @@ import { exportElementToPDF, exportElementToPDFBlob, generatePDFFilename } from 
 type DocType = "atestado" | "receita" | "cnh" | "laudo" | "relatorio" | "unknown";
 
 function detectDocType(data: any): DocType {
-  const typeStr = (data.tipo || data.type || data.document_type || "").toLowerCase();
+  const typeStr = (data.documentType || data.document_type || data.tipo || data.type || "").toLowerCase();
   if (typeStr === "receita") return "receita";
   if (typeStr === "cnh") return "cnh";
   if (typeStr === "laudo") return "laudo";
@@ -37,10 +37,9 @@ function detectDocType(data: any): DocType {
   if (typeStr === "atestado") return "atestado";
   
   // Fallback por campos
-  if (data.document_type === "laudo") return "laudo";
-  if (data.textoAtestado || data.afastamento) return "atestado";
   if (data.prescricao) return "receita";
   if (data.categoria || data.registro) return "cnh";
+  if (data.textoAtestado || data.afastamento) return "atestado";
   return "unknown";
 }
 
