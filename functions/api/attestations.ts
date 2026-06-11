@@ -348,7 +348,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
       texto_atestado, afastamento, data_assinatura, hora_assinatura, data_emissao,
       logo_url, logo_right, signature_color, signature_image, modo_carimbo,
       logo_left_scale, logo_right_scale, logo_left_x, logo_left_y, logo_right_x, logo_right_y,
-      stamp_scale, stamp_x, stamp_y, stamp_rotate, show_stamp_info, hide_qr_code, hide_signature_line, hide_patient_signature,
+      stamp_scale, stamp_x, stamp_y, stamp_rotate, show_stamp_info, hide_qr_code, hide_signature_line, hide_patient_signature, hide_afastamento_text,
       cidade, document_type, status, created_at, updated_at
     ) VALUES (
       ?, ?, ?, ?, ?, ?, ?, ?, ?,
@@ -357,7 +357,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
       ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?, ?,
-      ?, ?, ?, ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?, ?, ?, ?, ?,
       ?, ?, 'emitido', ?, ?
     )
   `).bind(
@@ -401,6 +401,7 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
     (body.hideQRCode ?? body.hide_qr_code) ? 1 : 0,
     (body.hideSignatureLine ?? body.hide_signature_line) ? 1 : 0,
     (body.hidePatientSignature ?? body.hide_patient_signature) ? 1 : 0,
+    (body.hideAfastamentoText ?? body.hide_afastamento_text) ? 1 : 0,
     body.cidade || body.cidade || "",
     body.documentType || body.document_type || 'atestado',
     now, now
