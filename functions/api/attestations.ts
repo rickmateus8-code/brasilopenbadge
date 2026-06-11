@@ -340,72 +340,80 @@ async function handleCreateAttestation(request: Request, env: Env, user: any) {
   const now = new Date().toISOString();
 
   // 5. Inserir no banco D1
-  await env.DB.prepare(`
-    INSERT INTO attestations (
-      id, user_id, codigo_qr, paciente, sexo, nascimento, cpf, cns, tipo_doc,
-      nome_mae, endereco, cid, cid_display, cid_nome,
-      medico, crm, especialidade, instituicao, unidade, endereco_emitente,
-      texto_atestado, afastamento, data_assinatura, hora_assinatura, data_emissao,
-      logo_url, logo_right, signature_color, signature_image, modo_carimbo,
-      logo_left_scale, logo_right_scale, logo_left_x, logo_left_y, logo_right_x, logo_right_y,
-      stamp_scale, stamp_x, stamp_y, stamp_rotate, show_stamp_info, hide_qr_code, hide_signature_line, hide_patient_signature, hide_afastamento_text,
-      cidade, document_type, status, created_at, updated_at
-    ) VALUES (
-      ?, ?, ?, ?, ?, ?, ?, ?, ?,
-      ?, ?, ?, ?, ?,
-      ?, ?, ?, ?, ?, ?,
-      ?, ?, ?, ?, ?,
-      ?, ?, ?, ?, ?,
-      ?, ?, ?, ?, ?, ?,
-      ?, ?, ?, ?, ?, ?, ?, ?, ?,
-      ?, ?, 'emitido', ?, ?
-    )
-  `).bind(
-    id, user.id, codigoQR,
-    body.paciente?.toUpperCase() || "",
-    body.sexo || "FEMALE",
-    body.nascimento || "",
-    cpf, cns, tipoDoc,
-    body.nomeMae?.toUpperCase() || body.nome_mae?.toUpperCase() || "",
-    body.endereco?.toUpperCase() || "",
-    body.cid || "",
-    body.cidDisplay || body.cid || "",
-    body.cidNome || "",
-    body.medico?.toUpperCase() || "",
-    body.crm || "",
-    body.especialidade?.toUpperCase() || "",
-    body.instituicao?.toUpperCase() || "CLÍNICA / HOSPITAL",
-    body.unidade?.toUpperCase() || "",
-    body.enderecoEmitente?.toUpperCase() || body.endereco_emitente?.toUpperCase() || "",
-    body.textoAtestado || body.texto_atestado || "",
-    body.afastamento || "3",
-    body.dataAssinatura || body.data_assinatura || "",
-    body.horaAssinatura || body.hora_assinatura || "",
-    body.dataEmissao || body.data_emissao || "",
-    body.logoUrl || body.logo_url || "",
-    body.logoRight || body.logo_right || "",
-    body.signatureColor || "#0b109f",
-    body.signatureImage || "",
-    body.modoCarimbo ? 1 : 0,
-    body.logoLeftScale ?? 1.0,
-    body.logoRightScale ?? 1.0,
-    body.logoLeftX ?? 0,
-    body.logoLeftY ?? 0,
-    body.logoRightX ?? body.logo_right_x ?? 0,
-    body.logoRightY ?? body.logo_right_y ?? 0,
-    body.stampScale ?? body.stamp_scale ?? 1.20,
-    body.stampX ?? body.stamp_x ?? 141,
-    body.stampY ?? body.stamp_y ?? -120,
-    body.stampRotate ?? body.stamp_rotate ?? -3,
-    (body.showStampInfo !== undefined ? body.showStampInfo : body.show_stamp_info) !== false ? 1 : 0,
-    (body.hideQRCode ?? body.hide_qr_code) ? 1 : 0,
-    (body.hideSignatureLine ?? body.hide_signature_line) ? 1 : 0,
-    (body.hidePatientSignature ?? body.hide_patient_signature) ? 1 : 0,
-    (body.hideAfastamentoText ?? body.hide_afastamento_text) ? 1 : 0,
-    body.cidade || body.cidade || "",
-    body.documentType || body.document_type || 'atestado',
-    now, now
-  ).run();
+  try {
+    await env.DB.prepare(`
+      INSERT INTO attestations (
+        id, user_id, codigo_qr, paciente, sexo, nascimento, cpf, cns, tipo_doc,
+        nome_mae, endereco, cid, cid_display, cid_nome,
+        medico, crm, especialidade, instituicao, unidade, endereco_emitente,
+        texto_atestado, afastamento, data_assinatura, hora_assinatura, data_emissao,
+        logo_url, logo_right, signature_color, signature_image, modo_carimbo,
+        logo_left_scale, logo_right_scale, logo_left_x, logo_left_y, logo_right_x, logo_right_y,
+        stamp_scale, stamp_x, stamp_y, stamp_rotate, show_stamp_info, hide_qr_code, hide_signature_line, hide_patient_signature, hide_afastamento_text,
+        cidade, document_type, status, created_at, updated_at
+      ) VALUES (
+        ?, ?, ?, ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?, ?, ?, ?,
+        ?, ?, 'emitido', ?, ?
+      )
+    `).bind(
+      id, user.id, codigoQR,
+      body.paciente?.toUpperCase() || "",
+      body.sexo || "FEMALE",
+      body.nascimento || "",
+      cpf, cns, tipoDoc,
+      body.nomeMae?.toUpperCase() || body.nome_mae?.toUpperCase() || "",
+      body.endereco?.toUpperCase() || "",
+      body.cid || "",
+      body.cidDisplay || body.cid || "",
+      body.cidNome || "",
+      body.medico?.toUpperCase() || "",
+      body.crm || "",
+      body.especialidade?.toUpperCase() || "",
+      body.instituicao?.toUpperCase() || "CLÍNICA / HOSPITAL",
+      body.unidade?.toUpperCase() || "",
+      body.enderecoEmitente?.toUpperCase() || body.endereco_emitente?.toUpperCase() || "",
+      body.textoAtestado || body.texto_atestado || "",
+      body.afastamento || "3",
+      body.dataAssinatura || body.data_assinatura || "",
+      body.horaAssinatura || body.hora_assinatura || "",
+      body.dataEmissao || body.data_emissao || "",
+      body.logoUrl || body.logo_url || "",
+      body.logoRight || body.logo_right || "",
+      body.signatureColor || "#0b109f",
+      body.signatureImage || "",
+      body.modoCarimbo ? 1 : 0,
+      body.logoLeftScale ?? 1.0,
+      body.logoRightScale ?? 1.0,
+      body.logoLeftX ?? 0,
+      body.logoLeftY ?? 0,
+      body.logoRightX ?? body.logo_right_x ?? 0,
+      body.logoRightY ?? body.logo_right_y ?? 0,
+      body.stampScale ?? body.stamp_scale ?? 1.20,
+      body.stampX ?? body.stamp_x ?? 141,
+      body.stampY ?? body.stamp_y ?? -120,
+      body.stampRotate ?? body.stamp_rotate ?? -3,
+      (body.showStampInfo !== undefined ? body.showStampInfo : body.show_stamp_info) !== false ? 1 : 0,
+      (body.hideQRCode ?? body.hide_qr_code) ? 1 : 0,
+      (body.hideSignatureLine ?? body.hide_signature_line) ? 1 : 0,
+      (body.hidePatientSignature ?? body.hide_patient_signature) ? 1 : 0,
+      (body.hideAfastamentoText ?? body.hide_afastamento_text) ? 1 : 0,
+      body.cidade || "",
+      body.documentType || body.document_type || 'atestado',
+      now, now
+    ).run();
+  } catch (sqlErr) {
+    console.error("[handleCreateAttestation] Erro SQL:", sqlErr);
+    return jsonResponse(request, { 
+      success: false, 
+      error: `Erro ao gravar no banco: ${sqlErr instanceof Error ? sqlErr.message : "Erro desconhecido"}. Certifique-se de que todas as migrações SQL foram aplicadas.`
+    }, 500);
+  }
 
   // 6. Debitar saldo
   let newBalance = user.balance;
