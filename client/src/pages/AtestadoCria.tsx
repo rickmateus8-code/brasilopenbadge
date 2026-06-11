@@ -763,29 +763,29 @@ export default function AtestadoCria() {
     if (!isNaN(dias) && dias >= 1 && dias <= 15) {
       const d = DIAS_EXTENSO[dias];
       const unidade = dias === 1 ? "dia" : "dias";
-      
+
       if (documentType === 'relatorio') {
-        // Para relatório médico, o texto é mais complexo e dinâmico
-        setForm(p => ({ 
-          ...p, 
-          textoAtestado: TEXTO_RELATORIO_TEMPLATE(p.paciente, p.docValue, p.cidDisplay, p.afastamento)
+        // Para relatório médico, o texto é dinâmico apenas pelo sexo
+        setForm(p => ({
+          ...p,
+          textoAtestado: TEXTO_RELATORIO_TEMPLATE(p.sexo === "MALE" ? "M" : "F")
         }));
       } else if (documentType === 'atestado') {
         const textoBase = `Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico. Necessita de ${d.num} (${d.ext}) ${unidade} de afastamento de suas atividades laborais para repouso e tratamento de saúde.`;
         setForm(p => ({ ...p, textoAtestado: textoBase }));
       }
     }
-  }, [form.afastamento, form.paciente, form.docValue, form.cidDisplay, documentType]);
+  }, [form.afastamento, documentType]);
 
   // ── Mudar texto quando documentType muda (ATESTADO, LAUDO ou RELATORIO) ─────
   useEffect(() => {
     if (documentType === 'laudo') {
       setForm(p => ({ ...p, textoAtestado: TEXTO_LAUDO, modoCarimbo: true }));
     } else if (documentType === 'relatorio') {
-      setForm(p => ({ 
-        ...p, 
-        textoAtestado: TEXTO_RELATORIO_TEMPLATE(p.paciente, p.docValue, p.cidDisplay, p.afastamento),
-        modoCarimbo: false 
+      setForm(p => ({
+        ...p,
+        textoAtestado: TEXTO_RELATORIO_TEMPLATE(p.sexo === "MALE" ? "M" : "F"),
+        modoCarimbo: false
       }));
     } else {
       // Atestado

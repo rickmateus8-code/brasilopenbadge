@@ -879,17 +879,17 @@ export default function AtestadoEditar() {
       const unidade = dias === 1 ? "dia" : "dias";
       
       if (documentType === 'relatorio') {
-        // Para relatório médico, o texto é mais complexo e dinâmico
+        // Para relatório médico, o texto é dinâmico apenas pelo sexo
         setForm(p => ({ 
           ...p, 
-          textoAtestado: TEXTO_RELATORIO_TEMPLATE(p.paciente, p.docValue, p.cidDisplay, p.afastamento)
+          textoAtestado: TEXTO_RELATORIO_TEMPLATE(p.sexo === "MALE" ? "M" : "F")
         }));
       } else if (documentType === 'atestado') {
         const textoBase = `Atesto para os devidos fins que o(a) paciente acima identificado(a) compareceu a esta unidade de saúde na data de hoje para atendimento médico. Necessita de ${d.num} (${d.ext}) ${unidade} de afastamento de suas atividades laborais para repouso e tratamento de saúde.`;
         setForm(p => ({ ...p, textoAtestado: textoBase }));
       }
     }
-  }, [documentType, form.afastamento, form.paciente, form.docValue, form.cidDisplay]);
+  }, [form.afastamento]); // Removido dependências extras para não sobrescrever texto manual na edição
 
   // ── Mudar texto quando documentType muda (ATESTADO, LAUDO ou RELATORIO) ─────
   useEffect(() => {
@@ -899,7 +899,7 @@ export default function AtestadoEditar() {
     } else if (documentType === 'relatorio') {
       setForm(p => ({ 
         ...p, 
-        textoAtestado: TEXTO_RELATORIO_TEMPLATE(p.paciente, p.docValue, p.cidDisplay, p.afastamento),
+        textoAtestado: TEXTO_RELATORIO_TEMPLATE(p.sexo === "MALE" ? "M" : "F"),
         modoCarimbo: false 
       }));
     } else {
@@ -1445,6 +1445,7 @@ export default function AtestadoEditar() {
         showStampInfo,
         hideSignatureLine: form.hideSignatureLine,
         hidePatientSignature: form.hidePatientSignature,
+        hideAfastamentoText: form.hideAfastamentoText,
         documentType,
       };
 
@@ -1533,6 +1534,7 @@ export default function AtestadoEditar() {
         showStampInfo,
         hideSignatureLine: form.hideSignatureLine,
         hidePatientSignature: form.hidePatientSignature,
+        hideAfastamentoText: form.hideAfastamentoText,
         documentType,
       };
 
