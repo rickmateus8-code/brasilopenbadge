@@ -227,163 +227,322 @@ const AttestationDocument = forwardRef<HTMLDivElement, AttestationDocumentProps>
           #attestation-document * { box-sizing: border-box; }
         `}</style>
 
-        {/* ─── LAYOUT RELATÓRIO (MODO ALFENAS - REFINADO) ─── */}
-        {docType === 'relatorio' ? (
-          <div style={{ display: "flex", flexDirection: "column", height: "100%", fontFamily: "Arial, sans-serif" }}>
-            {/* Header: Logo Esquerda + Texto Centralizado */}
-            <div style={{ 
-              position: "relative",
-              marginBottom: 40, 
-              border: "1px solid #000", 
-              height: 120,
-              boxSizing: "border-box",
-              background: "transparent",
-              display: "flex",
-              alignItems: "center"
-            }}>
-              {/* Logo Esquerda */}
-              <div style={{ width: 140, height: "100%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", overflow: "visible", zIndex: 2 }}>
-                {effectiveLogoLeft && (
-                  <img 
-                    src={effectiveLogoLeft} 
-                    style={{ 
-                      maxWidth: "100%", 
-                      maxHeight: 90, 
-                      objectFit: "contain", 
-                      background: "transparent",
-                      transform: `scale(${logoLeftScale}) translate(${logoLeftX}px, ${logoLeftY}px)`,
-                      transformOrigin: "center center",
-                      transition: "transform 0.1s",
-                    }} 
-                    alt="Logo" 
-                    crossOrigin={getCrossOrigin(effectiveLogoLeft)}
-                  />
-                )}
+        {/* ===== HEADER ===== */}
+        <div id="preview-header" style={{
+          position: "relative",
+          height: 80,
+          width: "100%",
+          marginBottom: 0,
+          zIndex: 2,
+          flexShrink: 0,
+          background: "transparent"
+        }}>
+          {/* Logo Esquerda (Absoluto) */}
+          <div style={{ 
+            position: "absolute",
+            left: 0,
+            top: 0,
+            width: 150, 
+            height: "100%", 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "flex-start", 
+            overflow: "visible", 
+            background: "transparent" 
+          }}>
+            {effectiveLogoLeft && (
+              <img
+                src={effectiveLogoLeft}
+                alt="Logo"
+                crossOrigin={getCrossOrigin(effectiveLogoLeft)}
+                style={{
+                  maxHeight: "100%",
+                  maxWidth: 150, 
+                  objectFit: "contain",
+                  background: "transparent",
+                  transform: `scale(${logoLeftScale}) translate(${logoLeftX}px, ${logoLeftY}px)`,
+                  transformOrigin: "left center",
+                  transition: "transform 0.1s",
+                }}
+              />
+            )}
+          </div>
+
+          {/* Bloco de Texto Centralizado */}
+          <div style={{ 
+            margin: "0 150px",
+            height: "100%",
+            display: "flex", 
+            flexDirection: "column", 
+            alignItems: "center", 
+            justifyContent: "center",
+            textAlign: "center"
+          }}>
+            {instituicao && (
+              <div style={{ fontSize: 14.7, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", letterSpacing: 0, lineHeight: 1.3 }}>
+                {instituicao}
               </div>
-
-              {/* Texto Centralizado (Overlay Absoluto para Garante Centralização 1:1) */}
-              <div style={{ 
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                textAlign: "center",
-                zIndex: 1,
-                pointerEvents: "none"
-              }}>
-                <div style={{ padding: "0 150px", pointerEvents: "auto", marginTop: -2 }}>
-                  <div style={{ fontSize: 16.2, fontWeight: 700, textTransform: "uppercase", color: "#000", marginBottom: 8 }}>{unidade || instituicao}</div>
-                  <div style={{ fontSize: 11.34, fontWeight: 700, textTransform: "uppercase", color: "#000" }}>{enderecoEmitente}</div>
-                </div>
+            )}
+            {unidade && unidade !== instituicao && (
+              <div style={{ fontSize: 12.6, fontWeight: 700, textTransform: "uppercase", marginBottom: 2, color: "#000", lineHeight: 1.3 }}>
+                {unidade}
               </div>
+            )}
+            {enderecoEmitente && (
+              <div style={{ fontSize: 11.025, fontWeight: 400, textTransform: "uppercase", color: "#000", lineHeight: 1.3 }}>
+                {enderecoEmitente}
+              </div>
+            )}
+          </div>
+
+          {/* Logo Direita (Absoluto) */}
+          <div style={{ 
+            position: "absolute",
+            right: 0,
+            top: 0,
+            width: 150, 
+            height: "100%", 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "flex-end", 
+            overflow: "visible", 
+            background: "transparent" 
+          }}>
+            {effectiveLogoRight && (
+              <img
+                src={effectiveLogoRight}
+                alt="Logo Direita"
+                crossOrigin={getCrossOrigin(effectiveLogoRight)}
+                style={{
+                  maxHeight: "100%",
+                  maxWidth: 150,
+                  objectFit: "contain",
+                  background: "transparent",
+                  transform: `scale(${logoRightScale}) translate(${logoRightX}px, ${logoRightY}px)`,
+                  transformOrigin: "right center",
+                  transition: "transform 0.1s",
+                }}
+              />
+            )}
+          </div>
+        </div>
+
+        <div style={{
+          fontWeight: 900,
+          fontSize: 23.15, 
+          textTransform: "uppercase",
+          borderTop: "none",
+          borderBottom: "none",
+          display: "block",
+          padding: "0",
+          width: "100%",
+          textAlign: "center",
+          marginTop: 15,
+          marginBottom: 11,
+          lineHeight: 1, 
+          letterSpacing: 0, 
+          position: "relative",
+          zIndex: 2,
+          color: "#000",
+          flexShrink: 0,
+        }}>
+          {docType === 'laudo' ? (
+            <div style={{ fontSize: 23.15, fontWeight: 900 }}>LAUDO MÉDICO</div>
+          ) : docType === 'relatorio' ? (
+            <div style={{ fontSize: 23.15, fontWeight: 900 }}>RELATÓRIO MÉDICO</div>
+          ) : (
+            <div style={{ fontSize: 23.15, fontWeight: 900 }}>ATESTADO MÉDICO</div>
+          )}
+        </div>
+
+        <div style={{
+          borderTop: "2.04px solid #000", 
+          width: "100%",
+          marginBottom: 23,
+          position: "relative",
+          zIndex: 2,
+          flexShrink: 0,
+        }} />
+
+        {/* ===== DADOS DO PACIENTE ===== */}
+        <div id="preview-patient" style={{
+          border: "1px solid #000",
+          padding: isExporting ? "6px 15px 22px 15px" : "14.25px 15px", 
+          boxSizing: "border-box",
+          fontSize: 10.815,
+          marginBottom: 10,
+          lineHeight: 1.2, 
+          gap: 4,
+          position: "relative",
+          zIndex: 2,
+          background: "#fff",
+          flexShrink: 0,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+        }}>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+            <div style={{ flex: 3 }}>
+              <span style={{ fontWeight: 700, color: "#000" }}>Paciente: </span>
+              <span style={{ color: "#000", textTransform: "uppercase" }}>{data.paciente}</span>
             </div>
-
-            {/* Título Centralizado */}
-            <div style={{ textAlign: "center", marginBottom: 50, marginTop: -12 }}>
-               <h1 style={{ fontSize: 17.5, fontWeight: 400, textTransform: "uppercase", color: "#000", letterSpacing: 0 }}>RELATÓRIO MÉDICO</h1>
+            <div>
+              <span style={{ fontWeight: 700, color: "#000" }}>Sexo: </span>
+              <span style={{ color: "#000" }}>{sexoLabel}</span>
             </div>
-
-            {/* Corpo do Texto */}
-            <div style={{ flex: 1, fontSize: 12.4, lineHeight: 1.8, color: "#000", textAlign: "justify", marginTop: -22 }}>
-               <div style={{ whiteSpace: "pre-wrap", marginBottom: 30 }}>
-                  <div><span style={{ fontWeight: 700 }}>Paciente:</span> {data.paciente?.toUpperCase() || ""}</div>
-                  <div style={{ marginBottom: 15 }}><span style={{ fontWeight: 700 }}>CPF:</span> {data.cpf || ""}</div>
-
-                  <div>Declaro para os devidos fins que a paciente acima encontra-se em acompanhamento médico devido ao diagnóstico:</div>
-                  
-                  <div style={{ marginTop: 25, fontSize: 13.67 }}>
-                    <span style={{ fontWeight: 700 }}>CID: </span>
-                    <span style={{ fontWeight: 700 }}>{cidDisplay || ""} {cidNome ? `(${cidNome})` : ""}</span>
-                  </div>
-
-                  {textoAtestado && (
-                    <div style={{ marginTop: 25 }}>
-                      {textoAtestado}
-                    </div>
-                  )}
-
-                  {!hAfastamentoText && (
-                    <div style={{ marginTop: 15 }}>
-                      Informo que a paciente permanece sem condições de exercer suas atividades profissionais pelo período estimado de {diasExtenso}, a contar desta data.
-                    </div>
-                  )}
-               </div>
-
-               {/* Local e Data à Direita */}
-               <div style={{ textAlign: "right", marginTop: 45, marginBottom: 90, fontSize: 12.39 }}>
-                  {dataFormatada}
-               </div>
-
-               {/* Área de Assinaturas */}
-               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: hPatientSignature ? 0 : 145 }}>
-                  {/* Assinatura Paciente */}
-                  {!hPatientSignature && (
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 45 }}>
-                       <div style={{ width: 280, borderTop: "1px solid #000" }}></div>
-                       <div style={{ fontSize: 12.6, marginTop: 0.1, fontWeight: 700 }}>Assinatura do Paciente ou Responsável</div>
-                    </div>
-                  )}
-
-                  {/* Assinatura Médico (Controlado por Elite 2.0) */}
-                  <div style={{ 
-                    display: "flex", 
-                    flexDirection: "column", 
-                    alignItems: "center", 
-                    position: "relative", 
-                    marginTop: hPatientSignature ? 45 : -35,
-                    zIndex: 10
-                  }}>
-                     {/* Bloco do Médico posicionado dinamicamente via Elite 2.0 */}
-                     <div style={{ 
-                       position: "absolute", 
-                       top: modoCarimbo ? sY : -45, 
-                       left: modoCarimbo ? sX : 0,
-                       transform: `scale(${modoCarimbo ? sScale : 1}) rotate(${modoCarimbo ? sRotate : -1}deg)`,
-                       opacity: 0.95, 
-                       textAlign: "center",
-                       width: "max-content",
-                       transition: "transform 0.1s"
-                     }}>
-                        {fotoAssinatura && <img src={fotoAssinatura} style={{ maxHeight: 100, maxWidth: 300, background: "transparent" }} alt="Assinatura" />}
-                        {modoCarimbo && sStampInfo && (
-                          <div style={{ textAlign: "center", color: corAssinatura, marginTop: -5, lineHeight: 1.1 }}>
-                             <div style={{ fontWeight: 700, fontSize: 13, margin: 0 }}>{data.medico?.toUpperCase()}</div>
-                             {data.especialidade && <div style={{ fontSize: 11, margin: 0 }}>{data.especialidade.toUpperCase()}</div>}
-                             <div style={{ fontSize: 11, margin: 0 }}>{data.crm}</div>
-                          </div>
-                        )}
-                     </div>
-                     {!hSignatureLine && (
-                       <>
-                         <div style={{ width: 280, borderTop: "1px solid #000" }}></div>
-                         <div style={{ fontSize: 12.6, marginTop: 0.1, fontWeight: 700 }}>Assinatura e Carimbo do Médico</div>
-                       </>
-                     )}
-                  </div>
-               </div>
-            </div>
-
-            {/* Rodapé Forense Refinado */}
-            <div style={{ borderTop: "1px solid #eee", paddingTop: 15, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-               <div style={{ fontSize: 9.5, color: "#555", lineHeight: 1.5 }}>
-                 Documento assinado digitalmente de acordo com a ICP-Brasil, MP 2.200-2/2001, no sistema certificado SBIS nº 167, 168 169 e 170 v 5.2.<br />
-                 por {data.medico?.toUpperCase()} em {data.dataAssinatura || data.dataEmissao} {data.horaAssinatura || "12:54"} Estado da assinatura: Válido<br />
-                 Valide este documento em https://validaratestado.digital | Código: {data.codigoQR || "****.****"}<br />
-                 <span style={{ fontSize: 8.5, fontWeight: 700 }}>**Esse documento possui dados sensíveis**</span>
-               </div>
-               <div style={{ fontSize: 11, color: "#555", fontWeight: 400 }}>
-                 Página 1 de 1
-               </div>
+            <div>
+              <span style={{ fontWeight: 700, color: "#000" }}>Nasc.: </span>
+              <span style={{ color: "#000" }}>{data.nascimento}</span>
             </div>
           </div>
-        ) : (
-          /* ─── LAYOUT ORIGINAL (ATESTADO / LAUDO) ─── */
-          <>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+            <div style={{ flex: 1 }}>
+              <span style={{ fontWeight: 700, color: "#000" }}>{data.tipoDoc === "CNS" ? "Cartão Nacional:" : "CPF:"} </span>
+              <span style={{ color: "#000", textTransform: "uppercase" }}>{data.cpf || data.cns || "___________"}</span>
+            </div>
+            <div style={{ flex: 2 }}>
+              <span style={{ fontWeight: 700, color: "#000" }}>Nome da Mãe: </span>
+              <span style={{ color: "#000", textTransform: "uppercase" }}>{data.nomeMae}</span>
+            </div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <div style={{ width: "100%" }}>
+              <span style={{ fontWeight: 700, color: "#000" }}>Endereço: </span>
+              <span style={{ color: "#000", textTransform: "uppercase" }}>{data.endereco}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ENDEREÇO EMITENTE (Restaurado da V7.61) */}
+        {enderecoEmitente && (
+          <div style={{
+            fontSize: 10.5,
+            lineHeight: 1.2,
+            fontFamily: "Arial, Helvetica, sans-serif",
+            textAlign: "left",
+            position: "relative",
+            zIndex: 2,
+            flexShrink: 0,
+            marginTop: isExporting ? layout.export.addressMarginTop : -2,
+            marginBottom: isExporting ? layout.export.addressMarginBottom : 22,
+            color: "#000",
+            textTransform: "uppercase"
+          }}>
+            <span style={{ fontWeight: 700 }}>ENDEREÇO EMITENTE:</span> <span style={{ fontWeight: 400 }}>{enderecoEmitente}</span>
+          </div>
+        )}
+
+        <div id="preview-body" style={{
+          flex: "1 1 auto",
+          fontSize: 15.18, 
+          lineHeight: 1.9,
+          textAlign: "justify",
+          position: "relative",
+          zIndex: 2,
+          paddingTop: 48,
+          paddingBottom: 8,
+          color: "#000",
+          fontWeight: 400,
+        }}>
+          <p style={{ margin: 0, textIndent: "4em", lineHeight: 1.9, whiteSpace: "pre-wrap" }}>
+            {"  "}{textoAtestado || "Atesto para os devidos fins..."}
+          </p>
+          {docType === 'relatorio' && !hAfastamentoText && (
+            <p style={{ margin: 0, marginTop: 15, textIndent: "4em", lineHeight: 1.9 }}>
+              Informo que a paciente permanece sem condições de exercer suas atividades profissionais pelo período estimado de {diasExtenso}, a contar desta data.
+            </p>
+          )}
+          {cidDisplay && (
+            <div style={{ fontWeight: 700, fontSize: 13.42, marginTop: 28, color: "#000", textTransform: "uppercase" }}>
+              CID: {cidDisplay}{cidNome ? ` — ${cidNome}` : ""}
+            </div>
+          )}
+        </div>
+
+        {/* Área de Assinaturas (Exclusivo Relatório) */}
+        {docType === 'relatorio' && (
+           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: hPatientSignature ? 0 : 145, marginBottom: 40 }}>
+              {/* Assinatura Paciente */}
+              {!hPatientSignature && (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 45 }}>
+                   <div style={{ width: 280, borderTop: "1px solid #000" }}></div>
+                   <div style={{ fontSize: 12.6, marginTop: 0.1, fontWeight: 700 }}>Assinatura do Paciente ou Responsável</div>
+                </div>
+              )}
+
+              {/* Linha da Assinatura do Médico */}
+              {!hSignatureLine && (
+                <div style={{ 
+                  display: "flex", 
+                  flexDirection: "column", 
+                  alignItems: "center", 
+                  position: "relative", 
+                  marginTop: hPatientSignature ? 45 : -35,
+                  zIndex: 10
+                }}>
+                   <div style={{ width: 280, borderTop: "1px solid #000" }}></div>
+                   <div style={{ fontSize: 12.6, marginTop: 0.1, fontWeight: 700 }}>Assinatura e Carimbo do Médico</div>
+                </div>
+              )}
+           </div>
+        )}
+
+        {!hQRCode && (
+          <div id="preview-footer" style={{ marginTop: modoCarimbo ? 20 : "auto", position: "relative", zIndex: 2, flexShrink: 0, width: "100%" }}>
+            <div style={{ borderTop: "2px solid #000", marginBottom: 6 }} />
+            <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "flex-end", gap: 0, width: "100%" }}>
+              <div style={{ color: "#000", lineHeight: 1.2, fontFamily: "Arial, sans-serif", height: 111, paddingBottom: 4, display: "flex", flexDirection: "column", justifyContent: "flex-end", marginRight: "auto" }}>
+                <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10.21 }}>
+                   {dataFormatada}
+                </div>
+                <div style={{ fontSize: 9.65 }}>Valide este documento acessando o endereço:</div>
+                <strong style={{ fontSize: 10.21, display: "block" }}>https://validaratestado.digital</strong>
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <span style={{ fontSize: 9.65 }}>Código: </span>
+                  <strong style={{ fontSize: 10.21, marginLeft: 2 }}>{isEmitted ? data.codigoQR : "****.****"}</strong>
+                </div>
+              </div>
+              <div style={{ border: "1px solid #000", width: 385, height: 111, display: "flex", alignItems: "center", background: "white", paddingRight: 10 }}>
+                <div style={{ width: 108, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {isEmitted ? (
+                    <QRCode value={qrValue} size={96} level="H" />
+                  ) : (
+                    <div style={{ filter: "blur(4px)", opacity: 0.5 }}>
+                       <QRCode value="https://validaratestado.digital" size={96} level="H" />
+                    </div>
+                  )}
+                </div>
+                {!hSignatureLine && (
+                  <div style={{ flex: 1, textAlign: "right", color: "#000" }}>
+                    <div style={{ fontSize: 9.5 }}>Documento assinado digitalmente conforme MP nº 2.200-2</div>
+                    <strong style={{ fontSize: 11.2, textTransform: "uppercase" }}>{data.medico}</strong>
+                    <span style={{ display: "block", fontSize: 10.1 }}>{data.crm}</span>
+                    <span style={{ display: "block", fontSize: 10.1, textTransform: "uppercase" }}>{data.especialidade}</span>
+                    <span style={{ display: "block", fontSize: 10.1 }}>Assinado em {data.dataAssinatura} {data.horaAssinatura}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {modoCarimbo && (
+          <div style={{
+            position: "absolute", bottom: hQRCode ? 100 : 150, left: "50%", marginLeft: -150, zIndex: 99,
+            transform: `scale(${sScale}) translate(${sX}px, ${sY}px) rotate(${sRotate}deg)`,
+          }}>
+            <div style={{ position: "relative", textAlign: "center" }}>
+               {fotoAssinatura && <img src={fotoAssinatura} style={{ maxWidth: 273, maxHeight: 89, background: "transparent" }} alt="Carimbo" />}
+               {sStampInfo && (
+                 <div style={{ color: corAssinatura, marginTop: -5, opacity: 0.9, textAlign: "center", lineHeight: 1.1 }}>
+                    <div style={{ fontWeight: 700, fontSize: 12.2, margin: 0 }}>{data.medico?.toUpperCase()}</div>
+                    {data.especialidade && <div style={{ fontSize: 11, margin: 0 }}>{data.especialidade.toUpperCase()}</div>}
+                    <div style={{ fontSize: 11, margin: 0 }}>{data.crm}</div>
+                 </div>
+               )}
+            </div>
+          </div>
+        )}
             {/* ===== HEADER ===== */}
             <div id="preview-header" style={{
               position: "relative",

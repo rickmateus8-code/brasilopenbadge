@@ -51,6 +51,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         a.cidade, a.instituicao, a.unidade, a.endereco_emitente,
         a.logo_url, a.logo_right, a.signature_color, a.signature_image, a.modo_carimbo,
         a.logo_left_scale, a.logo_right_scale, a.logo_left_x, a.logo_left_y, a.logo_right_x, a.logo_right_y,
+        a.hide_signature_line, a.hide_patient_signature, a.hide_afastamento_text,
         a.document_type, a.status, a.created_at,
         u.username as emitido_por
        FROM attestations a
@@ -102,6 +103,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         signatureColor: attestation.signature_color,
         signatureImage: formatLogo(attestation.signature_image),
         modoCarimbo: attestation.modo_carimbo === 1,
+        hideSignatureLine: attestation.hide_signature_line === 1,
+        hidePatientSignature: attestation.hide_patient_signature === 1,
+        hideAfastamentoText: attestation.hide_afastamento_text === 1,
         logoLeftScale: attestation.logo_left_scale ?? 1.0,
         logoRightScale: attestation.logo_right_scale ?? 1.0,
         logoLeftX: attestation.logo_left_x ?? 0,
