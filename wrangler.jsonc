@@ -1,6 +1,6 @@
 {
   "$schema": "https://developers.cloudflare.com/workers/schemas/wrangler.json",
-  "name": "docmaster",
+  "name": "brasilopenbadge",
   "compatibility_date": "2026-03-19",
   "compatibility_flags": ["nodejs_compat"],
   
