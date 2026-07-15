@@ -2,6 +2,8 @@ import { forwardRef } from "react";
 import { QRCodeSVG } from "qrcode.react";
 
 export interface CertificadoFGVData {
+  id?: string;
+  codigo_validacao?: string;
   nome_aluno: string;
   curso: string;
   data_emissao: string;
@@ -39,11 +41,12 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
     const diretoraCargo = data.diretora_cargo || "Diretora Executiva - DGA";
     const diretoraInst = data.diretora_instituicao || "Instituto de Desenvolvimento Educacional - IDE";
     
-    // Construct validation URL based on the code
+    // Construct validation URL based on the validation token
+    const validationToken = (data.codigo_validacao || data.id || codigoAutenticidade).toLowerCase();
     const validationUrl = data.url_validacao || (
       typeof window !== "undefined"
-        ? `${window.location.origin}/pages/badge/${codigoAutenticidade}`
-        : `https://brasilopenbadge.dev/pages/badge/${codigoAutenticidade}`
+        ? `${window.location.origin}/pages/badge/${validationToken}`
+        : `https://brasilopenbadge.dev/pages/badge/${validationToken}`
     );
 
     return (

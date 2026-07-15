@@ -100,7 +100,7 @@ export default function BrasilOpenBadgeValidation() {
       nao_expira: "Não Expira",
       codigo: "Código de Autenticidade",
       emitido_por: "Emitido por",
-      ganhador: "Ganhador",
+      ganhador: "Diplomado",
       certificado: "Certificado",
       baixar: "Baixar PDF do Certificado",
     },
@@ -126,7 +126,7 @@ export default function BrasilOpenBadgeValidation() {
       nao_expira: "No Expira",
       codigo: "Código de Autenticidad",
       emitido_por: "Emitido por",
-      ganhador: "Ganador",
+      ganhador: "Diplomado",
       certificado: "Certificado",
       baixar: "Descargar PDF del Certificado",
     }

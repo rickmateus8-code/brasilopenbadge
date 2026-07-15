@@ -9,7 +9,7 @@ import { usePDFExport, generatePDFFilename } from "@/lib/pdfExport";
 import EmissionModal from "@/components/EmissionModal";
 import {
   ArrowLeft, Save, Download, MessageCircle, Copy, Zap,
-  Upload, AlertCircle, FileText
+  Upload, AlertCircle, FileText, RefreshCw
 } from "lucide-react";
 
 // ─── Presets e Constantes ───────────────────────────────────────────────────
@@ -38,6 +38,35 @@ function gerarCodigoAutenticidade(): string {
   return res;
 }
 
+function gerarTokenValidacao(): string {
+  const chars = "0123456789abcdef";
+  let res = "";
+  for (let i = 0; i < 32; i++) {
+    res += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return res.toUpperCase(); // Save in uppercase to match D1 select case exactly
+}
+
+function gerarTurmaPadrao(curso: string): string {
+  const cursoLimpo = curso
+    ? curso.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
+    : "CURSO";
+    
+  let sigla = "";
+  if (cursoLimpo.includes("LIDERANCA")) {
+    sigla = "LIDGE";
+  } else {
+    // Extract consonants
+    const consoantes = cursoLimpo.replace(/[^A-Z]/g, "").replace(/[AEIOU]/g, "");
+    sigla = consoantes.slice(0, 5);
+    if (sigla.length < 5) sigla = (cursoLimpo.replace(/[^A-Z]/g, "") + "XXXXX").slice(0, 5);
+  }
+  
+  const ano = new Date().getFullYear().toString().slice(-2); // e.g. 26
+  const diaMes = "1710"; // standard format matching ONL024ZX-LIDGE1710-3
+  return `ONL0${ano}ZX-${sigla}${diaMes}-3`;
+}
+
 export default function CertificadoFGVCria() {
   const { user, updateBalance } = useAuth();
   const { theme } = useTheme();
@@ -59,22 +88,35 @@ export default function CertificadoFGVCria() {
   const [documentPrice, setDocumentPrice] = useState(1800); // R$ 18,00
 
   // State initialization
-  const [data, setData] = useState<CertificadoFGVData>({
-    nome_aluno: "",
-    curso: CURSO_DEFAULT,
-    data_emissao: new Date().toLocaleDateString("pt-BR"),
-    carga_horaria: "30 horas-aula",
-    codigo_autenticidade: gerarCodigoAutenticidade(),
-    matricula: "",
-    turma: "",
-    ementa: EMENTA_DEFAULT,
-    competencias: COMPETENCIAS_DEFAULT,
-    requisitos: REQUISITOS_DEFAULT,
-    diretora_nome: "Mary Kimiko Guimarães Murashima",
-    diretora_cargo: "Diretora Executiva - DGA",
-    diretora_instituicao: "Instituto de Desenvolvimento Educacional - IDE",
-    signature_image: "",
+  const [data, setData] = useState<CertificadoFGVData>(() => {
+    const authCode = gerarCodigoAutenticidade();
+    const token = gerarTokenValidacao();
+    return {
+      id: token,
+      codigo_validacao: token,
+      nome_aluno: "",
+      curso: CURSO_DEFAULT,
+      data_emissao: new Date().toLocaleDateString("pt-BR"),
+      carga_horaria: "30 horas-aula",
+      codigo_autenticidade: authCode,
+      matricula: "",
+      turma: "",
+      ementa: EMENTA_DEFAULT,
+      competencias: COMPETENCIAS_DEFAULT,
+      requisitos: REQUISITOS_DEFAULT,
+      diretora_nome: "Mary Kimiko Guimarães Murashima",
+      diretora_cargo: "Diretora Executiva - DGA",
+      diretora_instituicao: "Instituto de Desenvolvimento Educacional - IDE",
+      signature_image: "",
+    };
   });
+
+  // Pre-generate Turma if empty on mount or if course changes
+  useEffect(() => {
+    if (!isEditing && !data.turma) {
+      setData((d) => ({ ...d, turma: gerarTurmaPadrao(d.curso) }));
+    }
+  }, [isEditing, data.curso]);
 
   // Carregar dados se for edição
   useEffect(() => {
@@ -330,11 +372,31 @@ export default function CertificadoFGVCria() {
             <div className="fgv-grid">
               <div className="fgv-group">
                 <label>Turma</label>
-                <input type="text" value={data.turma} onChange={update("turma")} placeholder="Ex: ONL024ZX-LIDGE1710-3" />
+                <div className="flex gap-2">
+                  <input type="text" style={{ flex: 1 }} value={data.turma} onChange={update("turma")} placeholder="Ex: ONL024ZX-LIDGE1710-3" />
+                  <button
+                    type="button"
+                    onClick={() => setData(prev => ({ ...prev, turma: gerarTurmaPadrao(prev.curso) }))}
+                    className="p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center"
+                    title="Gerar Turma"
+                  >
+                    <RefreshCw size={14} className="text-slate-500" />
+                  </button>
+                </div>
               </div>
               <div className="fgv-group">
                 <label>Código de Autenticidade</label>
-                <input type="text" value={data.codigo_autenticidade} onChange={update("codigo_autenticidade")} />
+                <div className="flex gap-2">
+                  <input type="text" style={{ flex: 1 }} value={data.codigo_autenticidade} onChange={update("codigo_autenticidade")} />
+                  <button
+                    type="button"
+                    onClick={() => setData(prev => ({ ...prev, codigo_autenticidade: gerarCodigoAutenticidade() }))}
+                    className="p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center"
+                    title="Gerar Código"
+                  >
+                    <RefreshCw size={14} className="text-slate-500" />
+                  </button>
+                </div>
               </div>
             </div>
 
