@@ -162,13 +162,17 @@ export default function BrasilOpenBadgeValidation() {
           {/* ── Coluna Esquerda: Badge & Metadados ── */}
           <div className="lg:col-span-3 space-y-6">
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-200 text-center">
-              {/* Badge Circular Estilizado */}
-              <div className="relative w-40 h-40 mx-auto mb-6 flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 rounded-full border-4 border-[#005CA9] shadow-inner">
-                <div className="absolute inset-2 border-2 border-dashed border-[#005CA9]/40 rounded-full" />
-                <Award className="w-16 h-16 text-[#005CA9] animate-pulse" />
-                <span className="absolute bottom-2 bg-[#005CA9] text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
-                  FGV BADGE
-                </span>
+              {/* Badge Original */}
+              <div className="relative w-40 h-40 mx-auto mb-6 flex items-center justify-center">
+                <img
+                  src="/assets/fgv_selo.png"
+                  alt="FGV Badge"
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    // Fallback to text logo if image fails
+                    e.currentTarget.src = "/assets/logo-icon.png";
+                  }}
+                />
               </div>
 
               {/* Detalhes */}

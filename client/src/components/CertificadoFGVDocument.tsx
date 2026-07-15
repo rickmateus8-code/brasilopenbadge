@@ -222,31 +222,12 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
             alignItems: "center",
           }}
         >
-          {data.signature_image ? (
-            <img
-              src={data.signature_image}
-              alt="Assinatura"
-              style={{ height: 50, marginBottom: 8, mixBlendMode: "multiply" }}
-              crossOrigin={undefined}
-            />
-          ) : (
-            /* Imagem rubrica padrão simulada */
-            <div
-              style={{
-                fontFamily: "'Caveat', 'Dancing Script', cursive",
-                fontSize: "24pt",
-                color: "#0b109f",
-                height: 45,
-                transform: "rotate(-2deg)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: 8,
-              }}
-            >
-              Mary Kimiko G. Murashima
-            </div>
-          )}
+          <img
+            src={data.signature_image || "/assets/fgv_assinatura.png"}
+            alt="Assinatura"
+            style={{ height: 60, marginBottom: 4, mixBlendMode: "multiply" }}
+            crossOrigin={undefined}
+          />
           
           {/* Linha da assinatura */}
           <div style={{ width: 280, height: 1, backgroundColor: "#A0AEC0", margin: "4px 0" }} />

@@ -250,15 +250,30 @@ export default function CertificadoFGVCria() {
         .fgv-import-box textarea { width: 100%; height: 120px; padding: 10px; border-radius: 8px; border: 1px solid ${isDark ? "#334155" : "#e2e8f0"}; background: ${isDark ? "#0f172a" : "#fff"}; color: ${isDark ? "#fff" : "#000"}; resize: none; font-size: 12px; }
         .fgv-split-container { display: flex; gap: 30px; }
         .fgv-left-form { flex: 1.2; }
-        .fgv-right-preview { flex: 0.8; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
-        .fgv-preview-wrapper { 
+        .fgv-right-preview { 
+          flex: 0.8; 
+          display: flex; 
+          flex-direction: column; 
+          align-items: center; 
+          justify-content: flex-start;
+          min-width: 550px;
+        }
+        .fgv-preview-box {
+          width: 540px;
+          height: 382px;
+          position: relative;
           border: 1px solid #cbd5e1;
           box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-          transform: scale(0.48);
-          transform-origin: top center;
-          margin-top: 10px;
           border-radius: 8px;
           overflow: hidden;
+          background: #ffffff;
+        }
+        .fgv-preview-wrapper { 
+          transform: scale(0.48085);
+          transform-origin: top left;
+          position: absolute;
+          top: 0;
+          left: 0;
           width: 1123px;
           height: 794px;
         }
@@ -388,7 +403,7 @@ export default function CertificadoFGVCria() {
             <div className="text-sm font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
               <FileText size={16} /> PRÉVIA EM TEMPO REAL
             </div>
-            <div style={{ width: 540, height: 400, overflow: "hidden" }}>
+            <div className="fgv-preview-box">
               <div className="fgv-preview-wrapper">
                 <CertificadoFGVDocument data={data} isPreview={!saved} />
               </div>
