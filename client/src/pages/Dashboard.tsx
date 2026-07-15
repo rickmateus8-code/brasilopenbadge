@@ -15,7 +15,7 @@ import {
   Wallet, TrendingUp, BarChart3, ChevronRight, Plus,
   Clock, CheckCircle, Bell, Download, Trash2, Pill, Pencil, QrCode,
   Copy, X, Send, RefreshCw, Search, Save, Smartphone, AlertTriangle, Gift, Users, Loader2, Settings,
-  Eye, Trash, Receipt, Camera
+  Eye, Trash, Receipt, Camera, Award
 } from "lucide-react";
 import AttestationActionButtons from "@/components/AttestationActionButtons";
 import { downloadAttestationPdf, fetchLatestAttestationRecord } from "@/lib/attestationActions";
@@ -31,6 +31,7 @@ const quickActionsRaw = [
   { key: "receita", icon: Pill, label: "Dr. Consulta", desc: "Emitir receituário médico", path: "/receitacria", color: "violet" },
   { key: "peticao-stj", icon: FileText, label: "STJ Petição", desc: "Emitir petição jurídica STJ", path: "/peticaocria", color: "indigo" },
   { key: "bot-adv", icon: Search, label: "Bot Adv", desc: "Consulta Judicial Inteligente", path: "/bot-adv", color: "blue" },
+  { key: "fgv", icon: Award, label: "Certificado FGV", desc: "Emitir certificado FGV", path: "/certificado-fgv", color: "blue" },
 ];
 
 const colorMap: Record<string, { bg: string; text: string; iconBg: string; badge: string }> = {
@@ -52,6 +53,7 @@ const INITIAL_HISTORY_TABS = [
   { key: "toxicologico", label: "Toxicológico", icon: FlaskConical, color: "emerald" },
   { key: "historico-sp", label: "Histórico SP", icon: GraduationCap, color: "green" },
   { key: "historico-uninter", label: "UNINTER", icon: GraduationCap, color: "indigo" },
+  { key: "fgv", label: "Certificado FGV", icon: Award, color: "blue" },
   { key: "receita", label: "Receitas", icon: Pill, color: "violet" },
 ];
 
@@ -61,6 +63,7 @@ const TAB_LABELS: Record<string, string> = {
   cha: "CHA",
   "historico-sp": "Histórico SP",
   "historico-uninter": "UNINTER",
+  fgv: "Certificado FGV",
   receita: "Receita",
 };
 
@@ -225,7 +228,7 @@ export default function Dashboard() {
     try {
       let endpoint = `/api/attestations/${id}`;
       if (activeTab === "receita") endpoint = `/api/receitas/${id}`;
-      else if (["cnh", "cha", "toxicologico", "toxicria", "historico-sp", "historico-uninter"].includes(activeTab)) endpoint = `/api/documents/${id}`;
+      else if (["cnh", "cha", "toxicologico", "toxicria", "historico-sp", "historico-uninter", "fgv"].includes(activeTab)) endpoint = `/api/documents/${id}`;
       const res = await fetch(endpoint, { method: "DELETE", credentials: "include" });
       if (res.ok) {
         setHistory(prev => prev.filter(d => d.id !== id));
@@ -602,7 +605,7 @@ const intelligentStats = [
                               <td className="px-4 py-4 text-right">
                                 <AttestationActionButtons
                                     onEdit={() => {
-                                      const route = doc.type === "historico-uninter" ? "historicocria" : doc.type;
+                                      const route = doc.type === "fgv" ? "certificado-fgv" : (doc.type === "historico-uninter" ? "historicocria" : doc.type);
                                       setLocation(`/${route}/editar/${doc.id}`);
                                     }}
                                     onDelete={() => setConfirmDeleteId(doc.id)}

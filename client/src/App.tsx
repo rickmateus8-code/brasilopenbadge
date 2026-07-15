@@ -129,6 +129,9 @@ import CNHPainel from "./pages/cnh-validation/CNHPainel";
 import CNHCondutor from "./pages/cnh-validation/CNHCondutor";
 import CNHHabilitacao from "./pages/cnh-validation/CNHHabilitacao";
 
+import CertificadoFGVCria from "./pages/CertificadoFGVCria";
+import BrasilOpenBadgeValidation from "./pages/BrasilOpenBadgeValidation";
+
 // ─── Detectar Domínio ──────────────────────────────────────────────────────────
 const isValidationDomain = typeof window !== 'undefined' && 
   (window.location.hostname === 'validaratestado.digital' || 
@@ -141,6 +144,13 @@ const isVerificaMedDomain = typeof window !== 'undefined' &&
 const isCNHValidationDomain = typeof window !== 'undefined' &&
   (window.location.hostname === 'carteira-digital-transito-vio.digital' ||
    window.location.hostname === 'www.carteira-digital-transito-vio.digital');
+
+const isBrasilOpenBadgeDomain = typeof window !== 'undefined' &&
+  (window.location.hostname.includes('brasilopenbadge') ||
+   window.location.hostname === 'brasilopenbadge.dev' ||
+   window.location.hostname === 'www.brasilopenbadge.dev' ||
+   window.location.pathname.startsWith('/pages/badge/') ||
+   window.location.pathname.startsWith('/badge/'));
 
 // ─── Roteador para verificamed.digital (Validação de Receitas) ───────────────────
 function VerificaMedRouter() {
@@ -176,6 +186,18 @@ function CNHValidationRouter() {
       
       {/* Fallback universal para o domínio de CNH */}
       <Route component={CNHLanding} />
+    </Switch>
+  );
+}
+
+// ─── Roteador para brasilopenbadge (Validação de Certificados/Badges) ───────────
+function BrasilOpenBadgeRouter() {
+  return (
+    <Switch>
+      <Route path="/pages/badge/:id" component={BrasilOpenBadgeValidation} />
+      <Route path="/badge/:id" component={BrasilOpenBadgeValidation} />
+      <Route path="/:id" component={BrasilOpenBadgeValidation} />
+      <Route component={BrasilOpenBadgeValidation} />
     </Switch>
   );
 }
@@ -327,6 +349,13 @@ function DocMasterRouter() {
         <ProtectedRoute component={DiplomaUninterCria} />
       </Route>
 
+      <Route path="/certificado-fgv">
+        <ProtectedRoute component={CertificadoFGVCria} />
+      </Route>
+      <Route path="/certificado-fgv/editar/:id">
+        {(params) => <ProtectedRoute component={CertificadoFGVCria} params={params} />}
+      </Route>
+
       {/* Financeiro */}
       <Route path="/extrato">
         <ProtectedRoute component={Extrato} />
@@ -371,11 +400,17 @@ function DocMasterRouter() {
 function App() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const isVal = isValidationDomain || isVerificaMedDomain || isCNHValidationDomain;
+      const isVal = isValidationDomain || isVerificaMedDomain || isCNHValidationDomain || isBrasilOpenBadgeDomain;
       
       if (isVal) {
         document.body.classList.add('is-validation-page');
-        document.title = isValidationDomain ? "Validação Oficial" : isVerificaMedDomain ? "VerificaMed" : "Carteira Digital";
+        document.title = isValidationDomain 
+          ? "Validação Oficial" 
+          : isVerificaMedDomain 
+            ? "VerificaMed" 
+            : isCNHValidationDomain 
+              ? "Carteira Digital"
+              : "Brasil Open Badge";
       } else {
         document.body.classList.remove('is-validation-page');
         // Apenas setar DocMaster se NÃO for um domínio de validação
@@ -397,7 +432,9 @@ function App() {
                 ? <VerificaMedRouter />
                 : isValidationDomain
                   ? <ValidationRouter />
-                  : <DocMasterRouter />
+                  : isBrasilOpenBadgeDomain
+                    ? <BrasilOpenBadgeRouter />
+                    : <DocMasterRouter />
             }
           </TooltipProvider>
         </AuthProvider>

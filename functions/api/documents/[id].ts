@@ -33,7 +33,7 @@ function isDocumentFree(user: any, docType: string): boolean {
  */
 import type { Env } from '../../types';
 
-const DOCUMENT_TYPES = ['cnh', 'cha', 'toxicologico', 'historico-sp', 'historico-uninter', 'peticaocria', 'peticao-stj', 'toxicria', 'diploma-uninter', 'receita'];
+const DOCUMENT_TYPES = ['cnh', 'cha', 'toxicologico', 'historico-sp', 'historico-uninter', 'peticaocria', 'peticao-stj', 'toxicria', 'diploma-uninter', 'receita', 'fgv'];
 
 function getSessionToken(request: Request): string | null {
   const cookieHeader = request.headers.get("Cookie") || "";
@@ -128,7 +128,7 @@ export async function onRequest(context: { request: Request; env: Env; params: {
         const defaults: Record<string, number> = {
           'atestado': 1000, 'cnh': 1500, 'cha': 1500, 'toxicologico': 1500,
           'toxicria': 1500, 'historico-sp': 1800, 'historico-uninter': 1800,
-          'peticao-stj': 2000, 'peticaocria': 2000, 'receita': 1000
+          'peticao-stj': 2000, 'peticaocria': 2000, 'receita': 1000, 'fgv': 1800
         };
         price = defaults[docType] || 1000;
       }

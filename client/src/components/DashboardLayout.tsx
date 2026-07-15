@@ -84,6 +84,7 @@ const getPathSlug = (path: string): string => {
     "peticaocria": "peticao-stj",
     "peticao-stj": "peticao-stj",
     "diploma-uninter": "diploma-uninter",
+    "certificado-fgv": "fgv",
     "laudocria": "laudocria"
   };
   return mapping[p] || p;

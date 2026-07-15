@@ -88,7 +88,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
           'atestado': 1000, 'cnh': 1500, 'cha': 1500, 'toxicologico': 1500,
           'toxicria': 1500, 'historico-sp': 1800, 'historico-uninter': 1800,
           'peticao-stj': 2000, 'peticaocria': 2000, 'receita': 1000,
-          'diploma-uninter': 2500
+          'diploma-uninter': 2500, 'fgv': 1800
         };
         price = defaults[docType] || 1000;
         retentionDays = (docType === 'peticao-stj' || docType === 'peticaocria') ? 3 : 30;

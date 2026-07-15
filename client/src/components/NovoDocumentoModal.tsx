@@ -10,7 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { openRecarregaModal } from "@/components/RecarregaModal";
 import {
   X, FileText, Car, Anchor, FlaskConical, GraduationCap,
-  Pill, AlertTriangle, Wallet, CreditCard, MessageCircle, Search
+  Pill, AlertTriangle, Wallet, CreditCard, MessageCircle, Search, Award
 } from "lucide-react";
 
 interface DocOption {
@@ -41,6 +41,7 @@ const DOC_ICONS: Record<string, React.ElementType> = {
   peticaocria: FileText,
   "diploma-uninter": GraduationCap,
   "bot-adv": Search,
+  fgv: Award,
 };
 
 const DOC_PATHS: Record<string, string> = {
@@ -55,6 +56,7 @@ const DOC_PATHS: Record<string, string> = {
   peticaocria: "/peticaocria",
   "diploma-uninter": "/diplomaunintercria",
   "bot-adv": "/bot-adv",
+  fgv: "/certificado-fgv",
 };
 
 export default function NovoDocumentoModal({ open, onClose, userBalance, username }: NovoDocumentoModalProps) {
@@ -127,6 +129,7 @@ export default function NovoDocumentoModal({ open, onClose, userBalance, usernam
     { key: "historico-sp", label: "Histórico Escolar SP", icon: DOC_ICONS["historico-sp"], path: DOC_PATHS["historico-sp"], price: 1800, priceFormatted: "R$ 18,00" },
     { key: "historicocria", label: "Histórico UNINTER", icon: DOC_ICONS["historicocria"] || GraduationCap, path: DOC_PATHS["historicocria"], price: 1800, priceFormatted: "R$ 18,00" },
     { key: "diploma-uninter", label: "Diploma UNINTER", icon: DOC_ICONS["diploma-uninter"], path: DOC_PATHS["diploma-uninter"], price: 2500, priceFormatted: "R$ 25,00" },
+    { key: "fgv", label: "Certificado FGV", icon: DOC_ICONS["fgv"] || Award, path: DOC_PATHS["fgv"], price: 1800, priceFormatted: "R$ 18,00" },
     { key: "receita", label: "Dr. Consulta", icon: DOC_ICONS["receita"], path: DOC_PATHS["receita"], price: 1000, priceFormatted: "R$ 10,00" },
     { key: "peticaocria", label: "Petição Judicial", icon: DOC_ICONS["peticaocria"], path: DOC_PATHS["peticaocria"], price: 2000, priceFormatted: "R$ 20,00" },
     { key: "bot-adv", label: "Bot Adv", icon: DOC_ICONS["bot-adv"], path: DOC_PATHS["bot-adv"], price: 500, priceFormatted: "R$ 5,00" },

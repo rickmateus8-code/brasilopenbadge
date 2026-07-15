@@ -86,6 +86,7 @@ export type DocType =
   | "receita"
   | "peticaocria"
   | "diploma-uninter"
+  | "fgv"
   | "generic";
 
 export interface PDFExportOptions {
@@ -402,6 +403,7 @@ const DOC_PREFIXES: Record<DocType, string> = {
   receita: "RECEITA",
   peticaocria: "PETICAO_JUDICIAL",
   "diploma-uninter": "DIPLOMA_UNINTER",
+  fgv: "CERTIFICADO_FGV",
   generic: "DOCUMENTO",
 };
 
