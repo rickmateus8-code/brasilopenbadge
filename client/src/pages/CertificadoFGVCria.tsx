@@ -50,7 +50,20 @@ function gerarTokenValidacao(): string {
   return res.toUpperCase(); // Save in uppercase to match D1 select case exactly
 }
 
-function gerarTurmaPadrao(curso: string): string {
+function extrairAno(dataStr: string): string {
+  if (!dataStr) return new Date().getFullYear().toString().slice(-2);
+  const match = dataStr.match(/\b(19|20)\d{2}\b/);
+  if (match) return match[0].slice(-2);
+  const parts = dataStr.split(/[-/]/);
+  if (parts.length === 3) {
+    const yearPart = parts[2].trim();
+    if (yearPart.length === 4) return yearPart.slice(-2);
+    if (yearPart.length === 2) return yearPart;
+  }
+  return new Date().getFullYear().toString().slice(-2);
+}
+
+function gerarTurmaPadrao(curso: string, dataEmissao?: string): string {
   const cursoLimpo = curso
     ? curso.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
     : "CURSO";
@@ -65,9 +78,15 @@ function gerarTurmaPadrao(curso: string): string {
     if (sigla.length < 5) sigla = (cursoLimpo.replace(/[^A-Z]/g, "") + "XXXXX").slice(0, 5);
   }
   
-  const ano = new Date().getFullYear().toString().slice(-2); // e.g. 26
+  const ano = extrairAno(dataEmissao || "");
   const diaMes = "1710"; // standard format matching ONL024ZX-LIDGE1710-3
   return `ONL0${ano}ZX-${sigla}${diaMes}-3`;
+}
+
+function gerarMatriculaAleatoria(): string {
+  const num = Math.floor(100000 + Math.random() * 900000); // 6 dígitos
+  const ano = new Date().getFullYear();
+  return `${num}/${ano}`;
 }
 
 export default function CertificadoFGVCria() {
@@ -117,9 +136,9 @@ export default function CertificadoFGVCria() {
   // Pre-generate Turma if empty on mount or if course changes
   useEffect(() => {
     if (!isEditing && !data.turma) {
-      setData((d) => ({ ...d, turma: gerarTurmaPadrao(d.curso) }));
+      setData((d) => ({ ...d, turma: gerarTurmaPadrao(d.curso, d.data_emissao) }));
     }
-  }, [isEditing, data.curso]);
+  }, [isEditing, data.curso, data.data_emissao]);
 
   // Carregar dados se for edição
   useEffect(() => {
@@ -375,7 +394,17 @@ export default function CertificadoFGVCria() {
               </div>
               <div className="fgv-group">
                 <label>Matrícula</label>
-                <input type="text" value={data.matricula} onChange={update("matricula")} placeholder="Ex: 590927/2024" />
+                <div className="flex gap-2">
+                  <input type="text" style={{ flex: 1 }} value={data.matricula} onChange={update("matricula")} placeholder="Ex: 590927/2024" />
+                  <button
+                    type="button"
+                    onClick={() => setData(prev => ({ ...prev, matricula: gerarMatriculaAleatoria() }))}
+                    className="p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center"
+                    title="Gerar Matrícula"
+                  >
+                    <RefreshCw size={14} className="text-slate-500" />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -386,7 +415,7 @@ export default function CertificadoFGVCria() {
                   <input type="text" style={{ flex: 1 }} value={data.turma} onChange={update("turma")} placeholder="Ex: ONL024ZX-LIDGE1710-3" />
                   <button
                     type="button"
-                    onClick={() => setData(prev => ({ ...prev, turma: gerarTurmaPadrao(prev.curso) }))}
+                    onClick={() => setData(prev => ({ ...prev, turma: gerarTurmaPadrao(prev.curso, prev.data_emissao) }))}
                     className="p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center"
                     title="Gerar Turma"
                   >
