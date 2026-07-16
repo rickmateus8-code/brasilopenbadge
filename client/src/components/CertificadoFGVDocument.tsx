@@ -207,7 +207,7 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
           style={{
             position: "absolute",
             bottom: 60,
-            left: 382,
+            left: 400,
             width: 420,
             textAlign: "center",
             zIndex: 2,
@@ -216,27 +216,20 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
             alignItems: "center",
           }}
         >
-          {data.signature_image ? (
-            <img
-              src={data.signature_image}
-              alt="Assinatura"
-              style={{ height: 60, marginBottom: 4, mixBlendMode: "multiply" }}
-              crossOrigin={undefined}
-            />
-          ) : (
-            <div style={{ height: 48 }} />
-          )}
-           
+          <img
+            src={data.signature_image || "/assets/fgv_assinatura.png"}
+            alt="Assinatura"
+            style={{ height: 62, marginBottom: 4, mixBlendMode: "multiply" }}
+            crossOrigin={undefined}
+          />
           
-          
-          
-          <div style={{ fontSize: "9.5pt", fontWeight: 400, color: "#000000" }}>
+          <div style={{ fontSize: "9.8pt", fontWeight: 400, color: "#000000" }}>
             {diretoraNome}
           </div>
-          <div style={{ fontSize: "8.5pt", color: "#000000", fontWeight: 400 }}>
+          <div style={{ fontSize: "8.75pt", color: "#000000", fontWeight: 400 }}>
             {diretoraCargo}
           </div>
-          <div style={{ fontSize: "8.5pt", color: "#000000", fontWeight: 400 }}>
+          <div style={{ fontSize: "8.75pt", color: "#000000", fontWeight: 400 }}>
             {diretoraInst}
           </div>
         </div>
