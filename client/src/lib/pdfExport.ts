@@ -176,8 +176,8 @@ export async function exportElementToPDF(
     customHeight,
   } = options;
 
-  const docWidth = customWidth || DOC_REAL_WIDTH;
-  const docHeight = customHeight || DOC_REAL_HEIGHT;
+  const docWidth = customWidth || (orientation === "l" ? DOC_REAL_HEIGHT : DOC_REAL_WIDTH);
+  const docHeight = customHeight || (orientation === "l" ? DOC_REAL_WIDTH : DOC_REAL_HEIGHT);
 
   // Limita scale em mobile para evitar estouro de memória
   const dpr = typeof window !== "undefined" ? (window.devicePixelRatio || 1) : 1;
@@ -458,8 +458,8 @@ export async function exportElementToPDFBlob(
     customHeight,
   } = options;
 
-  const docWidth = customWidth || DOC_REAL_WIDTH;
-  const docHeight = customHeight || DOC_REAL_HEIGHT;
+  const docWidth = customWidth || (orientation === "l" ? DOC_REAL_HEIGHT : DOC_REAL_WIDTH);
+  const docHeight = customHeight || (orientation === "l" ? DOC_REAL_WIDTH : DOC_REAL_HEIGHT);
 
   const dpr = typeof window !== "undefined" ? (window.devicePixelRatio || 1) : 1;
   const safeScale = dpr > 2 ? Math.min(scale, 1.5) : scale;
