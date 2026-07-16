@@ -200,6 +200,31 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
             </div>
           </div>
 
+          {/* Matrícula e Turma */}
+          {(data.matricula || data.turma) && (
+            <div
+              style={{
+                display: "flex",
+                gap: 80,
+                fontSize: "12.5pt",
+                color: "#1A202C",
+                fontWeight: 500,
+                marginTop: 5,
+              }}
+            >
+              {data.matricula && (
+                <div>
+                  <span style={{ fontWeight: 400, color: "#4A5568" }}>Matrícula:</span> {data.matricula}
+                </div>
+              )}
+              {data.turma && (
+                <div>
+                  <span style={{ fontWeight: 400, color: "#4A5568" }}>Turma:</span> {data.turma}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Código de Autenticidade */}
           <div style={{ fontSize: "12.5pt", color: "#1A202C", fontWeight: 500, marginTop: 5 }}>
             <span style={{ fontWeight: 400, color: "#4A5568" }}>Código de Autenticidade:</span> {codigoAutenticidade}
