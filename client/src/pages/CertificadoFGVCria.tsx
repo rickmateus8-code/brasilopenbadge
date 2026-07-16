@@ -25,7 +25,10 @@ const MODELO_TEXTO = `Nome do Aluno:
 Curso: Liderança e Gestão de Equipes
 Carga Horária: 30 horas-aula
 Data de Emissão: 18/12/2024
+Início: 17/10/2024
+Término: 18/12/2024
 Matrícula: 590927/2024
+CPF: 123.456.789-00
 Turma: ONL024ZX-LIDGE1710-3`;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -168,7 +171,10 @@ export default function CertificadoFGVCria() {
       curso: get("Curso") || d.curso,
       carga_horaria: get("Carga Horária") || d.carga_horaria,
       data_emissao: get("Data de Emissão") || d.data_emissao,
+      data_inicio: get("Início") || get("Data de Início") || d.data_inicio,
+      data_termino: get("Término") || get("Data de Término") || d.data_termino,
       matricula: get("Matrícula") || d.matricula,
+      cpf: get("CPF") || d.cpf,
       turma: get("Turma") || d.turma,
     }));
     toast.success("Dados processados!");
@@ -364,6 +370,10 @@ export default function CertificadoFGVCria() {
                 <input type="text" value={data.nome_aluno} onChange={update("nome_aluno")} placeholder="Nome do aluno" />
               </div>
               <div className="fgv-group">
+                <label>CPF do Aluno</label>
+                <input type="text" value={data.cpf || ""} onChange={update("cpf")} placeholder="Ex: 000.000.000-00" />
+              </div>
+              <div className="fgv-group">
                 <label>Matrícula</label>
                 <input type="text" value={data.matricula} onChange={update("matricula")} placeholder="Ex: 590927/2024" />
               </div>
@@ -410,6 +420,17 @@ export default function CertificadoFGVCria() {
               <div className="fgv-group">
                 <label>Carga Horária</label>
                 <input type="text" value={data.carga_horaria} onChange={update("carga_horaria")} />
+              </div>
+            </div>
+
+            <div className="fgv-grid">
+              <div className="fgv-group">
+                <label>Data de Início</label>
+                <input type="text" value={data.data_inicio || ""} onChange={update("data_inicio")} placeholder="Ex: 17/10/2024" />
+              </div>
+              <div className="fgv-group">
+                <label>Data de Término</label>
+                <input type="text" value={data.data_termino || ""} onChange={update("data_termino")} placeholder="Ex: 18/12/2024" />
               </div>
               <div className="fgv-group">
                 <label>Data de Emissão</label>

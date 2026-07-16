@@ -6,6 +6,8 @@ import {
 import AttestationDocument from "@/components/AttestationDocument";
 import CNHDocument, { type CNHDocumentHandle } from "@/components/CNHDocument";
 import { buildAttestationData } from "@/lib/attestationActions";
+import CertificadoFGVDocument from "@/components/CertificadoFGVDocument";
+import { usePDFExport, generatePDFFilename } from "@/lib/pdfExport";
 
 interface DocumentViewerModalProps {
   doc: any;
@@ -28,11 +30,15 @@ export default function DocumentViewerModal({
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   
   const docRef = useRef<CNHDocumentHandle>(null);
+  const certRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const isCNH = doc.type === 'cnh';
   const isCHA = doc.type === 'cha';
+  const isFGV = doc.type === 'fgv';
   const parsedData = typeof doc.data === 'string' ? JSON.parse(doc.data) : (doc.data || {});
+
+  const { exportPDF, exporting: isExportingGenericPDF } = usePDFExport();
 
   // Auto-fit inicial
   useEffect(() => {
@@ -66,6 +72,18 @@ export default function DocumentViewerModal({
   const handleExportPdf = async () => {
     if (isCNH && docRef.current) {
        await docRef.current.exportAsPdf();
+    } else if (isFGV) {
+       if (!certRef.current) return;
+       try {
+         await exportPDF(certRef.current, {
+           filename: generatePDFFilename(parsedData.nome_aluno || "certificado", "fgv"),
+           docType: "fgv",
+           orientation: "l",
+           scale: 2,
+         });
+       } catch (err) {
+         console.error("FGV PDF error:", err);
+       }
     } else {
        onDownload();
     }
@@ -91,9 +109,9 @@ export default function DocumentViewerModal({
             <button onClick={onEdit} className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-xl transition-all active:scale-95 shadow-sm shadow-amber-200 dark:shadow-none">
               <Pencil className="w-3.5 h-3.5" /> EDITAR
             </button>
-            <button onClick={handleExportPdf} disabled={isDownloading} className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-[#005CA9] hover:bg-[#004a8a] text-white rounded-xl transition-all active:scale-95 shadow-sm shadow-blue-200 dark:shadow-none disabled:opacity-60">
-              {isDownloading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-              {isDownloading ? "GERANDO..." : "EXPORTAR PDF"}
+            <button onClick={handleExportPdf} disabled={isDownloading || isExportingGenericPDF} className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-[#005CA9] hover:bg-[#004a8a] text-white rounded-xl transition-all active:scale-95 shadow-sm shadow-blue-200 dark:shadow-none disabled:opacity-60">
+              {(isDownloading || isExportingGenericPDF) ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+              {(isDownloading || isExportingGenericPDF) ? "GERANDO..." : "EXPORTAR PDF"}
             </button>
             <div className="w-px h-6 bg-gray-200 dark:bg-slate-700 mx-1" />
             <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 dark:text-slate-500 hover:text-gray-900 dark:hover:text-slate-100 transition-colors">
@@ -127,6 +145,8 @@ export default function DocumentViewerModal({
           >
             {isCNH ? (
                <CNHDocument ref={docRef} {...parsedData} codigoQR={doc.codigo_qr || doc.id} />
+            ) : isFGV ? (
+               <CertificadoFGVDocument ref={certRef} data={parsedData} />
             ) : (
                <AttestationDocument data={buildAttestationData(doc)} />
             )}

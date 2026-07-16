@@ -18,8 +18,13 @@ import {
   Eye, Trash, Receipt, Camera, Award
 } from "lucide-react";
 import AttestationActionButtons from "@/components/AttestationActionButtons";
-import { downloadAttestationPdf, fetchLatestAttestationRecord } from "@/lib/attestationActions";
+import { downloadAttestationPdf, fetchLatestAttestationRecord, buildAttestationData } from "@/lib/attestationActions";
 import { toast } from "sonner";
+import { createRoot } from "react-dom/client";
+import { createElement } from "react";
+import CertificadoFGVDocument from "@/components/CertificadoFGVDocument";
+import AttestationDocument from "@/components/AttestationDocument";
+import { usePDFExport, generatePDFFilename } from "@/lib/pdfExport";
 
 const quickActionsRaw = [
   { key: "atestado", icon: FileText, label: "Novo Atestado", desc: "Emitir atestado médico", path: "/atestadocria", color: "yellow" },
@@ -255,6 +260,49 @@ export default function Dashboard() {
     try {
       const latestDoc = await downloadAttestationPdf(doc);
       setHistory((prev) => prev.map((item) => (item.id === latestDoc.id ? latestDoc : item)));
+      toast.success("PDF baixado com sucesso!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao gerar PDF");
+    } finally {
+      setDownloadingAtestadoId(null);
+    }
+  };
+
+  const { exportPDF, exporting: isExportingGeneric } = usePDFExport();
+
+  const handleDirectDownloadGeneric = async (doc: DocRecord) => {
+    setDownloadingAtestadoId(doc.id);
+    try {
+      const latestDoc = await fetchLatestAttestationRecord(doc);
+      const parsed = typeof latestDoc.data === "string" ? JSON.parse(latestDoc.data) : (latestDoc.data || {});
+      
+      if (doc.type === "fgv") {
+        const container = document.createElement("div");
+        container.style.cssText = "position:fixed;left:-9999px;top:0;width:1123px;background:white;";
+        document.body.appendChild(container);
+        
+        const root = createRoot(container);
+        await new Promise<void>((resolve) => {
+          root.render(createElement(CertificadoFGVDocument, { data: parsed }));
+          setTimeout(resolve, 1200);
+        });
+        
+        await exportPDF(container.firstElementChild as HTMLElement, {
+          filename: generatePDFFilename(parsed.nome_aluno || "certificado", "fgv"),
+          docType: "fgv",
+          orientation: "l",
+          scale: 2,
+        });
+        
+        root.unmount();
+        if (document.body.contains(container)) {
+          document.body.removeChild(container);
+        }
+      } else {
+        const latestDocVal = await downloadAttestationPdf(latestDoc);
+        setHistory((prev) => prev.map((item) => (item.id === latestDocVal.id ? latestDocVal : item)));
+      }
       toast.success("PDF baixado com sucesso!");
     } catch (err) {
       console.error(err);
@@ -598,12 +646,28 @@ const intelligentStats = [
                             );
                           }
 
+                          let docLabel = "Documento";
+                          if (doc.type === "fgv") {
+                            docLabel = `Certificado FGV - ${parsed.nome_aluno || "—"}`;
+                          } else if (doc.type === "historico-uninter") {
+                            docLabel = `Histórico UNINTER - ${parsed.nome_aluno || parsed.nome || "—"}`;
+                          } else if (doc.type === "historico-sp") {
+                            docLabel = `Histórico SP - ${parsed.nome || "—"}`;
+                          } else if (doc.type === "peticao-stj") {
+                            docLabel = `Petição STJ - ${parsed.nome_parte || parsed.nome || "—"}`;
+                          } else {
+                            docLabel = `${doc.type.toUpperCase()} - ${doc.paciente || doc.nome || parsed.nome || "—"}`;
+                          }
+
                           return (
                             <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors border-b border-gray-50 dark:border-gray-800/50">
-                              <td className="px-4 py-4 text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">{doc.paciente || doc.nome || parsed.nome || "Sem nome"}</td>
+                              <td className="px-4 py-4 text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">{docLabel}</td>
                               <td className="px-4 py-4 text-[10px] font-mono text-gray-400">{new Date(doc.created_at).toLocaleDateString("pt-BR")}</td>
                               <td className="px-4 py-4 text-right">
                                 <AttestationActionButtons
+                                    onView={() => openViewAtestado(doc)}
+                                    onDownload={() => handleDirectDownloadGeneric(doc)}
+                                    isDownloading={downloadingAtestadoId === doc.id}
                                     onEdit={() => {
                                       const route = doc.type === "fgv" ? "certificado-fgv" : (doc.type === "historico-uninter" ? "historicocria" : doc.type);
                                       setLocation(`/${route}/editar/${doc.id}`);
