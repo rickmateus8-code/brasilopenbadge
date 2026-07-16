@@ -173,24 +173,8 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
             </div>
           </div>
 
-          {/* Período de Realização */}
-          {(data.data_inicio || data.data_termino) && (
-            <div
-              style={{
-                fontSize: "12.5pt",
-                color: "#000000",
-                fontWeight: 400,
-                marginTop: 5,
-              }}
-            >
-              <span style={{ fontWeight: 400, color: "#000000" }}>Período:</span>{" "}
-              {data.data_inicio ? `de ${data.data_inicio}` : ""}{" "}
-              {data.data_termino ? `a ${data.data_termino}` : ""}
-            </div>
-          )}
-
-          {/* Matrícula, CPF e Turma */}
-          {(data.matricula || data.cpf || data.turma) && (
+          {/* Matrícula e Turma */}
+          {(data.matricula || data.turma) && (
             <div
               style={{
                 display: "flex",
@@ -204,11 +188,6 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
               {data.matricula && (
                 <div>
                   <span style={{ fontWeight: 400, color: "#000000" }}>Matrícula:</span> {data.matricula}
-                </div>
-              )}
-              {data.cpf && (
-                <div>
-                  <span style={{ fontWeight: 400, color: "#000000" }}>CPF:</span> {data.cpf}
                 </div>
               )}
               {data.turma && (

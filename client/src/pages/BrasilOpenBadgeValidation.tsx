@@ -271,6 +271,22 @@ export default function BrasilOpenBadgeValidation() {
                     {validDoc.data_emissao || (validDoc.created_at && !isNaN(new Date(validDoc.created_at).getTime()) ? new Date(validDoc.created_at).toLocaleDateString("pt-BR") : "")}
                   </p>
                 </div>
+                {validDoc.data_inicio && (
+                  <div>
+                    <h5 className="text-[10px] uppercase font-black tracking-wider text-gray-400">Início do Curso</h5>
+                    <p className="text-sm font-bold text-gray-800">
+                      {validDoc.data_inicio}
+                    </p>
+                  </div>
+                )}
+                {validDoc.data_termino && (
+                  <div>
+                    <h5 className="text-[10px] uppercase font-black tracking-wider text-gray-400">Término do Curso</h5>
+                    <p className="text-sm font-bold text-gray-800">
+                      {validDoc.data_termino}
+                    </p>
+                  </div>
+                )}
                 <div>
                   <h5 className="text-[10px] uppercase font-black tracking-wider text-gray-400">{texts.validade}</h5>
                   <p className="text-sm font-bold text-emerald-600 flex items-center gap-1">
@@ -367,7 +383,17 @@ export default function BrasilOpenBadgeValidation() {
                     <p className="text-sm text-blue-900 font-bold font-mono">
                       matricula: {validDoc.matricula} {validDoc.turma ? `– turma: ${validDoc.turma}` : ""}
                     </p>
-                    <span className="text-[10px] text-blue-700 font-black uppercase tracking-wider">FUNDAÇÃO GETULIO VARGAS</span>
+                    {validDoc.cpf && (
+                      <p className="text-sm text-blue-900 font-bold font-mono mt-1">
+                        cpf: {validDoc.cpf}
+                      </p>
+                    )}
+                    {(validDoc.data_inicio || validDoc.data_termino) && (
+                      <p className="text-sm text-blue-900 font-bold font-mono mt-1">
+                        período: {validDoc.data_inicio ? `de ${validDoc.data_inicio}` : ""} {validDoc.data_termino ? `a ${validDoc.data_termino}` : ""}
+                      </p>
+                    )}
+                    <span className="text-[10px] text-blue-700 font-black uppercase tracking-wider mt-2 block">FUNDAÇÃO GETULIO VARGAS</span>
                   </div>
                 </div>
               )}
