@@ -33,6 +33,12 @@ interface Props {
   logoScale?: number;
   logoX?: number;
   logoY?: number;
+  gerenteScale?: number;
+  gerenteX?: number;
+  gerenteY?: number;
+  diretorScale?: number;
+  diretorX?: number;
+  diretorY?: number;
 }
 
 /* Highlight helper */
@@ -57,6 +63,12 @@ export function SPPage1({
   logoScale = 1,
   logoX = 0,
   logoY = 0,
+  gerenteScale = 1,
+  gerenteX = 0,
+  gerenteY = 0,
+  diretorScale = 1,
+  diretorX = 0,
+  diretorY = 0,
 }: Props) {
   const hl = highlightModified;
   const b = "0.7px solid #000";
@@ -570,7 +582,7 @@ export function SPPage1({
         <tbody>
           <tr>
             <td style={{ borderRight: b, borderTop: b, padding: "2px 4px", textAlign: "center", fontSize: "9.46px", verticalAlign: "bottom", position: "relative", height: "60px" }}>
-              <div style={{ position: "absolute", top: "-1px", left: "11%", width: "78%", height: "44px", zIndex: 1 }}><img src={sigGerente} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", opacity: 0.85 }} crossOrigin="anonymous" /></div>
+              <div style={{ position: "absolute", top: "-1px", left: "11%", width: "78%", height: "44px", zIndex: 1 }}><img src={sigGerente} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", opacity: 0.85, transform: `scale(${gerenteScale}) translate(${gerenteX}px, ${gerenteY}px)`, transformOrigin: "center" }} crossOrigin="anonymous" /></div>
               <div style={{ position: "absolute", bottom: "3px", left: 0, right: 0, zIndex: 2 }}>
                 <div>Nome: <V val={f.gerente_nome} orig="MARISTELA GALVANI MACHADO" hl={hl} /></div>
                 <div>R.G. : <V val={f.gerente_rg} orig="23.425.125-45" hl={hl} /></div>
@@ -585,7 +597,7 @@ export function SPPage1({
             </td>
             {/* Assinatura do Diretor (Angela Pereira) +15%: 67px→77px, 96%→110% */}
             <td style={{ borderTop: b, padding: "2px 4px", textAlign: "center", fontSize: "9.46px", verticalAlign: "bottom", position: "relative", height: "60px" }}>
-              <div style={{ position: "absolute", top: "-8px", left: "-4%", width: "108%", height: "68px", zIndex: 1 }}><img src={sigDiretor} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", opacity: 0.85 }} crossOrigin="anonymous" /></div>
+              <div style={{ position: "absolute", top: "-8px", left: "-4%", width: "108%", height: "68px", zIndex: 1 }}><img src={sigDiretor} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", opacity: 0.85, transform: `scale(${diretorScale}) translate(${diretorX}px, ${diretorY}px)`, transformOrigin: "center" }} crossOrigin="anonymous" /></div>
               <div style={{ position: "absolute", bottom: "3px", left: 0, right: 0, zIndex: 2 }}>
                 <div>Nome: <V val={f.diretor_nome} orig="ANGELA PEREIRA DOS SANTOS" hl={hl} /></div>
                 <div>R.G. : <V val={f.diretor_rg} orig="13.068.721-63" hl={hl} /></div>

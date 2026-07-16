@@ -107,7 +107,13 @@ export default function Dashboard() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showRenewModal, setShowRenewModal] = useState<DocRecord | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const parseDocData = (doc: DocRecord) => {
+    let parsed: any = {};
+    try { 
+      parsed = typeof doc.data === "string" ? JSON.parse(doc.data) : (doc.data || {}); 
+    } catch {}
+    return parsed;
+  };
 
   const filteredHistory = history.filter(doc => {
     if (!searchTerm) return true;
@@ -166,13 +172,7 @@ export default function Dashboard() {
     return "Boa noite";
   };
 
-  const parseDocData = (doc: DocRecord) => {
-    let parsed: any = {};
-    try { 
-      parsed = typeof doc.data === "string" ? JSON.parse(doc.data) : (doc.data || {}); 
-    } catch {}
-    return parsed;
-  };
+  const [searchTerm, setSearchTerm] = useState("");
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "—";

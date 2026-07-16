@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Download, ZoomIn, ZoomOut,
   PanelLeftClose, PanelLeft, CheckCircle2, AlertCircle, FileText,
-  Move, RotateCcw
+  Move, RotateCcw, X
 } from "lucide-react";
 import EmissionModal from "@/components/EmissionModal";
 import { useSPSubstitution } from "@/hooks/useSPSubstitution";
@@ -52,6 +52,14 @@ export default function HistoricoSP() {
   const [logoScale, setLogoScale] = useState(1);
   const [logoX, setLogoX] = useState(0);
   const [logoY, setLogoY] = useState(0);
+
+  const [activeAdjustTab, setActiveAdjustTab] = useState<"logo" | "gerente" | "diretor">("logo");
+  const [gerenteScale, setGerenteScale] = useState(1);
+  const [gerenteX, setGerenteX] = useState(0);
+  const [gerenteY, setGerenteY] = useState(0);
+  const [diretorScale, setDiretorScale] = useState(1);
+  const [diretorX, setDiretorX] = useState(0);
+  const [diretorY, setDiretorY] = useState(0);
 
   const {
     fields,
@@ -289,32 +297,105 @@ export default function HistoricoSP() {
 
             {/* Documento Centralizado */}
             <div className="flex-1 overflow-auto flex justify-center py-10 custom-scrollbar bg-[#e5e7eb] relative">
-              {/* Controles de Logo Flutuantes */}
+              {/* Controles de Logo e Assinaturas Flutuantes */}
               <div className="absolute top-16 left-6 z-50 flex flex-col gap-2 bg-white p-2 rounded-lg shadow-xl border border-gray-200 animate-in fade-in slide-in-from-left-4 duration-300">
                 <div className="flex items-center gap-2 px-1 mb-1 border-b border-gray-100 pb-1">
                   <Move size={12} className="text-blue-600" />
-                  <span className="text-[9px] font-black text-gray-500 uppercase tracking-tighter">Ajuste de Logo</span>
-                </div>
-                
-                <div className="flex items-center gap-1 bg-gray-50 rounded p-1">
-                  <button onClick={() => setLogoScale(v => Math.max(0.1, v - 0.1))} className="h-6 w-6 flex items-center justify-center hover:bg-white hover:text-blue-600 rounded transition-colors text-gray-500 shadow-sm border border-gray-200" title="Diminuir Logo">-</button>
-                  <span className="text-[10px] font-black w-10 text-center text-gray-600">{Math.round(logoScale * 100)}%</span>
-                  <button onClick={() => setLogoScale(v => Math.min(3, v + 0.1))} className="h-6 w-6 flex items-center justify-center hover:bg-white hover:text-blue-600 rounded transition-colors text-gray-500 shadow-sm border border-gray-200" title="Aumentar Logo">+</button>
+                  <span className="text-[9px] font-black text-gray-500 uppercase tracking-tighter">Ajuste Fino</span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-1">
-                  <div/>
-                  <button onClick={() => setLogoY(v => v - 2)} className="h-7 w-7 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Subir">▲</button>
-                  <div/>
-                  <button onClick={() => setLogoX(v => v - 2)} className="h-7 w-7 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Esquerda">◀</button>
-                  <button onClick={() => { setLogoScale(1); setLogoX(0); setLogoY(0); }} className="h-7 w-7 flex items-center justify-center hover:bg-red-50 hover:text-red-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Resetar">
-                    <RotateCcw size={12} />
+                <div className="flex gap-1 border-b border-gray-100 pb-1.5 mb-1">
+                  <button 
+                    onClick={() => setActiveAdjustTab("logo")} 
+                    className={`text-[9px] font-black px-2 py-0.5 rounded transition-colors uppercase tracking-tight ${activeAdjustTab === "logo" ? "bg-blue-50 text-blue-600" : "text-gray-400 hover:text-gray-600"}`}
+                  >
+                    Logo
                   </button>
-                  <button onClick={() => setLogoX(v => v + 2)} className="h-7 w-7 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Direita">▶</button>
-                  <div/>
-                  <button onClick={() => setLogoY(v => v + 2)} className="h-7 w-7 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Descer">▼</button>
-                  <div/>
+                  <button 
+                    onClick={() => setActiveAdjustTab("gerente")} 
+                    className={`text-[9px] font-black px-2 py-0.5 rounded transition-colors uppercase tracking-tight ${activeAdjustTab === "gerente" ? "bg-blue-50 text-blue-600" : "text-gray-400 hover:text-gray-600"}`}
+                  >
+                    Gerente
+                  </button>
+                  <button 
+                    onClick={() => setActiveAdjustTab("diretor")} 
+                    className={`text-[9px] font-black px-2 py-0.5 rounded transition-colors uppercase tracking-tight ${activeAdjustTab === "diretor" ? "bg-blue-50 text-blue-600" : "text-gray-400 hover:text-gray-600"}`}
+                  >
+                    Diretor
+                  </button>
                 </div>
+                
+                {activeAdjustTab === "logo" && (
+                  <>
+                    <div className="flex items-center gap-1 bg-gray-50 rounded p-1">
+                      <button onClick={() => setLogoScale(v => Math.max(0.1, v - 0.1))} className="h-6 w-6 flex items-center justify-center hover:bg-white hover:text-blue-600 rounded transition-colors text-gray-500 shadow-sm border border-gray-200" title="Diminuir Logo">-</button>
+                      <span className="text-[10px] font-black w-10 text-center text-gray-600">{Math.round(logoScale * 100)}%</span>
+                      <button onClick={() => setLogoScale(v => Math.min(3, v + 0.1))} className="h-6 w-6 flex items-center justify-center hover:bg-white hover:text-blue-600 rounded transition-colors text-gray-500 shadow-sm border border-gray-200" title="Aumentar Logo">+</button>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-1">
+                      <div/>
+                      <button onClick={() => setLogoY(v => v - 2)} className="h-7 w-7 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Subir">▲</button>
+                      <div/>
+                      <button onClick={() => setLogoX(v => v - 2)} className="h-7 w-7 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Esquerda">◀</button>
+                      <button onClick={() => { setLogoScale(1); setLogoX(0); setLogoY(0); }} className="h-7 w-7 flex items-center justify-center hover:bg-red-50 hover:text-red-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Resetar">
+                        <RotateCcw size={12} />
+                      </button>
+                      <button onClick={() => setLogoX(v => v + 2)} className="h-7 w-7 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Direita">▶</button>
+                      <div/>
+                      <button onClick={() => setLogoY(v => v + 2)} className="h-7 w-7 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Descer">▼</button>
+                      <div/>
+                    </div>
+                  </>
+                )}
+
+                {activeAdjustTab === "gerente" && (
+                  <>
+                    <div className="flex items-center gap-1 bg-gray-50 rounded p-1">
+                      <button onClick={() => setGerenteScale(v => Math.max(0.1, v - 0.1))} className="h-6 w-6 flex items-center justify-center hover:bg-white hover:text-blue-600 rounded transition-colors text-gray-500 shadow-sm border border-gray-200" title="Diminuir Assinatura">-</button>
+                      <span className="text-[10px] font-black w-10 text-center text-gray-600">{Math.round(gerenteScale * 100)}%</span>
+                      <button onClick={() => setGerenteScale(v => Math.min(3, v + 0.1))} className="h-6 w-6 flex items-center justify-center hover:bg-white hover:text-blue-600 rounded transition-colors text-gray-500 shadow-sm border border-gray-200" title="Aumentar Assinatura">+</button>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-1">
+                      <div/>
+                      <button onClick={() => setGerenteY(v => v - 2)} className="h-7 w-7 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Subir">▲</button>
+                      <div/>
+                      <button onClick={() => setGerenteX(v => v - 2)} className="h-7 w-7 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Esquerda">◀</button>
+                      <button onClick={() => { setGerenteScale(1); setGerenteX(0); setGerenteY(0); }} className="h-7 w-7 flex items-center justify-center hover:bg-red-50 hover:text-red-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Resetar">
+                        <RotateCcw size={12} />
+                      </button>
+                      <button onClick={() => setGerenteX(v => v + 2)} className="h-7 w-7 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Direita">▶</button>
+                      <div/>
+                      <button onClick={() => setGerenteY(v => v + 2)} className="h-7 w-7 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Descer">▼</button>
+                      <div/>
+                    </div>
+                  </>
+                )}
+
+                {activeAdjustTab === "diretor" && (
+                  <>
+                    <div className="flex items-center gap-1 bg-gray-50 rounded p-1">
+                      <button onClick={() => setDiretorScale(v => Math.max(0.1, v - 0.1))} className="h-6 w-6 flex items-center justify-center hover:bg-white hover:text-blue-600 rounded transition-colors text-gray-500 shadow-sm border border-gray-200" title="Diminuir Assinatura">-</button>
+                      <span className="text-[10px] font-black w-10 text-center text-gray-600">{Math.round(diretorScale * 100)}%</span>
+                      <button onClick={() => setDiretorScale(v => Math.min(3, v + 0.1))} className="h-6 w-6 flex items-center justify-center hover:bg-white hover:text-blue-600 rounded transition-colors text-gray-500 shadow-sm border border-gray-200" title="Aumentar Assinatura">+</button>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-1">
+                      <div/>
+                      <button onClick={() => setDiretorY(v => v - 2)} className="h-7 w-7 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Subir">▲</button>
+                      <div/>
+                      <button onClick={() => setDiretorX(v => v - 2)} className="h-7 w-7 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Esquerda">◀</button>
+                      <button onClick={() => { setDiretorScale(1); setDiretorX(0); setDiretorY(0); }} className="h-7 w-7 flex items-center justify-center hover:bg-red-50 hover:text-red-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Resetar">
+                        <RotateCcw size={12} />
+                      </button>
+                      <button onClick={() => setDiretorX(v => v + 2)} className="h-7 w-7 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Direita">▶</button>
+                      <div/>
+                      <button onClick={() => setDiretorY(v => v + 2)} className="h-7 w-7 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Descer">▼</button>
+                      <div/>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div style={{ transform: `scale(${zoom})`, transformOrigin: "top center", transition: "transform 0.2s ease-out" }}>
@@ -329,6 +410,12 @@ export default function HistoricoSP() {
                     logoScale={logoScale}
                     logoX={logoX}
                     logoY={logoY}
+                    gerenteScale={gerenteScale}
+                    gerenteX={gerenteX}
+                    gerenteY={gerenteY}
+                    diretorScale={diretorScale}
+                    diretorX={diretorX}
+                    diretorY={diretorY}
                     pageId="doc-page-sp-preview"
                   />
                 </div>
