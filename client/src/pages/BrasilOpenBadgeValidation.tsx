@@ -267,7 +267,9 @@ export default function BrasilOpenBadgeValidation() {
               <div className="space-y-4 text-left border-t border-gray-100 pt-6">
                 <div>
                   <h5 className="text-[10px] uppercase font-black tracking-wider text-gray-400">{texts.emissao}</h5>
-                  <p className="text-sm font-bold text-gray-800">{validDoc.data_emissao || validDoc.created_at ? new Date(validDoc.created_at).toLocaleDateString("pt-BR") : ""}</p>
+                  <p className="text-sm font-bold text-gray-800">
+                    {validDoc.data_emissao || (validDoc.created_at && !isNaN(new Date(validDoc.created_at).getTime()) ? new Date(validDoc.created_at).toLocaleDateString("pt-BR") : "")}
+                  </p>
                 </div>
                 <div>
                   <h5 className="text-[10px] uppercase font-black tracking-wider text-gray-400">{texts.validade}</h5>
