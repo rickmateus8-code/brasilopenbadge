@@ -113,7 +113,7 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
             textAlign: "left",
           }}
         >
-          <div style={{ fontSize: "14.5pt", color: "#4A5568", fontWeight: 400, letterSpacing: "-0.2px" }}>
+          <div style={{ fontSize: "14.5pt", color: "#000000", fontWeight: 400, letterSpacing: "-0.2px" }}>
             O Instituto de Desenvolvimento Educacional da Fundação Getulio Vargas confere a
           </div>
 
@@ -122,7 +122,7 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
             style={{
               fontSize: "30pt",
               fontWeight: 400,
-              color: "#1A202C",
+              color: "#000000",
               margin: "5px 0",
               letterSpacing: "-0.5px",
             }}
@@ -130,7 +130,7 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
             {nomeAluno}
           </div>
 
-          <div style={{ fontSize: "12.5pt", color: "#4A5568", fontWeight: 500 }}>
+          <div style={{ fontSize: "12.5pt", color: "#000000", fontWeight: 400 }}>
             O Certificado do Curso
           </div>
 
@@ -139,7 +139,7 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
             style={{
               fontSize: "22pt",
               fontWeight: 400,
-              color: "#1A202C",
+              color: "#000000",
               lineHeight: "1.2",
               letterSpacing: "-0.3px",
             }}
@@ -147,7 +147,7 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
             {cursoNome}
           </div>
 
-          <div style={{ fontSize: "12.5pt", color: "#4A5568", fontWeight: 400, marginTop: 4 }}>
+          <div style={{ fontSize: "12.5pt", color: "#000000", fontWeight: 400, marginTop: 4 }}>
             Nível atualização oferecido pelo Programa FGV Educação Executiva.
           </div>
 
@@ -157,16 +157,16 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
               display: "flex",
               gap: 80,
               fontSize: "12.5pt",
-              color: "#1A202C",
-              fontWeight: 500,
+              color: "#000000",
+              fontWeight: 400,
               marginTop: 15,
             }}
           >
             <div>
-              <span style={{ fontWeight: 400, color: "#4A5568" }}>Data de Emissão:</span> {dataEmissao}
+              <span style={{ fontWeight: 400, color: "#000000" }}>Data de Emissão:</span> {dataEmissao}
             </div>
             <div>
-              <span style={{ fontWeight: 400, color: "#4A5568" }}>Carga horária:</span> {cargaHoraria}
+              <span style={{ fontWeight: 400, color: "#000000" }}>Carga horária:</span> {cargaHoraria}
             </div>
           </div>
 
@@ -177,27 +177,27 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
                 display: "flex",
                 gap: 80,
                 fontSize: "12.5pt",
-                color: "#1A202C",
-                fontWeight: 500,
+                color: "#000000",
+                fontWeight: 400,
                 marginTop: 5,
               }}
             >
               {data.matricula && (
                 <div>
-                  <span style={{ fontWeight: 400, color: "#4A5568" }}>Matrícula:</span> {data.matricula}
+                  <span style={{ fontWeight: 400, color: "#000000" }}>Matrícula:</span> {data.matricula}
                 </div>
               )}
               {data.turma && (
                 <div>
-                  <span style={{ fontWeight: 400, color: "#4A5568" }}>Turma:</span> {data.turma}
+                  <span style={{ fontWeight: 400, color: "#000000" }}>Turma:</span> {data.turma}
                 </div>
               )}
             </div>
           )}
 
           {/* Código de Autenticidade */}
-          <div style={{ fontSize: "12.5pt", color: "#1A202C", fontWeight: 500, marginTop: 5 }}>
-            <span style={{ fontWeight: 400, color: "#4A5568" }}>Código de Autenticidade:</span> {codigoAutenticidade}
+          <div style={{ fontSize: "12.5pt", color: "#000000", fontWeight: 400, marginTop: 5 }}>
+            <span style={{ fontWeight: 400, color: "#000000" }}>Código de Autenticidade:</span> {codigoAutenticidade}
           </div>
         </div>
 
@@ -230,13 +230,13 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
           
           
           
-          <div style={{ fontSize: "9.5pt", fontWeight: 700, color: "#2D3748" }}>
+          <div style={{ fontSize: "9.5pt", fontWeight: 400, color: "#000000" }}>
             {diretoraNome}
           </div>
-          <div style={{ fontSize: "8.5pt", color: "#718096", fontWeight: 500 }}>
+          <div style={{ fontSize: "8.5pt", color: "#000000", fontWeight: 400 }}>
             {diretoraCargo}
           </div>
-          <div style={{ fontSize: "8.5pt", color: "#718096", fontWeight: 500 }}>
+          <div style={{ fontSize: "8.5pt", color: "#000000", fontWeight: 400 }}>
             {diretoraInst}
           </div>
         </div>
@@ -264,7 +264,7 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
           >
             <QRCodeSVG value={validationUrl} size={110} />
           </div>
-          <div style={{ fontSize: "6.5pt", color: "#718096", fontWeight: 700, textTransform: "uppercase" }}>
+          <div style={{ fontSize: "6.5pt", color: "#000000", fontWeight: 400, textTransform: "uppercase" }}>
             QR Code de Autenticidade
           </div>
         </div>
