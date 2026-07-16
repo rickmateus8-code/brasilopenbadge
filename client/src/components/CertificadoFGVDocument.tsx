@@ -104,7 +104,7 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
           style={{
             position: "absolute",
             top: 240,
-            left: 200,
+            left: 222,
             width: 740,
             zIndex: 2,
             display: "flex",
@@ -207,7 +207,7 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
           style={{
             position: "absolute",
             bottom: 60,
-            left: 360,
+            left: 382,
             width: 420,
             textAlign: "center",
             zIndex: 2,
