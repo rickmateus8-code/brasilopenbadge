@@ -53,6 +53,9 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
           width: PAGE_WIDTH_PX,
           height: PAGE_HEIGHT_PX,
           backgroundColor: "#ffffff",
+          backgroundImage: "url(/assets/fgv_background.png)",
+          backgroundSize: "100% 100%",
+          backgroundRepeat: "no-repeat",
           position: "relative",
           overflow: "hidden",
           boxSizing: "border-box",
@@ -89,45 +92,12 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
                 letterSpacing: "4px",
               }}
             >
-              DOCUMENTO INVALIDO - NÃO EMITIDO - PRÉVIA
+                DOCUMENTO INVALIDO - NÃO EMITIDO - PRÉVIA
             </span>
           </div>
         )}
 
-        {/* ── 1. Borda Ondulada Esquerda (SVG) ── */}
-        <div style={{ position: "absolute", top: 0, left: 0, height: PAGE_HEIGHT_PX, width: 220, zIndex: 1 }}>
-          <svg width="220" height="794" viewBox="0 0 220 794" fill="none" xmlns="http://www.w3.org/2000/svg">
-            {/* Onda Azul Escura principal */}
-            <path
-              d="M0 0 H140 C110 160, 40 300, 40 397 C40 494, 90 610, 110 794 H0 V0Z"
-              fill="#002d62"
-            />
-            {/* Detalhe Azul Ciano */}
-            <path
-              d="M140 0 C110 160, 40 300, 40 397 C40 494, 90 610, 110 794"
-              stroke="#00b5e2"
-              strokeWidth="6"
-              opacity="0.8"
-            />
-            {/* Detalhe Azul Médio */}
-            <path
-              d="M130 0 C102 160, 35 300, 35 397 C35 494, 82 610, 100 794"
-              stroke="#0054a6"
-              strokeWidth="3"
-              opacity="0.9"
-            />
-          </svg>
-        </div>
-
-        {/* ── 2. Logotipo FGV (Top Right) ── */}
-        <div style={{ position: "absolute", top: 60, right: 80, zIndex: 2 }}>
-          <img
-            src="/assets/fgv_logo.png"
-            alt="FGV"
-            style={{ height: 46 }}
-            crossOrigin={undefined}
-          />
-        </div>
+        {/* NOTA: A borda ondulada, as linhas onduladas centrais, o logotipo FGV (Top Right) e a assinatura (Bottom Center) já fazem parte do arquivo de background fgv_background.png para 100% de fidelidade forense. */}
 
         {/* ── 3. Conteúdo Principal do Certificado ── */}
         <div
@@ -246,12 +216,16 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
             alignItems: "center",
           }}
         >
-          <img
-            src={data.signature_image || "/assets/fgv_assinatura.png"}
-            alt="Assinatura"
-            style={{ height: 60, marginBottom: 4, mixBlendMode: "multiply" }}
-            crossOrigin={undefined}
-          />
+          {data.signature_image ? (
+            <img
+              src={data.signature_image}
+              alt="Assinatura"
+              style={{ height: 60, marginBottom: 4, mixBlendMode: "multiply" }}
+              crossOrigin={undefined}
+            />
+          ) : (
+            <div style={{ height: 48 }} />
+          )}
           
           {/* Linha da assinatura */}
           <div style={{ width: 280, height: 1, backgroundColor: "#A0AEC0", margin: "4px 0" }} />
