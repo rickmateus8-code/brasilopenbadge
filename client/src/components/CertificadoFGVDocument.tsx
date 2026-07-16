@@ -43,11 +43,7 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
     
     // Construct validation URL based on the validation token
     const validationToken = (data.codigo_validacao || data.id || codigoAutenticidade).toLowerCase();
-    const validationUrl = data.url_validacao || (
-      typeof window !== "undefined"
-        ? `${window.location.origin}/pages/badge/${validationToken}`
-        : `https://brasilopenbadge.dev/pages/badge/${validationToken}`
-    );
+    const validationUrl = data.url_validacao || `https://brasilopenbadge.pages.dev/pages/badge/${validationToken}`;
 
     return (
       <div

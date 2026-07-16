@@ -1,13 +1,17 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams } from "wouter";
+import { useParams, useLocation } from "wouter";
 import { QRCodeSVG } from "qrcode.react";
 import CertificadoFGVDocument from "@/components/CertificadoFGVDocument";
 import { exportElementToPDF, generatePDFFilename } from "@/lib/pdfExport";
 import { toast } from "sonner";
 import { Loader2, Award, Clock, ShieldCheck, CheckCircle2, Languages, Globe, Download } from "lucide-react";
 
+const CURSO_DEFAULT = "Liderança e Gestão de Equipes";
+
 export default function BrasilOpenBadgeValidation() {
   const params = useParams<{ id: string }>();
+  const [, setLocation] = useLocation();
+  const [searchCode, setSearchCode] = useState("");
   const [loading, setLoading] = useState(true);
   const [validDoc, setValidDoc] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -16,7 +20,10 @@ export default function BrasilOpenBadgeValidation() {
   const [lang, setLang] = useState<"pt" | "en" | "es">("pt");
 
   useEffect(() => {
-    if (!params.id) return;
+    if (!params.id) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setErrorMessage(null);
     
@@ -60,6 +67,21 @@ export default function BrasilOpenBadgeValidation() {
     }
   };
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchCode.trim()) return;
+    
+    let token = searchCode.trim();
+    if (token.includes("/")) {
+      const parts = token.split("/");
+      token = parts.filter(Boolean).pop() || "";
+    }
+    
+    if (token) {
+      setLocation(`/pages/badge/${token.toLowerCase()}`);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
@@ -68,6 +90,72 @@ export default function BrasilOpenBadgeValidation() {
       </div>
     );
   }
+
+  // Se não foi fornecido ID (Home do validador)
+  if (!params.id) {
+    return (
+      <div className="min-h-screen bg-[#f0f2f5] text-gray-800 font-sans antialiased flex flex-col">
+        {/* Header */}
+        <header className="bg-white border-b border-gray-200 shadow-sm h-20 flex items-center justify-between px-6 md:px-12 w-full">
+          <div className="flex items-center">
+            <img
+              src="https://img.brasilopenbadge.com.br/logo-novo-azul-horizontal.png"
+              alt="Brasil Open Badge"
+              className="h-10 md:h-12 object-contain"
+              onError={(e) => {
+                e.currentTarget.src = "/assets/logo-text.webp";
+              }}
+            />
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
+              <ShieldCheck className="w-4 h-4 text-emerald-500" />
+              SISTEMA DE VALIDAÇÃO
+            </div>
+          </div>
+        </header>
+
+        {/* Central Card */}
+        <div className="flex-1 flex items-center justify-center p-4 md:p-8">
+          <div className="bg-white p-8 md:p-12 rounded-3xl shadow-xl max-w-xl w-full border-t-8 border-[#005CA9] text-center">
+            <Award className="w-16 h-16 text-[#005CA9] mx-auto mb-6" />
+            <h2 className="text-3xl font-black text-gray-900 mb-2 uppercase tracking-tight">Validar Conquista</h2>
+            <p className="text-gray-500 text-sm mb-8 leading-relaxed">
+              Verifique a autenticidade e validade de badges e certificados emitidos. 
+              Insira o código de autenticidade de 9 dígitos ou a chave de validação de 32 caracteres abaixo.
+            </p>
+
+            <form onSubmit={handleSearchSubmit} className="space-y-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchCode}
+                  onChange={(e) => setSearchCode(e.target.value)}
+                  placeholder="Código de Autenticidade ou link de validação"
+                  className="w-full px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl text-center font-semibold text-gray-800 placeholder-gray-400 focus:border-[#005CA9] focus:bg-white outline-none transition-all"
+                  required
+                />
+              </div>
+              
+              <button
+                type="submit"
+                className="w-full py-4 bg-[#005CA9] hover:bg-blue-800 text-white font-bold rounded-2xl uppercase tracking-widest text-sm transition-colors shadow-lg shadow-blue-900/10"
+              >
+                Validar Badge / Certificado
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <footer className="py-6 text-center text-xs text-gray-400 bg-white border-t border-gray-200">
+          © {new Date().getFullYear()} Brasil Open Badge. Todos os direitos reservados.
+        </footer>
+      </div>
+    );
+  }
+
+
 
   if (errorMessage || !validDoc) {
     return (
