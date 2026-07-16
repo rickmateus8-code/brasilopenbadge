@@ -121,7 +121,7 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
           <div
             style={{
               fontSize: "30pt",
-              fontWeight: 700,
+              fontWeight: 400,
               color: "#1A202C",
               margin: "5px 0",
               letterSpacing: "-0.5px",
@@ -138,7 +138,7 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
           <div
             style={{
               fontSize: "22pt",
-              fontWeight: 700,
+              fontWeight: 400,
               color: "#1A202C",
               lineHeight: "1.2",
               letterSpacing: "-0.3px",
@@ -226,9 +226,9 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
           ) : (
             <div style={{ height: 48 }} />
           )}
+           
           
-          {/* Linha da assinatura */}
-          <div style={{ width: 280, height: 1, backgroundColor: "#A0AEC0", margin: "4px 0" }} />
+          
           
           <div style={{ fontSize: "9.5pt", fontWeight: 700, color: "#2D3748" }}>
             {diretoraNome}
