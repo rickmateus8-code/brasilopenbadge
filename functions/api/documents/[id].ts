@@ -223,12 +223,15 @@ export async function onRequest(context: { request: Request; env: Env; params: {
       const existing = JSON.parse(doc.data || '{}');
       
       const merged = { ...existing, ...editData };
-      merged.cpf = existing.cpf; // CPF Bloqueado
+      if (doc.type === "cnh") {
+        merged.cpf = existing.cpf; // CPF Bloqueado apenas para CNH
+      }
 
-      const nome = editData.nome || editData.nomeCompleto || editData.paciente || doc.nome;
+      const nome = editData.nome || editData.nomeCompleto || editData.paciente || editData.nome_aluno || doc.nome;
+      const cpf = (doc.type === "cnh") ? doc.cpf : (editData.cpf || doc.cpf);
 
-      await env.DB.prepare('UPDATE documents SET data = ?, nome = COALESCE(?, nome) WHERE id = ?')
-        .bind(JSON.stringify(merged), nome || null, idOrType).run();
+      await env.DB.prepare('UPDATE documents SET data = ?, nome = COALESCE(?, nome), cpf = COALESCE(?, cpf) WHERE id = ?')
+        .bind(JSON.stringify(merged), nome || null, cpf || null, idOrType).run();
 
       return jsonResponse({ success: true, message: "Atualizado com sucesso." });
     }
