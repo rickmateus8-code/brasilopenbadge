@@ -19,6 +19,7 @@ import {
   normalizeStateName,
   normalizeStateUf,
   normalizeUppercase,
+  normalizeUppercasePreserveSpacing,
   parseSPImportText,
   type SPGradeRow,
   type SPSubstitutionField,
@@ -48,7 +49,7 @@ function normalizeFieldValue(fieldId: string, value: string) {
   }
 
   if (["nome_escola", "pais", "email_escola", "secretaria_estado", "local_emissao"].includes(fieldId)) {
-    return normalizeUppercase(value);
+    return normalizeUppercasePreserveSpacing(value);
   }
 
   if (fieldId === "tipo_escola") return normalizeSchoolType(value);
@@ -66,7 +67,7 @@ function buildDerivedFieldMap(fields: SPSubstitutionField[]) {
     ? getSPStateLayout(raw.estado_instituicao || raw.uf_documento)
     : { uf: "", name: "", brasaoUrl: undefined, governmentPrefix: "DE" as const };
   const schoolType = raw.tipo_escola ? normalizeSchoolType(raw.tipo_escola) : "";
-  const schoolName = normalizeUppercase(raw.nome_escola || "");
+  const schoolName = normalizeUppercasePreserveSpacing(raw.nome_escola || "");
   const fullSchoolName = schoolName ? buildSPFullSchoolName(schoolName, schoolType || SP_REFERENCE_FIELDS.tipo_escola) : "";
   const certificateSchoolName = fullSchoolName ? buildSPCertificateSchoolName(fullSchoolName) : "";
   const municipioEscola = raw.municipio_escola || "";
@@ -78,9 +79,9 @@ function buildDerivedFieldMap(fields: SPSubstitutionField[]) {
     ? formatSPSecurityCode(raw.registro_gdae, stateLayout.uf || "SP")
     : codigoSeguranca;
   const localEmissao = raw.local_emissao
-    ? normalizeUppercase(raw.local_emissao)
+    ? normalizeUppercasePreserveSpacing(raw.local_emissao)
     : municipioEscola && stateLayout.uf
-      ? normalizeUppercase(`${municipioEscola} - ${stateLayout.uf}`)
+      ? normalizeUppercasePreserveSpacing(`${municipioEscola} - ${stateLayout.uf}`)
       : "";
   const dataEmissao = raw.data_emissao || (anoConclusao ? `04/12/${anoConclusao}` : "");
 
@@ -91,14 +92,14 @@ function buildDerivedFieldMap(fields: SPSubstitutionField[]) {
     tipo_escola: schoolType,
     estado_instituicao: stateLayout.name,
     uf_documento: stateLayout.uf,
-    governo_estado: normalizeUppercase(raw.governo_estado || stateLayout.name || ""),
-    secretaria_estado: normalizeUppercase(raw.secretaria_estado || ""),
+    governo_estado: normalizeUppercasePreserveSpacing(raw.governo_estado || stateLayout.name || ""),
+    secretaria_estado: normalizeUppercasePreserveSpacing(raw.secretaria_estado || ""),
     nome_escola: schoolName,
     nome_escola_full: fullSchoolName,
     nome_escola_certificado: certificateSchoolName,
-    nome_aluno: normalizeUppercase(raw.nome_aluno || ""),
-    pais: normalizeUppercase(raw.pais || ""),
-    email_escola: normalizeUppercase(raw.email_escola || ""),
+    nome_aluno: normalizeUppercasePreserveSpacing(raw.nome_aluno || ""),
+    pais: normalizeUppercasePreserveSpacing(raw.pais || ""),
+    email_escola: normalizeUppercasePreserveSpacing(raw.email_escola || ""),
     ra: raw.ra ? formatSPRA(raw.ra) : "",
     estado_nascimento: raw.estado_nascimento ? normalizeStateUf(raw.estado_nascimento) : "",
     codigo_seguranca: codigoSeguranca,

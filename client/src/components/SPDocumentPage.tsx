@@ -302,7 +302,7 @@ export function SPPage1({
                 crossOrigin="anonymous" 
               />
             </td>
-            <td style={{ borderBottom: b, padding: "8px 8px 1px 8px", fontSize: "18.66px", fontWeight: "bold", lineHeight: "21.33px" }}>
+            <td style={{ borderBottom: b, padding: "8px 8px 1px 8px", fontSize: "18.28px", fontWeight: "bold", lineHeight: "21.33px" }}>
               <V val={governmentHeader} orig="GOVERNO DO ESTADO DE SÃO PAULO" hl={hl} />
             </td>
           </tr>

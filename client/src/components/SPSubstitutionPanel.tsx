@@ -185,22 +185,22 @@ export default function SPSubstitutionPanel({
       <div className="p-4 border-b border-gray-100 space-y-3 bg-gray-50/50">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
-             <div className="w-1.5 h-4 bg-amber-500 rounded-full" />
+             <div className="w-1.5 h-4 bg-blue-600 rounded-full" />
              Edição de Conteúdo
           </h3>
           <Button size="sm" variant="ghost" className="text-[10px] h-7 text-gray-400 hover:text-red-500 hover:bg-red-50 px-2" onClick={onReset}>
-            <RotateCcw size={12} className="mr-1" /> Resetar Tudo
+             <RotateCcw size={12} className="mr-1" /> Resetar Tudo
           </Button>
         </div>
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-amber-50 border border-amber-100">
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-            <span className="text-[11px] font-bold text-amber-700">{modifiedCount} campos preenchidos</span>
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-blue-50 border border-blue-100">
+            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+            <span className="text-[11px] font-bold text-blue-700">{modifiedCount} campos preenchidos</span>
           </div>
           <Button
             size="sm"
             variant="outline"
-            className="h-7 px-2 text-[10px] border-gray-200 text-gray-500 hover:bg-white hover:text-amber-600 shadow-sm"
+            className="h-7 px-2 text-[10px] border-gray-200 text-gray-500 hover:bg-white hover:text-blue-600 shadow-sm"
             onClick={() => onOpenHowToUse?.()}
           >
             <CircleHelp size={12} className="mr-1" /> Guia de Uso
@@ -212,7 +212,7 @@ export default function SPSubstitutionPanel({
         {/* Sessão de Importação */}
         <div className="p-4 border-b border-gray-100 space-y-4 bg-white">
           <h4 className="text-[11px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
-            <FileText size={13} className="text-amber-600" /> Importação Rápida
+            <FileText size={13} className="text-blue-600" /> Importação Rápida
           </h4>
 
           <div className="space-y-2">
@@ -222,7 +222,7 @@ export default function SPSubstitutionPanel({
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="h-6 px-2 text-[10px] text-amber-600 hover:bg-amber-50 font-bold"
+                className="h-6 px-2 text-[10px] text-blue-600 hover:bg-blue-50 font-bold"
                 onClick={handleCopyTemplate}
               >
                 <Copy size={11} className="mr-1" />
@@ -240,11 +240,11 @@ export default function SPSubstitutionPanel({
               value={importText}
               onChange={(e) => onUpdateImportText(e.target.value)}
               placeholder="Cole os dados preenchidos pelo cliente aqui..."
-              className="min-h-24 text-[11px] bg-white border-gray-200 text-gray-800 resize-none focus-visible:ring-amber-500"
+              className="min-h-24 text-[11px] bg-white border-gray-200 text-gray-800 resize-none focus-visible:ring-blue-500"
             />
             <Button
               type="button"
-              className="w-full h-9 text-xs bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-md shadow-amber-200"
+              className="w-full h-9 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md shadow-blue-200"
               onClick={onApplyImportText}
             >
               ⚡ PROCESSAR E PREENCHER
@@ -292,19 +292,19 @@ export default function SPSubstitutionPanel({
             const Icon = meta.icon;
 
             return (
-              <div key={cat} className={`rounded-xl border transition-all ${isExpanded ? "border-amber-200 bg-amber-50/20 shadow-sm" : "border-gray-100 bg-white"}`}>
+              <div key={cat} className={`rounded-xl border transition-all ${isExpanded ? "border-blue-200 bg-blue-50/20 shadow-sm" : "border-gray-100 bg-white"}`}>
                 <button
                   type="button"
-                  className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${isExpanded ? "bg-amber-50/50" : "hover:bg-gray-50"}`}
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${isExpanded ? "bg-blue-50/50" : "hover:bg-gray-50"}`}
                   onClick={() => setExpandedCategory(isExpanded ? null : cat)}
                 >
-                  <div className={`p-1.5 rounded-lg ${isExpanded ? "bg-amber-500 text-white" : "bg-gray-100 text-gray-400"}`}>
+                  <div className={`p-1.5 rounded-lg ${isExpanded ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-400"}`}>
                     <Icon size={14} className="shrink-0" />
                   </div>
-                  <span className={`text-xs font-bold flex-1 ${isExpanded ? "text-amber-900" : "text-gray-700"}`}>{meta.label}</span>
+                  <span className={`text-xs font-bold flex-1 ${isExpanded ? "text-blue-900" : "text-gray-700"}`}>{meta.label}</span>
                   <div className="flex items-center gap-2">
                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">{catFields.length}</span>
-                     {isExpanded ? <ChevronDown size={14} className="text-amber-500" /> : <ChevronRight size={14} className="text-gray-300" />}
+                     {isExpanded ? <ChevronDown size={14} className="text-blue-500" /> : <ChevronRight size={14} className="text-gray-300" />}
                   </div>
                 </button>
                 {isExpanded && (
@@ -316,7 +316,7 @@ export default function SPSubstitutionPanel({
                         <div key={field.id} className="space-y-1">
                           <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center justify-between">
                             {field.label}
-                            {changed && <span className="text-[9px] text-amber-600 bg-amber-100 px-1 rounded">Modificado</span>}
+                            {changed && <span className="text-[9px] text-blue-600 bg-blue-100 px-1 rounded">Modificado</span>}
                           </label>
 
                           {field.type === "select" ? (
@@ -324,7 +324,7 @@ export default function SPSubstitutionPanel({
                               value={field.currentValue}
                               onChange={(e) => onUpdateField(field.id, e.target.value)}
                               className={`h-9 w-full rounded-lg border px-3 text-xs outline-none transition-all ${
-                                changed ? "border-amber-500 bg-amber-50" : "border-gray-200 bg-white focus:border-amber-400"
+                                changed ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white focus:border-blue-400"
                               }`}
                             >
                               <option value="">Selecione</option>
@@ -340,15 +340,15 @@ export default function SPSubstitutionPanel({
                                 value={field.currentValue}
                                 onChange={(e) => onUpdateField(field.id, e.target.value)}
                                 placeholder={field.placeholder}
-                                className={`h-9 text-xs border-gray-200 focus-visible:ring-amber-500 transition-all ${
-                                  changed ? "border-amber-500 bg-amber-50" : "bg-white"
+                                className={`h-9 text-xs border-gray-200 focus-visible:ring-blue-500 transition-all ${
+                                  changed ? "border-blue-500 bg-blue-50" : "bg-white"
                                 }`}
                               />
                               <Button
                                 type="button"
                                 size="sm"
                                 variant="outline"
-                                className="h-9 px-3 text-[10px] border-amber-200 text-amber-700 font-bold hover:bg-amber-50"
+                                className="h-9 px-3 text-[10px] border-blue-200 text-blue-700 font-bold hover:bg-blue-50"
                                 onClick={() => onGenerateSecurityCode?.()}
                               >
                                 GERAR
@@ -360,15 +360,15 @@ export default function SPSubstitutionPanel({
                                 value={field.currentValue}
                                 onChange={(e) => onUpdateField(field.id, e.target.value)}
                                 placeholder={field.placeholder}
-                                className={`h-9 text-xs border-gray-200 focus-visible:ring-amber-500 transition-all ${
-                                  changed ? "border-amber-500 bg-amber-50" : "bg-white"
+                                className={`h-9 text-xs border-gray-200 focus-visible:ring-blue-500 transition-all ${
+                                  changed ? "border-blue-500 bg-blue-50" : "bg-white"
                                 }`}
                               />
                               <Button
                                 type="button"
                                 size="sm"
                                 variant="outline"
-                                className="h-9 px-3 text-[10px] border-amber-200 text-amber-700 font-bold hover:bg-amber-50"
+                                className="h-9 px-3 text-[10px] border-blue-200 text-blue-700 font-bold hover:bg-blue-50"
                                 onClick={() => onGenerateRA?.()}
                               >
                                 GERAR
@@ -380,15 +380,15 @@ export default function SPSubstitutionPanel({
                                 value={field.currentValue}
                                 onChange={(e) => onUpdateField(field.id, e.target.value)}
                                 placeholder={field.placeholder}
-                                className={`h-9 text-xs border-gray-200 focus-visible:ring-amber-500 transition-all ${
-                                  changed ? "border-amber-500 bg-amber-50" : "bg-white"
+                                className={`h-9 text-xs border-gray-200 focus-visible:ring-blue-500 transition-all ${
+                                  changed ? "border-blue-500 bg-blue-50" : "bg-white"
                                 }`}
                               />
                               <Button
                                 type="button"
                                 size="sm"
                                 variant="outline"
-                                className="h-9 px-3 text-[10px] border-amber-200 text-amber-700 font-bold hover:bg-amber-50"
+                                className="h-9 px-3 text-[10px] border-blue-200 text-blue-700 font-bold hover:bg-blue-50"
                                 onClick={() => onGenerateRGGerente?.()}
                               >
                                 GERAR
@@ -400,15 +400,15 @@ export default function SPSubstitutionPanel({
                                 value={field.currentValue}
                                 onChange={(e) => onUpdateField(field.id, e.target.value)}
                                 placeholder={field.placeholder}
-                                className={`h-9 text-xs border-gray-200 focus-visible:ring-amber-500 transition-all ${
-                                  changed ? "border-amber-500 bg-amber-50" : "bg-white"
+                                className={`h-9 text-xs border-gray-200 focus-visible:ring-blue-500 transition-all ${
+                                  changed ? "border-blue-500 bg-blue-50" : "bg-white"
                                 }`}
                               />
                               <Button
                                 type="button"
                                 size="sm"
                                 variant="outline"
-                                className="h-9 px-3 text-[10px] border-amber-200 text-amber-700 font-bold hover:bg-amber-50"
+                                className="h-9 px-3 text-[10px] border-blue-200 text-blue-700 font-bold hover:bg-blue-50"
                                 onClick={() => onGenerateRGDiretor?.()}
                               >
                                 GERAR
@@ -419,8 +419,8 @@ export default function SPSubstitutionPanel({
                               value={field.currentValue}
                               onChange={(e) => onUpdateField(field.id, e.target.value)}
                               placeholder={field.placeholder}
-                              className={`h-9 text-xs border-gray-200 focus-visible:ring-amber-500 transition-all ${
-                                changed ? "border-amber-500 bg-amber-50" : "bg-white"
+                              className={`h-9 text-xs border-gray-200 focus-visible:ring-blue-500 transition-all ${
+                                changed ? "border-blue-500 bg-blue-50" : "bg-white"
                               }`}
                             />
                           )}

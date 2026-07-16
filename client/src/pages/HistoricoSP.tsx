@@ -46,6 +46,7 @@ export default function HistoricoSP() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [showHowToUse, setShowHowToUse] = useState(false);
 
   // Estados para ajuste fino do Logo
   const [logoScale, setLogoScale] = useState(1);
@@ -187,7 +188,7 @@ export default function HistoricoSP() {
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden bg-slate-50 font-sans">
         {/* Header no estilo AtestadoCria */}
-        <header className="h-14 bg-[#d97706] flex items-center px-6 gap-4 shrink-0 shadow-md z-10">
+        <header className="h-14 bg-[#005CA9] flex items-center px-6 gap-4 shrink-0 shadow-md z-10">
           <button
             onClick={() => setLocation("/dashboard")}
             className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all"
@@ -201,14 +202,14 @@ export default function HistoricoSP() {
           
           <div className="ml-auto flex items-center gap-3">
              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/10 border border-white/10">
-                <AlertCircle size={14} className="text-amber-200" />
+                <AlertCircle size={14} className="text-blue-200" />
                 <span className="text-[10px] font-bold text-white uppercase tracking-wider">Auto-deleção em 60 dias</span>
              </div>
             <button
               className={`flex items-center gap-2 text-xs font-black h-9 px-5 rounded-xl transition-all shadow-lg active:scale-95 ${
                 saved 
                 ? "bg-emerald-500 text-white" 
-                : "bg-white text-amber-700 hover:bg-amber-50 shadow-amber-900/20"
+                : "bg-white text-blue-700 hover:bg-blue-50 shadow-blue-900/20"
               }`}
               onClick={handleRequestEmit}
               disabled={isExporting || saved}
@@ -246,6 +247,7 @@ export default function HistoricoSP() {
                 assinaturaDiretorUrl={assinaturaDiretorUrl || SIG_DIRETOR_B64}
                 hasCustomAssinaturaGerente={!!assinaturaGerenteUrl}
                 hasCustomAssinaturaDiretor={!!assinaturaDiretorUrl}
+                onOpenHowToUse={() => setShowHowToUse(true)}
               />
           </aside>
 
@@ -290,27 +292,27 @@ export default function HistoricoSP() {
               {/* Controles de Logo Flutuantes */}
               <div className="absolute top-16 left-6 z-50 flex flex-col gap-2 bg-white p-2 rounded-lg shadow-xl border border-gray-200 animate-in fade-in slide-in-from-left-4 duration-300">
                 <div className="flex items-center gap-2 px-1 mb-1 border-b border-gray-100 pb-1">
-                  <Move size={12} className="text-amber-600" />
+                  <Move size={12} className="text-blue-600" />
                   <span className="text-[9px] font-black text-gray-500 uppercase tracking-tighter">Ajuste de Logo</span>
                 </div>
                 
                 <div className="flex items-center gap-1 bg-gray-50 rounded p-1">
-                  <button onClick={() => setLogoScale(v => Math.max(0.1, v - 0.1))} className="h-6 w-6 flex items-center justify-center hover:bg-white hover:text-amber-600 rounded transition-colors text-gray-500 shadow-sm border border-gray-200" title="Diminuir Logo">-</button>
+                  <button onClick={() => setLogoScale(v => Math.max(0.1, v - 0.1))} className="h-6 w-6 flex items-center justify-center hover:bg-white hover:text-blue-600 rounded transition-colors text-gray-500 shadow-sm border border-gray-200" title="Diminuir Logo">-</button>
                   <span className="text-[10px] font-black w-10 text-center text-gray-600">{Math.round(logoScale * 100)}%</span>
-                  <button onClick={() => setLogoScale(v => Math.min(3, v + 0.1))} className="h-6 w-6 flex items-center justify-center hover:bg-white hover:text-amber-600 rounded transition-colors text-gray-500 shadow-sm border border-gray-200" title="Aumentar Logo">+</button>
+                  <button onClick={() => setLogoScale(v => Math.min(3, v + 0.1))} className="h-6 w-6 flex items-center justify-center hover:bg-white hover:text-blue-600 rounded transition-colors text-gray-500 shadow-sm border border-gray-200" title="Aumentar Logo">+</button>
                 </div>
 
                 <div className="grid grid-cols-3 gap-1">
                   <div/>
-                  <button onClick={() => setLogoY(v => v - 2)} className="h-7 w-7 flex items-center justify-center hover:bg-amber-50 hover:text-amber-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Subir">▲</button>
+                  <button onClick={() => setLogoY(v => v - 2)} className="h-7 w-7 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Subir">▲</button>
                   <div/>
-                  <button onClick={() => setLogoX(v => v - 2)} className="h-7 w-7 flex items-center justify-center hover:bg-amber-50 hover:text-amber-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Esquerda">◀</button>
+                  <button onClick={() => setLogoX(v => v - 2)} className="h-7 w-7 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Esquerda">◀</button>
                   <button onClick={() => { setLogoScale(1); setLogoX(0); setLogoY(0); }} className="h-7 w-7 flex items-center justify-center hover:bg-red-50 hover:text-red-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Resetar">
                     <RotateCcw size={12} />
                   </button>
-                  <button onClick={() => setLogoX(v => v + 2)} className="h-7 w-7 flex items-center justify-center hover:bg-amber-50 hover:text-amber-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Direita">▶</button>
+                  <button onClick={() => setLogoX(v => v + 2)} className="h-7 w-7 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Direita">▶</button>
                   <div/>
-                  <button onClick={() => setLogoY(v => v + 2)} className="h-7 w-7 flex items-center justify-center hover:bg-amber-50 hover:text-amber-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Descer">▼</button>
+                  <button onClick={() => setLogoY(v => v + 2)} className="h-7 w-7 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 rounded-md transition-all text-gray-400 border border-gray-100 shadow-sm" title="Descer">▼</button>
                   <div/>
                 </div>
               </div>
@@ -360,6 +362,53 @@ export default function HistoricoSP() {
         onClose={() => setShowSuccessModal(false)}
         historyPath="/historico-sp-salvos"
       />
+
+      {/* Modal Guia de Uso */}
+      {showHowToUse && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] border border-gray-100 dark:border-gray-800 shadow-2xl p-8 max-w-lg w-full mx-4 relative overflow-hidden animate-in zoom-in-95 duration-300">
+            <button 
+              onClick={() => setShowHowToUse(false)} 
+              className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <X size={18} />
+            </button>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center">
+                <FileText size={20} />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-gray-900 dark:text-white uppercase tracking-wider">Guia de Uso - Histórico SP</h3>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Instruções para preenchimento rápido</p>
+              </div>
+            </div>
+            <div className="space-y-4 text-xs text-gray-600 dark:text-gray-300 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="bg-gray-50 dark:bg-gray-850 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
+                <h4 className="font-bold text-gray-800 dark:text-gray-200 mb-1.5 uppercase text-[11px] tracking-wider">⚡ Importação Automática</h4>
+                <p className="leading-relaxed">Copie o modelo de dados disponível no painel esquerdo, preencha com as informações do seu cliente e cole na caixa de texto. O sistema mapeará as notas e informações cadastrais automaticamente.</p>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-850 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
+                <h4 className="font-bold text-gray-800 dark:text-gray-200 mb-1.5 uppercase text-[11px] tracking-wider">🛡️ Brasões Estaduais</h4>
+                <p className="leading-relaxed">Ao selecionar o estado da instituição no formulário, o brasão correspondente será carregado de forma automática e otimizada (CORS-ready). Se preferir, faça upload de uma imagem personalizada.</p>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-850 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
+                <h4 className="font-bold text-gray-800 dark:text-gray-200 mb-1.5 uppercase text-[11px] tracking-wider">🖋️ Assinaturas e Responsáveis</h4>
+                <p className="leading-relaxed">Use assinaturas em formato PNG transparente. Você pode ajustar a escala e o posicionamento horizontal/vertical do brasão diretamente através do controle flutuante de tela.</p>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-850 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
+                <h4 className="font-bold text-gray-800 dark:text-gray-200 mb-1.5 uppercase text-[11px] tracking-wider">🔍 Pré-visualização</h4>
+                <p className="leading-relaxed">Use a barra de zoom para ver os detalhes finos do documento. O layout renderiza a réplica 1:1 exata do histórico escolar de conclusão.</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setShowHowToUse(false)}
+              className="mt-6 w-full h-11 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black rounded-2xl uppercase tracking-widest transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+            >
+              Entendido
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
