@@ -107,6 +107,32 @@ export default function Dashboard() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showRenewModal, setShowRenewModal] = useState<DocRecord | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredHistory = history.filter(doc => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase().trim();
+    const parsed = parseDocData(doc);
+    
+    const paciente = String(doc.paciente || "").toLowerCase();
+    const nome = String(doc.nome || "").toLowerCase();
+    const cpf = String(doc.cpf || parsed.cpf || parsed.cpf_paciente || "").toLowerCase();
+    
+    const parsedNome = String(parsed.nome || parsed.nome_aluno || parsed.nome_paciente || "").toLowerCase();
+    const docId = String(doc.id || "").toLowerCase();
+    const codigoQR = String(doc.codigo_qr || doc.codigo_validacao || "").toLowerCase();
+    const parsedCurso = String(parsed.curso || "").toLowerCase();
+    
+    return (
+      paciente.includes(term) ||
+      nome.includes(term) ||
+      cpf.includes(term) ||
+      parsedNome.includes(term) ||
+      docId.includes(term) ||
+      codigoQR.includes(term) ||
+      parsedCurso.includes(term)
+    );
+  });
 
   const handleRenew = (doc: DocRecord) => {
     setShowRenewModal(doc);
@@ -475,10 +501,30 @@ const intelligentStats = [
         {/* History */}
         {hasEmissions && (
           <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
               <div className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 <h2 className="text-sm md:text-base font-bold text-gray-800 dark:text-gray-200 uppercase tracking-widest">Histórico de Emissões</h2>
+              </div>
+              <div className="relative w-full sm:w-80">
+                <input 
+                  type="text" 
+                  value={searchTerm} 
+                  onChange={(e) => setSearchTerm(e.target.value)} 
+                  placeholder="Pesquisar nome, CPF ou código..." 
+                  className="w-full pl-10 pr-9 py-2.5 text-[11px] font-bold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-gray-400 dark:placeholder:text-gray-500 shadow-sm transition-all uppercase"
+                />
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 dark:text-gray-500">
+                  <Search size={14} />
+                </div>
+                {searchTerm && (
+                  <button 
+                    onClick={() => setSearchTerm("")} 
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
               </div>
             </div>
             
@@ -498,6 +544,12 @@ const intelligentStats = [
                     <FileText className="w-12 h-12 text-gray-200 mx-auto mb-3" />
                     <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Nenhuma {TAB_LABELS[activeTab] || activeTab} emitida ainda</h3>
                     <button onClick={() => setLocation(quickActionsRaw.find(a => a.key === activeTab)?.path || "/dashboard")} className="mt-4 px-4 py-2 bg-blue-600 text-white text-[10px] font-black rounded-lg uppercase">Emitir Documento</button>
+                  </div>
+                ) : filteredHistory.length === 0 ? (
+                  <div className="py-20 text-center border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl">
+                    <Search className="w-12 h-12 text-gray-300 mx-auto mb-3 animate-pulse" />
+                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Nenhum resultado encontrado para "{searchTerm}"</h3>
+                    <p className="text-[10px] text-gray-400 mt-1 uppercase font-bold">Tente buscar por outro termo</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -529,7 +581,7 @@ const intelligentStats = [
                         )}
                       </thead>
                       <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-                        {history.map(doc => {
+                        {filteredHistory.map(doc => {
                           const parsed = parseDocData(doc);
                           const cpf = doc.cpf || parsed.cpf || parsed.cpf_paciente || "—";
                           const dataEmissao = doc.data_emissao || parsed.data_emissao || doc.created_at;
