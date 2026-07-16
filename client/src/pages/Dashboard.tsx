@@ -656,7 +656,9 @@ const intelligentStats = [
                           } else if (doc.type === "peticao-stj") {
                             docLabel = `Petição STJ - ${parsed.nome_parte || parsed.nome || "—"}`;
                           } else {
-                            docLabel = `${doc.type.toUpperCase()} - ${doc.paciente || doc.nome || parsed.nome || "—"}`;
+                            const typeStr = doc.type ? String(doc.type).toUpperCase() : "";
+                            const patientStr = doc.paciente || doc.nome || parsed.nome || "—";
+                            docLabel = typeStr ? `${typeStr} - ${patientStr}` : patientStr;
                           }
 
                           return (
@@ -669,7 +671,7 @@ const intelligentStats = [
                                     onDownload={() => handleDirectDownloadGeneric(doc)}
                                     isDownloading={downloadingAtestadoId === doc.id}
                                     onEdit={() => {
-                                      const route = doc.type === "fgv" ? "certificado-fgv" : (doc.type === "historico-uninter" ? "historicocria" : doc.type);
+                                      const route = doc.type === "fgv" ? "certificado-fgv" : (doc.type === "historico-uninter" ? "historicocria" : (doc.type || "documento"));
                                       setLocation(`/${route}/editar/${doc.id}`);
                                     }}
                                     onDelete={() => setConfirmDeleteId(doc.id)}

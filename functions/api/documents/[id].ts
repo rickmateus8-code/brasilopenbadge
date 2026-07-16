@@ -198,7 +198,7 @@ export async function onRequest(context: { request: Request; env: Env; params: {
         if (user.role === 'admin') {
           rows = await env.DB.prepare('SELECT d.*, u.username as user_name FROM documents d LEFT JOIN users u ON d.user_id = u.id WHERE d.type = ? ORDER BY d.created_at DESC').bind(type).all();
         } else {
-          rows = await env.DB.prepare('SELECT * FROM documents WHERE type = ? AND user_id = ? ORDER BY d.created_at DESC').bind(type, user.id).all();
+          rows = await env.DB.prepare('SELECT * FROM documents WHERE type = ? AND user_id = ? ORDER BY created_at DESC').bind(type, user.id).all();
         }
         return jsonResponse({ success: true, data: rows.results || [] });
       }
