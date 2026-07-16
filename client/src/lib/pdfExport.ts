@@ -167,6 +167,7 @@ export async function exportElementToPDF(
 ): Promise<void> {
   const {
     filename,
+    docType,
     scale = 2,
     quality = 0.92,
     orientation = "p",
@@ -176,8 +177,9 @@ export async function exportElementToPDF(
     customHeight,
   } = options;
 
-  const docWidth = customWidth || (orientation === "l" ? DOC_REAL_HEIGHT : DOC_REAL_WIDTH);
-  const docHeight = customHeight || (orientation === "l" ? DOC_REAL_WIDTH : DOC_REAL_HEIGHT);
+  const isLandscape = orientation === "l" || docType === "fgv" || docType === "diploma-uninter";
+  const docWidth = customWidth || (isLandscape ? DOC_REAL_HEIGHT : DOC_REAL_WIDTH);
+  const docHeight = customHeight || (isLandscape ? DOC_REAL_WIDTH : DOC_REAL_HEIGHT);
 
   // Limita scale em mobile para evitar estouro de memória
   const dpr = typeof window !== "undefined" ? (window.devicePixelRatio || 1) : 1;
@@ -283,7 +285,7 @@ ${elementHTML}
 
     // ── 6. Gerar PDF A4 ──────────────────────────────────────────────────
     const pdf = new jsPDF({
-      orientation,
+      orientation: isLandscape ? "l" : "p",
       unit: "mm",
       format,
       compress: true,
@@ -449,6 +451,7 @@ export async function exportElementToPDFBlob(
   options: Omit<PDFExportOptions, "filename">
 ): Promise<string> {
   const {
+    docType,
     scale = 2,
     quality = 0.92,
     orientation = "p",
@@ -458,8 +461,9 @@ export async function exportElementToPDFBlob(
     customHeight,
   } = options;
 
-  const docWidth = customWidth || (orientation === "l" ? DOC_REAL_HEIGHT : DOC_REAL_WIDTH);
-  const docHeight = customHeight || (orientation === "l" ? DOC_REAL_WIDTH : DOC_REAL_HEIGHT);
+  const isLandscape = orientation === "l" || docType === "fgv" || docType === "diploma-uninter";
+  const docWidth = customWidth || (isLandscape ? DOC_REAL_HEIGHT : DOC_REAL_WIDTH);
+  const docHeight = customHeight || (isLandscape ? DOC_REAL_WIDTH : DOC_REAL_HEIGHT);
 
   const dpr = typeof window !== "undefined" ? (window.devicePixelRatio || 1) : 1;
   const safeScale = dpr > 2 ? Math.min(scale, 1.5) : scale;
@@ -535,7 +539,7 @@ ${elementHTML}
       y: 0,
     });
     if (canvas.width === 0 || canvas.height === 0) throw new Error("Canvas gerado está vazio.");
-    const pdf = new jsPDF({ orientation, unit: "mm", format, compress: true });
+    const pdf = new jsPDF({ orientation: isLandscape ? "l" : "p", unit: "mm", format, compress: true });
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
     const imgWidth = canvas.width;
