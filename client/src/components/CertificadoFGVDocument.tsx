@@ -56,7 +56,7 @@ const CertificadoFGVDocument = forwardRef<HTMLDivElement, CertificadoFGVDocument
           width: PAGE_WIDTH_PX,
           height: PAGE_HEIGHT_PX,
           backgroundColor: "#ffffff",
-          backgroundImage: "url(/assets/fgv_background.png)",
+          backgroundImage: "url(/assets/fgv_background.png?v=3)",
           backgroundSize: "100% 100%",
           backgroundRepeat: "no-repeat",
           position: "relative",
