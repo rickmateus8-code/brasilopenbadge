@@ -18,6 +18,23 @@ export default function BrasilOpenBadgeValidation() {
   const [isDownloading, setIsDownloading] = useState(false);
   const certRef = useRef<HTMLDivElement>(null);
   const [lang, setLang] = useState<"pt" | "en" | "es">("pt");
+  const [containerWidth, setContainerWidth] = useState(820);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerWidth(entry.contentRect.width);
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [validDoc]);
+
+  const scale = Math.max(0.1, Math.min(0.73, containerWidth / 1123));
+  const containerHeight = 794 * scale;
+  const containerWidthStyle = 1123 * scale;
 
   useEffect(() => {
     if (!params.id) {
@@ -287,6 +304,14 @@ export default function BrasilOpenBadgeValidation() {
                     </p>
                   </div>
                 )}
+                {validDoc.carga_horaria && (
+                  <div>
+                    <h5 className="text-[10px] uppercase font-black tracking-wider text-gray-400">Carga Horária</h5>
+                    <p className="text-sm font-bold text-gray-800">
+                      {validDoc.carga_horaria}
+                    </p>
+                  </div>
+                )}
                 <div>
                   <h5 className="text-[10px] uppercase font-black tracking-wider text-gray-400">{texts.validade}</h5>
                   <p className="text-sm font-bold text-emerald-600 flex items-center gap-1">
@@ -393,6 +418,11 @@ export default function BrasilOpenBadgeValidation() {
                         período: {validDoc.data_inicio ? `de ${validDoc.data_inicio}` : ""} {validDoc.data_termino ? `a ${validDoc.data_termino}` : ""}
                       </p>
                     )}
+                    {validDoc.carga_horaria && (
+                      <p className="text-sm text-blue-900 font-bold font-mono mt-1">
+                        carga horária: {validDoc.carga_horaria}
+                      </p>
+                    )}
                     <span className="text-[10px] text-blue-700 font-black uppercase tracking-wider mt-2 block">FUNDAÇÃO GETULIO VARGAS</span>
                   </div>
                 </div>
@@ -417,11 +447,11 @@ export default function BrasilOpenBadgeValidation() {
               </div>
 
               {/* Certificado Scale Container */}
-              <div className="bg-gray-100 rounded-2xl p-4 flex items-center justify-center overflow-x-auto border border-gray-200">
-                <div style={{ width: "100%", maxWidth: 820, height: 580, overflow: "hidden", position: "relative" }}>
+              <div ref={containerRef} className="bg-gray-100 rounded-2xl p-4 flex items-center justify-center border border-gray-200 w-full">
+                <div style={{ width: containerWidthStyle, height: containerHeight, overflow: "hidden", position: "relative" }}>
                   <div 
                     style={{ 
-                      transform: "scale(0.73)", 
+                      transform: `scale(${scale})`, 
                       transformOrigin: "top left",
                       width: 1123,
                       height: 794,
